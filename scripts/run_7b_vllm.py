@@ -42,12 +42,13 @@ def mx_by_type(t):
         if qt.lower()==t: out.append(i)
     return out
 DATASET_IDX = {
-    "MedXpert-Reasoning": lambda: mx_by_type("reasoning"),
-    "MedXpert-Understanding": lambda: mx_by_type("understanding"),
-    "PMC-VQA": lambda: subset("pmcvqa","pmc"),
-    "SLAKE": lambda: subset("slake"),
-    "VQA-RAD": lambda: subset("vqarad","vqa_rad","rad"),
-    "PathVQA": lambda: subset("pathvqa","path"),
+    "MedXpert-Reasoning":               lambda: mx_by_type("reasoning"),
+    "MedXpert-Understanding":           lambda: mx_by_type("understanding"),
+    "PMC-VQA":                          lambda: subset("pmcvqa","pmc"),
+    "SLAKE":                            lambda: subset("slake"),
+    "VQA-RAD":                          lambda: subset("vqarad","vqa_rad","rad"),
+    "PathVQA":                          lambda: subset("pathvqa","path"),
+    "MMMU":                             lambda: subset("mmmu"),
 }
 def fixed_slice(idxs):
     rng=random.Random(42); s=idxs[:]; rng.shuffle(s); s=s[:A.n]; return s[SHARD_K::SHARD_N]

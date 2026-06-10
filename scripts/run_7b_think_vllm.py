@@ -26,7 +26,7 @@ from transformers import AutoProcessor
 from qwen_vl_utils import process_vision_info
 from vllm import LLM, SamplingParams
 
-MODEL = "/data/dan/weights/MedVLThinker-32B-RL_m23k"
+MODEL = "/data/dan/weights/MedVLThinker-7B-RL_m23k" 
 ROOT  = "/data/dan/dataset/MedVLThinker-Eval"
 SYS_THINK = ("You will solve a problem/request. You should provide your thoughts "
              "within <think> </think> tags before providing the answer.")
@@ -38,7 +38,7 @@ ap.add_argument("--n", type=int, default=500)
 ap.add_argument("--datasets", nargs="+",
                 default=["MedXpert-Reasoning","MedXpert-Understanding","PMC-VQA"])
 ap.add_argument("--shard", default="0/1")
-ap.add_argument("--ckpt_dir", default="ckpts/gate_32b")
+ap.add_argument("--ckpt_dir", default="ckpts/gate_7b_think")
 ap.add_argument("--tp", type=int, default=2)
 ap.add_argument("--gpu_mem", type=float, default=0.88)
 ap.add_argument("--max_model_len", type=int, default=8192)
