@@ -14,7 +14,7 @@
 - ckpts/gate_7b_vllm/            7B no_think, full-res, EVAL    (all 6)
 - ckpts/gate_7b_prune/cap{640,320,160,80}/  7B no_think, capped, EVAL  (4 competent; MISSING MedXpert+MMMU)
 - ckpts/gate_32b/               32B think, full-res, EVAL       (all 6)
-- ckpts/gate_7b_v2/             7B THINK, n~500, EVAL           (PMC + MedXpert only; nothink here is stale)
+- archive/single-model-routing/gate_7b_rag_axes/  (was ckpts/gate_7b_v2) 7B n~500 grid over think/nothink/RAG axes — KILLED RAG experiment, archived
 - ckpts/gate_7b_pmctrain/       7B no_think, full-res, CALIB (PMC-train, 3000)
 - ckpts/gate_7b_pmctrain_prune/cap{...}/  7B no_think, capped, CALIB (3000 each)
 - ckpts/router_margin.pkl       frozen margin gate, tau=0.426

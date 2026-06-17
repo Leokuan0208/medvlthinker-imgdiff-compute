@@ -1,21 +1,57 @@
 # medvlthinker-imgdiff-compute
 
-Question-Aware Adaptive Compute for Medical VLMs — image-difficulty-driven
-reasoning-budget allocation. Base model: MedVLThinker-3B-RL_m23k (Qwen2.5-VL).
+**Compute-efficient medical VQA via a two-model cascade.** A cheap **7B** VLM answers
+most multiple-choice medical-VQA questions; a frozen **confidence-margin gate** (τ = 0.426)
+escalates only the low-confidence ones to an expensive **32B** model. Serving the 7B at a
+reduced image resolution ("cap320"), the cascade reaches **exact accuracy parity** with
+always-using-32B (0.572 = 0.572) at ~**74%** of the always-32B compute (prefill-inclusive
+FLOPs), and is never worse than always-7B on any of the six benchmarks. Both models are
+`MedVLThinker-*-RL_m23k`. Target venue: **CVGIP 2026**.
 
-## Lineage
-- huatuo-llava-v15-med-pruning  : 2D question-aware token pruning (frozen; random>=QSim dead end)
-- medvlthinker-imgdiff-compute  : PIVOT. Hypothesis: image content (not the question)
-  drives per-case difficulty; allocate reasoning compute on that signal.
+> Full project context, glossary, environment, and the rules for working in this repo are in
+> **`CLAUDE.md`** — read it before running or moving anything. Headline numbers there are
+> ground truth; never fabricate or edit experimental numbers.
 
-## Pipeline (gate)
-1. build_subset.py            -> subset.csv  (SLAKE yes/no closed, stratified)
-2. difficulty_medvlthinker.py -> difficulty.csv  (pass-count difficulty on the 3B; = training labels)
-3. complexity.py              -> complexity.csv  (question-free image complexity)
-4. complexity_lesion.py       -> adds comp_lesion_* (REFINE: SLAKE organ-mask region size/contrast)
-5. analyze.py                 -> GO / REFINE / NO-GO  (difficulty~complexity | question_type+modality)
+## Layout
 
-## Status
-- Track-1 (HuatuoGPT) gate: REFINE — image->difficulty real & significant but weak (|rho|<=0.11),
-  NEGATIVE sign (busier=easier) => whole-image texture likely measures evidence-richness,
-  not lesion subtlety. Running definitive 3B gate + lesion-aware refinement before training.
+All active code lives under `src/`, grouped by pipeline stage. **Always run scripts from the
+repo root** (e.g. `python3 src/cascade/live_cascade.py`) — several resolve `ckpts/...` paths
+relative to the launch directory.
+
+```
+src/
+├── labeling/      run a model over a dataset -> per-sample JSONL checkpoints
+│                  run_7b_hf_labeler.py, run_7b_vllm.py, run_7b_think_vllm.py,
+│                  run_32b_hf.py, run_32b_vllm.py, run_pmctrain_vllm.py
+├── sweep/         resolution / compute sweeps + the calibrated res×τ grid
+│                  run_7b_prune_sweep.py, tokens_per_cap.py, grid_resolution_tau.py,
+│                  cascade_resolution_sweep.py, cascade_heldout_frontier.py
+├── gate/          train + freeze the deployed margin gate (-> ckpts/router_margin.pkl)
+│                  train_margin_gate.py, refit_gate_tau_per_cap.py
+├── cascade/       the LIVE co-resident cascade + real-time measurement
+│                  live_cascade.py, measure_single_leg.py,
+│                  report_cascade_from_legs.py, analyze_live_cascade.py
+├── analysis/
+│   ├── cascade/   analyses of the live cascade (cost, complementarity, mechanism, energy)
+│   └── ablations/ gate alternatives that LOST to the margin gate (conformal, learned, FBE)
+├── reporting/     build the paper's accuracy/efficiency tables + harness validation
+├── data_prep/     build eval subsets, sample the held-out PMC-VQA train split
+└── legacy_retrieval/  retrieve.py — leftover from the killed RAG direction
+
+archive/            killed directions, kept as the record of negative results:
+                    image-difficulty/, old-gate-scripts/, single-model-routing/
+MedRAG/, MedVLThinker/   dependency repos — DO NOT move or rename
+ckpts/ logs/ data/ results/ feats/ feats_full/   gitignored data/checkpoints
+```
+
+## Headline pipeline
+
+1. **Label** the eval sets and the held-out PMC-VQA train split with the 7B (cheap, no-think)
+   and 32B (think) — `src/labeling/`.
+2. **Sweep** image-resolution caps and calibrate the (resolution, τ) operating point —
+   `src/sweep/` → cap320, τ = 0.426.
+3. **Train + freeze** the margin gate on the clean PMC-VQA train labels — `src/gate/`
+   → `ckpts/router_margin.pkl`.
+4. **Run the live cascade** co-resident (7B on GPU0, 32B on GPU1) with real escalation and
+   NVML power logging — `src/cascade/live_cascade.py` → `rt_cascade_cap320.jsonl`.
+5. **Analyze / report** — `src/analysis/` and `src/reporting/`.
