@@ -6,14 +6,48 @@
 > each piece does, (3) propose a cleaner folder structure, and (4) list the rules that must be
 > followed so the reorganization does not break anything.
 >
-> **The immediate task** is a *cleanup*: move and rename files into a structure that is easier
-> to understand. Read the **"Rules & landmines"** and **"Safe cleanup procedure"** sections
-> before touching anything. Several things in this folder will silently break if moved
-> carelessly — those are spelled out below.
+> **History — the original task was a *cleanup*** (move/rename files into `src/<stage>/`). That is
+> **done** (see §5). The **rules & landmines** below still apply to any file moves. The active work
+> is now a research loop, summarized in §0.
 >
 > **About the author.** The researcher (Leo / Li-Wen Kuan) is an engineering student who is
 > relatively new to computer science. When you explain a command or a plan, be explicit and
 > step-by-step; don't assume familiarity with shell, git internals, or Python packaging.
+
+---
+
+## 0. Current status (updated 2026-06-18) — read this first
+
+The cleanup is finished. Active work = a **cascade-method research loop** (find a cascade that beats
+the deployed margin gate). **Session progress log (read first for the full story, comparison charts
+vs FrugalGPT/CP-Router/AutoMix/etc., and the math): [`progress_June_17.md`](progress_June_17.md) in the
+repo root; the cross-family + native-prompt continuation (5 families/3 architectures, native think, all-methods
+bake-off w/ measured latency+energy, the negative novel-method search, the cost-fix) is in
+[`progress_June_20-22.md`](progress_June_20-22.md) (+ `results/cascade_methods/{2SIZE_VALIDATION,FULL_RECORD,
+NOVEL_METHOD_FLD}.md`, `MASTER_TABLES.md`, `master_data.csv`).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
+`METHOD_ACC.md` + `METHOD_MATH.md`; code in **`src/cascade_methods/`**. Two outcomes:
+
+1. **The deployed margin gate (τ=0.426, ~74% backbone) is essentially optimal among training-free
+   GATES.** No decision rule (confidence / conformal / learned / recoverability / self-verification)
+   beats it in a way that is novel + real-efficiency-positive + per-benchmark guardrail-safe.
+   "Will the 32B fix it?" (recoverability) is only ~0.6 AUROC from any cheap signal. The
+   verification-augmented deferral router (VADR) is a dead end (not novel; its one new claim fails).
+
+2. **The genuine improvement is structural: the Adaptive-Compute Cascade (ACC).** A confidence-gated
+   3-tier cascade over compute *configurations*: **7B-nothink@cap320 → 32B-NO-THINK@cap320 →
+   32B-think@fullres**. The big model's *fast* no-think mode (≈0.34s vs ≈28s for think) is inserted
+   as an intermediate tier (gated by its own logprob margin), so the slow think pass fires only on
+   the ~18% reasoning residual. Honest held-out, **real measured batch-1 latency**, at parity with
+   always-32B-think: **latency 20.0s→5.7s (−72%) on ALL-6, 9.1s→0.28s (−97%) on ALL-5; FLOPs
+   81→55% / 51→27%; guardrail-cleaner.** Mechanism: thinking *overthinks* perception VQA
+   (32B-no-think ≥ 32B-think on the 4 competent sets). Scope: competent-4 (MMMU/MedXpert excluded).
+   Novelty: incremental-but-defensible systems contribution (closest prior art CAR, arXiv 2505.15154).
+   Spec: `results/cascade_methods/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
+
+New gitignored checkpoints from the loop (see RESULTS.md): `ckpts/gate_32b_modes/`,
+`ckpts/gate_32b_pmctrain*/`, `ckpts/gate_7b_verify*/`, `results/cascade_methods/latency_*.jsonl`.
+The standing no-fabricated-numbers rule applies to everything above — all figures are from real
+checkpoint output.
 
 ---
 
@@ -99,9 +133,11 @@ directions** (keep but tuck away in `archive/`).
 
 ## 4. Current repository inventory (verify against the live tree first)
 
-> **Important:** this inventory reflects the project as of mid-June 2026 and may have drifted.
-> **Before acting, run a real listing** and reconcile it with this list (see the procedure in
-> §6). Treat anything below as "expected, confirm on disk," not "guaranteed present."
+> **Important:** this inventory was reconciled against the live tree on **2026-06-17** (the
+> `src/` layout, the `ckpts/` contents, and the `rt_cascade_cap320.jsonl` location all match
+> disk as of then). It can still drift as new runs land. **Before acting, run a real listing**
+> and reconcile it with this list (see the procedure in §6). Treat anything below as "expected,
+> confirm on disk," not "guaranteed present."
 
 ### 4.1 Active Python code — now under `src/` (see §5 for the full map)
 
@@ -136,11 +172,21 @@ These are the live scripts. Names in (parentheses) note history.
 ### 4.2 Checkpoints — `ckpts/` (gitignored, often resumable, do not casually move)
 
 - `gate_7b_pmctrain/ckpt_nothink.jsonl` — 3,000 rows, PMC-VQA **train** split. The gate's
-  calibration data.
-- `gate_7b_prune/<cap>/ckpt_*_nothink_norag.jsonl` — the cheap 7B leg across resolution
-  caps; 8,220 rows per benchmark set.
+  calibration data (at full resolution).
+- `gate_7b_pmctrain_prune/<cap>/ckpt_nothink.jsonl` — the **same** held-out PMC-VQA train
+  calibration sample re-run at each resolution cap (`cap80/160/320/640`). This is what
+  `refit_gate_tau_per_cap.py` uses to refit τ per cap (so cap320 gets its own threshold).
+- `gate_7b_prune/<cap>/ckpt_*_nothink_norag.jsonl` — the cheap 7B leg (no-think) across
+  resolution caps (`cap80/160/320/640`); 8,220 rows per benchmark set. The chosen operating
+  point is `cap320`.
+- `gate_7b_vllm/ckpt_*_nothink_norag.jsonl` — the cheap 7B no-think leg at **full resolution**
+  over the full 6-benchmark eval (the "fullres" cheap baseline; same schema as `gate_7b_prune`).
+- `gate_7b_think/ckpt_*_think_norag_s{0,1}of2.jsonl` — the 7B **think** baseline, run in 2
+  shards (see the shard-tag note below). Used for the think-vs-no-think comparison, not the gate.
 - `gate_32b/ckpt_*_think_norag.jsonl` — the strong 32B leg; 8,220 rows. (`opt_logprobs`
   is empty here because the 32B is a reasoning model.)
+- `pmctrain/ckpt_{nothink,think}.jsonl` — an earlier PMC-VQA train labeling pair (no-think and
+  think) kept alongside the newer `gate_7b_pmctrain*` dirs.
 
 > **Shard-tag convention (updated 2026-06-16):** checkpoints/feats from a **single-shard** run
 > carry **no `_sKofN` suffix** (the redundant `_s0of1` was stripped). Only genuinely **sharded**
@@ -149,9 +195,19 @@ These are the live scripts. Names in (parentheses) note history.
 > write the tag only when `N>1` (`SHARD_TAG`), and every reader treats `(?:_s\d+of\d+)?` as
 > optional, so both forms load and shards still merge by `idx`.
 - `router_margin.pkl` — the **gate artifact** itself: keys `gate`, `tau`, `signal`,
-  `trained_on`. This is the deployable result.
-- `rt_cascade_cap320.jsonl` — output of the live cascade run.
-- `_legacy/` — old field-poor checkpoints from the 3B and early-7B runs. Keep, do not delete.
+  `trained_on`. This is the **deployable result** — the frozen margin gate (τ=0.426).
+- `router_learned.pkl`, `router_learned_6ds.pkl`, `router_conformal_6ds.pkl` — pickled
+  **alternative** gates (HistGBM "learned" and conformal CP-Router), one over the 4 competent
+  benchmarks and one over all 6 (`_6ds`). These are the *losing* ablation gates (see
+  `src/analysis/ablations/`), kept so the bake-off is reproducible. **Not deployed.**
+- `token_cache.json` — processor-only image-token-count cache (output of
+  `src/sweep/tokens_per_cap.py`), keyed by cap; feeds the FLOPs accounting.
+- `rt_cascade_cap320.jsonl` — output of the live cascade run. **Now lives in `ckpts/`**
+  (`ckpts/rt_cascade_cap320.jsonl`), and that is the default `--jsonl`/`--cascade`/`--out` path
+  for every script that reads or writes it. (An earlier draft placed it at the repo root; it
+  was moved into `ckpts/` with everything else, and all default paths were updated to match.)
+- `_legacy/` — old field-poor checkpoints from the 3B and early-7B runs (`gate_ckpts/`,
+  `gate_ckpts_7b/`). Keep, do not delete.
 
 **Checkpoint JSONL schema** (so you can read them without guessing): per-sample keys are
 `idx, gold, pred, ok, parse_ok, opt_logprobs (letter→logprob dict), gen_tokens, latency_s,
@@ -163,6 +219,10 @@ versions `pred7, pred32, gold, margin, latency_s, energy_j, gen7, gen32`).
 - `logs/` — `nohup` output from long runs. Gitignored.
 - `data/` — small inputs like `subset.csv`. Gitignored.
 - `results/` — run artifacts (may be empty). Gitignored.
+- `feats/`, `feats_full/` — saved hidden-state features (`feat_*_L14.npz`, layer-14
+  activations) extracted for the killed single-model-routing probes. `feats/` holds the early
+  3-benchmark subset; `feats_full/` holds all 6. `*.npz` is gitignored. Leftovers from a killed
+  direction — kept for record, not used by the live cascade.
 - `archive/` — killed directions. Subfolders: `image-difficulty/` (complexity / difficulty /
   lesion files), `old-gate-scripts/` (`gate_probe.py`, `gate_rag.py`, old `analyze.py`), and
   `single-model-routing/` (the killed direction #3: `oracle_luck_floor.py`, `router_scalar.py`,
@@ -173,7 +233,8 @@ versions `pred7, pred32, gold, margin, latency_s, energy_j, gen7, gen32`).
   gitignored). Kept as the negative-result record).
 - `MedRAG/` — **dependency git repo. DO NOT MOVE OR RENAME.** `retrieve.py` imports from it.
 - `MedVLThinker/` — **dependency git repo. DO NOT MOVE OR RENAME.** The eval stack uses it.
-- `README.md`, `.gitignore`, `env_backup_*.txt` (a local env snapshot, gitignored).
+- `README.md`, `RESULTS.md` (the written-up results / numbers log), `.gitignore`,
+  `env_backup_*.txt` (a local env snapshot, gitignored).
 
 ---
 
@@ -240,13 +301,13 @@ medvlthinker-imgdiff-compute/
 │       └── retrieve.py          # killed RAG direction, kept for record
 │
 ├── ckpts/  logs/  data/  results/  feats/  feats_full/   # gitignored data — UNTOUCHED
+│   └── ckpts/rt_cascade_cap320.jsonl   # live cascade output — default --jsonl/--out of many scripts
 ├── archive/                     # killed directions (keep, don't delete)
 │   ├── image-difficulty/        old-gate-scripts/
 │   └── single-model-routing/    # oracle_luck_floor, router_scalar/hidden, analyze_router,
 │                                #   pmcvqa_recoverability, extract_features, gap_router_probe,
 │                                #   cascade_complementarity_check[_corrected], validate_think_harness_vs_paper
 │                                #   (all read the dead RAG-axes grid), + gate_7b_rag_axes/ data (gitignored)
-├── rt_cascade_cap320.jsonl      # live cascade output — left at root (hub: default arg of many scripts)
 │
 ├── MedRAG/                      # dependency repo — DO NOT MOVE/RENAME
 └── MedVLThinker/                # dependency repo — DO NOT MOVE/RENAME
@@ -276,9 +337,9 @@ that discipline:
    place that mentions it is updated too. Grep for imports and hard-coded paths:
    ```bash
    # which scripts import which (so a rename doesn't break an import)
-   grep -rn "import\|from " --include=*.py scripts/ | grep -vi "^.*#"
+   grep -rn "import\|from " --include=*.py src/ | grep -vi "^.*#"
    # hard-coded paths to weights / datasets / checkpoint dirs
-   grep -rn "/data/dan\|ckpts\|CKPT_DIR\|gate_7b\|gate_32b\|router_margin" --include=*.py scripts/
+   grep -rn "/data/dan\|ckpts\|CKPT_DIR\|gate_7b\|gate_32b\|router_margin" --include=*.py src/
    ```
    Anything that shows up here must be updated in the same change as the move/rename.
 

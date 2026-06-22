@@ -37,7 +37,7 @@ ap.add_argument("--gate", default="ckpts/router_margin.pkl", help="gate+tau arti
 ap.add_argument("--gpu7", type=int, default=0); ap.add_argument("--gpu32", type=int, default=1)
 ap.add_argument("--warmup", type=int, default=3)
 ap.add_argument("--repo", default=os.path.expanduser("~/medvlthinker-imgdiff-compute"))
-ap.add_argument("--out", default="rt_cascade_cap320.jsonl")
+ap.add_argument("--out", default="ckpts/rt_cascade_cap320.jsonl")
 A = ap.parse_args()
 DEV7, DEV32 = f"cuda:{A.gpu7}", f"cuda:{A.gpu32}"
 PX7 = HIGH_PX // DIVS[A.cap]                      # cheap-leg pixel budget; 32B always uses HIGH_PX

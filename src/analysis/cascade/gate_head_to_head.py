@@ -103,7 +103,7 @@ def conf_escalate(pds, thr):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cascade", default="rt_cascade_cap320.jsonl")
+    ap.add_argument("--cascade", default="ckpts/rt_cascade_cap320.jsonl")
     ap.add_argument("--repo", default=os.path.expanduser("~/medvlthinker-imgdiff-compute"))
     ap.add_argument("--d32", default=None); ap.add_argument("--d7", default=None); ap.add_argument("--d7think", default=None)
     ap.add_argument("--all", action="store_true", help="include all benchmarks (default: competent four)")

@@ -19,7 +19,7 @@ import numpy as np
 CAL_PATH    = "ckpts/gate_7b_pmctrain/ckpt_nothink.jsonl"                    # 7B no-think, PMC-VQA TRAIN (calibration)
 CHEAP_GLOB  = "ckpts/gate_7b_prune/cap320/ckpt_*_nothink_norag.jsonl"  # deployed cheap leg (cap320)
 STRONG_GLOB = "ckpts/gate_32b/ckpt_*_think_norag.jsonl"                # 32B, full coverage
-LIVE_OUT    = "rt_cascade_cap320.jsonl"                                      # rt_cascade.py output (escalate/ok/final)
+LIVE_OUT    = "ckpts/rt_cascade_cap320.jsonl"                                      # rt_cascade.py output (escalate/ok/final)
 GATE_PKL    = "ckpts/router_margin.pkl"
 BUDGET   = 0.631        # deployed escalation rate
 TAU_SET  = 1            # CP-Router: route cheap iff |prediction set| <= TAU_SET

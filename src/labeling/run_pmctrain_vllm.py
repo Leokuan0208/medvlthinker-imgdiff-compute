@@ -19,12 +19,14 @@ SYS_THINK   = ("You will solve a problem/request. You should provide your though
                "within <think> </think> tags before providing the answer.")
 SYS_NOTHINK = "Answer with only the correct option letter (e.g. 'A'). Do not explain."
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28
+CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 CHUNK = 128
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--sample", default="/data/dan/dataset/pmc_vqa_train/train_sample_3000.jsonl")
 ap.add_argument("--model_path", required=True)
 ap.add_argument("--arm", choices=["think","nothink"], required=True)
+ap.add_argument("--cap", choices=list(CAP_DIV), default="fullres")
 ap.add_argument("--ckpt_dir", default="ckpts/pmctrain")
 ap.add_argument("--tp", type=int, default=2)
 ap.add_argument("--gpu_mem", type=float, default=0.88)
@@ -34,6 +36,7 @@ ap.add_argument("--max_images", type=int, default=8)
 A = ap.parse_args()
 os.makedirs(A.ckpt_dir, exist_ok=True)
 SYS = SYS_THINK if A.arm=="think" else SYS_NOTHINK
+MAXPX = HIGH_PX // CAP_DIV[A.cap]
 
 rows = [json.loads(l) for l in open(A.sample) if l.strip()]
 print(f"loaded {len(rows)} train-sample rows | arm={A.arm} max_tokens={A.max_tokens}", flush=True)
@@ -69,7 +72,7 @@ def opt_lp(tok,lps):
     return {}
 def build(r):
     q=r["question"]+"\n"+"\n".join(f"{k}) {v}" for k,v in r["options"].items())
-    img=[{"type":"image","image":r["image_path"],"max_pixels":HIGH_PX,"min_pixels":MIN_PX}]
+    img=[{"type":"image","image":r["image_path"],"max_pixels":MAXPX,"min_pixels":MIN_PX}]
     msgs=[{"role":"system","content":SYS},{"role":"user","content":img+[{"type":"text","text":q}]}]
     text=proc.apply_chat_template(msgs,tokenize=False,add_generation_prompt=True)
     imgs,_=process_vision_info(msgs)

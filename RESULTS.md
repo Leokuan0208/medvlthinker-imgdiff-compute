@@ -12,12 +12,22 @@
 
 ## Result folders (current layout)
 - ckpts/gate_7b_vllm/            7B no_think, full-res, EVAL    (all 6)
-- ckpts/gate_7b_prune/cap{640,320,160,80}/  7B no_think, capped, EVAL  (4 competent; MISSING MedXpert+MMMU)
+- ckpts/gate_7b_prune/cap{640,320,160,80}/  7B no_think, capped, EVAL  (all 6; MedXpert+MMMU now present)
 - ckpts/gate_32b/               32B think, full-res, EVAL       (all 6)
 - archive/single-model-routing/gate_7b_rag_axes/  (was ckpts/gate_7b_v2) 7B n~500 grid over think/nothink/RAG axes — KILLED RAG experiment, archived
 - ckpts/gate_7b_pmctrain/       7B no_think, full-res, CALIB (PMC-train, 3000)
 - ckpts/gate_7b_pmctrain_prune/cap{...}/  7B no_think, capped, CALIB (3000 each)
 - ckpts/router_margin.pkl       frozen margin gate, tau=0.426
+
+## NEW (2026-06-17/18) — cascade-methods research-loop artifacts
+- ckpts/gate_32b_modes/{nothink_fullres,nothink_cap320,think_cap320}/  32B strong-leg ablation, EVAL (all 6).
+    KEY FINDING: on the 4 competent perception sets, 32B NO-THINK >= 32B-think (SLAKE 0.841 vs 0.764,
+    VQA-RAD 0.893 vs 0.776) at ~2 decode tok vs ~477 — thinking overthinks perception VQA.
+- ckpts/gate_32b_pmctrain/                       32B think, full-res, CALIB (PMC-train, 3000) — strong-model labels.
+- ckpts/gate_32b_pmctrain_nothink_{cap320,fullres}/  32B no_think CALIB (for the ACC tier-1 gate).
+- ckpts/gate_7b_verify/, gate_7b_verify_cap80/, gate_7b_pmctrain_verify*/  P(True) self-verification passes.
+- results/cascade_methods/latency_{7b,32b}.jsonl  REAL batch-1 per-config latencies
+    (7B-nothink 0.18s | 32B-nothink@cap320 0.34s | 32B-think@fullres ~28s).
 
 ## File naming
 - EVAL  files: ckpt_<benchmark>_<mode>_norag_s<k>of<N>.jsonl   (mode = nothink | think)
@@ -35,7 +45,20 @@ runs/artifacts/router_margin.pkl
 - Subsets = paper's CLOSED subsets (vqa_rad 272, slake 416, pathvqa 3362).
 - no_think = a faster mode, ~+2-3pt on perception sets, ~flat on MedXpert.
 
-## Known gaps (Task 3)
-- MMMU: data present (MMMU-medical, 170) but no DATASET_IDX entry; never run on either model.
-- MedXpert: missing at all caps (only full-res exists).
-- 7B think: only PMC + MedXpert at n~500; missing SLAKE/VQA-RAD/PathVQA entirely.
+## Known gaps (Task 3) — mostly RESOLVED as of 2026-06-18
+- MMMU: now run on both models at all caps (170). [resolved]
+- MedXpert: now present at all caps. [resolved]
+- 7B think: still only PMC + MedXpert at n~500 (not needed for the cascade — the cheap leg is no-think).
+
+## Cascade-methods research loop (2026-06-18) — see results/cascade_methods/README.md
+Goal: beat the deployed margin gate on compute/latency at iso-accuracy. Outcome:
+- The GATE is signal-limited & saturated: no training-free gate (confidence/conformal/learned/
+  recoverability/self-verification) beats the margin gate in a way that is novel + real-efficiency-
+  positive + guardrail-safe (recoverability AUROC ceiling ~0.6 from any cheap signal).
+- WINNER = **Adaptive-Compute Cascade (ACC)**: confidence-gated 3-tier 7B-nothink@cap320 →
+  32B-NOTHINK@cap320 → 32B-think@fullres. The fast no-think 32B tier resolves most escalations; slow
+  think fires only on the reasoning residual. Honest held-out, real measured latency, at parity acc:
+  **ALL-6 latency 20.0s→5.7s (−72%), FLOPs 81→55%; ALL-5 9.1s→0.28s (−97%), FLOPs 51→27%;
+  guardrail-cleaner than the SOTA cascade.** Scope: 4 competent benchmarks (MMMU/MedXpert excluded,
+  both near chance). Novelty: incremental-but-defensible systems contribution (closest prior art:
+  CAR 2505.15154; see results/cascade_methods/METHOD_ACC.md). Reproduce: `python3 src/cascade_methods/acc.py`.

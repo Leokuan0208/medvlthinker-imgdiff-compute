@@ -43,7 +43,7 @@ def macro(acc):
     return float(np.mean(vals)) if len(vals) == len(FOUR) else float("nan")
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cascade", default="rt_cascade_cap320.jsonl")
+    ap.add_argument("--cascade", default="ckpts/rt_cascade_cap320.jsonl")
     ap.add_argument("--repo", default=os.path.expanduser("~/medvlthinker-imgdiff-compute"))
     A = ap.parse_args(); R = lambda s: os.path.join(A.repo, s)
     casc = load_jsonl(A.cascade)

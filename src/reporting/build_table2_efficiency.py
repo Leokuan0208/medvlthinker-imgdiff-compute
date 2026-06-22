@@ -31,7 +31,7 @@ def report(rows, title):
     print(f"  Rel. compute  always-32B : 1.000 x")
     print(f"  NOTE: phi is an upper-bound estimate; VRAM not in this file (read startup log).")
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument("--cascade", default="rt_cascade_cap320.jsonl")
+    ap=argparse.ArgumentParser(); ap.add_argument("--cascade", default="ckpts/rt_cascade_cap320.jsonl")
     ap.add_argument("--all", action="store_true"); A=ap.parse_args()
     rows=[json.loads(l) for l in open(A.cascade) if l.strip()]
     report([r for r in rows if norm(r["dataset"]) in FOUR], "FOUR competent benchmarks")

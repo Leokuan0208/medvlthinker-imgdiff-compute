@@ -29,8 +29,11 @@ src/
 ├── gate/          train + freeze the deployed margin gate (-> ckpts/router_margin.pkl)
 │                  train_margin_gate.py, refit_gate_tau_per_cap.py
 ├── cascade/       the LIVE co-resident cascade + real-time measurement
-│                  live_cascade.py, measure_single_leg.py,
+│                  live_cascade.py, measure_single_leg.py, measure_config.py,
 │                  report_cascade_from_legs.py, analyze_live_cascade.py
+├── cascade_methods/  RESEARCH LOOP (2026-06): offline harness + every cascade method tried,
+│                  incl. the winner ACC. harness.py, acc.py, frontier_compare.py,
+│                  metarouter_honest.py, sota_comparison.py, latency_estimate.py, diagnostics.py
 ├── analysis/
 │   ├── cascade/   analyses of the live cascade (cost, complementarity, mechanism, energy)
 │   └── ablations/ gate alternatives that LOST to the margin gate (conformal, learned, FBE)
@@ -55,3 +58,25 @@ ckpts/ logs/ data/ results/ feats/ feats_full/   gitignored data/checkpoints
 4. **Run the live cascade** co-resident (7B on GPU0, 32B on GPU1) with real escalation and
    NVML power logging — `src/cascade/live_cascade.py` → `rt_cascade_cap320.jsonl`.
 5. **Analyze / report** — `src/analysis/` and `src/reporting/`.
+
+## Cascade-method research (2026-06) — current frontier
+
+After the deployed margin gate (above), an autonomous research loop searched for a better cascade
+**method**. Two outcomes (full account in `results/cascade_methods/README.md`):
+
+- **The gate is signal-limited.** No training-free decision rule (confidence / conformal / learned /
+  recoverability / self-verification) beats the margin gate in a way that is simultaneously novel,
+  real-efficiency-positive, and per-benchmark guardrail-safe. ("Will the 32B fix it?" is ~0.6 AUROC
+  from any cheap signal.) The deployed margin gate is essentially optimal among gates.
+
+- **The win is structural — the Adaptive-Compute Cascade (ACC).** A confidence-gated 3-tier cascade
+  over *compute configurations*: **7B-nothink@cap320 → 32B-NOTHINK@cap320 → 32B-think@fullres**. The
+  big model's *fast* no-think mode (≈0.34s, vs ≈28s for think) is inserted as an intermediate tier,
+  gated by its own logprob margin, so the slow reasoning pass fires only on the ~18% reasoning
+  residual. Honest held-out eval with **real measured batch-1 latencies**, at accuracy parity with
+  always-32B-think: **latency 20.0s→5.7s (−72%) on ALL-6, 9.1s→0.28s (−97%) on ALL-5; FLOPs 81→55% /
+  51→27%; and *cleaner* on the never-worse-than-7B guardrail.** Mechanism: thinking *overthinks*
+  perception VQA (32B-no-think ≥ 32B-think on the competent benchmarks). Scope: the 4 competent
+  benchmarks (MMMU/MedXpert excluded — both near chance). Reproduce: `python3 src/cascade_methods/acc.py`.
+  Method spec + adversarial novelty check (incremental-but-defensible systems contribution; closest
+  prior art CAR, arXiv 2505.15154): `results/cascade_methods/METHOD_ACC.md`.

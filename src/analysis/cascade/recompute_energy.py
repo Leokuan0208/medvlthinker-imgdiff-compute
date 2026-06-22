@@ -36,7 +36,7 @@ FOUR={norm(x) for x in ["PMC-VQA","SLAKE","VQA-RAD","PathVQA"]}
 
 def main():
     ap=argparse.ArgumentParser()
-    ap.add_argument("--jsonl",default=os.path.expanduser("~/medvlthinker-imgdiff-compute/rt_cascade_cap320.jsonl"))
+    ap.add_argument("--jsonl",default=os.path.expanduser("~/medvlthinker-imgdiff-compute/ckpts/rt_cascade_cap320.jsonl"))
     a=ap.parse_args()
     if not os.path.exists(a.jsonl): sys.exit(f"!! not found: {a.jsonl}")
     rows=load(a.jsonl)

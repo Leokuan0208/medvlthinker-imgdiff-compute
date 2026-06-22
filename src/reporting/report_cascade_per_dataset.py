@@ -6,7 +6,7 @@ from collections import defaultdict
 import numpy as np
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--jsonl", default="rt_cascade_cap320.jsonl")
+ap.add_argument("--jsonl", default="ckpts/rt_cascade_cap320.jsonl")
 args = ap.parse_args()
 rows = [json.loads(l) for l in open(args.jsonl) if l.strip()]
 if not rows: sys.exit("no rows in " + args.jsonl)

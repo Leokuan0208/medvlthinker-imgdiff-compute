@@ -98,7 +98,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--jsonl",
                     default=os.path.expanduser(
-                        "~/medvlthinker-imgdiff-compute/rt_cascade_cap320.jsonl"),
+                        "~/medvlthinker-imgdiff-compute/ckpts/rt_cascade_cap320.jsonl"),
                     help="finished live-cascade JSONL (in the PROJECT folder)")
     args = ap.parse_args()
 

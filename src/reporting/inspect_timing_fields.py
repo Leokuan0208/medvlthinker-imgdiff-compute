@@ -30,6 +30,6 @@ def show(label, path, jsonl):
             print("  item type:", type(val).__name__)
 
 # EDIT paths to match your repo (jsonl is in the project root, per your note):
-show("rt_cascade live run (HF)",      os.path.expanduser("~/medvlthinker-imgdiff-compute/rt_cascade_cap320.jsonl"), True)
+show("rt_cascade live run (HF)",      os.path.expanduser("~/medvlthinker-imgdiff-compute/ckpts/rt_cascade_cap320.jsonl"), True)
 show("always-32B vLLM eval (gate_32b)", os.path.expanduser("~/medvlthinker-imgdiff-compute/ckpts/gate_32b"), False)
 show("always-7B vLLM eval (gate_7b)",   os.path.expanduser("~/medvlthinker-imgdiff-compute/ckpts/gate_7b_vllm"), False)
