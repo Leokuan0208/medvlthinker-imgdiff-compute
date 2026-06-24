@@ -107,17 +107,53 @@ routing signal degenerate (~0.6 ceiling); open-ended free-text revives them.
   ceiling; right: the gate hunt (confidence ties fusion, beats all other signals). New JSONs
   `open_cascade_calib_judge.json` + `open_gate_search.json`; `MASTER_TABLES.md` got an open-ended section.
 
+## 2026-06-24 (phase 6) — completeness pass + a new-method loop (user: "make the research as complete as
+possible … then start another research loop to create another novel method that beats SOTA; GPU/network
+free; non-core findings in a separate doc")
+
+- **Four background literature/scouting agents** (cascade-domain gaps, learned baselines, datasets+models,
+  new-method scouting). All non-core survey material is logged **separately** in
+  `results/cascade_methods/AUXILIARY_RESEARCH.md` (gitignored), per the directive.
+- **Master tables — LLM-judge column** (`make_master_charts.py`): open-ended model accuracy with exact-match
+  vs LLM-judge columns (incl. Kvasir).
+- **Ablations.** `open_ablations.py` (K-ablation: self-consistency 0.73→0.83 over K, never beats confidence
+  0.846; routing efficiency 70/59/30% SLAKE/VQA-RAD/PathVQA). `deferral_curve.py` (random↔confidence↔oracle
+  for MCQ+open) → **the key honest split: DETECTION** (cheap-wrong AUROC 0.66→0.85, the ceiling-break) is
+  distinct from **cascade gain** (oracle−cheap headroom only +0.02 MCQ / +0.06 open) — the open-ended win is
+  in error *detection*, not compute-saving. Bootstrap CI on the ceiling-break: 0.846, 95% CI [0.830, 0.862].
+- **Theory backing** (`uniform_improver_diag.py`): the strong model breaks cheap-correct answers only 22%
+  (MCQ) / 14% (open) → it is a near-**uniform improver** → per **Jitkrittum (2307.02764)** confidence is
+  near-Bayes-optimal. Turns "the gate is saturated" into a *theory-predicted* result (§5.2).
+- **4th modality — Kvasir-VQA-x1** (GI endoscopy, `prep_kvasir.py`, n=1200, LLM-judged): Lingshu-7B 0.302 ≈
+  Lingshu-32B 0.301 (equal, zero cascade headroom) yet confidence cheap-wrong AUROC **0.749** (CI [0.72,0.78])
+  — the ceiling-break holds on a fresh modality and cleanly shows detection ≠ cascade-gain. *(Caught/fixed a
+  racy partial-judge-file read that had shown 0.84 / "32B worse" — always judge both legs fully first.)*
+- **Reviewer-threat fixes (paper):** discrimination-vs-calibration + cite/distinguish CritiCal [2510.24505];
+  over-thinking demoted to a *cited* mechanism (MME-CoT etc.); batch-1 single-stream scope + batched-serving
+  caveat; related-work adds learned pre-generation routers (Hybrid-LLM, RouteLLM, Co-LLM, Cascade-Routing).
+  Learned baseline *ran*: Jitkrittum Diff-01 (ties/marginal); cross-model agreement weak (0.586).
+- **NEW METHOD — §5.8 "Knowing when to abstain"** (`selective_abstain.py`, `triage_3way.py`,
+  `SELECTIVE_ABSTENTION.md`). Training-free **safe abstention / clinician-referral** for open-ended medical
+  VLMs, engaging the verified 2026 SOTA **"Uncertainty Is Not a Safety Net for Clinical VQA"** [2606.16583]
+  (MCQ-only, negative, ~0.72 ceiling). *Money plot:* self-error-detection AUROC lifts MCQ→open (MedVLThinker
+  0.66→0.74, Lingshu 0.74→0.82). *Deployable:* SLAKE-open auto-answers **54% at ≤5% error** (det AUROC 0.89).
+  *Honest:* deployability tracks competence (collapses on weak datasets — confirms the SOTA's nuance); the
+  3-way answer/escalate/abstain triage is only marginally better (recoverability-bounded).
+
 ---
 
 ## Bottom line (2026-06-24)
 
 1. **ACC-v3** — a real, validated, *incremental* improvement to the cascade method (in the paper).
-2. **Open-ended breaks the MCQ routing ceiling** (AUROC ~0.6 → ~0.87, robust across 3 datasets + 3 scorers) —
-   the headline, novel-in-cell contribution that **reframes the project's central "gate is saturated" negative
-   as a benchmark artifact**.
-3. **No novel *gate* beats confidence** — established exhaustively across MCQ and open-ended (consistency,
-   semantic-entropy, self-verification, and their fusion all tie or lose). The efficiency lever is the
-   evaluation **setting**, not a new gate. Self-consistency is only a conditional calibration rescue.
+2. **Open-ended breaks the MCQ routing ceiling** (DETECTION AUROC ~0.6 → ~0.87, robust across 4 datasets +
+   3 scorers, theory-backed via Jitkrittum) — the headline, reframing the "gate is saturated" negative as a
+   benchmark artifact. The win is in error *detection*, not cascade compute-saving (recoverability-bounded).
+3. **No novel *gate*/signal beats confidence** — exhaustive across MCQ and open-ended (consistency, semantic
+   entropy, self-verification, cross-model agreement, learned deferral, fusion all tie/lose). Every genuine
+   contribution is in the **setting/application**, never a new signal.
+4. **NEW (§5.8): safe abstention for open-ended medical VLMs** — a deployable selective-prediction system
+   that engages and partially refutes a 2026 SOTA; honest about competence-dependence.
 
 Docs: `results/cascade_methods/{NOVEL_METHOD_VISUAL_STABILITY, RESCUE_INTO_ACCV2, ACCV3_V4_AND_NOVELTY,
-OPENENDED_CASCADE, DETAILED_TABLES}.md`. Figures: `paper/figs/{rescue,open,master}/`. All pushed to `main`.
+OPENENDED_CASCADE, DETAILED_TABLES, SELECTIVE_ABSTENTION, AUXILIARY_RESEARCH}.md`. Figures:
+`paper/figs/{rescue,open,master}/`. All pushed to `main`.
