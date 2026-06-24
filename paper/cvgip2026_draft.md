@@ -11,7 +11,7 @@ produces each result. Replace bracketed `[TODO]` with final polish/figures befor
 Two-model cascades (cheap model first, escalate hard cases to a large model) are the standard recipe
 for efficient inference, and a frozen confidence gate is the standard escalation rule. We study this
 recipe for **medical visual question answering (VQA)** with a 7B→32B MedVLThinker pair on six
-benchmarks, and report two findings. **(1) The gate is saturated.** Across a dozen training-free
+benchmarks, and report three findings. **(1) The gate is saturated.** Across a dozen training-free
 escalation signals — confidence (margin/MSP/entropy/Gini), conformal set-size, learned correctness,
 learned deferral, self-verification, cross-model agreement, multi-resolution ensembling, compute-
 elasticity, hidden-state probes, and cross-*family* routing on image content — *recoverability* ("will
@@ -27,9 +27,15 @@ a confidence-gated three-tier cascade over compute *configurations* of the same 
 no-think mode as the intermediate workhorse so the slow ~28 s think pass fires on only ~14% of queries.
 At matched accuracy with always-32B-think, ACC cuts batch-1 latency by **72%** on all six benchmarks
 (20.0 s→5.7 s; **97%** on the five non-MedXpert benchmarks), FLOPs to **~½**, and energy by **~4×**, while
-being *strictly never worse than always-7B* per benchmark. We position ACC as an efficiency-systems
-contribution and the gate-saturation/complementarity analysis as the first cross-family medical-VLM
-recoverability characterization explaining *why* routing is hard here.
+being *strictly never worse than always-7B* per benchmark. **(3) The gate ceiling is an MCQ artifact.**
+Re-evaluating routing in the **open-ended** (free-text generative) regime, the same confidence signal
+jumps from ~0.6 to **~0.87 AUROC** — a *discreteness*, not answer-length, effect (open answers are a
+median 1–2 tokens, yet routing is strong) — so confidence-gated open-ended medical-VLM cascades genuinely
+work; the gate nonetheless stays near-optimal at plain confidence in *both* regimes (an exhaustive hunt
+over consistency, semantic-entropy, and self-verification signals, and their fusion, fails to beat it), so
+the efficiency lever is the evaluation *setting*, not a new gate. We position ACC as an efficiency-systems
+contribution and the gate-saturation/complementarity/open-ended analysis as the first cross-family
+medical-VLM recoverability characterization explaining *why* routing is hard here — and *where* it is not.
 
 ---
 
@@ -255,7 +261,9 @@ activations predict correctness 0.60 vs confidence's 0.68 — *worse* than the l
 
 **Mechanism.** The 7B and 32B are the same family, so their errors are *nested*: P(32B wrong | 7B wrong)
 = 0.584, error-correlation φ = 0.372; the 32B fixes the 7B only where neither has signal (the irreducible
-regime), so futility is unpredictable. `[REPRO: harness pool over competent-4]`
+regime), so futility is unpredictable. `[REPRO: harness pool over competent-4]` **(But this ~0.6 ceiling
+is specific to MCQ evaluation — §5.7 shows the same confidence signal reaches AUROC ~0.87 in the
+open-ended regime.)**
 
 **Post-audit correction (faithful baselines).** We audited each baseline against its canonical paper and
 re-ran a faithful 2-tier (7B-nt→32B-think) bake-off at iso-accuracy (`baseline_compare.py`; honest 50/50
@@ -407,6 +415,74 @@ src/training_methods/{lora_stability_router.py, fld_distill.py, calm_fuse.py}; N
 
 ---
 
+### 5.7 From MCQ to open-ended: the routing ceiling is a benchmark artifact (NEW)
+`[REPRO: src/labeling/run_openvqa*.py, src/cascade_methods/{open_cascade_analyze,gate_search_open}.py;
+SLAKE-open (645 English OPEN) + VQA-RAD-open (200 non-yes/no), n=845; normalized exact-match + token-F1]`
+
+§5.2 found every routing signal saturates at **~0.6 AUROC** for recoverability. Is that a property of
+medical VLMs, or of the **multiple-choice** benchmarks all prior medical-VLM routing is evaluated on? A
+single letter (A/B/C/D) is a maximally discrete target — confidence, agreement, and self-consistency all
+collapse toward a 4-way chance baseline. We re-ask the routing question in the **open-ended (free-text
+generative)** regime: the cheap model emits a free-text answer (no options), a strong model is the
+escalation target, and we measure routing AUROC for *cheap-wrong* and *recoverable* (cheap wrong ∧ strong
+right), scored by normalized exact-match with token-F1 as a partial-credit rigor check. (PathVQA-open is
+excluded — its long descriptive answers are unscoreable by exact-match, 7B acc 0.058.)
+
+**(a) The MedVLThinker family is near-equivalent on open-ended → no routable gap.** Unlike on MCQ, model
+size barely moves open-ended accuracy: SLAKE-open **3B 0.457 ≈ 7B 0.419 ≈ 32B-no-think 0.498 ≈ 32B-think
+0.453** (token-F1 confirms; think *hurts* perception here too). These RL-on-MCQ models generalize poorly
+to free-text, similarly at every size, so within the family there is nothing to cascade *to*
+`[REPRO: run_openvqa_3b.sh]`.
+
+**(b) A real gap exists across families, and the routing ceiling BREAKS.** Pairing a cheap model with a
+genuinely stronger open-ended medical model (**Lingshu-32B**, 0.775 pooled; token-F1 0.789) restores a
+routable gap, and routing signals become **strong — far above the MCQ ceiling**:
+
+| cheap → strong | cheap acc | strong acc | confidence AUROC (cheap-wrong / recover) |
+|---|---:|---:|---:|
+| MCQ — any of 12 signal families (§5.2) | — | — | ~0.6 / ~0.6 (ceiling) |
+| **Lingshu-7B → Lingshu-32B** (calibrated cheap) | 0.683 | 0.775 | **0.866 / 0.804** |
+| MedVLThinker-7B → Lingshu-32B (miscalibrated cheap) | 0.407 | 0.775 | 0.735 / 0.575 |
+
+The ceiling is a **discreteness** artifact, not an answer-length one: the open answers are **median 1–2
+tokens** (as short as a letter), yet routing AUROC is **~0.87** — because the answer *space* is open, not
+4 fixed options. So §5.2's "the gate is saturated" does **not transfer**: confidence-gated *open-ended*
+medical-VLM cascades genuinely work.
+
+**(c) The gate itself still cannot be beaten — confidence is near-optimal.** We ran an exhaustive
+open-ended gate hunt on the calibrated cascade (Lingshu-7B → Lingshu-32B; bar = confidence 0.866 / 0.804),
+honest 20-seed calib/test for the learned fusion:
+
+| signal | cheap-wrong | recover |
+|---|---:|---:|
+| **confidence (seq-logprob)** | **0.866** | **0.804** |
+| exact self-consistency (K=8) | 0.845 | 0.764 |
+| semantic self-consistency | 0.806 | 0.766 |
+| semantic entropy | 0.807 | 0.766 |
+| mean pairwise token-F1 | 0.844 | 0.788 |
+| self-verify P(True) | 0.755 | 0.726 |
+| **fusion of all six (honest CV)** | **0.866** | 0.798 |
+
+No signal beats confidence, and the honest fusion **ties** it (+0.000 / −0.007). Confidence is the
+near-optimal open-ended gate — the gate is saturated *here too*, just at a far higher level (~0.87 vs
+~0.6). **Self-consistency helps only a *miscalibrated* cheap model:** for MedVLThinker-7B (RL-on-MCQ,
+poorly calibrated on free-text) it beats confidence (recoverability +0.043, bootstrap 95% CI
+[0.016, 0.069]) and its accuracy-vs-escalation frontier Pareto-dominates confidence's; for the
+natively-calibrated Lingshu-7B, confidence wins. Self-consistency is thus a **calibration rescue**, not a
+better gate. (Figs: `paper/figs/open/{frontier_selfconsistency,auroc_signals,ceiling_break}.png`.)
+
+**Takeaway — a correction to §5.2.** The medical-VLM routing ceiling is a property of **MCQ evaluation**,
+not of the task: in open-ended VQA, routing signals carry AUROC ~0.87 and confidence-gated cascades work.
+The *gate* remains unbeatable (confidence is near-optimal across MCQ and open-ended), so the efficiency
+lever is the **evaluation/deployment setting**, not a new gate. **Positioning vs prior art:**
+agreement-gated open-ended cascades exist for *text LLMs* (semantic-agreement cascade, arXiv 2509.21837,
+EMNLP'25, using cross-model-ensemble greedy agreement — not single-model self-consistency; ABC, arXiv
+2407.02348); confidence-deferral theory is Jitkrittum et al. (NeurIPS 2023). The genuinely unoccupied cell
+is the **medical vision-language, open-ended** instantiation plus the *ceiling-is-discreteness* diagnostic;
+we claim this applied/empirical contribution, not a new gate primitive.
+
+---
+
 ## 6. Discussion & Limitations
 
 - **Scope & pools.** We report **ALL-6** (all 7 benchmark splits) and **ALL-5** (ALL-6 minus the two
@@ -430,12 +506,17 @@ src/training_methods/{lora_stability_router.py, fld_distill.py, calm_fuse.py}; N
 
 ## 7. Conclusion
 
-For medical-VLM cascades the predictive signal needed to route well (recoverability) is largely absent
-from cheap features, and even large cross-family complementarity is unexploitable with available peers.
-The leverage is structural: routing among **compute configurations** of the same models — with the large
-model's fast no-think mode as the workhorse — yields large, guardrail-safe efficiency gains (−72%
-latency, ~½ FLOPs, ~4× energy at parity) without a better gate. We release ACC and the full negative-
-result characterization.
+For medical-VLM cascades *on multiple-choice benchmarks*, the predictive signal needed to route well
+(recoverability) is largely absent from cheap features, and even large cross-family complementarity is
+unexploitable with available peers. The leverage is structural: routing among **compute configurations**
+of the same models — with the large model's fast no-think mode as the workhorse — yields large,
+guardrail-safe efficiency gains (−72% latency, ~½ FLOPs, ~4× energy at parity) without a better gate.
+We further show this routing ceiling is a **benchmark artifact**: in **open-ended generative** medical VQA
+the same confidence signal reaches AUROC ~0.87 (vs ~0.6 on MCQ — a *discreteness*, not answer-length,
+effect) and confidence-gated cascades work, so medical-VLM cascades should be evaluated open-ended (§5.7).
+The gate itself, however, remains near-optimal at plain confidence in *both* regimes — no consistency,
+semantic-entropy, or self-verification signal beats it. We release ACC and the full negative-result
+characterization.
 
 ---
 
@@ -444,8 +525,13 @@ ACC: `src/cascade_methods/acc_v2.py` (+ `acc.py`, `acc_compare.py`, `gate_compar
 `results/cascade_methods/METHOD_MATH.md`, `METHOD_ACC.md`. Gate-saturation: `ceiling.py`,
 `metarouter_honest.py`. Cross-family: `run_peer_eval.py`, `embed_siglip.py`, `peer_premise.py`,
 `peer_router.py`, `peer_router_img.py`. Language-prior: `run_vlm_eval.py --blank`, `vision_sensitivity.py`.
-Cost measurement: `src/cascade/measure_config.py`. Full session narrative: `progress_June_17.md`.
-All checkpoints under `ckpts/` (gitignored). **No number in this paper is fabricated.**
+Cost measurement: `src/cascade/measure_config.py`. ACC-v3/v4 (§5.1.2): `acc_v3_confgate.py`,
+`acc_v4_lowres_think.py`, `gate_data_size.py`, `make_detailed_table.py`. Open-ended / ceiling-break
+(§5.7): `src/labeling/{run_openvqa.py, run_openvqa_verify.py}`, `run_openvqa_{all,think,3b,lingshu,
+lingshu7b}.sh`, `src/cascade_methods/{open_cascade_analyze.py, gate_search_open.py, make_open_chart.py}`;
+writeup `results/cascade_methods/OPENENDED_CASCADE.md`; figs `paper/figs/open/`. Full session narratives:
+`progress_June_17.md`, `progress_June_20-22.md`. All checkpoints under `ckpts/` (gitignored). **No number
+in this paper is fabricated.**
 
 ## [TODO before submission]
 - **Figures: DONE** — Fig 1 latency-accuracy frontier + Fig 2 per-benchmark over-thinking (`paper/figs/`,
