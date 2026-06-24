@@ -132,6 +132,17 @@ def main():
         lh="lat(s)" if HAVE else "lat"; eh="energy(J)" if HAVE else "en"
         print(f"  {'method':<28}{'acc':>7}{'esc0':>7}{'think':>7}{'FLOPs%':>8}{lh:>9}{eh:>11}{'guard':>7}")
         DUMP["pools"][label]={"parity":float(parity),"rows":[]}
+        # static anchors (always-small / always-big-nt / always-big-think) with full cost
+        F2tot=F2all.sum(); pb=lambda okf,d: float(okf[P["ds_of"]==d].mean())
+        def anchor(E0v,E1v):
+            E0=np.full(n,E0v,bool); E1=np.full(n,E1v,bool); ok=accof(P,E0,E1); fl,_,lt,en=cost(P,E0,E1)
+            return ok.mean(),E0.mean(),E1.mean(),fl.sum()/F2tot,(lt.mean() if HAVE else None),(en.mean() if HAVE else None),ok
+        for an,(e0v,e1v) in [("always-small-nt",(0,0)),("always-big-nt",(1,0)),("always-big-think",(1,1))]:
+            a,ae0,ae1,afl,alt,aen,aok=anchor(e0v,e1v)
+            gbad=sum(1 for d in names if pb(aok,d)<pb(P["ok0"],d)-1e-9) if an!="always-small-nt" else 0
+            DUMP["pools"][label]["rows"].append(dict(method=an,acc=float(a),esc0=float(ae0),think=float(ae1),flops=float(afl),
+                lat=(float(alt) if HAVE else None),energy=(float(aen) if HAVE else None),guard=float(gbad),
+                bench={d:pb(aok,d) for d in names},anchor=True))
         for nm,_ in MODES:
             if reach[nm]<20:
                 print(f"  {nm:<28}  — reaches parity {reach[nm]}/20 seeds"); continue
