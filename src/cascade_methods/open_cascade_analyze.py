@@ -35,8 +35,12 @@ if "--lingshu" in _s.argv:                          # cross-family strong leg = 
     STRONG = "ckpts/openvqa/strong_lingshu"; STRONG_TAG = "lingshu32b"
 else:
     STRONG = "ckpts/openvqa/strong"; STRONG_TAG = "32b_think" if ("--think" in _s.argv) else "32b_t0"
-CHEAP = "ckpts/openvqa/cheap3b" if ("--cheap3b" in _s.argv) else "ckpts/openvqa/cheap"
-CTAG = "3b" if ("--cheap3b" in _s.argv) else "7b"   # cheap-model tag in filenames
+if "--cheap_l7" in _s.argv:                          # same-family: Lingshu-7B cheap leg
+    CHEAP = "ckpts/openvqa/cheap_lingshu7b"; CTAG = "lingshu7b"; T0TAG = "lingshu7b"; SC8TAG = "lingshu7b_sc8"
+elif "--cheap3b" in _s.argv:
+    CHEAP = "ckpts/openvqa/cheap3b"; CTAG = "3b"; T0TAG = "3b_t0"; SC8TAG = "3b_sc8"
+else:
+    CHEAP = "ckpts/openvqa/cheap"; CTAG = "7b"; T0TAG = "7b_t0"; SC8TAG = "7b_sc8"
 def load(p):
     m = {}
     if not os.path.exists(p): return m
@@ -52,7 +56,7 @@ def auroc(score, y):
     return (ranks[:len(pos)].sum() - len(pos)*(len(pos)+1)/2) / (len(pos)*len(neg))
 
 def build(ds):
-    t0 = load(f"{CHEAP}/ckpt_{ds}_{CTAG}_t0.jsonl"); sc = load(f"{CHEAP}/ckpt_{ds}_{CTAG}_sc8.jsonl"); st = load(f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.jsonl")
+    t0 = load(f"{CHEAP}/ckpt_{ds}_{T0TAG}.jsonl"); sc = load(f"{CHEAP}/ckpt_{ds}_{SC8TAG}.jsonl"); st = load(f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.jsonl")
     idx = sorted(set(t0) & set(sc) & set(st))
     rows = []
     for i in idx:
