@@ -22,11 +22,19 @@ def _norm(s):
 def sc_at_K(preds, K):
     from collections import Counter
     c = Counter(_norm(p) for p in preds[:K]); top = c.most_common(1)[0][1]; return top / K, len(c)
-CHEAP = "ckpts/openvqa/cheap"; STRONG = "ckpts/openvqa/strong"
+def token_f1(pred, gold):  # partial-credit scorer (rigor check vs exact-match)
+    p, g = set(_norm(pred).split()), set(_norm(gold).split())
+    if not p or not g: return 0.0
+    ov = len(p & g)
+    if ov == 0: return 0.0
+    prec, rec = ov/len(p), ov/len(g); return 2*prec*rec/(prec+rec)
+import sys as _s
 # pathvqa_open excluded: long descriptive answers unscoreable by exact-match (7B-nt acc 0.058)
 DSETS = ["slake_open", "vqa_rad_open"]
-import sys as _s
+STRONG = "ckpts/openvqa/strong"
 STRONG_TAG = "32b_think" if ("--think" in _s.argv) else "32b_t0"
+CHEAP = "ckpts/openvqa/cheap3b" if ("--cheap3b" in _s.argv) else "ckpts/openvqa/cheap"
+CTAG = "3b" if ("--cheap3b" in _s.argv) else "7b"   # cheap-model tag in filenames
 def load(p):
     m = {}
     if not os.path.exists(p): return m
@@ -42,7 +50,7 @@ def auroc(score, y):
     return (ranks[:len(pos)].sum() - len(pos)*(len(pos)+1)/2) / (len(pos)*len(neg))
 
 def build(ds):
-    t0 = load(f"{CHEAP}/ckpt_{ds}_7b_t0.jsonl"); sc = load(f"{CHEAP}/ckpt_{ds}_7b_sc8.jsonl"); st = load(f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.jsonl")
+    t0 = load(f"{CHEAP}/ckpt_{ds}_{CTAG}_t0.jsonl"); sc = load(f"{CHEAP}/ckpt_{ds}_{CTAG}_sc8.jsonl"); st = load(f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.jsonl")
     idx = sorted(set(t0) & set(sc) & set(st))
     rows = []
     for i in idx:
@@ -52,11 +60,13 @@ def build(ds):
             strong_ok=st[i]["modal_ok"],
             conf=(t0[i].get("seqlogprob") if t0[i].get("seqlogprob") is not None else 0.0),
             selfcons=sc[i]["self_consistency"], ndist=sc[i]["n_distinct"], preds=sc[i].get("preds", []),
-            cheap_gen=(t0[i].get("gen_tokens") or 8), strong_gen=(st[i].get("gen_tokens") or 0)))
+            cheap_gen=(t0[i].get("gen_tokens") or 8), strong_gen=(st[i].get("gen_tokens") or 0),
+            cheap_f1=token_f1(t0[i].get("modal_pred",""), t0[i]["gold"]),
+            strong_f1=token_f1(st[i].get("modal_pred",""), st[i]["gold"])))
     return rows
 
 # --- cost model (FLOPs = 2N(P+G); P fixed ~ cap320 prompt; latency: SC samples decode in PARALLEL ~ 1 pass) ---
-N0, N1, PFIX = 7.6e9, 33e9, 420.0
+N0, N1, PFIX = (3.0e9 if CTAG == "3b" else 7.6e9), 33e9, 420.0
 def cost_frontier(rows, gate_score, cheap_ok_key, K):
     """Return list of (flops, latency, acc) over escalation thresholds. K = #cheap samples for the gate."""
     g = np.asarray(gate_score, float)
@@ -97,6 +107,9 @@ def report(rows, label):
           f"cheap-wrong={np.mean(cw):.3f}  recoverable={np.mean(rec):.3f}")
     print(f"  AUROC predict CHEAP-WRONG :  confidence={auroc(s_conf,cw):.3f}   self-consistency={auroc(s_sc,cw):.3f}   n_distinct={auroc(s_nd,cw):.3f}")
     print(f"  AUROC predict RECOVERABLE :  confidence={auroc(s_conf,rec):.3f}   self-consistency={auroc(s_sc,rec):.3f}   n_distinct={auroc(s_nd,rec):.3f}")
+    cf1 = np.mean([r["cheap_f1"] for r in rows]); sf1 = np.mean([r["strong_f1"] for r in rows])
+    print(f"  TOKEN-F1 (partial credit, rigor check):  cheap={cf1:.3f}  strong={sf1:.3f}  gap={sf1-cf1:+.3f}  "
+          f"(vs exact-match gap {np.mean([r['strong_ok'] for r in rows])-np.mean([r['cheap_ok'] for r in rows]):+.3f})")
     if any(r.get("preds") for r in rows): kcurve(rows)
     return dict(label=label, n=len(rows), cheap_acc=float(np.mean([r['cheap_ok'] for r in rows])),
                 sc_acc=float(np.mean([r['sc_ok'] for r in rows])), strong_acc=float(np.mean([r['strong_ok'] for r in rows])),
