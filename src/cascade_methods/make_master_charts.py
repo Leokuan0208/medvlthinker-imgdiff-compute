@@ -164,3 +164,51 @@ axes[0][0].set_ylabel("accuracy"); axes[0][0].legend(fontsize=7)
 fig.suptitle("ALL-5 vs ALL-6 accuracy (baselines + Ours)", fontsize=11)
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_all5_all6_acc.png"), dpi=150); plt.close(fig)
 print("wrote 5 charts to paper/figs/master/")
+
+# ---------- Chart 6 + table: OPEN-ENDED — routing ceiling is an MCQ artifact (§5.7) ----------
+def _load(n):
+    p = os.path.join(RES, n); return json.load(open(p)) if os.path.exists(p) else None
+oc = _load("open_cascade_calib_judge.json")   # calibrated Lingshu-7B->Lingshu-32B, LLM-judge, 3 datasets
+gs = _load("open_gate_search.json")           # gate hunt on the calibrated cascade
+if oc and gs:
+    DS = [("slake_open", "SLAKE"), ("vqa_rad_open", "VQA-RAD"), ("pathvqa_open", "PathVQA"), ("POOLED", "pooled")]
+    fig, (axA, axB) = plt.subplots(1, 2, figsize=(12.5, 4.6))
+    # Panel A: open-ended routing AUROC (confidence, cheap-wrong) per dataset vs the ~0.6 MCQ ceiling
+    labs = ["MCQ\n(any signal,\n§5.2)"] + [s for _, s in DS]
+    vals = [0.6] + [oc[k]["auroc_cw"]["conf"] for k, _ in DS]
+    cols = ["#7f7f7f"] + ["#2ca02c"] * len(DS)
+    bars = axA.bar(range(len(labs)), vals, color=cols)
+    for i, v in enumerate(vals): axA.text(i, v + 0.008, f"{v:.2f}", ha="center", fontsize=9)
+    axA.axhline(0.6, ls="--", c="k", lw=0.9); axA.axhline(0.5, ls=":", c="gray", lw=0.7)
+    axA.set_xticks(range(len(labs))); axA.set_xticklabels(labs, fontsize=8); axA.set_ylim(0.45, 0.95)
+    axA.set_ylabel("routing AUROC (predict cheap-wrong)")
+    axA.set_title("Open-ended breaks the MCQ routing ceiling\n(Lingshu-7B→Lingshu-32B, LLM-judge)", fontsize=10)
+    # Panel B: the gate hunt — no signal/fusion beats confidence on the calibrated cascade
+    order = ["conf", "exactSC", "semSC", "semH", "mpf", "ptrue", "FUSION"]
+    nice = {"conf": "confidence", "exactSC": "exact-SC", "semSC": "semantic-SC", "semH": "sem-entropy",
+            "mpf": "mean-F1", "ptrue": "P(True)", "FUSION": "fusion(all)"}
+    sig = [s for s in order if s in gs["signals"]]
+    gv = [gs["signals"][s]["cw"] for s in sig]
+    gc = ["#1f77b4" if s in ("conf", "FUSION") else "#ff7f0e" for s in sig]
+    gb = axB.bar(range(len(sig)), gv, color=gc)
+    for i, v in enumerate(gv): axB.text(i, v + 0.004, f"{v:.2f}", ha="center", fontsize=8)
+    axB.axhline(gs["signals"]["conf"]["cw"], ls="--", c="#1f77b4", lw=0.9)
+    axB.set_xticks(range(len(sig))); axB.set_xticklabels([nice[s] for s in sig], fontsize=8, rotation=20)
+    axB.set_ylim(0.70, 0.90); axB.set_ylabel("routing AUROC (cheap-wrong)")
+    axB.set_title("…but the gate is still unbeatable: no signal\nor fusion beats plain confidence", fontsize=10)
+    fig.suptitle("OPEN-ENDED medical VQA (§5.7): the routing ceiling is a benchmark artifact, "
+                 "the gate stays near-optimal at confidence", fontsize=11)
+    fig.tight_layout(rect=[0, 0, 1, 0.94]); fig.savefig(os.path.join(FIG, "fig_openended_ceiling.png"), dpi=150); plt.close(fig)
+    # append an open-ended section to MASTER_TABLES.md
+    with open(os.path.join(RES, "MASTER_TABLES.md"), "a") as fh:
+        fh.write("\n## Open-ended routing (§5.7) — Lingshu-7B → Lingshu-32B, LLM-judge\n\n")
+        fh.write("Routing AUROC (predict the cheap model is wrong). MCQ ceiling ≈ 0.6 (§5.2).\n\n")
+        fh.write("| dataset | confidence cheap-wrong | confidence recover |\n|---|---|---|\n")
+        for k, s in DS:
+            fh.write(f"| {s} | {oc[k]['auroc_cw']['conf']:.3f} | {oc[k]['auroc_rec']['conf']:.3f} |\n")
+        fh.write(f"\n### Gate hunt ({gs['family']}, n={gs['n']}) — no signal beats confidence\n\n")
+        fh.write("| signal | cheap-wrong AUROC |\n|---|---|\n")
+        for s in sig: fh.write(f"| {nice[s]} | {gs['signals'][s]['cw']:.3f} |\n")
+    print("wrote fig_openended_ceiling.png + open-ended section in MASTER_TABLES.md")
+else:
+    print("[open-ended JSONs missing — run gate_search_open.py and open_cascade_analyze.py --cheap_l7 --lingshu --judge --pathvqa]")

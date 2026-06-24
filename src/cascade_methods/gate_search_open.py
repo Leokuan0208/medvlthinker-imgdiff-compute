@@ -74,10 +74,12 @@ cw=np.array([r["cw"] for r in rows]); rec=np.array([r["rec"] for r in rows])
 SIGS=["conf","exactSC","semSC","semH","mpf"]+(["ptrue"] if HAVE_V else [])
 print(f"  {'signal':<14}{'AUROC cheap-wrong':>20}{'AUROC recoverable':>20}")
 base_cw=auroc([r["conf"] for r in rows],cw); base_rec=auroc([r["conf"] for r in rows],rec)
+DUMP={"family":("MedVLThinker-7B->Lingshu-32B" if XFAM else "Lingshu-7B->Lingshu-32B"),"n":len(rows),"signals":{}}
 for s in SIGS:
     a=auroc([r[s] for r in rows],cw); b=auroc([r[s] for r in rows],rec)
     tag=" <- baseline" if s=="conf" else (f"  cw{a-base_cw:+.3f} rec{b-base_rec:+.3f}")
     print(f"  {s:<14}{a:>20.3f}{b:>20.3f}{tag}")
+    DUMP["signals"][s]={"cw":float(a),"rec":float(b)}
 # FUSION: logistic(conf, semSC, semH, mpf [, ptrue]), honest 50/50 calib/test x20 seeds
 FF=["conf","semSC","semH","mpf"]+(["ptrue"] if HAVE_V else [])
 X=np.column_stack([[r[s] for r in rows] for s in FF]); n=len(rows)
@@ -93,3 +95,8 @@ fcw=cv_auroc(cw); frec=cv_auroc(rec)
 print(f"  {'FUSION (cv)':<14}{fcw[0]:>20.3f}{frec[0]:>20.3f}   cw{fcw[0]-base_cw:+.3f} rec{frec[0]-base_rec:+.3f}  (honest 20-seed cv)")
 print(f"\n  BAR = confidence: cheap-wrong {base_cw:.3f}, recoverable {base_rec:.3f}. A signal/fusion ABOVE both")
 print("  (especially on Lingshu-7B, the calibrated case) is a ROBUST gate beating confidence.")
+DUMP["signals"]["FUSION"]={"cw":float(fcw[0]),"rec":float(frec[0])}
+import os as _o
+_o.makedirs("results/cascade_methods",exist_ok=True)
+json.dump(DUMP,open("results/cascade_methods/open_gate_search%s.json"%("_xfam" if XFAM else ""),"w"),indent=1)
+print("-> results/cascade_methods/open_gate_search%s.json"%("_xfam" if XFAM else ""))
