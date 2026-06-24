@@ -55,8 +55,19 @@ def auroc(score, y):
     u, inv, cnt = np.unique(allv, return_inverse=True, return_counts=True); s = np.zeros(len(cnt)); np.add.at(s, inv, ranks); ranks = (s/cnt)[inv]
     return (ranks[:len(pos)].sum() - len(pos)*(len(pos)+1)/2) / (len(pos)*len(neg))
 
+JUDGE = "--judge" in _s.argv
+def apply_judge(d, jpath):
+    """override modal_ok with LLM-judge_ok (robustness vs exact-match)."""
+    if not os.path.exists(jpath): return d
+    j = {r["idx"]: r["judge_ok"] for r in (json.loads(l) for l in open(jpath) if l.strip())}
+    for i, r in d.items():
+        if i in j: r["modal_ok"] = j[i]
+    return d
 def build(ds):
     t0 = load(f"{CHEAP}/ckpt_{ds}_{T0TAG}.jsonl"); sc = load(f"{CHEAP}/ckpt_{ds}_{SC8TAG}.jsonl"); st = load(f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.jsonl")
+    if JUDGE:
+        t0 = apply_judge(t0, f"{CHEAP}/ckpt_{ds}_{T0TAG}.judge.jsonl")
+        st = apply_judge(st, f"{STRONG}/ckpt_{ds}_{STRONG_TAG}.judge.jsonl")
     idx = sorted(set(t0) & set(sc) & set(st))
     rows = []
     for i in idx:

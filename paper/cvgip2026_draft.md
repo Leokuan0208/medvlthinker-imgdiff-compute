@@ -85,6 +85,22 @@ Human-AI [2506.11887], and learning-to-defer [Jitkrittum, NeurIPS 2023; 2307.027
 ensemble *disagreement*. We benchmark all of these as gates (§5.2) and find they tie or lose to a plain
 margin threshold under a per-benchmark guardrail.
 
+**Open-ended routing and the agreement/consistency signal.** Closest to our §5.7 is *Semantic Agreement
+Enables Efficient Open-Ended LLM Cascades* [2509.21837, EMNLP 2025], which defers in *text-LLM* cascades on
+low semantic agreement and shows agreement beats Chow-style confidence — but its agreement is computed
+across an **ensemble of distinct models under greedy decoding**, it is text-only (no vision, no medicine),
+and it makes no multiple-choice-vs-open-ended claim (it notes, if anything, that agreement weakens on
+*short* answers). The underlying signal lineage is self-consistency [Wang et al., ICLR 2023; 2203.11171]
+and semantic entropy [Kuhn et al., ICLR 2023, 2302.09664; Farquhar et al., *Nature* 2024], whose
+closed-vs-open contrast we instantiate **inside a cascade gate, in the medical-VLM setting**, and attribute
+specifically to the **discreteness** of a single multiple-choice letter (not answer length — our open
+answers are a median 1–2 tokens, yet routing is strong). The closest VQA-side work, selective VQA from
+black-box VLMs [Khan & Fu, CVPR 2024; 2404.10193], uses question-rephrasing consistency to **abstain**, not
+to escalate, and is not medical. To our knowledge §5.7 is the first **open-ended, medical vision-language**
+cascade-routing study; we further show that, once open-ended, plain confidence is already near-optimal
+(no consistency/semantic-entropy/self-verification signal or fusion beats it) and self-consistency helps
+only a *miscalibrated* cheap model.
+
 **Model routing.** VL-RouterBench [2512.23562], ECVL-ROUTER [2510.27256] (image is the dominant routing
 signal), and RouterDC [2409.19886] route among models. We test image-content routing among cross-family
 medical/peer VLMs and find which-model-is-right unpredictable here (§5.3).
@@ -425,8 +441,8 @@ single letter (A/B/C/D) is a maximally discrete target — confidence, agreement
 collapse toward a 4-way chance baseline. We re-ask the routing question in the **open-ended (free-text
 generative)** regime: the cheap model emits a free-text answer (no options), a strong model is the
 escalation target, and we measure routing AUROC for *cheap-wrong* and *recoverable* (cheap wrong ∧ strong
-right), scored by normalized exact-match with token-F1 as a partial-credit rigor check. (PathVQA-open is
-excluded — its long descriptive answers are unscoreable by exact-match, 7B acc 0.058.)
+right), scored by normalized exact-match with **token-F1** and a **neutral LLM-judge** (MedVLThinker-32B,
+a Qwen2.5-32B backbone not in the Lingshu cascade) as robustness checks.
 
 **(a) The MedVLThinker family is near-equivalent on open-ended → no routable gap.** Unlike on MCQ, model
 size barely moves open-ended accuracy: SLAKE-open **3B 0.457 ≈ 7B 0.419 ≈ 32B-no-think 0.498 ≈ 32B-think
@@ -447,7 +463,10 @@ routable gap, and routing signals become **strong — far above the MCQ ceiling*
 The ceiling is a **discreteness** artifact, not an answer-length one: the open answers are **median 1–2
 tokens** (as short as a letter), yet routing AUROC is **~0.87** — because the answer *space* is open, not
 4 fixed options. So §5.2's "the gate is saturated" does **not transfer**: confidence-gated *open-ended*
-medical-VLM cascades genuinely work.
+medical-VLM cascades genuinely work. **This is not a scoring artifact:** under the neutral LLM-judge,
+confidence AUROC is **0.860 / 0.784** (≈ the exact-match 0.866 / 0.804) and the cheap→strong accuracies
+(0.67 → 0.77) match exact-match — token-F1 agrees (gap +0.10). The ceiling-break is robust across all
+three scorers.
 
 **(c) The gate itself still cannot be beaten — confidence is near-optimal.** We ran an exhaustive
 open-ended gate hunt on the calibrated cascade (Lingshu-7B → Lingshu-32B; bar = confidence 0.866 / 0.804),
