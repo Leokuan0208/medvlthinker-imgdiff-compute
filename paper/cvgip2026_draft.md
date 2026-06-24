@@ -346,7 +346,12 @@ is largest on the radiology benchmarks (SLAKE, VQA-RAD) universally:
 so absolute medical accuracy is lower, but the *over-thinking delta* is what ACC relies on and it holds.)
 Conclusion: the mechanism that motivates ACC's no-think workhorse tier is an **architecture-general**
 property of perception VQA, strengthening ACC's external validity. `[REPRO: run_peer_eval.py --think;
-overthink_generalize.py → results/cascade_methods/overthink_generalize.txt]`
+overthink_generalize.py → results/cascade_methods/overthink_generalize.txt]` We do **not** claim to
+*discover* over-thinking: that chain-of-thought can underperform direct answering — especially on
+perception — is established (MME-CoT [2502.09621]; "More Thought, Less Accuracy" [2509.25848];
+think-or-not routing for VLMs [2505.16854]). Our contribution is to *measure that it holds
+architecture-generally on medical perception VQA* and to *exploit it structurally* — inserting the big
+model's no-think mode as the cascade's workhorse tier — which prior work does not do.
 
 #### 5.5.1 Full five-family validation with NATIVE reasoning prompts (NEW)
 We ran the complete 3-tier pipeline (small-no-think → big-no-think → big-think) on four additional medical
@@ -570,6 +575,12 @@ miscalibrated cheap model), with the MCQ ceiling attributable to single-letter d
   VM-wide network throttle (no model downloads) — it auto-resumes when bandwidth returns. Future work.
 - **Honesty of cost.** FLOPs is exact; latency/energy are *calibrated* batch-1 wall-clock (measured + the
   expected-cost formula), not a single end-to-end pipeline timing.
+- **Single-stream scope (batched serving).** Our latency/energy are **batch-1**, the regime that matters for
+  point-of-care / single-clinician interactive use. Under heavy **batched** serving, continuous batching
+  amortizes prefill and the no-think tier's wall-clock advantage shrinks (the FLOPs and energy-per-query
+  savings, which are batch-invariant, remain). We therefore scope the latency headline to single-stream
+  deployment and report FLOPs/energy as the batch-robust efficiency axes; a throughput-vs-accuracy study at
+  batch ≥ 2 is future work.
 - **Novelty.** ACC is an *incremental systems/combination* contribution (it composes known parts — CAR-
   style self-gating, the large-no-think mode, resolution co-variation, ABC-style agreement). We do **not**
   claim a new gate or cascade primitive; §5.2–§5.4 show the data refute novel routing primitives here.
