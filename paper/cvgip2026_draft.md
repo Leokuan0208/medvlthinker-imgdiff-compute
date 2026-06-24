@@ -497,6 +497,16 @@ better gate. (This margin shrinks further under the LLM-judge, which credits the
 answers — raising its accuracy 0.41→0.52 and partly fixing the very miscalibration self-consistency was
 correcting — leaving self-consistency only marginally ahead.) (Figs: `paper/figs/open/{frontier_selfconsistency,auroc_signals,ceiling_break}.png`.)
 
+**Ablations** `[REPRO: open_ablations.py; calibrated cascade, LLM-judge]`. *(i) K-ablation:*
+self-consistency's routing AUROC rises monotonically with the sample budget K (0.73→0.83 over K=2→8) but
+**never reaches confidence (0.846)** — so even 8 samples do not beat the single-pass gate, and its only
+value is the conditional miscalibration rescue. *(ii) Routing efficiency vs an oracle:* the fraction of the
+*oracle* router's accuracy gain captured by the confidence gate is **70% (SLAKE), 59% (VQA-RAD), 30%
+(PathVQA)** — high where a real model-gap exists, low where it is small (PathVQA cheap→strong 0.343→0.376).
+The achievable cascade *gain* is bounded by **recoverability** (the model-gap), not by signal quality: the
+open-ended setting fixes the *signal* (cheap-wrong AUROC ~0.85), but a cascade still needs a strong model
+that is reliably better. (Fig: `paper/figs/open/fig_open_ablations.png`.)
+
 **Takeaway — a correction to §5.2.** The medical-VLM routing ceiling is a property of **MCQ evaluation**,
 not of the task: in open-ended VQA, routing signals carry AUROC ~0.87 and confidence-gated cascades work.
 The *gate* remains unbeatable (confidence is near-optimal across MCQ and open-ended), so the efficiency
