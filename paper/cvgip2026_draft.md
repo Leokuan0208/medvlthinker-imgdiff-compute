@@ -524,6 +524,18 @@ The achievable cascade *gain* is bounded by **recoverability** (the model-gap), 
 open-ended setting fixes the *signal* (cheap-wrong AUROC ~0.85), but a cascade still needs a strong model
 that is reliably better. (Fig: `paper/figs/open/fig_open_ablations.png`.)
 
+**Detection vs. cascade gain (deferral curves)** `[REPRO: deferral_curve.py]`. We separate two quantities a
+reviewer rightly conflates. *Detection* — how well the cheap model's own confidence separates its right
+from wrong answers (cheap-wrong AUROC) — is where the ceiling breaks: **0.66 (MCQ) → 0.85 (open-ended)**.
+This is a *selective-prediction* property (knowing when to abstain / defer / refer), and is the robust
+finding. The realized *cascade compute-saving* additionally needs **recoverability headroom** (the strong
+model actually being better); on our pairs that headroom is modest in *both* regimes (oracle−cheap = **+0.02
+MCQ, +0.06 open-ended**), so the random↔confidence↔oracle deferral curves (Fig. `fig_deferral_curve.png`)
+sit with the confidence gate tracking the oracle's shape between the random floor and the oracle ceiling in
+both. The open-ended advantage is therefore primarily in error *detection*, which a cascade converts into
+compute savings only to the extent a stronger model exists — exactly why the deployed MCQ cascade (§5.1) is
+framed as *cost reduction at parity*, not accuracy gain.
+
 **Takeaway — a correction to §5.2.** The medical-VLM routing ceiling is a property of **MCQ evaluation**,
 not of the task: in open-ended VQA, routing signals carry AUROC ~0.87 and confidence-gated cascades work.
 The *gate* remains unbeatable (confidence is near-optimal across MCQ and open-ended), so the efficiency
