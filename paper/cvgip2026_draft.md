@@ -534,6 +534,16 @@ EMNLP'25, using cross-model-ensemble greedy agreement — not single-model self-
 is the **medical vision-language, open-ended** instantiation plus the *ceiling-is-discreteness* diagnostic;
 we claim this applied/empirical contribution, not a new gate primitive.
 
+**Discrimination, not calibration.** Our claim is about **discrimination** — how well a signal *separates*
+cheap-right from cheap-wrong (AUROC) — not calibration (whether its raw probabilities match empirical
+accuracy). The two can diverge, so we measure the routing-relevant quantity (AUROC / risk–coverage), never
+raw probabilities. This sharpens the relation to CritiCal [2510.24505], which reports — for *single-model
+confidence calibration* in *text LLMs* — that "confidence suits multiple-choice tasks, while uncertainty
+excels in open-ended": a *calibration* view of the same closed-vs-open divide. We study the orthogonal
+*cascade-routing discrimination* of a *medical VLM*, and find the opposite ranking on *that* axis —
+single-pass confidence is the best *discriminative routing gate* open-ended (self-consistency only rescues a
+miscalibrated cheap model), with the MCQ ceiling attributable to single-letter discreteness.
+
 ---
 
 ## 6. Discussion & Limitations
