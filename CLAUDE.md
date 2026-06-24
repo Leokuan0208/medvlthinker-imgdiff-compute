@@ -39,7 +39,11 @@ vs FrugalGPT/CP-Router/AutoMix/etc., and the math): [`progress_June_17.md`](prog
 repo root; the cross-family + native-prompt continuation (5 families/3 architectures, native think, all-methods
 bake-off w/ measured latency+energy, the negative novel-method search, the cost-fix) is in
 [`progress_June_20-22.md`](progress_June_20-22.md) (+ `results/cascade_methods/{2SIZE_VALIDATION,FULL_RECORD,
-NOVEL_METHOD_FLD}.md`, `MASTER_TABLES.md`, `master_data.csv`).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
+NOVEL_METHOD_FLD}.md`, `MASTER_TABLES.md`, `master_data.csv`); the 2026-06-24 continuation (Visual-Stability
+Rescue, ACC-v3/v4, and the headline **open-ended ceiling-break** — routing AUROC ~0.6→~0.87, the MCQ
+"gate is saturated" result is a benchmark artifact) is in [`progress_June_24.md`](progress_June_24.md) (+
+`results/cascade_methods/{NOVEL_METHOD_VISUAL_STABILITY,RESCUE_INTO_ACCV2,ACCV3_V4_AND_NOVELTY,
+OPENENDED_CASCADE}.md`, paper §5.7).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
 `METHOD_ACC.md` + `METHOD_MATH.md`; code in **`src/cascade_methods/`**. Two outcomes:
 
 1. **The deployed margin gate (τ=0.426, ~74% backbone) is essentially optimal among training-free
