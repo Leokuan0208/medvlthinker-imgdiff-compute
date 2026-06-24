@@ -567,6 +567,28 @@ excels in open-ended": a *calibration* view of the same closed-vs-open divide. W
 single-pass confidence is the best *discriminative routing gate* open-ended (self-consistency only rescues a
 miscalibrated cheap model), with the MCQ ceiling attributable to single-letter discreteness.
 
+### 5.8 Knowing when to abstain: safe deferral when no stronger model helps
+
+The cascade escalates errors a *stronger model* can fix; §5.7 shows the cheap model *detects* its own
+errors well open-ended. The third action a deployed system needs is to **abstain** — refer to a clinician —
+on the irreducible residual where escalation cannot help (e.g. Kvasir, where the 32B is no better, §5.7).
+We turn the open-ended detection signal into a **training-free selective-prediction system** and test it
+against the recent SOTA **"Uncertainty Is Not a Safety Net for Clinical VQA"** [2606.16583] (8 UE methods ×
+12 VLMs), whose headline — uncertainty fails for clinical VQA, its quality "tracks model accuracy" — is
+**MCQ-only**. `[REPRO: selective_abstain.py, triage_3way.py]`
+
+*(i) The regime lifts self-assessment.* Same-model self-error-detection AUROC rises from MCQ to open-ended:
+MedVLThinker-7B **0.66→0.74**, Lingshu-7B **0.74→0.82** — above the SOTA's ~0.72 MCQ ceiling (Fig.
+`fig_selective.png`, left). *(ii) Deployable on competent open-ended VQA.* A confidence threshold on
+Lingshu-7B **auto-answers 54% of SLAKE-open at ≤5% error** (detection AUROC 0.89, AURC 0.07) and refers the
+rest — refuting the *strong* form of the SOTA negative. *(iii) Honest scope (confirms the SOTA's nuance).*
+Deployability **tracks competence**: where the model is weak the safe coverage collapses (VQA-RAD/PathVQA/
+Kvasir cov@5%-risk ≤0.10). A **3-way triage** (answer / escalate / abstain) is a strict generalization but
+only marginally better (SLAKE cov@10%-risk 0.67→0.74), again **recoverability-bounded**. The contribution is
+the *regime insight*, the *deployable competent-set operating points*, and the cross-model/cross-modality
+validation — not a new uncertainty signal (confidence remains unbeatable, §5.7). Spec:
+`results/cascade_methods/SELECTIVE_ABSTENTION.md`.
+
 ---
 
 ## 6. Discussion & Limitations
