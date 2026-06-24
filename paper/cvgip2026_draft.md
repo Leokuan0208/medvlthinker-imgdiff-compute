@@ -277,9 +277,16 @@ activations predict correctness 0.60 vs confidence's 0.68 — *worse* than the l
 
 **Mechanism.** The 7B and 32B are the same family, so their errors are *nested*: P(32B wrong | 7B wrong)
 = 0.584, error-correlation φ = 0.372; the 32B fixes the 7B only where neither has signal (the irreducible
-regime), so futility is unpredictable. `[REPRO: harness pool over competent-4]` **(But this ~0.6 ceiling
-is specific to MCQ evaluation — §5.7 shows the same confidence signal reaches AUROC ~0.87 in the
-open-ended regime.)**
+regime), so futility is unpredictable. `[REPRO: harness pool over competent-4]` This is the
+**uniform-improver regime of Jitkrittum et al. (NeurIPS 2023, 2307.02764)**, who prove confidence-based
+deferral is **near-Bayes-optimal** *unless* the strong model is a **specialist** (better on a subset,
+worse elsewhere). Our strong model rarely *breaks* a cheap-correct answer — P(strong wrong | cheap right)
+= **0.22 (MCQ), 0.14 (open-ended)** `[REPRO: uniform_improver_diag.py]` — i.e. it is a near-uniform
+improver, so the ~0.6 recoverability ceiling and "no gate beats confidence" are **theory-predicted**, not
+merely empirical. (We confirm: a learned Jitkrittum *Diff-01* deferral scorer over confidence +
+self-consistency lifts recoverability prediction only marginally and non-robustly — ties/loses on the
+real-gap datasets — as the theory predicts for a uniform improver.) **(This ~0.6 ceiling is specific to
+MCQ evaluation — §5.7 shows the same confidence signal reaches AUROC ~0.87 in the open-ended regime.)**
 
 **Post-audit correction (faithful baselines).** We audited each baseline against its canonical paper and
 re-ran a faithful 2-tier (7B-nt→32B-think) bake-off at iso-accuracy (`baseline_compare.py`; honest 50/50
@@ -467,7 +474,11 @@ tokens** (as short as a letter), yet routing AUROC is **~0.87** — because the 
 medical-VLM cascades genuinely work. **This is not a scoring artifact:** under the neutral LLM-judge,
 confidence AUROC is **0.860 / 0.784** (≈ the exact-match 0.866 / 0.804) and the cheap→strong accuracies
 (0.67 → 0.77) match exact-match — token-F1 agrees (gap +0.10). The ceiling-break is robust across all
-three scorers. It also holds on a **third, harder dataset**: PathVQA-open (long descriptive answers;
+three scorers. (Our judge follows the modern open-ended medical-VQA protocol — binary correctness against
+the reference answer, as in Lingshu [2506.07044] and LLaVA-Med [2306.00890]; like those it is text-only,
+a known limitation that can miss image-grounded distinctions, which is why we report it *alongside*
+exact-match and token-F1 rather than as the sole score.) It also holds on a **third, harder dataset**:
+PathVQA-open (long descriptive answers;
 exact-match collapses at acc 0.058, so *only* the LLM-judge can score it) gives Lingshu-7B confidence
 routing AUROC **0.797** (cheap-wrong) on its own, and the **3-dataset pooled** (n=2345, all judge-scored)
 confidence AUROC is **0.846 / 0.591** — still far above the ~0.6 MCQ ceiling, with confidence ≥
