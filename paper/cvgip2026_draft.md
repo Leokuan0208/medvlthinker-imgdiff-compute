@@ -432,8 +432,9 @@ src/training_methods/{lora_stability_router.py, fld_distill.py, calm_fuse.py}; N
 ---
 
 ### 5.7 From MCQ to open-ended: the routing ceiling is a benchmark artifact (NEW)
-`[REPRO: src/labeling/run_openvqa*.py, src/cascade_methods/{open_cascade_analyze,gate_search_open}.py;
-SLAKE-open (645 English OPEN) + VQA-RAD-open (200 non-yes/no), n=845; normalized exact-match + token-F1]`
+`[REPRO: src/labeling/{run_openvqa.py, run_judge.py}, src/cascade_methods/{open_cascade_analyze,
+gate_search_open}.py; SLAKE-open (645) + VQA-RAD-open (200) + PathVQA-open (1500), n=2345; exact-match,
+token-F1, and a neutral LLM-judge]`
 
 §5.2 found every routing signal saturates at **~0.6 AUROC** for recoverability. Is that a property of
 medical VLMs, or of the **multiple-choice** benchmarks all prior medical-VLM routing is evaluated on? A
@@ -466,7 +467,11 @@ tokens** (as short as a letter), yet routing AUROC is **~0.87** — because the 
 medical-VLM cascades genuinely work. **This is not a scoring artifact:** under the neutral LLM-judge,
 confidence AUROC is **0.860 / 0.784** (≈ the exact-match 0.866 / 0.804) and the cheap→strong accuracies
 (0.67 → 0.77) match exact-match — token-F1 agrees (gap +0.10). The ceiling-break is robust across all
-three scorers.
+three scorers. It also holds on a **third, harder dataset**: PathVQA-open (long descriptive answers;
+exact-match collapses at acc 0.058, so *only* the LLM-judge can score it) gives Lingshu-7B confidence
+routing AUROC **0.797** (cheap-wrong) on its own, and the **3-dataset pooled** (n=2345, all judge-scored)
+confidence AUROC is **0.846 / 0.591** — still far above the ~0.6 MCQ ceiling, with confidence ≥
+self-consistency (0.846 vs 0.831).
 
 **(c) The gate itself still cannot be beaten — confidence is near-optimal.** We ran an exhaustive
 open-ended gate hunt on the calibrated cascade (Lingshu-7B → Lingshu-32B; bar = confidence 0.866 / 0.804),
@@ -488,7 +493,9 @@ near-optimal open-ended gate — the gate is saturated *here too*, just at a far
 poorly calibrated on free-text) it beats confidence (recoverability +0.043, bootstrap 95% CI
 [0.016, 0.069]) and its accuracy-vs-escalation frontier Pareto-dominates confidence's; for the
 natively-calibrated Lingshu-7B, confidence wins. Self-consistency is thus a **calibration rescue**, not a
-better gate. (Figs: `paper/figs/open/{frontier_selfconsistency,auroc_signals,ceiling_break}.png`.)
+better gate. (This margin shrinks further under the LLM-judge, which credits the MCQ-tuned model's verbose
+answers — raising its accuracy 0.41→0.52 and partly fixing the very miscalibration self-consistency was
+correcting — leaving self-consistency only marginally ahead.) (Figs: `paper/figs/open/{frontier_selfconsistency,auroc_signals,ceiling_break}.png`.)
 
 **Takeaway — a correction to §5.2.** The medical-VLM routing ceiling is a property of **MCQ evaluation**,
 not of the task: in open-ended VQA, routing signals carry AUROC ~0.87 and confidence-gated cascades work.
