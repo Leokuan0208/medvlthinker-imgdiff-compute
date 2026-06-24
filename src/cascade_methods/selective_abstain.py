@@ -109,6 +109,19 @@ for ds in OPEN4:
     cv, rk, au, eau, ca2, br = risk_coverage(cc, ccor)
     perds[ds] = (cv, rk, ca2, br, au); results.setdefault("lingshu7b_perdataset", {})[ds] = dict(
         base_risk=br, aurc=au, eaurc=eau, covatrisk=ca2, det_auroc=auroc(-cc, 1-ccor), n=len(ccor))
+# DEPLOYED model = the strongest available (Lingshu-32B) self-abstaining: higher base acc -> more coverage
+LS = "ckpts/openvqa/strong_lingshu"
+print("\n== Lingshu-32B SELF-abstention (the DEPLOYED model: auto-answer the confident, refer the rest) ==")
+for ds in OPEN4:
+    s = judged(load(f"{LS}/ckpt_{ds}_lingshu32b.jsonl"), f"{LS}/ckpt_{ds}_lingshu32b.judge.jsonl") if os.path.exists(
+        f"{LS}/ckpt_{ds}_lingshu32b.jsonl") else {}
+    if not s: continue
+    cor = np.array([r["modal_ok"] for r in s.values()]); cf = np.array([r.get("seqlogprob") or 0.0 for r in s.values()])
+    cv, rk, au, eau, ca2, br = risk_coverage(cf, cor)
+    results.setdefault("lingshu32b_deployed", {})[ds] = dict(base_acc=float(cor.mean()), det_auroc=auroc(-cf, 1-cor),
+        aurc=au, covatrisk=ca2, n=len(cor))
+    print(f"  {DSLAB[ds]:<11} base_acc={cor.mean():.3f} det_AUROC={auroc(-cf,1-cor):.3f} AURC={au:.3f} "
+          f"cov@5%={ca2[0.05]:.2f} cov@10%={ca2[0.10]:.2f}")
 
 # figure: money plot (detection AUROC MCQ vs open) + per-dataset open-ended risk-coverage
 fig, (a2, a1) = plt.subplots(1, 2, figsize=(12.5, 4.6))

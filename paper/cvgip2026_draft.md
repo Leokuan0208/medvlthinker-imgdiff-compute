@@ -579,12 +579,15 @@ against the recent SOTA **"Uncertainty Is Not a Safety Net for Clinical VQA"** [
 
 *(i) The regime lifts self-assessment.* Same-model self-error-detection AUROC rises from MCQ to open-ended:
 MedVLThinker-7B **0.66→0.74**, Lingshu-7B **0.74→0.82** — above the SOTA's ~0.72 MCQ ceiling (Fig.
-`fig_selective.png`, left). *(ii) Deployable on competent open-ended VQA.* A confidence threshold on
-Lingshu-7B **auto-answers 54% of SLAKE-open at ≤5% error** (detection AUROC 0.89, AURC 0.07) and refers the
-rest — refuting the *strong* form of the SOTA negative. *(iii) Honest scope (confirms the SOTA's nuance).*
-Deployability **tracks competence**: where the model is weak the safe coverage collapses (VQA-RAD/PathVQA/
-Kvasir cov@5%-risk ≤0.10). A **3-way triage** (answer / escalate / abstain) is a strict generalization but
-only marginally better (SLAKE cov@10%-risk 0.67→0.74), again **recoverability-bounded**. The contribution is
+`fig_selective.png`, left). *(ii) Deployable on competent open-ended VQA.* The **deployed** (strongest)
+model — Lingshu-32B — self-abstains to **auto-answer 69% of SLAKE-open at ≤5% error (81% at ≤10%)**,
+detection AUROC 0.88, referring the rest to a clinician (the cheaper Lingshu-7B variant: 54% at ≤5%). This
+**refutes the strong form** of the SOTA negative. *(iii) Honest scope (confirms the SOTA's nuance), but the
+failure mode is safe.* Deployable coverage **tracks competence** — where the model is weak (VQA-RAD/PathVQA/
+Kvasir, base acc ≤0.60) the safe coverage collapses to ≤0.14, i.e. the system **abstains on almost
+everything, which is the correct behavior when the model is unreliable** (it never auto-answers at high
+risk). A **3-way triage** (answer / escalate / abstain) is a strict generalization but only marginally
+better (SLAKE cov@10%-risk 0.67→0.74), again **recoverability-bounded**. The contribution is
 the *regime insight*, the *deployable competent-set operating points*, and the cross-model/cross-modality
 validation — not a new uncertainty signal (confidence remains unbeatable, §5.7). Spec:
 `results/cascade_methods/SELECTIVE_ABSTENTION.md`.
