@@ -209,6 +209,30 @@ if oc and gs:
         fh.write(f"\n### Gate hunt ({gs['family']}, n={gs['n']}) — no signal beats confidence\n\n")
         fh.write("| signal | cheap-wrong AUROC |\n|---|---|\n")
         for s in sig: fh.write(f"| {nice[s]} | {gs['signals'][s]['cw']:.3f} |\n")
-    print("wrote fig_openended_ceiling.png + open-ended section in MASTER_TABLES.md")
+        # open-ended model accuracy: exact-match vs LLM-judge column (robustness)
+        def _accs(ckdir, tag, ds):
+            base = os.path.join(REPO, ckdir, f"ckpt_{ds}_{tag}.jsonl"); jf = base[:-6] + ".judge.jsonl"
+            if not os.path.exists(base): return None
+            rows = [json.loads(l) for l in open(base) if l.strip()]
+            em = float(np.mean([r["modal_ok"] for r in rows]))
+            ja = None
+            if os.path.exists(jf):
+                j = {json.loads(l)["idx"]: json.loads(l)["judge_ok"] for l in open(jf) if l.strip()}
+                vals = [j[r["idx"]] for r in rows if r["idx"] in j]
+                ja = float(np.mean(vals)) if vals else None
+            return em, ja, len(rows)
+        fh.write("\n### Open-ended model accuracy — exact-match vs **LLM-judge** column "
+                 "(neutral MedVLThinker-32B grader)\n\n")
+        fh.write("| dataset | n | Lingshu-7B (cheap) EM | Lingshu-7B JUDGE | Lingshu-32B (strong) EM | "
+                 "Lingshu-32B JUDGE |\n|---|---|---|---|---|---|\n")
+        for k, s in [("slake_open", "SLAKE"), ("vqa_rad_open", "VQA-RAD"), ("pathvqa_open", "PathVQA")]:
+            c = _accs("ckpts/openvqa/cheap_lingshu7b", "lingshu7b", k)
+            st = _accs("ckpts/openvqa/strong_lingshu", "lingshu32b", k)
+            if not c or not st: continue
+            jc = "—" if c[1] is None else f"{c[1]:.3f}"; js = "—" if st[1] is None else f"{st[1]:.3f}"
+            fh.write(f"| {s} | {c[2]} | {c[0]:.3f} | {jc} | {st[0]:.3f} | {js} |\n")
+        fh.write("\n*(PathVQA-open exact-match is uninformative on its long descriptive answers; the LLM-judge "
+                 "column is the meaningful score there. EM≈JUDGE on the short-answer SLAKE/VQA-RAD.)*\n")
+    print("wrote fig_openended_ceiling.png + open-ended section (incl. LLM-judge column) in MASTER_TABLES.md")
 else:
     print("[open-ended JSONs missing — run gate_search_open.py and open_cascade_analyze.py --cheap_l7 --lingshu --judge --pathvqa]")
