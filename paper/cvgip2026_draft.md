@@ -471,7 +471,8 @@ three scorers. It also holds on a **third, harder dataset**: PathVQA-open (long 
 exact-match collapses at acc 0.058, so *only* the LLM-judge can score it) gives Lingshu-7B confidence
 routing AUROC **0.797** (cheap-wrong) on its own, and the **3-dataset pooled** (n=2345, all judge-scored)
 confidence AUROC is **0.846 / 0.591** — still far above the ~0.6 MCQ ceiling, with confidence ≥
-self-consistency (0.846 vs 0.831).
+self-consistency (0.846 vs 0.831). The break is **highly significant**: a 5 000× bootstrap on the pooled
+cheap-wrong AUROC gives **95% CI [0.830, 0.862]**, P(AUROC ≤ 0.6) = 0.0000.
 
 **(c) The gate itself still cannot be beaten — confidence is near-optimal.** We ran an exhaustive
 open-ended gate hunt on the calibrated cascade (Lingshu-7B → Lingshu-32B; bar = confidence 0.866 / 0.804),
