@@ -31,8 +31,10 @@ def token_f1(pred, gold):  # partial-credit scorer (rigor check vs exact-match)
 import sys as _s
 # pathvqa_open excluded: long descriptive answers unscoreable by exact-match (7B-nt acc 0.058)
 DSETS = ["slake_open", "vqa_rad_open"]
-STRONG = "ckpts/openvqa/strong"
-STRONG_TAG = "32b_think" if ("--think" in _s.argv) else "32b_t0"
+if "--lingshu" in _s.argv:                          # cross-family strong leg = Lingshu-32B
+    STRONG = "ckpts/openvqa/strong_lingshu"; STRONG_TAG = "lingshu32b"
+else:
+    STRONG = "ckpts/openvqa/strong"; STRONG_TAG = "32b_think" if ("--think" in _s.argv) else "32b_t0"
 CHEAP = "ckpts/openvqa/cheap3b" if ("--cheap3b" in _s.argv) else "ckpts/openvqa/cheap"
 CTAG = "3b" if ("--cheap3b" in _s.argv) else "7b"   # cheap-model tag in filenames
 def load(p):
