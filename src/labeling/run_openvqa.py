@@ -24,6 +24,8 @@ from vllm import LLM, SamplingParams
 from PIL import Image
 
 SYS = "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain."
+SYS_THINK = ("You will solve a problem/request. You should provide your thoughts within "
+             "<think> </think> tags before providing the answer. After </think>, give only the short final answer.")
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28
 CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 ap = argparse.ArgumentParser()
@@ -34,7 +36,9 @@ ap.add_argument("--cap", choices=list(CAP_DIV), default="cap320"); ap.add_argume
 ap.add_argument("--ckpt_dir", required=True); ap.add_argument("--tp", type=int, default=1)
 ap.add_argument("--gpu_mem", type=float, default=0.88); ap.add_argument("--max_model_len", type=int, default=8192)
 ap.add_argument("--max_tokens", type=int, default=64)
+ap.add_argument("--think", action="store_true", help="reasoning mode: think system prompt, answer = text after </think>")
 A = ap.parse_args(); os.makedirs(A.ckpt_dir, exist_ok=True); MAXPX = HIGH_PX // CAP_DIV[A.cap]
+if A.think and A.max_tokens < 256: A.max_tokens = 512
 
 def norm(s):
     s = str(s).lower().strip()
@@ -79,9 +83,15 @@ items = items[:A.n]
 print(f"{A.dataset}: {len(items)} open-ended items | tag={A.tag} n_samples={A.n_samples} temp={A.temp}", flush=True)
 
 proc = AutoProcessor.from_pretrained(A.model_path)
+def extract(t):  # think mode: answer = text after the LAST </think>; else the raw text
+    if A.think and "</think>" in t:
+        tail = t.split("</think>")[-1].strip()
+        return tail.splitlines()[-1].strip() if tail else t.strip()
+    return t.strip()
 def build(q, img):
     im = [{"type": "image", "image": img, "max_pixels": MAXPX, "min_pixels": MIN_PX}]
-    msgs = [{"role": "system", "content": SYS}, {"role": "user", "content": im + [{"type": "text", "text": q}]}]
+    sys = SYS_THINK if A.think else SYS
+    msgs = [{"role": "system", "content": sys}, {"role": "user", "content": im + [{"type": "text", "text": q}]}]
     text = proc.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
     imgs, _ = process_vision_info(msgs); req = {"prompt": text}
     if imgs: req["multi_modal_data"] = {"image": imgs}
@@ -106,7 +116,7 @@ with open(ckpt, "a") as fh:
         ch = todo[c0:c0+CH]; reqs = [build(q, im) for (_, q, _, im) in ch]
         outs = llm.generate(reqs, sp)
         for (idx, q, gold, _), o in zip(ch, outs):
-            preds = [c.text.strip() for c in o.outputs]
+            preds = [extract(c.text) for c in o.outputs]
             oks = [score(p, gold) for p in preds]
             from collections import Counter
             cnt = Counter(norm(p) for p in preds); modal_norm, modal_n = cnt.most_common(1)[0]
