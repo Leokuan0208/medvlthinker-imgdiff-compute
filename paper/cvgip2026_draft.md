@@ -206,6 +206,40 @@ needs reasoning). (ii) **Thinking hurts perception per-benchmark:** 32B-no-think
 (0.849 vs 0.764)** and **VQA-RAD (0.853 vs 0.776)**, so the cascades inherit ~0.85/0.86 there — *above* the
 always-32B-think parity baseline.
 
+### 5.1.2 Tightening the think gate with confidence (ACC-v3), and a resolution/reasoning dissociation (NEW)
+`[REPRO: src/cascade_methods/acc_v3_confgate.py, acc_v4_lowres_think.py; honest 50/50, 20 seeds, min-think@parity]`
+
+**ACC-v3.** ACC-v2 fires the 28 s think tier on *every* small-nt/big-nt disagreement. We tighten it: fire
+think only when the two no-think models disagree **and** the big no-think model is itself unsure (m₁ < τ₁) —
+disagreement is necessary but not sufficient. Per family:
+- **ALL-6 (reasoning present): ACC-v3 dominates both single-signal gates.** vs ACC-v1 (confidence-only) it
+  cuts think 19%→**14%** and FLOPs 54.7%→**52.6%** at equal-or-higher accuracy (0.5707), and unlike ACC-v2 it
+  reaches always-32B-think parity in **all 20 seeds** (ACC-v2: 19/20); guard 0.00.
+- **ALL-5 / perception: think is unnecessary** — the confidence term drives think→**0%**, so ACC-v3 coincides
+  with confidence-only and both roughly *halve* ACC-v2's compute at parity (ACC-v2 16% think / 39.7% FLOPs →
+  ACC-v3 0% think / **27.3% FLOPs**).
+- **Cross-family:** Lingshu ALL-6 FLOPs 77.8%→**48.6%** (its think is fast → no latency gain); QoQ's cascade is
+  degenerate (0% escalation) so all gates coincide. The conjunction never hurts and helps wherever think over-fires.
+
+ACC-v3 combines two *known* signals — confidence (CAR, arXiv 2505.15154) and agreement (ABC, arXiv 2407.02348);
+the contribution is that their **conjunction** removes ACC-v2's residual think-overuse at no accuracy cost. We
+also verified the gate is **data-efficient**: subsampling the PMC-VQA-train calibration, eval behaviour is flat
+from 2000→3000 samples (acc 0.6503→0.6502, threshold σ→0), so the full 337k-row train split would not change it
+— the binding limitation is the *perception-only distribution* of PMC-train (it cannot calibrate the think tier),
+not the sample size `[REPRO: gate_data_size.py]`.
+
+**A resolution/reasoning dissociation (ACC-v4).** Running the 32B think pass on a 1/4-resolution image (cap320)
+vs full resolution: accuracy is **preserved or improved on the reasoning benchmarks that actually reach the think
+tier** — MMMU 0.688→**0.712 (+0.024)**, MedXpert ≈ unchanged — while it drops on perception (SLAKE 0.764→0.721),
+which the no-think tiers already serve so the cascade never pays it. That is, *medical visual reasoning is
+resolution-insensitive while perception is resolution-sensitive* — the visual-token-count dissociation of
+Matryoshka (arXiv 2405.17430) instantiated on the **resolution** axis and in the **medical** domain (where MMMU
+even *improves*, opposite to the resolution-*escalation* of VisionThink, arXiv 2507.13348). ACC-v4 runs the
+reasoning tier at cap320 (−28% think prefill); the per-tier saving is real but the cascade-level effect is
+marginal because the think tier fires on ≤14% of queries and is decode-bound (the 32B commits its answer at the
+*end* of the trace — answer-marker at median 0.99 of trace length over 8 220 traces — so early-exit truncation is
+not viable either).
+
 ### 5.2 The gate is saturated
 Holding the ACC 3-tier config fixed and swapping the *gate* (margin / MSP-Chow / entropy / Gini /
 conformal-CP-Router / learned-correctness-FrugalGPT / learned-deferral / random): all real gates cluster
