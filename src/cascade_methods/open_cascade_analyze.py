@@ -13,8 +13,15 @@ Reports, per dataset + pooled:
 Scoring is the runner's normalized match. Validated baseline = confidence deferral (the gate the
 project's MCQ work and Jitkrittum NeurIPS'23 establish as the one to beat).
 """
-import os, json, glob
+import os, json, glob, re, string
 import numpy as np
+def _norm(s):
+    s = str(s).lower().strip()
+    s = re.sub(r"\b(the|a|an|is|are|of|in|on|at|this|image|picture)\b", " ", s)
+    s = s.translate(str.maketrans("", "", string.punctuation)); return re.sub(r"\s+", " ", s).strip()
+def sc_at_K(preds, K):
+    from collections import Counter
+    c = Counter(_norm(p) for p in preds[:K]); top = c.most_common(1)[0][1]; return top / K, len(c)
 CHEAP = "ckpts/openvqa/cheap"; STRONG = "ckpts/openvqa/strong"
 # pathvqa_open excluded: long descriptive answers unscoreable by exact-match (7B-nt acc 0.058)
 DSETS = ["slake_open", "vqa_rad_open"]
@@ -44,8 +51,39 @@ def build(ds):
             sc_ok=sc[i]["modal_ok"],                          # 7B self-consistency majority answer correctness
             strong_ok=st[i]["modal_ok"],
             conf=(t0[i].get("seqlogprob") if t0[i].get("seqlogprob") is not None else 0.0),
-            selfcons=sc[i]["self_consistency"], ndist=sc[i]["n_distinct"]))
+            selfcons=sc[i]["self_consistency"], ndist=sc[i]["n_distinct"], preds=sc[i].get("preds", []),
+            cheap_gen=(t0[i].get("gen_tokens") or 8), strong_gen=(st[i].get("gen_tokens") or 0)))
     return rows
+
+# --- cost model (FLOPs = 2N(P+G); P fixed ~ cap320 prompt; latency: SC samples decode in PARALLEL ~ 1 pass) ---
+N0, N1, PFIX = 7.6e9, 33e9, 420.0
+def cost_frontier(rows, gate_score, cheap_ok_key, K):
+    """Return list of (flops, latency, acc) over escalation thresholds. K = #cheap samples for the gate."""
+    g = np.asarray(gate_score, float)
+    ok_cheap = np.array([r[cheap_ok_key] for r in rows]); ok_strong = np.array([r["strong_ok"] for r in rows])
+    cflop = np.array([2*N0*(PFIX+r["cheap_gen"]) for r in rows]); sflop = np.array([2*N1*(PFIX+r["strong_gen"]) for r in rows])
+    # latency proxy (s): cheap ~ 0.15 + 0.01*gen ; strong-think ~ 0.4 + 0.03*gen (decode-bound). SC cheap ~ 1 pass (parallel).
+    clat = np.array([0.15+0.01*r["cheap_gen"] for r in rows]); slat = np.array([0.4+0.03*r["strong_gen"] for r in rows])
+    base_flop = K*cflop                                   # K cheap passes always (gate cost)
+    pts = []
+    for t in np.quantile(g, np.linspace(0, 1, 51)):
+        esc = g >= t
+        flops = (base_flop + np.where(esc, sflop, 0)).sum()
+        lat = (clat + np.where(esc, slat, 0)).mean()       # SC cheap latency ~ 1 pass (parallel sampling)
+        acc = np.where(esc, ok_strong, ok_cheap).mean()
+        pts.append((float(flops), float(lat), float(esc.mean()), float(acc)))
+    return pts
+def min_cost_at(pts, target, idx):
+    ok = [p for p in pts if p[3] >= target-1e-9]; return min(ok, default=None, key=lambda p: p[idx])
+def kcurve(rows):
+    """AUROC of self-consistency at K samples for predicting cheap-wrong (cost scales with K)."""
+    cw = [1-r["cheap_ok"] for r in rows]
+    print("  self-consistency AUROC (cheap-wrong) vs #samples K:  ", end="")
+    for K in [2, 3, 5, 8]:
+        if all(len(r["preds"]) >= K for r in rows):
+            scK = [-sc_at_K(r["preds"], K)[0] for r in rows]
+            print(f"K={K}:{auroc(scK, cw):.3f}  ", end="")
+    print()
 
 def report(rows, label):
     if not rows: print(f"[{label}] no data yet"); return
@@ -59,6 +97,7 @@ def report(rows, label):
           f"cheap-wrong={np.mean(cw):.3f}  recoverable={np.mean(rec):.3f}")
     print(f"  AUROC predict CHEAP-WRONG :  confidence={auroc(s_conf,cw):.3f}   self-consistency={auroc(s_sc,cw):.3f}   n_distinct={auroc(s_nd,cw):.3f}")
     print(f"  AUROC predict RECOVERABLE :  confidence={auroc(s_conf,rec):.3f}   self-consistency={auroc(s_sc,rec):.3f}   n_distinct={auroc(s_nd,rec):.3f}")
+    if any(r.get("preds") for r in rows): kcurve(rows)
     return dict(label=label, n=len(rows), cheap_acc=float(np.mean([r['cheap_ok'] for r in rows])),
                 sc_acc=float(np.mean([r['sc_ok'] for r in rows])), strong_acc=float(np.mean([r['strong_ok'] for r in rows])),
                 auroc_cw=dict(conf=auroc(s_conf,cw), selfcons=auroc(s_sc,cw), ndist=auroc(s_nd,cw)),
@@ -97,6 +136,19 @@ def main():
             sc_s = f"{es*100:.0f}%" if es is not None else "—"; cf_s = f"{ec*100:.0f}%" if ec is not None else "—"
             print(f"  @acc>={T:.3f} ({tname:<12}):  confidence-gate esc={cf_s:<6}  self-consistency-gate esc={sc_s}")
         OUT["frontier"] = dict(confidence=f_conf, self_consistency=f_sc, strong_acc=float(strong))
+        # cost-aware comparison (with the expensive strong leg): FLOPs and latency at matched accuracy
+        cheap = np.mean([r['cheap_ok'] for r in allrows])
+        cf = cost_frontier(allrows, [-r["conf"] for r in allrows], "cheap_ok", K=1)        # confidence gate, 1 cheap pass
+        cs = cost_frontier(allrows, [-r["selfcons"] for r in allrows], "sc_ok", K=8)       # self-consistency gate, K=8
+        print(f"\nCOST-AWARE FRONTIER (strong leg = 32B-think). cheap={cheap:.3f} strong={strong:.3f}.")
+        print(f"  min LATENCY / min FLOPs at matched accuracy (self-consistency cheap leg = K=8 parallel samples):")
+        for tname, T in [("midpoint", (cheap+strong)/2), ("strong-3pt", strong-0.03), ("strong-1pt", strong-0.01)]:
+            cl = min_cost_at(cf, T, 1); sl = min_cost_at(cs, T, 1); cflo = min_cost_at(cf, T, 0); sflo = min_cost_at(cs, T, 0)
+            def fmt(p, i, unit): return (f"{p[i]:.2f}{unit}" if (i==1 and p) else (f"{p[i]/1e12:.0f}TF" if p else "—")) if p else "—"
+            print(f"  @acc>={T:.3f} ({tname:<10}): latency conf={fmt(cl,1,'s')} vs SC={fmt(sl,1,'s')}   |   "
+                  f"FLOPs conf={fmt(cflo,0,'')} vs SC={fmt(sflo,0,'')}   "
+                  f"(esc conf={cl[2]*100:.0f}% vs SC={sl[2]*100:.0f}%)" if (cl and sl) else f"  @acc>={T:.3f}: unreachable")
+        OUT["cost_frontier"] = dict(confidence_K1=cf, selfcons_K8=cs)
     os.makedirs("results/cascade_methods", exist_ok=True)
     json.dump(OUT, open("results/cascade_methods/open_cascade.json", "w"), indent=1)
     print("\n-> results/cascade_methods/open_cascade.json")
