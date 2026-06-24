@@ -81,9 +81,14 @@ resolution with the model/mode tier.
 
 **Cascades and deferral.** FrugalGPT (learned scorer), AutoMix (self-verification), Cascaded LMs for
 Human-AI [2506.11887], and learning-to-defer [Jitkrittum, NeurIPS 2023; 2307.02764] escalate to a
-*larger* model by a confidence/benefit signal; agreement-based cascading (ABC) [2407.02348] escalates on
-ensemble *disagreement*. We benchmark all of these as gates (§5.2) and find they tie or lose to a plain
-margin threshold under a per-benchmark guardrail.
+*larger* model by a *post-generation* confidence/benefit signal; agreement-based cascading (ABC)
+[2407.02348] escalates on ensemble *disagreement*. A parallel line trains *pre-generation* query routers
+that decide from the input alone — Hybrid-LLM [2404.14618], RouteLLM [2406.18665], and the unified
+routing+cascading view [2410.10347] (and learned *token-level* deferral, Co-LLM [2403.03870]); these report
+gains over *random* allocation, not over a calibrated confidence gate. We benchmark the post-generation
+gates as routing rules (§5.2) — they tie/lose to a plain margin under a per-benchmark guardrail — and the
+pre-generation cell is covered by our image-content router (§5.3, AUROC ≈ 0.50). Speculative decoding (EAGLE
+[2401.15077], speculative cascades [2405.19261]) is *lossless* and orthogonal to the routing question.
 
 **Open-ended routing and the agreement/consistency signal.** Closest to our §5.7 is *Semantic Agreement
 Enables Efficient Open-Ended LLM Cascades* [2509.21837, EMNLP 2025], which defers in *text-LLM* cascades on
