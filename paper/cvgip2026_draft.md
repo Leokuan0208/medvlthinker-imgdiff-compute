@@ -587,8 +587,13 @@ failure mode is safe.* Deployable coverage **tracks competence** — where the m
 Kvasir, base acc ≤0.60) the safe coverage collapses to ≤0.14, i.e. the system **abstains on almost
 everything, which is the correct behavior when the model is unreliable** (it never auto-answers at high
 risk). A **3-way triage** (answer / escalate / abstain) is a strict generalization but only marginally
-better (SLAKE cov@10%-risk 0.67→0.74), again **recoverability-bounded**. The contribution is
-the *regime insight*, the *deployable competent-set operating points*, and the cross-model/cross-modality
+better (SLAKE cov@10%-risk 0.67→0.74), again **recoverability-bounded**. *(iv) Calibrated and deployable.*
+Under the **standard held-out protocol** — calibrate the confidence threshold on a held-out sample to a
+clinician's target risk r*, then deploy on fresh data — the **realized risk holds the target**: on
+SLAKE-open r*=5% gives 0.69 coverage at **5.1% realized risk** (20-seed held-out; VQA-RAD/PathVQA within
+tolerance). A threshold *reused across distributions* overshoots (SLAKE→Kvasir 19.5%), so a per-deployment
+calibration set is the safe practice `[REPRO: abstain_calibration.py]`. The contribution is the *regime
+insight*, the *calibrated, deployable competent-set operating points*, and the cross-model/cross-modality
 validation — not a new uncertainty signal (confidence remains unbeatable, §5.7). Spec:
 `results/cascade_methods/SELECTIVE_ABSTENTION.md`.
 
