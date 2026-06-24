@@ -480,8 +480,14 @@ routable gap, and routing signals become **strong — far above the MCQ ceiling*
 
 The ceiling is a **discreteness** artifact, not an answer-length one: the open answers are **median 1–2
 tokens** (as short as a letter), yet routing AUROC is **~0.87** — because the answer *space* is open, not
-4 fixed options. So §5.2's "the gate is saturated" does **not transfer**: confidence-gated *open-ended*
-medical-VLM cascades genuinely work. **This is not a scoring artifact:** under the neutral LLM-judge,
+4 fixed options. So §5.2's "the gate is saturated" does **not transfer**: the cheap model's confidence
+becomes a strong *error detector* in the open-ended regime. A **fourth modality** confirms it on fresh
+data: **Kvasir-VQA-x1** (GI endoscopy, n=1200, free-text, LLM-judged) gives confidence cheap-wrong AUROC
+**0.75** (95% CI [0.72, 0.78], above the 0.6 ceiling) — and it is the cleanest illustration of the
+*detection vs. cascade-gain* split, because there the 32B is **no better** than the 7B (judge acc 0.301 vs
+0.302, gap −0.001 — *zero* recoverability headroom): the cheap model reliably **knows when it is wrong even
+when no stronger model can fix it**. (Confidence ≥ self-consistency here too, 0.75 vs 0.73.)
+`[REPRO: prep_kvasir.py; run_openvqa.py --dataset kvasir_open; run_judge_kvasir.sh]` **This is not a scoring artifact:** under the neutral LLM-judge,
 confidence AUROC is **0.860 / 0.784** (≈ the exact-match 0.866 / 0.804) and the cheap→strong accuracies
 (0.67 → 0.77) match exact-match — token-F1 agrees (gap +0.10). The ceiling-break is robust across all
 three scorers. (Our judge follows the modern open-ended medical-VQA protocol — binary correctness against

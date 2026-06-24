@@ -225,14 +225,17 @@ if oc and gs:
                  "(neutral MedVLThinker-32B grader)\n\n")
         fh.write("| dataset | n | Lingshu-7B (cheap) EM | Lingshu-7B JUDGE | Lingshu-32B (strong) EM | "
                  "Lingshu-32B JUDGE |\n|---|---|---|---|---|---|\n")
-        for k, s in [("slake_open", "SLAKE"), ("vqa_rad_open", "VQA-RAD"), ("pathvqa_open", "PathVQA")]:
+        for k, s in [("slake_open", "SLAKE"), ("vqa_rad_open", "VQA-RAD"), ("pathvqa_open", "PathVQA"),
+                     ("kvasir_open", "Kvasir(GI)")]:
             c = _accs("ckpts/openvqa/cheap_lingshu7b", "lingshu7b", k)
             st = _accs("ckpts/openvqa/strong_lingshu", "lingshu32b", k)
             if not c or not st: continue
             jc = "—" if c[1] is None else f"{c[1]:.3f}"; js = "—" if st[1] is None else f"{st[1]:.3f}"
             fh.write(f"| {s} | {c[2]} | {c[0]:.3f} | {jc} | {st[0]:.3f} | {js} |\n")
-        fh.write("\n*(PathVQA-open exact-match is uninformative on its long descriptive answers; the LLM-judge "
-                 "column is the meaningful score there. EM≈JUDGE on the short-answer SLAKE/VQA-RAD.)*\n")
+        fh.write("\n*(PathVQA/Kvasir exact-match is uninformative on long descriptive answers; the LLM-judge "
+                 "column is the meaningful score. EM≈JUDGE on short-answer SLAKE/VQA-RAD. On Kvasir (GI "
+                 "endoscopy, OOD) the 32B is no better than the 7B (0.301 vs 0.302) — yet the cheap model's "
+                 "confidence still detects its own errors at AUROC 0.75 (§5.7): detection ≠ cascade gain.)*\n")
     print("wrote fig_openended_ceiling.png + open-ended section (incl. LLM-judge column) in MASTER_TABLES.md")
 else:
     print("[open-ended JSONs missing — run gate_search_open.py and open_cascade_analyze.py --cheap_l7 --lingshu --judge --pathvqa]")

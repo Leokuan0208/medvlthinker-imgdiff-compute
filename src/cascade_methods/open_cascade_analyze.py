@@ -29,8 +29,9 @@ def token_f1(pred, gold):  # partial-credit scorer (rigor check vs exact-match)
     if ov == 0: return 0.0
     prec, rec = ov/len(p), ov/len(g); return 2*prec*rec/(prec+rec)
 import sys as _s
-# pathvqa_open is unscoreable by exact-match (acc 0.058); include only under --pathvqa (requires --judge)
-DSETS = ["slake_open", "vqa_rad_open"] + (["pathvqa_open"] if "--pathvqa" in _s.argv else [])
+# pathvqa_open/kvasir_open have long answers -> judge-only (exact-match uninformative); opt in via flags
+DSETS = ["slake_open", "vqa_rad_open"] + (["pathvqa_open"] if "--pathvqa" in _s.argv else []) \
+        + (["kvasir_open"] if "--kvasir" in _s.argv else [])
 if "--lingshu" in _s.argv:                          # cross-family strong leg = Lingshu-32B
     STRONG = "ckpts/openvqa/strong_lingshu"; STRONG_TAG = "lingshu32b"
 else:
