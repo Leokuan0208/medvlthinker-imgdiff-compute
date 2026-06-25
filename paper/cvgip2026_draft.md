@@ -626,7 +626,7 @@ recoverable cases (it even hurts on PathVQA). Every training-free selector sits 
 (0.720): self-verification P(Yes) 0.715 (*below* random), 32B pointwise-verify 0.746, 32B *listwise* select
 0.758, learned fusion 0.743 — the best captures only **24% of the gap above random and none beats the 32B
 single pass (0.819)**. Candidate-conditioned *synthesis* (priming the 32B with the cheap candidates)
-**backfires** (0.774): the majority trap drags the strong model down. The gap is sampling **luck, not latent
+**backfires** (0.774): the majority trap drags the strong model down (Fig. `figs/limits/fig_selection_luckfloor.png`). The gap is sampling **luck, not latent
 knowledge** — the model does not *know* which sample is right (if it did, that would be its greedy answer) —
 the same luck-floor structure that sank single-model routing.
 
