@@ -676,7 +676,11 @@ across two independent grouped splits** (PathVQA trained-verify 0.414 / 0.426 vs
 pooled 0.509 / 0.533 vs 0.447 / 0.463). The win is concentrated where there is headroom to harvest
 (PathVQA); SLAKE is near-saturated. This is a multimodal-medical instance of the generative-verifier result
 [GenRM, ICLR’25; Weaver, NeurIPS’25] and a constructive rebuttal of the *Verification-Mirage* [2605.10850]
-negative for open-ended VQA: self-verification fails, but a *trained* verifier does not.
+negative for open-ended VQA: self-verification fails, but a *trained* verifier does not. An **image-ablation
+confirms the verifier is image-grounded** (not the "lazy verifier" Verification-Mirage warns of): blanking
+the image drops selection by **0.047 pooled** (SLAKE −0.064, PathVQA −0.039). It combines a learned
+text-correctness prior (blank-image 0.463 > greedy 0.447) with genuine visual grounding (the −0.047 from the
+image). `[REPRO: src/training_methods/verifier_image_ablation.py]`
 
 ---
 
