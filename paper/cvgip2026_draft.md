@@ -599,6 +599,47 @@ validation — not a new uncertainty signal (confidence remains unbeatable, §5.
 
 ---
 
+### 5.9 Beyond the gate: the *action* and *selection* axes are luck/capacity-bound (NEW)
+
+§5.2 shows the *gate* (when to escalate) is saturated at plain confidence. Two axes remain in a cascade —
+the **action** (what to do on escalation) and, in the generative setting, **selection** (which of N sampled
+answers to return). We test both exhaustively; both hit the same wall. `[REPRO:
+results/cascade_methods/{RECOVERABILITY_IS_CAPACITY_BOUND, OPENENDED_SELECTION_LUCKFLOOR,
+KNOWLEDGE_AUGMENTATION_FEASIBILITY}.md]`
+
+**The action axis is capacity-bound.** Decomposing the cheap 7B's errors by repair type, cheap *same-model*
+interventions (re-asking at full resolution, or in think mode) recover **14% of errors the 5×-larger 32B
+misses entirely** (stable 11–17% across the competent-4) — so scaling up is *not* a superset of intervening
+cheaply. But the recovery is **unharvestable**: the repairs break as many answers as they fix (every cheap
+view sits at ≈0.62 vs the 32B's 0.645), a confidence-gated 4-rung ladder *loses* at parity (43% vs 39%
+compute), and max-confidence/majority ensembles saturate at the best single view. The 32B's advantage
+requires its *capacity*; no cheap same-model transform substitutes for it.
+
+**The selection axis is a luck floor.** In open-ended generation the cheap model's 8 samples have a large
+oracle gap that survives the semantic judge (Lingshu-7B SLAKE-open greedy 0.730 → **oracle@8 0.879**), and
+self-consistency *fails* via a **majority trap** — the correct answer is a *minority* vote in 74–90% of
+recoverable cases (it even hurts on PathVQA). Every training-free selector sits at the **random-pick floor**
+(0.720): self-verification P(Yes) 0.715 (*below* random), 32B pointwise-verify 0.746, 32B *listwise* select
+0.758, learned fusion 0.743 — the best captures only **24% of the gap above random and none beats the 32B
+single pass (0.819)**. Candidate-conditioned *synthesis* (priming the 32B with the cheap candidates)
+**backfires** (0.774): the majority trap drags the strong model down. The gap is sampling **luck, not latent
+knowledge** — the model does not *know* which sample is right (if it did, that would be its greedy answer) —
+the same luck-floor structure that sank single-model routing.
+
+**The same wall closes every other lever.** *Knowledge augmentation* is not indicated: the 7B's
+genuinely-unknown errors (oracle@8 wrong) are fixed by the 32B *equally across knowledge and perception
+question types* (38% vs 36%) — general capacity, not a retrievable knowledge gap — and a systematic audit
+**refutes** the hypothesis that the large open-ended ceiling is a caption-extraction *artifact* (PathVQA
+difficulty is genuine, concentrated in well-formed questions). *Cross-family agreement* (decorrelated errors
+across two independently-trained VLMs) is a real reliability signal (P(correct | agree)=0.819 vs 0.649) but
+as an accuracy selector collapses to "trust the stronger model". *Few-shot ICL* hurts (PathVQA 0.343→0.203).
+**Conclusion:** across gate, action, selection, synthesis, retrieval, cross-family agreement, and in-context
+prompting, the binding constraint is the *genuine "which answer is right?" knowledge the frozen models lack*
+— it is not recoverable by any training-free re-routing, re-selection, or re-prompting of those models. This
+is why the leverage in this paper is structural (compute configuration, §4) rather than a better decision rule.
+
+---
+
 ## 6. Discussion & Limitations
 
 - **Scope & pools.** We report **ALL-6** (all 7 benchmark splits) and **ALL-5** (ALL-6 minus the two
@@ -620,9 +661,12 @@ validation — not a new uncertainty signal (confidence remains unbeatable, §5.
 - **Novelty.** ACC is an *incremental systems/combination* contribution (it composes known parts — CAR-
   style self-gating, the large-no-think mode, resolution co-variation, ABC-style agreement). We do **not**
   claim a new gate or cascade primitive; §5.2–§5.4 show the data refute novel routing primitives here.
-- **Negative results as contribution.** The gate-saturation ceiling, the unexploitable cross-family
-  complementarity, and the language-prior diagnostic are, together, an honest characterization of *why*
-  efficient medical-VLM routing is hard — useful to the community independent of ACC.
+- **Negative results as contribution.** The gate-saturation ceiling (§5.2), the unexploitable cross-family
+  complementarity (§5.3), the language-prior diagnostic (§5.4), and the **action/selection limits (§5.9)** are,
+  together, an honest characterization of *why* training-free medical-VLM cascades are hard: across the gate,
+  the action, and (generative) answer selection, the binding constraint is the genuine "which answer is right?"
+  knowledge the frozen models lack — a luck/capacity floor no training-free re-routing or re-selection clears.
+  This is useful to the community independent of ACC, and it is what motivates the structural (compute-config) design.
 
 ---
 
