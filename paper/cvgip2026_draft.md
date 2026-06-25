@@ -657,29 +657,33 @@ is why the leverage in this paper is structural (compute configuration, §4) rat
 ### 5.10 What *does* break the luck floor: a trained outcome verifier (NEW)
 
 §5.9 shows every *training-free* lever is luck-floored. The constructive complement: a **trained** verifier
-partially escapes it. We LoRA-fine-tune Lingshu-7B to score P(correct | image, question, free-text answer)
-on the per-sample LLM-judge labels (8,234 examples) and use it to select best-of-8 (honest grouped split by
-question, no leakage). `[REPRO: src/training_methods/run_lora_verifier_open.py]`
+escapes it. We LoRA-fine-tune Lingshu-7B to score P(correct | image, question, free-text answer) on the
+per-sample LLM-judge labels and use it to select best-of-8 (honest grouped split by question, no leakage).
+Trained **pooled over all four open-ended datasets** it lifts every one: `[REPRO:
+src/training_methods/run_lora_verifier_open.py]`
 
-| dataset | greedy | self-consist. | zero-shot self-verify | zero-shot **32B** verify | **trained 7B verifier** | oracle@8 |
+| dataset | greedy | self-consist. | zero-shot 32B verify | **trained verifier** | oracle@8 | gap captured |
 |---|---|---|---|---|---|---|
-| **PathVQA-open** | 0.343 | 0.324 | 0.319 *(below greedy)* | 0.357 | **0.414 / 0.426** | 0.50–0.52 |
-| SLAKE-open | 0.738 | 0.738 | 0.715 | 0.758 | 0.743 / 0.752 | 0.872 |
-| **pooled** | 0.447 | 0.443 | — | — | **0.509 / 0.533** | 0.606 |
-(trained-verifier shows both grouped-split seeds.)
+| PathVQA-open | 0.352 | 0.349 | 0.357 | **0.441** | 0.513 | 55% |
+| Kvasir-open (GI, OOD modality) | 0.282 | 0.282 | — | **0.405** | 0.493 | 58% |
+| VQA-RAD-open | 0.519 | 0.500 | — | **0.611** | 0.722 | 45% |
+| SLAKE-open | 0.738 | 0.738 | 0.758 | **0.762** | 0.895 | 15% |
+| **pooled (n=1064)** | 0.413 | 0.411 | — | **0.501** | 0.592 | **49%** |
+
+(zero-shot 32B verify run on PathVQA/SLAKE; a 2-dataset variant confirmed the PathVQA lift across two seeds:
+trained 0.414 / 0.426.)
 
 **Training is the active ingredient.** Zero-shot self-verification (P(True) [Kadavath’22]) is luck-floored —
-*below greedy* on PathVQA — yet LoRA-training the same model on judge labels lifts best-of-8 selection by
-**+0.09 over greedy on PathVQA** (capturing **~50% of the oracle gap** there, ~40% pooled), vs ≤24% for
-every training-free selector and *below-greedy* for zero-shot verification (§5.9). The correctness signal the
-frozen models cannot *surface* zero-shot is *learnable* from a few thousand labels — indeed the trained
-**7B** verifier beats the **zero-shot 32B** verifier (0.357 on PathVQA) by +0.06, a 5×-larger model, because
-it is trained. **The lift is robust across two independent grouped splits** (PathVQA trained-verify 0.414 / 0.426 vs greedy 0.328 / 0.329;
-pooled 0.509 / 0.533 vs 0.447 / 0.463). The win is concentrated where there is headroom to harvest
-(PathVQA); SLAKE is near-saturated. **It also transfers across datasets where there is headroom:** trained on
-SLAKE+PathVQA only, the verifier lifts the out-of-distribution **Kvasir** (GI endoscopy, a different modality)
-0.286→0.327 (+0.04, 20% of its gap), while being neutral-to-negative on the saturated VQA-RAD — the same
-headroom-gated behavior, in- or out-of-distribution. This is a multimodal-medical instance of the generative-verifier result
+*below greedy* on PathVQA (0.319) — yet LoRA-training the same model on judge labels captures **49% of the
+oracle gap pooled across all four datasets** (+0.088 over greedy), lifting **every dataset** (PathVQA +0.089,
+Kvasir +0.123, VQA-RAD +0.092, SLAKE +0.024), vs ≤24% for every training-free selector and *below-greedy* for
+zero-shot verification (§5.9). The correctness signal the frozen models cannot *surface* zero-shot is
+*learnable* from a few thousand labels — indeed the trained **7B** verifier beats the **zero-shot 32B**
+verifier (0.357 on PathVQA) by +0.08, a 5×-larger model, because it is trained. The PathVQA lift is **robust
+across two independent grouped splits** (0.414 / 0.426). A weaker 2-dataset variant (train on SLAKE+PathVQA
+only) further showed the win is **headroom-gated and transfers across modality** — it still lifted
+out-of-distribution Kvasir (GI endoscopy) 0.286→0.327; pooling all four into training resolves the residual
+(Kvasir +0.123, VQA-RAD +0.092 in-distribution). This is a multimodal-medical instance of the generative-verifier result
 [GenRM, ICLR’25; Weaver, NeurIPS’25] and a constructive rebuttal of the *Verification-Mirage* [2605.10850]
 negative for open-ended VQA: self-verification fails, but a *trained* verifier does not. An **image-ablation
 confirms the verifier is image-grounded** (not the "lazy verifier" Verification-Mirage warns of): blanking
