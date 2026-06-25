@@ -630,6 +630,18 @@ single pass (0.819)**. Candidate-conditioned *synthesis* (priming the 32B with t
 knowledge** — the model does not *know* which sample is right (if it did, that would be its greedy answer) —
 the same luck-floor structure that sank single-model routing.
 
+**The luck floor is not a free-text quirk — it generalizes to structured/verifiable outputs.** One might
+expect verifiable outputs (where a self-consistency *geometry* exists) to escape it. We test medical visual
+**grounding** (bounding boxes, IoU) on SLAKE's gold detection boxes. With a *weak* grounder (Lingshu-7B,
+near-floor IoU) spatial self-consistency appears to predict box correctness (AUROC 0.82) — but this is an
+**artifact of incompetence**: a weak model emits diverse boxes, so rare agreements spuriously correlate with
+correctness, and there is no accuracy to harvest (oracle@8 acc@0.3 = 0.22). With a *competent* grounder
+(Qwen2.5-VL-7B, organ oracle@8 acc@0.3 = 0.44, a real +0.18 gap) the escape **vanishes**: boxes are
+consistent, so the self-consistency signal collapses to chance (AUROC 0.56) and medoid selection ties greedy
+(0.246 vs 0.254). Competence → consistency → no discriminative selection signal — so the structured-output
+oracle gap is luck-floored exactly like free-text. Selection over a *single* model's samples is fundamentally
+luck-bound regardless of output type.
+
 **The same wall closes every other lever.** *Knowledge augmentation* is not indicated: the 7B's
 genuinely-unknown errors (oracle@8 wrong) are fixed by the 32B *equally across knowledge and perception
 question types* (38% vs 36%) — general capacity, not a retrievable knowledge gap — and a systematic audit
