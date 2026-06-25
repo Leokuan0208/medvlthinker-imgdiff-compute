@@ -694,6 +694,15 @@ the image drops selection by **0.047 pooled** (SLAKE −0.064, PathVQA −0.039)
 text-correctness prior (blank-image 0.463 > greedy 0.447) with genuine visual grounding (the −0.047 from the
 image). `[REPRO: src/training_methods/verifier_image_ablation.py]`
 
+**The principle generalizes from free-text to *structured* outputs.** §5.9 showed grounding (bounding-box)
+selection is luck-floored too — training-free SC-medoid sits *below greedy*. We train the analogous
+**box-verifier** (LoRA-Qwen2.5-VL judging "does this box localize the {organ}?", IoU≥0.3 = label) and select
+best-of-8 boxes on SLAKE: SC-medoid 0.164 (luck-floored) → **trained box-verifier 0.255** (greedy 0.197,
+oracle 0.343) — **+0.09 over the luck floor, capturing 40% of the oracle gap**, the same fraction as the
+free-text verifier. So *training* is the universal active ingredient that breaks the luck floor — across
+both free-text answers and verifiable structured outputs — whereas every *training-free* selector (§5.9) is
+luck-bound in both. `[REPRO: src/training_methods/run_lora_box_verifier.py]`
+
 ---
 
 ## 6. Discussion & Limitations
