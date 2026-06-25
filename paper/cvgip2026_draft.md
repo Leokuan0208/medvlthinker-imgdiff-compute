@@ -20,8 +20,12 @@ no gate beats a plain confidence threshold in a way that is simultaneously novel
 and per-benchmark safe. We trace this to an error-correlation effect: same-family models have nested
 errors (φ=0.37), and the lone direction with large headroom — a cross-*architecture* peer whose errors
 decorrelate (oracle union **0.80** vs always-32B **0.645**) — is **unexploitable** because *which* model
-is right cannot be predicted from confidence, agreement, or image content (AUROC ≈ 0.50). **(2) The
-lever is the compute *configuration*, not the gate.** We present the **Adaptive-Compute Cascade (ACC)**,
+is right cannot be predicted from confidence, agreement, or image content (AUROC ≈ 0.50). The same wall
+closes the *action* and *selection* axes too: cheap same-model repairs recover 14% of errors the large
+model misses yet are unharvestable (capacity-bound), and in open-ended generation the cheap model's samples
+contain the answer far more often than any training-free selector extracts it — a **luck floor** (best
+selector 0.76 vs oracle 0.88, *below* the large model's single pass 0.82) — so the limits of routing are not
+specific to the gate (§5.9). **(2) The lever is the compute *configuration*, not the gate.** We present the **Adaptive-Compute Cascade (ACC)**,
 a confidence-gated three-tier cascade over compute *configurations* of the same two models —
 7B-no-think@cap320 → 32B-**no-think**@cap320 → 32B-think@fullres — that inserts the large model's *fast*
 no-think mode as the intermediate workhorse so the slow ~28 s think pass fires on only ~14% of queries.
@@ -695,7 +699,12 @@ Cost measurement: `src/cascade/measure_config.py`. ACC-v3/v4 (§5.1.2): `acc_v3_
 `acc_v4_lowres_think.py`, `gate_data_size.py`, `make_detailed_table.py`. Open-ended / ceiling-break
 (§5.7): `src/labeling/{run_openvqa.py, run_openvqa_verify.py}`, `run_openvqa_{all,think,3b,lingshu,
 lingshu7b}.sh`, `src/cascade_methods/{open_cascade_analyze.py, gate_search_open.py, make_open_chart.py}`;
-writeup `results/cascade_methods/OPENENDED_CASCADE.md`; figs `paper/figs/open/`. Full session narratives:
+writeup `results/cascade_methods/OPENENDED_CASCADE.md`; figs `paper/figs/open/`. Action/selection limits
+(§5.9): `src/labeling/{run_openvqa_verify_persample.py, run_openvqa_select_listwise.py, run_openvqa_synth.py,
+run_openvqa_fewshot.py, run_artifact_audit.py}`, `src/cascade_methods/{explode_sc_for_judge.py,
+select_eval.py, knowledge_feasibility_bytype.py, strong_fixes_genuinely_unknown.py, crossfamily_agree.py}`;
+writeups `results/cascade_methods/{RECOVERABILITY_IS_CAPACITY_BOUND, OPENENDED_SELECTION_LUCKFLOOR,
+KNOWLEDGE_AUGMENTATION_FEASIBILITY}.md`. Full session narratives:
 `progress_June_17.md`, `progress_June_20-22.md`. All checkpoints under `ckpts/` (gitignored). **No number
 in this paper is fabricated.**
 
