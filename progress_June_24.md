@@ -157,3 +157,35 @@ free; non-core findings in a separate doc")
 Docs: `results/cascade_methods/{NOVEL_METHOD_VISUAL_STABILITY, RESCUE_INTO_ACCV2, ACCV3_V4_AND_NOVELTY,
 OPENENDED_CASCADE, DETAILED_TABLES, SELECTIVE_ABSTENTION, AUXILIARY_RESEARCH}.md`. Figures:
 `paper/figs/{rescue,open,master}/`. All pushed to `main`.
+
+---
+
+## Phase 7 (2026-06-25) — user dropped abstention; two fresh directions, both bounded (luck floor)
+
+User: *"not interested in anything to do with abstention or referral, find a different direction."* Pivoted
+away from §5.8 and probed the two axes the loop had **not** touched. Both reach the same wall.
+
+- **Direction A — ACTION side of the cascade (cheap test-time repair).** All prior work optimized the GATE;
+  this asks what to DO on escalation. Decomposed the 7B@cap320 error set by repair: LOOK-CLOSER (fullres),
+  THINK (7B reasoning), SCALE (32B). *Finding:* cheap same-model repairs recover **14% of errors the 5×-larger
+  32B MISSES** (per-bench 11–17%, stable) — scaling up is NOT a superset of intervening cheaply (novel obs).
+  *But UNHARVESTABLE:* repairs break as many as they fix (net-flat accuracy); a 4-rung ladder LOSES at parity
+  (43% vs 39% backbone); max-confidence / majority ensembles saturate at 0.62 (can't reach the 32B's 0.645).
+  **The 32B's advantage is capacity-bound.** Doc: `RECOVERABILITY_IS_CAPACITY_BOUND.md`.
+- **Direction B — open-ended generation→SELECTION (non-abstention accuracy).** The cheap model's 8 samples
+  have a large oracle gap (SLAKE-open: greedy 0.730 → **oracle@8 0.879**, survives the semantic judge) and
+  self-consistency FAILS via a **majority trap** (correct answer is a minority vote in 74–90% of recoverable
+  cases). Tested every training-free selector under one consistent judge run: self-verify P(Yes) **0.715
+  (worse than the 0.720 random floor)**, 32B pointwise 0.746, 32B LISTWISE 0.758, learned fusion 0.743 —
+  best captures only **24% of the gap above random** and **none beats the 32B single-pass SOTA (0.819)**.
+  Candidate-conditioned SYNTHESIS backfires (0.774, majority trap drags the 32B down). **The gap is sampling
+  LUCK, not latent knowledge** — same structure as the killed single-model-routing luck-floor. Doc:
+  `OPENENDED_SELECTION_LUCKFLOOR.md`. New committed infra: `run_openvqa_verify_persample.py`,
+  `run_openvqa_select_listwise.py`, `run_openvqa_synth.py`, `explode_sc_for_judge.py`, `select_eval.py`.
+
+**Phase-7 bottom line (4th confirmation of the meta-finding).** Across GATE, ACTION, SELECTION, SYNTHESIS:
+oracle gaps are real and large everywhere, but training-free signals are too weak to harvest them and naive
+aggregation hurts (majority trap). A training-free SOTA-beating *accuracy* method does not exist in this
+family; the project's genuine positives stay ACC, Visual-Stability Rescue, and the §5.7 detection ceiling-break.
+The only avenue left open is a *trained* multimodal verifier — and the near-random verifier signal predicts
+low EV there too. (Config: auto-compaction enabled globally so the loop never blocks on a compaction prompt.)
