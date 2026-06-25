@@ -3,10 +3,11 @@
 verifiable/structured output ESCAPE the free-text luck floor? Parses Lingshu boxes (normalized or absolute),
 computes IoU vs gold, and compares greedy / random-sample / SC-medoid / oracle@8, plus the AUROC of
 SC-agreement (mean pairwise IoU) predicting correct@0.5. Run: python3 src/cascade_methods/ground_analyze.py"""
-import json, os, re, numpy as np
+import json, os, re, sys, numpy as np
 from sklearn.metrics import roc_auc_score
 ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
-F=os.path.join(ROOT,"ckpts/ground/slake_lingshu7b.jsonl")
+F=sys.argv[1] if len(sys.argv)>1 else os.path.join(ROOT,"ckpts/ground/slake_lingshu7b.jsonl")
+if not os.path.isabs(F): F=os.path.join(ROOT,F)
 def parse_box(s, W, H):
     m=re.search(r'bbox_2d"?\s*:?\s*\[([^\]]+)\]', s)   # Qwen2.5-VL JSON format (abs pixels, orig dims)
     if m:
