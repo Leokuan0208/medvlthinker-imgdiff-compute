@@ -9,6 +9,10 @@ run_ground_slake.py so ground_analyze.py / the box-verifier reuse it. Baseline: 
 """
 import argparse, json, os
 import pandas as pd
+from PIL import Image
+def img_ok(p):
+    try: Image.open(p).load(); return True
+    except Exception: return False
 from transformers import AutoProcessor
 from qwen_vl_utils import process_vision_info
 from vllm import LLM, SamplingParams
@@ -24,7 +28,7 @@ df = pd.read_csv(A.csv)
 items = []
 for i, r in df.iterrows():
     ip = os.path.join(A.imgdir, f"{r['dicom_id']}.jpg")
-    if not (os.path.exists(ip) and os.path.getsize(ip) > 1000): continue
+    if not (os.path.exists(ip) and os.path.getsize(ip) > 1000 and img_ok(ip)): continue
     x, y, w, h = r["x"], r["y"], r["w"], r["h"]
     items.append({"idx": f"{r['dicom_id']}|{i}", "img": ip, "label": str(r["label_text"]),
                   "category": str(r["category_name"]), "gold": [float(x), float(y), float(x+w), float(y+h)],
