@@ -8,7 +8,11 @@ from sklearn.metrics import roc_auc_score
 ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
 F=os.path.join(ROOT,"ckpts/ground/slake_lingshu7b.jsonl")
 def parse_box(s, W, H):
-    nums=re.findall(r"-?\d+\.?\d*", s.replace(","," "))
+    m=re.search(r'bbox_2d"?\s*:?\s*\[([^\]]+)\]', s)   # Qwen2.5-VL JSON format (abs pixels, orig dims)
+    if m:
+        nums=re.findall(r"-?\d+\.?\d*", m.group(1))
+    else:
+        nums=re.findall(r"-?\d+\.?\d*", s.replace(","," "))
     if len(nums)<4: return None
     v=[float(x) for x in nums[:4]]
     if max(v)<=1.5:                       # normalized 0-1
