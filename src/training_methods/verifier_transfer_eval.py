@@ -25,8 +25,9 @@ def loadj(p): return {r["idx"]:r for r in (json.loads(l) for l in open(p) if l.s
 def norm(s): return str(s).strip().lower()
 def imgs_for(ds):
     m={}
-    if ds=="kvasir_open":
-        for r in json.load(open("/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json")):
+    if ds in ("kvasir_open","radimagenet_open"):
+        jp = "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json" if ds=="kvasir_open" else "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json"
+        for r in json.load(open(jp)):
             if os.path.exists(r["img_path"]): m[r["idx"]]=(r["question"], r["img_path"])
     else:
         import pandas as pd

@@ -30,7 +30,7 @@ HIGH_PX, MIN_PX = 1280*28*28, 4*28*28
 CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 ap = argparse.ArgumentParser()
 ap.add_argument("--model_path", required=True); ap.add_argument("--tag", required=True)
-ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open", "pathvqa_open", "kvasir_open"])
+ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open", "pathvqa_open", "kvasir_open", "radimagenet_open"])
 ap.add_argument("--n_samples", type=int, default=1); ap.add_argument("--temp", type=float, default=0.0)
 ap.add_argument("--cap", choices=list(CAP_DIV), default="cap320"); ap.add_argument("--n", type=int, default=100000)
 ap.add_argument("--ckpt_dir", required=True); ap.add_argument("--tp", type=int, default=1)
@@ -62,6 +62,11 @@ if A.dataset == "slake_open":
         ip = os.path.join(root, x["img_name"])
         if not os.path.exists(ip): continue
         items.append((x["qid"], x["question"], str(x["answer"]), ip))
+elif A.dataset == "radimagenet_open":
+    d = json.load(open("/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json"))
+    for r in d:
+        if os.path.exists(r["img_path"]):
+            items.append((r["idx"], r["question"], r["answer"], r["img_path"]))
 elif A.dataset == "kvasir_open":
     d = json.load(open(f"/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json"))
     for r in d:

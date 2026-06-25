@@ -21,7 +21,7 @@ SYS = ("You are a careful medical exam grader. Given a question and a proposed a
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28; CAP_DIV = {"fullres":1,"cap640":2,"cap320":4,"cap160":8,"cap80":16}
 ap = argparse.ArgumentParser()
 ap.add_argument("--model_path", required=True)
-ap.add_argument("--dataset", required=True, choices=["slake_open","vqa_rad_open","pathvqa_open","kvasir_open"])
+ap.add_argument("--dataset", required=True, choices=["slake_open","vqa_rad_open","pathvqa_open","kvasir_open","radimagenet_open"])
 ap.add_argument("--sc8", required=True); ap.add_argument("--out", required=True)
 ap.add_argument("--cap", default="cap320", choices=list(CAP_DIV)); ap.add_argument("--tp", type=int, default=1)
 ap.add_argument("--gpu_mem", type=float, default=0.88); ap.add_argument("--max_model_len", type=int, default=4096)
@@ -41,8 +41,9 @@ if A.dataset == "slake_open":
         if x.get("answer_type") != "OPEN" or x.get("q_lang") != "en": continue
         ip = os.path.join(root, x["img_name"])
         if os.path.exists(ip) and x["qid"] in SC: IMG[x["qid"]] = (x["question"], ip)
-elif A.dataset == "kvasir_open":
-    d = json.load(open("/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json"))
+elif A.dataset in ("kvasir_open", "radimagenet_open"):
+    jp = "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json" if A.dataset=="kvasir_open" else "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json"
+    d = json.load(open(jp))
     for r in d:
         if os.path.exists(r["img_path"]) and r["idx"] in SC: IMG[r["idx"]] = (r["question"], r["img_path"])
 else:
