@@ -39,10 +39,10 @@ def slake_imgs():
             ip = os.path.join("/data/dan/dataset/slake/imgs", x["img_name"])
             if os.path.exists(ip): m[x["qid"]] = (x["question"], ip)
     return m
-def pathvqa_imgs():
+def parquet_imgs(base):
     import pandas as pd
     m = {}
-    df = pd.concat([pd.read_parquet(f) for f in sorted(glob.glob("/data/dan/dataset/path_vqa/data/test-*.parquet"))], ignore_index=True)
+    df = pd.concat([pd.read_parquet(f) for f in sorted(glob.glob(f"{base}/test-*.parquet"))], ignore_index=True)
     for i, r in df.iterrows():
         q = r.get("question"); a = r.get("answer")
         if q is None and "conversations" in r:
@@ -52,11 +52,21 @@ def pathvqa_imgs():
         if isinstance(img, dict) and "bytes" in img:
             m[int(i)] = (str(q), Image.open(io.BytesIO(img["bytes"])).convert("RGB"))
     return m
-IMG = {"slake_open": slake_imgs(), "pathvqa_open": pathvqa_imgs()}
+def kvasir_imgs():
+    m = {}
+    for r in json.load(open("/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json")):
+        if os.path.exists(r["img_path"]): m[r["idx"]] = (r["question"], r["img_path"])
+    return m
+DSETS = os.environ.get("VERIF_DSETS", "slake_open,pathvqa_open,vqa_rad_open,kvasir_open").split(",")
+IMG = {}
+if "slake_open" in DSETS: IMG["slake_open"] = slake_imgs()
+if "pathvqa_open" in DSETS: IMG["pathvqa_open"] = parquet_imgs("/data/dan/dataset/path_vqa/data")
+if "vqa_rad_open" in DSETS: IMG["vqa_rad_open"] = parquet_imgs("/data/dan/dataset/vqa_rad/data")
+if "kvasir_open" in DSETS: IMG["kvasir_open"] = kvasir_imgs()
 
 # ---- build per-question records + per-(idx,answer) labels from exploded judge ----
 QREC = {}   # (ds, idx) -> {"q":..,"img":..,"preds":[8], "modal":.., "slabels":{normans:0/1}}
-for ds in ["slake_open", "pathvqa_open"]:
+for ds in DSETS:
     sc = loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8.jsonl")
     exp = loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.jsonl")
     jud = {k: v["judge_ok"] for k, v in loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.judge.jsonl").items()}
