@@ -686,7 +686,9 @@ verifier (0.357 on PathVQA) by +0.08, a 5×-larger model, because it is trained.
 across two independent grouped splits** (0.414 / 0.426). A weaker 2-dataset variant (train on SLAKE+PathVQA
 only) further showed the win is **headroom-gated and transfers across modality** — it still lifted
 out-of-distribution Kvasir (GI endoscopy) 0.286→0.327; pooling all four into training resolves the residual
-(Kvasir +0.123, VQA-RAD +0.092 in-distribution). This is a multimodal-medical instance of the generative-verifier result
+(Kvasir +0.123, VQA-RAD +0.092 in-distribution). The pooled-4 verifier even transfers **zero-shot to a fifth,
+fully held-out dataset** — RadImageNet-VQA (which independently reproduces the luck floor: SC = greedy 0.329,
+oracle 0.512) — lifting it 0.329→0.353 (+0.024, 13% of its gap), weaker than in-distribution as expected. This is a multimodal-medical instance of the generative-verifier result
 [GenRM, ICLR’25; Weaver, NeurIPS’25] and a constructive rebuttal of the *Verification-Mirage* [2605.10850]
 negative for open-ended VQA: self-verification fails, but a *trained* verifier does not. An **image-ablation
 confirms the verifier is image-grounded** (not the "lazy verifier" Verification-Mirage warns of): blanking
