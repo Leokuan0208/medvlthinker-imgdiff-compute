@@ -661,18 +661,20 @@ partially escapes it. We LoRA-fine-tune Lingshu-7B to score P(correct | image, q
 on the per-sample LLM-judge labels (8,234 examples) and use it to select best-of-8 (honest grouped split by
 question, no leakage). `[REPRO: src/training_methods/run_lora_verifier_open.py]`
 
-| dataset | greedy | self-consistency | zero-shot self-verify P(True) | **trained verifier** | oracle@8 |
-|---|---|---|---|---|---|
-| **PathVQA-open** | 0.343 | 0.324 | **0.319** (below greedy) | **0.414** | 0.50–0.52 |
-| SLAKE-open | 0.738 | 0.738 | 0.715 | 0.743 | 0.872 |
-| **pooled** | 0.447 | 0.443 | — | **0.509** | 0.606 |
+| dataset | greedy | self-consist. | zero-shot self-verify | zero-shot **32B** verify | **trained 7B verifier** | oracle@8 |
+|---|---|---|---|---|---|---|
+| **PathVQA-open** | 0.343 | 0.324 | 0.319 *(below greedy)* | 0.357 | **0.414 / 0.426** | 0.50–0.52 |
+| SLAKE-open | 0.738 | 0.738 | 0.715 | 0.758 | 0.743 / 0.752 | 0.872 |
+| **pooled** | 0.447 | 0.443 | — | — | **0.509 / 0.533** | 0.606 |
+(trained-verifier shows both grouped-split seeds.)
 
 **Training is the active ingredient.** Zero-shot self-verification (P(True) [Kadavath’22]) is luck-floored —
 *below greedy* on PathVQA — yet LoRA-training the same model on judge labels lifts best-of-8 selection by
 **+0.09 over greedy on PathVQA** (capturing **~50% of the oracle gap** there, ~40% pooled), vs ≤24% for
 every training-free selector and *below-greedy* for zero-shot verification (§5.9). The correctness signal the
-frozen models cannot *surface* zero-shot is *learnable* from a few thousand labels. **The lift is robust
-across two independent grouped splits** (PathVQA trained-verify 0.414 / 0.426 vs greedy 0.328 / 0.329;
+frozen models cannot *surface* zero-shot is *learnable* from a few thousand labels — indeed the trained
+**7B** verifier beats the **zero-shot 32B** verifier (0.357 on PathVQA) by +0.06, a 5×-larger model, because
+it is trained. **The lift is robust across two independent grouped splits** (PathVQA trained-verify 0.414 / 0.426 vs greedy 0.328 / 0.329;
 pooled 0.509 / 0.533 vs 0.447 / 0.463). The win is concentrated where there is headroom to harvest
 (PathVQA); SLAKE is near-saturated. This is a multimodal-medical instance of the generative-verifier result
 [GenRM, ICLR’25; Weaver, NeurIPS’25] and a constructive rebuttal of the *Verification-Mirage* [2605.10850]
