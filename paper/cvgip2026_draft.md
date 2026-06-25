@@ -676,7 +676,10 @@ frozen models cannot *surface* zero-shot is *learnable* from a few thousand labe
 **7B** verifier beats the **zero-shot 32B** verifier (0.357 on PathVQA) by +0.06, a 5×-larger model, because
 it is trained. **The lift is robust across two independent grouped splits** (PathVQA trained-verify 0.414 / 0.426 vs greedy 0.328 / 0.329;
 pooled 0.509 / 0.533 vs 0.447 / 0.463). The win is concentrated where there is headroom to harvest
-(PathVQA); SLAKE is near-saturated. This is a multimodal-medical instance of the generative-verifier result
+(PathVQA); SLAKE is near-saturated. **It also transfers across datasets where there is headroom:** trained on
+SLAKE+PathVQA only, the verifier lifts the out-of-distribution **Kvasir** (GI endoscopy, a different modality)
+0.286→0.327 (+0.04, 20% of its gap), while being neutral-to-negative on the saturated VQA-RAD — the same
+headroom-gated behavior, in- or out-of-distribution. This is a multimodal-medical instance of the generative-verifier result
 [GenRM, ICLR’25; Weaver, NeurIPS’25] and a constructive rebuttal of the *Verification-Mirage* [2605.10850]
 negative for open-ended VQA: self-verification fails, but a *trained* verifier does not. An **image-ablation
 confirms the verifier is image-grounded** (not the "lazy verifier" Verification-Mirage warns of): blanking
