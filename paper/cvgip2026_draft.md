@@ -705,7 +705,10 @@ free-text verifier. **This replicates on the full real, standard MS-CXR phrase-g
 pathology, PhysioNet, 1448 boxes, n=435 held-out): SC-medoid 0.053 (luck-floored) → **trained box-verifier
 0.230** (greedy 0.041, oracle@8 0.285, IoU≥0.3) — **+0.19, capturing 77% of the oracle gap** (~9 s.e., a 5.6×
 lift over greedy; it lifts *selection* over a weak base grounder, not the grounding itself — the SOTA grounder
-MedGround-R1 is a better, unreleased base).
+MedGround-R1 is a better, unreleased base). Training is again the active ingredient: a **zero-shot** box-verifier
+(the same untrained Qwen judging the boxes) reaches only 0.115 (30% of the gap), so LoRA-training **doubles**
+the captured gap (30%→77%) — though, unlike free-text zero-shot verification (which sits *below* greedy),
+zero-shot *box* verification has modest signal, since judging a drawn box is a more concrete visual task.
 So *training* is the universal active ingredient that breaks the luck floor — across free-text answers AND
 verifiable structured outputs, on five open-ended datasets and two grounding benchmarks — whereas every
 *training-free* selector (§5.9) is luck-bound in both (Fig. `figs/limits/fig_trained_verifier_unified.png`).
