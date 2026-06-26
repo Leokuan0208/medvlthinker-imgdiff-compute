@@ -737,7 +737,8 @@ in a larger haystack. `[REPRO: src/training_methods/verifier_scaling_curve.py (S
 param-FLOPs. This is consistent with §5.7 (the 32B barely improves over the 7B open-ended: 0.444 vs greedy
 0.413): when scaling parameters buys little, spending test-time compute on a *trained verifier* over the
 small model's samples buys more. The verifier is thus the accuracy-optimal operating point (most accurate,
-at a compute premium), not dominated by simply using the larger model.
+at a compute premium), not dominated by simply using the larger model (Fig. `figs/limits/fig_verifier_pareto.png`).
+`[REPRO: paper/make_pareto_fig.py; 32B pooled from real judge files]`
 
 ---
 
