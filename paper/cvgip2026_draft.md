@@ -701,10 +701,11 @@ selection is luck-floored too — training-free SC-medoid sits *below greedy*. W
 **box-verifier** (LoRA-Qwen2.5-VL judging "does this box localize the {organ}?", IoU≥0.3 = label) and select
 best-of-8 boxes on SLAKE: SC-medoid 0.164 (luck-floored) → **trained box-verifier 0.255** (greedy 0.197,
 oracle 0.343) — **+0.09 over the luck floor, capturing 40% of the oracle gap**, the same fraction as the
-free-text verifier. **This replicates on the real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
-pathology, PhysioNet): SC-medoid 0.044 (below greedy, luck-floored) → **trained box-verifier 0.184** (greedy
-0.074, oracle@8 0.228, IoU≥0.3) — **+0.11, capturing 71% of the oracle gap** (it lifts *selection* over a
-weak base grounder, not the grounding itself — the SOTA grounder MedGround-R1 is a better, unreleased base).
+free-text verifier. **This replicates on the full real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
+pathology, PhysioNet, 1448 boxes, n=435 held-out): SC-medoid 0.053 (luck-floored) → **trained box-verifier
+0.230** (greedy 0.041, oracle@8 0.285, IoU≥0.3) — **+0.19, capturing 77% of the oracle gap** (~9 s.e., a 5.6×
+lift over greedy; it lifts *selection* over a weak base grounder, not the grounding itself — the SOTA grounder
+MedGround-R1 is a better, unreleased base).
 So *training* is the universal active ingredient that breaks the luck floor — across free-text answers AND
 verifiable structured outputs, on five open-ended datasets and two grounding benchmarks — whereas every
 *training-free* selector (§5.9) is luck-bound in both. `[REPRO: src/training_methods/run_lora_box_verifier.py]`
