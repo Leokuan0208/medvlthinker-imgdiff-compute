@@ -43,7 +43,11 @@ NOVEL_METHOD_FLD}.md`, `MASTER_TABLES.md`, `master_data.csv`); the 2026-06-24 co
 Rescue, ACC-v3/v4, and the headline **open-ended ceiling-break** — routing AUROC ~0.6→~0.87, the MCQ
 "gate is saturated" result is a benchmark artifact) is in [`progress_June_24.md`](progress_June_24.md) (+
 `results/cascade_methods/{NOVEL_METHOD_VISUAL_STABILITY,RESCUE_INTO_ACCV2,ACCV3_V4_AND_NOVELTY,
-OPENENDED_CASCADE}.md`, paper §5.7).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
+OPENENDED_CASCADE}.md`, paper §5.7); the 2026-06-25→26 continuation — the luck-floor characterization (§5.9)
+and the genuine positive, a **trained outcome verifier** breaking it for free-text answers AND grounding
+boxes (incl. a real MS-CXR benchmark; §5.10) — is in [`progress_June_25-26.md`](progress_June_25-26.md) (+
+`results/cascade_methods/{OPENENDED_SELECTION_LUCKFLOOR,TRAINED_VERIFIER_RESULT,BOX_VERIFIER_RESULT,
+NEW_DIRECTIONS_2026-06-25}.md`).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
 `METHOD_ACC.md` + `METHOD_MATH.md`; code in **`src/cascade_methods/`**. Two outcomes:
 
 1. **The deployed margin gate (τ=0.426, ~74% backbone) is essentially optimal among training-free

@@ -732,6 +732,13 @@ verifier keeps rising monotonically (0.356→0.394→0.411→0.417→0.424) but 
 captures a *shrinking* fraction of the faster-growing oracle gap, as the right answer becomes a rarer needle
 in a larger haystack. `[REPRO: src/training_methods/verifier_scaling_curve.py (SC_TAG=sc16)]`
 
+**Test-time compute beats parameters here.** Verifier-selected best-of-8 on the **7B (0.501)** outperforms the
+**32B single pass (0.444 pooled)** on open-ended accuracy — a 5×-larger model — at ~3.7× the 32B's
+param-FLOPs. This is consistent with §5.7 (the 32B barely improves over the 7B open-ended: 0.444 vs greedy
+0.413): when scaling parameters buys little, spending test-time compute on a *trained verifier* over the
+small model's samples buys more. The verifier is thus the accuracy-optimal operating point (most accurate,
+at a compute premium), not dominated by simply using the larger model.
+
 ---
 
 ## 6. Discussion & Limitations
