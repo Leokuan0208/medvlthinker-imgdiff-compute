@@ -26,7 +26,7 @@ model misses yet are unharvestable (capacity-bound), and in open-ended generatio
 contain the answer far more often than any training-free selector extracts it — a **luck floor** (best
 selector 0.76 vs oracle 0.88, *below* the large model's single pass 0.82) — so the limits of routing are not
 specific to the gate (§5.9). A **trained** outcome verifier, by contrast, recovers **40–77%** of this oracle gap — for free-text answers
-(49% pooled over five datasets, beating a zero-shot 32B verifier despite being 5× smaller) **and** for
+(49% pooled over four datasets, transferring zero-shot to a fifth; beating a zero-shot 32B verifier despite being 5× smaller) **and** for
 structured bounding-box outputs (SLAKE organ grounding 40%; the real MS-CXR chest-X-ray pathology benchmark
 77%, a 5.6× lift) — so the bottleneck is the *verifier’s training*, not the headroom, and *training* is the
 universal ingredient that breaks the luck floor across output types and domains (§5.10).
@@ -79,7 +79,7 @@ artifact, not a model limit (§5.7). (vi) A **luck-floor characterization**: *tr
 single model's samples is luck-bound across gate, action, selection, synthesis, retrieval, agreement,
 in-context prompting, **and** structured grounding outputs (§5.9). (vii) The constructive counterpart — a
 **trained outcome verifier** that breaks that floor, recovering **40–77%** of the oracle gap for both
-free-text answers (five datasets) and bounding boxes (SLAKE organs and the real MS-CXR chest-X-ray
+free-text answers (four datasets pooled, transferring to a fifth) and bounding boxes (SLAKE organs and the real MS-CXR chest-X-ray
 benchmark, a 5.6× lift), and behaving as a genuine test-time-scaling method — so *training* is the universal
 active ingredient across output types and domains (§5.10).
 
@@ -788,7 +788,7 @@ The gate itself, however, remains near-optimal at plain confidence in *both* reg
 semantic-entropy, or self-verification signal beats it. Finally, while *training-free* selection over a single
 model's samples is luck-floored across gate, action, selection, synthesis, retrieval, and even structured
 grounding outputs (§5.9), a **trained** outcome verifier breaks that floor — recovering 40–77% of the oracle
-gap for both free-text answers (five datasets) and bounding boxes (including the real MS-CXR chest-X-ray
+gap for both free-text answers (four datasets, transferring to a fifth) and bounding boxes (including the real MS-CXR chest-X-ray
 benchmark, a 5.6× lift), so *training* is the universal active ingredient (§5.10). We release ACC, the trained
 verifier, and the full negative-result characterization.
 
