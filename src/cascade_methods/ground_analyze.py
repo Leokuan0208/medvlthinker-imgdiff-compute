@@ -8,8 +8,13 @@ from sklearn.metrics import roc_auc_score
 ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
 F=sys.argv[1] if len(sys.argv)>1 else os.path.join(ROOT,"ckpts/ground/slake_lingshu7b.jsonl")
 if not os.path.isabs(F): F=os.path.join(ROOT,F)
+try:
+    from qwen_vl_utils.vision_process import smart_resize
+    _MAXP,_MINP=1280*28*28,4*28*28
+except Exception:
+    smart_resize=None
 def parse_box(s, W, H):
-    m=re.search(r'bbox_2d"?\s*:?\s*\[([^\]]+)\]', s)   # Qwen2.5-VL JSON format (abs pixels, orig dims)
+    m=re.search(r'bbox_2d"?\s*:?\s*\[([^\]]+)\]', s)   # Qwen2.5-VL JSON format
     if m:
         nums=re.findall(r"-?\d+\.?\d*", m.group(1))
     else:
@@ -18,6 +23,9 @@ def parse_box(s, W, H):
     v=[float(x) for x in nums[:4]]
     if max(v)<=1.5:                       # normalized 0-1
         v=[v[0]*W, v[1]*H, v[2]*W, v[3]*H]
+    elif smart_resize is not None:        # Qwen emits abs coords in SMART-RESIZED space -> scale to original
+        hb,wb=smart_resize(H,W,28,_MINP,_MAXP)
+        v=[v[0]*W/wb, v[1]*H/hb, v[2]*W/wb, v[3]*H/hb]
     x1,y1,x2,y2=v
     if x2<x1: x1,x2=x2,x1
     if y2<y1: y1,y2=y2,y1

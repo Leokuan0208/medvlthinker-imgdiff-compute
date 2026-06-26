@@ -25,12 +25,19 @@ ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--max_train"
 ap.add_argument("--out_dir", default="ckpts/train/lora_box_verifier"); ap.add_argument("--seed", type=int, default=0)
 A=ap.parse_args(); os.makedirs(os.path.join(ROOT,A.out_dir),exist_ok=True)
 DEV="cuda"; MAXPX,MINPX=1280*28*28,4*28*28
+try:
+    from qwen_vl_utils.vision_process import smart_resize
+    _MAXP,_MINP=1280*28*28,4*28*28
+except Exception:
+    smart_resize=None
 def parse_box(s,W,H):
     m=re.search(r'bbox_2d"?\s*:?\s*\[([^\]]+)\]', s)
     nums=re.findall(r"-?\d+\.?\d*", m.group(1) if m else s.replace(","," "))
     if len(nums)<4: return None
     v=[float(x) for x in nums[:4]]
     if max(v)<=1.5: v=[v[0]*W,v[1]*H,v[2]*W,v[3]*H]
+    elif smart_resize is not None:   # Qwen abs coords in smart-resized space -> scale to original
+        hb,wb=smart_resize(H,W,28,_MINP,_MAXP); v=[v[0]*W/wb,v[1]*H/hb,v[2]*W/wb,v[3]*H/hb]
     x1,y1,x2,y2=v; return [max(0,min(x1,x2)),max(0,min(y1,y2)),min(W,max(x1,x2)),min(H,max(y1,y2))]
 def iou(a,b):
     if not a or not b: return 0.0
