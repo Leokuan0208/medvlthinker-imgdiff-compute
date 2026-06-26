@@ -736,7 +736,9 @@ in a larger haystack. `[REPRO: src/training_methods/verifier_scaling_curve.py (S
 **32B single pass (0.444 pooled)** on open-ended accuracy — a 5×-larger model — at ~3.7× the 32B's
 param-FLOPs. This is consistent with §5.7 (the 32B barely improves over the 7B open-ended: 0.444 vs greedy
 0.413): when scaling parameters buys little, spending test-time compute on a *trained verifier* over the
-small model's samples buys more. The verifier is thus the accuracy-optimal operating point (most accurate,
+small model's samples buys more. Per dataset, the verifier-bo8 7B beats the 32B single pass exactly where
+scaling does not help — VQA-RAD (0.611 vs 0.600), PathVQA (0.441 vs 0.376), Kvasir (0.405 vs 0.301) — and
+loses only on SLAKE (0.762 vs 0.819), the one set where the 32B is genuinely the stronger grounder. The verifier is thus the accuracy-optimal operating point (most accurate,
 at a compute premium), not dominated by simply using the larger model (Fig. `figs/limits/fig_verifier_pareto.png`).
 `[REPRO: paper/make_pareto_fig.py; 32B pooled from real judge files]`
 
