@@ -25,9 +25,11 @@ closes the *action* and *selection* axes too: cheap same-model repairs recover 1
 model misses yet are unharvestable (capacity-bound), and in open-ended generation the cheap model's samples
 contain the answer far more often than any training-free selector extracts it — a **luck floor** (best
 selector 0.76 vs oracle 0.88, *below* the large model's single pass 0.82) — so the limits of routing are not
-specific to the gate (§5.9). A **trained** outcome verifier, by contrast, recovers **~half** this oracle gap
-(captures 49% pooled across four datasets, lifting every one, and beats a zero-shot 32B verifier despite
-being 5× smaller), so the bottleneck is the *verifier’s training*, not the headroom (§5.10).
+specific to the gate (§5.9). A **trained** outcome verifier, by contrast, recovers **40–77%** of this oracle gap — for free-text answers
+(49% pooled over five datasets, beating a zero-shot 32B verifier despite being 5× smaller) **and** for
+structured bounding-box outputs (SLAKE organ grounding 40%; the real MS-CXR chest-X-ray pathology benchmark
+77%, a 5.6× lift) — so the bottleneck is the *verifier’s training*, not the headroom, and *training* is the
+universal ingredient that breaks the luck floor across output types and domains (§5.10).
 **(2) The lever is the compute *configuration*, not the gate.** We present the **Adaptive-Compute Cascade (ACC)**,
 a confidence-gated three-tier cascade over compute *configurations* of the same two models —
 7B-no-think@cap320 → 32B-**no-think**@cap320 → 32B-think@fullres — that inserts the large model's *fast*
@@ -757,8 +759,12 @@ We further show this routing ceiling is a **benchmark artifact**: in **open-ende
 the same confidence signal reaches AUROC ~0.87 (vs ~0.6 on MCQ — a *discreteness*, not answer-length,
 effect) and confidence-gated cascades work, so medical-VLM cascades should be evaluated open-ended (§5.7).
 The gate itself, however, remains near-optimal at plain confidence in *both* regimes — no consistency,
-semantic-entropy, or self-verification signal beats it. We release ACC and the full negative-result
-characterization.
+semantic-entropy, or self-verification signal beats it. Finally, while *training-free* selection over a single
+model's samples is luck-floored across gate, action, selection, synthesis, retrieval, and even structured
+grounding outputs (§5.9), a **trained** outcome verifier breaks that floor — recovering 40–77% of the oracle
+gap for both free-text answers (five datasets) and bounding boxes (including the real MS-CXR chest-X-ray
+benchmark, a 5.6× lift), so *training* is the universal active ingredient (§5.10). We release ACC, the trained
+verifier, and the full negative-result characterization.
 
 ---
 
