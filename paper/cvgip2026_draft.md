@@ -73,7 +73,15 @@ recoverability ceiling, with an error-correlation explanation (§5.2). (iii) The
 medical-VLM complementarity map**: large oracle headroom that is provably unexploitable with available
 cheap peers — a negative result that explains why medical-VLM routing is hard (§5.3). (iv) A
 **language-prior diagnostic**: 57% of the 7B's medical-VQA answers are unchanged when the image is
-removed (§5.4).
+removed (§5.4). (v) The **open-ended ceiling-break**: the same confidence signal jumps from ~0.6 to ~0.87
+AUROC moving from MCQ to free-text — a *discreteness* artifact — so the routing ceiling is an evaluation
+artifact, not a model limit (§5.7). (vi) A **luck-floor characterization**: *training-free* selection over a
+single model's samples is luck-bound across gate, action, selection, synthesis, retrieval, agreement,
+in-context prompting, **and** structured grounding outputs (§5.9). (vii) The constructive counterpart — a
+**trained outcome verifier** that breaks that floor, recovering **40–77%** of the oracle gap for both
+free-text answers (five datasets) and bounding boxes (SLAKE organs and the real MS-CXR chest-X-ray
+benchmark, a 5.6× lift), and behaving as a genuine test-time-scaling method — so *training* is the universal
+active ingredient across output types and domains (§5.10).
 
 ---
 
