@@ -782,7 +782,15 @@ writeup `results/cascade_methods/OPENENDED_CASCADE.md`; figs `paper/figs/open/`.
 run_openvqa_fewshot.py, run_artifact_audit.py}`, `src/cascade_methods/{explode_sc_for_judge.py,
 select_eval.py, knowledge_feasibility_bytype.py, strong_fixes_genuinely_unknown.py, crossfamily_agree.py}`;
 writeups `results/cascade_methods/{RECOVERABILITY_IS_CAPACITY_BOUND, OPENENDED_SELECTION_LUCKFLOOR,
-KNOWLEDGE_AUGMENTATION_FEASIBILITY}.md`. Full session narratives:
+KNOWLEDGE_AUGMENTATION_FEASIBILITY}.md`. Trained verifier (§5.10): free-text
+`src/training_methods/{run_lora_verifier_open.py, verifier_image_ablation.py, verifier_transfer_eval.py}`
+(VERIF_DSETS env for pooled-4; --epochs 0 for the zero-shot baseline); structured box-verifier
+`src/labeling/{run_ground_slake.py, run_ground_mscxr.py}` + `src/cascade_methods/ground_analyze.py`
+(qwen smart_resize coord fix) + `src/training_methods/run_lora_box_verifier.py`; 5th dataset
+`src/data_prep/prep_radimagenet.py` + `radimagenet_open` loaders; figure `paper/make_verifier_fig.py`
+(`figs/limits/fig_trained_verifier_unified.png`); writeups `results/cascade_methods/{TRAINED_VERIFIER_RESULT,
+BOX_VERIFIER_RESULT, NEW_DIRECTIONS_2026-06-25}.md`. MS-CXR = PhysioNet ms-cxr 1.1.0 + selective
+MIMIC-CXR-JPG images. Full session narratives:
 `progress_June_17.md`, `progress_June_20-22.md`. All checkpoints under `ckpts/` (gitignored). **No number
 in this paper is fabricated.**
 
