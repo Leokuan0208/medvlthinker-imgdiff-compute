@@ -716,6 +716,11 @@ verifiable structured outputs, on five open-ended datasets and two grounding ben
 *training-free* selector (§5.9) is luck-bound in both (Fig. `figs/limits/fig_trained_verifier_unified.png`).
 `[REPRO: src/training_methods/run_lora_box_verifier.py]`
 
+The trained verifier is a genuine **test-time-scaling** method: a best-of-K curve (free-text, pooled-4,
+n=1064) rises **monotonically** with the sample budget — 0.385 (K=1) → 0.425 → 0.476 → **0.501** (K=8) —
+while **random** selection stays flat (~0.39), so the verifier converts added test-time compute into
+accuracy (Fig. `figs/limits/fig_verifier_scaling.png`). `[REPRO: src/training_methods/verifier_scaling_curve.py]`
+
 ---
 
 ## 6. Discussion & Limitations
