@@ -268,6 +268,12 @@ grouped by pipeline stage, and gave each file a self-explanatory name. **`script
 exists.** Killed directions were moved to `archive/`. Dependencies, checkpoints, and data were
 left untouched. **Always launch scripts from the repo root** (see §7).
 
+> **`STRUCTURE.md` is the live per-file index** (every directory + a one-line purpose for every script) —
+> read it to find a file fast. **2026-06-26 declutter:** the 23 root `run_*.sh` launchers moved into
+> `runners/` (each self-`cd`s to the repo root, so behavior is unchanged; launch as `bash runners/<x>.sh`).
+> The terse `src/cascade_methods/` names were intentionally **left as-is** (the paper's repro index, the five
+> `progress_*.md` logs, and ~36 imports reference them) and are documented in `STRUCTURE.md` instead.
+
 ```
 medvlthinker-imgdiff-compute/
 ├── CLAUDE.md   README.md   RESULTS.md   .gitignore

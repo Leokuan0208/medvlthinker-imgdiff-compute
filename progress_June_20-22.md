@@ -54,7 +54,7 @@ HF_HUB_ENABLE_HF_TRANSFER=0`). The throttle had lifted.
   Chiron inverse-scales (2B>8B on PathVQA, a binary benchmark).
 
 ### Real batch-1 latency (+ later energy), and the cost approach (NOT the 30 h eval)
-- Added `--batch1` to both eval runners (`max_num_seqs=1`, records `latency_s`). `run_latency_all.sh` measures a
+- Added `--batch1` to both eval runners (`max_num_seqs=1`, records `latency_s`). `runners/run_latency_all.sh` measures a
   small per-tier sample (6/benchmark); `acc_allmethods.fit_metric` fits `cost = a·gen+b` per tier and computes
   per-method cost analytically — the same cheap fit approach as the original `acc_compare.fit_models`, not a
   full-dataset real-time eval. Uniform across all five families.
