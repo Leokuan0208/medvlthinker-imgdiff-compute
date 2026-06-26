@@ -14,6 +14,9 @@ from peft import PeftModel
 from PIL import Image
 ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
 ADAPTER="ckpts/train/lora_verifier_pooled4"; MODEL="lingshu-medical-mllm/Lingshu-7B"; SEED=0
+SC=os.environ.get("SC_TAG","sc8")           # sc8 (K<=8) or sc16 (K<=16)
+KS=[1,2,4,8,16] if SC=="sc16" else [1,2,4,8]
+OUTNAME="scaling_curve16.json" if SC=="sc16" else "scaling_curve.json"
 DEV="cuda"; MAXPX,MINPX=1280*28*28,4*28*28
 SYS=("You are a careful medical exam grader. Given a question and a proposed answer, decide whether the "
      "proposed answer is correct. Respond with only 'Yes' or 'No'.")
@@ -47,8 +50,8 @@ IMG={"slake_open":slake_imgs(),"pathvqa_open":parquet_imgs("/data/dan/dataset/pa
      "vqa_rad_open":parquet_imgs("/data/dan/dataset/vqa_rad/data"),"kvasir_open":kvasir_imgs()}
 QREC={}
 for ds in ["slake_open","pathvqa_open","vqa_rad_open","kvasir_open"]:
-    sc=loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8.jsonl"); exp=loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.jsonl")
-    jud={k:v["judge_ok"] for k,v in loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.judge.jsonl").items()}
+    sc=loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}.jsonl"); exp=loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}_scexploded.jsonl")
+    jud={k:v["judge_ok"] for k,v in loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}_scexploded.judge.jsonl").items()}
     aj=defaultdict(dict)
     for cid,r in exp.items():
         if cid in jud:
@@ -81,7 +84,7 @@ for k in test_keys:
     sc=[pyes(r["q"],r["img"],a) for a in preds]
     rows.append((sl,sc))
 print(f"scored {len(rows)} questions",flush=True)
-Ks=[1,2,4,8]; out={}
+Ks=KS; out={}
 rngc=np.random.default_rng(0)
 for K in Ks:
     ver=[];orc=[];rnd=[]
@@ -97,5 +100,5 @@ for K in Ks:
 print("\n==================== VERIFIER BEST-of-K SCALING (pooled-4 free-text, held-out) ====================")
 print(f"{'K':>3} {'random':>8} {'verifier':>9} {'oracle@K':>9}")
 for K in Ks: print(f"{K:>3} {out[K]['random']:>8.3f} {out[K]['verifier']:>9.3f} {out[K]['oracle']:>9.3f}")
-json.dump(out,open(os.path.join(ROOT,ADAPTER,"scaling_curve.json"),"w"),indent=1)
+json.dump(out,open(os.path.join(ROOT,ADAPTER,OUTNAME),"w"),indent=1)
 print("\nREAD: rising verifier curve with K = the trained verifier converts more test-time samples into accuracy.")
