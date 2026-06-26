@@ -100,5 +100,22 @@ for K in Ks:
 print("\n==================== VERIFIER BEST-of-K SCALING (pooled-4 free-text, held-out) ====================")
 print(f"{'K':>3} {'random':>8} {'verifier':>9} {'oracle@K':>9}")
 for K in Ks: print(f"{K:>3} {out[K]['random']:>8.3f} {out[K]['verifier']:>9.3f} {out[K]['oracle']:>9.3f}")
+# save per-question (labels, scores) so any CI can be computed offline (never re-run the GPU pass)
+json.dump([{"sl":sl,"sc":sc} for sl,sc in rows], open(os.path.join(ROOT,ADAPTER,f"perq_{SC}.json"),"w"))
+# bootstrap CI on the verifier gain at max K (verifier@maxK - first-sample@1), 2000 resamples
+maxK=max(Ks)
+def sel(sl,sc,K):
+    cand=[i for i in range(min(K,len(sl))) if sl[i] is not None]
+    return sl[max(cand,key=lambda i:sc[i])] if cand else None
+pairs=[(sel(sl,sc,maxK), (sl[0] if sl[0] is not None else None)) for sl,sc in rows]
+pairs=[(v,g) for v,g in pairs if v is not None and g is not None]
+v=np.array([p[0] for p in pairs]); g=np.array([p[1] for p in pairs]); n=len(v)
+rb=np.random.default_rng(0); diffs=[]
+for _ in range(2000):
+    ix=rb.integers(0,n,n); diffs.append(v[ix].mean()-g[ix].mean())
+lo,hi=np.percentile(diffs,[2.5,97.5])
+print(f"\nbootstrap (n={n}, 2000 resamples): verifier@{maxK} {v.mean():.3f} vs first-sample {g.mean():.3f} | "
+      f"gain {v.mean()-g.mean():+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}]")
+out["bootstrap_gain_vs_K1"]={"gain":float(v.mean()-g.mean()),"ci_lo":float(lo),"ci_hi":float(hi),"n":n,"K":maxK}
 json.dump(out,open(os.path.join(ROOT,ADAPTER,OUTNAME),"w"),indent=1)
 print("\nREAD: rising verifier curve with K = the trained verifier converts more test-time samples into accuracy.")

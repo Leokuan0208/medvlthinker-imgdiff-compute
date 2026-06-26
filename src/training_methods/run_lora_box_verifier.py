@@ -117,7 +117,16 @@ for i in te_ix:
     # trained box-verifier
     sc=[pyes(r["img"],r["label"],b) for b in r["boxes"]]; tv.append(oks[int(np.argmax(sc))])
 out={"n":len(g),"greedy":float(np.mean(g)),"sc_medoid":float(np.mean(med)),"trained_box_verify":float(np.mean(tv)),"oracle":float(np.mean(orc)),"thr":A.thr}
-print(f"\n==================== BOX-VERIFIER (SLAKE grounding, thr={A.thr}) ====================")
+# bootstrap CI on the trained-verifier gain over greedy (2000 resamples)
+gv=np.array(g,float); tvv=np.array(tv,float); nb=len(gv); rb=np.random.default_rng(0); diffs=[]
+for _ in range(2000):
+    ix=rb.integers(0,nb,nb); diffs.append(tvv[ix].mean()-gv[ix].mean())
+blo,bhi=np.percentile(diffs,[2.5,97.5])
+out["bootstrap_gain_vs_greedy"]={"gain":float(tvv.mean()-gv.mean()),"ci_lo":float(blo),"ci_hi":float(bhi),"n":nb}
+json.dump({"per_q_greedy":[int(x) for x in g],"per_q_trained":[int(x) for x in tv],"per_q_oracle":[int(x) for x in orc]},
+          open(os.path.join(ROOT,A.out_dir,"perq.json"),"w"))
+print(f"\n==================== BOX-VERIFIER (grounding, thr={A.thr}) ====================")
 print(f"  n={out['n']}  greedy={out['greedy']:.3f}  SC-medoid={out['sc_medoid']:.3f}  trained-box-verify={out['trained_box_verify']:.3f}  oracle@8={out['oracle']:.3f}")
+print(f"  bootstrap gain (trained-greedy) {tvv.mean()-gv.mean():+.3f}  95% CI [{blo:+.3f}, {bhi:+.3f}]")
 json.dump(out,open(os.path.join(ROOT,A.out_dir,"result.json"),"w"),indent=1)
 print("READ: trained-box-verify > SC-medoid toward oracle => TRAINING breaks the grounding luck floor too (2nd positive).")
