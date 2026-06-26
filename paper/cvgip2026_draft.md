@@ -719,7 +719,10 @@ verifiable structured outputs, on five open-ended datasets and two grounding ben
 The trained verifier is a genuine **test-time-scaling** method: a best-of-K curve (free-text, pooled-4,
 n=1064) rises **monotonically** with the sample budget — 0.385 (K=1) → 0.425 → 0.476 → **0.501** (K=8) —
 while **random** selection stays flat (~0.39), so the verifier converts added test-time compute into
-accuracy (Fig. `figs/limits/fig_verifier_scaling.png`). `[REPRO: src/training_methods/verifier_scaling_curve.py]`
+accuracy (Fig. `figs/limits/fig_verifier_scaling.png`). Extending to **K=16** (a fresh 16-sample run) the
+verifier keeps rising monotonically (0.356→0.394→0.411→0.417→0.424) but with **diminishing returns** — it
+captures a *shrinking* fraction of the faster-growing oracle gap, as the right answer becomes a rarer needle
+in a larger haystack. `[REPRO: src/training_methods/verifier_scaling_curve.py (SC_TAG=sc16)]`
 
 ---
 
