@@ -821,10 +821,13 @@ MIMIC-CXR-JPG images. Full session narratives:
 in this paper is fabricated.**
 
 ## [TODO before submission]
-- **Figures: DONE** — Fig 1 latency-accuracy frontier + Fig 2 per-benchmark over-thinking (`paper/figs/`,
-  via `paper/make_figs.py`). Still optional: F3 cross-family oracle-union bar; F4 recoverability-AUROC dot plot.
-- Convert `[arXiv:...]` tags to a proper .bib; verify each citation's final venue/ID.
-- Decide framing emphasis (systems-method-first vs characterization-first) per CVGIP reviewer fit.
-- **Blocked (network):** the 2-size cross-family validation (Lingshu/MedGemma) — auto-resumes on recovery.
-- Optional rigor: paired bootstrap CI on (Ours − best-baseline) FLOPs/latency (seed CIs already in §5.1.1);
-  few-shot AutoMix re-run (ours is 0-shot self-verify).
+- **Figures: DONE** — Fig 1 latency-accuracy frontier + Fig 2 over-thinking (`paper/make_figs.py`); §5.9–§5.10
+  figs fig_selection_luckfloor, fig_trained_verifier_unified, fig_verifier_scaling, fig_verifier_pareto
+  (`paper/figs/limits/`). All referenced + present. Still optional: F3 cross-family oracle-union; F4 AUROC dot.
+- **Trained verifier (§5.10): DONE + validated** — 3 positives (free-text 49% / SLAKE 40% / MS-CXR 77%),
+  all 2-seed; zero-shot baselines; TTS scaling curve; compute-Pareto; numbers audited vs result.json.
+  Bootstrap CI on the headline gain in progress (verifier_scaling_curve.py dumps per-question scores).
+- Convert `[arXiv:...]` tags to a proper .bib (new §5.10 cites GenRM 2408.15240, Weaver 2506.18203,
+  P(True) 2207.05221, Med-RewardBench 2508.21430, Verification-Mirage 2606.10850, MedGround-R1 2507.02994).
+- **Author decisions (not auto):** framing emphasis; whether to keep/demote/cut §5.8 (abstention, deprioritized).
+- Housekeeping: rotate HF token + PhysioNet password (both passed through a session chat).
