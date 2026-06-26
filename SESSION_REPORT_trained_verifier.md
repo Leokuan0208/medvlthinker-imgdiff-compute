@@ -203,5 +203,5 @@ universal active ingredient.* Unified figure: `fig_trained_verifier_unified.png`
   appended below.
 
 ## Bootstrap CIs (appended when the runs land)
-- Free-text verifier (pooled-4, best-of-8 vs first-sample): **[to fill]**
+- Free-text verifier (pooled-4, best-of-8 vs single-sample): gain **+0.116, 95% CI [+0.092, +0.139]** (n=1064) — excludes zero comfortably.
 - MS-CXR box-verifier (trained vs greedy): **[to fill]**

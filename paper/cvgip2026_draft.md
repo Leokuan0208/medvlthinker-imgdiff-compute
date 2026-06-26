@@ -688,7 +688,8 @@ trained 0.414 / 0.426.)
 
 **Training is the active ingredient.** Zero-shot self-verification (P(True) [Kadavath’22]) is luck-floored —
 *below greedy* on PathVQA (0.319) — yet LoRA-training the same model on judge labels captures **49% of the
-oracle gap pooled across all four datasets** (+0.088 over greedy), lifting **every dataset** (PathVQA +0.089,
+oracle gap pooled across all four datasets** (+0.088 over greedy; best-of-8 vs single-sample +0.116, 95%
+bootstrap CI [+0.092, +0.139], n=1064 — excludes zero), lifting **every dataset** (PathVQA +0.089,
 Kvasir +0.123, VQA-RAD +0.092, SLAKE +0.024), vs ≤24% for every training-free selector and *below-greedy* for
 zero-shot verification (§5.9). The correctness signal the frozen models cannot *surface* zero-shot is
 *learnable* from a few thousand labels — indeed the trained **7B** verifier beats the **zero-shot 32B**
