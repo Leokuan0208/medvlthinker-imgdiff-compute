@@ -703,10 +703,10 @@ selection is luck-floored too — training-free SC-medoid sits *below greedy*. W
 **box-verifier** (LoRA-Qwen2.5-VL judging "does this box localize the {organ}?", IoU≥0.3 = label) and select
 best-of-8 boxes on SLAKE: SC-medoid 0.164 and a *zero-shot* box-verifier 0.177 (both ≤ greedy 0.197,
 luck-floored) → **trained box-verifier 0.255** (oracle 0.343) — **+0.09 over the luck floor, capturing 40% of
-the oracle gap**, the same fraction as the free-text verifier. **This replicates on the full real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
+the oracle gap**, the same fraction as the free-text verifier (robust across two seeds: trained 0.255/0.257). **This replicates on the full real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
 pathology, PhysioNet, 1448 boxes, n=435 held-out): SC-medoid 0.053 (luck-floored) → **trained box-verifier
 0.230** (greedy 0.041, oracle@8 0.285, IoU≥0.3) — **+0.19, capturing 77% of the oracle gap** (~9 s.e., a 5.6×
-lift over greedy; it lifts *selection* over a weak base grounder, not the grounding itself — the SOTA grounder
+lift over greedy; robust across two seeds: trained 0.230/0.248, 77%/76% of gap; it lifts *selection* over a weak base grounder, not the grounding itself — the SOTA grounder
 MedGround-R1 is a better, unreleased base). Training is again the active ingredient: a **zero-shot** box-verifier
 (the same untrained Qwen judging the boxes) reaches only 0.115 (30% of the gap), so LoRA-training **doubles**
 the captured gap (30%→77%) — though, unlike free-text zero-shot verification (which sits *below* greedy),
