@@ -708,7 +708,8 @@ lift over greedy; it lifts *selection* over a weak base grounder, not the ground
 MedGround-R1 is a better, unreleased base).
 So *training* is the universal active ingredient that breaks the luck floor — across free-text answers AND
 verifiable structured outputs, on five open-ended datasets and two grounding benchmarks — whereas every
-*training-free* selector (§5.9) is luck-bound in both. `[REPRO: src/training_methods/run_lora_box_verifier.py]`
+*training-free* selector (§5.9) is luck-bound in both (Fig. `figs/limits/fig_trained_verifier_unified.png`).
+`[REPRO: src/training_methods/run_lora_box_verifier.py]`
 
 ---
 
