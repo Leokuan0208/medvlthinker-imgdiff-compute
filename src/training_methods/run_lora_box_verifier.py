@@ -58,8 +58,11 @@ ntr=int(0.7*len(idx)); tr_ix=set(idx[:ntr]); te_ix=set(idx[ntr:])
 proc=AutoProcessor.from_pretrained(A.model_path)
 YES=proc.tokenizer.encode("Yes",add_special_tokens=False)[0]; NO=proc.tokenizer.encode("No",add_special_tokens=False)[0]
 def draw(img_path, box):
-    im=Image.open(img_path).convert("RGB"); d=ImageDraw.Draw(im)
-    if box: d.rectangle([box[0],box[1],box[2],box[3]], outline=(255,0,0), width=max(2,im.size[0]//100))
+    im=Image.open(img_path).convert("RGB"); d=ImageDraw.Draw(im); W,H=im.size
+    if box:
+        x0,x1=sorted([max(0,min(box[0],W)), max(0,min(box[2],W))])
+        y0,y1=sorted([max(0,min(box[1],H)), max(0,min(box[3],H))])
+        if x1>x0 and y1>y0: d.rectangle([x0,y0,x1,y1], outline=(255,0,0), width=max(2,W//100))
     return im
 def encode(img_path, label, box, lab=None):
     im=draw(img_path, box)
