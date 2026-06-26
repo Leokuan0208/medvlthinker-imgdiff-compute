@@ -699,9 +699,9 @@ image). `[REPRO: src/training_methods/verifier_image_ablation.py]`
 **The principle generalizes from free-text to *structured* outputs.** §5.9 showed grounding (bounding-box)
 selection is luck-floored too — training-free SC-medoid sits *below greedy*. We train the analogous
 **box-verifier** (LoRA-Qwen2.5-VL judging "does this box localize the {organ}?", IoU≥0.3 = label) and select
-best-of-8 boxes on SLAKE: SC-medoid 0.164 (luck-floored) → **trained box-verifier 0.255** (greedy 0.197,
-oracle 0.343) — **+0.09 over the luck floor, capturing 40% of the oracle gap**, the same fraction as the
-free-text verifier. **This replicates on the full real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
+best-of-8 boxes on SLAKE: SC-medoid 0.164 and a *zero-shot* box-verifier 0.177 (both ≤ greedy 0.197,
+luck-floored) → **trained box-verifier 0.255** (oracle 0.343) — **+0.09 over the luck floor, capturing 40% of
+the oracle gap**, the same fraction as the free-text verifier. **This replicates on the full real, standard MS-CXR phrase-grounding benchmark** (chest-X-ray
 pathology, PhysioNet, 1448 boxes, n=435 held-out): SC-medoid 0.053 (luck-floored) → **trained box-verifier
 0.230** (greedy 0.041, oracle@8 0.285, IoU≥0.3) — **+0.19, capturing 77% of the oracle gap** (~9 s.e., a 5.6×
 lift over greedy; it lifts *selection* over a weak base grounder, not the grounding itself — the SOTA grounder
