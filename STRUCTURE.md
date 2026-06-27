@@ -1,5 +1,9 @@
 # Repository Structure & File Guide
 
+> **New here? Read `READING_GUIDE.md` first** — it's the step-by-step *reading order* (which section of which
+> file, and why) to understand the whole research process. This file (STRUCTURE.md) is the *file index* it
+> points you to.
+>
 > **What this is.** A map of the whole repo: every directory, and a one-line purpose for every script.
 > Generated 2026-06-26. Companion to `CLAUDE.md` (which holds the project context + the safety rules).
 >
