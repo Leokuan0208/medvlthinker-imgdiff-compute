@@ -126,7 +126,7 @@ and it transfers to a 5th it never saw):
 - It's **statistically significant** (bootstrap confidence intervals exclude zero on both headline results).
 - It's a **test-time-scaling method**: give it more samples, it gets better (random selection does not).
 - **Test-time compute beats parameters:** the small 7B *with the verifier* (0.501) beats the big 32B's single
-  answer (0.444) — because, for these questions, thinking bigger barely helps but *checking* helps a lot.
+  answer (0.462, same questions) — because, for these questions, thinking bigger barely helps but *checking* helps a lot.
 
 `figs/limits/fig_trained_verifier_unified.png`
 `figs/limits/fig_verifier_discrimination.png`
