@@ -35,7 +35,7 @@ bounding-box outputs. Error correlation explains it: the cheap and strong models
    **MS-CXR** chest-X-ray pathology benchmark **78%**, a 5.6× lift; bootstrap-significant). The verifier
    discriminates correct from incorrect candidates at **AUROC 0.924**, beats a zero-shot 32B verifier despite
    being 5× smaller, behaves as a genuine test-time-scaling method, and — because reasoning barely helps
-   open-ended — **a 7B with the verifier (0.501) beats the 32B's single pass (0.444)**: test-time compute
+   open-ended — **a 7B with the verifier (0.501) beats the 32B's single pass (0.462, same held-out split)**: test-time compute
    beats parameters where parameters do not help.
 
 The connective insight: **training-free routing/selection over a frozen model is luck-floored; the two
@@ -354,10 +354,10 @@ Best-of-K accuracy rises monotonically with the sample budget while random stays
 diminishing returns. So the verifier converts test-time compute into accuracy — the defining TTS property.
 
 **Compute beats parameters where parameters don't help.** Because reasoning barely improves open-ended
-medical VQA (§5.3), the 32B's single pass scores only **0.444** pooled — *below* the 7B with verifier-bo8
+medical VQA (§5.3), the 32B's single pass scores only **0.462** (same held-out split) pooled — *below* the 7B with verifier-bo8
 (**0.501**), at ~3.7× the 32B's param-FLOPs. Per dataset the 7B+verifier beats the 32B exactly where scaling
-fails — VQA-RAD 0.611 vs 0.600, PathVQA 0.441 vs 0.376, Kvasir 0.405 vs 0.301 — and loses only on SLAKE
-(0.762 vs 0.819), the one set where the 32B is genuinely the stronger model
+fails — PathVQA 0.441 vs 0.377 and Kvasir 0.405 vs 0.326 (the two hardest sets) — and loses on the two where
+the 32B is genuinely stronger, SLAKE (0.762 vs 0.829) and VQA-RAD (0.611 vs 0.648)
 (Fig. `figs/limits/fig_verifier_pareto.png`). The verifier is thus the accuracy-optimal operating point, not
 dominated by simply using a 5×-larger model.
 

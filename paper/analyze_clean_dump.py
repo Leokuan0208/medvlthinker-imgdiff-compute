@@ -37,9 +37,9 @@ for ds in DS:
 tot=sum(tab[d]["n"] for d in DS)
 pool={m:sum((tab[d][m] or 0)*tab[d]["n"] for d in DS)/tot for m in METH}; pool["n"]=tot
 tab["POOLED"]=pool
-print(f"{'dataset':<14}"+''.join(f'{m[:8]:>9}' for m in METH)+f'{\"n\":>6}')
+print(f"{'dataset':<14}"+''.join(f'{m[:8]:>9}' for m in METH)+f"{'n':>6}")
 for ds in DS+["POOLED"]:
-    print(f"{ds:<14}"+''.join((f'{tab[ds][m]:>9.3f}' if tab[ds][m] is not None else f'{\"-\":>9}') for m in METH)+f"{tab[ds]['n']:>6}")
+    print(f"{ds:<14}"+''.join((f'{tab[ds][m]:>9.3f}' if tab[ds][m] is not None else f"{'-':>9}") for m in METH)+f"{tab[ds]['n']:>6}")
 json.dump(tab, open(os.path.join(ROOT,"ckpts/train/lora_verifier_pooled4/peer_comparison.json"),"w"), indent=1)
 
 # best-of-K accuracy-compute curve (pooled), cost in 7B-forward-equiv: bo-K = 2K (K gen + K verify); 32B single = 4.3

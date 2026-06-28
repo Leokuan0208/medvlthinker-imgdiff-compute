@@ -8,11 +8,8 @@ def TBL(headers, rows, ours_idx=None):
         body+=f"<tr{cls}>"+"".join(f"<td>{c}</td>" for c in r)+"</tr>"
     return f"<div class='tbl-wrap'><table><thead><tr>{h}</tr></thead><tbody>{body}</tbody></table></div>"
 
-VER = (peer or {}).get("POOLED",{}).get("verifier") or 0.501
-GRE = (peer or {}).get("POOLED",{}).get("greedy") or 0.413
-SCC = (peer or {}).get("POOLED",{}).get("self_consistency") or 0.411
-M32 = (peer or {}).get("POOLED",{}).get("m32b") or 0.444
-ORC = (peer or {}).get("POOLED",{}).get("oracle") or 0.592
+# CANONICAL same-split (held-out n=1064), VERIFIED_FACTS §F
+VER, GRE, SCC, M32, ORC = 0.501, 0.413, 0.411, 0.462, 0.592
 
 # S1 COVER
 S.append(slide(f'''<div class="cover">
@@ -97,16 +94,16 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>6 · The baselin
 <div class="callout note">These are exactly the selectors the test-time-scaling literature benchmarks. Question: do any of them work in <b>medical</b> VQA?</div>'''))
 
 # S8 the wall: training-free selection fails
-land_rows=[["SLAKE","0.722","0.736","0.819","0.879"],["VQA-RAD","0.420","0.465","0.600","0.630"],
-["PathVQA","0.295","0.324","0.376","0.517"],["Kvasir","0.287","0.286","0.301","0.491"],
-["POOLED (n=3545)","0.377","0.394","0.444","0.580"]]
+land_rows=[["SLAKE","0.738","0.738","0.829","0.895"],["VQA-RAD","0.519","0.500","0.648","0.722"],
+["PathVQA","0.352","0.349","0.377","0.513"],["Kvasir","0.282","0.282","0.326","0.493"],
+["POOLED (n=1064)","0.413","0.411","0.462","0.592"]]
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>7 · Experiment — do the standard selectors work?</div>
 <h2 class="slide-h sm">No. Training-free selection barely moves, despite huge headroom</h2>
 '''+TBL(["dataset","greedy","self-consistency","32B (scale-up)","oracle@8"], land_rows)+'''
 <ul class="body">
-<li><b>Self-consistency barely beats greedy</b> (0.394 vs 0.377; on Kvasir it's <i>below</i> greedy). The reason — the <b>majority trap</b>: the correct answer is a <i>minority</i> vote in 74–90% of recoverable cases, so majority voting picks the wrong one.</li>
-<li><b>Scaling up</b> to the 5× larger 32B only reaches 0.444.</li>
-<li>Yet the <b>oracle is 0.58</b> — the right answer is usually <i>in</i> the 8 samples; we just can't pick it.</li>
+<li><b>Self-consistency does not beat greedy</b> (0.411 vs 0.413 — actually below it). The reason — the <b>majority trap</b>: the correct answer is a <i>minority</i> vote in 74–90% of recoverable cases, so majority voting picks the wrong one.</li>
+<li><b>Scaling up</b> to the 5× larger 32B only reaches 0.462 (same questions).</li>
+<li>Yet the <b>oracle is 0.59</b> — the right answer is usually <i>in</i> the 8 samples; we just can't pick it.</li>
 </ul>'''))
 
 # S9 insight / hook
@@ -130,21 +127,14 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>9 · The me
 
 # S11 headline result (filled from peer_comparison if available)
 def per_rows():
-    if not peer:
-        return [["PathVQA","0.352","0.349","0.376","0.441","0.513"],["Kvasir","0.282","0.282","0.301","0.405","0.493"],
-                ["VQA-RAD","0.519","0.500","0.600","0.611","0.722"],["SLAKE","0.738","0.738","0.819","0.762","0.895"],
-                ["POOLED","0.413","0.411","0.444","0.501","0.592"]]
-    nm={"slake_open":"SLAKE","vqa_rad_open":"VQA-RAD","pathvqa_open":"PathVQA","kvasir_open":"Kvasir","POOLED":"POOLED"}
-    out=[]
-    for ds in ["pathvqa_open","kvasir_open","vqa_rad_open","slake_open","POOLED"]:
-        t=peer.get(ds,{});
-        out.append([nm[ds],fmt(t.get("greedy")),fmt(t.get("self_consistency")),fmt(t.get("m32b")),fmt(t.get("verifier")),fmt(t.get("oracle"))])
-    return out
+    return [["PathVQA","0.352","0.349","0.377","0.441","0.513"],["Kvasir","0.282","0.282","0.326","0.405","0.493"],
+            ["VQA-RAD","0.519","0.500","0.648","0.611","0.722"],["SLAKE","0.738","0.738","0.829","0.762","0.895"],
+            ["POOLED","0.413","0.411","0.462","0.501","0.592"]]
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>10 · Result — the verifier beats every baseline</div>
 <h2 class="slide-h sm">It beats self-consistency, the bigger model, and recovers ~half the gap</h2>
 '''+TBL(["dataset","greedy","self-consist.","32B scale-up","<b>verifier (ours)</b>","oracle@8"], per_rows())+
 img("paper/figs/limits/fig_peer_comparison.png","Pooled accuracy: the trained verifier (teal) beats greedy, self-consistency, and the 5×-larger 32B; oracle is the ceiling.")+'''
-<div class="callout win"><b>The headline:</b> ours captures <b>49%</b> of the oracle gap, beats the 5×-larger model, and (per-dataset) wins on PathVQA / Kvasir / VQA-RAD, losing only on SLAKE where the 32B is genuinely stronger.</div>'''))
+<div class="callout win"><b>The headline:</b> ours captures <b>49%</b> of the oracle gap, beats the 5×-larger model on the same questions (0.501 vs 0.462), and (per-dataset) beats the 32B on the harder sets (PathVQA 0.441 vs 0.377; Kvasir 0.405 vs 0.326), while the 32B wins on SLAKE and VQA-RAD.</div>'''))
 
 # S12 why trust it
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why we trust it</div>
