@@ -103,7 +103,7 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>6 · The baselin
 <dt>Greedy</dt><dd>just take the first/most-likely answer. The deploy default.</dd>
 <dt>Self-consistency / majority vote <span class="src">(Wang et al., ICLR 2023)</span></dt><dd>take the answer that appears most often across the N samples. The standard, widely-used selector.</dd>
 <dt>Self-verification, P(True) <span class="src">(Kadavath et al., 2022)</span></dt><dd>ask the model "is this answer correct?" and use its Yes-probability to rank.</dd>
-<dt>Self-certainty best-of-N <span class="src">(NeurIPS 2025, arXiv:2502.18581)</span></dt><dd>rank samples by the model's own output-distribution certainty — recent training-free SOTA.</dd>
+<dt>Self-certainty best-of-N <span class="src">(NeurIPS 2025, arXiv:2502.18581)</span></dt><dd>rank samples by the model's own output-distribution certainty — recent training-free SOTA. (Needs per-sample logprobs we didn't store; being training-free it shares the majority trap, so we benchmark the self-consistency and self-verify members directly and expect self-certainty to be luck-floored too.)</dd>
 <dt>Oracle@N</dt><dd>an impossible upper bound: always pick a correct sample if one exists. Measures the headroom.</dd>
 </dl>
 <div class="callout note">These are exactly the selectors the test-time-scaling literature benchmarks. Question: do any of them work in <b>medical</b> VQA?</div>'''))
@@ -156,7 +156,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>10 · Resul
 <h2 class="slide-h sm">It beats self-consistency, the bigger model, and recovers ~half the gap</h2>
 '''+TBL(["dataset","greedy","self-consist.","32B scale-up","<b>verifier (ours)</b>","oracle@8"], per_rows())+
 img("paper/figs/limits/fig_peer_comparison.png","Pooled accuracy: the trained verifier (teal) beats greedy, self-consistency, and the 5×-larger 32B; oracle is the ceiling.")+'''
-<div class="callout win"><b>The headline:</b> ours captures <b>49%</b> of the oracle gap, beats the 5×-larger model on the same questions (0.501 vs 0.462), and (per-dataset) beats the 32B on the harder sets (PathVQA 0.441 vs 0.377; Kvasir 0.405 vs 0.326), while the 32B wins on SLAKE and VQA-RAD.</div>'''))
+<div class="callout win"><b>The headline:</b> ours captures <b>49%</b> of the oracle gap, beats the 5×-larger model on the same questions (0.501 vs 0.462), and (per-dataset) beats the 32B on the harder sets (PathVQA 0.441 vs 0.377; Kvasir 0.405 vs 0.326), while the 32B wins on SLAKE and VQA-RAD. <i>(Per-dataset splits are small — VQA-RAD n=54 — so read per-dataset signs as directional; the pooled win, n=1064, is the solid claim.)</i></div>'''))
 
 # S12 why trust it
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why we trust it</div>

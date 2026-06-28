@@ -373,7 +373,8 @@ diminishing returns. So the verifier converts test-time compute into accuracy �
 medical VQA (§5.3), the 32B's single pass scores only **0.462** (same held-out split) pooled — *below* the 7B with verifier-bo8
 (**0.501**), at ~3.7× the 32B's param-FLOPs. Per dataset the 7B+verifier beats the 32B exactly where scaling
 fails — PathVQA 0.441 vs 0.377 and Kvasir 0.405 vs 0.326 (the two hardest sets) — and loses on the two where
-the 32B is genuinely stronger, SLAKE (0.762 vs 0.829) and VQA-RAD (0.611 vs 0.648)
+the 32B is genuinely stronger, SLAKE (0.762 vs 0.829) and VQA-RAD (0.611 vs 0.648; per-dataset n are small —
+VQA-RAD n=54 — so per-dataset signs are directional, the pooled n=1064 win is the solid claim)
 (Fig. `figs/limits/fig_verifier_pareto.png`). The verifier is thus the accuracy-optimal operating point, not
 dominated by simply using a 5×-larger model.
 
