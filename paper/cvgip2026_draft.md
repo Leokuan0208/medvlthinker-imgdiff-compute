@@ -362,9 +362,15 @@ GenRM; the contribution is its *application + unification* — inference-time be
 VQA and grounding**, as a constructive counter to Verification-Mirage. We do not claim new signals or new
 reward-model machinery.
 
-**Honest scope.** ACC parity is on the competent benchmarks (MMMU/MedXpert excluded as near-chance for both
-models). The verifier lifts *selection over a frozen generator*; it does not beat a trained SOTA grounder in
-absolute IoU. Latency/energy are calibrated batch-1 (Eq. 1), not a single end-to-end wall-clock; FLOPs are
+**Honest scope.** The ACC over-thinking premise (no-think ≥ think) holds on the *perception* benchmarks
+(COMPETENT-4: SLAKE/VQA-RAD/PathVQA/PMC). **MMMU-medical is competent (32B-think 0.688), not near-chance** —
+but it is a *reasoning* benchmark where thinking helps (no-think 0.624 < think 0.688), so the over-thinking
+mechanism does not apply to it; **MedXpert-MM is the genuinely near-chance set** (7B at/below the 4-option
+chance level, 0.23–0.26) and is excluded from headline efficiency claims. Both still appear in the full ALL-6
+tables. The verifier (open-ended) is evaluated on the datasets that *have* free-text answers — SLAKE,
+VQA-RAD, PathVQA (the core three), plus Kvasir (OOD) and RadImageNet (transfer); PMC-VQA and MMMU are
+MCQ-only, so they are absent by *format*, not by selection. The verifier lifts *selection over a frozen
+generator*; it does not beat a trained SOTA grounder in absolute IoU. Latency/energy are calibrated batch-1 (Eq. 1), not a single end-to-end wall-clock; FLOPs are
 exact. The free-text per-dataset spread is wide (SLAKE 15% — little headroom — to Kvasir 58%); the 40–78%
 headline is the cross-output-type range.
 

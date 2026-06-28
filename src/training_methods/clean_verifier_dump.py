@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Best-of-N test-time-scaling curve for the trained free-text verifier: does verifier-selected accuracy
+keep improving as you sample more (K=1,2,4,8)? Loads the pooled-4 adapter, scores all 8 samples per
+held-out question (seed-0 grouped split = the §5.10 test set), then computes verifier-best-of-K vs oracle@K
+vs random@K for K in {1,2,4,8}. A rising verifier curve = the method benefits from test-time compute.
+  HF_HOME=/data/dan/hf_cache CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/verifier_scaling_curve.py
+"""
+import os, json, glob, io, math, random
+import numpy as np, torch
+from collections import defaultdict
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from qwen_vl_utils import process_vision_info
+from peft import PeftModel
+from PIL import Image
+ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
+ADAPTER="ckpts/train/lora_verifier_pooled4"; MODEL="lingshu-medical-mllm/Lingshu-7B"; SEED=0
+SC=os.environ.get("SC_TAG","sc8")           # sc8 (K<=8) or sc16 (K<=16)
+KS=[1,2,4,8,16] if SC=="sc16" else [1,2,4,8]
+OUTNAME="scaling_curve16.json" if SC=="sc16" else "scaling_curve.json"
+DEV="cuda"; MAXPX,MINPX=1280*28*28,4*28*28
+SYS=("You are a careful medical exam grader. Given a question and a proposed answer, decide whether the "
+     "proposed answer is correct. Respond with only 'Yes' or 'No'.")
+CK=os.path.join(ROOT,"ckpts/openvqa/cheap_lingshu7b")
+def loadj(p): return {r["idx"]:r for r in (json.loads(l) for l in open(p) if l.strip())} if os.path.exists(p) else {}
+def norm(s): return str(s).strip().lower()
+def slake_imgs():
+    m={}
+    for x in json.load(open("/data/dan/dataset/slake/test.json")):
+        if x.get("answer_type")=="OPEN" and x.get("q_lang")=="en":
+            ip=os.path.join("/data/dan/dataset/slake/imgs",x["img_name"])
+            if os.path.exists(ip): m[x["qid"]]=(x["question"],ip)
+    return m
+def parquet_imgs(base):
+    import pandas as pd; m={}
+    df=pd.concat([pd.read_parquet(f) for f in sorted(glob.glob(f"{base}/test-*.parquet"))],ignore_index=True)
+    for i,r in df.iterrows():
+        q=r.get("question"); a=r.get("answer")
+        if q is None and "conversations" in r:
+            conv=r["conversations"]; q=conv[0]["value"].replace("<image>","").strip(); a=conv[1]["value"]
+        if str(a).strip().lower() in ("yes","no"): continue
+        img=r["image"]
+        if isinstance(img,dict) and "bytes" in img: m[int(i)]=(str(q),Image.open(io.BytesIO(img["bytes"])).convert("RGB"))
+    return m
+def kvasir_imgs():
+    m={}
+    for r in json.load(open("/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json")):
+        if os.path.exists(r["img_path"]): m[r["idx"]]=(r["question"],r["img_path"])
+    return m
+IMG={"slake_open":slake_imgs(),"pathvqa_open":parquet_imgs("/data/dan/dataset/path_vqa/data"),
+     "vqa_rad_open":parquet_imgs("/data/dan/dataset/vqa_rad/data"),"kvasir_open":kvasir_imgs()}
+QREC={}
+for ds in ["slake_open","pathvqa_open","vqa_rad_open","kvasir_open"]:
+    sc=loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}.jsonl"); exp=loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}_scexploded.jsonl")
+    jud={k:v["judge_ok"] for k,v in loadj(f"{CK}/ckpt_{ds}_lingshu7b_{SC}_scexploded.judge.jsonl").items()}
+    aj=defaultdict(dict)
+    for cid,r in exp.items():
+        if cid in jud:
+            oi=cid.split("#")[0]; oi=int(oi) if oi.lstrip("-").isdigit() else oi
+            aj[oi][norm(r["modal_pred"])]=jud[cid]
+    for i in sc:
+        if i in IMG[ds] and i in aj:
+            q,img=IMG[ds][i]; QREC[(ds,i)]={"q":q,"img":img,"preds":sc[i]["preds"],"slabels":aj[i]}
+keys=list(QREC.keys()); rng=random.Random(SEED); rng.shuffle(keys)
+test_keys=keys[int(0.7*len(keys)):]
+print(f"test questions={len(test_keys)}",flush=True)
+proc=AutoProcessor.from_pretrained(MODEL)
+YES=proc.tokenizer.encode("Yes",add_special_tokens=False)[0]; NO=proc.tokenizer.encode("No",add_special_tokens=False)[0]
+print("loading base + pooled-4 adapter...",flush=True)
+model=AutoModelForImageTextToText.from_pretrained(MODEL,torch_dtype=torch.bfloat16,attn_implementation="flash_attention_2").to(DEV)
+model=PeftModel.from_pretrained(model,os.path.join(ROOT,ADAPTER)); model.eval()
+def pyes(q,img,a):
+    msgs=[{"role":"system","content":SYS},{"role":"user","content":[
+        {"type":"image","image":img,"max_pixels":MAXPX,"min_pixels":MINPX},
+        {"type":"text","text":f"Question: {q}\nProposed answer: {a}\nIs the proposed answer correct? Answer Yes or No."}]}]
+    text=proc.apply_chat_template(msgs,tokenize=False,add_generation_prompt=True)
+    igs,vids=process_vision_info(msgs); enc=proc(text=[text],images=igs,videos=vids,return_tensors="pt",padding=True).to(DEV)
+    with torch.no_grad():
+        lg=model(**enc).logits[0,-1]; return math.exp(lg[YES].item())/(math.exp(lg[YES].item())+math.exp(lg[NO].item())+1e-9)
+# clean per-question dump for the offline baseline + cascade analysis (ds, idx, answer texts, judge labels, verifier scores)
+recs=[]
+for k in test_keys:
+    ds,idx=k; r=QREC[k]; preds=r["preds"]; sl=[r["slabels"].get(norm(a)) for a in preds]
+    if all(x is None for x in sl): continue
+    sc=[pyes(r["q"],r["img"],a) for a in preds]
+    recs.append({"ds":ds,"idx":idx,"preds":preds,"sl":[(-1 if x is None else int(x)) for x in sl],"sc":sc})
+out=os.path.join(ROOT,"ckpts/train/lora_verifier_pooled4/clean_dump.json")
+json.dump(recs, open(out,"w")); print(f"dumped {len(recs)} records -> {out}",flush=True)
