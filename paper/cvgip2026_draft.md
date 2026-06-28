@@ -302,6 +302,19 @@ L(φ) = −Σ [ y·log s_φ + (1−y)·log(1−s_φ) ].                         
 Given N samples `a₁…a_N ~ M(·|v,q)`, **best-of-N selection** returns `â = argmax_{i≤N} s_φ(v,q,aᵢ)` (Eq. 4),
 and we report gap-captured by Eq. (2) against the greedy baseline.
 
+**Why a 32B-judged 7B verifier beating the 32B is not circular.** The LLM judge is an *automated grader*,
+not a knowledge oracle: its sole job is deciding whether a free-text answer matches the **gold** answer
+(a semantic substitute for exact-match, which is too brittle for free text). The labels `y` therefore derive
+from the dataset **answer key**, not from the 32B's medical knowledge — the grader could be a human or
+exact-match. The verifier (a frozen 7B + LoRA) is trained only on the **7B's own samples** and learns to
+*discriminate* correct answers, a strictly easier task than *generating* them: the 7B's N samples already
+contain a correct answer in 59% of pooled cases (the oracle), so the verifier need only identify it — which
+is why a *7B* selector suffices and imports no 32B capability. The comparison is thus between two deployment
+strategies — scaling to a 5× model *zero-shot* vs. sampling a small model + a small *supervised* verifier —
+and the latter wins; the in-domain supervision (a few thousand gold labels) is precisely the contribution
+(and its cost). AUROC 0.924 and the −0.047 image-ablation confirm the verifier learned genuine visual
+discrimination, not judge-mimicry (the judge needs the gold answer; the verifier does not).
+
 ### 6.1 Free-text answers: 49% of the oracle gap (pooled over four datasets)
 
 | dataset | greedy | self-consist. | zero-shot 32B verify | **trained verifier** | oracle@8 | gap captured |

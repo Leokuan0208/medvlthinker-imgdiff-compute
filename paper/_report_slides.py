@@ -49,19 +49,34 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>2 · Setup &amp;
 <dt>AUROC</dt><dd>$P(\\text{score(correct)} > \\text{score(wrong)})$ — how well a score separates right from wrong. 0.5 = useless, 1.0 = perfect.</dd>
 </dl></div></div>'''))
 
-# S4 ACC recap with math + peers
-acc_rows=[["always-32B-think (parity)","0.572","100%","11.34 s","6319 J"],
-["MSP/Chow gate (Chow'70)","0.570","57%","2.96 s","1568 J"],
-["AutoMix self-verify","0.569","55%","2.50 s","1307 J"],
-["FrugalGPT-style learned (Chen'23)","0.568","60%","3.30 s","1766 J"],
-["Jitkrittum L2D (NeurIPS'23)","0.567","51%","2.29 s","1195 J"],
-["Ours: ACC (agreement)","0.569","52%","2.27 s","1182 J"]]
+# S4 ACC method + gate peers EXPLAINED + which SOTA
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 · The efficiency result, now with math + peers</div>
-<h2 class="slide-h sm">ACC: same accuracy, ~⅕ the latency — and it beats published gates</h2>
-<p class="body"><b>Idea.</b> The 32B's <i>fast</i> mode is as good as its slow mode on perception questions (SLAKE 0.849 no-think vs 0.764 think) — thinking <i>over-thinks</i> them. So we add the 32B-fast as a middle tier and fire the slow tier only when the two fast legs <b>disagree</b>:</p>
-<div class="eq">$$\\text{fire slow tier} \\iff \\mathbb{1}[\\hat y_{7B}\\neq\\hat y_{32B\\text{-fast}}]+\\epsilon(-m)>\\tau \\quad(\\text{“iff” = if and only if});\\quad \\text{cost } C=c_0+e_0 c_1+e_1 c_2$$</div>
-'''+TBL(["system (6-benchmark avg, equal accuracy)","acc","FLOPs","latency","energy"], acc_rows)+'''
-<div class="callout win"><b>Result:</b> at equal accuracy, latency 11.34 s → <b>2.27 s</b>, energy ~5× lower, compute halved. Every published gate (MSP/Chow, AutoMix, FrugalGPT, Jitkrittum L2D) lands on the same frontier — <b>the win is the 3-tier structure, not the gate</b>. (Full 10-method table + 5 model families in the paper.)</div>'''))
+<h2 class="slide-h sm">ACC, and the cascade gates we compare against</h2>
+<p class="body"><b>Idea.</b> The 32B\'s <i>fast</i> (no-think) mode is as good as its slow (think) mode on perception questions (SLAKE 0.849 vs 0.764) — thinking <i>over-thinks</i> them. So we insert the 32B-fast as a middle tier and fire the slow tier only when the two fast legs <b>disagree</b> ("iff" = if and only if):</p>
+<div class="eq">$$\\text{fire slow tier} \\iff \\mathbb{1}[\\hat y_{7B}\\neq\\hat y_{32B\\text{-fast}}]+\\epsilon(-m)>\\tau;\\qquad \\text{cost } C=c_0+e_0c_1+e_1c_2$$</div>
+<p class="body"><b>The gates we benchmark (each = a published way to decide "escalate?"):</b></p>
+<dl class="def">
+<dt>Confidence / MSP / Chow\'s rule <span class="src">(Chow 1970; Hendrycks &amp; Gimpel, ICLR 2017)</span></dt><dd>escalate when the model\'s top answer probability is low. The classic baseline.</dd>
+<dt>Entropy / Gini (DOCTOR)</dt><dd>escalate on high spread of the answer distribution.</dd>
+<dt>AutoMix <span class="src">(Madaan et al., 2023)</span></dt><dd>escalate based on the model self-verifying its own answer.</dd>
+<dt>FrugalGPT <span class="src">(Chen et al., 2023)</span></dt><dd>a <i>learned</i> cost-aware scorer that decides when the cheap answer suffices.</dd>
+<dt>Jitkrittum L2D <span class="src">(NeurIPS 2023)</span></dt><dd>the <b>theoretically-optimal</b> learned deferral rule — the strongest principled gate; our main learned baseline.</dd>
+<dt>CAR <span class="src">(arXiv 2505.15154, 2025)</span></dt><dd>certainty-based adaptive routing for <i>multimodal</i> models — the <b>closest prior art</b> to ACC\'s think-gating.</dd>
+</dl>
+<div class="callout note"><b>What we compare to:</b> the accuracy ceiling is <b>always-32B-think</b> (parity); the efficiency baseline is the standard 2-tier confidence cascade. The SOTA peers above are the published gates; CAR is the nearest multimodal prior art, Jitkrittum L2D the strongest learned one.</div>'''))
+
+# S4b ACC result table + FLOPs-vs-latency explanation + the cluster finding
+acc_rows=[["always-32B-think (parity, ceiling)","0.572","100%","11.34 s","6319 J"],
+["Jitkrittum L2D (learned, NeurIPS\'23)","0.567","51%","2.29 s","1195 J"],
+["FrugalGPT-style learned (Chen\'23)","0.568","60%","3.30 s","1766 J"],
+["AutoMix self-verify (\'23)","0.569","55%","2.50 s","1307 J"],
+["MSP/Chow confidence","0.570","57%","2.96 s","1568 J"],
+["Ours: ACC (agreement gate)","0.569","52%","2.27 s","1182 J"]]
+S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 (cont.) · ACC result — same accuracy, ~⅕ the latency</div>
+<h2 class="slide-h sm">Every gate clusters: the win is the structure, not the gate</h2>
+'''+TBL(["ALL-6, at equal accuracy","acc","FLOPs","latency","energy"], acc_rows)+'''
+<div class="callout win"><b>Result:</b> at parity accuracy, latency 11.34 s → <b>2.27 s</b> (−80%), energy ~5× lower, FLOPs halved. Holding the 3-tier structure fixed, <b>all gates land in the same cluster</b> (FLOPs ~50–60%, latency ~2–3 s) — so ACC\'s advantage is the <b>3-tier structure</b>, not a cleverer gate. On <b>ALL-5</b> (excluding near-chance MedXpert) it is sharper still: <b>8.88 s → 0.44 s (−95%)</b>, FLOPs to 25%. (Full 10-method × 5-family table in the paper.)</div>
+<div class="callout honest"><b>Why FLOPs and latency don\'t move together</b> (e.g. ACC has slightly higher FLOPs than Jitkrittum, 52% vs 51%, yet lower latency, 2.27 vs 2.29 s): <b>FLOPs</b> is dominated by the parallel image <b>prefill</b>, paid on every 32B escalation — even the fast no-think tier (which generates only ~2 tokens). <b>Latency/energy</b> are dominated by the serial <b>think decode</b> (~hundreds of tokens). ACC escalates a bit more to the fast no-think tier (more prefill-FLOPs, almost no added latency); the two methods are otherwise tied. This is exactly why ACC\'s latency win (−80%) is larger than its FLOPs win (−48%).</div>'''))
 
 # S5 the gate is saturated
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>4 · Loop step — can we improve the gate itself?</div>
@@ -123,7 +138,14 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>9 · The me
 <div class="eq">$$s_\\phi(v,q,a)=P_\\phi(\\text{Yes}\\mid v,q,a)=\\frac{e^{z_{\\text{Yes}}}}{e^{z_{\\text{Yes}}}+e^{z_{\\text{No}}}}\\qquad(\\text{$v$=image, $q$=question, $a$=candidate answer})$$</div>
 <p class="body"><b>Training</b> (cross-entropy on the judge's correct/incorrect labels $y$; base frozen):</p>
 <div class="eq">$$\\mathcal{L}(\\phi)=-\\textstyle\\sum\\big[y\\log s_\\phi+(1-y)\\log(1-s_\\phi)\\big];\\qquad \\text{select } \\hat a=\\arg\\max_{i\\le N} s_\\phi(v,q,a_i)$$</div>
-<p class="body">We report the <b>fraction of the oracle gap captured</b>: $\\;(\\text{acc}(\\hat a)-\\text{greedy})/(\\text{oracle}-\\text{greedy})$.</p>'''))
+<p class="body">We report the <b>fraction of the oracle gap captured</b>: $\\;(\\text{acc}(\\hat a)-\\text{greedy})/(\\text{oracle}-\\text{greedy})$.</p>
+<div class="callout note"><b>What it trains on, and why a 32B-judged 7B beating the 32B isn't circular:</b>
+<ul class="body" style="margin-top:6px">
+<li><b>Trained on</b> ~6,000 <i>(image, question, candidate-answer)</i> examples from the <b>70% train split</b> (question-disjoint from the test set) of the four open-ended datasets (SLAKE/VQA-RAD/PathVQA/Kvasir); candidates are the 7B\'s own samples, labelled vs gold; <b>RadImageNet held out</b> as transfer. Base = Lingshu-7B (the open-ended generator we use) + a ~190 MB LoRA.</li>
+<li>The <b>judge</b> is an automated <i>grader</i>, not a knowledge oracle: it only checks "does this answer match the <b>gold</b> answer?" (exact-match is too brittle for free text). Labels come from the <b>answer key</b>, not the 32B's knowledge — it could be a human or exact-match.</li>
+<li>The verifier learns to <b>discriminate</b> correct answers (easy), not <b>generate</b> them (hard). The 7B's 8 samples already contain a correct answer ~59% of the time (the oracle); the verifier just learns to <b>pick</b> it. Picking is easier than knowing, so a <i>7B</i> verifier suffices — it harvests the 7B's own diversity, it does not import 32B knowledge.</li>
+<li>Fair framing: a 5× model <i>zero-shot</i> vs. a small model + a small <i>trained</i> verifier — the latter wins. Honest caveat: the verifier is supervised in-domain (a few thousand gold labels); that supervision is the contribution (and its cost).</li>
+</ul></div>'''))
 
 # S11 headline result (filled from peer_comparison if available)
 def per_rows():
@@ -150,7 +172,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why w
 
 # S13 generalization
 def cg_line():
-    if not cg: return "Cross-generator transfer — the Lingshu-trained verifier, applied to a <b>different</b> generator's answers (MedVLThinker-7B), still works: SLAKE-open greedy 0.543 → verifier <b>0.620</b> (oracle 0.701) — ~49% of the gap, same as in-distribution. The verifier is generator-agnostic."
+    if not cg: return "Cross-generator transfer — the Lingshu-trained verifier, applied to a <b>different</b> generator's answers (MedVLThinker-7B), still works: SLAKE-open 0.543 → <b>0.620</b> (49% of gap) and VQA-RAD-open 0.395 → <b>0.520</b> (61% of gap) — the verifier is generator-agnostic."
     parts=[]
     for ds,t in cg.items():
         parts.append(f"{ds.replace('_open','')}: greedy {fmt(t.get('greedy'))} → verifier <b>{fmt(t.get('verifier'))}</b> (oracle {fmt(t.get('oracle'))})")
@@ -158,10 +180,14 @@ def cg_line():
 S.append(slide(f'''<div class="eyebrow teal"><span class="dot"></span>12 · Generalization — multiple models, modalities, output types</div>
 <h2 class="slide-h sm">The verifier is not a one-dataset trick</h2>
 <ul class="body">
-<li><b>Multiple generators (multi-model):</b> {cg_line()}</li>
+<li><b>Other base model (method, not just transfer):</b> we are also training the full method from scratch on a <b>MedVLThinker-7B</b> base (result landing). <i>And</i> cross-generator transfer: {cg_line()}</li>
 <li><b>Out-of-distribution modality:</b> works on Kvasir (GI endoscopy), a modality it wasn't built around.</li>
 <li><b>Held-out transfer:</b> the pooled verifier lifts RadImageNet (never trained on) +0.024 zero-shot.</li>
-<li><b>Different output type — bounding boxes:</b> the same idea recovers 40% of the gap on SLAKE organ grounding and <b>78%</b> on the real <b>MS-CXR</b> chest-X-ray benchmark (a 5.6× lift; bootstrap CI [+0.152,+0.232]).</li>
+<li><b>Different output type — bounding boxes:</b> the same idea works for grounding (data below).</li>
+</ul>
+<div class="tbl-wrap"><table><thead><tr><th>grounding (IoU≥0.3)</th><th>greedy</th><th>SC-medoid</th><th>verifier (ours)</th><th>oracle@8</th><th>gap</th></tr></thead><tbody><tr><td>SLAKE organs (n=487)</td><td>0.197</td><td>0.164</td><td>0.255</td><td>0.343</td><td>40%</td></tr><tr class="total"><td>MS-CXR chest X-ray (n=435)</td><td>0.041</td><td>0.053</td><td>0.232</td><td>0.285</td><td>78%</td></tr></tbody></table></div>
+<p class="caption">IoU = box overlap (intersection÷union); a box is correct if IoU≥0.3. MS-CXR gain +0.191, 95% bootstrap CI [+0.152,+0.232]; "5.6× lift" = trained 0.232 ÷ greedy 0.041.</p>
+<ul class="body" style="display:none">
 </ul>'''+img("paper/figs/limits/fig_trained_verifier_unified.png","One principle across output types: training breaks the selection wall for free-text answers, organ boxes, and chest-X-ray boxes.","78%")))
 
 # S14 integration / two axes
@@ -208,5 +234,10 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>Appendix · Glos
 <dt>Recoverability / φ</dt><dd>will the big model fix the cheap model's error; φ = correlation of their right/wrong outcomes (0.37 = they fail together).</dd>
 <dt>AUROC / bootstrap CI</dt><dd>separation of right vs wrong (0.5–1.0); a confidence interval from resampling questions 2000×.</dd>
 <dt>FLOPs / latency / energy</dt><dd>compute (2N(P+G)) / wall-clock seconds / joules, all batch-1, prefill-included.</dd>
-<dt>LLM judge</dt><dd>a strong neutral 32B model grading free-text answers as correct/incorrect vs gold.</dd>
+<dt>LLM judge</dt><dd>an automated grader: a strong neutral model checking whether a free-text answer matches the <b>gold</b> answer (a semantic substitute for exact-match). Labels come from the answer key, not the grader's knowledge.</dd>
+<dt>Perception vs reasoning question</dt><dd>perception = answerable by recognising what's in the image; reasoning = needs multi-step inference. Thinking helps reasoning but over-thinks perception.</dd>
+<dt>Capacity-bound</dt><dd>the limit is the model's inherent ability/knowledge — not fixable by re-asking, re-prompting, or a better gate.</dd>
+<dt>Latent knowledge</dt><dd>knowledge a model has but can't surface on demand; the luck floor shows a correct answer is present in the samples but not identifiable training-free.</dd>
+<dt>IoU</dt><dd>intersection-over-union of predicted vs gold box; a box is correct if IoU ≥ 0.3.</dd>
+<dt>CASP-Stability</dt><dd>a <i>trained</i> cascade gate (a baseline, not ours); appears only in the full paper tables.</dd>
 </dl>'''))

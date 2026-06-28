@@ -27,7 +27,8 @@ A = ap.parse_args(); os.makedirs(os.path.join(ROOT, A.out_dir), exist_ok=True)
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28; MAXPX = HIGH_PX // A.cap_div; DEV = "cuda"
 SYS = ("You are a careful medical exam grader. Given a question and a proposed answer, decide whether the "
        "proposed answer is correct. Respond with only 'Yes' or 'No'.")
-CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
+CK = os.path.join(ROOT, os.environ.get("VERIF_CK", "ckpts/openvqa/cheap_lingshu7b"))
+TAG = os.environ.get("VERIF_TAG", "lingshu7b")  # filename model tag (e.g. "7b" for MedVLThinker)
 def loadj(p): return {r["idx"]: r for r in (json.loads(l) for l in open(p) if l.strip())} if os.path.exists(p) else {}
 def norm(s): return str(s).strip().lower()
 
@@ -67,9 +68,9 @@ if "kvasir_open" in DSETS: IMG["kvasir_open"] = kvasir_imgs()
 # ---- build per-question records + per-(idx,answer) labels from exploded judge ----
 QREC = {}   # (ds, idx) -> {"q":..,"img":..,"preds":[8], "modal":.., "slabels":{normans:0/1}}
 for ds in DSETS:
-    sc = loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8.jsonl")
-    exp = loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.jsonl")
-    jud = {k: v["judge_ok"] for k, v in loadj(f"{CK}/ckpt_{ds}_lingshu7b_sc8_scexploded.judge.jsonl").items()}
+    sc = loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8.jsonl")
+    exp = loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8_scexploded.jsonl")
+    jud = {k: v["judge_ok"] for k, v in loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8_scexploded.judge.jsonl").items()}
     aj = defaultdict(dict)
     for cid, r in exp.items():
         if cid in jud:
