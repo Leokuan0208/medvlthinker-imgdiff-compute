@@ -10,7 +10,7 @@ where to read more.*
 
 A **medical vision–language model (VLM)** takes a medical **image** (a chest X-ray, a pathology slide) plus a
 **question** and returns an **answer**. The best models are large "reasoning" models that think step by step —
-**accurate but slow and power-hungry** (a 32-billion-parameter model takes ~28 seconds and ~6 kilojoules per
+**accurate but slow and power-hungry** (a 32-billion-parameter model takes ~11 seconds and ~6 kilojoules per
 question). A small 7-billion model answers in ~0.2 seconds but is less accurate. **Our goal is efficiency:
 match the big model's accuracy for far less compute** — and, separately, to *improve* accuracy cheaply. The
 deliverable is a paper for **CVGIP 2026**.
@@ -71,7 +71,7 @@ math in `results/cascade_methods/METHOD_MATH.md`.
 
 **Honest note.** The *agreement* rule we use to decide when to think is not new (it's shared with prior
 "agreement-based cascading"). What's new is the *structure* — using the big model's fast mode as a middle
-tier. The title of the paper reflects this: "It's the compute configuration, not the gate."
+tier. The paper's thesis: the *structure* (the fast middle tier), not the gate, is the win.
 
 ---
 

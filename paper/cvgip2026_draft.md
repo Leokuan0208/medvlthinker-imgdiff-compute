@@ -5,8 +5,8 @@ checkpoints; none fabricated. Canonical source: `results/cascade_methods/GROUND_
 
 ## Abstract
 
-Deploying medical vision–language models (VLMs) is expensive: a 32B reasoning model spends ~28 s and ~6 kJ
-per question, a 7B model ~0.2 s. The natural fix is a **cascade** — answer cheaply, escalate only the hard
+Deploying medical vision–language models (VLMs) is expensive: a 32B reasoning model spends ~11 s and ~6 kJ
+per question (batch-1), a 7B model ~0.2 s. The natural fix is a **cascade** — answer cheaply, escalate only the hard
 cases — but this requires *deciding* which cases to escalate, and *what to do* once escalated. We make two
 findings that pull in opposite directions and a unifying explanation.
 
@@ -50,7 +50,7 @@ should be evaluated open-ended. We release ACC, the trained verifier, and the fu
 
 A medical VLM takes an image (radiograph, pathology slide, …) and a question, and returns an answer. The
 strongest models are large reasoning models that emit a long `<think>` trace; they are accurate but slow and
-energy-hungry (≈ 28 s, ≈ 6 kJ per question at batch 1 for a 32B), while a 7B answers directly in ≈ 0.2 s.
+energy-hungry (≈ 11 s, ≈ 6 kJ per question at batch 1 for a 32B), while a 7B answers directly in ≈ 0.2 s.
 A **cascade** — cheap model first, escalate hard cases to the expensive one — is the standard route to
 efficiency. Its quality hinges on two decisions: the **gate** (which queries to escalate) and the **action**
 (what computation to run on escalation). This paper characterizes the limits of the first and finds leverage
@@ -165,7 +165,7 @@ ACC is a three-tier cascade over *compute configurations* of the **same** two mo
 ```
 T0 = 7B no-think @cap320     (≈0.21 s)
 T1 = 32B no-think @cap320    (≈0.34 s)
-T2 = 32B think @fullres      (≈26.6 s)
+T2 = 32B think @fullres      (≈11.3 s, batch-1)
 ```
 **Why a no-think middle tier.** Reasoning *over-thinks* perception VQA: at cap320 the 32B's no-think mode
 matches or beats its think mode on competent sets — SLAKE **0.849** (no-think) vs 0.764 (think, +0.085),
@@ -186,7 +186,7 @@ agreement mechanism (3) is the ABC family; the contribution is the tiered comput
 
 **Cost.** Plugging measured per-tier costs into Eq. (1) with `e₀ = 71.7%`, `e₁ = 15.1%` (ALL-6) yields the
 savings in §5.1. The savings come from the third term: `e₁` drops from ~69% (a 2-tier 7B→think cascade) to
-15%, and `c_T2 ≈ 80·c_T1`, so the avoided think calls dominate.
+15%, and `c_T2 ≈ 33·c_T1` (and ~87× the 7B leg), so the avoided think calls dominate.
 
 ---
 

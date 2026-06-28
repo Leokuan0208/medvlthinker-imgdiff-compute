@@ -71,7 +71,7 @@ After the deployed margin gate (above), an autonomous research loop searched for
 
 - **The win is structural — the Adaptive-Compute Cascade (ACC).** A confidence-gated 3-tier cascade
   over *compute configurations*: **7B-nothink@cap320 → 32B-NOTHINK@cap320 → 32B-think@fullres**. The
-  big model's *fast* no-think mode (≈0.34s, vs ≈28s for think) is inserted as an intermediate tier,
+  big model's *fast* no-think mode (≈0.34s, vs ≈11s for think) is inserted as an intermediate tier,
   gated by its own logprob margin, so the slow reasoning pass fires only on the ~18% reasoning
   residual. Honest held-out eval with **real measured batch-1 latencies**, at accuracy parity with
   always-32B-think: **latency 11.34s→2.27s (−80%) on ALL-6, 8.88s→0.44s (−95%) on ALL-5; FLOPs 100→52% /

@@ -58,7 +58,7 @@ NEW_DIRECTIONS_2026-06-25}.md`).** Full account also in **`results/cascade_metho
 
 2. **The genuine improvement is structural: the Adaptive-Compute Cascade (ACC).** A confidence-gated
    3-tier cascade over compute *configurations*: **7B-nothink@cap320 → 32B-NO-THINK@cap320 →
-   32B-think@fullres**. The big model's *fast* no-think mode (≈0.34s vs ≈28s for think) is inserted
+   32B-think@fullres**. The big model's *fast* no-think mode (≈0.34s vs ≈11s for think) is inserted
    as an intermediate tier (gated by its own logprob margin), so the slow think pass fires only on
    the ~18% reasoning residual. Honest held-out, **real measured batch-1 latency**, at parity with
    always-32B-think: **latency 11.34s→2.27s (−80%) on ALL-6, 8.88s→0.44s (−95%) on ALL-5; FLOPs

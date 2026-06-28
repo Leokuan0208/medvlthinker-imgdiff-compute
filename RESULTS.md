@@ -27,7 +27,7 @@
 - ckpts/gate_32b_pmctrain_nothink_{cap320,fullres}/  32B no_think CALIB (for the ACC tier-1 gate).
 - ckpts/gate_7b_verify/, gate_7b_verify_cap80/, gate_7b_pmctrain_verify*/  P(True) self-verification passes.
 - results/cascade_methods/latency_{7b,32b}.jsonl  REAL batch-1 per-config latencies
-    (7B-nothink 0.18s | 32B-nothink@cap320 0.34s | 32B-think@fullres ~28s).
+    (7B-nothink 0.18s | 32B-nothink@cap320 0.34s | 32B-think@fullres ~11s (batch-1; rt_cascade co-resident ~28s)).
 
 ## File naming
 - EVAL  files: ckpt_<benchmark>_<mode>_norag_s<k>of<N>.jsonl   (mode = nothink | think)
