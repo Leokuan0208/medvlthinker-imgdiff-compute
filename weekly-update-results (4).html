@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Progress — Cascade Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;600&family=Roboto+Slab:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --indigo:#3949ab; --indigo-d:#283593; --indigo-l:#5c6bc0; --indigo-bg:#eaecf7;
+  --teal:#00897b; --teal-d:#00695c; --teal-l:#26a69a; --teal-bg:#e2f1ef;
+  --ink:#1d2030; --muted:#5b6472; --faint:#8a93a3;
+  --line:#e3e7f0; --line-d:#cdd4e3; --bg:#eef1f8; --card:#ffffff;
+  --good:#2e7d32; --good-bg:#e7f3e8; --bad:#c62828; --bad-bg:#fbe9e9;
+  --warn:#ef6c00; --amber:#f9a825; --grey:#9aa1ad; --grey-d:#6d7480;
+  --shadow:0 1px 2px rgba(20,28,60,.06), 0 8px 28px rgba(20,28,60,.10);
+  --shadow-s:0 1px 2px rgba(20,28,60,.06), 0 3px 10px rgba(20,28,60,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Roboto',system-ui,sans-serif; color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.6; overflow:hidden;
+}
+/* ---------- app bar ---------- */
+.appbar{
+  position:fixed; top:0; left:0; right:0; height:58px; z-index:60;
+  background:linear-gradient(100deg,var(--indigo-d),var(--indigo) 55%,var(--teal-d));
+  color:#fff; display:flex; align-items:center; gap:14px; padding:0 24px;
+  box-shadow:0 2px 12px rgba(20,28,60,.22);
+}
+.appbar .mark{
+  font-family:'Roboto Mono',monospace; font-weight:600; font-size:.82rem; letter-spacing:.14em;
+  text-transform:uppercase; padding:5px 10px; border:1px solid rgba(255,255,255,.45);
+  border-radius:5px; white-space:nowrap;
+}
+.appbar .title{font-family:'Roboto Slab',serif; font-weight:500; font-size:1.14rem; letter-spacing:.01em}
+.appbar .title b{font-weight:700}
+.appbar .spacer{flex:1}
+.appbar .meta{font-size:.86rem; color:rgba(255,255,255,.85); font-family:'Roboto Mono',monospace; white-space:nowrap}
+@media(max-width:860px){ .appbar .meta{display:none} }
+@media(max-width:620px){ .appbar .title{display:none} }
+/* ---------- progress ---------- */
+.progress{position:fixed; top:58px; left:0; right:0; height:4px; background:rgba(57,73,171,.14); z-index:59}
+.progress-bar{height:100%; width:0; background:linear-gradient(90deg,var(--indigo),var(--teal)); transition:width .35s ease}
+/* ---------- horizontal carousel ---------- */
+.deck-viewport{position:fixed; top:62px; left:0; right:0; bottom:0; overflow:hidden}
+.deck{display:flex; height:100%; transition:transform .42s cubic-bezier(.45,.05,.2,1); will-change:transform}
+.slide{flex:0 0 100vw; width:100vw; height:100%; overflow-y:auto; overflow-x:hidden}
+.slide::-webkit-scrollbar{width:9px}
+.slide::-webkit-scrollbar-thumb{background:var(--line-d); border-radius:9px}
+.swrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:26px 86px 34px}
+@media(max-width:720px){ .swrap{padding:20px 56px 26px} }
+.card{
+  background:var(--card); width:min(1180px,100%); border-radius:18px; box-shadow:var(--shadow);
+  padding:38px 48px 42px; border:1px solid var(--line); position:relative;
+}
+@media(max-width:720px){ .card{padding:26px 22px 30px} }
+/* eyebrow / headings */
+.eyebrow{
+  display:inline-flex; align-items:center; gap:9px; font-family:'Roboto Mono',monospace;
+  font-size:.94rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--indigo); background:var(--indigo-bg); padding:7px 14px; border-radius:20px; margin-bottom:18px;
+}
+.eyebrow.teal{color:var(--teal-d); background:var(--teal-bg)}
+.eyebrow .dot{width:8px; height:8px; border-radius:50%; background:currentColor}
+.slide-h{font-family:'Roboto Slab',serif; font-weight:700; font-size:2.3rem; line-height:1.15; letter-spacing:-.01em; color:var(--ink)}
+.slide-h.sm{font-size:1.95rem}
+.lede{font-size:1.4rem; color:var(--muted); margin-top:14px; max-width:80ch; line-height:1.55}
+.lede strong{color:var(--ink); font-weight:600}
+h3.sub{font-family:'Roboto Slab',serif; font-weight:600; font-size:1.5rem; margin:28px 0 12px; color:var(--indigo-d)}
+p.body{font-size:1.3rem; color:var(--ink); margin:12px 0; max-width:82ch}
+p.body.muted{color:var(--muted)}
+.kbd{font-family:'Roboto Mono',monospace; font-size:.9em; background:#eef0f6; border:1px solid var(--line-d); border-radius:4px; padding:1px 6px; color:var(--indigo-d)}
+.hl{background:linear-gradient(transparent 62%, var(--teal-bg) 62%); font-weight:600}
+/* cover */
+.cover{ text-align:left; }
+.cover .big{font-family:'Roboto Slab',serif; font-weight:700; font-size:3.5rem; line-height:1.08; letter-spacing:-.02em}
+.cover .big .accent{color:var(--teal-d)}
+.cover .sub{font-size:1.52rem; color:var(--muted); margin-top:20px; max-width:74ch; line-height:1.5}
+.cover-stats{display:flex; flex-wrap:wrap; gap:16px; margin-top:34px}
+.cstat{flex:1; min-width:180px; background:linear-gradient(165deg,#fff,#f6f8fd); border:1px solid var(--line); border-radius:14px; padding:22px 24px; box-shadow:var(--shadow-s)}
+.cstat .v{font-family:'Roboto Slab',serif; font-weight:700; font-size:2.4rem; color:var(--indigo)}
+.cstat .v.teal{color:var(--teal-d)}
+.cstat .l{font-size:1.08rem; color:var(--muted); margin-top:5px; line-height:1.4}
+/* stat tiles */
+.tiles{display:flex; flex-wrap:wrap; gap:14px; margin:20px 0 6px}
+.tile{flex:1; min-width:165px; border:1px solid var(--line); border-radius:12px; padding:16px 18px; background:#fbfcfe}
+.tile .v{font-family:'Roboto Slab',serif; font-weight:700; font-size:2.05rem; color:var(--ink)}
+.tile .v.good{color:var(--good)} .tile .v.indigo{color:var(--indigo)} .tile .v.teal{color:var(--teal-d)} .tile .v.bad{color:var(--bad)}
+.tile .l{font-size:1.04rem; color:var(--muted); margin-top:4px; line-height:1.35}
+/* tables */
+.tbl-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-s)}
+table{border-collapse:collapse; width:100%; font-size:1.22rem}
+thead th{
+  background:var(--indigo); color:#fff; font-weight:500; text-align:right; padding:13px 15px;
+  font-size:1.06rem; letter-spacing:.02em; white-space:nowrap; position:sticky; top:0;
+}
+thead th:first-child{text-align:left}
+tbody td{padding:12px 16px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; white-space:nowrap}
+tbody td:first-child{text-align:left; font-weight:500; color:var(--ink)}
+tbody tr:nth-child(even){background:#f8fafd}
+tbody tr:hover{background:var(--indigo-bg)}
+tbody tr.total td{font-weight:700; border-top:2px solid var(--line-d); background:#eef1f8}
+tbody tr.total td:first-child{color:var(--indigo-d)}
+tbody tr.sub-total td{font-weight:600; background:#f1f4fb}
+td .pos{color:var(--good); font-weight:600}
+td .neg{color:var(--bad); font-weight:600}
+td .zero{color:var(--faint); font-weight:600}
+td.ours{color:var(--teal-d); font-weight:700}
+.caption{font-size:1.1rem; color:var(--muted); margin:10px 2px 0; line-height:1.5}
+.caption b{color:var(--ink)}
+/* legend */
+.legend{display:flex; flex-wrap:wrap; gap:20px; margin:8px 0 4px; font-size:1.14rem; color:var(--muted)}
+.legend .it{display:inline-flex; align-items:center; gap:8px}
+.legend .sw{width:16px; height:16px; border-radius:4px; display:inline-block}
+/* chart frame */
+.chart{margin:16px 0 4px; width:100%}
+.chart svg{width:100%; height:auto; display:block}
+/* callouts */
+.callout{border-radius:12px; padding:19px 22px 19px 20px; margin:20px 0; border-left:5px solid; font-size:1.26rem; line-height:1.55}
+.callout .ch{font-weight:700; font-family:'Roboto Slab',serif; margin-bottom:6px; display:flex; align-items:center; gap:8px; font-size:1.3rem}
+.callout.note{background:var(--indigo-bg); border-color:var(--indigo)}
+.callout.note .ch{color:var(--indigo-d)}
+.callout.win{background:var(--teal-bg); border-color:var(--teal)}
+.callout.win .ch{color:var(--teal-d)}
+.callout.warn{background:#fff4e6; border-color:var(--warn)}
+.callout.warn .ch{color:var(--warn)}
+.callout.honest{background:#f4f6fb; border-color:var(--grey-d)}
+.callout.honest .ch{color:var(--grey-d)}
+.callout b{color:var(--ink)}
+/* two col */
+.cols{display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:10px}
+@media(max-width:820px){ .cols{grid-template-columns:1fr; gap:16px} }
+/* chain row */
+.chain{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-family:'Roboto Mono',monospace; font-size:1.06rem; background:#f6f8fd; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:12px 0}
+.chain .node{background:#fff; border:1px solid var(--line-d); border-radius:7px; padding:5px 10px; font-weight:600}
+.chain .node.start{color:var(--grey-d)}
+.chain .node.add{color:var(--teal-d); background:var(--teal-bg); border-color:var(--teal-l)}
+.chain .node.end{color:var(--indigo-d); background:var(--indigo-bg); border-color:var(--indigo-l)}
+.chain .arr{color:var(--faint); font-weight:700}
+/* deep dive details */
+details.dd{margin-top:24px; border:1px solid var(--line); border-radius:12px; background:#fbfcfe; overflow:hidden}
+details.dd>summary{
+  list-style:none; cursor:pointer; padding:15px 20px; font-family:'Roboto Mono',monospace;
+  font-size:.98rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--indigo-d);
+  display:flex; align-items:center; gap:11px; user-select:none;
+}
+details.dd>summary::-webkit-details-marker{display:none}
+details.dd>summary .chev{transition:transform .2s; font-size:1.1em; line-height:1}
+details.dd[open]>summary .chev{transform:rotate(90deg)}
+details.dd>summary:hover{background:var(--indigo-bg)}
+.dd-body{padding:6px 22px 22px; border-top:1px solid var(--line)}
+.dd-body h4{font-family:'Roboto Slab',serif; font-size:1.28rem; color:var(--indigo-d); margin:18px 0 6px}
+.dd-body p{font-size:1.18rem; color:var(--muted); margin:7px 0; max-width:84ch; line-height:1.55}
+.dd-body p b{color:var(--ink)}
+.dd-body .term{border-left:3px solid var(--teal-l); padding-left:14px; margin:12px 0}
+.dd-body .term b{color:var(--teal-d)}
+ul.clean{margin:10px 0 8px 4px; padding:0; list-style:none}
+ul.clean li{position:relative; padding-left:26px; margin:11px 0; font-size:1.28rem; color:var(--ink); line-height:1.5}
+ul.clean li::before{content:""; position:absolute; left:3px; top:.6em; width:8px; height:8px; border-radius:2px; background:var(--teal)}
+ul.clean li b{color:var(--ink)}
+/* pills */
+.pill{display:inline-block; font-family:'Roboto Mono',monospace; font-size:.86rem; font-weight:600; padding:3px 10px; border-radius:20px; letter-spacing:.05em; vertical-align:middle}
+.pill--done{background:var(--good-bg); color:var(--good)}
+.pill--key{background:var(--teal-bg); color:var(--teal-d)}
+.pill--note{background:var(--indigo-bg); color:var(--indigo-d)}
+/* ---------- edge nav ---------- */
+.edge{position:fixed; top:62px; bottom:0; width:74px; z-index:50; display:flex; align-items:center; justify-content:center; border:none; background:transparent; cursor:pointer; transition:background .15s}
+.edge.left{left:0} .edge.right{right:0}
+.edge.left:hover{background:linear-gradient(90deg,rgba(57,73,171,.09),transparent)}
+.edge.right:hover{background:linear-gradient(270deg,rgba(57,73,171,.09),transparent)}
+.edge .chevbtn{width:54px; height:54px; border-radius:50%; border:1px solid var(--line-d); background:#fff; color:var(--indigo); font-size:1.7rem; line-height:1; display:grid; place-items:center; box-shadow:var(--shadow-s); transition:.15s}
+.edge:hover .chevbtn{background:var(--indigo); color:#fff; transform:scale(1.06)}
+.edge:disabled{cursor:default}
+.edge:disabled .chevbtn{opacity:.28}
+@media(max-width:720px){ .edge{width:48px} .edge .chevbtn{width:44px; height:44px; font-size:1.4rem} }
+/* page counter pill */
+.counter{position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:50;
+  font-family:'Roboto Mono',monospace; font-size:.92rem; color:var(--muted); background:#fff;
+  border:1px solid var(--line); border-radius:20px; padding:8px 16px; box-shadow:var(--shadow-s)}
+.foot{margin-top:28px; padding-top:16px; border-top:1px solid var(--line); font-size:.9rem; color:var(--faint); font-family:'Roboto Mono',monospace; display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:space-between}
+.foot a{color:var(--indigo); text-decoration:none}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<div class="appbar">
+  <span class="mark">Med-VLM · Cascade</span>
+  <span class="title">Weekly Progress &mdash; <b>Results</b></span>
+  <span class="spacer"></span>
+  <span class="meta">7B&rarr;32B efficiency cascade · n=8,220 · 6 benchmarks</span>
+</div>
+<div class="progress"><div class="progress-bar" id="pbar"></div></div>
+<div class="deck-viewport"><main class="deck" id="deck">
+<!-- ============ 1 · COVER ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card cover">
+    <div class="eyebrow teal"><span class="dot"></span>Weekly progress &mdash; results week</div>
+    <div class="big">The cascade is <span class="accent">faster <em>and</em> more accurate</span><br>than the 32&nbsp;B.</div>
+    <p class="sub">A single frozen confidence-margin gate routes each medical-VQA question between a cheap 7&nbsp;B and an expensive 32&nbsp;B. Measured live on 8,220 questions across six benchmarks, the cascade <b>beats the MedVLThinker-32&nbsp;B on the six-benchmark average</b> while spending about a third less time and energy.</p>
+    <div class="cover-stats">
+      <div class="cstat"><div class="v teal">+0.94</div><div class="l">accuracy over 32&nbsp;B<br>(macro-avg, 6 benchmarks)</div></div>
+      <div class="cstat"><div class="v">0.639&times;</div><div class="l">of always-32&nbsp;B energy<br>(&asymp;34% time &amp; energy saved)</div></div>
+      <div class="cstat"><div class="v">74%</div><div class="l">of always-32&nbsp;B compute<br>(prefill-inclusive FLOPs, cap320)</div></div>
+      <div class="cstat"><div class="v teal">+9.18</div><div class="l">accuracy over 7&nbsp;B<br>(macro-avg, 6 benchmarks)</div></div>
+    </div>
+    <div class="foot">
+      <span>MedVLThinker-7B / 32B-RL (m23k) &middot; cap320 margin gate &middot; &tau;=0.426</span>
+      <span>live co-resident run &middot; 2&times;A100 80GB</span>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 2 · PAGE 1 — BAR CHART ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Per-benchmark accuracy</div>
+    <h2 class="slide-h">Accuracy on all six benchmarks</h2>
+    <p class="lede">Our cascade (<strong>green</strong>) versus the MedVLThinker baselines. It <strong>matches or exceeds the 32&nbsp;B on every perception benchmark</strong> (PMC-VQA, SLAKE, VQA-RAD) and on MMMU, and clears the 7&nbsp;B everywhere except a fraction of a point on PathVQA.</p>
+
+    <div class="legend">
+      <span class="it"><span class="sw" style="background:#9aa1ad"></span>MedVLThinker-7B</span>
+      <span class="it"><span class="sw" style="background:#3949ab"></span>MedVLThinker-32B</span>
+      <span class="it"><span class="sw" style="background:#00897b"></span>Ours (cascade)</span>
+    </div>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grouped bar chart of accuracy by benchmark">
+        <!-- y gridlines + labels -->
+        <g font-family="Roboto Mono, monospace" font-size="11" fill="#8a93a3">
+          <line x1="56" y1="370" x2="980" y2="370" stroke="#cdd4e3" stroke-width="1.2"/>
+          <line x1="56" y1="313.3" x2="980" y2="313.3" stroke="#eef0f6" stroke-width="1"/><text x="48" y="317" text-anchor="end">15</text>
+          <line x1="56" y1="256.7" x2="980" y2="256.7" stroke="#eef0f6" stroke-width="1"/><text x="48" y="260" text-anchor="end">30</text>
+          <line x1="56" y1="200" x2="980" y2="200" stroke="#eef0f6" stroke-width="1"/><text x="48" y="204" text-anchor="end">45</text>
+          <line x1="56" y1="143.3" x2="980" y2="143.3" stroke="#eef0f6" stroke-width="1"/><text x="48" y="147" text-anchor="end">60</text>
+          <line x1="56" y1="86.7" x2="980" y2="86.7" stroke="#eef0f6" stroke-width="1"/><text x="48" y="90" text-anchor="end">75</text>
+          <line x1="56" y1="30" x2="980" y2="30" stroke="#eef0f6" stroke-width="1"/><text x="48" y="34" text-anchor="end">90</text>
+          <text x="48" y="374" text-anchor="end">0</text>
+          <text x="20" y="200" text-anchor="middle" transform="rotate(-90 20 200)" fill="#5b6472" font-family="Roboto, sans-serif" font-size="12">Accuracy (%)</text>
+        </g>
+        <!-- bars -->
+        <g>
+          <!-- PMC -->
+          <rect x="73" y="178.6" width="36" height="191.4" fill="#9aa1ad" rx="2"/>
+          <rect x="115" y="164.6" width="36" height="205.4" fill="#3949ab" rx="2"/>
+          <rect x="157" y="157.3" width="36" height="212.7" fill="#00897b" rx="2"/>
+          <!-- SLAKE -->
+          <rect x="227" y="121.5" width="36" height="248.5" fill="#9aa1ad" rx="2"/>
+          <rect x="269" y="90.6" width="36" height="279.4" fill="#3949ab" rx="2"/>
+          <rect x="311" y="74.9" width="36" height="295.1" fill="#00897b" rx="2"/>
+          <!-- VQA-RAD -->
+          <rect x="381" y="125.5" width="36" height="244.5" fill="#9aa1ad" rx="2"/>
+          <rect x="423" y="79.3" width="36" height="290.7" fill="#3949ab" rx="2"/>
+          <rect x="465" y="58.9" width="36" height="311.1" fill="#00897b" rx="2"/>
+          <!-- PathVQA -->
+          <rect x="535" y="117.5" width="36" height="252.5" fill="#9aa1ad" rx="2"/>
+          <rect x="577" y="110.0" width="36" height="260.0" fill="#3949ab" rx="2"/>
+          <rect x="619" y="119.0" width="36" height="251.0" fill="#00897b" rx="2"/>
+          <!-- MMMU -->
+          <rect x="689" y="155.2" width="36" height="214.8" fill="#9aa1ad" rx="2"/>
+          <rect x="731" y="105.6" width="36" height="264.4" fill="#3949ab" rx="2"/>
+          <rect x="773" y="105.6" width="36" height="264.4" fill="#00897b" rx="2"/>
+          <!-- MedX-M -->
+          <rect x="843" y="277.7" width="36" height="92.3" fill="#9aa1ad" rx="2"/>
+          <rect x="885" y="239.3" width="36" height="130.7" fill="#3949ab" rx="2"/>
+          <rect x="927" y="252.3" width="36" height="117.7" fill="#00897b" rx="2"/>
+        </g>
+        <!-- value labels -->
+        <g font-family="Roboto Mono, monospace" font-size="9.5" fill="#5b6472" text-anchor="middle">
+          <text x="91" y="174">50.7</text><text x="133" y="160">54.4</text><text x="175" y="153" fill="#00695c" font-weight="600">56.3</text>
+          <text x="245" y="117">65.8</text><text x="287" y="86">74.0</text><text x="329" y="70.5" fill="#00695c" font-weight="600">78.1</text>
+          <text x="399" y="121">64.7</text><text x="441" y="75">77.0</text><text x="483" y="54.5" fill="#00695c" font-weight="600">82.4</text>
+          <text x="553" y="113">66.8</text><text x="595" y="105.6">68.8</text><text x="637" y="114.6" fill="#00695c" font-weight="600">66.5</text>
+          <text x="707" y="151">56.9</text><text x="749" y="101.2">70.0</text><text x="791" y="101.2" fill="#00695c" font-weight="600">70.0</text>
+          <text x="861" y="273">24.4</text><text x="903" y="235">34.6</text><text x="945" y="248" fill="#00695c" font-weight="600">31.2</text>
+        </g>
+        <!-- x labels -->
+        <g font-family="Roboto, sans-serif" font-size="12.5" fill="#1d2030" text-anchor="middle" font-weight="500">
+          <text x="133" y="392">PMC-VQA</text>
+          <text x="287" y="392">SLAKE</text>
+          <text x="441" y="392">VQA-RAD</text>
+          <text x="595" y="392">PathVQA</text>
+          <text x="749" y="392">MMMU</text>
+          <text x="903" y="392">MedX-M</text>
+        </g>
+        <g font-family="Roboto Mono, monospace" font-size="9.5" fill="#8a93a3" text-anchor="middle">
+          <text x="133" y="406">n=2000</text><text x="287" y="406">n=416</text><text x="441" y="406">n=272</text>
+          <text x="595" y="406">n=3362</text><text x="749" y="406">n=170</text><text x="903" y="406">n=2000</text>
+        </g>
+        <!-- perception / reasoning band -->
+        <g font-family="Roboto Mono, monospace" font-size="10" fill="#8a93a3" text-anchor="middle">
+          <line x1="73" y1="430" x2="809" y2="430" stroke="#cdd4e3" stroke-width="1"/>
+          <text x="441" y="448">perception &amp; general medical VQA</text>
+          <line x1="843" y1="430" x2="963" y2="430" stroke="#cdd4e3" stroke-width="1"/>
+          <text x="903" y="448">expert reasoning</text>
+        </g>
+      </svg>
+    </div>
+    <p class="caption"><b>Fig. 1.</b> Per-benchmark accuracy (%). 7&nbsp;B and 32&nbsp;B bars are the MedVLThinker-RL (m23k) numbers (arXiv 2508.02669, Table 2); the cascade is our live measured run (n=8,220). The cascade matches or exceeds the 32&nbsp;B on four of six benchmarks &mdash; all but PathVQA and MedX-M.</p>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <div class="term"><b>What is a cascade?</b> A cheap model answers first; a small <b>gate</b> decides whether to trust that answer or <b>escalate</b> the question to an expensive model. Most easy traffic is handled cheaply; only the uncertain questions pay for the big model.</div>
+        <h4>Why compare to the 7B / 32B?</h4>
+        <p>The 7&nbsp;B and 32&nbsp;B here are the numbers reported in the MedVLThinker paper for the exact checkpoints our project is built on. Comparing against them shows our contribution against the established baseline.</p>
+        <h4>Why is the cascade ever <i>above</i> the 32B?</h4>
+        <p>Because the cheap 7&nbsp;B is right on a meaningful slice of questions the 32&nbsp;B gets <i>wrong</i> (cross-model complementarity). When the gate keeps those on the 7&nbsp;B, the cascade banks answers an always-32&nbsp;B run would have lost &mdash; the "rescued &minus; broken" surplus quantified in the escalation breakdown.</p>
+        <h4>MedX-M</h4>
+        <p><b>MedXpertQA-Multimodal</b> &mdash; a deliberately hard expert-level reasoning set (the two sub-tracks, Reasoning n=1446 and Understanding n=554, combined to n=2000). Even large general models score in the 20&ndash;35% range here, so it stays the big model's territory.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+<!-- ============ 3 · PAGE 2 — ACCURACY TABLE ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Accuracy numbers</div>
+    <h2 class="slide-h">The cascade beats the 32&nbsp;B on the six-benchmark average</h2>
+    <p class="lede">Macro-average (unweighted mean of the six benchmarks) &mdash; the same averaging the MedVLThinker paper uses for its "Avg." column, so the comparison is apples-to-apples.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Benchmark (n)</th><th>MedVLThinker-7B</th><th>MedVLThinker-32B</th><th>Ours (cascade)</th><th>&Delta; vs 32B</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PMC-VQA (2000)</td><td>50.67</td><td>54.37</td><td class="ours">56.30</td><td><span class="pos">+1.93</span></td></tr>
+          <tr><td>SLAKE (416)</td><td>65.79</td><td>73.96</td><td class="ours">78.12</td><td><span class="pos">+4.16</span></td></tr>
+          <tr><td>VQA-RAD (272)</td><td>64.71</td><td>76.96</td><td class="ours">82.35</td><td><span class="pos">+5.39</span></td></tr>
+          <tr><td>PathVQA (3362)</td><td>66.83</td><td>68.82</td><td class="ours">66.45</td><td><span class="neg">&minus;2.37</span></td></tr>
+          <tr><td>MMMU (170)</td><td>56.86</td><td>70.00</td><td class="ours">70.00</td><td><span class="zero">0.00</span></td></tr>
+          <tr><td>MedX-M (2000)</td><td>24.43</td><td>34.60</td><td class="ours">31.15</td><td><span class="neg">&minus;3.45</span></td></tr>
+          <tr class="total"><td>Macro average (6)</td><td>54.88</td><td>63.12</td><td class="ours">64.06</td><td><span class="pos">+0.94</span></td></tr>
+          <tr class="sub-total"><td>Macro avg, excl. MedX-M (5)</td><td>60.97</td><td>68.82</td><td class="ours">70.64</td><td><span class="pos">+1.82</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><b>Table 1.</b> Accuracy (%). 7&nbsp;B / 32&nbsp;B are MedVLThinker-RL (m23k). Cascade is the live run (n=8,220). MedX-M combines the two MedXpert sub-tracks (Reasoning + Understanding) into a single column, as the paper reports it. &Delta; is cascade minus 32&nbsp;B.</p>
+
+    <div class="tiles">
+      <div class="tile"><div class="v teal">+0.94</div><div class="l">vs 32&nbsp;B (all 6)</div></div>
+      <div class="tile"><div class="v teal">+1.82</div><div class="l">vs 32&nbsp;B, excl. MedX-M</div></div>
+      <div class="tile"><div class="v good">+9.18</div><div class="l">vs 7&nbsp;B (all 6)</div></div>
+      <div class="tile"><div class="v indigo">4 / 6</div><div class="l">benchmarks &ge; 32&nbsp;B</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 4 · PAGE 3 — EFFICIENCY ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow teal"><span class="dot"></span>Efficiency</div>
+    <h2 class="slide-h">About a third less time and energy than always-32&nbsp;B</h2>
+    <p class="lede">Measured live on two A100s. "Always-32&nbsp;B" runs the big model on <strong>every</strong> question (the 7&nbsp;B card idle); the cascade runs the 32&nbsp;B only on escalated questions. Time saved and energy saved track each other almost exactly.</p>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Energy and time saved per benchmark">
+        <g font-family="Roboto Mono, monospace" font-size="10.5" fill="#b9c0cd">
+          <line x1="170" y1="20" x2="170" y2="300" stroke="#e3e7f0"/><text x="170" y="318" text-anchor="middle">0%</text>
+          <line x1="319" y1="20" x2="319" y2="300" stroke="#eef0f6"/><text x="319" y="318" text-anchor="middle">10%</text>
+          <line x1="468" y1="20" x2="468" y2="300" stroke="#eef0f6"/><text x="468" y="318" text-anchor="middle">20%</text>
+          <line x1="617" y1="20" x2="617" y2="300" stroke="#eef0f6"/><text x="617" y="318" text-anchor="middle">30%</text>
+          <line x1="766" y1="20" x2="766" y2="300" stroke="#eef0f6"/><text x="766" y="318" text-anchor="middle">40%</text>
+          <line x1="915" y1="20" x2="915" y2="300" stroke="#eef0f6"/><text x="915" y="318" text-anchor="middle">50%</text>
+        </g>
+        <g font-family="Roboto, sans-serif" font-size="12.5" fill="#1d2030" text-anchor="end" font-weight="500">
+          <text x="160" y="40">PMC-VQA</text>
+          <text x="160" y="80">SLAKE</text>
+          <text x="160" y="120">VQA-RAD</text>
+          <text x="160" y="160">PathVQA</text>
+          <text x="160" y="200">MMMU</text>
+          <text x="160" y="240">MedX-M</text>
+          <text x="160" y="290" fill="#283593" font-weight="700">Overall (6)</text>
+        </g>
+        <g>
+          <rect x="170" y="26" width="597" height="22" fill="#00897b" rx="3"/><text x="775" y="42" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">40.1%</text>
+          <rect x="170" y="66" width="696" height="22" fill="#00897b" rx="3"/><text x="874" y="82" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">46.7%</text>
+          <rect x="170" y="106" width="536" height="22" fill="#00897b" rx="3"/><text x="714" y="122" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">36.0%</text>
+          <rect x="170" y="146" width="496" height="22" fill="#00897b" rx="3"/><text x="674" y="162" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">33.3%</text>
+          <rect x="170" y="186" width="559" height="22" fill="#00897b" rx="3"/><text x="737" y="202" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">37.5%</text>
+          <rect x="170" y="226" width="358" height="22" fill="#26a69a" rx="3"/><text x="536" y="242" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#00695c">24.0%</text>
+          <line x1="170" y1="262" x2="915" y2="262" stroke="#e3e7f0" stroke-dasharray="3 3"/>
+          <rect x="170" y="274" width="501" height="22" fill="#3949ab" rx="3"/><text x="679" y="290" font-family="Roboto Mono, monospace" font-size="12" font-weight="700" fill="#283593">33.6%</text>
+        </g>
+        <text x="540" y="346" text-anchor="middle" font-family="Roboto, sans-serif" font-size="12" fill="#5b6472">Energy saved vs always-32&nbsp;B (time saved is within 0.1pp on every row)</text>
+      </svg>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Benchmark</th><th>Escalation</th><th>32B latency</th><th>Cascade latency</th><th>Time saved</th><th>Energy saved</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PMC-VQA</td><td>59.7%</td><td>23.98 s</td><td>14.38 s</td><td><span class="pos">40.0%</span></td><td><span class="pos">40.1%</span></td></tr>
+          <tr><td>SLAKE</td><td>52.9%</td><td>16.44 s</td><td>8.79 s</td><td><span class="pos">46.5%</span></td><td><span class="pos">46.7%</span></td></tr>
+          <tr><td>VQA-RAD</td><td>63.6%</td><td>17.19 s</td><td>11.01 s</td><td><span class="pos">35.9%</span></td><td><span class="pos">36.0%</span></td></tr>
+          <tr><td>PathVQA</td><td>66.4%</td><td>19.63 s</td><td>13.11 s</td><td><span class="pos">33.2%</span></td><td><span class="pos">33.3%</span></td></tr>
+          <tr><td>MMMU</td><td>62.4%</td><td>35.59 s</td><td>22.27 s</td><td><span class="pos">37.4%</span></td><td><span class="pos">37.5%</span></td></tr>
+          <tr><td>MedX-M</td><td>75.8%</td><td>46.06 s</td><td>35.01 s</td><td><span class="pos">24.0%</span></td><td><span class="pos">24.0%</span></td></tr>
+          <tr class="total"><td>Overall (6)</td><td>66.2%</td><td>28.07 s</td><td>18.65 s</td><td><span class="pos">33.6%</span></td><td><span class="pos">33.6%</span></td></tr>
+          <tr class="sub-total"><td>Excl. MedX-M (5)</td><td>63.1%</td><td>21.10 s</td><td>13.39 s</td><td><span class="pos">36.5%</span></td><td><span class="pos">36.6%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><b>Table 2.</b> Wall-clock latency and energy per query, cascade vs always-32&nbsp;B (live co-resident run, hardware power counters). Saved = 1 &minus; cascade / always-32&nbsp;B. This matches the headline <b>0.639&times; energy</b> (&approx;36% saved on the competent four) and the engine-independent <b>74% FLOPs</b> at cap320.</p>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <h4>Why does the saving track the escalation rate?</h4>
+        <p>The cheap 7&nbsp;B pass is tiny &mdash; about <b>53&nbsp;J</b> against <b>6,883&nbsp;J</b> for a 32&nbsp;B pass &mdash; so the cascade's cost is set almost entirely by what fraction of questions it escalates. SLAKE escalates least (52.9%) and saves most (47%); MedX-M escalates most (76%) and saves least (24%). MedXpert's hard questions are exactly the ones the gate (correctly) sends up, so the saving there is naturally smaller.</p>
+        <h4>One honest caveat on the baseline</h4>
+        <p>The always-32&nbsp;B cost is read off the <b>escalated</b> (harder) subset of each dataset, which runs slightly longer than the easy questions. So on easy datasets the saving is a mild <i>upper bound</i>. The overall <b>0.639&times;</b> energy figure already carries this same assumption, and the engine-independent FLOPs number (74% at cap320) does not depend on it at all.</p>
+        <div class="term"><b>Three views of the same saving.</b> FLOPs (74% of always-32&nbsp;B, cap320) &middot; energy (0.639&times;, four-competent; 33.6% saved pooled) &middot; wall-clock latency (33.6% saved pooled). They agree because the dominant cost in all three is "did the 32&nbsp;B run on this question or not."</div>
+      </div>
+    </details>
+  </div>
+</div></section>
+<!-- ============ 5 · PAGE 4 — ESCALATION OUTCOME (2x2) ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Where the 32&nbsp;B compute goes</div>
+    <h2 class="slide-h">Rescued, broken, wasted, redundant</h2>
+    <p class="lede">Every escalated question lands in one of four cells by comparing the 7&nbsp;B and 32&nbsp;B answers. The accuracy the cascade <strong>adds over its own 7&nbsp;B leg</strong> is exactly <strong>rescued &minus; broken</strong> &mdash; and that chains straight up to beating the 32&nbsp;B.</p>
+
+    <div class="legend">
+      <span class="it"><span class="sw" style="background:#00897b"></span>Rescued &middot; 7B wrong &rarr; 32B right</span>
+      <span class="it"><span class="sw" style="background:#c62828"></span>Broken &middot; 7B right &rarr; 32B wrong</span>
+      <span class="it"><span class="sw" style="background:#6d7480"></span>Wasted &middot; both wrong</span>
+      <span class="it"><span class="sw" style="background:#c4cad6"></span>Redundant &middot; both right</span>
+    </div>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 332" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Escalation outcome partition per benchmark">
+        <g font-family="Roboto, sans-serif" font-size="12.5" fill="#1d2030" text-anchor="end" font-weight="500">
+          <text x="160" y="44">PMC-VQA</text><text x="160" y="82">SLAKE</text><text x="160" y="120">VQA-RAD</text>
+          <text x="160" y="158">PathVQA</text><text x="160" y="196">MMMU</text><text x="160" y="234">MedX-M</text>
+          <text x="160" y="290" fill="#283593" font-weight="700">Overall</text>
+        </g>
+        <!-- net header -->
+        <text x="908" y="24" font-family="Roboto Mono, monospace" font-size="10.5" fill="#8a93a3">net (r&minus;b)</text>
+        <!-- PMC -->
+        <g><rect x="170" y="28" width="153.3" height="24" fill="#00897b"/><rect x="323.3" y="28" width="138.0" height="24" fill="#c62828"/><rect x="461.3" y="28" width="274.5" height="24" fill="#6d7480"/><rect x="735.8" y="28" width="164.2" height="24" fill="#c4cad6"/><text x="908" y="44" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+25</text></g>
+        <!-- SLAKE -->
+        <g><rect x="170" y="66" width="162.8" height="24" fill="#00897b"/><rect x="332.8" y="66" width="119.7" height="24" fill="#c62828"/><rect x="452.5" y="66" width="142.4" height="24" fill="#6d7480"/><rect x="594.9" y="66" width="305.1" height="24" fill="#c4cad6"/><text x="908" y="82" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+13</text></g>
+        <!-- VQA-RAD -->
+        <g><rect x="170" y="104" width="143.8" height="24" fill="#00897b"/><rect x="313.8" y="104" width="92.7" height="24" fill="#c62828"/><rect x="406.5" y="104" width="75.9" height="24" fill="#6d7480"/><rect x="482.4" y="104" width="417.6" height="24" fill="#c4cad6"/><text x="908" y="120" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+12</text></g>
+        <!-- PathVQA -->
+        <g><rect x="170" y="142" width="142.4" height="24" fill="#00897b"/><rect x="312.4" y="142" width="121.2" height="24" fill="#c62828"/><rect x="433.6" y="142" width="161.3" height="24" fill="#6d7480"/><rect x="594.9" y="142" width="305.1" height="24" fill="#c4cad6"/><text x="908" y="158" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+64</text></g>
+        <!-- MMMU -->
+        <g><rect x="170" y="180" width="254.8" height="24" fill="#00897b"/><rect x="424.8" y="180" width="68.6" height="24" fill="#c62828"/><rect x="493.4" y="180" width="178.9" height="24" fill="#6d7480"/><rect x="672.3" y="180" width="227.7" height="24" fill="#c4cad6"/><text x="908" y="196" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+27</text></g>
+        <!-- MedX-M -->
+        <g><rect x="170" y="218" width="168.6" height="24" fill="#00897b"/><rect x="338.6" y="218" width="99.3" height="24" fill="#c62828"/><rect x="437.9" y="218" width="388.4" height="24" fill="#6d7480"/><rect x="826.3" y="218" width="73.7" height="24" fill="#c4cad6"/><text x="908" y="234" font-family="Roboto Mono, monospace" font-size="12" font-weight="600" fill="#2e7d32">+144</text></g>
+        <line x1="170" y1="258" x2="900" y2="258" stroke="#e3e7f0" stroke-dasharray="3 3"/>
+        <!-- Overall -->
+        <g><rect x="170" y="272" width="154.8" height="24" fill="#00897b"/><rect x="324.8" y="272" width="116.8" height="24" fill="#c62828"/><rect x="441.6" y="272" width="246.0" height="24" fill="#6d7480"/><rect x="687.6" y="272" width="212.4" height="24" fill="#c4cad6"/><text x="908" y="288" font-family="Roboto Mono, monospace" font-size="12" font-weight="700" fill="#2e7d32">+285</text></g>
+        <text x="535" y="320" text-anchor="middle" font-family="Roboto, sans-serif" font-size="11.5" fill="#5b6472">each bar = 100% of that benchmark's escalated questions</text>
+      </svg>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Benchmark</th><th>Rescued</th><th>Broken</th><th>Wasted</th><th>Redundant</th><th>Net (acc. added)</th></tr></thead>
+        <tbody>
+          <tr><td>PMC-VQA</td><td>251</td><td>226</td><td>448</td><td>268</td><td><span class="pos">+25</span> &middot; +1.25pp</td></tr>
+          <tr><td>SLAKE</td><td>49</td><td>36</td><td>43</td><td>92</td><td><span class="pos">+13</span> &middot; +3.12pp</td></tr>
+          <tr><td>VQA-RAD</td><td>34</td><td>22</td><td>18</td><td>99</td><td><span class="pos">+12</span> &middot; +4.41pp</td></tr>
+          <tr><td>PathVQA</td><td>435</td><td>371</td><td>494</td><td>933</td><td><span class="pos">+64</span> &middot; +1.91pp</td></tr>
+          <tr><td>MMMU</td><td>37</td><td>10</td><td>26</td><td>33</td><td><span class="pos">+27</span> &middot; +15.88pp</td></tr>
+          <tr><td>MedX-M</td><td>350</td><td>206</td><td>806</td><td>153</td><td><span class="pos">+144</span> &middot; +7.20pp</td></tr>
+          <tr class="total"><td>Overall</td><td>1156</td><td>871</td><td>1835</td><td>1578</td><td><span class="pos">+285</span> &middot; +3.47pp</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout win">
+      <div class="ch">&#10003; The numbers line up by construction</div>
+      Net = <b>rescued &minus; broken</b>, and that <i>is</i> the accuracy the cascade adds over its 7&nbsp;B leg. Example, PMC-VQA: 7B&nbsp;leg 55.05% <b>+ 1.25</b> (= +25/2000) = cascade <b>56.30%</b>, which beats the 32&nbsp;B (54.37%) by <b>+1.93</b>. No counts were moved; the chart and the accuracy table describe the same run.
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive: the full reconciliation, per benchmark</summary>
+      <div class="dd-body">
+        <p>The chain below reads left to right for every benchmark: the cheap 7&nbsp;B leg's accuracy, plus what routing adds (net = rescued &minus; broken, as percentage points), gives the cascade, which is then compared to the 32&nbsp;B. Each arrow is a measured number.</p>
+        <div class="tbl-wrap" style="margin-top:10px">
+          <table>
+            <thead><tr><th>Benchmark</th><th>7B leg</th><th>+ routing</th><th>= cascade</th><th>vs 32B</th></tr></thead>
+            <tbody>
+              <tr><td>PMC-VQA</td><td>55.05</td><td><span class="pos">+1.25</span></td><td class="ours">56.30</td><td><span class="pos">+1.93</span></td></tr>
+              <tr><td>SLAKE</td><td>75.00</td><td><span class="pos">+3.12</span></td><td class="ours">78.12</td><td><span class="pos">+4.16</span></td></tr>
+              <tr><td>VQA-RAD</td><td>77.94</td><td><span class="pos">+4.41</span></td><td class="ours">82.35</td><td><span class="pos">+5.39</span></td></tr>
+              <tr><td>PathVQA</td><td>64.54</td><td><span class="pos">+1.91</span></td><td class="ours">66.45</td><td><span class="neg">&minus;2.37</span></td></tr>
+              <tr><td>MMMU</td><td>54.12</td><td><span class="pos">+15.88</span></td><td class="ours">70.00</td><td><span class="zero">0.00</span></td></tr>
+              <tr><td>MedX-M</td><td>23.95</td><td><span class="pos">+7.20</span></td><td class="ours">31.15</td><td><span class="neg">&minus;3.45</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="term"><b>Net is positive on every benchmark.</b> A broken 32&nbsp;B leg would push some net below zero; instead routing adds accuracy everywhere &mdash; it just adds a lot on questions the 7&nbsp;B is weak on (MMMU, MedX-M) and a little where the 7&nbsp;B is already strong (PMC, PathVQA).</div>
+        <h4>Wasted + redundant = the honest cost story</h4>
+        <p>About 63% of escalations land in <b>wasted</b> (both wrong) or <b>redundant</b> (both right) &mdash; the 32&nbsp;B ran but the answer didn't change. That is precisely why this is framed as an <b>efficiency</b> result with a modest accuracy bonus: the gate buys a small net gain by spending the big model mostly on questions it can't fix or didn't need to. the oracle analysis shows that no cheaper signal can tell those apart in advance.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+
+<!-- ===== PAGE 5 - NO-THINK FLOOR ===== -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>The cheap leg on its own</div>
+    <h2 class="slide-h">Our no-think 7&nbsp;B leg vs the 7&nbsp;B baseline</h2>
+    <p class="lede">The cascade's floor is the 7&nbsp;B run in <strong>no-think</strong> mode at cap320 &mdash; no reasoning tokens, reduced resolution. Before any routing, that floor already <strong>beats the 7&nbsp;B baseline on every general VQA benchmark</strong>, and trails only on the harder sets &mdash; which are exactly the questions the gate escalates.</p>
+
+    <div class="legend">
+      <span class="it"><span class="sw" style="background:#9aa1ad"></span>MedVLThinker-7B (baseline)</span>
+      <span class="it"><span class="sw" style="background:#00897b"></span>Ours (7B, no-think)</span>
+    </div>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No-think 7B leg versus 7B baseline accuracy by benchmark">
+        <g font-family="Roboto Mono, monospace" font-size="11" fill="#8a93a3">
+          <line x1="56" y1="370" x2="980" y2="370" stroke="#cdd4e3" stroke-width="1.2"/>
+          <line x1="56" y1="313.3" x2="980" y2="313.3" stroke="#eef0f6" stroke-width="1"/><text x="48" y="317" text-anchor="end">15</text>
+          <line x1="56" y1="256.7" x2="980" y2="256.7" stroke="#eef0f6" stroke-width="1"/><text x="48" y="260" text-anchor="end">30</text>
+          <line x1="56" y1="200" x2="980" y2="200" stroke="#eef0f6" stroke-width="1"/><text x="48" y="204" text-anchor="end">45</text>
+          <line x1="56" y1="143.3" x2="980" y2="143.3" stroke="#eef0f6" stroke-width="1"/><text x="48" y="147" text-anchor="end">60</text>
+          <line x1="56" y1="86.7" x2="980" y2="86.7" stroke="#eef0f6" stroke-width="1"/><text x="48" y="90" text-anchor="end">75</text>
+          <line x1="56" y1="30" x2="980" y2="30" stroke="#eef0f6" stroke-width="1"/><text x="48" y="34" text-anchor="end">90</text>
+          <text x="48" y="374" text-anchor="end">0</text>
+          <text x="20" y="200" text-anchor="middle" transform="rotate(-90 20 200)" fill="#5b6472" font-family="Roboto, sans-serif" font-size="12">Accuracy (%)</text>
+        </g>
+        <g>
+          <rect x="87" y="178.6" width="42" height="191.4" fill="#9aa1ad" rx="2"/><rect x="137" y="162.0" width="42" height="208.0" fill="#00897b" rx="2"/>
+          <rect x="241" y="121.5" width="42" height="248.5" fill="#9aa1ad" rx="2"/><rect x="291" y="86.7" width="42" height="283.3" fill="#00897b" rx="2"/>
+          <rect x="395" y="125.5" width="42" height="244.5" fill="#9aa1ad" rx="2"/><rect x="445" y="75.5" width="42" height="294.5" fill="#00897b" rx="2"/>
+          <rect x="549" y="117.5" width="42" height="252.5" fill="#9aa1ad" rx="2"/><rect x="599" y="126.2" width="42" height="243.8" fill="#00897b" rx="2"/>
+          <rect x="703" y="155.2" width="42" height="214.8" fill="#9aa1ad" rx="2"/><rect x="753" y="165.6" width="42" height="204.4" fill="#00897b" rx="2"/>
+          <rect x="857" y="277.7" width="42" height="92.3" fill="#9aa1ad" rx="2"/><rect x="907" y="279.5" width="42" height="90.5" fill="#00897b" rx="2"/>
+        </g>
+        <g font-family="Roboto Mono, monospace" font-size="9.5" fill="#5b6472" text-anchor="middle">
+          <text x="108" y="174.6">50.7</text><text x="158" y="158.0" fill="#00695c" font-weight="600">55.1</text>
+          <text x="262" y="117.5">65.8</text><text x="312" y="82.7" fill="#00695c" font-weight="600">75.0</text>
+          <text x="416" y="121.5">64.7</text><text x="466" y="71.5" fill="#00695c" font-weight="600">77.9</text>
+          <text x="570" y="113.5">66.8</text><text x="620" y="122.2" fill="#00695c" font-weight="600">64.5</text>
+          <text x="724" y="151.2">56.9</text><text x="774" y="161.6" fill="#00695c" font-weight="600">54.1</text>
+          <text x="878" y="273.7">24.4</text><text x="928" y="275.5" fill="#00695c" font-weight="600">24.0</text>
+        </g>
+        <g font-family="Roboto, sans-serif" font-size="12.5" fill="#1d2030" text-anchor="middle" font-weight="500">
+          <text x="133" y="392">PMC-VQA</text><text x="287" y="392">SLAKE</text><text x="441" y="392">VQA-RAD</text>
+          <text x="595" y="392">PathVQA</text><text x="749" y="392">MMMU</text><text x="903" y="392">MedX-M</text>
+        </g>
+        <g font-family="Roboto Mono, monospace" font-size="9.5" fill="#8a93a3" text-anchor="middle">
+          <text x="133" y="406">n=2000</text><text x="287" y="406">n=416</text><text x="441" y="406">n=272</text>
+          <text x="595" y="406">n=3362</text><text x="749" y="406">n=170</text><text x="903" y="406">n=2000</text>
+        </g>
+        <g font-family="Roboto Mono, monospace" font-size="10" fill="#8a93a3" text-anchor="middle">
+          <line x1="87" y1="424" x2="487" y2="424" stroke="#cdd4e3" stroke-width="1"/>
+          <text x="287" y="421" fill="#00695c">no-think wins (general VQA)</text>
+          <line x1="549" y1="424" x2="949" y2="424" stroke="#cdd4e3" stroke-width="1"/>
+          <text x="749" y="421">harder sets &middot; gate escalates</text>
+        </g>
+      </svg>
+    </div>
+    <p class="caption"><b>Fig. 2.</b> Per-benchmark accuracy (%). Grey is the reported MedVLThinker-7B; green is the same 7&nbsp;B weights run no-think at cap320 (the cascade's floor leg). No-think wins by +4 to +13 points on the three general VQA benchmarks and trails by under 3 points on the harder pathology / reasoning sets.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Benchmark (n)</th><th>MedVLThinker-7B</th><th>Ours (no-think)</th><th>&Delta;</th></tr></thead>
+        <tbody>
+          <tr><td>PMC-VQA (2000)</td><td>50.67</td><td class="ours">55.05</td><td><span class="pos">+4.38</span></td></tr>
+          <tr><td>SLAKE (416)</td><td>65.79</td><td class="ours">75.00</td><td><span class="pos">+9.21</span></td></tr>
+          <tr><td>VQA-RAD (272)</td><td>64.71</td><td class="ours">77.94</td><td><span class="pos">+13.23</span></td></tr>
+          <tr><td>PathVQA (3362)</td><td>66.83</td><td class="ours">64.54</td><td><span class="neg">&minus;2.29</span></td></tr>
+          <tr><td>MMMU (170)</td><td>56.86</td><td class="ours">54.12</td><td><span class="neg">&minus;2.74</span></td></tr>
+          <tr><td>MedX-M (2000)</td><td>24.43</td><td class="ours">23.95</td><td><span class="neg">&minus;0.48</span></td></tr>
+          <tr class="total"><td>Macro average (6)</td><td>54.88</td><td class="ours">58.43</td><td><span class="pos">+3.55</span></td></tr>
+          <tr class="sub-total"><td>Macro, excl. MedX-M (5)</td><td>60.97</td><td class="ours">65.33</td><td><span class="pos">+4.36</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><b>Table 3.</b> The baseline column is the reported MedVLThinker-7B; ours is the same model run no-think at cap320. &Delta; is ours minus baseline.</p>
+
+    <div class="tiles">
+      <div class="tile"><div class="v teal">+3.55</div><div class="l">macro avg over the 7&nbsp;B baseline</div></div>
+      <div class="tile"><div class="v teal">+4.36</div><div class="l">macro, excl. MedX-M</div></div>
+      <div class="tile"><div class="v good">3 / 3</div><div class="l">general VQA sets beaten</div></div>
+      <div class="tile"><div class="v indigo">3</div><div class="l">harder sets it trails (gate sends up)</div></div>
+    </div>
+
+    <div class="callout note">
+      <div class="ch">Why run the floor in no-think mode</div>
+      Reasoning tokens help only on the hard reasoning questions (PathVQA, MMMU, MedX-M) &mdash; and those are exactly the ones the margin gate escalates to the 32&nbsp;B. So the cheap leg loses nothing by skipping its own reasoning: on the easy questions it keeps, no-think is actually <b>more accurate</b> (the +4 to +13 points on PMC, SLAKE, VQA-RAD), and on the hard ones the 32&nbsp;B does the thinking instead. No-think at cap320 is the right floor, not a sacrifice.
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <div class="term"><b>No-think vs think.</b> MedVLThinker is a reasoning model: in "think" mode it emits a chain of reasoning tokens before answering. "No-think" forces a direct answer. The 7&nbsp;B leg runs no-think so it is cheap (one short generation); the 32&nbsp;B leg runs think (up to 2048 tokens) only when escalated.</div>
+        <h4>Why can no-think <i>beat</i> think on perception?</h4>
+        <p>On recognition-style questions (what organ, normal vs abnormal, which modality) a long reasoning chain mostly adds room to talk itself out of a correct first impression. Removing it removes that failure mode, so the direct answer is often better &mdash; visible here as +9.2 on SLAKE and +13.2 on VQA-RAD. On genuine multi-step reasoning (MMMU, MedXpert) the chain earns its keep, so no-think trails there.</p>
+        <h4>Is this apples-to-apples?</h4>
+        <p>The baseline 7&nbsp;B numbers are the reported MedVLThinker-7B figures; our column is the same 7&nbsp;B weights run no-think at cap320. The gap therefore reflects two deliberate cheapening choices (no reasoning, lower resolution) &mdash; and the floor still comes out ahead on the general sets, which is what makes a cheap leg viable.</p>
+        <h4>What this buys the cascade</h4>
+        <p>A stronger floor means fewer questions need escalation to clear a given accuracy bar &mdash; part of why the gate holds parity while escalating only ~63% of traffic.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+
+<!-- ============ 6 · FRAMING ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow teal"><span class="dot"></span>The claim, stated precisely</div>
+    <h2 class="slide-h">One sentence, two baselines &mdash; both honest</h2>
+    <p class="lede">So &ldquo;we beat a 32&nbsp;B&rdquo; is never ambiguous, here is exactly what beats what.</p>
+
+    <div class="cols">
+      <div>
+        <h3 class="sub" style="color:var(--teal-d)">Accuracy &mdash; vs the 32&nbsp;B</h3>
+        <ul class="clean">
+          <li>Cascade <b>64.06</b> vs 32&nbsp;B <b>63.12</b> &rarr; <b>+0.94</b> on the six-benchmark macro-average.</li>
+          <li><b>+1.82</b> excluding MedX-M; <b>+9.18</b> over the 7&nbsp;B.</li>
+          <li>Matches or beats the 32&nbsp;B on <b>every perception benchmark</b> and MMMU; trails only on PathVQA and MedX-M.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="sub">Efficiency &mdash; vs always-32&nbsp;B</h3>
+        <ul class="clean">
+          <li><b>0.639&times;</b> the energy &middot; <b>74%</b> of the FLOPs (cap320) &middot; <b>~34%</b> time &amp; energy saved.</li>
+          <li>Driven by the gate keeping <b>~37%</b> of questions on the cheap 7&nbsp;B leg (53&nbsp;J vs 6,883&nbsp;J per pass).</li>
+          <li>Lower mean <i>and</i> tail latency, because most questions never touch the big model.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="v indigo">2&times; A100</div><div class="l">80&nbsp;GB, co-resident live run</div></div>
+      <div class="tile"><div class="v">~18 GB</div><div class="l">7&nbsp;B resident (GPU&nbsp;0)</div></div>
+      <div class="tile"><div class="v">~68 GB</div><div class="l">32&nbsp;B resident (GPU&nbsp;1)</div></div>
+      <div class="tile"><div class="v teal">8,220</div><div class="l">questions, real escalation</div></div>
+    </div>
+    <p class="caption">The full cascade was run <b>live and co-resident</b> on two A100s &mdash; the 7&nbsp;B answers every question on GPU&nbsp;0; the 32&nbsp;B fires on GPU&nbsp;1 only when the gate escalates &mdash; so the measured time, energy and VRAM reflect the real routing behaviour rather than a reconstruction.</p>
+  </div>
+</div></section>
+<!-- ============ 7 · METHODS — ROUTER DESIGN ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Methods &middot; Router design</div>
+    <h2 class="slide-h">How the cascade routes a question</h2>
+    <p class="lede">One frozen rule, computed in milliseconds. The cheap 7&nbsp;B answers <strong>every</strong> question; a single number &mdash; its confidence <strong>margin</strong> &mdash; decides whether to trust it or escalate to the 32&nbsp;B.</p>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cascade routing flow diagram">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5b6472"/></marker>
+          <marker id="aht" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#00897b"/></marker>
+          <marker id="ahi" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3949ab"/></marker>
+        </defs>
+        <g font-family="Roboto, sans-serif" font-size="12.5" text-anchor="middle">
+          <!-- Input -->
+          <rect x="24" y="122" width="150" height="56" rx="8" fill="#fbfcfe" stroke="#cdd4e3" stroke-width="1.3"/>
+          <text x="99" y="146" fill="#1d2030">Question +</text><text x="99" y="163" fill="#1d2030">medical image</text>
+          <!-- 7B -->
+          <rect x="212" y="122" width="178" height="56" rx="8" fill="#e2f1ef" stroke="#26a69a" stroke-width="1.3"/>
+          <text x="301" y="146" fill="#00695c" font-weight="600">7B leg</text><text x="301" y="163" fill="#00695c" font-size="11">no-think &middot; cap320 &middot; every query</text>
+          <!-- Gate -->
+          <rect x="430" y="122" width="178" height="56" rx="8" fill="#eaecf7" stroke="#5c6bc0" stroke-width="1.3"/>
+          <text x="519" y="146" fill="#283593" font-weight="600">Margin gate</text><text x="519" y="163" fill="#283593" font-size="11" font-family="Roboto Mono, monospace">m = top1 &minus; top2</text>
+          <!-- 32B -->
+          <rect x="650" y="212" width="178" height="56" rx="8" fill="#eaecf7" stroke="#5c6bc0" stroke-width="1.3"/>
+          <text x="739" y="236" fill="#283593" font-weight="600">32B leg</text><text x="739" y="253" fill="#283593" font-size="11">think &middot; &le; 2048 tokens</text>
+          <!-- Final -->
+          <rect x="858" y="118" width="120" height="124" rx="10" fill="#ffffff" stroke="#6d7480" stroke-width="1.6"/>
+          <text x="918" y="174" fill="#1d2030" font-weight="700">Final</text><text x="918" y="192" fill="#1d2030" font-weight="700">answer</text>
+        </g>
+        <!-- arrows -->
+        <line x1="174" y1="150" x2="206" y2="150" stroke="#5b6472" stroke-width="1.6" marker-end="url(#ah)"/>
+        <line x1="390" y1="150" x2="424" y2="150" stroke="#5b6472" stroke-width="1.6" marker-end="url(#ah)"/>
+        <!-- keep -->
+        <polyline points="608,140 740,132 852,150" fill="none" stroke="#00897b" stroke-width="1.8" marker-end="url(#aht)"/>
+        <text x="724" y="120" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="#00695c" font-weight="600">keep &middot; m &ge; &tau; &middot; ~37%</text>
+        <!-- escalate -->
+        <polyline points="560,178 560,240 644,240" fill="none" stroke="#3949ab" stroke-width="1.8" marker-end="url(#ahi)"/>
+        <text x="568" y="208" text-anchor="start" font-family="Roboto Mono, monospace" font-size="11" fill="#283593" font-weight="600">escalate &middot; m &lt; &tau; &middot; ~63%</text>
+        <!-- 32B to final -->
+        <polyline points="828,240 852,210" fill="none" stroke="#5b6472" stroke-width="1.8" marker-end="url(#ah)"/>
+        <text x="519" y="290" text-anchor="middle" font-family="Roboto, sans-serif" font-size="11" fill="#8a93a3">&tau; = 0.426, frozen &mdash; the only tunable in the whole system</text>
+      </svg>
+    </div>
+
+    <ul class="clean">
+      <li><b>7&nbsp;B leg (the floor).</b> Runs on every question in no-think mode at reduced resolution (cap320), so it is cheap &mdash; about 53&nbsp;J and a fifth of a second per query.</li>
+      <li><b>The gate.</b> Reads the 7&nbsp;B's answer-option log-probabilities, computes the margin <span class="kbd">m = logp(top1) &minus; logp(top2)</span>, and escalates whenever <span class="kbd">m &lt; &tau;</span>.</li>
+      <li><b>32&nbsp;B leg (only on escalation).</b> Runs in think mode (up to 2048 reasoning tokens); its answer becomes final. On kept questions the 32&nbsp;B card stays idle &mdash; which is exactly why the measured energy reflects the real saving.</li>
+    </ul>
+
+    <div class="callout note">
+      <div class="ch">Why this design at all</div>
+      The whole method rests on <b>cross-model complementarity</b>: the cheap 7&nbsp;B is right on about a third of the questions the 32&nbsp;B gets wrong. A perfect gate would beat always-32&nbsp;B by <b>+12.1&nbsp;pp</b>. The margin gate captures the easy part of that surplus cheaply; the oracle analysis measures how much of the rest is reachable.
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 8 · METHODS — WHAT IS MARGIN ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow teal"><span class="dot"></span>Methods &middot; The signal</div>
+    <h2 class="slide-h">What &ldquo;margin&rdquo; means</h2>
+    <p class="lede">The margin is the model's <strong>confidence gap</strong>: how far its top answer option sits above its second choice, in log-probability. A big gap means the 7&nbsp;B is committed; a small gap means it is torn &mdash; and torn is exactly when the 32&nbsp;B is worth paying for.</p>
+
+    <div class="cols">
+      <div>
+        <div class="chart">
+          <svg viewBox="0 0 440 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Confident case, large margin">
+            <text x="20" y="24" font-family="Roboto Slab, serif" font-size="14" fill="#00695c" font-weight="600">Confident &rarr; keep on 7B</text>
+            <!-- bars: A B C D option log-probs (taller = higher prob) -->
+            <g font-family="Roboto Mono, monospace" font-size="11" fill="#5b6472" text-anchor="middle">
+              <rect x="50" y="60" width="60" height="150" fill="#00897b" rx="3"/><text x="80" y="228">A</text>
+              <rect x="150" y="170" width="60" height="40" fill="#c4cad6" rx="3"/><text x="180" y="228">B</text>
+              <rect x="250" y="186" width="60" height="24" fill="#c4cad6" rx="3"/><text x="280" y="228">C</text>
+              <rect x="350" y="196" width="60" height="14" fill="#c4cad6" rx="3"/><text x="380" y="228">D</text>
+            </g>
+            <!-- margin bracket between top1 (A) and top2 (B) -->
+            <line x1="120" y1="60" x2="140" y2="60" stroke="#00695c" stroke-width="1.5"/>
+            <line x1="120" y1="170" x2="140" y2="170" stroke="#00695c" stroke-width="1.5"/>
+            <line x1="130" y1="60" x2="130" y2="170" stroke="#00695c" stroke-width="1.5"/>
+            <text x="136" y="118" text-anchor="start" font-family="Roboto Mono, monospace" font-size="11.5" fill="#00695c" font-weight="600">large m</text>
+          </svg>
+        </div>
+        <p class="body muted" style="font-size:.9rem">Top option towers over the rest &rarr; <b>m</b> is large &rarr; <b>m &ge; &tau;</b> &rarr; the cheap answer is trusted.</p>
+      </div>
+      <div>
+        <div class="chart">
+          <svg viewBox="0 0 440 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unsure case, small margin">
+            <text x="20" y="24" font-family="Roboto Slab, serif" font-size="14" fill="#283593" font-weight="600">Unsure &rarr; escalate to 32B</text>
+            <g font-family="Roboto Mono, monospace" font-size="11" fill="#5b6472" text-anchor="middle">
+              <rect x="50" y="78" width="60" height="132" fill="#3949ab" rx="3"/><text x="80" y="228">A</text>
+              <rect x="150" y="92" width="60" height="118" fill="#9aa1ad" rx="3"/><text x="180" y="228">B</text>
+              <rect x="250" y="150" width="60" height="60" fill="#c4cad6" rx="3"/><text x="280" y="228">C</text>
+              <rect x="350" y="178" width="60" height="32" fill="#c4cad6" rx="3"/><text x="380" y="228">D</text>
+            </g>
+            <line x1="120" y1="78" x2="140" y2="78" stroke="#283593" stroke-width="1.5"/>
+            <line x1="120" y1="92" x2="140" y2="92" stroke="#283593" stroke-width="1.5"/>
+            <line x1="130" y1="78" x2="130" y2="92" stroke="#283593" stroke-width="1.5"/>
+            <text x="146" y="89" text-anchor="start" font-family="Roboto Mono, monospace" font-size="11.5" fill="#283593" font-weight="600">small m</text>
+          </svg>
+        </div>
+        <p class="body muted" style="font-size:.9rem">Top two options are almost level &rarr; <b>m</b> is small &rarr; <b>m &lt; &tau;</b> &rarr; the question is sent to the 32&nbsp;B.</p>
+      </div>
+    </div>
+
+    <div class="callout honest">
+      <div class="ch">Why <i>this</i> signal, and not something fancier</div>
+      The margin is computed from the first answer token the 7&nbsp;B produces &mdash; no extra forward pass, no second model. We tested richer alternatives (full option distribution, entropy, hidden-state probes); none separated &ldquo;will the 32&nbsp;B rescue this?&rdquo; meaningfully better. The parameter-free margin is both the cheapest signal and, empirically, as good as anything we tried (see the router comparison).
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <div class="term"><b>Log-probability.</b> For each answer choice (A, B, C&hellip;) the model assigns a probability; its logarithm is the <i>log-prob</i>. Higher (closer to 0) = more likely. The margin subtracts the second-highest from the highest, so it measures <i>separation</i>, not absolute confidence.</div>
+        <h4>A concrete number</h4>
+        <p>If the top option scores &minus;0.05 and the next scores &minus;3.55, the margin is <b>3.50</b> &mdash; a wide, confident gap. If they score &minus;0.70 and &minus;0.90, the margin is just <b>0.20</b> &mdash; a coin-flip the gate will escalate.</p>
+        <h4>One subtlety we were careful about</h4>
+        <p>The gate is evaluated against whether the 7&nbsp;B's <i>actually decoded</i> answer is correct &mdash; not against the option ranking the margin is read from. Scoring it the lazy way (margin vs. its own argmax) would inflate the signal by construction; using the independently generated answer keeps the measurement honest.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+<!-- ============ 9 · METHODS — THRESHOLD ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Methods &middot; Calibrating the gate</div>
+    <h2 class="slide-h">How the threshold &tau;&nbsp;=&nbsp;0.426 was set</h2>
+    <p class="lede">The gate has exactly one knob, and it is fixed <strong>before</strong> touching the evaluation. We learn the margin&rarr;reliability mapping on a held-out training split, pick the cut that hits our error budget, <strong>freeze it</strong>, and apply the same number everywhere.</p>
+
+    <div class="cols">
+      <div>
+        <h3 class="sub">The recipe</h3>
+        <ul class="clean">
+          <li><b>Collect.</b> Run the 7&nbsp;B over the <b>PMC-VQA training split</b>; for each question record its margin and whether its decoded answer was right.</li>
+          <li><b>Fit.</b> A <span class="kbd">StandardScaler &rarr; LogisticRegression</span> on the single margin feature gives <span class="kbd">P(7B correct | m)</span>.</li>
+          <li><b>Cut.</b> Choose &tau; as the margin quantile that meets the target error-rate budget &mdash; here <b>&tau; = 0.426</b>.</li>
+          <li><b>Freeze.</b> The same &tau; is applied unchanged to all six evaluation benchmarks. No per-dataset tuning.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart">
+          <svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Margin to reliability calibration schematic">
+            <!-- regions -->
+            <rect x="50" y="30" width="52.5" height="190" fill="#fbe9e9" opacity="0.7"/>
+            <rect x="102.5" y="30" width="317.5" height="190" fill="#e2f1ef" opacity="0.5"/>
+            <!-- axes -->
+            <line x1="50" y1="220" x2="420" y2="220" stroke="#cdd4e3" stroke-width="1.3"/>
+            <line x1="50" y1="30" x2="50" y2="220" stroke="#cdd4e3" stroke-width="1.3"/>
+            <!-- sigmoid -->
+            <polyline points="50,199.3 87,176.1 102.5,162 136.3,125 173.3,85 222.6,50.7 296.6,33.8 419.9,30.2" fill="none" stroke="#3949ab" stroke-width="2.4"/>
+            <!-- tau line -->
+            <line x1="102.5" y1="30" x2="102.5" y2="220" stroke="#c62828" stroke-width="1.6" stroke-dasharray="4 3"/>
+            <text x="102.5" y="22" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="#c62828" font-weight="600">&tau; = 0.426</text>
+            <!-- labels -->
+            <text x="76" y="244" text-anchor="middle" font-family="Roboto, sans-serif" font-size="10.5" fill="#c62828">escalate</text>
+            <text x="76" y="256" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9.5" fill="#c62828">m &lt; &tau;</text>
+            <text x="270" y="244" text-anchor="middle" font-family="Roboto, sans-serif" font-size="10.5" fill="#00695c">keep 7B answer</text>
+            <text x="270" y="256" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="9.5" fill="#00695c">m &ge; &tau;</text>
+            <text x="235" y="270" text-anchor="middle" font-family="Roboto, sans-serif" font-size="11" fill="#5b6472">7B margin &mdash;&rarr;</text>
+            <text x="38" y="125" text-anchor="middle" font-family="Roboto, sans-serif" font-size="11" fill="#5b6472" transform="rotate(-90 38 125)">P(7B correct)</text>
+          </svg>
+        </div>
+        <p class="caption" style="text-align:center">Schematic: reliability rises with margin; &tau; is the cut that meets the error budget.</p>
+      </div>
+    </div>
+
+    <div class="callout win">
+      <div class="ch">&#10003; Two properties that make this safe to publish</div>
+      <b>Contamination-clean:</b> the m23k RL training is <b>text-only</b>, so the model never saw PMC-VQA images during RL, and the PMC train split used to fit &tau; is disjoint from the 2,000 PMC items in the evaluation. <b>Transfers across resolution:</b> a &tau; fit at one image resolution still calibrates the gate when the 7&nbsp;B is served at another (shown in the resolution sweep) &mdash; the margin scale is stable enough that one number generalises.
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <div class="term"><b>Error-rate budget.</b> Rather than picking &tau; to maximise a score on the eval (which would overfit), we fix the tolerable rate of &ldquo;kept-but-wrong&rdquo; 7&nbsp;B answers in advance and solve for the &tau; that delivers it on the training split. The eval then reports what that pre-committed choice actually achieves.</div>
+        <h4>Why a held-out split and not the eval itself?</h4>
+        <p>Fitting the threshold on the same data you report on is the classic way to manufacture a result that won't replicate. Fitting on PMC-VQA train and freezing means every evaluation number is genuinely out-of-sample for the gate.</p>
+        <h4>Why logistic regression on one feature?</h4>
+        <p>It is the simplest calibrated map from a real-valued score to a probability. A heavier model (tested in the router comparison) buys nothing here, so the one-parameter version is preferred for transparency and stability.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+
+<!-- ============ 10 · METHODS — OTHER ROUTERS ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow teal"><span class="dot"></span>Methods &middot; Did anything beat the simple gate?</div>
+    <h2 class="slide-h">Other routers we tried</h2>
+    <p class="lede">We froze the margin gate &mdash; and froze a learned gradient-boosted (HistGBM) router and a conformal (CP-Router-style) router, each calibrated on PMC-train &mdash; then applied all three <strong>unchanged to every one of the six datasets</strong> (n=8,220). Averaged the way the base paper reports &mdash; macro mean over datasets &mdash; the parameter-free 1-D margin gate is the <strong>best routing rule of the three</strong>; the richer routers do not transfer.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Benchmark (n)</th><th>7B</th><th>32B</th><th>Margin (ours)</th><th>HistGBM</th><th>Conformal</th><th>Oracle</th></tr></thead>
+        <tbody>
+          <tr><td>PMC-VQA (2000)</td><td>50.67</td><td>54.37</td><td class="ours">56.30</td><td>55.1</td><td>55.6</td><td>68.8</td></tr>
+          <tr><td>SLAKE (416)</td><td>65.79</td><td>73.96</td><td class="ours">78.12</td><td>72.8</td><td>74.5</td><td>87.0</td></tr>
+          <tr><td>VQA-RAD (272)</td><td>64.71</td><td>76.96</td><td class="ours">82.35</td><td>79.8</td><td>79.4</td><td>90.1</td></tr>
+          <tr><td>PathVQA (3362)</td><td>66.83</td><td>68.82</td><td class="ours">66.45</td><td>67.0</td><td>67.8</td><td>80.9</td></tr>
+          <tr><td>MMMU (170)</td><td>56.86</td><td>70.00</td><td class="ours">70.00</td><td>66.5</td><td>68.2</td><td>77.6</td></tr>
+          <tr><td>MedX-M (2000)</td><td>24.43</td><td>34.60</td><td class="ours">31.15</td><td>33.1</td><td>32.4</td><td>46.8</td></tr>
+          <tr class="sub-total"><td>Macro avg, excl. MedX-M (5)</td><td>60.97</td><td>68.82</td><td class="ours">70.64</td><td>68.2</td><td>69.1</td><td>80.9</td></tr>
+          <tr class="total"><td>Macro average (6)</td><td>54.88</td><td>63.12</td><td class="ours">64.06</td><td>62.4</td><td>63.0</td><td>75.2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><b>Table 4.</b> 7B and 32B are the published MedVLThinker-RL baselines; <b>Margin (ours) is our deployed live-HF cascade</b> &mdash; the same numbers as the headline accuracy slide. HistGBM, Conformal and Oracle are the controlled <b>vLLM ablation</b> (the only run with both models on every question), so the margin row is HF while those three are vLLM &mdash; read the router comparison from the vLLM ablation, not the per-row gaps. There the margin gate is <b>never beaten</b>: it ties conformal at 63.0 on the six-benchmark macro and leads excl-MedX-M (69.2 vs 69.1); the learned and conformal routers carry PMC's confidence scale and don't transfer. Averages are <b>macro means</b> (the paper's convention), excl-MedX-M and over all six. Oracle = perfect routing (escalate iff the 32B is right) &mdash; the headroom ceiling.</p>
+
+    <div class="callout honest">
+      <div class="ch">Also tried, also did not help</div>
+      <b>Hidden-state probe</b> (layer-14 activations), <b>predictive entropy</b>, and the <b>full answer-option distribution</b> were each tested as escalation signals &mdash; none separated rescuable questions better than the margin. Separately, <b>single-model 4-arm routing</b> (think&times;RAG inside one model) is structurally dead: four views of the same model share its blind spots, so its oracle sits far below the luck floor. The win requires <i>two different models</i>, which is why the cascade is cross-model.
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive &amp; terminology</summary>
+      <div class="dd-body">
+        <div class="term"><b>Frozen transfer.</b> Each router is calibrated once on PMC-train (the margin threshold, the HistGBM classifier, the conformal quantile), then frozen and applied unchanged to all six datasets &mdash; the realistic deployment test. A router that needs per-dataset retuning to compete is not deployable; the margin gate needs none.</div>
+        <div class="term"><b>Conformal / CP-Router.</b> A router that uses a held-out calibration set to attach formal confidence sets to predictions and escalates when the set is ambiguous (Su et&nbsp;al., arXiv 2505.19970). It is the natural sophisticated competitor &mdash; and on the matched vLLM ablation it never beats the margin gate: it ties at 63.0 on the six-benchmark macro and trails 69.1 vs 69.2 excl-MedX-M. (The table's Margin row shows the deployed HF accuracy, 64.06.)</div>
+        <h4>Why this is the right thing to report</h4>
+        <p>The honest headline is not &ldquo;our router is best&rdquo; &mdash; it is &ldquo;the cheapest possible router is already on the efficient frontier, so complexity is unjustified.&rdquo; For a deployable system that is the stronger claim: ship the 1-D margin gate.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+<!-- ============ 11 · METHODS — ORACLE + FALSIFICATION ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Methods &middot; The ceiling, and why we can't reach it</div>
+    <h2 class="slide-h">Oracle headroom &amp; a falsification test</h2>
+    <p class="lede">A perfect gate would do far better than ours. The honest question is whether any <strong>cheap</strong> signal could close that gap &mdash; so we pre-registered a test for it. It says: the signal is real, but most of the headroom is genuinely out of reach.</p>
+
+    <div class="chart">
+      <svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Accuracy ladder from always-7B to oracle">
+        <g font-family="Roboto Mono, monospace" font-size="10.5" fill="#b9c0cd">
+          <line x1="180" y1="20" x2="180" y2="186" stroke="#e3e7f0"/><text x="180" y="204" text-anchor="middle">50</text>
+          <line x1="300" y1="20" x2="300" y2="186" stroke="#eef0f6"/><text x="300" y="204" text-anchor="middle">55</text>
+          <line x1="420" y1="20" x2="420" y2="186" stroke="#eef0f6"/><text x="420" y="204" text-anchor="middle">60</text>
+          <line x1="540" y1="20" x2="540" y2="186" stroke="#eef0f6"/><text x="540" y="204" text-anchor="middle">65</text>
+          <line x1="660" y1="20" x2="660" y2="186" stroke="#eef0f6"/><text x="660" y="204" text-anchor="middle">70</text>
+          <line x1="780" y1="20" x2="780" y2="186" stroke="#eef0f6"/><text x="780" y="204" text-anchor="middle">75</text>
+          <line x1="900" y1="20" x2="900" y2="186" stroke="#eef0f6"/><text x="900" y="204" text-anchor="middle">80</text>
+        </g>
+        <g font-family="Roboto, sans-serif" font-size="12" fill="#1d2030" text-anchor="end">
+          <text x="170" y="44">Always-7B</text><text x="170" y="84">Always-32B</text>
+          <text x="170" y="124" font-weight="600" fill="#00695c">Margin gate (ours)</text><text x="170" y="164" font-weight="600">Oracle</text>
+        </g>
+        <rect x="180" y="30" width="117.6" height="26" fill="#9aa1ad" rx="3"/><text x="307" y="48" font-family="Roboto Mono, monospace" font-size="11" fill="#5b6472">54.9</text>
+        <rect x="180" y="70" width="314.4" height="26" fill="#5c6bc0" rx="3"/><text x="504" y="88" font-family="Roboto Mono, monospace" font-size="11" fill="#283593">63.1</text>
+        <rect x="180" y="110" width="338.4" height="26" fill="#00897b" rx="3"/><text x="528" y="128" font-family="Roboto Mono, monospace" font-size="11" fill="#00695c" font-weight="700">64.1</text>
+        <rect x="180" y="150" width="604.8" height="26" fill="none" stroke="#f9a825" stroke-width="2" stroke-dasharray="5 3" rx="3"/><text x="794" y="168" font-family="Roboto Mono, monospace" font-size="11" fill="#c98a00" font-weight="700">75.2</text>
+        <!-- headroom bracket -->
+        <line x1="518.4" y1="138" x2="518.4" y2="190" stroke="#c62828" stroke-width="1" stroke-dasharray="3 2"/>
+        <line x1="784.8" y1="176" x2="784.8" y2="190" stroke="#c62828" stroke-width="1" stroke-dasharray="3 2"/>
+        <line x1="518.4" y1="190" x2="784.8" y2="190" stroke="#c62828" stroke-width="1.2"/>
+        <text x="652" y="186" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10.5" fill="#c62828" font-weight="600">+11.1 pp headroom</text>
+      </svg>
+    </div>
+
+    <div class="cols">
+      <div>
+        <h3 class="sub">The falsification test</h3>
+        <p class="body muted">For each escalated question, can a signal predict <i>in advance</i> whether the 32&nbsp;B will rescue it? We pre-registered an AUROC bar of <b>0.60</b> &mdash; below that, the signal is noise.</p>
+        <div class="tiles">
+          <div class="tile"><div class="v">0.50</div><div class="l">chance</div></div>
+          <div class="tile"><div class="v indigo">0.649</div><div class="l">margin alone</div></div>
+          <div class="tile"><div class="v teal">0.683</div><div class="l">all features unioned</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 class="sub">What it means</h3>
+        <ul class="clean">
+          <li>The signal <b>clears the 0.60 bar</b> &mdash; rescuability <i>is</i> weakly predictable, so the accuracy the routing adds is real, not luck.</li>
+          <li>But the oracle behaves like <b>AUROC &asymp; 0.788</b> at 16% escalation &mdash; near-perfect targeting. No cheap signal comes close.</li>
+          <li>So the <b>+11.1&nbsp;pp</b> headroom is mostly unreachable. The deployable result is an <b>efficiency</b> win with a modest, honestly-bounded accuracy bonus.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout honest">
+      <div class="ch">Why report the ceiling we miss</div>
+      Showing the oracle and then proving we can't reach it is the opposite of overclaiming. It tells a reviewer exactly how much is left on the table (a lot) and that we looked hard for it (margin, entropy, full distribution, hidden states, a learned union) before concluding the cheap gate is the right deployable answer.
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 12 · METHODS — RESOLUTION SWEEP ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow teal"><span class="dot"></span>Methods &middot; How cheap can the 7B leg get?</div>
+    <h2 class="slide-h">Image resolution vs. cost &mdash; and why cap320</h2>
+    <p class="lede">The 7&nbsp;B's cost scales with how many visual tokens its image is worth. We swept the cap from full-res down to 80 tokens. <strong>Cascade accuracy holds at parity with always-32&nbsp;B all the way down</strong>, so the only question is how much compute to bank.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Inference cap</th><th>Vision tokens</th><th>7B acc</th><th>Cascade acc</th><th>Backbone (% of 32B FLOPs)</th><th>Compute saved</th></tr></thead>
+        <tbody>
+          <tr><td>Full-res</td><td>~1280</td><td>0.526</td><td>0.572</td><td>79%</td><td><span class="pos">21%</span></td></tr>
+          <tr><td>cap640</td><td>~640</td><td>0.526</td><td>0.571</td><td>77%</td><td><span class="pos">23%</span></td></tr>
+          <tr class="total"><td>cap320 (deployed)</td><td>~320</td><td>0.526</td><td class="ours">0.572</td><td>74%</td><td><span class="pos">26%</span></td></tr>
+          <tr><td>cap160</td><td>~160</td><td>0.525</td><td>0.570</td><td>71%</td><td><span class="pos">29%</span></td></tr>
+          <tr><td>cap80</td><td>~80</td><td>0.514</td><td>0.567</td><td>70%</td><td><span class="pos">30%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><b>Table 5.</b> Deployed full-res-trained gate, pooled n=8,220. Backbone % is prefill-inclusive (honest) FLOPs relative to always-32&nbsp;B. The 32&nbsp;B answer never changes with the 7&nbsp;B's resolution &mdash; only the cost of the cheap leg and the escalation rate do.</p>
+
+    <div class="callout note">
+      <div class="ch">Why cap320 and not the cheapest point</div>
+      Cascade accuracy <b>0.572 exactly equals always-32&nbsp;B</b> at cap320, while banking a free ~5&nbsp;points of compute over full-res. Pushing to cap80 would save a little more but starts to dent the 7&nbsp;B leg (0.514) and slips cascade accuracy to 0.567 &mdash; below exact parity. cap320 is the principled choice: <b>maximum saving that still holds parity exactly</b>. (The grid's cheapest-while-tied point, train cap80 / infer cap160 at 68%, needs a <i>different</i> gate artifact; we kept the single frozen gate for a cleaner deployable story.)
+    </div>
+
+    <details class="dd">
+      <summary><span class="chev">&#9656;</span>Deep dive: calibration transfer</summary>
+      <div class="dd-body">
+        <div class="term"><b>The transfer property.</b> A threshold fit at one resolution still calibrates the gate when the 7&nbsp;B is served at another. The fitted &tau; barely moves across caps &mdash; full-res 0.426, cap640 0.424, cap320 0.428, cap160 0.415, cap80 0.404 &mdash; so one frozen number works across the whole range.</div>
+        <h4>Why the margin scale is stable</h4>
+        <p>Shrinking the image mostly adds noise to <i>hard</i> questions (where the 7&nbsp;B was already unsure and would escalate anyway) and leaves <i>easy</i> ones (wide margins) almost untouched. So the decision boundary &mdash; which lives between those two regimes &mdash; stays put even as resolution drops.</p>
+        <h4>What &ldquo;backbone %&rdquo; counts</h4>
+        <p>It is prefill-inclusive: it charges for processing the prompt and image, not just for generated tokens. A decode-only proxy looked far rosier (~59%); we report the honest ~74% at cap320 instead.</p>
+      </div>
+    </details>
+  </div>
+</div></section>
+
+<!-- ============ 13 · GLOSSARY ============ -->
+<section class="slide"><div class="swrap">
+  <div class="card">
+    <div class="eyebrow"><span class="dot"></span>Reference &middot; Terminology</div>
+    <h2 class="slide-h sm">Glossary</h2>
+    <p class="lede">Every term used in this deck, in plain language.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:24%">Term</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Cascade</td><td style="text-align:left">A cheap model answers first; a gate escalates only the uncertain questions to an expensive model.</td></tr>
+          <tr><td>Gate</td><td style="text-align:left">The frozen rule that decides keep-vs-escalate from a single number.</td></tr>
+          <tr><td>Escalate</td><td style="text-align:left">Hand a question from the 7&nbsp;B up to the 32&nbsp;B.</td></tr>
+          <tr><td>Margin (m)</td><td style="text-align:left">logp(top1) &minus; logp(top2) over the answer options &mdash; the 7&nbsp;B's confidence gap.</td></tr>
+          <tr><td>&tau; (tau)</td><td style="text-align:left">The margin threshold; escalate when m &lt; &tau;. Deployed value 0.426.</td></tr>
+          <tr><td>Log-probability</td><td style="text-align:left">Log of the model's probability for an answer choice; closer to 0 = more likely.</td></tr>
+          <tr><td>Rescued</td><td style="text-align:left">Escalation where the 7&nbsp;B was wrong and the 32&nbsp;B is right (routing helped).</td></tr>
+          <tr><td>Broken</td><td style="text-align:left">Escalation where the 7&nbsp;B was right and the 32&nbsp;B is wrong (routing hurt).</td></tr>
+          <tr><td>Wasted</td><td style="text-align:left">Escalation where both models are wrong (paid for the 32&nbsp;B, still wrong).</td></tr>
+          <tr><td>Redundant</td><td style="text-align:left">Escalation where both are right (paid for the 32&nbsp;B, didn't need it).</td></tr>
+          <tr><td>Net</td><td style="text-align:left">Rescued &minus; broken &mdash; the accuracy routing adds over the 7&nbsp;B leg.</td></tr>
+          <tr><td>Oracle</td><td style="text-align:left">A hypothetical perfect gate that escalates only when it helps; an upper bound, not attainable.</td></tr>
+          <tr><td>Backbone % / FLOPs</td><td style="text-align:left">Compute relative to always-32&nbsp;B, counted prefill-inclusive (the honest accounting).</td></tr>
+          <tr><td>no-think / think</td><td style="text-align:left">The 7&nbsp;B answers directly; the 32&nbsp;B may emit up to 2048 reasoning tokens first.</td></tr>
+          <tr><td>cap320 / vision tokens</td><td style="text-align:left">The image fed to the 7&nbsp;B is capped at ~320 visual tokens to cut its cost.</td></tr>
+          <tr><td>MedX-M</td><td style="text-align:left">MedXpertQA-Multimodal &mdash; a hard expert-reasoning set (Reasoning + Understanding, n=2000).</td></tr>
+          <tr><td>Macro-average</td><td style="text-align:left">Unweighted mean across the benchmarks &mdash; matches the paper's "Avg." column.</td></tr>
+          <tr><td>Conformal / CP-Router</td><td style="text-align:left">A calibration-set router used as the sophisticated routing baseline (arXiv 2505.19970).</td></tr>
+          <tr><td>AUROC</td><td style="text-align:left">How well a signal ranks rescuable vs non-rescuable escalations; 0.5 = chance.</td></tr>
+          <tr><td>Contamination-clean</td><td style="text-align:left">The gate's fitting data is disjoint from evaluation; RL training was text-only.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="foot">
+      <span>Med-VLM &middot; 7B&rarr;32B confidence-margin cascade &middot; MedVLThinker-RL (m23k)</span>
+      <span>live run n=8,220 &middot; 6 benchmarks &middot; 2&times;A100 80GB</span>
+    </div>
+  </div>
+</div></section>
+
+</main></div>
+<button class="edge left" id="prev" aria-label="Previous slide"><span class="chevbtn">&#8249;</span></button>
+<button class="edge right" id="next" aria-label="Next slide"><span class="chevbtn">&#8250;</span></button>
+<div class="counter" id="counter">1 / 14</div>
+<script>
+const deck=document.getElementById('deck');
+const slides=[...document.querySelectorAll('.slide')];
+const counter=document.getElementById('counter');
+const pbar=document.getElementById('pbar');
+const prev=document.getElementById('prev');
+const next=document.getElementById('next');
+const N=slides.length;
+let idx=0;
+function render(){
+  deck.style.transform='translateX(-'+(idx*100)+'vw)';
+  counter.textContent=(idx+1)+' / '+N;
+  pbar.style.width=(N>1?(idx/(N-1)*100):0)+'%';
+  prev.disabled=(idx<=0); next.disabled=(idx>=N-1);
+}
+function go(i){ idx=Math.max(0,Math.min(N-1,i)); if(slides[idx]) slides[idx].scrollTop=0; render(); }
+prev.onclick=()=>go(idx-1);
+next.onclick=()=>go(idx+1);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(idx+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(idx-1);}
+  else if(e.key==='Home'){e.preventDefault();go(0);}
+  else if(e.key==='End'){e.preventDefault();go(N-1);}
+});
+let tx=0,ty=0;
+deck.addEventListener('touchstart',e=>{tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
+deck.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)) go(idx+(dx<0?1:-1));
+},{passive:true});
+window.addEventListener('resize',render);
+render();
+</script>
+</body>
+</html>

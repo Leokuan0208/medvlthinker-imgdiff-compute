@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 os.makedirs("paper/figs", exist_ok=True)
 
 # --- Fig 1: latency-vs-accuracy frontier (ALL-6), real values from final_3tier_comparison.txt ---
-pts = {  # name: (latency_s, accuracy, marker, is_ours)
-    "always-7B-nt": (0.21, 0.5262, "v", 0), "always-32B-nt": (0.34, 0.5573, "s", 0),
-    "always-32B-think (parity)": (26.61, 0.5723, "*", 0),
-    "Ours (ACC-v2)": (4.86, 0.5710, "o", 1), "ACC-v1 (margin)": (5.93, 0.5694, "o", 0),
-    "MSP/Chow": (6.60, 0.5704, "o", 0), "AutoMix": (5.46, 0.5699, "o", 0),
-    "CASP-Stability (trained)": (3.94, 0.5698, "D", 1), "Jitkrittum L2D": (5.01, 0.5673, "o", 0),
+pts = {  # name: (latency_s, accuracy, marker, is_ours) -- CANONICAL from master_data.csv (June-24, native cost)
+    "always-7B-nt": (0.13, 0.5262, "v", 0), "always-32B-nt": (0.23, 0.5573, "s", 0),
+    "always-32B-think (parity)": (11.34, 0.5723, "*", 0),
+    "Ours (ACC-v2)": (2.27, 0.5693, "o", 1), "ACC-v1 (margin)": (2.69, 0.5687, "o", 0),
+    "MSP/Chow": (2.96, 0.5697, "o", 0), "AutoMix": (2.50, 0.5692, "o", 0),
+    "CASP-Stability (trained)": (1.77, 0.5698, "D", 1), "Jitkrittum L2D": (2.29, 0.5666, "o", 0),
 }
 fig, ax = plt.subplots(figsize=(6.2, 4.2))
 ax.axhline(0.5723, ls="--", c="gray", lw=1, label="parity (always-32B-think)")

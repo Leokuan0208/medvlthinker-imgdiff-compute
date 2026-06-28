@@ -74,8 +74,8 @@ After the deployed margin gate (above), an autonomous research loop searched for
   big model's *fast* no-think mode (≈0.34s, vs ≈28s for think) is inserted as an intermediate tier,
   gated by its own logprob margin, so the slow reasoning pass fires only on the ~18% reasoning
   residual. Honest held-out eval with **real measured batch-1 latencies**, at accuracy parity with
-  always-32B-think: **latency 20.0s→5.7s (−72%) on ALL-6, 9.1s→0.28s (−97%) on ALL-5; FLOPs 81→55% /
-  51→27%; and *cleaner* on the never-worse-than-7B guardrail.** Mechanism: thinking *overthinks*
+  always-32B-think: **latency 11.34s→2.27s (−80%) on ALL-6, 8.88s→0.44s (−95%) on ALL-5; FLOPs 100→52% /
+  100→25%; energy ~5×; and *cleaner* on the never-worse-than-7B guardrail.** Mechanism: thinking *overthinks*
   perception VQA (32B-no-think ≥ 32B-think on the competent benchmarks). Scope: the 4 competent
   benchmarks (MMMU/MedXpert excluded — both near chance). Reproduce: `python3 src/cascade_methods/acc.py`.
   Method spec + adversarial novelty check (incremental-but-defensible systems contribution; closest

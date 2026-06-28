@@ -58,7 +58,7 @@ Goal: beat the deployed margin gate on compute/latency at iso-accuracy. Outcome:
 - WINNER = **Adaptive-Compute Cascade (ACC)**: confidence-gated 3-tier 7B-nothink@cap320 →
   32B-NOTHINK@cap320 → 32B-think@fullres. The fast no-think 32B tier resolves most escalations; slow
   think fires only on the reasoning residual. Honest held-out, real measured latency, at parity acc:
-  **ALL-6 latency 20.0s→5.7s (−72%), FLOPs 81→55%; ALL-5 9.1s→0.28s (−97%), FLOPs 51→27%;
+  **ALL-6 latency 11.34s→2.27s (−80%), FLOPs 100→52%, energy ~5×; ALL-5 8.88s→0.44s (−95%), FLOPs 100→25%;
   guardrail-cleaner than the SOTA cascade.** Scope: 4 competent benchmarks (MMMU/MedXpert excluded,
   both near chance). Novelty: incremental-but-defensible systems contribution (closest prior art:
   CAR 2505.15154; see results/cascade_methods/METHOD_ACC.md). Reproduce: `python3 src/cascade_methods/acc.py`.

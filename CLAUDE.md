@@ -61,8 +61,8 @@ NEW_DIRECTIONS_2026-06-25}.md`).** Full account also in **`results/cascade_metho
    32B-think@fullres**. The big model's *fast* no-think mode (≈0.34s vs ≈28s for think) is inserted
    as an intermediate tier (gated by its own logprob margin), so the slow think pass fires only on
    the ~18% reasoning residual. Honest held-out, **real measured batch-1 latency**, at parity with
-   always-32B-think: **latency 20.0s→5.7s (−72%) on ALL-6, 9.1s→0.28s (−97%) on ALL-5; FLOPs
-   81→55% / 51→27%; guardrail-cleaner.** Mechanism: thinking *overthinks* perception VQA
+   always-32B-think: **latency 11.34s→2.27s (−80%) on ALL-6, 8.88s→0.44s (−95%) on ALL-5; FLOPs
+   100→52% / 100→25%; energy ~5×; guardrail-cleaner.** Mechanism: thinking *overthinks* perception VQA
    (32B-no-think ≥ 32B-think on the 4 competent sets). Scope: competent-4 (MMMU/MedXpert excluded).
    Novelty: incremental-but-defensible systems contribution (closest prior art CAR, arXiv 2505.15154).
    Spec: `results/cascade_methods/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
