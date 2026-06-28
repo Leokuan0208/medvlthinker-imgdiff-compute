@@ -315,8 +315,8 @@ drops it −0.047 — it uses the image, refuting the Verification-Mirage "lazy 
 
 **Generalizes.** The pooled-4 verifier transfers **zero-shot to a fifth, held-out** dataset
 (RadImageNet-VQA: 0.329 → 0.353, +0.024, 13% of its gap) and across modality (Kvasir-OOD). **Data-efficient:**
-a label-budget ablation (500 / 1500 / 6000 training examples) shows the verifier captures most of its gain
-from only a few thousand labels.
+it needs only ${\sim}6{,}000$ judge
+labels in total to reach this lift.
 
 ### 6.2 Structured outputs: the same principle holds for bounding boxes
 

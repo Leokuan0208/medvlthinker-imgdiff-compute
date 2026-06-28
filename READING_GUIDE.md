@@ -8,7 +8,7 @@
 > **How the documents relate (mental model):**
 > - `CLAUDE.md` = the **briefing** (what the project is + the rules). Start here.
 > - `progress_June_*.md` = the **diary** (what happened, chronologically, with the messy detail).
-> - `SESSION_REPORT_trained_verifier.md` = the **best narrative** of the most recent + most important phase.
+> - the **Detailed narrative** section of `progress_June_25-26.md` = the **best narrative** of the most recent + most important phase.
 > - `paper/cvgip2026_draft.md` = the **polished final story** (what we'd actually publish).
 > - `STRUCTURE.md` = the **map of the code** (every file, one line each).
 > - `results/cascade_methods/*.md` = the **deep-dive appendices** (read only when you want full detail on one result).
@@ -73,7 +73,7 @@ free-text the same signal jumps to ~0.87. Phases 1–2 cover the visual-stabilit
 bounded) and **Phase B** (the trained verifier that finally breaks it). *Why:* this is the latest and
 arguably best result; the next step explains it in depth.
 
-**Step 9 — `SESSION_REPORT_trained_verifier.md` (read the whole file — it's the best single document).** 🟢
+**Step 9 — the **Detailed narrative** section of `progress_June_25-26.md` (read the whole file — it's the best single document).** 🟢
 *Learn:* the deep, reasoned narrative of the final phase, written as *question → method → data → result →
 **why we made that move***. It covers the seven luck-floor experiments and the three trained-verifier
 positives (free-text answers + SLAKE boxes + the real MS-CXR chest-X-ray benchmark), with the bootstrap
@@ -86,26 +86,22 @@ this is the clearest example. Pairs with paper §5.9–§5.10 (Step 13).
 
 Now read the paper, which synthesizes everything above into the publishable narrative.
 
-**Step 10 — `paper/cvgip2026_draft.md`, Abstract + §1 Introduction (especially the "Contributions" list).** 🟢
-*Learn:* the entire project in ~2 pages, and the 7 numbered contributions (i–vii). *Why:* the cleanest
-top-down summary; the contributions list is your table of contents for §5.
+*(The paper was restructured 2026-06-27 into a two-positive arc: ACC for efficiency + the trained verifier for accuracy, unified by the luck floor; the old §5.8 abstention section was removed.)*
 
-**Step 11 — paper §3 "Setup" + §4 "Method: the Adaptive-Compute Cascade (ACC)".**
-*Learn:* the models/datasets, and the precise 3-tier ACC method. *Why:* the formal version of Step 4.
+**Step 10 — `paper/cvgip2026_draft.md`, Abstract + §1 Introduction (the "Contributions" list (i)–(v)).** 🟢
+*Learn:* the entire project in ~2 pages and the five contributions. *Why:* the cleanest top-down summary.
 
-**Step 12 — paper §5.1 → §5.6.**
-*Learn:* the ACC results and the "limits of routing" findings — §5.1 (ACC vs cascades), §5.2 (the gate is
-saturated), §5.3 (cross-family headroom is unexploitable), §5.4 (language-prior), §5.5 (generalizes across
-architectures), §5.6 (a trained gate + learnability). *Why:* the evidence for the older half.
+**Step 11 — paper §3 "Setup" + §4 "Method I: the Adaptive-Compute Cascade (ACC)".**
+*Learn:* the metrics/definitions (incl. the cost equation and the agreement-gate math) and the 3-tier ACC. *Why:* the formal version of Step 4.
 
-**Step 13 — paper §5.7 → §5.10** (the recent, most novel results). 🟢
-*Learn:* §5.7 open-ended ceiling-break, §5.8 abstention (a deprioritized side-result), §5.9 the luck floor,
-§5.10 **the trained verifier** (the headline positive, with the scaling curve, the compute-beats-parameters
-Pareto, and the bootstrap CIs). *Why:* this is the frontier of the work; mirrors Steps 8–9.
+**Step 12 — paper §5.1 (ACC results) + §5.2 (the luck floor) + §5.3 (open-ended ceiling-break).**
+*Learn:* the efficiency win (−80% latency etc.), why no training-free gate/selector beats the baseline, and why open-ended evaluation matters. *Why:* the evidence for the first positive + the connective negative.
 
-**Step 14 — paper §6 "Discussion & Limitations" + §7 "Conclusion".**
-*Learn:* honest scope, what is and isn't claimed, and the one-paragraph takeaway. *Why:* tells you the
-boundaries of every claim above.
+**Step 13 — paper §6 "Method II: a Trained Outcome Verifier".** 🟢
+*Learn:* the verifier math (score, loss, best-of-N), the free-text result (49%), the box result (SLAKE + real MS-CXR), the AUROC-0.924 discrimination, the scaling curve, and the compute-beats-parameters Pareto. *Why:* the second, most novel positive; mirrors Steps 8–9.
+
+**Step 14 — paper §7 "Discussion & Limitations" + §8 "Conclusion".**
+*Learn:* honest scope (what is/ isn't novel), and the one-paragraph takeaway. *Why:* the boundaries of every claim.
 
 ---
 

@@ -28,7 +28,7 @@ medvlthinker-imgdiff-compute/
 ├── STRUCTURE.md         this file
 ├── README.md  RESULTS.md   project readme + running results log
 ├── progress_June_*.md   dated session logs (the paper trail; June 17 → 25-26)
-├── SESSION_REPORT_trained_verifier.md   narrative report of the trained-verifier program
+├── progress_June_25-26.md   dated diary + folded detailed narrative
 │
 ├── src/                 ALL active Python, grouped by pipeline stage (see sections below)
 ├── runners/             shell launchers (.sh) that drive the src/ scripts — NEW: decluttered from root
