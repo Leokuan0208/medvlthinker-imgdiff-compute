@@ -181,7 +181,7 @@ def cg_line():
 S.append(slide(f'''<div class="eyebrow teal"><span class="dot"></span>12 · Generalization — multiple models, modalities, output types</div>
 <h2 class="slide-h sm">The verifier is not a one-dataset trick</h2>
 <ul class="body">
-<li><b>Other base model (method, not just transfer):</b> we are also training the full method from scratch on a <b>MedVLThinker-7B</b> base (result landing). <i>And</i> cross-generator transfer: {cg_line()}</li>
+<li><b>Other base model (method, not just transfer):</b> we also trained the full method from scratch on a <b>MedVLThinker-7B</b> base — it works on SLAKE (0.564→0.622, 42%) and is pooled-positive (25%), but <i>fails</i> on VQA-RAD's tiny split (n=54: 0.500→0.470). So the method <b>partially</b> transfers to a second base — not uniformly; base quality matters (the Lingshu verifier even transfers to MedVLThinker's outputs better, 49–61%, than a from-scratch MedVLThinker verifier, 25%). Honest caveat: the Lingshu result (49%, 4 datasets, 2-seed) is the validated headline. <i>And</i> cross-generator transfer: {cg_line()}</li>
 <li><b>Out-of-distribution modality:</b> works on Kvasir (GI endoscopy), a modality it wasn't built around.</li>
 <li><b>Held-out transfer:</b> the pooled verifier lifts RadImageNet (never trained on) +0.024 zero-shot.</li>
 <li><b>Different output type — bounding boxes:</b> the same idea works for grounding (data below).</li>

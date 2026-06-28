@@ -339,10 +339,16 @@ separates correct from incorrect at **AUROC 0.924** (mean score 0.749 vs 0.171),
 drops it −0.047 — it uses the image, refuting the Verification-Mirage "lazy verifier" failure mode.
 (Fig. `figs/limits/fig_verifier_discrimination.png`.)
 
-**Generalizes.** The pooled-4 verifier transfers **zero-shot to a fifth, held-out** dataset
-(RadImageNet-VQA: 0.329 → 0.353, +0.024, 13% of its gap) and across modality (Kvasir-OOD). **Data-efficient:**
-it needs only ${\sim}6{,}000$ judge
-labels in total to reach this lift.
+**Generalizes (datasets, modality, and across generators).** The pooled-4 verifier transfers **zero-shot to a
+fifth, held-out** dataset (RadImageNet-VQA: 0.329 → 0.353, +0.024, 13% of its gap) and across modality
+(Kvasir-OOD). **Across generator models:** applied to a *different* model's answers (MedVLThinker-7B), the
+Lingshu-trained verifier still lifts SLAKE 0.543 → 0.620 (49%) and VQA-RAD 0.395 → 0.520 (61%) — it is
+largely generator-agnostic. **Across base models (honest, mixed):** trained *from scratch* on a MedVLThinker-7B
+base it works on SLAKE (0.564 → 0.622, 42%) and is pooled-positive (25%) but *fails* on VQA-RAD's tiny split
+(n=54: 0.500 → 0.470) — so the method is not uniformly robust across bases, and a stronger base (Lingshu) makes
+a stronger verifier (its transfer 49–61% exceeds a from-scratch MedVLThinker verifier's 25%); the Lingshu
+result (49%, four datasets, two seeds) is the validated headline. **Data-efficient:** it needs only
+${\sim}6{,}000$ judge labels in total to reach this lift.
 
 ### 6.2 Structured outputs: the same principle holds for bounding boxes
 
