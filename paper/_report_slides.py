@@ -166,7 +166,8 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why w
 <div>'''+img("paper/figs/limits/fig_verifier_scaling.png","Best-of-K: accuracy rises with samples; random stays flat.","100%")+'''</div></div>
 <ul class="body">
 <li><b>Discrimination AUROC 0.924</b> (n=8512 candidates) — not a "lazy verifier"; blanking the image drops it −0.047 (it uses the image).</li>
-<li><b>Statistically significant:</b> bootstrap 95% CI on the gain = <b>[+0.092, +0.139]</b> (resample questions 2000×; excludes 0).</li>
+<li><b>Statistically significant:</b> bootstrap 95% CI on the gain over greedy = <b>[+0.092, +0.139]</b>; and on the gain over the <b>32B itself</b> = <b>[+0.010, +0.066]</b> (excludes 0 — a modest but real win over the 5× model).</li>
+<li><b>Argmax is the right rule:</b> we tried verifier-<i>weighted</i> voting and a score×count hybrid — both are <i>worse</i> (0.489, 0.470 vs 0.501), because the majority trap contaminates even score-weighted voting. Pure verifier-argmax wins.</li>
 <li><b>Test-time scaling:</b> more samples → higher accuracy; random selection does not improve.</li>
 </ul>'''))
 

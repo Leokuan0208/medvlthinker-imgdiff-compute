@@ -147,7 +147,7 @@ MS-CXR (real) & 0.041 & 0.053 & \textbf{0.232/0.230} & 0.285 & 78/77\%\\
 \end{table}
 
 \subsection{A test-time-scaling method; compute beats parameters}
-Best-of-$K$ accuracy rises monotonically while random stays flat ($K{=}1,2,4,8$: $0.385\to0.425\to0.476\to0.501$; oracle@8 $0.592$; Fig.~\ref{fig:scaling}), so the verifier converts test-time compute into accuracy. Because reasoning barely helps open-ended, the 32B's single pass ($0.462$ pooled, same held-out split) is \emph{below} the 7B with verifier-bo8 ($0.501$); the 7B+verifier wins on the harder sets (PathVQA $0.441$ vs $0.377$, Kvasir $0.405$ vs $0.326$) and loses on SLAKE ($0.762$ vs $0.829$) and VQA-RAD ($0.611$ vs $0.648$). Test-time compute beats parameters where parameters do not help.
+Best-of-$K$ accuracy rises monotonically while random stays flat ($K{=}1,2,4,8$: $0.385\to0.425\to0.476\to0.501$; oracle@8 $0.592$; Fig.~\ref{fig:scaling}), so the verifier converts test-time compute into accuracy. Because reasoning barely helps open-ended, the 32B's single pass ($0.462$ pooled, same held-out split) is \emph{below} the 7B with verifier-bo8 ($0.501$; paired bootstrap $+0.039$, 95\% CI $[+0.010,+0.066]$, excludes 0 --- a modest but significant win over the 5$\times$ model); the 7B+verifier wins on the harder sets (PathVQA $0.441$ vs $0.377$, Kvasir $0.405$ vs $0.326$) and loses on SLAKE ($0.762$ vs $0.829$) and VQA-RAD ($0.611$ vs $0.648$). Test-time compute beats parameters where parameters do not help.
 
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{fig_verifier_discrimination.png}
 \caption{The verifier separates correct from incorrect candidates (AUROC $0.924$, $n{=}8512$)---not a ``lazy verifier.''}\label{fig:discrim}\end{figure}

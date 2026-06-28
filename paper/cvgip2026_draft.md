@@ -329,7 +329,10 @@ discrimination, not judge-mimicry (the judge needs the gold answer; the verifier
 greedy); LoRA-training the *same* model on judge labels captures **49%** of the oracle gap (gain **+0.088**
 over greedy; lifting every dataset), and the trained **7B** verifier beats the **zero-shot 32B** verifier
 (0.357 on PathVQA) by +0.08 despite being 5× smaller. Bootstrap (best-of-8 vs a single random sample): gain
-**+0.116, 95% CI [+0.092, +0.139]** (n=1064, excludes 0).
+**+0.116, 95% CI [+0.092, +0.139]** (n=1064, excludes 0); and over the **32B itself**, +0.039, 95% CI
+**[+0.010, +0.066]** — a modest but significant win over the 5× model. *Argmax is the correct selection
+rule:* verifier-*weighted* voting (0.489) and a score×count hybrid (0.470) are both **worse** than plain
+argmax (0.501), because the majority trap (§5.2e) contaminates even score-weighted voting.
 
 **It genuinely discriminates (not a "lazy verifier").** Across all 8,512 candidates, the verifier's score
 separates correct from incorrect at **AUROC 0.924** (mean score 0.749 vs 0.171), and a blank-image ablation
