@@ -17,7 +17,7 @@ S.append(slide(f'''<div class="cover">
 <div class="big">Test-time compute for medical VLMs:<br><span class="accent">what actually helps.</span></div>
 <div class="sub">Continuing from last time's efficiency cascade. This time, with the math and peer baselines you asked for — and a new result: in medical open-ended VQA, the standard training-free tricks fail, but a small <b>trained verifier</b> beats them all <i>and</i> a model 5× its size.</div>
 <div class="cover-stats">
-<div class="cstat"><div class="v">{fmt(SCC,3)}</div><div class="l">self-consistency (the standard) — barely above greedy {fmt(GRE,3)}</div></div>
+<div class="cstat"><div class="v">{fmt(SCC,3)}</div><div class="l">self-consistency (the standard) — no better than greedy {fmt(GRE,3)} (the majority trap)</div></div>
 <div class="cstat"><div class="v teal">{fmt(VER,3)}</div><div class="l">our trained verifier — beats every baseline</div></div>
 <div class="cstat"><div class="v">{fmt(M32,3)}</div><div class="l">a 5× larger model (scale-up) — still below ours</div></div>
 <div class="cstat"><div class="v teal">0.924</div><div class="l">verifier AUROC (tells right from wrong)</div></div>
@@ -198,7 +198,7 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>13 · How the tw
 <div class="callout win"><b>ACC — spend compute across model <i>configurations</i></b> (cheap → fast-big → slow-big). Buys <b>efficiency</b>: same accuracy, ~⅕ latency.</div>
 <div class="callout win"><b>Verifier — spend compute across <i>samples</i></b> (best-of-N). Buys <b>accuracy</b>: reaches what a 5× larger model cannot.</div></div>
 '''+img("paper/figs/limits/fig_accuracy_compute.png","Accuracy vs compute: spending compute on samples+verifier reaches accuracy the bigger model can't.","82%")+'''
-<div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine in a verifier-augmented cascade (the deployable system; next step).</div>'''))
+<div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine: a verifier-augmented cascade (cheap best-of-N → escalate the residual to the 32B) reaches <b>0.517</b> at 35% escalation — above both the verifier alone (0.501) and the 32B (0.462) — i.e. the accuracy-optimal point (at a compute premium; the fully-measured deployable version is the next step).</div>'''))
 
 # S15 cohesive story + master table
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story, and how we compare to peers</div>
@@ -207,8 +207,7 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story,
 '''+TBL(["method","type","source","pooled acc"],[
 ["Greedy","—","deploy default","0.41"],
 ["Self-consistency","training-free","Wang, ICLR'23","0.41"],
-["Self-verify P(True)","training-free","Kadavath'22","~0.41"],
-["32B single pass","scale-up","—","0.44"],
+["32B single pass (same split)","scale-up","—","0.46"],
 ["<b>Trained verifier (ours)</b>","trained","this work (GenRM family, ICLR'25)","<b>0.50</b>"],
 ["Oracle@8","ceiling","—","0.59"]])+'''
 <div class="callout win"><b>Bottom line:</b> a small trained verifier is the one method that decisively beats the standard selectors and the bigger model in medical open-ended VQA — a regime where, unlike general LLMs, verification genuinely pays.</div>'''))
@@ -217,7 +216,7 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story,
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>15 · Next step (reasoned and lined up)</div>
 <h2 class="slide-h sm">What we run next, and why</h2>
 <ul class="body">
-<li><b>The deployable verifier-augmented cascade</b> — put the verifier inside ACC (cheap-leg best-of-N + escalation) and measure the full accuracy/latency/energy frontier vs always-32B. <i>Why:</i> turns the two findings into one system with a single baseline.</li>
+<li><b>The deployable verifier-augmented cascade</b> — put the verifier inside ACC (cheap-leg best-of-N + escalation) and measure the full accuracy/latency/energy frontier vs always-32B. <i>Status:</i> preliminary offline result already in hand (0.517 @ 35% escalation, accuracy-optimal); the next step is the fully-measured latency/energy frontier vs always-32B. <i>Why:</i> turns the two findings into one deployable system with a single baseline.</li>
 <li><b>Scale the verifier</b> (more labels, a larger base, cross-generator at scale) — <i>why:</i> the discrimination AUROC (0.924) suggests headroom toward the oracle (0.59) is still open.</li>
 <li><b>Verifier-guided training</b> (use it as a reward to improve the generator). <i>Why:</i> moves from selection to improving the model itself.</li>
 </ul>
