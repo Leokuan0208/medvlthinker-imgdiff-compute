@@ -121,14 +121,14 @@ MCQ artifact.
 ## 3. Setup, metrics, and definitions
 
 **Models.** Cheap legs: 7B medical VLMs (MedVLThinker-7B, Lingshu-7B). Strong leg: the 32B counterpart, run
-in no-think and think modes. Cross-family peers (§5.3): InternVL, Phi-3.5-V. Verifier base (§5.10):
+in no-think and think modes. Cross-family peers (§5.3): InternVL, Phi-3.5-V. Verifier base (§6):
 Lingshu-7B; box-verifier base: Qwen2.5-VL-7B.
 
 **Data / pools.** Six medical-VQA **benchmarks**: PMC-VQA, SLAKE, VQA-RAD, PathVQA, MMMU-medical,
 MedXpertQA-MM. **ALL-6** = all six (MedXpert contributes two splits, so per-split tables show seven columns);
 **ALL-5** = ALL-6 minus MedXpert (near-chance for both models); **COMPETENT-4** = SLAKE/VQA-RAD/PathVQA/PMC.
-Open-ended (§5.7–§5.10): free-text SLAKE/VQA-RAD/PathVQA/Kvasir-VQA-x1, + RadImageNet-VQA (transfer), graded
-by a neutral LLM judge. Grounding (§5.10): SLAKE organ boxes and the real **MS-CXR** chest-X-ray
+Open-ended (§5.3, §6): free-text SLAKE/VQA-RAD/PathVQA/Kvasir-VQA-x1, + RadImageNet-VQA (transfer), graded
+by a neutral LLM judge. Grounding (§6.2): SLAKE organ boxes and the real **MS-CXR** chest-X-ray
 phrase-grounding benchmark (PhysioNet; 1448 boxes / 1047 images).
 
 **Cost model.** One model forward costs `F = 2·N·(P+G)` FLOPs (N params, P prompt tokens incl. vision, G
@@ -216,7 +216,7 @@ parity); agreement is merely the cheapest point. Bootstrap CI on ACC-v2 accuracy
 ALL-5 [0.6372, 0.6562]; latency CI [2.6, 9.8] s. ACC-v3 (confidence-tightened think gate) further cuts think
 19%→14% and FLOPs to 52.6% at equal accuracy (20/20 seeds at parity).
 
-**Generalizes across families/architectures (§5.5).** The "no-think ≥ think on perception" premise and the
+**Generalizes across families/architectures.** The "no-think ≥ think on perception" premise and the
 ACC savings reproduce across five families and three architectures (Lingshu, QoQ, Chiron, MedGemma): e.g.
 Lingshu ALL-6 FLOPs 77.8% → 48.6% at parity. (Full per-family tables: `MASTER_TABLES.md`.)
 
