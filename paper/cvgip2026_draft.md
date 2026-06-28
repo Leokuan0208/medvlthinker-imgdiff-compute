@@ -230,8 +230,11 @@ not just *cheap-model-wrongness*. Across **12 signal families** (margin, MSP/Cho
 energy, hidden-state probe, self-verification P(True), conformal/CP-Router, learned GBM router, cross-model
 agreement, multi-resolution stability, semantic self-consistency), recoverability AUROC sits at **0.5–0.69**;
 a hidden-state probe reaches only 0.60 vs confidence 0.68. The cause is error correlation:
-`P(32B wrong | 7B wrong) = 0.584` and `φ = 0.372` — the models fail together. Holding ACC's config fixed,
-every gate lands on one frontier (§5.1), so no gate is "better."
+`P(32B wrong | 7B wrong) = 0.584` and `φ = 0.372` (φ = the correlation of the two models' right/wrong
+outcomes) — the models fail together. Holding ACC's config fixed, every gate lands on one frontier (§5.1),
+so no gate is "better." This matches theory: Jitkrittum et al. (*When does confidence-based cascade deferral
+suffice?*, NeurIPS 2023) prove the optimal deferral rule needs *both* models' confidence and that
+confidence-only deferral is fundamentally limited — exactly the wall we hit empirically on medical VLMs.
 
 **(b) Cross-family complementarity is real but unexploitable.** Two independently-trained VLMs have large
 *oracle union* headroom: `union(7B | InternVL) = 0.753`, `union(7B | InternVL | Phi) = 0.801` vs always-32B
@@ -277,6 +280,13 @@ is still floored — setting up the one thing that is not.
 
 §5.2(e) shows *training-free* selection is luck-floored. The constructive complement: a small **trained**
 verifier escapes it, for free-text answers **and** structured boxes.
+
+**Why a trained verifier matters *here* specifically.** In *general* LLM reasoning, trained-verifier
+best-of-N barely beats plain self-consistency — recent work reports near-parity (e.g. self-certainty
+best-of-N, NeurIPS 2025 [2502.18581]; aggregation studies [2510.13918]) — so a learned verifier is often
+seen as not worth its cost. Medical open-ended VQA is the opposite regime: self-consistency *fails* (the
+majority trap, §5.2e), the strong model barely helps (§5.1), yet the oracle headroom is large. That is
+exactly where a learned selector should pay off — and it does.
 
 **Verifier and selection.** A LoRA-fine-tuned VLM verifier with parameters φ scores a candidate by the
 probability it assigns to "Yes" vs "No" at the final token of the prompt *"…Is the proposed answer correct?
