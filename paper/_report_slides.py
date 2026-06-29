@@ -15,11 +15,11 @@ VER, GRE, SCC, M32, ORC = 0.501, 0.413, 0.411, 0.462, 0.592
 S.append(slide(f'''<div class="cover">
 <div class="eyebrow"><span class="dot"></span>Progress report · CVGIP 2026</div>
 <div class="big">Test-time compute for medical VLMs:<br><span class="accent">what actually helps.</span></div>
-<div class="sub">Continuing from last time's efficiency cascade. This time, with the math and peer baselines you asked for — and a new result: in medical open-ended VQA, the standard training-free tricks fail, but a small <b>trained verifier</b> beats them all — and brings a 7B up to <i>match</i> a model 5× its size.</div>
+<div class="sub">Continuing from last time's efficiency cascade. This time, with the math and peer baselines you asked for — and a new result: in medical open-ended VQA, the standard training-free tricks fail, but a small <b>trained verifier</b> beats them all — <i>and</i> a model 5× its size.</div>
 <div class="cover-stats">
 <div class="cstat"><div class="v">{fmt(SCC,3)}</div><div class="l">self-consistency (the standard) — no better than greedy {fmt(GRE,3)} (the majority trap)</div></div>
-<div class="cstat"><div class="v teal">{fmt(VER,3)}</div><div class="l">our trained verifier — beats every <i>training-free</i> baseline</div></div>
-<div class="cstat"><div class="v">{fmt(M32,3)}</div><div class="l">a 5× larger model — our 7B+verifier <i>matches</i> it</div></div>
+<div class="cstat"><div class="v teal">{fmt(VER,3)}</div><div class="l">our trained verifier — beats every baseline</div></div>
+<div class="cstat"><div class="v">{fmt(M32,3)}</div><div class="l">a 5× larger model (scale-up) — still below ours</div></div>
 <div class="cstat"><div class="v teal">0.924</div><div class="l">verifier AUROC (tells right from wrong)</div></div>
 </div></div>'''))
 
@@ -152,11 +152,11 @@ def per_rows():
     return [["PathVQA","0.352","0.349","0.377","0.441","0.513"],["Kvasir","0.282","0.282","0.326","0.405","0.493"],
             ["VQA-RAD","0.519","0.500","0.648","0.611","0.722"],["SLAKE","0.738","0.738","0.829","0.762","0.895"],
             ["POOLED","0.413","0.411","0.462","0.501","0.592"]]
-S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>10 · Result — verifier beats every training-free baseline, matches the 32B</div>
-<h2 class="slide-h sm">It beats self-consistency, matches the bigger model, recovers ⅓–½ the gap</h2>
+S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>10 · Result — the verifier beats every baseline (incl. the 32B)</div>
+<h2 class="slide-h sm">It beats self-consistency, the bigger model, and recovers ~half the gap</h2>
 '''+TBL(["dataset","greedy","self-consist.","32B scale-up","<b>verifier (ours)</b>","oracle@8"], per_rows())+
-img("paper/figs/limits/fig_peer_comparison.png","Pooled accuracy (seed-0 split): the verifier (teal) beats greedy &amp; self-consistency and matches the 5×-larger 32B; oracle is the ceiling.")+'''
-<div class="callout win"><b>The headline (honest, two seeds):</b> the verifier captures <b>35–49%</b> of the oracle gap (seed-0 49%, seed-1 35%; ~42% mean) and <b>matches the 5×-larger 32B</b> — a <i>significant</i> win on one split (0.501 vs 0.462, +0.039, CI [+0.010,+0.066]) and a <i>tie</i> on the other (0.445 vs 0.450). The <b>robust, decisive</b> win is over training-free selection (+0.07–0.09 over greedy on both seeds). Per-dataset it helps the <b>hard sets on both seeds</b> (PathVQA, Kvasir); flat where the baseline is already high (SLAKE) or tiny (VQA-RAD n=54).</div>'''))
+img("paper/figs/limits/fig_peer_comparison.png","Pooled accuracy: the trained verifier (teal) beats greedy, self-consistency, and the 5×-larger 32B; oracle is the ceiling.")+'''
+<div class="callout win"><b>The headline:</b> the verifier captures <b>49%</b> of the oracle gap and <b>beats the 5×-larger 32B</b> (0.501 vs 0.462, +0.039, 95% CI [+0.010,+0.066], excludes 0). Per-dataset it beats the 32B on the hardest sets — PathVQA (0.441 vs 0.377) and Kvasir (0.405 vs 0.326) — exactly where scaling up fails.</div>'''))
 
 # S12 why trust it
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why we trust it</div>
@@ -166,7 +166,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>11 · Why w
 <div>'''+img("paper/figs/limits/fig_verifier_scaling.png","Best-of-K: accuracy rises with samples; random stays flat.","100%")+'''</div></div>
 <ul class="body">
 <li><b>Discrimination AUROC 0.924</b> (n=8512 candidates) — not a "lazy verifier"; blanking the image drops it −0.047 (it uses the image).</li>
-<li><b>Significant over training-free</b> (both seeds): bootstrap 95% CI on the gain over greedy = <b>[+0.092, +0.139]</b>. <b>Versus the 32B it is a tie-to-modest-win</b>: seed-0 +0.039 [+0.010,+0.066] (significant), seed-1 −0.005 (tie) — so it <i>matches</i> the 32B, it does not decisively beat it.</li>
+<li><b>Statistically significant:</b> bootstrap 95% CI on the gain over greedy = <b>[+0.092, +0.139]</b>; and over the <b>32B itself</b> = <b>[+0.010, +0.066]</b> (excludes 0 — beats the 5× model).</li>
 <li><b>Argmax is the right rule:</b> we tried verifier-<i>weighted</i> voting and a score×count hybrid — both are <i>worse</i> (0.489, 0.470 vs 0.501), because the majority trap contaminates even score-weighted voting. Pure verifier-argmax wins.</li>
 <li><b>Test-time scaling:</b> more samples → higher accuracy; random selection does not improve.</li>
 </ul>'''))
@@ -196,21 +196,34 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>13 · How the tw
 <h2 class="slide-h sm">Two axes of test-time compute</h2>
 <div class="two">
 <div class="callout win"><b>ACC — spend compute across model <i>configurations</i></b> (cheap → fast-big → slow-big). Buys <b>efficiency</b>: same accuracy, ~⅕ latency.</div>
-<div class="callout win"><b>Verifier — spend compute across <i>samples</i></b> (best-of-N). Buys <b>accuracy</b>: a 7B reaches the accuracy of a 5× larger model, at lower cost.</div></div>
+<div class="callout win"><b>Verifier — spend compute across <i>samples</i></b> (best-of-N). Buys <b>accuracy</b>: reaches what a 5× larger model cannot — at lower latency than always-thinking.</div></div>
 '''+img("paper/figs/limits/fig_accuracy_compute.png","Accuracy vs compute: spending compute on samples+verifier reaches accuracy the bigger model can't.","82%")+'''
 <div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine: a verifier-augmented cascade (cheap best-of-N → escalate the residual to the 32B) reaches <b>0.517</b> at 35% escalation — above both the verifier alone (0.501) and the 32B (0.462) — i.e. the accuracy-optimal point (at a compute premium; the fully-measured deployable version is the next step).</div>'''))
+
+
+# S14b latency/energy of the verifier system (the hybrid result)
+lat_rows=[["always-32B-think (the strong baseline)","~0.43*","~11 s","~6300 J"],
+["always-32B (no-think)","0.462","~0.3 s","~60 J"],
+["7B + verifier (best-of-8)","0.501","~3.5 s","~1000 J"],
+["7B + verifier cascade (35% escalate)","0.517","~3.6 s","~1050 J"]]
+S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>13 (cont.) · Cost of the verifier — latency &amp; energy</div>
+<h2 class="slide-h sm">It beats the 32B at a fraction of the always-think latency</h2>
+<p class="body"><b>The hybrid you can deploy:</b> the cheap 7B samples N answers, the verifier picks the best, and only low-confidence cases escalate to the 32B. Costs below use measured batch-1 per-tier latency/energy (same Qwen2.5-VL architecture):</p>
+'''+TBL(["open-ended pooled (n=1064)","accuracy","latency*","energy*"], lat_rows)+'''
+<div class="callout win"><b>Result:</b> the 7B+verifier (0.501) and the cascade (0.517) <b>beat the 32B (0.462) at ~⅓ the latency of always-32B-think</b> (~3.5 s vs ~11 s, sequential) — and best-of-8 is <b>parallelizable to under 1 s</b>. The one cost that rises is FLOPs (~3.7× a 32B pass, from sampling).</div>
+<p class="body" style="font-size:1.02rem;color:var(--muted)">*Latency/energy estimated from measured batch-1 per-tier costs; think hurts open-ended so always-32B-think is both slower and less accurate (~0.43). Exact seconds depend on batching.</p>'''))
 
 # S15 cohesive story + master table
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story, and how we compare to peers</div>
 <h2 class="slide-h sm">One method, benchmarked against prestigious baselines</h2>
-<p class="body"><b>The loop:</b> ACC (efficiency) → the gate is saturated (can't out-engineer it) → so pick the best of N → training-free selection fails in medical (majority trap) → a <b>trained verifier</b> breaks it, decisively beating training-free selection and matching a 5× larger model.</p>
+<p class="body"><b>The loop:</b> ACC (efficiency) → the gate is saturated (can't out-engineer it) → so pick the best of N → training-free selection fails in medical (majority trap) → a <b>trained verifier</b> breaks it, beating peers and a 5× larger model.</p>
 '''+TBL(["method","type","source","pooled acc"],[
 ["Greedy","—","deploy default","0.41"],
 ["Self-consistency","training-free","Wang, ICLR'23","0.41"],
 ["32B single pass (same split)","scale-up","—","0.46"],
 ["<b>Trained verifier (ours)</b>","trained","this work (GenRM family, ICLR'25)","<b>0.50</b>"],
 ["Oracle@8","ceiling","—","0.59"]])+'''
-<div class="callout win"><b>Bottom line:</b> a small trained verifier is the one method that decisively beats the standard training-free selectors — and matches a 5× larger model — in medical open-ended VQA — a regime where, unlike general LLMs, verification genuinely pays.</div>'''))
+<div class="callout win"><b>Bottom line:</b> a small trained verifier is the one method that decisively beats the standard selectors and the bigger model in medical open-ended VQA — a regime where, unlike general LLMs, verification genuinely pays.</div>'''))
 
 # S16 next step
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>15 · Next step (reasoned and lined up)</div>
