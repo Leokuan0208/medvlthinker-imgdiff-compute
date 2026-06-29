@@ -126,3 +126,26 @@ whole Lingshu medical-VQA suite. (See §6 for why the verifier is open-text-only
   replicate MedEvalKit's prompt/extraction/scoring (env-safe but protocol-matching is on us).
 - SCOPE NOTE: full reproduction = venv + dataset downloads (OmniMedVQA large; MedXpertQA manual) + Lingshu-7B AND -32B
   over 7 tasks → multi-hour. Datasets DO download from the real HF endpoint (not hf-mirror).
+
+## 14. Dataset details (for the paper Method section — what each contains)
+| dataset | domain / images | content | format | n(test) | role |
+|---|---|---|---|---|---|
+| SLAKE | radiology CT/MRI/X-ray, bilingual | organ/abnormality/position/knowledge Qs | open + closed | 645 (open) | ACC (MCQ) + verifier (open) |
+| VQA-RAD | radiology chest/head/abdomen | clinician-written Q&A | open + closed | 200 (open) / 451 (MedEvalKit) | ACC + verifier |
+| PathVQA | pathology/histology microscopy | tissue/diagnosis, many yes/no | open + closed | 1500 (open) | ACC + verifier |
+| PMC-VQA | PubMed Central article figures (mixed) | figure-based Qs | MCQ 4-opt | large | ACC |
+| MMMU-Med | college medical exams, 5 subjects | multi-discipline reasoning, multi-image | MCQ | ~1.5k | ACC (reasoning; excluded from over-think) |
+| MedXpertQA-MM | expert/exam multimodal | hardest medical | MCQ | ~2k | ACC (near-chance, excluded) |
+| OmniMedVQA | many imaging modalities | large-scale medical VQA | MCQ | large | Lingshu-suite (to reproduce) |
+| Kvasir-VQA | GI endoscopy | findings | open | 1200 | verifier (OOD modality) |
+| RadImageNet-VQA | radiology | held-out | open | 2000 | verifier (transfer) |
+| MS-CXR | chest X-ray | pathology phrase → bounding box | grounding | 435 | box-verifier |
+
+EVALUATION: MCQ = exact-match on the option letter (no judge); open-text = LLM-judge semantic-equivalence vs gold
+(labels from the answer key); verifier = AUROC / gap-captured / oracle@N / bootstrap CI; efficiency = batch-1 latency (s),
+NVML energy (J), FLOPs 2N(P+G). Train/test splits disjoint; all numbers from real checkpoints.
+
+NOTE (vLLM env, 2026-06-29): downgrading the system vLLM to 0.9.0.1 would BREAK the NGC env (force-downgrades the
+custom NGC torch 2.9 → ABI/CUDA mismatch; breaks all working scripts). Single-image MedEvalKit tasks RUN in our vLLM 0.10
+(PMC-VQA: no InputProcessingError); only MMMU (multi-image) hit the 0.10 mm-alignment bug ⇒ patch MMMU's multi-image
+handling OR isolated venv; do NOT downgrade the base.
