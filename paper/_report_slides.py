@@ -120,7 +120,7 @@ acc_rows=[["always-32B-think (parity, ceiling)","0.572","100%","11.34 s","6319 J
 ["Ours: ACC (agreement gate)","0.569","52%","2.27 s","1182 J"]]
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 (cont.) · ACC result — same accuracy, ~⅕ the latency</div>
 <h2 class="slide-h sm">Every gate clusters: the win is the structure, not the gate</h2>
-'''+TBL(["ALL-6, at equal accuracy","acc","FLOPs","latency","energy"], acc_rows)+'''
+'''+TBL(["MedVLThinker-7B→32B · MCQ ALL-6 · at equal accuracy","acc","FLOPs","latency","energy"], acc_rows)+'''
 <div class="callout win"><b>Result:</b> at parity accuracy, latency 11.34 s → <b>2.27 s</b> (−80%), energy ~5× lower, FLOPs halved. Holding the 3-tier structure fixed, <b>all gates land in the same cluster</b> (FLOPs ~50–60%, latency ~2–3 s) — so ACC\'s advantage is the <b>3-tier structure</b>, not a cleverer gate. On <b>ALL-5</b> (excluding near-chance MedXpert) it is sharper still: <b>8.88 s → 0.44 s (−95%)</b>, FLOPs to 25%. (Full 10-method × 5-family table in the paper.)</div>
 <div class="callout honest"><b>Why FLOPs and latency don\'t move together</b> (e.g. ACC has slightly higher FLOPs than Jitkrittum, 52% vs 51%, yet lower latency, 2.27 vs 2.29 s): <b>FLOPs</b> is dominated by the parallel image <b>prefill</b>, paid on every 32B escalation — even the fast no-think tier (which generates only ~2 tokens). <b>Latency/energy</b> are dominated by the serial <b>think decode</b> (~hundreds of tokens). ACC escalates a bit more to the fast no-think tier (more prefill-FLOPs, almost no added latency); the two methods are otherwise tied. This is exactly why ACC\'s latency win (−80%) is larger than its FLOPs win (−48%).</div>'''))
 
@@ -242,34 +242,35 @@ S.append(slide(f'''<div class="eyebrow teal"><span class="dot"></span>12 · Gene
 # S14 integration / two axes
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>13 · How the two pieces fit together</div>
 <h2 class="slide-h sm">Two axes of test-time compute</h2>
+<div class="callout note" style="margin-bottom:10px"><b>Note — two studies, two settings (why the two "32B" numbers differ):</b> the <b>efficiency</b> result (ACC) is <b>MedVLThinker-7B→32B on the MCQ benchmarks</b> (32B-think 0.572, ALL-6); the <b>accuracy</b> result (verifier) is <b>Lingshu-7B/32B on open-ended free-text</b> (32B 0.462 pooled, where thinking <i>hurts</i>). Same idea — different model family and task type.</div>
 <div class="two">
 <div class="callout win"><b>ACC — spend compute across model <i>configurations</i></b> (cheap → fast-big → slow-big). Buys <b>efficiency</b>: same accuracy, ~⅕ latency.</div>
 <div class="callout win"><b>Verifier — spend compute across <i>samples</i></b> (best-of-N). Buys <b>accuracy</b>: reaches what a 5× larger model cannot — at lower latency than always-thinking.</div></div>
-'''+img("paper/figs/limits/fig_accuracy_compute.png","Accuracy vs compute: spending compute on samples+verifier reaches accuracy the bigger model can't.","82%")+'''
-<div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine: a verifier-augmented cascade (cheap best-of-N → escalate the residual to the 32B) reaches <b>0.517</b> at 35% escalation — above both the verifier alone (0.501) and the 32B (0.462) — i.e. the accuracy-optimal point (at a compute premium; the fully-measured deployable version is the next step).</div>'''))
+'''+img("paper/figs/limits/fig_accuracy_compute.png","Accuracy vs compute (Lingshu, open-ended pooled n=1064): a 7B + verifier reaches accuracy Lingshu-32B cannot, by spending compute on samples not parameters.","82%")+'''
+<div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine: a verifier-augmented cascade (cheap best-of-N → escalate the residual to the 32B) reaches <b>0.517</b> at 35% escalation — above both the verifier alone (0.501) and Lingshu-32B no-think (0.462) — all on the open-ended pooled set (SLAKE/VQA-RAD/PathVQA/Kvasir, n=1064) — i.e. the accuracy-optimal point (at a compute premium; the fully-measured deployable version is the next step).</div>'''))
 
 
 # S14b latency/energy of the verifier system (the hybrid result)
-lat_rows=[["always-32B-think (the strong baseline)","~0.43*","~11 s","~6300 J"],
-["always-32B (no-think)","0.462","~0.3 s","~60 J"],
-["7B + verifier (best-of-8)","0.501","~3.5 s","~1000 J"],
-["7B + verifier cascade (35% escalate)","0.517","~3.6 s","~1050 J"]]
+lat_rows=[["Lingshu-32B · THINK mode","~0.43*","~11 s","~6300 J"],
+["Lingshu-32B · no-think","0.462","~0.3 s","~60 J"],
+["Lingshu-7B + verifier (best-of-8)","0.501","~3.5 s","~1000 J"],
+["Lingshu-7B + verifier cascade (35% escalate)","0.517","~3.6 s","~1050 J"]]
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>13 (cont.) · Cost of the verifier — latency &amp; energy</div>
 <h2 class="slide-h sm">It beats the 32B at a fraction of the always-think latency</h2>
 <p class="body"><b>The hybrid you can deploy:</b> the cheap 7B samples N answers, the verifier picks the best, and only low-confidence cases escalate to the 32B. Costs below use measured batch-1 per-tier latency/energy (same Qwen2.5-VL architecture):</p>
-'''+TBL(["open-ended pooled (n=1064)","accuracy","latency*","energy*"], lat_rows)+'''
+'''+TBL(["Lingshu · open-ended pooled · SLAKE/VQA-RAD/PathVQA/Kvasir (n=1064)","accuracy","latency*","energy*"], lat_rows)+'''
 <div class="callout win"><b>Result:</b> the 7B+verifier (0.501) and the cascade (0.517) <b>beat the 32B (0.462) at ~⅓ the latency of always-32B-think</b> (~3.5 s vs ~11 s, sequential) — and best-of-8 is <b>parallelizable to under 1 s</b>. The one cost that rises is FLOPs (~3.7× a 32B pass, from sampling).</div>
-<p class="body" style="font-size:1.02rem;color:var(--muted)">*Latency/energy estimated from measured batch-1 per-tier costs; think hurts open-ended so always-32B-think is both slower and less accurate (~0.43). Exact seconds depend on batching.</p>'''))
+<p class="body" style="font-size:1.02rem;color:var(--muted)">*Latency/energy estimated from measured batch-1 per-tier costs; on this open-ended pooled set thinking hurts perception, so Lingshu-32B-think (~0.43) is both slower and <i>less</i> accurate than Lingshu-32B-no-think (0.462), measured with the same LLM-judge. Exact seconds depend on batching.</p>'''))
 
 # S15 cohesive story + master table
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story, and how we compare to peers</div>
 <h2 class="slide-h sm">One method, benchmarked against prestigious baselines</h2>
 <p class="body"><b>The loop:</b> ACC (efficiency) → the gate is saturated (can't out-engineer it) → so pick the best of N → training-free selection fails in medical (majority trap) → a <b>trained verifier</b> breaks it, beating peers and a 5× larger model.</p>
-'''+TBL(["method","type","source","pooled acc"],[
+'''+TBL(["method · Lingshu · open-ended pooled (n=1064)","type","source","accuracy"],[
 ["Greedy","—","deploy default","0.41"],
 ["Self-consistency","training-free","Wang, ICLR'23","0.41"],
-["32B single pass (same split)","scale-up","—","0.46"],
-["<b>Trained verifier (ours)</b>","trained","this work (GenRM family, ICLR'25)","<b>0.50</b>"],
+["Lingshu-32B single pass","scale-up","—","0.46"],
+["<b>Lingshu-7B + trained verifier (ours)</b>","trained","this work (GenRM family, ICLR'25)","<b>0.50</b>"],
 ["Oracle@8","ceiling","—","0.59"]])+'''
 <div class="callout win"><b>Bottom line:</b> a small trained verifier is the one method that decisively beats the standard selectors and the bigger model in medical open-ended VQA — a regime where, unlike general LLMs, verification genuinely pays.</div>'''))
 
