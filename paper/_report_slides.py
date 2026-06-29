@@ -120,12 +120,14 @@ acc_rows=[["always-32B-think (parity, ceiling)","0.572","100%","11.34 s","6319 J
 ["FrugalGPT-style learned (Chen\'23)","0.568","60%","3.30 s","1766 J"],
 ["AutoMix self-verify (\'23)","0.569","55%","2.50 s","1307 J"],
 ["MSP/Chow confidence","0.570","57%","2.96 s","1568 J"],
-["Ours: ACC (agreement gate)","0.569","52%","2.27 s","1182 J"]]
+["Ours: ACC (agreement gate)","0.569","52%","2.27 s","1182 J"],
+["CASP-Stability (trained router) †","0.570","49%","1.77 s","899 J"]]
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 (cont.) · ACC result — same accuracy, ~⅕ the latency</div>
 <h2 class="slide-h sm">Every gate clusters: the win is the structure, not the gate</h2>
 '''+TBL(["MedVLThinker-7B→32B · MCQ ALL-6 · at equal accuracy","acc","FLOPs","latency","energy"], acc_rows)+'''
 <div class="callout win"><b>Result:</b> at parity accuracy, latency 11.34 s → <b>2.27 s</b> (−80%), energy ~5× lower, FLOPs halved. Holding the 3-tier structure fixed, <b>all gates land in the same cluster</b> (FLOPs ~50–60%, latency ~2–3 s) — so ACC\'s advantage is the <b>3-tier structure</b>, not a cleverer gate. On <b>ALL-5</b> (excluding near-chance MedXpert) it is sharper still: <b>8.88 s → 0.44 s (−95%)</b>, FLOPs to 25%. (Full 10-method × 5-family table in the paper.)</div>
-<div class="callout honest"><b>Why FLOPs and latency don\'t move together</b> (e.g. ACC has slightly higher FLOPs than Jitkrittum, 52% vs 51%, yet lower latency, 2.27 vs 2.29 s): <b>FLOPs</b> is dominated by the parallel image <b>prefill</b>, paid on every 32B escalation — even the fast no-think tier (which generates only ~2 tokens). <b>Latency/energy</b> are dominated by the serial <b>think decode</b> (~hundreds of tokens). ACC escalates a bit more to the fast no-think tier (more prefill-FLOPs, almost no added latency); the two methods are otherwise tied. This is exactly why ACC\'s latency win (−80%) is larger than its FLOPs win (−48%).</div>'''))
+<div class="callout honest"><b>Why FLOPs and latency don\'t move together</b> (e.g. ACC has slightly higher FLOPs than Jitkrittum, 52% vs 51%, yet lower latency, 2.27 vs 2.29 s): <b>FLOPs</b> is dominated by the parallel image <b>prefill</b>, paid on every 32B escalation — even the fast no-think tier (which generates only ~2 tokens). <b>Latency/energy</b> are dominated by the serial <b>think decode</b> (~hundreds of tokens). ACC escalates a bit more to the fast no-think tier (more prefill-FLOPs, almost no added latency); the two methods are otherwise tied. This is exactly why ACC\'s latency win (−80%) is larger than its FLOPs win (−48%).</div>
+<p class="caption">† <b>CASP-Stability</b> is a <i>trained</i> stability-router (label = does the 7B answer match what 32B-think would say) — the cheapest gate here (FLOPs 49%, 1.77 s), the trained-router exception to "the gate is saturated" (next slide). Caveat: a small per-benchmark guardrail dip (0.05) vs guardrail-clean 0.0 for the others.</p>'''))
 
 # S5 the gate is saturated
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>4 · Loop step — can we improve the gate itself?</div>
