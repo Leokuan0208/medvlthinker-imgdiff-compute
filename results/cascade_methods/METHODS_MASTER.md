@@ -164,3 +164,19 @@ EXPERIMENT TO RUN (after Lingshu reproduction): (a) make CASP-Stability per-benc
 the threshold so no benchmark dips below 7B); (b) validate it on the Lingshu 7-task suite; (c) use it as the
 MCQ-side gate inside the UNIFIED router (MCQ→ACC+stability-gate, open→verifier) → improve the routing DECISION,
 not just the structure. Folded into report S5 (nuance) + next-step slide.
+
+## 16. Lingshu reproduction — status + anomaly resolution (2026-06-29)
+ENV FIX CHAIN (venv = vllm 0.9.0.1, isolated): vllm 0.9 fixes the NGC-vllm-0.10 batched-mm bug (InputProcessingError);
++ transformers 4.52.4 (aimv2 conflict), triton 3.7.1 (CUDA-13 parse), hf_transfer, datasets 5.0.0. Inference WORKS.
+RESULTS (Lingshu-7B, no-judge): PMC-VQA 0.544 (paper 0.563) ✅ MATCH (full 33,430). VQA-RAD closed 0.785 / SLAKE
+closed 0.821 (reasonable; OPEN portions need a judge — exact-match ~0). MMMU-Medical-val 0.813.
+MMMU ANOMALY — INVESTIGATED, NOT A BUG: parsing is correct (gold A -> resp "A." -> parsed A -> correct); Lingshu
+answers MMMU DIRECTLY even with reasoning=True (response "C", len 1) -> reasoning=True gives 0.773, no-reasoning
+0.813 — both far above the paper's 0.540. So the gap is an UNRESOLVED protocol/split/version difference in MMMU-Med
+(needs the paper's exact MMMU config), NOT a pipeline error. Do NOT claim MMMU as a match; PMC is the validated anchor.
+FAILED/PENDING: OmniMedVQA (extract error), MedXpertQA-MM + (open) PathVQA need MANUAL image download (./datas/<T>/images).
+CAPTURE INSTRUMENTATION (so no re-runs): MedEvalKit/models/Qwen2_5_VL/Qwen2_5_VL_vllm.py now sets SamplingParams
+logprobs=5 + fills self.last_meta per sample {margin (top1-top2 prob, first gen token), conf, cum_logprob, gen_toks,
+latency_s}; base_dataset.run() saves them onto each result. Works for base-run tasks (PMC/VQA-RAD/SLAKE/PathVQA/Omni);
+MMMU uses a CUSTOM eval (eval_val.py) so capture not wired there (known). NEXT: local judge for open tasks; manual
+image downloads; then the unified-router method runs capture confidence+latency+energy+samples in one pass.
