@@ -68,3 +68,10 @@ Lingshu verifier (full per-dataset): VQA-RAD 0.575 (32B 0.600), PathVQA 0.453 (3
   RadImageNet-HELD-OUT 0.353 (greedy 0.329 -> generalizes OOD; 32B pending). MedVLThinker verifier: slake 0.583, vqa_rad 0.456,
   kvasir 0.424 (32B 0.361 BEAT), pooled 0.476. => verifier works + generalizes in BOTH families; beats the (weak/competent) 32B where the 32B is weak.
 NEXT: InternVL3-8B/38B (download+baseline+verifier); full-set cascade + integration variants (agreement-on-picks).
+
+## Held-out OOD (RadImageNet) — verifier generalizes AND beats the 32B
+Lingshu-32B 0.289 | Lingshu-7B greedy 0.329 | 7B+verifier 0.353 | oracle@8 0.512.
+=> on a dataset the verifier was NEVER trained on, 7B+verifier (0.353) BEATS Lingshu-32B (0.289); the 32B doesn't even beat
+   the 7B greedy here. Strong generalization + cross-size win on OOD.
+RUNNING: batch4 = per-sample verifier dumps (both families) for the full-set cascade + cross-family + agreement-on-picks;
+  InternVL3-8B/38B downloading (~28%). Monitor set.
