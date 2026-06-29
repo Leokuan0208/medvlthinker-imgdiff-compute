@@ -230,7 +230,7 @@ dl.def{font-size:1.16rem}dl.def dt{font-weight:700;color:var(--indigo-d);margin-
 <p class="body"><b>Datasets (chosen for reasons, not convenience).</b> The three that anchor everything — <b>SLAKE, VQA-RAD, PathVQA</b> — are competent and exist in <i>both</i> multiple-choice (for the cascade) and free-text (for the verifier) form. PMC-VQA &amp; MMMU are multiple-choice-only (no free-text answers to select among); MedXpert is near-chance (excluded from headlines). Kvasir (different modality) and RadImageNet (held-out) test generalization.</p>
 </div><div>
 <dl class="def">
-<dt>FLOPs (compute)</dt><dd>$F=2N(P{+}G)$: params $N$ × (prompt tokens $P$ incl. the image + generated tokens $G$). Prefill-included. Reported as % of always-32B-think.</dd>
+<dt>FLOPs (compute)</dt><dd>$F=2N(P{+}G)$: $F$ = compute (FLOPs), the factor&nbsp;2 = one multiply&nbsp;+ one add per parameter per token, $N$ = (prompt tokens $P$ incl. the image + generated tokens $G$). Prefill-included. Reported as % of always-32B-think.</dd>
 <dt>Latency</dt><dd>wall-clock seconds for one question, batch-1, end-to-end (prefill + generation), measured in isolation.</dd>
 <dt>Energy</dt><dd>GPU power sampled every 25 ms and integrated over the question (Joules).</dd>
 <dt>AUROC</dt><dd>$P(\text{score(correct)} > \text{score(wrong)})$ — how well a score separates right from wrong. 0.5 = useless, 1.0 = perfect.</dd>
@@ -239,6 +239,7 @@ dl.def{font-size:1.16rem}dl.def dt{font-weight:700;color:var(--indigo-d);margin-
 <h2 class="slide-h sm">ACC, and the cascade gates we compare against</h2>
 <p class="body"><b>Idea.</b> The 32B's <i>fast</i> (no-think) mode is as good as its slow (think) mode on perception questions (SLAKE 0.849 vs 0.764) — thinking <i>over-thinks</i> them. So we insert the 32B-fast as a middle tier and fire the slow tier only when the two fast legs <b>disagree</b> ("iff" = if and only if):</p>
 <div class="eq">$$\text{fire slow tier} \iff \mathbb{1}[\hat y_{7B}\neq\hat y_{32B\text{-fast}}]+\epsilon(-m)>\tau;\qquad \text{cost } C=c_0+e_0c_1+e_1c_2$$</div>
+<p class="body" style="font-size:1.05rem"><b>Every symbol:</b> $\mathbb{1}[\cdot]$ = 1 if the bracket is true else 0 (an "indicator"); $\hat y_{7B},\hat y_{32B\text{-fast}}$ = the answers the 7B and the fast-32B give; $\neq$ = "differ" (they disagree); $m$ = the fast-32B's <b>margin</b> (confidence = gap between its top-2 answer probabilities); $\epsilon(-m)$ = a small bump that raises escalation when confidence $m$ is low; $\tau$ (tau) = the threshold (think when the left side exceeds it); $C$ = total cost; $c_0,c_1,c_2$ = cost of tier&nbsp;0/1/2; $e_0,e_1$ = fraction of questions reaching tier&nbsp;1/2.</p>
 <p class="body"><b>The gates we benchmark (each = a published way to decide "escalate?"):</b></p>
 <dl class="def">
 <dt>Confidence / MSP / Chow's rule <span class="src">(Chow 1970; Hendrycks &amp; Gimpel, ICLR 2017)</span></dt><dd>escalate when the model's top answer probability is low. The classic baseline.</dd>
@@ -298,9 +299,11 @@ dl.def{font-size:1.16rem}dl.def dt{font-weight:700;color:var(--indigo-d);margin-
 <h2 class="slide-h sm">A small LoRA verifier that scores "is this answer correct?"</h2>
 <p class="body"><b>Architecture.</b> A LoRA adapter (~190 MB) on the frozen 7B VLM. Input: image + question + a candidate answer. Output: the probability it puts on "Yes" vs "No" at the final token.</p>
 <div class="eq">$$s_\phi(v,q,a)=P_\phi(\text{Yes}\mid v,q,a)=\frac{e^{z_{\text{Yes}}}}{e^{z_{\text{Yes}}}+e^{z_{\text{No}}}}\qquad(\text{$v$=image, $q$=question, $a$=candidate answer})$$</div>
+<p class="body" style="font-size:1.05rem"><b>Every symbol:</b> $s_\phi$ = the verifier's score (its estimated probability the answer is correct); $\phi$ (phi) = the trained LoRA weights; $P_\phi(\text{Yes}\mid v,q,a)$ = probability it says "Yes, correct" given image $v$, question $q$, candidate $a$; $z_{\text{Yes}},z_{\text{No}}$ = the model's raw output scores (<b>logits</b>) for the "Yes"/"No" tokens; $e^{z}$ = the exponential of $z$; the whole fraction is the <b>softmax</b> turning the two logits into a probability between 0 and 1.</p>
 <p class="body"><b>Training</b> (cross-entropy on the judge's correct/incorrect labels $y$; base frozen):</p>
 <div class="eq">$$\mathcal{L}(\phi)=-\textstyle\sum\big[y\log s_\phi+(1-y)\log(1-s_\phi)\big];\qquad \text{select } \hat a=\arg\max_{i\le N} s_\phi(v,q,a_i)$$</div>
-<p class="body">We report the <b>fraction of the oracle gap captured</b>: $\;(\text{acc}(\hat a)-\text{greedy})/(\text{oracle}-\text{greedy})$.</p>
+<p class="body" style="font-size:1.05rem"><b>Every symbol:</b> $\mathcal{L}(\phi)$ = the training loss we minimize; $\sum$ = sum over training examples; $y$ = the true label (1 if the candidate is correct, 0 if not); $\log$ = natural logarithm; $\hat a$ = the chosen answer; $\arg\max_{i\le N}$ = pick the candidate $i$ (of the $N$ samples) with the highest verifier score; $a_i$ = the $i$-th sampled answer; $N$ = number of samples.</p>
+<p class="body">We report the <b>fraction of the oracle gap captured</b>: $\;(\text{acc}(\hat a)-\text{greedy})/(\text{oracle}-\text{greedy})$ — where $\text{acc}(\hat a)$ = accuracy of the picked answer, greedy = the single-sample baseline, oracle = accuracy if a correct sample were always picked.</p>
 <div class="callout note"><b>What it trains on, and why a 32B-judged 7B beating the 32B isn't circular:</b>
 <ul class="body" style="margin-top:6px">
 <li><b>Trained on</b> ~6,000 <i>(image, question, candidate-answer)</i> examples from the <b>70% train split</b> (question-disjoint from the test set) of the four open-ended datasets (SLAKE/VQA-RAD/PathVQA/Kvasir); candidates are the 7B's own samples, labelled vs gold; <b>RadImageNet held out</b> as transfer. Base = Lingshu-7B (the open-ended generator we use) + a ~190 MB LoRA.</li>
