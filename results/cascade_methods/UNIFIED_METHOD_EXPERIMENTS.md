@@ -85,3 +85,8 @@ MedVLThinker: VQA-RAD 0.555 (0.525) @54% | Kvasir 0.483 (0.361) @9% | RadImageNe
    on every dataset, BOTH families, in-dist AND held-out OOD, escalating 22-54%. (slake excluded from dumps — imgs_for unsupported.)
 COST: best-of-8 keeps FLOPs > always-32B; accuracy is the substantial robust win. Latency/energy ~neutral (no-think 32Bs).
 NEXT: cost-optimized variant (lower N at the gate), agreement-on-verifier-picks (2 small models), InternVL3 family.
+
+## Variant — agreement-on-verifier-picks (2 small models: Lingshu-7B + MedVLThinker-7B) — LOSES to verifier-conf gate
+agree% / acc|agree / agree-gate(esc disagree->32B): VQA-RAD 27% / 0.852 / 0.570@73% | Kvasir 24% / 0.797 / 0.381@76% |
+RadImageNet 20% / 0.595 / 0.216@80%. => agreement is HIGH-PRECISION (agree=>~85% right) but LOW-COVERAGE (20-27%),
+so as a gate it escalates 73-80% and ends up WORSE than the verifier-confidence cascade. Verifier-confidence stays the best gate.
