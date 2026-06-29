@@ -149,3 +149,18 @@ NOTE (vLLM env, 2026-06-29): downgrading the system vLLM to 0.9.0.1 would BREAK 
 custom NGC torch 2.9 → ABI/CUDA mismatch; breaks all working scripts). Single-image MedEvalKit tasks RUN in our vLLM 0.10
 (PMC-VQA: no InputProcessingError); only MMMU (multi-image) hit the 0.10 mm-alignment bug ⇒ patch MMMU's multi-image
 handling OR isolated venv; do NOT downgrade the base.
+
+## 15. Lined-up experiment: guardrail-clean trained stability-router (2026-06-29, user-requested)
+CHECKED + CONFIRMED: CASP-Stability (trained logistic on 7B "stability" signals; label = 1[pred7==pred32think])
+BEAT the confidence/margin gate on ALL-6 at parity: FLOPs 49.0% vs 53.9% (margin)/57.4% (MSP), latency 1.77s vs
+2.69s/2.96s, acc 0.5698 vs 0.5687 — and edged ACC-v2 agreement (52%/2.27s). KEY: re-targeting the routing label
+from un-learnable recoverability (AUROC 0.58, the wall) to learnable STABILITY (AUROC 0.71) is what breaks the
+training-free ceiling; capacity is irrelevant (logistic≈MLP≈LoRA). So "gate saturated" holds ONLY for training-free
+gates predicting recoverability; a TRAINED stability-router beats confidence on cascade efficiency.
+CAVEATS: (1) small per-benchmark guardrail dip (guard 0.05 vs 0.0); (2) iso-accuracy compute cut (cannot exceed the
+32B); (3) ALL-5 / PMC-calib competent-4 edge shrinks or trades acc for compute. Code: src/training_methods/
+{casp_stability.py, lora_stability_router.py}; data results/cascade_methods/casp_stability.txt.
+EXPERIMENT TO RUN (after Lingshu reproduction): (a) make CASP-Stability per-benchmark guardrail-CLEAN (constrain
+the threshold so no benchmark dips below 7B); (b) validate it on the Lingshu 7-task suite; (c) use it as the
+MCQ-side gate inside the UNIFIED router (MCQ→ACC+stability-gate, open→verifier) → improve the routing DECISION,
+not just the structure. Folded into report S5 (nuance) + next-step slide.
