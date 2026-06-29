@@ -57,3 +57,8 @@ COST TENSION (the key open problem): best-of-8 ~= 16 7B-fwd + 0.35*(32B~=4.6 7B-
 CAVEAT: seed-0 split (favorable); 2-seed range applies (verifier 0.501/0.445). Per-dataset WIN pattern (kvasir/pathvqa/vqa_rad) is robust.
 NEXT: cost-frontier search — vary N {1,2,4,8}, cheaper verifier, smarter gate (verifier-conf vs 7B-conf vs CASP) — find any config
   that beats 32B on accuracy AND FLOPs; + the integration variants (router/unified/agreement-on-picks); + held-out (radimagenet).
+
+## Phase 1 RESULT — best cascade gate (Lingshu, clean_dump n=1064)
+escalation signal -> best cascade acc @ esc%: VERIFIER-CONFIDENCE 0.518 @ 34% (BEST) > self-consistency 0.501 @ 0% (no gain) > n_distinct 0.501 @ 0%.
+=> the trained verifier's own confidence is the best escalation gate; SC/answer-diversity don't beat the verifier-alone. (7B-seqlogprob + CASP-stability gates pending the captured cheap-leg + training.)
+RUNNING (batch3): GPU0 = Lingshu verifier full-set scoring (vqa_rad/pathvqa/kvasir + radimagenet held-out); GPU1 = MedVLThinker verifier training (4 in-dist, radimagenet held-out).
