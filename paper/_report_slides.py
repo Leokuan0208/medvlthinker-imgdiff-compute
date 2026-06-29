@@ -302,14 +302,15 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>14 · The story,
 <div class="callout win"><b>Bottom line:</b> a small trained verifier is the one method that decisively beats the standard selectors and the bigger model in medical open-ended VQA — a regime where, unlike general LLMs, verification genuinely pays.</div>'''))
 
 # S16 next step
-S.append(slide('''<div class="eyebrow"><span class="dot"></span>15 · Next step (reasoned and lined up)</div>
-<h2 class="slide-h sm">What we run next, and why</h2>
+S.append(slide('''<div class="eyebrow"><span class="dot"></span>15 · Next step (lined up + already in motion)</div>
+<h2 class="slide-h sm">Combine both methods to beat Lingshu-32B on latency AND accuracy</h2>
+<p class="body">The goal: one <b>unified test-time-compute allocator</b> that routes each query by type and beats the strong model on <i>both</i> axes — a 7B-led system that is more accurate <b>and</b> faster than always running the 32B.</p>
 <ul class="body">
-<li><b>The deployable verifier-augmented cascade</b> — put the verifier inside ACC (cheap-leg best-of-N + escalation) and measure the full accuracy/latency/energy frontier vs always-32B. <i>Status:</i> preliminary offline result already in hand (0.517 @ 35% escalation, accuracy-optimal); the next step is the fully-measured latency/energy frontier vs always-32B. <i>Why:</i> turns the two findings into one deployable system with a single baseline.</li>
-<li><b>Scale the verifier</b> (more labels, a larger base, cross-generator at scale) — <i>why:</i> the discrimination AUROC (0.924) suggests headroom toward the oracle (0.59) is still open.</li>
-<li><b>Verifier-guided training</b> (use it as a reward to improve the generator). <i>Why:</i> moves from selection to improving the model itself.</li>
+<li><b>The system:</b> a deterministic router — <b>MCQ → the ACC cascade</b> (escalate reasoning to 32B-think only when the two no-think legs disagree); <b>open-ended → 7B + the trained verifier</b> (best-of-N, escalate only the low-confidence residual). One allocator, the right mechanism per query type.</li>
+<li><b>The target:</b> beat <b>Lingshu-32B</b> — the SOTA open medical VLM (avg <b>66.6</b> on its own 7-task suite) — on <b>accuracy</b> and on <b>latency/energy</b> at once.</li>
+<li><b>The testbed:</b> the <b>Lingshu evaluation suite</b> (MedEvalKit's 7 medical-VQA tasks) — a clean, <i>published</i> baseline so the comparison is unambiguous. <i>Status:</i> reproduction underway — we already reproduce the paper's Lingshu-7B numbers (PMC-VQA <b>0.571</b> vs paper 0.563); the full 7-task Lingshu-7B and -32B baselines are running now.</li>
 </ul>
-<div class="callout note">This is the honest current frontier: a validated novel method with peer baselines, and a concrete, reasoned next experiment already in motion.</div>'''))
+<div class="callout note"><b>Then:</b> plug ACC + the verifier into the router and measure accuracy + latency + energy + FLOPs across the whole suite — showing the unified 7B-led system beats always-Lingshu-32B on both accuracy and latency. (Secondary: scale the verifier toward the oracle; use it as a training reward.)</div>'''))
 
 # S17 glossary
 S.append(slide('''<div class="eyebrow"><span class="dot"></span>Appendix · Glossary</div>
