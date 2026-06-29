@@ -92,7 +92,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 · The ef
 <li><b>Tier 0 → 1 (confidence margin):</b> escalate to the big model when the 7B\'s <b>margin</b> (top-1 minus top-2 answer probability) is below a threshold $\\tau_0$ — i.e. the 7B is unsure.</li>
 <li><b>Tier 1 → 2 (the agreement gate):</b> run the 32B in <i>fast no-think</i> mode and fire the <i>slow think</i> pass <b>only if the 7B and 32B-fast <u>disagree</u></b> (a query-by-committee signal of genuine ambiguity); the 32B\'s own margin breaks ties ($\\tau_1$). When two independent models already agree, the 11 s think pass would be wasted.</li>
 </ul>
-<div class="callout win"><b>Latency implication, per tier:</b> Tier 2 (think) costs ~<b>11 s</b> — about <b>60× a no-think pass</b> — so it dominates the bill. Firing it on only <b>15.1%</b> of questions (ALL-6) / <b>2.3%</b> (ALL-5) is the whole win: cascade latency <b>2.27 s</b> vs always-32B-think <b>11.34 s</b> (ALL-6), and <b>0.44 s</b> vs <b>8.88 s</b> (ALL-5). The think tier\'s ~11 s × 15% ≈ 1.7 s is most of the 2.27 s; the two no-think tiers add only ~0.5 s.</div>'''))
+<div class="callout win"><b>Latency implication, per tier:</b> Tier 2 (think) costs ~<b>11 s</b> — about <b>60× a no-think pass</b> — so it dominates the bill. Firing it on only <b>15.1%</b> of questions (ALL-6) / <b>2.3%</b> (ALL-5) is the whole win: cascade latency <b>2.27 s</b> vs always-32B-think <b>11.34 s</b> (MedVLThinker, MCQ ALL-6), and <b>0.44 s</b> vs <b>8.88 s</b> (ALL-5). The think tier\'s ~11 s × 15% ≈ 1.7 s is most of the 2.27 s; the two no-think tiers add only ~0.5 s.</div>'''))
 
 # S4 ACC method + gate peers EXPLAINED + which SOTA
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 · The efficiency result, now with math + peers</div>
@@ -109,7 +109,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 · The ef
 <dt>Jitkrittum L2D <span class="src">(NeurIPS 2023)</span></dt><dd>the <b>theoretically-optimal</b> learned deferral rule — the strongest principled gate; our main learned baseline.</dd>
 <dt>CAR <span class="src">(arXiv 2505.15154, 2025)</span></dt><dd>certainty-based adaptive routing for <i>multimodal</i> models — the <b>closest prior art</b> to ACC\'s think-gating.</dd>
 </dl>
-<div class="callout note"><b>What we compare to:</b> the accuracy ceiling is <b>always-32B-think</b> (parity); the efficiency baseline is the standard 2-tier confidence cascade. The SOTA peers above are the published gates; CAR is the nearest multimodal prior art, Jitkrittum L2D the strongest learned one.</div>'''))
+<div class="callout note"><b>What we compare to:</b> the accuracy ceiling is <b>always-32B-think</b> (MedVLThinker, MCQ) (parity); the efficiency baseline is the standard 2-tier confidence cascade. The SOTA peers above are the published gates; CAR is the nearest multimodal prior art, Jitkrittum L2D the strongest learned one.</div>'''))
 
 # S4b ACC result table + FLOPs-vs-latency explanation + the cluster finding
 acc_rows=[["always-32B-think (parity, ceiling)","0.572","100%","11.34 s","6319 J"],
@@ -259,7 +259,7 @@ S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>13 (cont.) 
 <h2 class="slide-h sm">It beats the 32B at a fraction of the always-think latency</h2>
 <p class="body"><b>The hybrid you can deploy:</b> the cheap 7B samples N answers, the verifier picks the best, and only low-confidence cases escalate to the 32B. Costs below use measured batch-1 per-tier latency/energy (same Qwen2.5-VL architecture):</p>
 '''+TBL(["Lingshu · open-ended pooled · SLAKE/VQA-RAD/PathVQA/Kvasir (n=1064)","accuracy","latency*","energy*"], lat_rows)+'''
-<div class="callout win"><b>Result:</b> the 7B+verifier (0.501) and the cascade (0.517) <b>beat the 32B (0.462) at ~⅓ the latency of always-32B-think</b> (~3.5 s vs ~11 s, sequential) — and best-of-8 is <b>parallelizable to under 1 s</b>. The one cost that rises is FLOPs (~3.7× a 32B pass, from sampling).</div>
+<div class="callout win"><b>Result:</b> the 7B+verifier (0.501) and the cascade (0.517) <b>beat the 32B (0.462) at ~⅓ the latency of always-<b>Lingshu</b>-32B-think</b> (~3.5 s vs ~11 s, sequential) — and best-of-8 is <b>parallelizable to under 1 s</b>. The one cost that rises is FLOPs (~3.7× a 32B pass, from sampling).</div>
 <p class="body" style="font-size:1.02rem;color:var(--muted)">*Latency/energy estimated from measured batch-1 per-tier costs; on this open-ended pooled set thinking hurts perception, so Lingshu-32B-think (~0.43) is both slower and <i>less</i> accurate than Lingshu-32B-no-think (0.462), measured with the same LLM-judge. Exact seconds depend on batching.</p>'''))
 
 # S15 cohesive story + master table
