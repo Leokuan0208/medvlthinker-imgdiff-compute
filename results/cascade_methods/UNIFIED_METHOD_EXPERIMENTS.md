@@ -62,3 +62,9 @@ NEXT: cost-frontier search — vary N {1,2,4,8}, cheaper verifier, smarter gate 
 escalation signal -> best cascade acc @ esc%: VERIFIER-CONFIDENCE 0.518 @ 34% (BEST) > self-consistency 0.501 @ 0% (no gain) > n_distinct 0.501 @ 0%.
 => the trained verifier's own confidence is the best escalation gate; SC/answer-diversity don't beat the verifier-alone. (7B-seqlogprob + CASP-stability gates pending the captured cheap-leg + training.)
 RUNNING (batch3): GPU0 = Lingshu verifier full-set scoring (vqa_rad/pathvqa/kvasir + radimagenet held-out); GPU1 = MedVLThinker verifier training (4 in-dist, radimagenet held-out).
+
+## Phase 2/3 — verifier on FULL sets + held-out + cross-family (batch3, 2026-06-29)
+Lingshu verifier (full per-dataset): VQA-RAD 0.575 (32B 0.600), PathVQA 0.453 (32B 0.376 BEAT), Kvasir 0.439 (32B 0.301 BEAT),
+  RadImageNet-HELD-OUT 0.353 (greedy 0.329 -> generalizes OOD; 32B pending). MedVLThinker verifier: slake 0.583, vqa_rad 0.456,
+  kvasir 0.424 (32B 0.361 BEAT), pooled 0.476. => verifier works + generalizes in BOTH families; beats the (weak/competent) 32B where the 32B is weak.
+NEXT: InternVL3-8B/38B (download+baseline+verifier); full-set cascade + integration variants (agreement-on-picks).
