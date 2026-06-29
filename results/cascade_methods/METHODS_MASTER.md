@@ -110,8 +110,8 @@ whole Lingshu medical-VQA suite. (See §6 for why the verifier is open-text-only
 ## 12. MedEvalKit reproduction — live status (2026-06-29)
 - DONE: cloned + patched + deps installed; **Lingshu-7B loads + the pipeline runs end-to-end in our vLLM 0.10** (env validated).
 - REMAINING (active): per-dataset HF auto-download resolution. `datasets_path=hf` ⇒ each task loads from its HF repo
-  (VQA-RAD=flaviagiammarino/vqa-rad, MMMU=MMMU/MMMU, etc.); the MMMU fetch failed despite hf-mirror up (needs config/
-  trust_remote_code/endpoint handling). A few tasks are MANUAL-download (MedXpertQA = TsinghuaC3I/MedXpertQA; OmniMedVQA).
+  (VQA-RAD=flaviagiammarino/vqa-rad, MMMU=MMMU/MMMU, etc.); FIXED 2026-06-29: MedEvalKit defaults HF_ENDPOINT=hf-mirror.com which does NOT resolve datasets (308); use
+  HF_ENDPOINT=https://huggingface.co (network is back) — vqa-rad/etc. download cleanly. A few tasks are MANUAL-download (MedXpertQA = TsinghuaC3I/MedXpertQA; OmniMedVQA).
   Alternative: point datasets_path at local copies (we already have MMMU-med/PMC/SLAKE/VQA-RAD/PathVQA/MedXpert under
   /data/dan/dataset + MedVLThinker-Eval) — but must match MedEvalKit's expected format/version to match the paper.
 - THEN: Lingshu-7B over 7 tasks → compare to Table 6 (MCQ exact-match should match; open-text within local-judge tolerance) → then Lingshu-32B → then build the unified router + verifier/cascade and measure acc/latency/energy/FLOPs vs 32B.
