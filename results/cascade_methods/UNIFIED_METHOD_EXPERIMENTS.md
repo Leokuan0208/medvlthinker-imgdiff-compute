@@ -43,3 +43,17 @@ FINDINGS:
 DATA FIXES NEEDED before experiments: (1) PathVQA question-set mismatch — MedVLThinker uses full 3357, Lingshu uses a 1500 subset
   -> unify (use the same pathvqa set per family/cross-family). (2) MedVLThinker-7B PathVQA has only greedy (no sc8) -> generate sc8.
   (3) Lingshu-32B @ RadImageNet (held-out) not yet generated. (4) MedVLThinker-7B-pathvqa greedy judge running.
+
+## Phase 3 — first integration result: verifier-augmented cascade (Lingshu, seed-0 split, clean_dump n=1064)
+| dataset | greedy | verifier-bo8 | 32B | cascade(esc->32B) best-acc @ esc% |
+| SLAKE   | 0.729 | 0.762 | 0.829 | 0.829 @ 100% (can only match 32B; verifier<32B here) |
+| Kvasir  | 0.274 | 0.405 | 0.326 | 0.422 @ 36%  BEATS 32B |
+| PathVQA | 0.306 | 0.441 | 0.377 | 0.453 @ 30%  BEATS 32B |
+| VQA-RAD | 0.444 | 0.611 | 0.648 | 0.667 @ 37%  BEATS 32B (n=54) |
+| POOLED  | 0.385 | 0.501 | 0.462 | 0.517 @ 35%  BEATS 32B on accuracy |
+FINDING: the verifier-augmented cascade BEATS Lingshu-32B on accuracy (pooled 0.517 vs 0.462) escalating ~35%.
+COST TENSION (the key open problem): best-of-8 ~= 16 7B-fwd + 0.35*(32B~=4.6 7B-fwd) ~= 17.6 vs always-32B ~= 4.6
+  => ~3.8x the FLOPs. So it WINS accuracy, LOSES FLOPs. SLAKE only matches (verifier 0.762<32B 0.829 -> escalate-all).
+CAVEAT: seed-0 split (favorable); 2-seed range applies (verifier 0.501/0.445). Per-dataset WIN pattern (kvasir/pathvqa/vqa_rad) is robust.
+NEXT: cost-frontier search — vary N {1,2,4,8}, cheaper verifier, smarter gate (verifier-conf vs 7B-conf vs CASP) — find any config
+  that beats 32B on accuracy AND FLOPs; + the integration variants (router/unified/agreement-on-picks); + held-out (radimagenet).
