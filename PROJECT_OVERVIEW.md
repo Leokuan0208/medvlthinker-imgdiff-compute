@@ -100,7 +100,7 @@ where the verifier (next) works.
 **The idea.** The luck floor is a property of *frozen* models. If we **train** a small helper to score
 "is this candidate answer correct?", it can pick the best of N tries — and it works.
 
-**For free-text answers**, the trained verifier recovers **49%** of the oracle gap (averaged over 4 datasets,
+**For free-text answers**, the trained verifier recovers **35–49%** of the oracle gap (two seeds; seed-0 table below averaged over 4 datasets,
 and it transfers to a 5th it never saw):
 
 | dataset | cheap model | **+ trained verifier** | best possible (oracle) |
@@ -122,11 +122,11 @@ and it transfers to a 5th it never saw):
 **Why we trust it:**
 - It **genuinely tells right from wrong** (AUROC **0.924** at scoring individual answers — see figure), and it
   **uses the image** (blanking the image hurts it).
-- It **beats** an *untrained* version, and even beats the **5× bigger 32B model's** answer.
+- It **beats** an *untrained* version, and **matches** the **5× bigger 32B model's** answer (a significant win on one split, a tie on another).
 - It's **statistically significant** (bootstrap confidence intervals exclude zero on both headline results).
 - It's a **test-time-scaling method**: give it more samples, it gets better (random selection does not).
-- **Test-time compute beats parameters:** the small 7B *with the verifier* (0.501) beats the big 32B's single
-  answer (0.462, same questions) — because, for these questions, thinking bigger barely helps but *checking* helps a lot.
+- **Test-time compute beats parameters:** the small 7B *with the verifier* (0.501) **matches** the big 32B's single
+  answer (0.462, same questions; a tie on a 2nd seed) — because, for these questions, thinking bigger barely helps but *checking* helps a lot.
 
 `figs/limits/fig_trained_verifier_unified.png`
 `figs/limits/fig_verifier_discrimination.png`
@@ -143,7 +143,7 @@ self-checking fails in medical VQA.
 ## 7. Where the project stands
 
 - **Two solid, complementary contributions:** ACC (efficiency: −80% latency, ~5× energy, at parity) and the
-  trained verifier (accuracy: 40–78% of the oracle gap, answers *and* boxes, a real benchmark).
+  trained verifier (accuracy: 35–78% of the oracle gap across two seeds, answers *and* boxes, a real benchmark).
 - **A thorough negative-result map** (the luck floor) that makes both positives meaningful.
 - **Paper** restructured around these two results (`paper/cvgip2026_draft.md`), with an **IEEE PDF**
   (`paper/cvgip2026_ieee.pdf`) and this overview.

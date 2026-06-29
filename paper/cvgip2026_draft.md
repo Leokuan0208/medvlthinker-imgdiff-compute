@@ -30,13 +30,13 @@ bounding-box outputs. Error correlation explains it: the cheap and strong models
 
 2. **A little training (accuracy).** While *training-free* selection is luck-floored, a small **trained
    outcome verifier** that scores P(correct | image, question, candidate) and selects best-of-N **breaks the
-   floor**, recovering **40–78%** of the oracle gap — for free-text answers (**49%** pooled over four
+   floor**, recovering **35–78%** of the oracle gap — for free-text answers (**35–49%** across two seeds, ~42% mean, over four
    datasets, transferring to a fifth) *and* for structured bounding boxes (SLAKE organs **40%**; the real
    **MS-CXR** chest-X-ray pathology benchmark **78%**, a 5.6× lift; bootstrap-significant). The verifier
    discriminates correct from incorrect candidates at **AUROC 0.924**, beats a zero-shot 32B verifier despite
    being 5× smaller, behaves as a genuine test-time-scaling method, and — because reasoning barely helps
-   open-ended — **a 7B with the verifier (0.501) beats the 32B's single pass (0.462, same held-out split)**: test-time compute
-   beats parameters where parameters do not help.
+   open-ended — **a 7B with the verifier matches the 32B's single pass** (0.501 vs 0.462 on one split, a tie 0.445 vs 0.450
+   on another): test-time compute is competitive with parameters where parameters do not help.
 
 The connective insight: **training-free routing/selection over a frozen model is luck-floored; the two
 things that move the needle are *structure* (ACC) and *a little training* (the verifier).** We additionally
@@ -85,7 +85,7 @@ error-correlation explanation; extended to actions, cross-family peers, the lang
 outputs. (iii) The **open-ended ceiling-break**: routing signal is a discreteness artifact (MCQ ~0.6 →
 open ~0.87). (iv) A **trained outcome verifier** that breaks the selection floor for free-text answers and
 bounding boxes (incl. real MS-CXR), 2-seed and bootstrap-significant, a test-time-scaling method that lets a
-7B beat the 32B single pass. (v) Honest framing throughout: the agreement *gate* mechanism is shared with
+7B match the 32B single pass. (v) Honest framing throughout: the agreement *gate* mechanism is shared with
 prior cascading work — our novelty is the compute-configuration *structure* and the trained-verifier
 *application/unification*, not the signals themselves.
 
@@ -315,7 +315,7 @@ and the latter wins; the in-domain supervision (a few thousand gold labels) is p
 (and its cost). AUROC 0.924 and the −0.047 image-ablation confirm the verifier learned genuine visual
 discrimination, not judge-mimicry (the judge needs the gold answer; the verifier does not).
 
-### 6.1 Free-text answers: 49% of the oracle gap (pooled over four datasets)
+### 6.1 Free-text answers: 35–49% of the oracle gap (two seeds, pooled over four datasets)
 
 | dataset | greedy | self-consist. | zero-shot 32B verify | **trained verifier** | oracle@8 | gap captured |
 |---|---|---|---|---|---|---|
@@ -327,10 +327,13 @@ discrimination, not judge-mimicry (the judge needs the gold answer; the verifier
 
 **Training is the active ingredient.** Zero-shot self-verification P(True) is luck-floored (PathVQA 0.319 <
 greedy); LoRA-training the *same* model on judge labels captures **49%** of the oracle gap (gain **+0.088**
-over greedy; lifting every dataset), and the trained **7B** verifier beats the **zero-shot 32B** verifier
-(0.357 on PathVQA) by +0.08 despite being 5× smaller. Bootstrap (best-of-8 vs a single random sample): gain
-**+0.116, 95% CI [+0.092, +0.139]** (n=1064, excludes 0); and over the **32B itself**, +0.039, 95% CI
-**[+0.010, +0.066]** — a modest but significant win over the 5× model. *Argmax is the correct selection
+over greedy on the seed-0 split; lifting every dataset), and the trained **7B** verifier beats the **zero-shot 32B**
+verifier (0.357 on PathVQA) by +0.08 despite being 5× smaller. **Two-seed robustness (honest):** gap-captured is
+49% (seed-0) and 35% (seed-1), ~42% mean — the gain over training-free is robust (bootstrap 95% CI over greedy
+**[+0.092, +0.139]**), but **versus the 32B it is a tie-to-modest-win**: seed-0 +0.039 (95% CI [+0.010, +0.066],
+significant), seed-1 −0.005 (tie, 0.445 vs 0.450). So the 7B+verifier **matches** the 32B; it does not robustly beat
+it. Per-dataset the verifier helps the **hard sets on both seeds** (PathVQA, Kvasir) and is flat where the baseline is
+already high (SLAKE) or n is tiny (VQA-RAD). *Argmax is the correct selection
 rule:* verifier-*weighted* voting (0.489) and a score×count hybrid (0.470) are both **worse** than plain
 argmax (0.501), because the majority trap (§5.2e) contaminates even score-weighted voting.
 
@@ -347,7 +350,7 @@ largely generator-agnostic. **Across base models (honest, mixed):** trained *fro
 base it works on SLAKE (0.564 → 0.622, 42%) and is pooled-positive (25%) but *fails* on VQA-RAD's tiny split
 (n=54: 0.500 → 0.470) — so the method is not uniformly robust across bases, and a stronger base (Lingshu) makes
 a stronger verifier (its transfer 49–61% exceeds a from-scratch MedVLThinker verifier's 25%); the Lingshu
-result (49%, four datasets, two seeds) is the validated headline. **Data-efficient:** it needs only
+result (35–49%, four datasets, two seeds) is the validated headline. **Data-efficient:** it needs only
 ${\sim}6{,}000$ judge labels in total to reach this lift.
 
 ### 6.2 Structured outputs: the same principle holds for bounding boxes
@@ -375,12 +378,13 @@ Best-of-K accuracy rises monotonically with the sample budget while random stays
 `figs/limits/fig_verifier_scaling.png`); extending to K=16 (a fresh, larger sample) it keeps rising with
 diminishing returns. So the verifier converts test-time compute into accuracy — the defining TTS property.
 
-**Compute beats parameters where parameters don't help.** Because reasoning barely improves open-ended
-medical VQA (§5.3), the 32B's single pass scores only **0.462** (same held-out split) pooled — *below* the 7B with verifier-bo8
-(**0.501**), at ~3.7× the 32B's param-FLOPs. Per dataset the 7B+verifier beats the 32B exactly where scaling
-fails — PathVQA 0.441 vs 0.377 and Kvasir 0.405 vs 0.326 (the two hardest sets) — and loses on the two where
-the 32B is genuinely stronger, SLAKE (0.762 vs 0.829) and VQA-RAD (0.611 vs 0.648; per-dataset n are small —
-VQA-RAD n=54 — so per-dataset signs are directional, the pooled n=1064 win is the solid claim)
+**Compute is competitive with parameters where parameters don't help.** Because reasoning barely improves
+open-ended medical VQA (§5.3), the 32B's single pass scores only **0.462** pooled (seed-0 split) — *matched*
+by the 7B with verifier-bo8 (**0.501**) at ~3.7× the 32B's param-FLOPs; **on a second seed they tie** (32B
+0.450 vs verifier 0.445), so the 7B+verifier **matches** the 32B rather than robustly beating it. The
+*robust* per-dataset pattern (both seeds) is that the verifier beats the 32B on the **hard sets** where
+scaling fails — PathVQA 0.441 vs 0.377 and Kvasir 0.405 vs 0.326 — and is flat/behind where the 32B is
+genuinely stronger or n is tiny — SLAKE (0.762 vs 0.829) and VQA-RAD (0.611 vs 0.648, n=54)
 (Fig. `figs/limits/fig_verifier_pareto.png`). The verifier is thus the accuracy-optimal operating point, not
 dominated by simply using a 5×-larger model.
 
@@ -420,7 +424,7 @@ and the two frozen models fail together. Yet two levers give large, real gains: 
 Adaptive-Compute Cascade, whose large-model no-think tier cuts latency −80%, FLOPs to ~½, and energy ~5× at
 parity — and **a little training** — an outcome verifier that breaks the selection luck floor, recovering
 40–78% of the oracle gap for both answers and bounding boxes (incl. a real chest-X-ray benchmark), behaving
-as a test-time-scaling method that lets a 7B beat a 32B. We also show the routing ceiling is partly an
+as a test-time-scaling method that lets a 7B match a 32B. We also show the routing ceiling is partly an
 MCQ artifact (AUROC ~0.6 → ~0.87 open-ended), so medical-VLM cascades should be evaluated open-ended. We
 release ACC, the trained verifier, and the full negative-result characterization.
 
