@@ -72,7 +72,7 @@ so removing think calls dominates the savings.
 **Training breaks the selection floor (the verifier).** Routing *between* models is capacity-bound, but a
 different question — given N samples from *one* model, which is correct? — admits a *trained* answer. A small
 LoRA verifier scoring P(correct | image, question, candidate), used for best-of-N selection, recovers
-40–78% of the oracle gap for both answers and boxes, where every training-free selector is luck-floored.
+35–78% of the oracle gap for both answers and boxes, where every training-free selector is luck-floored.
 
 **Open-ended evaluation matters.** The pessimistic routing AUROC (~0.6) is partly an artifact of
 multiple-choice: a single A/B/C/D letter is maximally discrete. On open-ended free-text the same confidence
@@ -364,7 +364,7 @@ to judge "does this drawn box localize the {target}?" and select best-of-8 boxes
 | **MS-CXR pathology (n=435, real)** | 0.041 | 0.053 | 0.115 | **0.232 / 0.230** | 0.285 | **78% / 77%** |
 
 Both training-free selectors (SC-medoid, zero-shot) sit at the luck floor; the **trained** box-verifier
-recovers 40–78% of the oracle gap, 2-seed-robust. On the real **MS-CXR** chest-X-ray benchmark the gain is
+recovers 35–78% of the oracle gap, 2-seed-robust. On the real **MS-CXR** chest-X-ray benchmark the gain is
 **+0.191, 95% bootstrap CI [+0.152, +0.232]** (n=435), a **5.6× lift** over greedy. (It lifts *selection over
 a weak base grounder* — not a trained SOTA grounder like MedGround-R1, whose checkpoint is unreleased — but
 the principle, "training breaks the luck floor for structured outputs too," is the point.) *Training is the
@@ -408,7 +408,7 @@ tables. The verifier (open-ended) is evaluated on the datasets that *have* free-
 VQA-RAD, PathVQA (the core three), plus Kvasir (OOD) and RadImageNet (transfer); PMC-VQA and MMMU are
 MCQ-only, so they are absent by *format*, not by selection. The verifier lifts *selection over a frozen
 generator*; it does not beat a trained SOTA grounder in absolute IoU. Latency/energy are calibrated batch-1 (Eq. 1), not a single end-to-end wall-clock; FLOPs are
-exact. The free-text per-dataset spread is wide (SLAKE 15% — little headroom — to Kvasir 58%); the 40–78%
+exact. The free-text per-dataset spread is wide (SLAKE 15% — little headroom — to Kvasir 58%); the 35–78%
 headline is the cross-output-type range.
 
 **Why the two levers and not a better gate.** Both findings reduce to the recoverability ceiling: *between*
@@ -423,7 +423,7 @@ training-free signals — a dozen of them hit the same recoverability ceiling, s
 and the two frozen models fail together. Yet two levers give large, real gains: **structure** — the
 Adaptive-Compute Cascade, whose large-model no-think tier cuts latency −80%, FLOPs to ~½, and energy ~5× at
 parity — and **a little training** — an outcome verifier that breaks the selection luck floor, recovering
-40–78% of the oracle gap for both answers and bounding boxes (incl. a real chest-X-ray benchmark), behaving
+35–78% of the oracle gap for both answers and bounding boxes (incl. a real chest-X-ray benchmark), behaving
 as a test-time-scaling method that lets a 7B match a 32B. We also show the routing ceiling is partly an
 MCQ artifact (AUROC ~0.6 → ~0.87 open-ended), so medical-VLM cascades should be evaluated open-ended. We
 release ACC, the trained verifier, and the full negative-result characterization.

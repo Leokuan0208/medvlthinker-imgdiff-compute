@@ -125,7 +125,7 @@ and it transfers to a 5th it never saw):
 - It **beats** an *untrained* version, and **matches** the **5× bigger 32B model's** answer (a significant win on one split, a tie on another).
 - It's **statistically significant** (bootstrap confidence intervals exclude zero on both headline results).
 - It's a **test-time-scaling method**: give it more samples, it gets better (random selection does not).
-- **Test-time compute beats parameters:** the small 7B *with the verifier* (0.501) **matches** the big 32B's single
+- **Test-time compute rivals parameters:** the small 7B *with the verifier* (0.501) **matches** the big 32B's single
   answer (0.462, same questions; a tie on a 2nd seed) — because, for these questions, thinking bigger barely helps but *checking* helps a lot.
 
 `figs/limits/fig_trained_verifier_unified.png`
