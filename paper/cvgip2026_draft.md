@@ -371,7 +371,7 @@ the principle, "training breaks the luck floor for structured outputs too," is t
 active ingredient here as well:* on MS-CXR the zero-shot box-verifier reaches 0.115 (30% of gap), so training
 **doubles** the captured gap (30% → 78%). Fig. `figs/limits/fig_trained_verifier_unified.png`.
 
-### 6.3 A test-time-scaling method; and test-time compute beats parameters
+### 6.3 A test-time-scaling method; and test-time compute rivals parameters
 
 Best-of-K accuracy rises monotonically with the sample budget while random stays flat
 (K = 1,2,4,8: **0.385 → 0.425 → 0.476 → 0.501**; oracle@8 0.592; random ~0.39; Fig.
