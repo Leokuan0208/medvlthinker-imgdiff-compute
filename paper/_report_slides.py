@@ -258,6 +258,24 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>13 · How the tw
 <div class="callout note">They are complementary levers of one idea — <i>allocate test-time compute where it pays</i> — and combine: a verifier-augmented cascade (cheap best-of-N → escalate the residual to the 32B) reaches <b>0.517</b> at 35% escalation — above both the verifier alone (0.501) and Lingshu-32B no-think (0.462) — all on the open-ended pooled set (SLAKE/VQA-RAD/PathVQA/Kvasir, n=1064) — i.e. the accuracy-optimal point (at a compute premium; the fully-measured deployable version is the next step).</div>'''))
 
 
+# S14a verifier-augmented cascade setup (with flow diagram)
+S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>13 (cont.) · The deployable verifier-augmented cascade — how it is set up</div>
+<h2 class="slide-h sm">Cheap best-of-N first; escalate only the uncertain residual to the 32B</h2>
+<div style="max-width:780px;margin:4px auto 0">
+<div style="background:var(--indigo-bg);border:1px solid var(--indigo-l);border-radius:10px;padding:9px 14px;text-align:center;font-size:1.12rem"><b>Question + image</b></div>
+<div style="text-align:center;color:var(--muted);font-size:1.5rem;line-height:1.1">&#8595;</div>
+<div style="background:var(--good-bg);border:1px solid #bfe0c2;border-radius:10px;padding:9px 14px;font-size:1.12rem"><b>&#9312; Cheap 7B samples N=8 candidate answers</b> <span style="color:var(--muted)">(~0.4 s, can run in parallel)</span></div>
+<div style="text-align:center;color:var(--muted);font-size:1.5rem;line-height:1.1">&#8595;</div>
+<div style="background:var(--good-bg);border:1px solid #bfe0c2;border-radius:10px;padding:9px 14px;font-size:1.12rem"><b>&#9313; Trained verifier scores all 8</b> &#8594; picks the best answer <b>&acirc;</b> and its confidence <b>c = max score</b></div>
+<div style="text-align:center;color:var(--muted);font-size:1.5rem;line-height:1.1">&#8595;</div>
+<div style="background:#eef1f8;border:1px dashed var(--indigo-l);border-radius:10px;padding:9px 14px;text-align:center;font-size:1.12rem"><b>&#9314; Gate: is the verifier confident? &nbsp; c &ge; &tau; ?</b></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:9px;font-size:1.1rem">
+<div style="background:var(--good-bg);border:1px solid #bfe0c2;border-radius:10px;padding:9px 14px"><b>YES — confident (~65%)</b><br>keep <b>&acirc;</b> &mdash; cheap, done</div>
+<div style="background:#fff7e8;border:1px solid #f3e0b8;border-radius:10px;padding:9px 14px"><b>NO — low confidence (~35%)</b><br>&#9315; escalate &#8594; <b>32B answers</b></div>
+</div></div>
+<div class="eq">$$\\text{escalate} \\iff c < \\tau,\\qquad c = \\max_{i\\le N} s_\\phi(v,q,a_i);\\qquad \\hat y = \\hat a \\;(\\text{if } c\\ge\\tau)\\;\\text{ else the 32B answer}$$</div>
+<div class="callout win"><b>Result (Lingshu, open-ended pooled n=1064):</b> sweeping the gate threshold &tau; traces an accuracy–cost frontier; the accuracy-optimal point is <b>0.517 @ 35% escalation</b> — above the verifier alone (0.501) and the 32B (0.462). Key choice: the gate fires on the <b>verifier&#39;s own confidence</b> (its max score), not the 7B&#39;s logprob — the trained verifier is the better judge of which questions still need the big model. Honest: this buys accuracy at a compute premium (best-of-8 + escalation); the fully-measured latency/energy version is the next step.</div>'''))
+
 # S14b latency/energy of the verifier system (the hybrid result)
 lat_rows=[["Lingshu-32B · THINK mode","~0.43*","~11 s","~6300 J"],
 ["Lingshu-32B · no-think","0.462","~0.3 s","~60 J"],
