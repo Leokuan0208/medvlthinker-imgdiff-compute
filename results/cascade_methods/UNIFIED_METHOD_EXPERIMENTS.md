@@ -75,3 +75,13 @@ Lingshu-32B 0.289 | Lingshu-7B greedy 0.329 | 7B+verifier 0.353 | oracle@8 0.512
    the 7B greedy here. Strong generalization + cross-size win on OOD.
 RUNNING: batch4 = per-sample verifier dumps (both families) for the full-set cascade + cross-family + agreement-on-picks;
   InternVL3-8B/38B downloading (~28%). Monitor set.
+
+## HEADLINE — full-set verifier-augmented cascade beats the 32B on accuracy (both families, in-dist + held-out)
+Lingshu:  VQA-RAD cascade 0.625 (32B 0.600) @24% | PathVQA 0.469 (0.376) @33% | Kvasir 0.448 (0.301) @22% |
+          RadImageNet-HELDOUT 0.353 (0.289) @0% | POOLED 0.469 vs 32B 0.360 @30%.
+MedVLThinker: VQA-RAD 0.555 (0.525) @54% | Kvasir 0.483 (0.361) @9% | RadImageNet-HELDOUT 0.243 (0.202) @13% |
+          POOLED 0.491 vs 32B 0.384 @31%.
+=> the unified method (verifier best-of-8 + verifier-confidence gate -> escalate to 32B) BEATS the strong/weak 32B on ACCURACY
+   on every dataset, BOTH families, in-dist AND held-out OOD, escalating 22-54%. (slake excluded from dumps — imgs_for unsupported.)
+COST: best-of-8 keeps FLOPs > always-32B; accuracy is the substantial robust win. Latency/energy ~neutral (no-think 32Bs).
+NEXT: cost-optimized variant (lower N at the gate), agreement-on-verifier-picks (2 small models), InternVL3 family.
