@@ -115,3 +115,14 @@ whole Lingshu medical-VQA suite. (See §6 for why the verifier is open-text-only
   Alternative: point datasets_path at local copies (we already have MMMU-med/PMC/SLAKE/VQA-RAD/PathVQA/MedXpert under
   /data/dan/dataset + MedVLThinker-Eval) — but must match MedEvalKit's expected format/version to match the paper.
 - THEN: Lingshu-7B over 7 tasks → compare to Table 6 (MCQ exact-match should match; open-text within local-judge tolerance) → then Lingshu-32B → then build the unified router + verifier/cascade and measure acc/latency/energy/FLOPs vs 32B.
+
+## 13. MedEvalKit env blocker (2026-06-29) + path forward
+- Pipeline validated end-to-end EXCEPT: vLLM **0.10** (our NGC env) rejects MedEvalKit's multimodal input format
+  (`InputProcessingError: list index out of range` in `_prepare_model_input_tensors`); MedEvalKit targets **vLLM 0.9.0.1**.
+  Model loads + dataset loads + prompts build; failure is at vLLM input prep (0.9→0.10 mm-API change).
+- PATH FORWARD (recommended): isolated **venv with MedEvalKit's pinned requirements** (vllm 0.9.0.1, transformers 4.52.4,
+  torch 2.7) on /data — keeps our NGC env untouched; the faithful way to match the paper. Alternative: patch the
+  Qwen2.5-VL wrapper for vLLM 0.10 (fiddly), or reuse OUR eval stack (run_vlm_eval/run_openvqa, works in 0.10) and
+  replicate MedEvalKit's prompt/extraction/scoring (env-safe but protocol-matching is on us).
+- SCOPE NOTE: full reproduction = venv + dataset downloads (OmniMedVQA large; MedXpertQA manual) + Lingshu-7B AND -32B
+  over 7 tasks → multi-hour. Datasets DO download from the real HF endpoint (not hf-mirror).
