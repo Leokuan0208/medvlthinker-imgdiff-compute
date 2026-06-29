@@ -49,6 +49,34 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>2 · Setup &amp;
 <dt>AUROC</dt><dd>$P(\\text{score(correct)} > \\text{score(wrong)})$ — how well a score separates right from wrong. 0.5 = useless, 1.0 = perfect.</dd>
 </dl></div></div>'''))
 
+# S3b detailed models + datasets
+ds_rows=[
+["SLAKE","radiology (CT/MRI/X-ray), bilingual; Qs on organs, abnormalities, position","open + closed","ACC + verifier","645 (open)"],
+["VQA-RAD","radiology (chest/head/abdomen); clinician-written Q&amp;A","open + closed","ACC + verifier","200 (open)"],
+["PathVQA","pathology / histology microscopy; many yes/no","open + closed","ACC + verifier","1500 (open)"],
+["PMC-VQA","figures from PubMed Central biomedical articles (mixed)","MCQ (4-opt)","ACC","large"],
+["MMMU-Med","college-exam medical Qs, 5 subjects, multi-image","MCQ","ACC (reasoning)","~1.5k"],
+["MedXpertQA-MM","expert/exam-level multimodal medical, hardest","MCQ","ACC (near-chance)","~2k"],
+["Kvasir-VQA","GI endoscopy images; findings","open","verifier (OOD)","1200"],
+["RadImageNet-VQA","radiology; fully held-out","open","verifier (transfer)","2000"],
+["MS-CXR","chest X-ray: localize a described pathology","bounding box","box-verifier","435"]]
+S.append(slide('''<div class="eyebrow"><span class="dot"></span>2 (cont.) · Experiments — models &amp; datasets in detail</div>
+<h2 class="slide-h sm">Exactly what we run, and on what</h2>
+<p class="body"><b>Models</b> (all Qwen2.5-VL-based medical VLMs): cheap leg = <b>7B</b> (Lingshu-7B for open-ended; MedVLThinker-7B for the MCQ cascade); strong leg = the <b>32B</b> counterpart, run either <b>no-think</b> (fast) or <b>think</b> (slow reasoning trace). The <b>verifier</b> = the 7B with a ~190 MB LoRA adapter on top of the frozen base; the <b>box-verifier</b> = Qwen2.5-VL-7B + LoRA.</p>
+'''+TBL(["dataset","what it is (domain + content)","format","role","n (test)"], ds_rows)+'''
+<p class="body" style="font-size:1.05rem;color:var(--muted)">"open" = free-text short answer; "closed" = yes/no; "MCQ" = pick a lettered option. These are the standard public medical-VQA benchmarks (the same suite the Lingshu paper reports).</p>'''))
+
+# S3c evaluation methodology
+S.append(slide('''<div class="eyebrow"><span class="dot"></span>2 (cont.) · How accuracy &amp; cost are measured</div>
+<h2 class="slide-h sm">Evaluation methodology (so every number is comparable)</h2>
+<dl class="def">
+<dt>MCQ accuracy</dt><dd>extract the model\'s chosen option letter and <b>exact-match</b> it to the gold letter. No judge needed.</dd>
+<dt>Open-text accuracy</dt><dd>an <b>LLM judge</b> (a strong neutral model) decides whether the free-text answer is <i>semantically</i> the gold answer (e.g. "CT" = "computed tomography"). Labels come from the dataset answer key, not the judge\'s opinion; exact-match is too brittle for free text.</dd>
+<dt>Verifier quality</dt><dd><b>AUROC</b> (does its score rank correct answers above wrong ones); <b>gap-captured</b> = (acc of picked − greedy)/(oracle − greedy); <b>oracle@N</b> (best possible if you always picked a correct sample); bootstrap 95% CIs.</dd>
+<dt>Efficiency</dt><dd><b>latency</b> = batch-1 end-to-end wall-clock (s); <b>energy</b> = GPU power sampled every 25 ms via NVML, integrated (J); <b>FLOPs</b> = $2N(P{+}G)$, prefill-included.</dd>
+<dt>Discipline</dt><dd>gate/verifier trained on a <b>disjoint</b> split (no question leaks into the test set); every number is verbatim from real checkpoints (none fabricated).</dd>
+</dl>'''))
+
 # S4 ACC method + gate peers EXPLAINED + which SOTA
 S.append(slide('''<div class="eyebrow teal"><span class="dot"></span>3 · The efficiency result, now with math + peers</div>
 <h2 class="slide-h sm">ACC, and the cascade gates we compare against</h2>
