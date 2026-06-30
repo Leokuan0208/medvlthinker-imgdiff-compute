@@ -92,7 +92,7 @@ else:
 items = items[:A.n]
 print(f"{A.dataset}: {len(items)} open-ended items | tag={A.tag} n_samples={A.n_samples} temp={A.temp}", flush=True)
 
-proc = AutoProcessor.from_pretrained(A.model_path)
+proc = AutoProcessor.from_pretrained(A.model_path, trust_remote_code=True)
 def extract(t):  # think mode: answer = text after the LAST </think>; else the raw text
     if A.think and "</think>" in t:
         tail = t.split("</think>")[-1].strip()
@@ -110,7 +110,7 @@ def build(q, img):
 llm = LLM(model=A.model_path, tensor_parallel_size=A.tp, dtype="bfloat16", gpu_memory_utilization=A.gpu_mem,
           max_model_len=A.max_model_len, limit_mm_per_prompt={"image": 4}, trust_remote_code=True)
 sp = SamplingParams(temperature=A.temp, max_tokens=A.max_tokens, n=A.n_samples,
-                    logprobs=1 if A.n_samples == 1 else None)
+                    logprobs=5)   # capture top-5 token logprobs -> margin/confidence (cascade gate signal)
 ckpt = os.path.join(A.ckpt_dir, f"ckpt_{A.dataset}_{A.tag}.jsonl")
 done = set()
 if os.path.exists(ckpt):
@@ -124,7 +124,7 @@ import time; t0 = time.time(); CH = 64
 with open(ckpt, "a") as fh:
     for c0 in range(0, len(todo), CH):
         ch = todo[c0:c0+CH]; reqs = [build(q, im) for (_, q, _, im) in ch]
-        outs = llm.generate(reqs, sp)
+        import math, time as _t; _t0 = _t.time(); outs = llm.generate(reqs, sp); _blat = (_t.time()-_t0)/max(1, len(ch))
         for (idx, q, gold, _), o in zip(ch, outs):
             preds = [extract(c.text) for c in o.outputs]
             oks = [score(p, gold) for p in preds]
@@ -133,13 +133,21 @@ with open(ckpt, "a") as fh:
             modal_pred = next(p for p in preds if norm(p) == modal_norm)
             sc = modal_n / len(preds); ndist = len(cnt)
             slp = None
-            if A.n_samples == 1 and o.outputs[0].logprobs:
+            if o.outputs[0].logprobs:
                 slp = float(np.mean([next(iter(lp.values())).logprob for lp in o.outputs[0].logprobs if lp]))
+            margin = conf = None
+            try:  # 1st-token top1-top2 prob -> confidence margin (cascade gate signal)
+                _ps = sorted([math.exp(v.logprob) for v in o.outputs[0].logprobs[0].values()], reverse=True)
+                conf = round(_ps[0], 4); margin = round(_ps[0] - (_ps[1] if len(_ps) > 1 else 0.0), 4)
+            except Exception:
+                pass
             fh.write(json.dumps({"idx": idx, "question": q, "gold": gold, "preds": preds, "oks": oks,
                 "modal_pred": modal_pred, "modal_ok": int(score(modal_pred, gold)),
                 "self_consistency": round(sc, 4), "n_distinct": ndist,
                 "seqlogprob": (round(slp, 4) if slp is not None else None),
-                "gen_tokens": len(o.outputs[0].token_ids)}) + "\n")
+                "margin": margin, "conf": conf,
+                "gen_tokens": len(o.outputs[0].token_ids),
+                "gen_tokens_all": [len(c.token_ids) for c in o.outputs], "lat_s": round(_blat, 4)}) + "\n")
         fh.flush()
         acc = np.mean([score(json.loads(l)["modal_pred"], json.loads(l)["gold"]) for l in open(ckpt) if l.strip()])
         print(f"   [{min(c0+CH,len(todo))}/{len(todo)}] running modal-acc={acc:.3f} {(min(c0+CH,len(todo)))/(time.time()-t0):.1f}/s", flush=True)

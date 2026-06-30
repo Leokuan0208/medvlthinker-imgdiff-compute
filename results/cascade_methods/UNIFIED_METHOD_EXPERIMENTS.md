@@ -90,3 +90,62 @@ NEXT: cost-optimized variant (lower N at the gate), agreement-on-verifier-picks 
 agree% / acc|agree / agree-gate(esc disagree->32B): VQA-RAD 27% / 0.852 / 0.570@73% | Kvasir 24% / 0.797 / 0.381@76% |
 RadImageNet 20% / 0.595 / 0.216@80%. => agreement is HIGH-PRECISION (agree=>~85% right) but LOW-COVERAGE (20-27%),
 so as a gate it escalates 73-80% and ends up WORSE than the verifier-confidence cascade. Verifier-confidence stays the best gate.
+
+## COST-FRONTIER (Phase 2 "best verifier setup") — sweep best-of-N {1,2,4,8} ± gate, 2026-06-30
+Resolves the headline's flagged "key open problem" (best-of-8 costs > always-32B FLOPs). Cost model is
+PREFILL-DOMINATED forward-equiv, VALIDATED on real data: gen decode = mean 4-6 tok (run_openvqa caps short
+answers) << ~320 image-prefill tok, so each gen/verify/strong call ≈ one prefill scaled by params. Units =
+2·7B·P (one 7B forward). verifier-bo-N cost = N·(cheap/7) + N·(verif/7); always-STRONG = strong/7 = 4.57 for 32B.
+Verifier base = Lingshu-7B (ratio 1.0) in BOTH families (the pooled4 / mvt7b_4ds adapters). Strong = no-think 32B.
+Per-sample dumps (sl[8],scores[8]) let us simulate any N≤8 + sweep the gate τ offline (no new inference).
+
+LINGSHU (strong=Lingshu-32B):
+| dataset | always-STRONG acc (cost 4.57) | cheapest no-gate win | +gate-best |
+| vqa_rad (32B STRONG 0.600) | 0.600 | NONE (bo8 0.575 < 0.600) | 0.625 @esc24% cost 17.1 (acc-win, COSTLIER) |
+| pathvqa (0.376) | 0.376 | NONE on both axes (bo4 0.411 beats acc but cost 8>4.57) | 0.469 @esc33% cost 17.5 |
+| kvasir (WEAK 0.301) | 0.301 | **N=2 no-gate 0.335 @cost 4.0** BEATS acc+FLOPs | 0.447 @esc20% cost 16.9 |
+| radimagenet-OOD (WEAK 0.289) | 0.289 | **N=1 no-gate 0.321 @cost 2.0** BEATS acc+FLOPs | 0.353 @esc0% |
+MEDVLThinker (strong=MedVLThinker-32B):
+| vqa_rad (32B 0.525) | 0.525 | NONE | 0.555 @esc40% cost 5.85 (acc-win, COSTLIER) |
+| kvasir (WEAK 0.361) | 0.361 | **N=2 no-gate 0.380 @cost 4.0** BEATS acc+FLOPs | 0.485 @esc9% cost 16.4 |
+| radimagenet-OOD (WEAK 0.202) | 0.202 | **N=2 no-gate 0.215 @cost 4.0** BEATS acc+FLOPs | 0.242 |
+
+KEY FINDING — the cost-positivity is REGIME-DEPENDENT (this is the honest, sharper claim):
+1. ACCURACY win (verifier±gate > strong) is ROBUST everywhere, both families, in-dist + OOD (already headline).
+2. BOTH-AXES win (beats strong on accuracy AND FLOPs) holds ONLY where the strong model is WEAK on the domain
+   (Kvasir, RadImageNet-OOD, all MedVLThinker free-text): there, verifier-best-of-2 with NO GATE is a genuine
+   free lunch — cheaper (4.0<4.57) AND more accurate, and it is τ-FREE (no gate => no oracle-τ optimism).
+3. Where the 32B is GENUINELY STRONG on the domain (Lingshu/MedVLThinker VQA-RAD), there is NO no-gate both-axes
+   win; the verifier+confidence-gate still wins ACCURACY but costs MORE FLOPs => a Pareto trade (pay compute for
+   accuracy), not a free lunch. best-of-2 is the knee (acc ≈ closes most of the gap at 4.0 cost).
+HONESTY NOTE: the "+gate-best" τ is oracle-selected (swept on the eval set) => optimistic; the no-gate wins use
+NO τ and are fully honest. The deployable recommendation: verifier-best-of-2 (no gate) as the default operating
+point — beats a weak/poorly-adapted strong model on both axes, and on a strong in-domain model it is the cheapest
+verifier setting that still captures most of the accuracy gain.
+NEXT: same cost-frontier for InternVL3 (cross-family verifier transfer: Lingshu verifier scoring IV3-8B answers),
+strong=IV3-38B; then a consolidated 3-family master table.
+
+## LEAKAGE CHECK (2026-06-30) — verifier-bo8 full-set ≈ held-out test-split => no memorization inflation
+pooled4 was trained on vqa_rad/pathvqa/kvasir (+slake); the transfer-dumps score the FULL eval set incl. train
+questions. Concern: optimism. Test: compare the train-script's grouped held-out test-split bo8 vs the full-set
+transfer-dump bo8:  vqa_rad 0.611(test n=54) vs 0.575(full n=200) | pathvqa 0.441(435) vs 0.453(1500) |
+kvasir 0.405(365) vs 0.439(1200).  => full-set is NOT systematically higher (differs both directions, ~±0.03)
+=> the LoRA verifier learned a GENERAL correctness signal, not memorized (q,a) pairs. Full-set numbers are honest.
+(radimagenet is a fully held-out DATASET => clean by construction.)
+
+## GATE HONESTY + WHAT ACTUALLY MATTERS (held-out-τ cross-fit, 2026-06-30)
+The cost-frontier "+gate-best" used oracle-τ (swept on eval). 5-fold cross-fit (pick τ* on 4/5, test on 1/5)
+quantifies the DEPLOYABLE gate value and the oracle optimism. Pooled:
+| family / N | STRONG | no-gate bo-N (τ-free) | held-out-τ gate (deployable) | oracle-τ | gate gain | oracle optimism |
+| Lingshu N=8     | 0.331 | 0.414 | 0.421 @esc11% | 0.421 | +0.007 | +0.000 |
+| Lingshu N=2     | 0.331 | 0.348 | 0.377 @esc51% | 0.379 | +0.030 | +0.002 |
+| MedVLThinker N=8| 0.277 | 0.339 | 0.343 @esc18% | 0.344 | +0.003 | +0.001 |
+TWO CLEAN FINDINGS:
+1. Oracle-τ optimism is NEGLIGIBLE (+0.000..+0.002) => the verifier-confidence threshold GENERALIZES; the
+   headline frontier numbers are honest (not threshold-cherry-picked).
+2. At N=8 the verifier-confidence GATE is essentially REDUNDANT with best-of-8 selection (+0.003..+0.007). The
+   gate only adds real accuracy at SMALL N (N=2: +0.030, by escalating the unconfident ~half to the strong model).
+=> The trained-verifier best-of-N SELECTION is the dominant lever; the escalation gate is a small-N cost-saver,
+   not the source of the win. This SIMPLIFIES the deployed method: ship verifier best-of-N selection; add the
+   confidence gate only when sample budget is tight (small N) or you want to spend compute to close the last
+   accuracy gap on domains where the strong model is genuinely better.
