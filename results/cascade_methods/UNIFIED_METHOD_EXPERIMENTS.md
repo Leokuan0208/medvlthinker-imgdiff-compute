@@ -205,3 +205,37 @@ FINAL VERDICT on "is confidence gate really the best option?" (3 families x both
   is the recoverability WALL (Jitkrittum'23), not gate learnability or features. BEST COMBO = trained outcome-verifier
   best-of-N SELECTION (the dominant lever) + verifier-confidence escalation gate (a small-N cost-saver). CASP belongs
   in the paper as a cited, beaten baseline (renamed; cite CCPS arXiv:2505.21772), NOT as the deployed gate.
+
+## InternVL3 (3rd family, CROSS-FAMILY verifier) — completes the 3-family generality claim, 2026-06-30
+The Lingshu-trained verifier (pooled4) scores InternVL3-8B's answers (cross-architecture transfer, no IV3 verifier
+trained). Cascade IV3-8B+verifier -> IV3-38B vs always-38B:
+| dataset | SC/greedy | verifier-bo8 | IV3-38B | oracle@8 | cascade-best @esc |
+| vqa_rad         | 0.445 | 0.570 | 0.415 | 0.620 | 0.580 @12% BEATS |
+| pathvqa         | 0.081 | 0.116 | 0.096 | 0.192 | 0.125 @52% BEATS (both near-floor; IV3 weak free-text) |
+| kvasir          | 0.362 | 0.479 | 0.380 | 0.593 | 0.487 @17% BEATS |
+| radimagenet-OOD | 0.285 | 0.302 | 0.304 | 0.398 | 0.313 @52% BEATS (cross-family verifier TIES then edges the 38B on held-out OOD) |
+| POOLED          | 0.202 | 0.249 | 0.218 | 0.337 | 0.255 @36% BEATS |
+=> 3rd family confirms: verifier best-of-8 + verifier-conf gate BEATS the strong 38B on accuracy, every dataset +
+   held-out OOD. AND the verifier transfers ACROSS ARCHITECTURES (trained on Lingshu-7B, scores InternVL3-8B) — a
+   stronger generality statement than a same-family verifier.
+
+## InternVL3 feature-complete gate bake-off (pooled n=6757, full signals) — 3rd confirmation of the gate verdict
+verifier-conf AUROC(pick_ok)=0.875 (best). Best TRAINED gate (gbm verif+cheap)=0.879 (+0.004=noise). Cheap-only
+WITH full logprob signals (cheap-conf 0.753, cheap-margin 0.712, cheap-seqlogprob 0.685) = 0.78 trained — still far
+below verifier-conf. Recoverability wall: strong fixes 6.1% of pick-errors, verifier-conf AUROC 0.367 (<chance).
+=> SAME verdict on the largest sample with full features: verifier-confidence is the best gate; no trained gate beats it.
+
+## MEASURED batch-1 latency + energy per tier (HF, clean per-GPU NVML), 2026-06-30
+| tier | latency (ms, mean) | energy (J) | prefill tok | gen tok |
+| Lingshu-7B generate  | 347 | 45.8  | 327 | 5.6 |
+| Lingshu-7B VERIFY    | 175 | 25.3  | 362 | 1.0 |  (one forward ~= 0.5x a generation)
+| MedVLThinker-7B gen  | 246 | 31.1  | 327 | 3.7 |
+| Lingshu-32B generate | 665 | 126.9 | 327 | 5.6 |
+| MedVLThinker-32B gen | 633 | 118.4 | 327 | 5.1 |
+KEY: at batch-1, the 32B is only ~1.9x the 7B's LATENCY and ~2.8x the energy (NOT 4.6x like FLOPs) -- batch-1 is
+bandwidth/overhead-bound, not compute-bound, at these tiny gen-token counts. CONSEQUENCE for cost:
+- verifier-bo-N latency (SEQUENTIAL) = N*(gen7 347 + verify7 175) + esc*gen32 665 ms. N=2,esc=0 => 1044ms vs
+  always-32B 665ms => best-of-N is SLOWER at strict batch-1 sequential. BUT the N samples are embarrassingly
+  parallel: BATCHED, best-of-N ~= 1 gen-call + 1 verify-batch ~= 0.5-0.6s ~ NEUTRAL vs the 32B. So the FLOPs win
+  (verifier-bo2 < always-32B FLOPs) is real; the LATENCY/energy is ~neutral-to-slightly-worse and depends on batching.
+  HONEST framing: the method's win is ACCURACY (robust) + FLOPs (regime-dependent); latency/energy ~neutral.
