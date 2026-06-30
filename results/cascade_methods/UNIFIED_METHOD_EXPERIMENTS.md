@@ -149,3 +149,59 @@ TWO CLEAN FINDINGS:
    not the source of the win. This SIMPLIFIES the deployed method: ship verifier best-of-N selection; add the
    confidence gate only when sample budget is tight (small N) or you want to spend compute to close the last
    accuracy gap on domains where the strong model is genuinely better.
+
+## GATE BAKE-OFF: is a TRAINED gate (incl. CASP) better than verifier-confidence? — 2026-06-30
+Prompted by the open question "the training-required-gate route is still open; CASP-stability won in MCQ."
+Tested rigorously in the OPEN-TEXT verifier cascade (which the earlier 'verifier-conf is best' only compared
+training-FREE signals in). Target = verifier_pick_ok; gates compared by AUROC(pick correct) + cascade-acc at
+fixed escalation budgets, with 5-fold OUT-OF-FOLD scores for trained gates (no leakage). Also the DECISIVE
+recoverability test (Jitkrittum NeurIPS'23, arXiv:2307.02764): the OPTIMAL gate thresholds recoverability
+d=P(strong correct)-P(small correct), not confidence — can ANY trained gate learn it?
+
+PICK-CORRECTNESS GATE (pooled): verifier-conf AUROC = 0.853 (Lingshu) / 0.885 (MedVLThinker). Best TRAINED gate
+(GBM on verifier+cheap) = 0.861 / 0.882 => +0.008 / -0.003, i.e. NO improvement; cascade acc identical. Cheap-only
+trained gates (self_consistency,n_distinct,gen_tokens) = 0.69-0.73, far below verifier-conf. Same on vqa_rad
+(strong competitive): verifier-conf 0.883, trained <=0.869.
+
+RECOVERABILITY (the wall, Jitkrittum-optimal target), trained on ALL signals (verifier dist + cheap), cross-fit:
+| set | strong fixes pick-errors | ORACLE cascade (esc gain-rows) | verifier-conf | TRAINED-recover (best) |
+| Lingshu pooled  | gain 6.0% / lose 14.2% | 0.473 @6%  | cascade 0.421, AUROC(gain) 0.604 | cascade 0.413, AUROC 0.627 (gbm) |
+| Lingshu vqa_rad | gain 11% / lose 8.5%   | 0.685 @11% | cascade 0.620, AUROC 0.665        | cascade <=0.620, AUROC 0.581 (worse) |
+| MVT pooled      | gain 4.9% / lose 11.1% | 0.389 @5%  | cascade 0.344, AUROC 0.514        | cascade 0.338, AUROC 0.649 (gbm) |
+| MVT vqa_rad     | gain 14.5% / lose 11%  | 0.635 @14% | cascade 0.550, AUROC 0.707        | cascade <=0.525, AUROC 0.637 (worse) |
+
+VERDICT (answers "is confidence gate really best?"): YES, the VERIFIER-CONFIDENCE gate is the best DEPLOYABLE gate.
+- Trained gates (logit/GBM/MLP) on verifier±cheap signals do NOT beat it on cascade accuracy ANYWHERE (both
+  families, pooled + the gate-matters vqa_rad regime). On large pooled sets a GBM can raise the recoverability-
+  RANKING AUROC (0.60->0.63-0.65) but this does NOT convert to cascade accuracy (it escalates more losing rows);
+  on the smaller competitive set it OVERFITS and loses to verifier-conf outright.
+- WHY (Jitkrittum theory, confirmed): the optimal gate target is recoverability, which is near-UNLEARNABLE here
+  (AUROC stuck ~0.6, far below the oracle ceiling that proves signal exists) — the noise/saturation regime.
+  The verifier's P(correct) is ALREADY a trained, calibrated correctness estimator (the strongest such signal in
+  the pipeline; Cobbe/GenRM), so a stability/CASP gate (which also estimates upstream correctness) is REDUNDANT
+  with it, not orthogonal. To beat verifier-conf a gate must add recoverability info — and nothing does.
+- CASP-stability's MCQ "win" was ISO-ACCURACY COMPUTE-SAVING (a different objective; its own code pre-registers
+  "cannot raise accuracy"). It is not applicable as an accuracy-improving gate here.
+NAMING: "CASP" collides with the protein-structure CASP competition and does not exist as an ML gate; the real
+prior art is CCPS (Khanmohammadi et al. 2025, arXiv:2505.21772 — a trained classifier on perturbed-REPRESENTATION
+stability). Rename our trained-stability-gate ablation and cite CCPS + Bahat&Shakhnarovich (arXiv:2006.16705).
+LIT PRECEDENTS for our design (verifier score AS the gate): Self-REF (arXiv:2410.13284, one confidence head for
+route+reject) and Kiyani et al. 2026 (arXiv:2602.17633, verifier-confidence accept/reject/escalate) — both close,
+neither uses a trained outcome verifier as a small->large medical-VQA cascade gate => our combo is novel.
+REMAINING: feature-complete CASP test on InternVL3 (has margin/conf/seqlogprob) incl. the stability target.
+
+## FEATURE-COMPLETE confirmation (InternVL3 vqa_rad, cheap sc8 HAS margin/conf/seqlogprob) — 2026-06-30
+The Lingshu/MVT sc8 lacked the cheap logprob signals CASP/CCPS use. InternVL3-8B sc8 (generated this session
+with logprobs=5) HAS them, so this is the feature-complete CASP test. n=200; verifier-pick 0.570 vs always-38B 0.415.
+  verifier-conf AUROC(pick_ok)=0.838 (best). Cheap signals WITH logprobs: cheap-conf 0.758 > -n_distinct 0.740 >
+  self_consistency 0.710 > cheap-margin 0.685 > cheap-seqlogprob 0.648 — all still FAR below verifier-conf.
+  TRAINED-logit verif+cheap = 0.842 (+0.004 over verifier-conf = noise); GBM/MLP 0.808-0.831 (worse). Cheap-only
+  trained (full features) 0.706-0.764. => Even the full CASP/CCPS feature set does NOT let a trained gate beat
+  verifier-confidence; the cheap confidence signals are redundant with the verifier's calibrated P(correct).
+
+FINAL VERDICT on "is confidence gate really the best option?" (3 families x both regimes x full feature set):
+  YES — the VERIFIER-CONFIDENCE gate is the best gate. The training-required route (CASP-stability, learned MLP/GBM,
+  and even the theoretically-optimal recoverability-targeted gate) does NOT beat it on cascade accuracy. The limit
+  is the recoverability WALL (Jitkrittum'23), not gate learnability or features. BEST COMBO = trained outcome-verifier
+  best-of-N SELECTION (the dominant lever) + verifier-confidence escalation gate (a small-N cost-saver). CASP belongs
+  in the paper as a cited, beaten baseline (renamed; cite CCPS arXiv:2505.21772), NOT as the deployed gate.
