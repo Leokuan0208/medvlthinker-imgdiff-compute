@@ -250,3 +250,20 @@ Bahat&Shakhnarovich (arXiv:2006.16705, TTA-consistency). n=4900; raw agree@cap16
 => visual-stability is a WEAK gate (0.60, like self-consistency) and adds NOTHING to verifier-conf (0.852 vs 0.853).
    The faithful CASP/CCPS signal is REDUNDANT with the verifier (both estimate upstream correctness) — final
    confirmation that the trained-stability-gate route does not beat verifier-confidence. (3-family extension running.)
+
+## 3-FAMILY visual-stability confirmation (2026-06-30) — CASP/CCPS redundant in ALL families
+verifier-conf vs pure-CASP visual-stability(frac) vs verifier+vstab (AUROC for pick_ok):
+| family | verifier-conf | pure-CASP vstab | verifier+vstab | adds? |
+| Lingshu      | 0.853 | 0.604 | 0.852 | no |
+| MedVLThinker | 0.885 | 0.568 | 0.883 | no |
+| InternVL3    | 0.875 | 0.605 | 0.875 | no |
+=> The faithful input-perturbation stability gate (CCPS/CASP-style) is a WEAK gate (0.57-0.61) and adds NOTHING to
+   verifier-confidence in every family. FINAL, EXHAUSTIVE confirmation: verifier-confidence is the best gate; the
+   trained/stability-gate route does not beat it. Scripts: src/cascade_methods/open_vstab_gate.py (+perturb gen via
+   run_openvqa --cap cap160/cap80 into ckpts/openvqa/*_perturb).
+
+## OPEN FORWARD POINTER (where the real headroom is — the VERIFIER, not the gate)
+oracle@8 >> verifier-bo8 everywhere (Lingshu pooled 0.513 vs 0.414; MVT 0.416 vs 0.339; IV3 0.337 vs 0.249) => the
+binding limit on accuracy is the VERIFIER's selection quality, not the gate. Highest-EV next direction = a BETTER
+verifier (more/cleaner training data, per-family or larger base, process-style signals), which raises the whole
+cascade. The gate is settled (verifier-confidence); compute spent on gate variants is confirmatory.
