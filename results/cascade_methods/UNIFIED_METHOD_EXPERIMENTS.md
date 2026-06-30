@@ -267,3 +267,23 @@ oracle@8 >> verifier-bo8 everywhere (Lingshu pooled 0.513 vs 0.414; MVT 0.416 vs
 binding limit on accuracy is the VERIFIER's selection quality, not the gate. Highest-EV next direction = a BETTER
 verifier (more/cleaner training data, per-family or larger base, process-style signals), which raises the whole
 cascade. The gate is settled (verifier-confidence); compute spent on gate variants is confirmatory.
+
+## VERIFIER IMPROVEMENT (2026-06-30) — diagnostic + experiments
+User directive: improve the verifier (the real accuracy headroom; oracle@8 >> verifier-bo8).
+SELECTION-RULE bake-off (free, no training): argmax-verifier ~= weighted_mean (best); adding answer-frequency
+(SC) HURTS (weighted_sum/verif_x_freq < argmax). => no free win from the selection rule; the verifier's SCORES
+must improve.
+DIAGNOSTIC (per-answer verifier quality vs selection efficiency):
+| family | per-answer AUROC | mean P(Yes) correct/wrong (sep) | selection efficiency (argmax picks the correct one | recoverable Qs) |
+| Lingshu      | 0.903 | 0.715 / 0.176 (0.538) | 81% (2027/2514) |
+| MedVLThinker | 0.913 | 0.795 / 0.236 (0.560) | 82% (1154/1414) |
+| InternVL3    | 0.898 | 0.676 / 0.141 (0.535) | 74% (1688/2277) |
+=> The verifier is GOOD per-answer (AUROC ~0.90) but selection efficiency is only 74-82% (= verifier-bo8/oracle@8
+   ratio). The headroom is entirely the within-question NEAR-TIES where a wrong answer outscores the correct one.
+   IMPLICATION: the verifier is trained POINTWISE (each answer labeled independently) but the task is RANKING within
+   a question => a within-question contrastive/ranking objective (Bradley-Terry) is the most aligned lever.
+TRAINING DATA: only 6000 of 14635 judged pairs were used (1 epoch). Retraining on all 10364 TRAIN pairs (pos rate
+0.194, imbalanced) x 2 epochs, r=16 (lora_verifier_pooled4_v2) and r=32 (lora_verifier_pooled4_r32); same seed-0
+held-out 1064-Q split for fair comparison vs pooled4 baseline. [results pending]
+NEXT LEVERS (ranked): (1) within-question ranking/contrastive loss (targets selection efficiency directly);
+(2) class balancing (pos rate 0.194); (3) CoT/generative verifier (GenRM) if rationale data can be synthesized.

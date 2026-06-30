@@ -23,6 +23,7 @@ ap.add_argument("--epochs", type=int, default=1); ap.add_argument("--bs", type=i
 ap.add_argument("--accum", type=int, default=8); ap.add_argument("--lr", type=float, default=1e-4)
 ap.add_argument("--max_train", type=int, default=6000); ap.add_argument("--cap_div", type=int, default=1)
 ap.add_argument("--out_dir", default="ckpts/train/lora_verifier_open"); ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--lora_r", type=int, default=16, help="LoRA rank (alpha=2*r); test verifier capacity")
 A = ap.parse_args(); os.makedirs(os.path.join(ROOT, A.out_dir), exist_ok=True)
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28; MAXPX = HIGH_PX // A.cap_div; DEV = "cuda"
 SYS = ("You are a careful medical exam grader. Given a question and a proposed answer, decide whether the "
@@ -113,7 +114,7 @@ def encode(q, img, proposed, label=None):
 print("loading Lingshu-7B + LoRA...", flush=True)
 model = AutoModelForImageTextToText.from_pretrained(A.model_path, torch_dtype=torch.bfloat16,
                                                     attn_implementation="flash_attention_2").to(DEV)
-lcfg = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
+lcfg = LoraConfig(r=A.lora_r, lora_alpha=2*A.lora_r, lora_dropout=0.05, bias="none",
                   target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"])
 model = get_peft_model(model, lcfg); model.print_trainable_parameters()
 opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=A.lr)
