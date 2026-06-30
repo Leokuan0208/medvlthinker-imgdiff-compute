@@ -239,3 +239,14 @@ bandwidth/overhead-bound, not compute-bound, at these tiny gen-token counts. CON
   parallel: BATCHED, best-of-N ~= 1 gen-call + 1 verify-batch ~= 0.5-0.6s ~ NEUTRAL vs the 32B. So the FLOPs win
   (verifier-bo2 < always-32B FLOPs) is real; the LATENCY/energy is ~neutral-to-slightly-worse and depends on batching.
   HONEST framing: the method's win is ACCURACY (robust) + FLOPs (regime-dependent); latency/energy ~neutral.
+
+## FAITHFUL CASP/CCPS test: input-perturbation VISUAL-STABILITY as a gate (Lingshu, 2026-06-30)
+The bake-off tested trained gates on existing signals; CASP/CCPS is specifically STABILITY-UNDER-PERTURBATION.
+Generated Lingshu-7B answers at perturbed resolutions (cap160, cap80) via vLLM; visual-stability = answer agreement
+with the cap320 modal answer. Input-perturbation analog of CCPS (arXiv:2505.21772, perturbs representations) /
+Bahat&Shakhnarovich (arXiv:2006.16705, TTA-consistency). n=4900; raw agree@cap160=0.583, @cap80=0.572.
+  AUROC(pick_ok): verifier-conf 0.853 | visual-stability-frac (pure CASP gate) 0.604 | vstab trained(160+80) 0.597 |
+  verifier-conf + stability (trained) 0.852.
+=> visual-stability is a WEAK gate (0.60, like self-consistency) and adds NOTHING to verifier-conf (0.852 vs 0.853).
+   The faithful CASP/CCPS signal is REDUNDANT with the verifier (both estimate upstream correctness) — final
+   confirmation that the trained-stability-gate route does not beat verifier-confidence. (3-family extension running.)
