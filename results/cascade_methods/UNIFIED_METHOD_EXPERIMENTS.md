@@ -462,3 +462,21 @@ CONCLUSION: the tier structure should be REGIME-ADAPTIVE, not fixed 2-tier:
 => The 2-tier decision was correct FOR PERCEPTION; MMMU warrants the 3rd tier (efficiency win); MedXpert is the hard
    regime where no cascade helps. Full "beat/match original across the suite" = perception(open-text, beat via
    verifier) + MMMU(3-tier, match at ~1/3 compute) + MedXpert(match, no compute win).
+
+## Candidate-quality (oracle@N) + JUDGE TRUST results (2026-07-01)
+ORACLE@N (Lingshu-7B, judged): more samples raise the ceiling -> candidate quality IS the lever.
+| dataset | @8 | @16 | @32 | think@8 | temp1.0@8 |
+| vqa_rad | 0.625 | 0.675 | 0.700 | 0.660 | 0.645 |
+| kvasir  | 0.486 | 0.538 | 0.607 | 0.489 | 0.492 |
+| radimagenet | 0.503 | 0.566 | 0.635 | 0.570 | 0.489 |
+=> sc32 adds +0.08..+0.13 oracle over sc8; think candidates help on vqa_rad/radimagenet. Verifier headroom grows with
+   more/better candidates (consistent with cross-model pool +0.11..+0.15). The binding limit is candidate quality.
+JUDGE TRUST (independent 2nd judge Lingshu-32B vs MedVLThinker-32B): vqa_rad agreement 0.984 kappa 0.962;
+kvasir agreement 0.958 kappa 0.849. + anchor check (100% exact-match). => LLM judge is TRUSTWORTHY.
+
+## LINGSHU BASELINE — faithful protocol decided (user: BOTH). NGC harness != Lingshu eval.
+NGC-harness Lingshu (MedVLThinker-Eval, secondary): 32B VQA-RAD 81.6/SLAKE 89.4/PathVQA 87.0/PMC 64.0/MMMU 62.4/
+MedXpert-R 28.4/MedXpert-U 33.2. MATCHES paper on SLAKE(89.2)/MMMU(62.3) but PathVQA(87 vs 65.9) way off + 7B-MMMU
+0.853 anomaly => NGC harness NOT faithful (MedVLThinker's reformatted benchmarks). FAITHFUL = MedEvalKit (MMMU-32B
+0.633=paper 62.3). Plan: fix MedEvalKit fragility (vllm 0.9 InputProcessingError), run Lingshu-7B/32B baseline +
+our cascade methods within MedEvalKit; metrics = accuracy + latency + FLOPs + energy + %-strong-calls + deferral/APGR.
