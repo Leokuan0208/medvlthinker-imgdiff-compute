@@ -505,3 +505,21 @@ cascade should NOT escalate on MMMU (efficiency win: keep 7B). IF a 7B-run artif
 cascade. TO RESOLVE (post-pipeline): (1) check Lingshu paper 7B MMMU-Med number; (2) per-sample spot-check 7B-right/
 32B-wrong on MMMU — genuine or parse-inflated. OVERNIGHT pipeline running: MMMU meta re-runs -> 32B-think + 7B-think
 (all 5) -> cascade_medeval.py (2-tier/3-tier + gate sweep, accuracy + measured latency + gen-token FLOPs).
+
+## Faithful baseline VALIDATION + MMMU-7B anomaly diagnosis (2026-07-01, vs Lingshu paper Table 6)
+Paper: 7B/32B = MMMU-Med 54.0/62.3, VQA-RAD 67.9/76.5, SLAKE 83.1/89.2, PMC-VQA 56.3/57.9, MedXpert-MM 26.7/25.7.
+Ours (MedEvalKit): 
+| bench | 7B ours | 7B paper | 32B ours | 32B paper | verdict |
+| MMMU-Med | 80.0 | 54.0 | 63.3 | 62.3 | 7B INFLATED +26 ; 32B ✓ |
+| SLAKE(close) | 82.5 | 83.1 | 85.9 | 89.2 | ✓ both reproduce |
+| PMC_VQA | 54.3 | 56.3 | 55.2 | 57.9 | ✓ both reproduce |
+| MedXpert-MM | 26.2 | 26.7 | 30.6 | 25.7 | ✓ (32B +5) |
+| VQA_RAD(close) | 78.1 | 67.9 | 85.3 | 76.5 | both ~+10 (protocol) |
+=> SLAKE/PMC/MedXpert faithfully reproduce for BOTH sizes -> harness VALIDATED. MMMU-7B is the outlier: spot-check
+   confirms it is GENUINE (clean parsing; 7B outputs the correct letter more often than 32B; 7B 0.800 vs 32B 0.633
+   on same 150 Qs; replicates across NGC(85) + MedEvalKit(80)). 32B-MMMU matches paper. So it's a 7B-SPECIFIC
+   protocol difference (our no-think prompt vs the paper's 7B protocol), NOT a bug in our harness or parser.
+   HYPOTHESIS: paper 7B used reasoning/different prompt; the overnight 7B-think MMMU run will test if it -> ~54.
+   IMPLICATION: EXCLUDE MMMU from faithful cascade CLAIMS until the 7B protocol is reconciled; rely on
+   SLAKE/PMC/MedXpert (reproduce cleanly for both sizes) + VQA_RAD (offset but consistent). (Mirrors the original
+   project's MMMU/MedXpert exclusion.) Overnight pipeline continues: 32B-MMMU re-run -> think tiers -> cascade.
