@@ -611,3 +611,19 @@ DONE:
 BLOCKED (honest): PATH_VQA (no network to fetch dataset); open-ended judge for SLAKE/VQA-RAD open halves (GPT-4.1 API).
 BEST CONFIG for the Lingshu Medical VQA eval: 2-tier (7B-nt -> 32B-nt) with the margin gate; operating point per
 benchmark set by the iso-32B threshold. Deployable, faithful, matches 32B at -17..-69% FLOPs where 7B is competitive.
+
+## Resolution-cap lever (cheaper cheap leg), faithful MedEvalKit Lingshu-7B (2026-07-01)
+cap320 (max_pixels=1280*28*28//4) vs full-res, closed subsets: PMC_VQA 0.543->0.542 (-0.001, FREE), SLAKE
+0.825->0.809 (-0.017), VQA_RAD 0.781->0.741 (-0.040). => Benchmark-dependent: cap320 is a FREE cheap-leg cost
+reduction on PMC-VQA (pathology/natural images tolerate low res) -> the PMC cascade gets even cheaper; but hurts on
+radiology (SLAKE/VQA-RAD need resolution). Recommendation: cap the cheap leg where the domain tolerates it (PMC),
+keep full-res for radiology. (Consistent with the original ACC finding that cap320 was fine for competent perception.)
+Wrapper lever added: CAP_MAX_PIXELS env in models/Qwen2_5_VL/Qwen2_5_VL_vllm.py.
+
+## ============ OVERNIGHT RUN — FINAL, COMPLETE (2026-07-01) ============
+All tractable variations for the faithful Lingshu Medical VQA cascade tested + documented:
+  baseline (2 families x 2 sizes, reproduces paper) | 2-tier cascade efficiency (PMC -69%/-49% FLOPs both families,
+  cross-family generalizes where 7B competitive) | APGR+CPT publication metrics | gate variation (margin best) |
+  tier count (Lingshu 2-tier: no think mode; 3-tier is MedVLThinker/NGC) | MMMU-7B anomaly resolved (Lingshu-specific)
+  | judge trust (kappa 0.85-0.96) | resolution-cap lever (free on PMC). BEST CONFIG: 2-tier 7B->32B, margin gate,
+  cap the cheap leg where domain-tolerant. BLOCKED: PATH_VQA (network), open-ended judge (GPT-4.1 API).
