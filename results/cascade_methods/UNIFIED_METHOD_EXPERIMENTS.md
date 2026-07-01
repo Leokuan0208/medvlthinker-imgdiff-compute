@@ -444,3 +444,21 @@ CURRENT MODEL SETUP (open-text, verified gen_tokens~4-6=no-think): cheap small(7
 trained verifier SELECTS -> verifier-confidence gate -> strong big(32B/38B) NO-THINK(t0). TWO tiers, BOTH no-think;
 best-of-N selection REPLACES the think tier. This is NOT the MCQ-era ACC 3-tier (small/nothink + big/nothink +
 big/think). (The lingshu7b_think candidate variant currently generating is an EXPERIMENT, not the deployed setup.)
+
+## USER Q — why 2 tiers? add the THINK tier for reasoning datasets (MMMU, MedXpert). 3-tier cascade test (2026-07-01)
+Think genuinely helps on reasoning MCQ: MMMU 32B nt->think 0.624->0.688 (+0.065); MedXpert-Reasoning 0.279->0.326
+(+0.047); MedXpert-Understanding 0.292->0.384 (+0.092). think decodes ~474-694 tok (vs 2 for no-think) => dominant cost.
+3-tier margin-gated cascade (7B-nt -> 32B-nt -> 32B-think), min-cost config @ iso-accuracy (match always-32B-think):
+| dataset | always-think acc | cascade acc | ->32Bnt | ->think(fire) | FLOPs% vs always-think |
+| MMMU                   | 0.688 | 0.688 | 68% | 28% | 78% (latency/energy ~31%, think-decode-dominated) |  <- WIN
+| MedXpert-Reasoning     | 0.326 | 0.326 | 100% | 92% | 143% |  <- no win (near-floor cheap tiers -> escalate ~all)
+| MedXpert-Understanding | 0.384 | 0.384 | 96% | 96% | 151% |  <- no win
+CONCLUSION: the tier structure should be REGIME-ADAPTIVE, not fixed 2-tier:
+- Perception VQA (competent-4 + open-text sets): 2-tier NO-THINK (thinking overthinks; best-of-N + verifier is the win).
+- Reasoning VQA the cheap model can partly handle (MMMU): gated 3rd THINK tier -> match 32B-think at ~78% FLOPs /
+  ~31% latency+energy (think fires on only 28%). This is the ACC result, now shown INCLUDING MMMU.
+- Reasoning VQA at the cheap-model FLOOR (MedXpert): cascading CANNOT save compute (7B near-chance => escalate ~all,
+  gating overhead makes it costlier than always-think); matches accuracy but no efficiency gain. (Why ACC excluded it.)
+=> The 2-tier decision was correct FOR PERCEPTION; MMMU warrants the 3rd tier (efficiency win); MedXpert is the hard
+   regime where no cascade helps. Full "beat/match original across the suite" = perception(open-text, beat via
+   verifier) + MMMU(3-tier, match at ~1/3 compute) + MedXpert(match, no compute win).
