@@ -496,3 +496,12 @@ use_vllm True + TORCHDYNAMO_DISABLE=1 + use_llm_judge False (MCQ exact-match). P
    via exact-match) -> use the validated local MedVLThinker-32B judge (kappa 0.85-0.96) to match paper open-ended.
    NGC harness was NOT faithful (MMMU 85 vs 62) -> MedEvalKit is the correct baseline tool. TODO: Lingshu-7B (cheap
    leg), reasoning/think variant (3-tier), PATH_VQA data, open-ended judge, then methods-within-MedEvalKit.
+
+## Overnight (2026-07-01) — Lingshu-7B MedEvalKit baseline + a flagged anomaly
+Lingshu-7B (MedEvalKit, faithful): MMMU-Medical-val = 80.0% (vs Lingshu-32B 63.3% on the SAME 150-Q set).
+ANOMALY: 7B > 32B on MMMU-Med, reproducible on BOTH harnesses (NGC 85 vs 62; MedEvalKit 80 vs 63). 32B matches
+paper (62.3); 7B unverified vs paper. IMPLICATION if real: on MMMU the cheap 7B beats the strong 32B => the
+cascade should NOT escalate on MMMU (efficiency win: keep 7B). IF a 7B-run artifact: must fix before trusting MMMU
+cascade. TO RESOLVE (post-pipeline): (1) check Lingshu paper 7B MMMU-Med number; (2) per-sample spot-check 7B-right/
+32B-wrong on MMMU — genuine or parse-inflated. OVERNIGHT pipeline running: MMMU meta re-runs -> 32B-think + 7B-think
+(all 5) -> cascade_medeval.py (2-tier/3-tier + gate sweep, accuracy + measured latency + gen-token FLOPs).
