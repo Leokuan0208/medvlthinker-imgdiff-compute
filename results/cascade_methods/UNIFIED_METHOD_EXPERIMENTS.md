@@ -316,3 +316,12 @@ costs efficiency); (b) STRUCTURED/decomposed verifier that grades each sub-claim
 CANDIDATES (generator side: cleaner/more-distinct answers, higher N) so a clearly-best answer exists to select.
 Deployable pick: keep the pointwise verifier (or ranking-λ0.5 for a sharper gate); best-of-N selection remains
 the dominant lever and it is at ceiling for the cheap-verifier regime.
+
+## CORRECTION (stratified) — the selection ceiling is BROAD, not compound-specific (2026-07-01)
+Selection efficiency by gold-answer length (Lingshu, among oracle-recoverable Qs): short(<=3w) 79% (n=1928),
+medium(4-8w) 90% (n=343), long(>8w compound) 80% (n=243). Accuracy gap to oracle: short 0.117 (n=3463, the BULK),
+medium 0.048, long 0.068. => The earlier "compound answers" framing was anecdotal; the stratified data shows the
+verifier is broadly ~80% selection-efficient and the LARGEST volume+headroom is SHORT terse medical answers (e.g.
+"Right." vs "Both." vs "Left." — anatomical/finding one-liners the cheap verifier can't reliably ground to the
+image). Confirms the ceiling is intrinsic grounding difficulty across answer types, not a fixable training/format
+issue for a cheap 7B verifier.
