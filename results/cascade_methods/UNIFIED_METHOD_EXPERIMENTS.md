@@ -523,3 +523,20 @@ Ours (MedEvalKit):
    IMPLICATION: EXCLUDE MMMU from faithful cascade CLAIMS until the 7B protocol is reconciled; rely on
    SLAKE/PMC/MedXpert (reproduce cleanly for both sizes) + VQA_RAD (offset but consistent). (Mirrors the original
    project's MMMU/MedXpert exclusion.) Overnight pipeline continues: 32B-MMMU re-run -> think tiers -> cascade.
+
+## HEADLINE — faithful 2-tier cascade on Lingshu MedEvalKit eval (2026-07-01, overnight)
+Clean 2-tier (Lingshu-7B -> Lingshu-32B, margin gate) at ISO-accuracy (match always-32B), closed subsets, per-sample
+'correct' field. FLOPs = prefill-dominated (7B=1, 32B=4.57; MCQ decode~0). Latency = measured latency_s.
+| benchmark | 7B | 32B | 2-tier | esc% | FLOPs vs 32B | latency vs 32B |
+| PMC_VQA (n=33430) | 0.543 | 0.552 | 0.552 | 9%  | -69% | -33% |  <- HEADLINE
+| SLAKE-closed (836)| 0.825 | 0.859 | 0.861 | 22% | -56% | -22% |
+| VQA_RAD-closed(251)| 0.781| 0.853 | 0.853 | 61% | -17% | +21% (esc-heavy) |
+| MedXpert-MM (2000)| 0.262 | 0.306 | 0.307 | 95% | +17% | +60% (no win; 7B near-floor) |
+| MMMU (150) | 0.80* | 0.64 | - | - | - | (*7B protocol-inflated, unreliable) |
+=> On the FAITHFUL Lingshu eval, the 2-tier cascade MATCHES Lingshu-32B accuracy at large compute savings where the
+   7B is competitive: PMC-VQA -69% FLOPs / -33% latency @9% escalation (33k samples); SLAKE -56%/-22% @22%. Mixed on
+   VQA-RAD (FLOPs win, latency loss from 61% esc). No win on MedXpert (near-floor) or MMMU (7B inflated). This is the
+   classic cascade efficiency claim, now on Lingshu's published protocol. Script: src/cascade_methods/lingshu_medeval_cascade.py.
+KNOWN ISSUES to fix: (1) think tier / 3-tier: reasoning=True did NOT engage CoT (gen_toks ~3; MedEvalKit is_reasoning
+prompt only asks for \boxed letter, no step-by-step) -> need a real CoT prompt for Lingshu. (2) MMMU-7B protocol
+reconciliation. (3) open-ended halves need the local judge; PATH_VQA data.
