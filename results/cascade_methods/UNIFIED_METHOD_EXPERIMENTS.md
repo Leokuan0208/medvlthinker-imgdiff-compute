@@ -633,3 +633,12 @@ Fit gate threshold on half, apply to held-out half: Lingshu PMC -57% FLOPs (held
 vs -74% oracle-tau; MedVLThinker -49% (held-out) vs -51% oracle. => The 2-tier efficiency HOLDS with an honest
 threshold (~50-57% FLOPs saved on PMC-VQA, both families; Lingshu even beats the 32B on the held-out half). Some
 oracle optimism for Lingshu (74->57) but the claim is robust. Report held-out-tau as the deployable number.
+
+## InternVL3 faithful (MedEvalKit) — BLOCKED (broken wrapper), 2026-07-01
+InternVL3-8B via MedEvalKit InternVL wrapper fails: "Failed to apply InternVLProcessor ... InternVL not supported"
+(the wrapper feeds an empty video field the processor rejects, vllm 0.9). 3rd-family faithful cascade is blocked by a
+MedEvalKit wrapper bug; would need wrapper debugging. NOT pursued (confirmatory: cross-family already shown for
+Lingshu+MedVLThinker on the faithful eval; InternVL3 3rd-family is covered by the OPEN-TEXT 3-family claim). So the
+faithful MCQ cross-family cascade stands on 2 families; InternVL3 stays open-text-only.
+=> ALL TRACTABLE overnight variations exhausted. Blocked (need user input): PATH_VQA (network), open-ended judge
+(GPT-4.1 API key), InternVL3-faithful (MedEvalKit wrapper bug). See MASTER_SUMMARY_2026-07.md for the consolidated result.
