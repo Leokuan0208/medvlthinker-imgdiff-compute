@@ -480,3 +480,19 @@ MedXpert-R 28.4/MedXpert-U 33.2. MATCHES paper on SLAKE(89.2)/MMMU(62.3) but Pat
 0.853 anomaly => NGC harness NOT faithful (MedVLThinker's reformatted benchmarks). FAITHFUL = MedEvalKit (MMMU-32B
 0.633=paper 62.3). Plan: fix MedEvalKit fragility (vllm 0.9 InputProcessingError), run Lingshu-7B/32B baseline +
 our cascade methods within MedEvalKit; metrics = accuracy + latency + FLOPs + energy + %-strong-calls + deferral/APGR.
+
+## FAITHFUL Lingshu baseline via MedEvalKit — Stage 1+2 (2026-07-01)
+Recipe (WORKS): medeval_venv (vllm 0.9.0.1) + Qwen2_5_VL wrapper + Lingshu weights + datasets_path=hf (cached) +
+use_vllm True + TORCHDYNAMO_DISABLE=1 + use_llm_judge False (MCQ exact-match). Per-benchmark processes (one crash
+!= abort). Lingshu-32B, no-think:
+| benchmark | ours | closed | paper |
+| MMMU-Medical-val | 63.3% | - | 62.3 (EXACT MATCH ✓) |
+| MedXpertQA-MM | 30.6% | - | 25.7 |
+| PMC_VQA | 55.2% | - | 57.9 |
+| SLAKE | 34.3% | 85.9% | 89.2 (closed comparable) |
+| VQA_RAD | 47.5% | 85.3% | 76.5 (closed comparable) |
+| PATH_VQA | FAIL (data not cached) | - | 65.9 |
+=> MMMU reproduces the paper exactly; others ballpark. SLAKE/VQA_RAD open-ended halves need the LLM judge (score ~0
+   via exact-match) -> use the validated local MedVLThinker-32B judge (kappa 0.85-0.96) to match paper open-ended.
+   NGC harness was NOT faithful (MMMU 85 vs 62) -> MedEvalKit is the correct baseline tool. TODO: Lingshu-7B (cheap
+   leg), reasoning/think variant (3-tier), PATH_VQA data, open-ended judge, then methods-within-MedEvalKit.
