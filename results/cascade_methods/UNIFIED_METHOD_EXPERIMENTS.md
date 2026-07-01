@@ -358,3 +358,22 @@ Prior finding: cheap 7B verifier at ceiling; oracle@N is the wall. Testing what 
    DIVERSITY (cross-model) is a major lever. Capturing it needs the verifier to select from the pool (EXP2).
 RUNNING: EXP2 = Lingshu verifier scores the pooled candidates -> pooled SELECTION accuracy (GPU0). EXP3 = candidate
 N-scaling (sc32), higher-temp (t=1.0), and think-mode reasoning candidates for Lingshu-7B, then judge -> oracle@N.
+
+## USER Q — LLM-judge trustworthiness (2026-07-01)
+Anchor validation of the MedVLThinker-32B judge on 21477 Lingshu candidate pairs (overall judge=Yes 17.7%):
+  exact-match (ans==gold, n=1277): judge=Yes 100.0% (SHOULD ~100 ✓) | containment (n=2423): 82.5% (sensible) |
+  ZERO word-overlap (n=14320): judge=Yes 6.3% (SHOULD ~0; the 6.3% are mostly legit synonyms "Both"~="bilateral",
+  "Right cerebellum"~="right posteroinferior cerebellum"). => judge does SEMANTIC grading (correct), well-calibrated
+  at the anchors. TODO (GPU): independent 2nd-judge (different family, e.g. Lingshu-32B) agreement/kappa on a sample.
+
+## USER Q — does a better GATE lift the MCQ part? (MCQ gate bake-off on existing ckpts, competent-4, n=6050)
+7B-cap320 acc=0.622, 32B-think acc=0.645 (gap only +0.023 => MCQ nearly SATURATED). Recoverability: among 7B-wrong
+(2286), 32B-right rate 0.416, margin AUROC for recoverability 0.578 (the WALL, ~chance). Gates (AUROC for 7B-correct
+| cascade-acc @esc20/30/40): margin(deployed) 0.667 | 0.639/0.645/0.648 ; maxprob 0.677 | 0.634/0.641/0.647 ;
+TRAINED-logit 0.688 | 0.627/0.635/0.644 ; TRAINED-gbm 0.675 | 0.627/0.638/0.641.
+=> A better gate does NOT lift MCQ: trained gates get marginally higher AUROC but do NOT beat the margin gate on the
+   cascade (margin best at practical esc). Same story as open-text (gate near-optimal, recoverability wall). MCQ is
+   nearly saturated (7B~32B) so the cascade MATCHES the 32B (0.648@40%esc slightly exceeds 0.645) but can't
+   meaningfully BEAT it. => the method's BEAT-the-strong-model win is intrinsically an OPEN-TEXT phenomenon
+   (un-saturated); MCQ contributes efficiency (match 32B at reduced compute), not an accuracy lift. Consistent with
+   the earlier "MCQ gate is saturated = benchmark artifact" finding.
