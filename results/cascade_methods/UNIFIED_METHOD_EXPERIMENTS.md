@@ -540,3 +540,10 @@ Clean 2-tier (Lingshu-7B -> Lingshu-32B, margin gate) at ISO-accuracy (match alw
 KNOWN ISSUES to fix: (1) think tier / 3-tier: reasoning=True did NOT engage CoT (gen_toks ~3; MedEvalKit is_reasoning
 prompt only asks for \boxed letter, no step-by-step) -> need a real CoT prompt for Lingshu. (2) MMMU-7B protocol
 reconciliation. (3) open-ended halves need the local judge; PATH_VQA data.
+
+## Gate-signal variation (MCQ 2-tier, faithful Lingshu) — margin is best
+Min FLOPs @ iso-32B accuracy by gate signal (closed subsets): PMC_VQA margin 1.41(-69%) < conf 1.55(-66%) <
+cum_logprob 1.64(-64%); SLAKE margin 2.01(-56%) < conf 2.06 < cum_logprob 2.19; VQA_RAD margin 3.79(-17%) ~ conf ~
+cum_logprob. => MARGIN (top1-top2 first-token prob) is the best cascade gate signal for MCQ, marginally over conf/
+cum_logprob (consistent with the original project's deployed margin gate). CoT think-tier test (32B MMMU, CoT prompt
+patched into MedEvalKit is_reasoning) running to check if reasoning engages + helps.
