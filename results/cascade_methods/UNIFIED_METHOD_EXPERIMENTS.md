@@ -627,3 +627,9 @@ All tractable variations for the faithful Lingshu Medical VQA cascade tested + d
   tier count (Lingshu 2-tier: no think mode; 3-tier is MedVLThinker/NGC) | MMMU-7B anomaly resolved (Lingshu-specific)
   | judge trust (kappa 0.85-0.96) | resolution-cap lever (free on PMC). BEST CONFIG: 2-tier 7B->32B, margin gate,
   cap the cheap leg where domain-tolerant. BLOCKED: PATH_VQA (network), open-ended judge (GPT-4.1 API).
+
+## HONESTY CHECK — held-out-tau efficiency (not oracle-cherry-picked), PMC-VQA headline (2026-07-01)
+Fit gate threshold on half, apply to held-out half: Lingshu PMC -57% FLOPs (held-out-tau; cascade 0.563 >= 32B 0.549)
+vs -74% oracle-tau; MedVLThinker -49% (held-out) vs -51% oracle. => The 2-tier efficiency HOLDS with an honest
+threshold (~50-57% FLOPs saved on PMC-VQA, both families; Lingshu even beats the 32B on the held-out half). Some
+oracle optimism for Lingshu (74->57) but the claim is robust. Report held-out-tau as the deployable number.
