@@ -424,3 +424,23 @@ TRAINED gate on ALL signals only RECOVERS verifier-conf (ties, doesn't beat) bec
 dominant feature. All simpler signals (margin, self-consistency, answer-entropy) and the SOTA post-hoc recoverability
 gate (Diff-Prob) are strictly worse. => the verifier's OWN confidence is the optimal gate; it cannot be improved by
 substituting another gate mechanism. Scripts: src/cascade_methods/open_gate_swap.py, open_gate_efficiency.py.
+
+## SOTA trained-gate lit search + reconciliation + setup note (2026-07-01)
+SOTA post-hoc trained gate = Jitkrittum NeurIPS'23 (arXiv:2307.02764) Diff-01/Diff-Prob (target 1[32B right]-1[7B
+right] = our recoverability). ALREADY TESTED in the controlled swap ("SOTA Diff-Prob"): ADC 0.3832 < verifier-conf
+0.3923 => verifier-conf beats the SOTA. FrugalGPT(2305.05176)=our verifier scorer itself; AutoMix(2310.12963)/Gupta
+quantile(2404.10136)=learned layers our TRAINED-gbm subsumes (ties verifier-conf); RouteLLM/HybridLLM=query-only
+(off-paradigm); CAT/Gatekeeper/Self-REF=require retraining base (not post-hoc). External validation: measured
+latency+FLOPs+energy is RARE in this lit (only Semantic Agreement 2509.21837 reports latency) => our measured
+efficiency is a real differentiator. Report metrics: deferral curve + escalation%@iso-acc (RouteLLM CPT) + APGR.
+
+RECONCILIATION (trained gate "beat agreement before" but "ties us now" — no contradiction): the trained gate beats
+WEAK gates (agreement/self-consistency ADC ~0.368; agreement escalates 73-80%) — STILL TRUE (TRAINED-gbm 0.3914 >>
+0.368). It never beat the BEST simple gate: in MCQ it TIED the margin gate (within 0.003); in open-text it TIES
+verifier-conf (0.3914 vs 0.3923). Reason: verifier-conf is the dominant input feature, so a learned gate just
+recovers it. The comparison BASELINE changed (agreement -> verifier-conf), not the trained gate's quality.
+
+CURRENT MODEL SETUP (open-text, verified gen_tokens~4-6=no-think): cheap small(7B/8B) NO-THINK best-of-N(temp0.7) ->
+trained verifier SELECTS -> verifier-confidence gate -> strong big(32B/38B) NO-THINK(t0). TWO tiers, BOTH no-think;
+best-of-N selection REPLACES the think tier. This is NOT the MCQ-era ACC 3-tier (small/nothink + big/nothink +
+big/think). (The lingshu7b_think candidate variant currently generating is an EXPERIMENT, not the deployed setup.)
