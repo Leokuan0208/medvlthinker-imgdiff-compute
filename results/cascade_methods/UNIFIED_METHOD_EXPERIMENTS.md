@@ -345,3 +345,16 @@ accuracy is now CANDIDATE QUALITY (the cheap generator's 8 samples), not the ver
 (generator-side, a scope change from "the verifier"): raise oracle@N via (a) more candidates (best-of-16/32 -> more
 chances the correct answer appears), (b) better sampling (temperature/diversity, or diverse prompts), (c) a stronger
 cheap generator. Deployable verifier stays: trained 7B pointwise (or ranking-lambda0.5 for a sharper confidence gate).
+
+## CANDIDATE-QUALITY sweep (2026-07-01) — the binding limit is candidate quality; testing every generator-side lever
+Prior finding: cheap 7B verifier at ceiling; oracle@N is the wall. Testing what raises oracle@N.
+
+### EXP1 (FREE, CPU): cross-model candidate POOL — pool candidates from 3 cheap models (Lingshu-7B+MVT-7B+IV3-8B)
+| dataset | oracle@8 Lingshu / MVT / IV3 | POOLED@24 | gain over best single |
+| vqa_rad         | 0.630 / 0.600 / 0.620 | 0.780 | +0.150 |
+| kvasir          | 0.491 / 0.550 / 0.593 | 0.731 | +0.138 |
+| radimagenet-OOD | 0.512 / 0.317 / 0.398 | 0.625 | +0.113 |
+=> Diverse cheap models get DIFFERENT questions right; the union raises oracle by +0.11..+0.15 (huge). Candidate
+   DIVERSITY (cross-model) is a major lever. Capturing it needs the verifier to select from the pool (EXP2).
+RUNNING: EXP2 = Lingshu verifier scores the pooled candidates -> pooled SELECTION accuracy (GPU0). EXP3 = candidate
+N-scaling (sc32), higher-temp (t=1.0), and think-mode reasoning candidates for Lingshu-7B, then judge -> oracle@N.
