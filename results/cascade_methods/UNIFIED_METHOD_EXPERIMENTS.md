@@ -547,3 +547,20 @@ cum_logprob 1.64(-64%); SLAKE margin 2.01(-56%) < conf 2.06 < cum_logprob 2.19; 
 cum_logprob. => MARGIN (top1-top2 first-token prob) is the best cascade gate signal for MCQ, marginally over conf/
 cum_logprob (consistent with the original project's deployed margin gate). CoT think-tier test (32B MMMU, CoT prompt
 patched into MedEvalKit is_reasoning) running to check if reasoning engages + helps.
+
+## KEY FINDING — Lingshu has NO promptable think mode -> the Lingshu cascade is 2-TIER (2026-07-01)
+Tested reasoning for Lingshu two ways on MedEvalKit MMMU-32B: (1) reasoning=True with the default \boxed prompt,
+(2) an explicit "Reason step by step, then \boxed{answer}" prompt. BOTH: Lingshu-32B outputs just the letter
+(gen_toks=2-3, e.g. "C"), acc 0.627-0.633 == no-think. Lingshu does NOT produce chain-of-thought on demand for MCQ
+(it is RL-tuned to answer directly). => The salvaged eval_results_reason (MMMU 0.773) was a DIFFERENT model, not
+Lingshu-32B. CONSEQUENCE: the "think tier" cannot be built for Lingshu by prompting; the Lingshu cascade is
+INHERENTLY 2-TIER (7B-nt -> 32B-nt). This resolves "why 2 tiers?" for Lingshu: the model has no <think> mode.
+(The 3-tier think tier applies to models that DO reason on demand -- MedVLThinker with its <think> prompt, already
+analyzed: MMMU 3-tier matches 32B-think at ~78% FLOPs. So 3-tier is a MedVLThinker story, 2-tier is the Lingshu story.)
+NOTE: the overnight *_think tier runs (reasoning=True, old prompt) therefore == no-think duplicates (gen_toks~3);
+they are not a valid think tier and are excluded. question_formats.py reverted to original.
+
+## OVERNIGHT SUMMARY (Lingshu Medical VQA, faithful MedEvalKit)
+1. Baseline reproduced (SLAKE/PMC/MedXpert both sizes; 32B-MMMU exact). 2. 2-tier cascade is the deployable method:
+matches Lingshu-32B accuracy at PMC-VQA -69% FLOPs/-33% latency (@9% esc, 33k), SLAKE -56%/-22% (@22%); mixed VQA-RAD;
+no win MedXpert(floor)/MMMU(7B-inflated). 3. margin = best gate. 4. Lingshu has no think mode -> 2-tier only.
