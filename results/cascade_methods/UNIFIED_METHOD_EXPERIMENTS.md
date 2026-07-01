@@ -405,3 +405,22 @@ Break-even vs one 32B forward (4.57 7B-eq): 2N < 4.57 => N<=2. So:
   competitive strong model the method trades compute for the accuracy lift.
 DEPLOYABLE EFFICIENCY PICK: verifier best-of-2 + verifier-confidence gate. N=2 is the FLOP break-even; the gate adds
 escalation only where it beats the base. Latency wins via BATCHING the N samples (one batched gen + one batched verify).
+
+## CONTROLLED GATE SWAP (2026-07-01) — fix verifier+selection, swap ONLY the gate; does anything beat confidence?
+Deferral curve (cascade acc vs escalation%) + AUROC(pick_ok) + ADC (area under deferral curve = gate quality).
+Lingshu POOLED (verifier-bo8 fixed=0.414, strong=0.331):
+| gate | AUROC | ADC |
+| verifier-confidence [CURRENT] | 0.853 | 0.3923  <- BEST |
+| TRAINED-gbm (verifier+cheap)  | 0.854 | 0.3914 (ties, -0.001) |
+| TRAINED-logit                 | 0.853 | 0.3911 (ties) |
+| verifier-mean                 | 0.834 | 0.3855 |
+| SOTA Diff-Prob (Jitkrittum)   | 0.708 | 0.3832 |
+| self-consistency / -n_distinct / -answer-entropy | ~0.69 | ~0.368 |
+| verifier-margin / verifier-negstd | 0.40/0.44 | ~0.36 |
+VQA-RAD (gate matters): verifier-conf ADC 0.6042 (best) > verifier-mean 0.6010 > TRAINED-logit 0.6016 > rest.
+ANSWER: swapping the confidence gate for another mechanism does NOT improve the cascade. verifier-confidence has
+the highest ADC+AUROC in both regimes; its deferral curve dominates (>= every alternative at every budget). A
+TRAINED gate on ALL signals only RECOVERS verifier-conf (ties, doesn't beat) because verifier-conf is already the
+dominant feature. All simpler signals (margin, self-consistency, answer-entropy) and the SOTA post-hoc recoverability
+gate (Diff-Prob) are strictly worse. => the verifier's OWN confidence is the optimal gate; it cannot be improved by
+substituting another gate mechanism. Scripts: src/cascade_methods/open_gate_swap.py, open_gate_efficiency.py.
