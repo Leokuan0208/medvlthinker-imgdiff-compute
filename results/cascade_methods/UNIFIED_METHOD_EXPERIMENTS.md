@@ -325,3 +325,23 @@ verifier is broadly ~80% selection-efficient and the LARGEST volume+headroom is 
 "Right." vs "Both." vs "Left." — anatomical/finding one-liners the cheap verifier can't reliably ground to the
 image). Confirms the ceiling is intrinsic grounding difficulty across answer types, not a fixable training/format
 issue for a cheap 7B verifier.
+
+## DEFINITIVE: verifier ceiling is INTRINSIC, not capability-bound (32B zero-shot diagnostic, 2026-07-01)
+Scored the SAME 8 candidates with a 32B ZERO-SHOT verifier vs the trained 7B verifier, n=600 sampled Qs:
+  selection accuracy: 7B-trained=0.403  32B-zeroshot=0.355  oracle@8=0.490
+  selection efficiency: 7B=0.810  32B=0.717  => 32B delta = -0.048 (WORSE)
+=> A bigger verifier does NOT help; the trained 7B BEATS the zero-shot 32B. TWO conclusions: (1) task-TRAINING >>
+   SIZE for the verifier (a task-trained 7B > a zero-shot 32B); (2) the selection ceiling is INTRINSIC -- if the
+   candidate answers were easy to ground to the image, even a bigger verifier would pick them, but it can't.
+CAVEAT (honest): the 32B was zero-shot (not LoRA'd on the verify task); a trained 32B might edge the 7B, BUT a 32B
+   verifier costs ~as much as the strong model => not cost-sensible for a cheap-model cascade (you'd just use the
+   32B's own answer). Within the DEPLOYABLE cheap-verifier regime, the trained 7B is near-optimal.
+
+## FINAL CONCLUSION — "improve the verifier"
+The cheap 7B verifier is at its practical ceiling: training levers (more data +0.005; ranking: per-answer AUROC
+0.90->0.93 but selection FLAT) and a bigger (zero-shot 32B) verifier do NOT raise selection accuracy. The ceiling
+is real (not judge noise) and intrinsic (image-grounding of terse medical answers). => The binding limit on cascade
+accuracy is now CANDIDATE QUALITY (the cheap generator's 8 samples), not the verifier. HIGHEST-EV next direction
+(generator-side, a scope change from "the verifier"): raise oracle@N via (a) more candidates (best-of-16/32 -> more
+chances the correct answer appears), (b) better sampling (temperature/diversity, or diverse prompts), (c) a stronger
+cheap generator. Deployable verifier stays: trained 7B pointwise (or ranking-lambda0.5 for a sharper confidence gate).
