@@ -287,3 +287,32 @@ TRAINING DATA: only 6000 of 14635 judged pairs were used (1 epoch). Retraining o
 held-out 1064-Q split for fair comparison vs pooled4 baseline. [results pending]
 NEXT LEVERS (ranked): (1) within-question ranking/contrastive loss (targets selection efficiency directly);
 (2) class balancing (pos rate 0.194); (3) CoT/generative verifier (GenRM) if rationale data can be synthesized.
+
+## VERIFIER IMPROVEMENT — RESULTS + ceiling analysis (2026-07-01)
+Held-out 1064-Q split (identical), POOLED selection accuracy (trained-verify) + per-answer AUROC:
+| verifier | selection acc | per-answer AUROC |
+| baseline pooled4 (6k pairs, 1ep, pointwise) | 0.5009 | 0.903 |
+| v2 (10.4k pairs, 2ep, pointwise)            | 0.5056 (+0.005, ~noise) | - |
+| ranking clean λ=0.5 (BCE + within-Q Bradley-Terry) | 0.5009 (+0.000) | 0.931 |
+| ranking clean λ=1.0                          | 0.4991 (-0.002) | 0.933 |
+KEY RESULT: the ranking loss makes the verifier SHARPER per-answer (AUROC 0.903 -> 0.931/0.933, a real global-
+discrimination gain) but SELECTION accuracy stays flat (~0.50). Better global discrimination does NOT convert to
+within-question selection => the selection failures are on genuinely-hard near-ties, not undertraining.
+
+CEILING ANALYSIS (inspection of selection-failures, oracle-right but verifier-picks-wrong): the judge-'correct'
+answers ARE legit (semantic matches to gold that a crude string-match misses, e.g. "Right cerebellum"~="right
+posteroinferior cerebellum"; "Both"~="bilateral lungs") => NOT judge noise; the oracle ceiling is real. The
+failures are COMPOUND multi-part free-text answers (esp. Kvasir: "what color, what instrument, where") where the
+verifier's pick is fluent but wrong on one component. Distinguishing them needs fine-grained visual grounding of
+each sub-claim -- beyond a cheap 7B pointwise/ranking verifier.
+
+CONCLUSION on "improve the verifier": the cheap 7B verifier is near its PRACTICAL SELECTION CEILING on these
+candidates. Levers tried: more data (+0.005 noise), more epochs, within-question ranking (AUROC up, selection
+flat). The one genuine gain is a better-CALIBRATED verifier (ranking λ=0.5, AUROC 0.931) -- useful for the
+verifier-confidence GATE, though the recoverability wall caps how much the gate can add. Selection headroom to
+oracle (0.50->0.59) is intrinsic (compound-answer grounding difficulty), not capturable by training a cheap
+verifier harder. HIGHER-EV levers (not "train the cheap verifier more"): (a) larger verifier base (more grounding,
+costs efficiency); (b) STRUCTURED/decomposed verifier that grades each sub-claim of compound answers; (c) better
+CANDIDATES (generator side: cleaner/more-distinct answers, higher N) so a clearly-best answer exists to select.
+Deployable pick: keep the pointwise verifier (or ranking-λ0.5 for a sharper gate); best-of-N selection remains
+the dominant lever and it is at ceiling for the cheap-verifier regime.
