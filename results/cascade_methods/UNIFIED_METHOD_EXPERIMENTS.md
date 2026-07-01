@@ -377,3 +377,31 @@ TRAINED-logit 0.688 | 0.627/0.635/0.644 ; TRAINED-gbm 0.675 | 0.627/0.638/0.641.
    meaningfully BEAT it. => the method's BEAT-the-strong-model win is intrinsically an OPEN-TEXT phenomenon
    (un-saturated); MCQ contributes efficiency (match 32B at reduced compute), not an accuracy lift. Consistent with
    the earlier "MCQ gate is saturated = benchmark artifact" finding.
+
+## EFFICIENCY-LEG gate bake-off (measured latency/energy, 2026-07-01) — SOTA trained gates vs verifier-conf
+User focus: efficiency (latency/FLOPs/energy) at ISO-ACCURACY, not accuracy. Measured batch-1 (Lingshu):
+gen7=347ms/45.8J/1.0FLOP, verify7=175ms/25.3J/1.0, gen32=665ms/127J/4.57. Cascade = verifier-boN + gate->32B.
+Metric: min escalation to MATCH always-strong accuracy -> resulting FLOPs/energy/latency.
+
+VQA-RAD (strong 0.600 COMPETITIVE > verifier-bo8 0.575, so gate must escalate), N=8, target=0.600:
+| gate | esc@iso-acc | FLOPs | energy(J) | lat batched(ms) |
+| VERIFIER-CONF | 8%  | 16.4 | 580 | 579 |  <- most efficient gate
+| trained-logit(pickok) | 12% | 16.6 | 585 | 605 |
+| trained-gbm(pickok)   | 16% | 16.8 | 590 | 632 |
+| SOTA Diff-Prob/Jitkrittum(gbm) | 34% | 17.5 | 611 | 745 |
+| margin | 64% | 18.9 | 650 | 948 |
+| self-consistency | 98% | 20.5 | 694 | 1177 |
+N=2, VQA-RAD: trained-gbm 44% (FLOPs 6.0) slightly beats verifier-conf 52% (6.4); others worse.
+=> VERIFIER-CONFIDENCE is the most EFFICIENT gate (fewest escalations at iso-accuracy); the SOTA post-hoc trained
+   gate (Diff-Prob) is WORSE (34% vs 8%). Trained gates give at most a tiny edge at low N. Consistent with the
+   accuracy finding: verifier-confidence is the best gate on BOTH accuracy and efficiency.
+
+KEY EFFICIENCY TENSION (must report honestly): best-of-N base cost = 2N cheap-forwards (N gen + N verify).
+Break-even vs one 32B forward (4.57 7B-eq): 2N < 4.57 => N<=2. So:
+- POOLED (weak/OOD strong, verifier-bo2 0.348 > strong 0.331): at N=2, 0% escalation, cascade cost FLOPs=4.0<4.57,
+  latency(batched)=522<665ms, energy=142~127J => BEATS always-strong on FLOPs+latency (~parity energy) AND accuracy.
+- VQA-RAD (competitive strong): best-of-N base overhead makes FLOPs/energy > always-32B; only batched-LATENCY wins
+  (N=8 verifier-conf 579<665ms). => the FLOPs/energy efficiency win is a WEAK/OOD-strong regime phenomenon; on a
+  competitive strong model the method trades compute for the accuracy lift.
+DEPLOYABLE EFFICIENCY PICK: verifier best-of-2 + verifier-confidence gate. N=2 is the FLOP break-even; the gate adds
+escalation only where it beats the base. Latency wins via BATCHING the N samples (one batched gen + one batched verify).
