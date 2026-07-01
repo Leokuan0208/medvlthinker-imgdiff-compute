@@ -564,3 +564,24 @@ they are not a valid think tier and are excluded. question_formats.py reverted t
 1. Baseline reproduced (SLAKE/PMC/MedXpert both sizes; 32B-MMMU exact). 2. 2-tier cascade is the deployable method:
 matches Lingshu-32B accuracy at PMC-VQA -69% FLOPs/-33% latency (@9% esc, 33k), SLAKE -56%/-22% (@22%); mixed VQA-RAD;
 no win MedXpert(floor)/MMMU(7B-inflated). 3. margin = best gate. 4. Lingshu has no think mode -> 2-tier only.
+
+## CROSS-FAMILY faithful 2-tier cascade (MedVLThinker on MedEvalKit) + MMMU-anomaly resolution (2026-07-01)
+MedVLThinker 2-tier (7B->32B, margin gate) on faithful MedEvalKit, match-32B min-FLOPs, closed subsets:
+| bench | 7B | 32B | 2-tier | esc% | FLOPs vs 32B |
+| PMC_VQA(33k) | 0.521 | 0.537 | 0.537 | 29% | -49% |
+| VQA_RAD-cl(251) | 0.765 | 0.865 | 0.865 | 37% | -41% |
+| MMMU(150) | 0.533 | 0.613 | 0.613 | 64% | -14% |
+| SLAKE-cl(836) | 0.498 | 0.620 | - | 96% | +18% (no win, 7B weak) |
+| MedXpert(2000) | 0.239 | 0.299 | - | 100% | +22% (no win, floor) |
+CONCLUSIONS:
+(1) The 2-tier cascade efficiency GENERALIZES across families where the cheap 7B is competitive: PMC-VQA (-49% MVT /
+    -69% Lingshu FLOPs), VQA-RAD (-41% / -17%). Win magnitude ~ (32B-7B gap): small gap -> big win; large gap
+    (SLAKE-MVT, MedXpert both) -> no win. So the method's efficiency is real+cross-family but benchmark/model-gap-dependent.
+(2) MMMU-7B ANOMALY RESOLVED: MedVLThinker-7B MMMU=0.533 (NORMAL, < 32B 0.613) on the SAME faithful eval where
+    Lingshu-7B=0.80. => Lingshu-7B's inflation is LINGSHU-7B-SPECIFIC (likely MMMU-medical-like train contamination),
+    NOT a harness/subset/parser artifact. Definitively closes the anomaly.
+
+## CONSOLIDATED faithful-eval cascade master (both families, MedEvalKit, 2-tier margin gate)
+Where 7B competitive (PMC, VQA-RAD): cascade matches 32B at big FLOPs savings BOTH families. Where 7B weak vs 32B
+(SLAKE, MedXpert) or 7B inflated (Lingshu-MMMU): no clean win. margin=best gate. Lingshu=2-tier only (no think mode);
+MedVLThinker 3-tier(think) on NGC harness = MMMU ~78% FLOPs (separate, native <think>). Judge validated (kappa 0.85-0.96).
