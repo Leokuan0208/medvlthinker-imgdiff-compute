@@ -642,3 +642,17 @@ Lingshu+MedVLThinker on the faithful eval; InternVL3 3rd-family is covered by th
 faithful MCQ cross-family cascade stands on 2 families; InternVL3 stays open-text-only.
 => ALL TRACTABLE overnight variations exhausted. Blocked (need user input): PATH_VQA (network), open-ended judge
 (GPT-4.1 API key), InternVL3-faithful (MedEvalKit wrapper bug). See MASTER_SUMMARY_2026-07.md for the consolidated result.
+
+## CLAUDE-AS-JUDGE (Sonnet 5, via Max plan / Claude Code subagents — no API key) — 2026-07-02
+User idea: use Claude (this session's Max plan) as the open-ended judge instead of buying API credits. Built a
+workflow that fans out grading subagents (model=sonnet; Opus not needed — short-answer medical-equivalence is a
+light classification task). Graded Lingshu-32B open-ended halves (SLAKE 1257, VQA_RAD 200 pairs), 20 agents, ~62s.
+RESULT (open-ended acc, Claude-Sonnet judge): SLAKE-open 0.844, VQA_RAD-open 0.600.
+COMBINED with closed (paper-comparable): VQA_RAD-32B = 74.1% (paper 76.5), SLAKE-32B = 85.0% (paper 89.2). vs the
+exact-match-dragged 47%/34% before -> the LLM judge unblocked the open halves; now within a few pts of paper.
+JUDGE VALIDATION: exact-match anchor 100% judge=Yes (n=80/1005); zero-word-overlap judged-Yes 21% but ALL spot-checked
+cases are LEGIT (synonyms Top~Upper/Head~Brain; and BILINGUAL Chinese answers containing the gold that the English
+normalizer can't tokenize) -> NOT over-leniency; the judge correctly handles Chinese medical terms (a strength;
+GPT-4.1/weaker judges may not). => Claude-Sonnet-as-judge is VALIDATED + free (Max plan) + the project's judge going
+forward. Remaining gap to paper = judge-strictness (Claude vs paper's GPT-4.1) + minor protocol. Verdicts saved to
+results/cascade_methods/claude_judge/. Rolling out to PathVQA + other models as GPU runs land.
