@@ -8,16 +8,17 @@ MedVLThinker/
 # Results, checkpoints, logs — regenerable, not source
 ckpts/
 logs/
-results/
-# ...but DO version the prose and the numeric evidence under results/cascade_methods/:
-# these are the provenance for every number the project reports (~5 MB of .md + .json).
-# Bulk run outputs elsewhere under results/ stay ignored.
+# results/ is ignored EXCEPT the prose + numeric evidence under results/cascade_methods/,
+# which is the provenance for every number the project reports (~5 MB of .md + .json).
+# NOTE: we ignore the *contents* (results/*) rather than the directory (results/), because
+# git never descends into an excluded directory, so a `!` negation inside one never applies.
+results/*
 !results/cascade_methods/
+results/cascade_methods/*
 !results/cascade_methods/docs/
-!results/cascade_methods/docs/**
 !results/cascade_methods/artifacts/
-!results/cascade_methods/artifacts/**
-!results/cascade_methods/*.md
+!results/cascade_methods/README.md
+!results/cascade_methods/METHOD_IDEAS_BACKLOG.md
 data/
 
 # Archived experiment data (killed directions; kept on disk, not in git)
