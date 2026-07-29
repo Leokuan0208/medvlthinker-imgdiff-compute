@@ -1,0 +1,27 @@
+
+############  ACC 2-SIZE GENERALIZATION: LINGSHU  (n=8220)  ############
+  small=lingshu7b  big-nt=nothink_cap320  big-think=think_fullres
+
+  --- PREMISE: per-benchmark accuracy (does big-NO-THINK >= big-THINK on perception?) ---
+  benchmark    small-nt  big-nt big-think nt-think     n
+  PMC-VQA         0.622   0.640     0.598   +0.042  2000  <-nt wins
+  SLAKE           0.841   0.894     0.829   +0.065   416  <-nt wins
+  VQA-RAD         0.732   0.816     0.724   +0.092   272  <-nt wins
+  PathVQA         0.782   0.861     0.760   +0.102  3362  <-nt wins
+  MMMU            0.847   0.629     0.635   -0.006   170
+  MedXpert-Reasoning    0.247   0.296     0.296   +0.000  1446
+  MedXpert-Understanding    0.278   0.329     0.352   -0.023   554
+  POOLED ALL-6    0.618   0.668     0.611   +0.057
+  POOLED ALL-5    0.734   0.784     0.707   +0.077
+
+  --- ACC cascade (small-nt -> big-nt -> big-think; agreement think-gate) at parity, exact FLOPs ---
+  pool        acc   esc0  think  FLOPs%  guard
+  ALL-6    0.6180     0%     0%   10.5%   0.00  (parity 0.6109; always-big-think=100% FLOPs)
+  ALL-5    0.7341     0%     0%   10.5%   0.00  (parity 0.7072; always-big-think=100% FLOPs)
+
+  --- small-model no-think resolution sweep (accuracy vs cap, ALL-5 perception) ---
+    cap80    acc=0.708  (n=6220)
+    cap160   acc=0.720  (n=6220)
+    cap320   acc=0.734  (n=6220)
+    cap640   acc=0.734  (n=6220)
+    fullres  acc=0.734  (n=6220)

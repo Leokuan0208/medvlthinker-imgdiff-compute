@@ -1,0 +1,1353 @@
+{
+ "note": "Distractor-filter test on diverse pool (Lingshu-7B, cap320, pooled4 pointwise verifier). Filters use only candidate text + verifier score + cross-candidate agreement (never oks). Correctness = oks (identical scorer all cells). CIs = 3000-sample PAIRED question bootstrap keyed on uid=ds:idx. NOTE: pmc_content `oks` is loose option-letter matching (see findings) -- interpret PMC with caution; the 3 open sets use exact-match/judge oks.",
+ "methods": {
+  "references": [
+   "pointwise",
+   "modal_vote"
+  ],
+  "filters": [
+   "drop_lone_confident@q0.5",
+   "drop_lone_confident@q0.75",
+   "consensus",
+   "consensus_modalfallback",
+   "rarity_log1p",
+   "rarity_logliteral",
+   "topk_agreed@k2",
+   "topk_agreed@k3"
+  ],
+  "baselines": {
+   "a_unfiltered_diverse_pointwise": "diverse_pointwise",
+   "b_iid8_pointwise": "iid_pointwise"
+  }
+ },
+ "per_dataset": {
+  "vqa_rad_open": {
+   "n": 200,
+   "sel_acc": {
+    "pointwise": {
+     "acc": 0.36,
+     "ci95": [
+      0.2949,
+      0.425
+     ]
+    },
+    "modal_vote": {
+     "acc": 0.295,
+     "ci95": [
+      0.235,
+      0.36
+     ]
+    },
+    "drop_lone_confident@q0.5": {
+     "acc": 0.32,
+     "ci95": [
+      0.255,
+      0.385
+     ]
+    },
+    "drop_lone_confident@q0.75": {
+     "acc": 0.32,
+     "ci95": [
+      0.255,
+      0.385
+     ]
+    },
+    "consensus": {
+     "acc": 0.32,
+     "ci95": [
+      0.255,
+      0.385
+     ]
+    },
+    "consensus_modalfallback": {
+     "acc": 0.32,
+     "ci95": [
+      0.26,
+      0.385
+     ]
+    },
+    "rarity_log1p": {
+     "acc": 0.345,
+     "ci95": [
+      0.28,
+      0.41
+     ]
+    },
+    "rarity_logliteral": {
+     "acc": 0.31,
+     "ci95": [
+      0.245,
+      0.375
+     ]
+    },
+    "topk_agreed@k2": {
+     "acc": 0.325,
+     "ci95": [
+      0.26,
+      0.39
+     ]
+    },
+    "topk_agreed@k3": {
+     "acc": 0.36,
+     "ci95": [
+      0.29,
+      0.425
+     ]
+    }
+   },
+   "oracle": {
+    "iid8": 0.41,
+    "diverse": 0.48
+   },
+   "filtered_oracle": {
+    "drop_lone_confident@q0.5": 0.405,
+    "drop_lone_confident@q0.75": 0.43,
+    "consensus": 0.38,
+    "consensus_modalfallback": 0.38,
+    "rarity_log1p": 0.48,
+    "rarity_logliteral": 0.48,
+    "topk_agreed@k2": 0.385,
+    "topk_agreed@k3": 0.445
+   },
+   "delta_vs_diverse_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": -0.04,
+     "lo": -0.075,
+     "hi": -0.01,
+     "n": 200
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": -0.04,
+     "lo": -0.075,
+     "hi": -0.0099,
+     "n": 200
+    },
+    "consensus": {
+     "delta": -0.04,
+     "lo": -0.075,
+     "hi": -0.005,
+     "n": 200
+    },
+    "consensus_modalfallback": {
+     "delta": -0.04,
+     "lo": -0.075,
+     "hi": -0.005,
+     "n": 200
+    },
+    "rarity_log1p": {
+     "delta": -0.015,
+     "lo": -0.055,
+     "hi": 0.025,
+     "n": 200
+    },
+    "rarity_logliteral": {
+     "delta": -0.05,
+     "lo": -0.095,
+     "hi": -0.005,
+     "n": 200
+    },
+    "topk_agreed@k2": {
+     "delta": -0.035,
+     "lo": -0.07,
+     "hi": -0.005,
+     "n": 200
+    },
+    "topk_agreed@k3": {
+     "delta": 0.0,
+     "lo": -0.015,
+     "hi": 0.015,
+     "n": 200
+    }
+   },
+   "delta_vs_iid_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": 0.04,
+     "lo": 0.0,
+     "hi": 0.08,
+     "n": 200
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.04,
+     "lo": 0.0,
+     "hi": 0.085,
+     "n": 200
+    },
+    "consensus": {
+     "delta": 0.04,
+     "lo": 0.0,
+     "hi": 0.08,
+     "n": 200
+    },
+    "consensus_modalfallback": {
+     "delta": 0.04,
+     "lo": 0.0,
+     "hi": 0.085,
+     "n": 200
+    },
+    "rarity_log1p": {
+     "delta": 0.065,
+     "lo": 0.02,
+     "hi": 0.11,
+     "n": 200
+    },
+    "rarity_logliteral": {
+     "delta": 0.03,
+     "lo": -0.01,
+     "hi": 0.07,
+     "n": 200
+    },
+    "topk_agreed@k2": {
+     "delta": 0.045,
+     "lo": 0.005,
+     "hi": 0.09,
+     "n": 200
+    },
+    "topk_agreed@k3": {
+     "delta": 0.08,
+     "lo": 0.035,
+     "hi": 0.125,
+     "n": 200
+    }
+   }
+  },
+  "slake_open": {
+   "n": 645,
+   "sel_acc": {
+    "pointwise": {
+     "acc": 0.724,
+     "ci95": [
+      0.6899,
+      0.7581
+     ]
+    },
+    "modal_vote": {
+     "acc": 0.7271,
+     "ci95": [
+      0.693,
+      0.7628
+     ]
+    },
+    "drop_lone_confident@q0.5": {
+     "acc": 0.7287,
+     "ci95": [
+      0.6946,
+      0.7643
+     ]
+    },
+    "drop_lone_confident@q0.75": {
+     "acc": 0.7287,
+     "ci95": [
+      0.693,
+      0.7612
+     ]
+    },
+    "consensus": {
+     "acc": 0.7302,
+     "ci95": [
+      0.6961,
+      0.7643
+     ]
+    },
+    "consensus_modalfallback": {
+     "acc": 0.7302,
+     "ci95": [
+      0.6946,
+      0.7628
+     ]
+    },
+    "rarity_log1p": {
+     "acc": 0.7519,
+     "ci95": [
+      0.7194,
+      0.7845
+     ]
+    },
+    "rarity_logliteral": {
+     "acc": 0.7411,
+     "ci95": [
+      0.707,
+      0.7736
+     ]
+    },
+    "topk_agreed@k2": {
+     "acc": 0.7147,
+     "ci95": [
+      0.6791,
+      0.7504
+     ]
+    },
+    "topk_agreed@k3": {
+     "acc": 0.7225,
+     "ci95": [
+      0.6868,
+      0.7581
+     ]
+    }
+   },
+   "oracle": {
+    "iid8": 0.8558,
+    "diverse": 0.8775
+   },
+   "filtered_oracle": {
+    "drop_lone_confident@q0.5": 0.8388,
+    "drop_lone_confident@q0.75": 0.8481,
+    "consensus": 0.8248,
+    "consensus_modalfallback": 0.8248,
+    "rarity_log1p": 0.8775,
+    "rarity_logliteral": 0.8775,
+    "topk_agreed@k2": 0.8093,
+    "topk_agreed@k3": 0.8419
+   },
+   "delta_vs_diverse_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": 0.0047,
+     "lo": -0.014,
+     "hi": 0.0248,
+     "n": 645
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.0047,
+     "lo": -0.0155,
+     "hi": 0.0248,
+     "n": 645
+    },
+    "consensus": {
+     "delta": 0.0062,
+     "lo": -0.0124,
+     "hi": 0.0279,
+     "n": 645
+    },
+    "consensus_modalfallback": {
+     "delta": 0.0062,
+     "lo": -0.014,
+     "hi": 0.0264,
+     "n": 645
+    },
+    "rarity_log1p": {
+     "delta": 0.0279,
+     "lo": 0.0031,
+     "hi": 0.0512,
+     "n": 645
+    },
+    "rarity_logliteral": {
+     "delta": 0.0171,
+     "lo": -0.0093,
+     "hi": 0.045,
+     "n": 645
+    },
+    "topk_agreed@k2": {
+     "delta": -0.0093,
+     "lo": -0.0279,
+     "hi": 0.0109,
+     "n": 645
+    },
+    "topk_agreed@k3": {
+     "delta": -0.0016,
+     "lo": -0.014,
+     "hi": 0.0109,
+     "n": 645
+    }
+   },
+   "delta_vs_iid_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": 0.0186,
+     "lo": -0.0093,
+     "hi": 0.0465,
+     "n": 645
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.0186,
+     "lo": -0.0078,
+     "hi": 0.0465,
+     "n": 645
+    },
+    "consensus": {
+     "delta": 0.0202,
+     "lo": -0.0078,
+     "hi": 0.0481,
+     "n": 645
+    },
+    "consensus_modalfallback": {
+     "delta": 0.0202,
+     "lo": -0.0078,
+     "hi": 0.0481,
+     "n": 645
+    },
+    "rarity_log1p": {
+     "delta": 0.0419,
+     "lo": 0.0171,
+     "hi": 0.0682,
+     "n": 645
+    },
+    "rarity_logliteral": {
+     "delta": 0.031,
+     "lo": 0.0047,
+     "hi": 0.0574,
+     "n": 645
+    },
+    "topk_agreed@k2": {
+     "delta": 0.0047,
+     "lo": -0.0248,
+     "hi": 0.0341,
+     "n": 645
+    },
+    "topk_agreed@k3": {
+     "delta": 0.0124,
+     "lo": -0.0171,
+     "hi": 0.0434,
+     "n": 645
+    }
+   }
+  },
+  "pathvqa_open": {
+   "n": 178,
+   "sel_acc": {
+    "pointwise": {
+     "acc": 0.1292,
+     "ci95": [
+      0.0843,
+      0.1798
+     ]
+    },
+    "modal_vote": {
+     "acc": 0.1011,
+     "ci95": [
+      0.0618,
+      0.1461
+     ]
+    },
+    "drop_lone_confident@q0.5": {
+     "acc": 0.0955,
+     "ci95": [
+      0.0562,
+      0.1404
+     ]
+    },
+    "drop_lone_confident@q0.75": {
+     "acc": 0.1011,
+     "ci95": [
+      0.0618,
+      0.1461
+     ]
+    },
+    "consensus": {
+     "acc": 0.1067,
+     "ci95": [
+      0.0618,
+      0.1517
+     ]
+    },
+    "consensus_modalfallback": {
+     "acc": 0.1067,
+     "ci95": [
+      0.0618,
+      0.1517
+     ]
+    },
+    "rarity_log1p": {
+     "acc": 0.1067,
+     "ci95": [
+      0.0618,
+      0.1517
+     ]
+    },
+    "rarity_logliteral": {
+     "acc": 0.1011,
+     "ci95": [
+      0.0618,
+      0.1461
+     ]
+    },
+    "topk_agreed@k2": {
+     "acc": 0.1236,
+     "ci95": [
+      0.0787,
+      0.1742
+     ]
+    },
+    "topk_agreed@k3": {
+     "acc": 0.1292,
+     "ci95": [
+      0.0843,
+      0.1798
+     ]
+    }
+   },
+   "oracle": {
+    "iid8": 0.1461,
+    "diverse": 0.1966
+   },
+   "filtered_oracle": {
+    "drop_lone_confident@q0.5": 0.118,
+    "drop_lone_confident@q0.75": 0.1461,
+    "consensus": 0.1348,
+    "consensus_modalfallback": 0.1348,
+    "rarity_log1p": 0.1966,
+    "rarity_logliteral": 0.1966,
+    "topk_agreed@k2": 0.1404,
+    "topk_agreed@k3": 0.1573
+   },
+   "delta_vs_diverse_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": -0.0337,
+     "lo": -0.0674,
+     "hi": -0.0056,
+     "n": 178
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": -0.0281,
+     "lo": -0.0562,
+     "hi": 0.0,
+     "n": 178
+    },
+    "consensus": {
+     "delta": -0.0225,
+     "lo": -0.0506,
+     "hi": 0.0,
+     "n": 178
+    },
+    "consensus_modalfallback": {
+     "delta": -0.0225,
+     "lo": -0.0506,
+     "hi": 0.0,
+     "n": 178
+    },
+    "rarity_log1p": {
+     "delta": -0.0225,
+     "lo": -0.0449,
+     "hi": -0.0056,
+     "n": 178
+    },
+    "rarity_logliteral": {
+     "delta": -0.0281,
+     "lo": -0.0618,
+     "hi": 0.0056,
+     "n": 178
+    },
+    "topk_agreed@k2": {
+     "delta": -0.0056,
+     "lo": -0.0169,
+     "hi": 0.0,
+     "n": 178
+    },
+    "topk_agreed@k3": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "n": 178
+    }
+   },
+   "delta_vs_iid_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": 0.0,
+     "lo": -0.0281,
+     "hi": 0.0281,
+     "n": 178
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.0056,
+     "lo": -0.0225,
+     "hi": 0.0337,
+     "n": 178
+    },
+    "consensus": {
+     "delta": 0.0112,
+     "lo": -0.0169,
+     "hi": 0.0393,
+     "n": 178
+    },
+    "consensus_modalfallback": {
+     "delta": 0.0112,
+     "lo": -0.0169,
+     "hi": 0.0393,
+     "n": 178
+    },
+    "rarity_log1p": {
+     "delta": 0.0112,
+     "lo": -0.0169,
+     "hi": 0.0393,
+     "n": 178
+    },
+    "rarity_logliteral": {
+     "delta": 0.0056,
+     "lo": -0.0169,
+     "hi": 0.0337,
+     "n": 178
+    },
+    "topk_agreed@k2": {
+     "delta": 0.0281,
+     "lo": 0.0,
+     "hi": 0.0562,
+     "n": 178
+    },
+    "topk_agreed@k3": {
+     "delta": 0.0337,
+     "lo": 0.0056,
+     "hi": 0.0674,
+     "n": 178
+    }
+   }
+  },
+  "pmc_content": {
+   "n": 600,
+   "sel_acc": {
+    "pointwise": {
+     "acc": 0.305,
+     "ci95": [
+      0.27,
+      0.3417
+     ]
+    },
+    "modal_vote": {
+     "acc": 0.2967,
+     "ci95": [
+      0.2583,
+      0.3333
+     ]
+    },
+    "drop_lone_confident@q0.5": {
+     "acc": 0.2833,
+     "ci95": [
+      0.2467,
+      0.3217
+     ]
+    },
+    "drop_lone_confident@q0.75": {
+     "acc": 0.305,
+     "ci95": [
+      0.2683,
+      0.3433
+     ]
+    },
+    "consensus": {
+     "acc": 0.3,
+     "ci95": [
+      0.2633,
+      0.3367
+     ]
+    },
+    "consensus_modalfallback": {
+     "acc": 0.3,
+     "ci95": [
+      0.2633,
+      0.3367
+     ]
+    },
+    "rarity_log1p": {
+     "acc": 0.2967,
+     "ci95": [
+      0.2617,
+      0.3333
+     ]
+    },
+    "rarity_logliteral": {
+     "acc": 0.2967,
+     "ci95": [
+      0.2617,
+      0.3333
+     ]
+    },
+    "topk_agreed@k2": {
+     "acc": 0.2983,
+     "ci95": [
+      0.26,
+      0.3367
+     ]
+    },
+    "topk_agreed@k3": {
+     "acc": 0.3033,
+     "ci95": [
+      0.2667,
+      0.34
+     ]
+    }
+   },
+   "oracle": {
+    "iid8": 0.505,
+    "diverse": 0.615
+   },
+   "filtered_oracle": {
+    "drop_lone_confident@q0.5": 0.4717,
+    "drop_lone_confident@q0.75": 0.5517,
+    "consensus": 0.4833,
+    "consensus_modalfallback": 0.4833,
+    "rarity_log1p": 0.615,
+    "rarity_logliteral": 0.615,
+    "topk_agreed@k2": 0.375,
+    "topk_agreed@k3": 0.4167
+   },
+   "delta_vs_diverse_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": -0.0217,
+     "lo": -0.0533,
+     "hi": 0.01,
+     "n": 600
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.0,
+     "lo": -0.03,
+     "hi": 0.03,
+     "n": 600
+    },
+    "consensus": {
+     "delta": -0.005,
+     "lo": -0.0283,
+     "hi": 0.015,
+     "n": 600
+    },
+    "consensus_modalfallback": {
+     "delta": -0.005,
+     "lo": -0.0267,
+     "hi": 0.0167,
+     "n": 600
+    },
+    "rarity_log1p": {
+     "delta": -0.0083,
+     "lo": -0.025,
+     "hi": 0.0083,
+     "n": 600
+    },
+    "rarity_logliteral": {
+     "delta": -0.0083,
+     "lo": -0.0317,
+     "hi": 0.0133,
+     "n": 600
+    },
+    "topk_agreed@k2": {
+     "delta": -0.0067,
+     "lo": -0.02,
+     "hi": 0.005,
+     "n": 600
+    },
+    "topk_agreed@k3": {
+     "delta": -0.0017,
+     "lo": -0.0117,
+     "hi": 0.0067,
+     "n": 600
+    }
+   },
+   "delta_vs_iid_pointwise": {
+    "drop_lone_confident@q0.5": {
+     "delta": -0.0067,
+     "lo": -0.0383,
+     "hi": 0.0283,
+     "n": 600
+    },
+    "drop_lone_confident@q0.75": {
+     "delta": 0.015,
+     "lo": -0.015,
+     "hi": 0.045,
+     "n": 600
+    },
+    "consensus": {
+     "delta": 0.01,
+     "lo": -0.0183,
+     "hi": 0.0383,
+     "n": 600
+    },
+    "consensus_modalfallback": {
+     "delta": 0.01,
+     "lo": -0.0167,
+     "hi": 0.0383,
+     "n": 600
+    },
+    "rarity_log1p": {
+     "delta": 0.0067,
+     "lo": -0.02,
+     "hi": 0.0333,
+     "n": 600
+    },
+    "rarity_logliteral": {
+     "delta": 0.0067,
+     "lo": -0.0217,
+     "hi": 0.0367,
+     "n": 600
+    },
+    "topk_agreed@k2": {
+     "delta": 0.0083,
+     "lo": -0.02,
+     "hi": 0.035,
+     "n": 600
+    },
+    "topk_agreed@k3": {
+     "delta": 0.0133,
+     "lo": -0.0133,
+     "hi": 0.0383,
+     "n": 600
+    }
+   }
+  }
+ },
+ "pooled_3ds_exclPMC": {
+  "datasets": [
+   "vqa_rad_open",
+   "slake_open",
+   "pathvqa_open"
+  ],
+  "n": 1023,
+  "sel_acc": {
+   "pointwise": {
+    "acc": 0.5494,
+    "ci95": [
+     0.52,
+     0.5797
+    ]
+   },
+   "modal_vote": {
+    "acc": 0.5337,
+    "ci95": [
+     0.5024,
+     0.5621
+    ]
+   },
+   "drop_lone_confident@q0.5": {
+    "acc": 0.5386,
+    "ci95": [
+     0.5073,
+     0.5679
+    ]
+   },
+   "drop_lone_confident@q0.75": {
+    "acc": 0.5396,
+    "ci95": [
+     0.5093,
+     0.5699
+    ]
+   },
+   "consensus": {
+    "acc": 0.5415,
+    "ci95": [
+     0.5112,
+     0.5718
+    ]
+   },
+   "consensus_modalfallback": {
+    "acc": 0.5415,
+    "ci95": [
+     0.5103,
+     0.5718
+    ]
+   },
+   "rarity_log1p": {
+    "acc": 0.5601,
+    "ci95": [
+     0.5308,
+     0.5904
+    ]
+   },
+   "rarity_logliteral": {
+    "acc": 0.5455,
+    "ci95": [
+     0.5132,
+     0.5767
+    ]
+   },
+   "topk_agreed@k2": {
+    "acc": 0.5357,
+    "ci95": [
+     0.5044,
+     0.565
+    ]
+   },
+   "topk_agreed@k3": {
+    "acc": 0.5484,
+    "ci95": [
+     0.5181,
+     0.5787
+    ]
+   }
+  },
+  "oracle": {
+   "iid8": 0.6452,
+   "diverse": 0.6813
+  },
+  "filtered_oracle": {
+   "drop_lone_confident@q0.5": 0.6285,
+   "drop_lone_confident@q0.75": 0.6442,
+   "consensus": 0.6178,
+   "consensus_modalfallback": 0.6178,
+   "rarity_log1p": 0.6813,
+   "rarity_logliteral": 0.6813,
+   "topk_agreed@k2": 0.61,
+   "topk_agreed@k3": 0.6452
+  },
+  "delta_vs_diverse_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": -0.0108,
+    "lo": -0.0264,
+    "hi": 0.0049,
+    "n": 1023
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": -0.0098,
+    "lo": -0.0245,
+    "hi": 0.0049,
+    "n": 1023
+   },
+   "consensus": {
+    "delta": -0.0078,
+    "lo": -0.0225,
+    "hi": 0.0068,
+    "n": 1023
+   },
+   "consensus_modalfallback": {
+    "delta": -0.0078,
+    "lo": -0.0225,
+    "hi": 0.0078,
+    "n": 1023
+   },
+   "rarity_log1p": {
+    "delta": 0.0108,
+    "lo": -0.0059,
+    "hi": 0.0293,
+    "n": 1023
+   },
+   "rarity_logliteral": {
+    "delta": -0.0039,
+    "lo": -0.0235,
+    "hi": 0.0166,
+    "n": 1023
+   },
+   "topk_agreed@k2": {
+    "delta": -0.0137,
+    "lo": -0.0274,
+    "hi": 0.001,
+    "n": 1023
+   },
+   "topk_agreed@k3": {
+    "delta": -0.001,
+    "lo": -0.0088,
+    "hi": 0.0078,
+    "n": 1023
+   }
+  },
+  "delta_vs_iid_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": 0.0196,
+    "lo": -0.001,
+    "hi": 0.0401,
+    "n": 1023
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": 0.0205,
+    "lo": 0.0,
+    "hi": 0.0401,
+    "n": 1023
+   },
+   "consensus": {
+    "delta": 0.0225,
+    "lo": 0.002,
+    "hi": 0.043,
+    "n": 1023
+   },
+   "consensus_modalfallback": {
+    "delta": 0.0225,
+    "lo": 0.0029,
+    "hi": 0.042,
+    "n": 1023
+   },
+   "rarity_log1p": {
+    "delta": 0.0411,
+    "lo": 0.0235,
+    "hi": 0.0596,
+    "n": 1023
+   },
+   "rarity_logliteral": {
+    "delta": 0.0264,
+    "lo": 0.0078,
+    "hi": 0.045,
+    "n": 1023
+   },
+   "topk_agreed@k2": {
+    "delta": 0.0166,
+    "lo": -0.0039,
+    "hi": 0.0371,
+    "n": 1023
+   },
+   "topk_agreed@k3": {
+    "delta": 0.0293,
+    "lo": 0.0088,
+    "hi": 0.0518,
+    "n": 1023
+   }
+  }
+ },
+ "pooled_4ds_inclPMC": {
+  "datasets": [
+   "vqa_rad_open",
+   "slake_open",
+   "pathvqa_open",
+   "pmc_content"
+  ],
+  "n": 1623,
+  "sel_acc": {
+   "pointwise": {
+    "acc": 0.459,
+    "ci95": [
+     0.4356,
+     0.4818
+    ]
+   },
+   "modal_vote": {
+    "acc": 0.4461,
+    "ci95": [
+     0.4214,
+     0.4701
+    ]
+   },
+   "drop_lone_confident@q0.5": {
+    "acc": 0.4442,
+    "ci95": [
+     0.4202,
+     0.4683
+    ]
+   },
+   "drop_lone_confident@q0.75": {
+    "acc": 0.4529,
+    "ci95": [
+     0.4301,
+     0.4781
+    ]
+   },
+   "consensus": {
+    "acc": 0.4522,
+    "ci95": [
+     0.427,
+     0.4775
+    ]
+   },
+   "consensus_modalfallback": {
+    "acc": 0.4522,
+    "ci95": [
+     0.4282,
+     0.4757
+    ]
+   },
+   "rarity_log1p": {
+    "acc": 0.4627,
+    "ci95": [
+     0.4387,
+     0.488
+    ]
+   },
+   "rarity_logliteral": {
+    "acc": 0.4535,
+    "ci95": [
+     0.4288,
+     0.4775
+    ]
+   },
+   "topk_agreed@k2": {
+    "acc": 0.4479,
+    "ci95": [
+     0.4227,
+     0.4726
+    ]
+   },
+   "topk_agreed@k3": {
+    "acc": 0.4578,
+    "ci95": [
+     0.4319,
+     0.4831
+    ]
+   }
+  },
+  "oracle": {
+   "iid8": 0.5933,
+   "diverse": 0.6568
+  },
+  "filtered_oracle": {
+   "drop_lone_confident@q0.5": 0.5705,
+   "drop_lone_confident@q0.75": 0.61,
+   "consensus": 0.5681,
+   "consensus_modalfallback": 0.5681,
+   "rarity_log1p": 0.6568,
+   "rarity_logliteral": 0.6568,
+   "topk_agreed@k2": 0.5231,
+   "topk_agreed@k3": 0.5607
+  },
+  "delta_vs_diverse_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": -0.0148,
+    "lo": -0.0296,
+    "hi": 0.0006,
+    "n": 1623
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": -0.0062,
+    "lo": -0.0209,
+    "hi": 0.0086,
+    "n": 1623
+   },
+   "consensus": {
+    "delta": -0.0068,
+    "lo": -0.0191,
+    "hi": 0.0049,
+    "n": 1623
+   },
+   "consensus_modalfallback": {
+    "delta": -0.0068,
+    "lo": -0.0185,
+    "hi": 0.0049,
+    "n": 1623
+   },
+   "rarity_log1p": {
+    "delta": 0.0037,
+    "lo": -0.0092,
+    "hi": 0.0166,
+    "n": 1623
+   },
+   "rarity_logliteral": {
+    "delta": -0.0055,
+    "lo": -0.0209,
+    "hi": 0.0092,
+    "n": 1623
+   },
+   "topk_agreed@k2": {
+    "delta": -0.0111,
+    "lo": -0.0209,
+    "hi": -0.0012,
+    "n": 1623
+   },
+   "topk_agreed@k3": {
+    "delta": -0.0012,
+    "lo": -0.0074,
+    "hi": 0.0049,
+    "n": 1623
+   }
+  },
+  "delta_vs_iid_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": 0.0099,
+    "lo": -0.008,
+    "hi": 0.0271,
+    "n": 1623
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": 0.0185,
+    "lo": 0.0006,
+    "hi": 0.0351,
+    "n": 1623
+   },
+   "consensus": {
+    "delta": 0.0179,
+    "lo": 0.0006,
+    "hi": 0.0339,
+    "n": 1623
+   },
+   "consensus_modalfallback": {
+    "delta": 0.0179,
+    "lo": 0.0012,
+    "hi": 0.0351,
+    "n": 1623
+   },
+   "rarity_log1p": {
+    "delta": 0.0283,
+    "lo": 0.0123,
+    "hi": 0.0444,
+    "n": 1623
+   },
+   "rarity_logliteral": {
+    "delta": 0.0191,
+    "lo": 0.0037,
+    "hi": 0.0345,
+    "n": 1623
+   },
+   "topk_agreed@k2": {
+    "delta": 0.0136,
+    "lo": -0.0025,
+    "hi": 0.0302,
+    "n": 1623
+   },
+   "topk_agreed@k3": {
+    "delta": 0.0234,
+    "lo": 0.0062,
+    "hi": 0.0394,
+    "n": 1623
+   }
+  }
+ },
+ "pmc_deepdive": {
+  "n": 600,
+  "oracle_iid8": 0.505,
+  "oracle_diverse": 0.615,
+  "oracle_lift": 0.11,
+  "iid_pointwise": 0.29,
+  "diverse_pointwise": 0.305,
+  "filter_sel_acc": {
+   "drop_lone_confident@q0.5": 0.2833,
+   "drop_lone_confident@q0.75": 0.305,
+   "consensus": 0.3,
+   "consensus_modalfallback": 0.3,
+   "rarity_log1p": 0.2967,
+   "rarity_logliteral": 0.2967,
+   "topk_agreed@k2": 0.2983,
+   "topk_agreed@k3": 0.3033
+  },
+  "filtered_oracle": {
+   "drop_lone_confident@q0.5": 0.4717,
+   "drop_lone_confident@q0.75": 0.5517,
+   "consensus": 0.4833,
+   "consensus_modalfallback": 0.4833,
+   "rarity_log1p": 0.615,
+   "rarity_logliteral": 0.615,
+   "topk_agreed@k2": 0.375,
+   "topk_agreed@k3": 0.4167
+  },
+  "delta_vs_diverse_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": -0.0217,
+    "lo": -0.0533,
+    "hi": 0.01,
+    "n": 600
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": 0.0,
+    "lo": -0.03,
+    "hi": 0.03,
+    "n": 600
+   },
+   "consensus": {
+    "delta": -0.005,
+    "lo": -0.0283,
+    "hi": 0.015,
+    "n": 600
+   },
+   "consensus_modalfallback": {
+    "delta": -0.005,
+    "lo": -0.0267,
+    "hi": 0.0167,
+    "n": 600
+   },
+   "rarity_log1p": {
+    "delta": -0.0083,
+    "lo": -0.025,
+    "hi": 0.0083,
+    "n": 600
+   },
+   "rarity_logliteral": {
+    "delta": -0.0083,
+    "lo": -0.0317,
+    "hi": 0.0133,
+    "n": 600
+   },
+   "topk_agreed@k2": {
+    "delta": -0.0067,
+    "lo": -0.02,
+    "hi": 0.005,
+    "n": 600
+   },
+   "topk_agreed@k3": {
+    "delta": -0.0017,
+    "lo": -0.0117,
+    "hi": 0.0067,
+    "n": 600
+   }
+  },
+  "delta_vs_iid_pointwise": {
+   "drop_lone_confident@q0.5": {
+    "delta": -0.0067,
+    "lo": -0.0383,
+    "hi": 0.0283,
+    "n": 600
+   },
+   "drop_lone_confident@q0.75": {
+    "delta": 0.015,
+    "lo": -0.015,
+    "hi": 0.045,
+    "n": 600
+   },
+   "consensus": {
+    "delta": 0.01,
+    "lo": -0.0183,
+    "hi": 0.0383,
+    "n": 600
+   },
+   "consensus_modalfallback": {
+    "delta": 0.01,
+    "lo": -0.0167,
+    "hi": 0.0383,
+    "n": 600
+   },
+   "rarity_log1p": {
+    "delta": 0.0067,
+    "lo": -0.02,
+    "hi": 0.0333,
+    "n": 600
+   },
+   "rarity_logliteral": {
+    "delta": 0.0067,
+    "lo": -0.0217,
+    "hi": 0.0367,
+    "n": 600
+   },
+   "topk_agreed@k2": {
+    "delta": 0.0083,
+    "lo": -0.02,
+    "hi": 0.035,
+    "n": 600
+   },
+   "topk_agreed@k3": {
+    "delta": 0.0133,
+    "lo": -0.0133,
+    "hi": 0.0383,
+    "n": 600
+   }
+  },
+  "converted_fraction_of_oracle_lift": {
+   "drop_lone_confident@q0.5": -0.061,
+   "drop_lone_confident@q0.75": 0.136,
+   "consensus": 0.091,
+   "consensus_modalfallback": 0.091,
+   "rarity_log1p": 0.061,
+   "rarity_logliteral": 0.061,
+   "topk_agreed@k2": 0.075,
+   "topk_agreed@k3": 0.121
+  }
+ },
+ "verdict": {
+  "best_filter": "rarity_log1p",
+  "best_delta_vs_a_diverse_pointwise": {
+   "delta": 0.0108,
+   "lo": -0.0059,
+   "hi": 0.0293,
+   "n": 1023
+  },
+  "best_delta_vs_b_iid_pointwise": {
+   "delta": 0.0411,
+   "lo": 0.0235,
+   "hi": 0.0596,
+   "n": 1023
+  },
+  "beats_a": false,
+  "beats_b": true,
+  "any_filter_beats_both": false,
+  "conclusion": "=> PARTIAL: best filter beats iid@8 but is statistically tied with unfiltered-diverse-pointwise (filtering does not add over plain diverse pointwise).",
+  "lines": [
+   "POOLED-3ds (excl PMC, n=1023) selection accuracy [oks], 95% CI:",
+   "  BASELINE a  unfiltered-diverse-pointwise = 0.5494",
+   "  BASELINE b  iid@8-pointwise              = 0.5191",
+   "  diverse-oracle ceiling = 0.6813  (iid@8-oracle 0.6452)",
+   "",
+   "  filter sel_acc (pooled-3ds):",
+   "    rarity_log1p               0.5601 [0.5308, 0.5904]  vsDiv +0.0108[-0.006,+0.029]   vsIID +0.0411[+0.024,+0.060]*",
+   "    topk_agreed@k3             0.5484 [0.5181, 0.5787]  vsDiv -0.0010[-0.009,+0.008]   vsIID +0.0293[+0.009,+0.052]*",
+   "    rarity_logliteral          0.5455 [0.5132, 0.5767]  vsDiv -0.0039[-0.024,+0.017]   vsIID +0.0264[+0.008,+0.045]*",
+   "    consensus                  0.5415 [0.5112, 0.5718]  vsDiv -0.0078[-0.022,+0.007]   vsIID +0.0225[+0.002,+0.043]*",
+   "    consensus_modalfallback    0.5415 [0.5103, 0.5718]  vsDiv -0.0078[-0.022,+0.008]   vsIID +0.0225[+0.003,+0.042]*",
+   "    drop_lone_confident@q0.75  0.5396 [0.5093, 0.5699]  vsDiv -0.0098[-0.025,+0.005]   vsIID +0.0205[+0.000,+0.040] ",
+   "    drop_lone_confident@q0.5   0.5386 [0.5073, 0.5679]  vsDiv -0.0108[-0.026,+0.005]   vsIID +0.0196[-0.001,+0.040] ",
+   "    topk_agreed@k2             0.5357 [0.5044, 0.565]  vsDiv -0.0137[-0.027,+0.001]   vsIID +0.0166[-0.004,+0.037] ",
+   "",
+   "BEST filter (pooled-3ds) = rarity_log1p  acc=0.5601",
+   "  vs (a) unfiltered-diverse-pointwise: +0.0108 CI[-0.0059,+0.0293]  -> beats a: NO (CI incl 0)",
+   "  vs (b) iid@8-pointwise:              +0.0411 CI[+0.0235,+0.0596]  -> beats b: YES",
+   "  coverage check: filtered-oracle 0.6813 vs diverse-oracle 0.6813 (iid-oracle 0.6452)",
+   "",
+   "PMC conversion (n=600): oracle lift +0.110; iid-pointwise 0.290 -> best-filter 0.297 (converted 0.061 of the lift).",
+   "",
+   "=> PARTIAL: best filter beats iid@8 but is statistically tied with unfiltered-diverse-pointwise (filtering does not add over plain diverse pointwise).",
+   "(any filter beating BOTH baselines w/ CI-excludes-0: NO)"
+  ]
+ }
+}

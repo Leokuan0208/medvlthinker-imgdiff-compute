@@ -26,6 +26,28 @@ from PIL import Image
 SYS = "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain."
 SYS_THINK = ("You will solve a problem/request. You should provide your thoughts within "
              "<think> </think> tags before providing the answer. After </think>, give only the short final answer.")
+# MATCHED reasoning prompt: identical to SYS in persona + answer-style constraints ("expert medical image
+# analyst", "short, specific phrase", "Do not explain"); differs ONLY by the reason-first instruction. Used
+# to de-confound the reasoning effect from the output-convention effect (--think_matched).
+SYS_THINK_MATCHED = ("You are an expert medical image analyst. You should provide your thoughts within "
+                     "<think> </think> tags before providing the answer. After </think>, answer the question "
+                     "with a short, specific phrase. Do not explain.")
+# MATCHED variant 2 (--think_matched2). SYS_THINK_MATCHED paraphrases the reasoning trigger and these models
+# then SKIP the <think> trace most of the time (documented quirk: the trigger sentences must appear verbatim),
+# which would silently turn reasoning OFF instead of matching the prompts. This variant keeps SYS_THINK's
+# trigger sentences VERBATIM and replaces only its answer-style clause ("give only the short final answer")
+# with the direct prompt's persona + answer-style + no-explanation constraints -- so reasoning stays ON and
+# the ONLY difference from the direct arm is the reason-first instruction.
+SYS_THINK_MATCHED2 = ("You will solve a problem/request. You should provide your thoughts within "
+                      "<think> </think> tags before providing the answer. You are an expert medical image "
+                      "analyst. After </think>, answer the question with a short, specific phrase. "
+                      "Do not explain.")
+# UNSTYLED DIRECT prompt (--direct_unstyled): SYS_THINK with the reasoning instruction REMOVED and nothing
+# else changed -- no persona, no "specific phrase", no "Do not explain", same "give only the short final
+# answer" convention. It completes the 2x2 (style x reasoning): pairing it with SYS_THINK isolates the
+# reasoning effect at a FIXED output convention, which matched reasoning prompts cannot do, because telling
+# this model "Do not explain" also suppresses its <think> trace.
+SYS_DIRECT_UNSTYLED = "You will solve a problem/request. Give only the short final answer."
 HIGH_PX, MIN_PX = 1280*28*28, 4*28*28
 CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 ap = argparse.ArgumentParser()
@@ -37,7 +59,17 @@ ap.add_argument("--ckpt_dir", required=True); ap.add_argument("--tp", type=int, 
 ap.add_argument("--gpu_mem", type=float, default=0.88); ap.add_argument("--max_model_len", type=int, default=8192)
 ap.add_argument("--max_tokens", type=int, default=64)
 ap.add_argument("--think", action="store_true", help="reasoning mode: think system prompt, answer = text after </think>")
+ap.add_argument("--think_matched", action="store_true", help="reasoning mode with the MATCHED system prompt "
+                "(SYS_THINK_MATCHED: same persona/answer-style constraints as direct, reason-first added); implies --think")
+ap.add_argument("--think_matched2", action="store_true", help="reasoning mode with MATCHED variant 2 "
+                "(SYS_THINK_MATCHED2: SYS_THINK's trigger sentences kept VERBATIM so the <think> trace still "
+                "fires, + the direct prompt's persona/answer-style constraints); implies --think")
+ap.add_argument("--direct_unstyled", action="store_true", help="DIRECT mode with SYS_DIRECT_UNSTYLED "
+                "(SYS_THINK minus the reasoning instruction): completes the style x reasoning 2x2")
+ap.add_argument("--save_raw", action="store_true", help="also store the raw un-extracted sample texts (key 'raw')")
+ap.add_argument("--idx_file", default=None, help="optional JSON list of idx: restrict generation to this allowlist")
 A = ap.parse_args(); os.makedirs(A.ckpt_dir, exist_ok=True); MAXPX = HIGH_PX // CAP_DIV[A.cap]
+if A.think_matched or A.think_matched2: A.think = True
 if A.think and A.max_tokens < 256: A.max_tokens = 512
 
 def norm(s):
@@ -89,8 +121,12 @@ else:
             import io; pil = Image.open(io.BytesIO(img["bytes"])).convert("RGB")
         else: continue
         items.append((int(i), str(q), a, pil))
+if A.idx_file:
+    allow = set(json.load(open(A.idx_file)))
+    items = [it for it in items if it[0] in allow]
 items = items[:A.n]
-print(f"{A.dataset}: {len(items)} open-ended items | tag={A.tag} n_samples={A.n_samples} temp={A.temp}", flush=True)
+print(f"{A.dataset}: {len(items)} open-ended items | tag={A.tag} n_samples={A.n_samples} temp={A.temp}"
+      f"{' | idx_file allowlist='+str(len(json.load(open(A.idx_file)))) if A.idx_file else ''}", flush=True)
 
 proc = AutoProcessor.from_pretrained(A.model_path, trust_remote_code=True)
 def extract(t):  # think mode: answer = text after the LAST </think>; else the raw text
@@ -100,7 +136,8 @@ def extract(t):  # think mode: answer = text after the LAST </think>; else the r
     return t.strip()
 def build(q, img):
     im = [{"type": "image", "image": img, "max_pixels": MAXPX, "min_pixels": MIN_PX}]
-    sys = SYS_THINK if A.think else SYS
+    sys = ((SYS_THINK_MATCHED2 if A.think_matched2 else SYS_THINK_MATCHED if A.think_matched else SYS_THINK)
+           if A.think else (SYS_DIRECT_UNSTYLED if A.direct_unstyled else SYS))
     msgs = [{"role": "system", "content": sys}, {"role": "user", "content": im + [{"type": "text", "text": q}]}]
     text = proc.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
     imgs, _ = process_vision_info(msgs); req = {"prompt": text}
@@ -147,7 +184,8 @@ with open(ckpt, "a") as fh:
                 "seqlogprob": (round(slp, 4) if slp is not None else None),
                 "margin": margin, "conf": conf,
                 "gen_tokens": len(o.outputs[0].token_ids),
-                "gen_tokens_all": [len(c.token_ids) for c in o.outputs], "lat_s": round(_blat, 4)}) + "\n")
+                "gen_tokens_all": [len(c.token_ids) for c in o.outputs], "lat_s": round(_blat, 4),
+                **({"raw": [c.text for c in o.outputs]} if A.save_raw else {})}) + "\n")
         fh.flush()
         acc = np.mean([score(json.loads(l)["modal_pred"], json.loads(l)["gold"]) for l in open(ckpt) if l.strip()])
         print(f"   [{min(c0+CH,len(todo))}/{len(todo)}] running modal-acc={acc:.3f} {(min(c0+CH,len(todo)))/(time.time()-t0):.1f}/s", flush=True)

@@ -22,7 +22,7 @@ def fmt(x,n=3):
     return f"{x:.{n}f}" if isinstance(x,(int,float)) else "—"
 
 # template head + nav
-lines=open(os.path.join(ROOT,"weekly-update-results (4).html"),encoding="utf-8").read().split("\n")
+lines=open(os.path.join(ROOT,"meetings/report_template.html"),encoding="utf-8").read().split("\n")
 head="\n".join(lines[:187])
 mathjax='''<script>window.MathJax={tex:{inlineMath:[['$','$']]},svg:{fontCache:'global'}};</script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>

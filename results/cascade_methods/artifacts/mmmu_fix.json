@@ -1,0 +1,137 @@
+{
+  "title": "MMMU-medical Lingshu-7B vs 32B anomaly: investigation + faithful re-eval + method impact",
+  "date": "2026-07-08",
+  "no_fabricated_numbers": true,
+  "root_cause": {
+    "verdict": "NOT a harness/parse/position artifact. Under IDENTICAL faithful MedEvalKit conditions (same 150 idx, same gold, same prompt, same parser, no-think, full-res), Lingshu-7B genuinely and ORDER-ROBUSTLY outperforms Lingshu-32B on MMMU H&M val. The +26 vs the Lingshu paper's own 7B number (54.0) is a 7B-AND-MMMU-specific unreconciled protocol/version (possible train-set-leakage) difference, NOT a bug in our eval.",
+    "evidence": {
+      "same_150_idx_same_gold": true,
+      "gold_mismatches_between_models": 0,
+      "parsing_clean": "both models emit clean single letters ('B.','A'); parser is exact letter-match; 7B-right/32B-wrong cases are genuinely image-dependent questions the 7B answers correctly",
+      "faithful_baseline_dumps": {
+        "lingshu7b_nothink": 0.8,
+        "lingshu32b_nothink": 0.6333,
+        "lingshu32b_think_reason": 0.66,
+        "lingshu32b_think_default": 0.627
+      },
+      "7B_reproduces_paper_on_other_benchmarks": {
+        "SLAKE": [
+          82.5,
+          83.1
+        ],
+        "PMC_VQA": [
+          54.3,
+          56.3
+        ],
+        "MedXpert_MM": [
+          26.2,
+          26.7
+        ]
+      },
+      "32B_reproduces_paper_on_MMMU": [
+        63.3,
+        62.3
+      ],
+      "paper_7B_MMMU_Med": 54.0,
+      "reproduces_on_two_harnesses": {
+        "NGC": [
+          85,
+          62
+        ],
+        "MedEvalKit": [
+          80,
+          63
+        ]
+      }
+    }
+  },
+  "discordance_identity": {
+    "both_correct": 86,
+    "only_7b_correct": 34,
+    "only_32b_correct": 9,
+    "neither": 21,
+    "mcnemar_chi2_cc": 13.395,
+    "binomial_two_sided_p": 0.00017015517460094998,
+    "interpretation": "7B-wins vs 32B-wins = 34 vs 9 discordant pairs -> the 7B advantage is highly significant, not sampling noise"
+  },
+  "position_bias_test_cyclic_permutation": {
+    "method": "re-ran BOTH models on the same 150 Qs under EVERY cyclic shift of the options (shift0=original order=faithful baseline); position-debiased acc = per-question mean over shifts; per-sample dumps in mmmu_perm_{7b,32b}.json",
+    "lingshu_7b": {
+      "identity_shift0": 0.8266666666666667,
+      "position_debiased": 0.7707777777777778,
+      "circular_consistency": 0.58
+    },
+    "lingshu_32b": {
+      "identity_shift0": 0.6466666666666666,
+      "position_debiased": 0.6321111111111111,
+      "circular_consistency": 0.5133333333333333
+    },
+    "gap_identity": 0.18,
+    "gap_debiased": 0.1387,
+    "conclusion": "Position/letter bias explains only ~4 of the ~18 identity-gap points. After FULL cyclic debiasing the 7B STILL beats the 32B by ~+0.14 (0.771 vs 0.632). => the win is order-robust and is NOT a position-bias artifact.",
+    "note_identity_vs_dumps": "re-run identity (7B .827 / 32B .647) is ~2-4 questions above the canonical dumps (.80/.6333); benign vLLM batch-composition / unseeded parser tie-break drift; same regime, does not affect conclusions"
+  },
+  "does_7b_still_beat_32b": {
+    "answer": "YES. Under every faithful lens (raw dump, re-run identity, and rigorous position-debiased), 7B > 32B on MMMU-medical val. The task's expectation that a fix would flip it is NOT borne out empirically.",
+    "corrected_comparable_accuracies": {
+      "lingshu7b_nothink_debiased": 0.7707777777777778,
+      "lingshu32b_nothink_debiased": 0.6321111111111111,
+      "lingshu7b_nothink_dump": 0.8,
+      "lingshu32b_nothink_dump": 0.6333,
+      "lingshu32b_think_best": 0.66
+    }
+  },
+  "method_impact": {
+    "headline_metric": "accuracy-max (v2) pooled SAMPLE-WEIGHTED acc vs always-32B-THINK, full suite n=42374",
+    "pooled_method_acc_recomputed": 0.5844,
+    "always_32b_think": 0.5632,
+    "current_d_vs_think_keep7b": 0.0212,
+    "mmmu_weight_in_pool": 0.00354,
+    "scenarios": {
+      "keep_7b_current": {
+        "mmmu_method_acc": 0.8,
+        "pooled_acc": 0.58436,
+        "d_vs_think": 0.0212
+      },
+      "escalate_32b_think": {
+        "mmmu_method_acc": 0.66,
+        "pooled_acc": 0.58386,
+        "d_vs_think": 0.0207
+      },
+      "escalate_32b_nothink": {
+        "mmmu_method_acc": 0.6333,
+        "pooled_acc": 0.58377,
+        "d_vs_think": 0.0206
+      },
+      "keep_7b_debiased": {
+        "mmmu_method_acc": 0.7708,
+        "pooled_acc": 0.58425,
+        "d_vs_think": 0.0211
+      }
+    },
+    "sample_weighted_headline_sensitivity": "MMMU is only 0.35% of pooled samples -> keep-7B vs escalate-32B moves the sample-weighted accuracy-max headline only -0.0005 (from +0.0212 to +0.0207 vs 32B-think). The headline is CARRIED BY PMC fusion + open-text verifier, NOT by the MMMU anomaly.",
+    "macro_average_sensitivity": {
+      "full_suite_macro_d_vs_think_keep7b": 0.0777,
+      "full_suite_macro_d_vs_think_escalate": 0.0621,
+      "mcq_only_macro_d_vs_think_keep7b": 0.027,
+      "mcq_only_macro_d_vs_think_escalate": 0.0036,
+      "note": "MACRO (equal-weight per benchmark) IS materially inflated by keep-7B MMMU: full-suite macro drops +0.0777 -> +0.0621; MCQ-only macro is MMMU-DOMINATED, collapsing +0.0270 -> +0.0036. Any per-benchmark-equal-weight framing must correct the MMMU cell."
+    }
+  },
+  "recommendation": {
+    "for_the_method": "Do NOT bank the MMMU keep-7B as a headline 'beat-32B' win. Either (a) EXCLUDE MMMU from headline claims (as the project already does for the MedVLThinker family), or (b) conservatively ESCALATE MMMU to the 32B. Justification: although the 7B empirically wins on our eval, its 0.80 is +26 over the Lingshu paper's own 7B number and cannot be reconciled -> it is not a defensible comparable baseline for a reviewer.",
+    "headline_is_safe": "On the reported SAMPLE-WEIGHTED accuracy-max headline (+0.0212 vs 32B-think), escalating/excluding MMMU changes it by only ~-0.0005 (to ~+0.0207). The headline does NOT depend on the MMMU anomaly.",
+    "macro_must_be_fixed": "If any macro / per-benchmark-averaged number is reported, recompute it with MMMU escalated: MCQ-only macro falls from +0.027 to +0.004; full-suite macro from +0.078 to +0.062."
+  },
+  "artifacts": {
+    "per_sample_dumps": [
+      "results/cascade_methods/artifacts/mmmu_perm_7b.json",
+      "results/cascade_methods/artifacts/mmmu_perm_32b.json"
+    ],
+    "re_eval_script": "MedEvalKit/mmmu_perm_eval.py",
+    "faithful_baseline_dumps": [
+      "MedEvalKit/eval_results_lingshu7b_full/{}/MMMU-Medical-val",
+      "MedEvalKit/eval_results_lingshu32b_full/{}/MMMU-Medical-val"
+    ]
+  }
+}

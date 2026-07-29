@@ -64,6 +64,6 @@ for ds in DS:
     out["cross_dataset"][ds] = {"coverage": float(cov), "realized_risk": float(rk) if rk == rk else None}
     flag = "OK" if (rk == rk and rk <= RSTAR + 0.02) else ("RISK OVERSHOOT" if rk == rk else "abstain-all")
     print(f"  SLAKE-tau on {LAB[ds]:<9} coverage={cov:.2f}  realized risk={rk:.3f}  [{flag}]")
-json.dump(out, open("results/cascade_methods/abstain_calibration.json", "w"), indent=1)
+json.dump(out, open("results/cascade_methods/artifacts/abstain_calibration.json", "w"), indent=1)
 print("\nREAD: (A) holding risk<=r* with non-trivial coverage => deployable with standard held-out calibration.")
 print("      (B) shows how far one calibration travels; a per-deployment calibration set is the safe practice.")

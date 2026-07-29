@@ -1,0 +1,479 @@
+{
+  "method": "Robust slice-structure routing (backlog H4 slice discovery + H8 credibility shrinkage + H2 kNN gate) over the Lingshu-7B/32B MCQ dumps, to harden/extend the beat-always-32B claim.",
+  "data": {
+    "cells": [
+      "MMMU-Medical-val",
+      "MedXpertQA-MM",
+      "PATH_VQA_yesno",
+      "PMC_VQA",
+      "SLAKE_closed",
+      "VQA_RAD_yesno"
+    ],
+    "n_total": 40029,
+    "per_cell": {
+      "MMMU-Medical-val": {
+        "n": 150,
+        "acc_7b": 0.8,
+        "acc_32b": 0.6333
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "acc_7b": 0.2615,
+        "acc_32b": 0.3065
+      },
+      "PATH_VQA_yesno": {
+        "n": 3362,
+        "acc_7b": 0.8409,
+        "acc_32b": 0.8891
+      },
+      "PMC_VQA": {
+        "n": 33430,
+        "acc_7b": 0.5427,
+        "acc_32b": 0.5518
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "acc_7b": 0.8254,
+        "acc_32b": 0.8589
+      },
+      "VQA_RAD_yesno": {
+        "n": 251,
+        "acc_7b": 0.7809,
+        "acc_32b": 0.8526
+      }
+    }
+  },
+  "baseline_F1_certified_cells": {
+    "PMC_VQA": "F3_confadv fusion, d=+0.0135, CI[0.010,0.017] (broad comparably-skilled slice)",
+    "MMMU": "always_7b route-to-7B, d=+0.167, CI[0.087,0.247] (n=150 anomaly)",
+    "others": "SLAKE_closed / VQA_RAD_yesno / PATH_VQA_yesno / MedXpert -> always_32b (d=0)",
+    "source": "results/cascade_methods/artifacts/beat32b_fusion.json"
+  },
+  "embedding_upgrade": "NO image/text embedding exists in the dumps; feature space = dataset id + question text (len, wh-type, TF-IDF->SVD topics) + metadata (SLAKE lang, MedXpert task/qtype/body_system, MMMU subject) + 7B confidence (margin/conf/cum_logprob/gen_toks).  A real BiomedCLIP image+text embedding would sharpen H4 cluster coherence and H2 neighborhoods and is the clear next upgrade.",
+  "H4_slice_discovery": {
+    "protocol": "Repeated over 8 independent stratified 50/50 DISCOVER/CONFIRM splits.  Per split: certify each candidate slice's best deviating policy on CONFIRM (one-sided paired z), BH-FDR5 + Bonferroni across candidates.  GENUINELY-NEW = slice lives inside an always-32B dataset (a PMC/MMMU-majority certification is just an echo of the known win).  Label-permutation null calibrates the selection-inflated procedure.  A real new slice recurs across splits AND clears the null.",
+    "n_candidate_slices": 106,
+    "n_splits": 8,
+    "genuinely_new_raw_per_split_mean": 1.62,
+    "genuinely_new_BH_FDR5_per_split_mean": 0.25,
+    "genuinely_new_BH_FDR5_total_across_splits": 2,
+    "echo_slices_recur": {
+      "PMC_VQA|wh=what": 8,
+      "PMC_VQA|margmid": 8,
+      "PMC_VQA|marghi": 8,
+      "MMMU-Medical-val|wh=other": 7,
+      "PMC_VQA|wh=where": 7,
+      "GKM10c1": 6,
+      "GKM6c0": 5,
+      "GKM16c1": 4
+    },
+    "echo_note": "discovery AUTOMATICALLY RE-FINDS the known PMC-fusion / MMMU-keep7 wins across splits without being told they are special -- validates the F1 hand-gate.",
+    "genuinely_new_recurrence": {
+      "MedXpertQA-MM|bsys=Respiratory": {
+        "splits_certified": 5,
+        "of": 8,
+        "mean_conf_beat": 0.0581,
+        "ever_BH": true
+      },
+      "SLAKE_closed|margmid": {
+        "splits_certified": 3,
+        "of": 8,
+        "mean_conf_beat": 0.0379,
+        "ever_BH": false
+      },
+      "GKM6c5": {
+        "splits_certified": 1,
+        "of": 8,
+        "mean_conf_beat": 0.0549,
+        "ever_BH": false
+      },
+      "MedXpertQA-MM|WKM5c1": {
+        "splits_certified": 1,
+        "of": 8,
+        "mean_conf_beat": 0.0549,
+        "ever_BH": false
+      },
+      "GKM16c0": {
+        "splits_certified": 1,
+        "of": 8,
+        "mean_conf_beat": 0.0495,
+        "ever_BH": false
+      },
+      "GKM10c2": {
+        "splits_certified": 1,
+        "of": 8,
+        "mean_conf_beat": 0.0588,
+        "ever_BH": false
+      },
+      "GKM16c9": {
+        "splits_certified": 1,
+        "of": 8,
+        "mean_conf_beat": 0.07,
+        "ever_BH": true
+      }
+    },
+    "max_genuinely_new_recurrence": 5,
+    "permutation_null": {
+      "genuinely_new_certs_mean": 5.61,
+      "genuinely_new_certs_p95": 15,
+      "total_certs_mean": 15.1,
+      "reps": 120,
+      "note": "spurious genuinely-new certs when labels are shuffled (any real slice signal destroyed)"
+    },
+    "verdict": "If genuinely_new_BH_FDR5_per_split_mean ~ 0 and no genuinely-new slice recurs across a majority of splits above the permutation-null floor, automatic discovery found NO real beat-32B slice beyond PMC/MMMU -> the beat does not extend via slice structure (6th confirmation of the recoverability wall)."
+  },
+  "H8_credibility_shrinkage": {
+    "hand": {
+      "n_slices": 6,
+      "k_cv_mean": 47.5,
+      "ds_keep": {
+        "MMMU-Medical-val": 0.1867,
+        "MedXpertQA-MM": -0.034,
+        "PATH_VQA_yesno": -0.05,
+        "PMC_VQA": -0.0085,
+        "SLAKE_closed": -0.0431,
+        "VQA_RAD_yesno": -0.064
+      },
+      "ds_fuse": {
+        "MMMU-Medical-val": 0.1333,
+        "MedXpertQA-MM": -0.013,
+        "PATH_VQA_yesno": -0.0048,
+        "PMC_VQA": 0.0141,
+        "SLAKE_closed": -0.0024,
+        "VQA_RAD_yesno": -0.016
+      },
+      "naive_point": {
+        "mean_violations": 0.5,
+        "violations_per_split": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          2,
+          1,
+          0
+        ],
+        "mean_deviating_slices": 2.5,
+        "mean_pooled_confirm_beat": 0.0113,
+        "example_split_worst_violations": []
+      },
+      "buhlmann": {
+        "mean_violations": 0.5,
+        "violations_per_split": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          2,
+          1,
+          0
+        ],
+        "mean_deviating_slices": 2.5,
+        "mean_pooled_confirm_beat": 0.0113,
+        "example_split_worst_violations": []
+      },
+      "ci_guardrail": {
+        "mean_violations": 0.0,
+        "violations_per_split": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "mean_deviating_slices": 2.0,
+        "mean_pooled_confirm_beat": 0.0115,
+        "example_split_worst_violations": []
+      }
+    },
+    "fine": {
+      "n_slices": 61,
+      "k_cv_mean": 243.8,
+      "ds_keep": {
+        "MMMU-Medical-val": 0.1867,
+        "MedXpertQA-MM": -0.034,
+        "PATH_VQA_yesno": -0.05,
+        "PMC_VQA": -0.0085,
+        "SLAKE_closed": -0.0431,
+        "VQA_RAD_yesno": -0.064
+      },
+      "ds_fuse": {
+        "MMMU-Medical-val": 0.1333,
+        "MedXpertQA-MM": -0.013,
+        "PATH_VQA_yesno": -0.0048,
+        "PMC_VQA": 0.0141,
+        "SLAKE_closed": -0.0024,
+        "VQA_RAD_yesno": -0.016
+      },
+      "naive_point": {
+        "mean_violations": 7.5,
+        "violations_per_split": [
+          5,
+          6,
+          7,
+          5,
+          7,
+          11,
+          10,
+          9
+        ],
+        "mean_deviating_slices": 24.5,
+        "mean_pooled_confirm_beat": 0.0102,
+        "example_split_worst_violations": [
+          {
+            "slice": "MedXpertQA-MM|bsys=Endocrine",
+            "policy": "keep_7b",
+            "confirm_beat": -0.2432,
+            "n": 37
+          },
+          {
+            "slice": "MedXpertQA-MM|bsys=Cardiovascular",
+            "policy": "keep_7b",
+            "confirm_beat": -0.0782,
+            "n": 179
+          },
+          {
+            "slice": "VQA_RAD_yesno|wh=is",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0227,
+            "n": 88
+          },
+          {
+            "slice": "MedXpertQA-MM|qtype=Understanding",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0186,
+            "n": 269
+          },
+          {
+            "slice": "PATH_VQA_yesno|wh=is",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0079,
+            "n": 888
+          }
+        ]
+      },
+      "buhlmann": {
+        "mean_violations": 6.62,
+        "violations_per_split": [
+          4,
+          6,
+          5,
+          4,
+          3,
+          15,
+          7,
+          9
+        ],
+        "mean_deviating_slices": 22.1,
+        "mean_pooled_confirm_beat": 0.0105,
+        "example_split_worst_violations": [
+          {
+            "slice": "VQA_RAD_yesno|wh=is",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0227,
+            "n": 88
+          },
+          {
+            "slice": "MedXpertQA-MM|qtype=Understanding",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0186,
+            "n": 269
+          },
+          {
+            "slice": "SLAKE_closed",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0167,
+            "n": 418
+          },
+          {
+            "slice": "PATH_VQA_yesno|wh=is",
+            "policy": "F3_fusion",
+            "confirm_beat": -0.0079,
+            "n": 888
+          }
+        ]
+      },
+      "ci_guardrail": {
+        "mean_violations": 0.25,
+        "violations_per_split": [
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0
+        ],
+        "mean_deviating_slices": 9.2,
+        "mean_pooled_confirm_beat": 0.0117,
+        "example_split_worst_violations": []
+      }
+    },
+    "n_splits": 8,
+    "verdict": "Naive point routing (deviate iff raw discovery advantage>0) overfits thin slices: it yields ~7.5 held-out guardrail violations per split on the fine family (of ~24 deviating slices), confirming the thin-slice-overfit failure mode is REAL.  Hierarchical Buhlmann-Straub credibility (shrink each slice's advantage toward its parent-dataset mean, which is <=0 for the always-32B datasets) helps only MARGINALLY: 7.5 -> 6.6 violations, because shrinking a large thin-slice noise (raw ~+0.05) toward a mildly-negative parent (~-0.01) with an MSE-optimal k (mean 244) is too weak to flip it, and shrinking WHOLE-dataset cells toward the PMC-contaminated positive grand fusion mean can even slightly WORSEN them (hand family 0.50 -> 0.50).  The decisive robustifier is the simple CI lower-bound guardrail (deviate iff the discovery 95% lower-CI>0 -- exactly F1's EXISTING rule): it drives fine-family violations to 0.2 and hand-family to 0.0 at a preserved pooled beat (0.0117).  HONEST VERDICT: credibility shrinkage does not beat the CI-guardrail the method already deploys; H8's value is diagnostic -- it confirms the overfit risk is real AND that F1's CI-guardrail (not a fancier actuarial estimator) is the correct, sufficient fix that keeps the per-slice program guardrail-honest."
+  },
+  "H2_knn_gate": {
+    "per_dataset": {
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "acc_7b": 0.2615,
+        "acc_32b": 0.3065,
+        "auroc_helps_knn": 0.4854,
+        "auroc_helps_margin": 0.5547,
+        "acc_vs_esc_knn": {
+          "0.00": 0.2615,
+          "0.10": 0.2625,
+          "0.20": 0.2685,
+          "0.30": 0.266,
+          "0.40": 0.268,
+          "0.50": 0.277,
+          "0.75": 0.286,
+          "1.00": 0.3065
+        },
+        "acc_vs_esc_margin": {
+          "0.00": 0.2615,
+          "0.10": 0.2695,
+          "0.20": 0.2685,
+          "0.30": 0.272,
+          "0.40": 0.278,
+          "0.50": 0.285,
+          "0.75": 0.2955,
+          "1.00": 0.3065
+        },
+        "lowbudget_area_knn": 0.2684,
+        "lowbudget_area_margin": 0.2746,
+        "knn_beats_margin": false
+      },
+      "PATH_VQA_yesno": {
+        "n": 3362,
+        "acc_7b": 0.8409,
+        "acc_32b": 0.8891,
+        "auroc_helps_knn": 0.8314,
+        "auroc_helps_margin": 0.8429,
+        "acc_vs_esc_knn": {
+          "0.00": 0.8409,
+          "0.10": 0.8569,
+          "0.20": 0.8736,
+          "0.30": 0.8801,
+          "0.40": 0.8864,
+          "0.50": 0.887,
+          "0.75": 0.8891,
+          "1.00": 0.8891
+        },
+        "acc_vs_esc_margin": {
+          "0.00": 0.8409,
+          "0.10": 0.8611,
+          "0.20": 0.8763,
+          "0.30": 0.8825,
+          "0.40": 0.8864,
+          "0.50": 0.8896,
+          "0.75": 0.8891,
+          "1.00": 0.8891
+        },
+        "lowbudget_area_knn": 0.8768,
+        "lowbudget_area_margin": 0.8792,
+        "knn_beats_margin": false
+      },
+      "PMC_VQA": {
+        "n": 33430,
+        "acc_7b": 0.5427,
+        "acc_32b": 0.5518,
+        "auroc_helps_knn": 0.6784,
+        "auroc_helps_margin": 0.6975,
+        "acc_vs_esc_knn": {
+          "0.00": 0.5427,
+          "0.10": 0.5496,
+          "0.20": 0.5562,
+          "0.30": 0.5596,
+          "0.40": 0.5612,
+          "0.50": 0.5612,
+          "0.75": 0.5563,
+          "1.00": 0.5518
+        },
+        "acc_vs_esc_margin": {
+          "0.00": 0.5427,
+          "0.10": 0.5524,
+          "0.20": 0.5584,
+          "0.30": 0.5626,
+          "0.40": 0.5625,
+          "0.50": 0.5625,
+          "0.75": 0.5555,
+          "1.00": 0.5518
+        },
+        "lowbudget_area_knn": 0.5576,
+        "lowbudget_area_margin": 0.5597,
+        "knn_beats_margin": false
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "acc_7b": 0.8254,
+        "acc_32b": 0.8589,
+        "auroc_helps_knn": 0.8426,
+        "auroc_helps_margin": 0.857,
+        "acc_vs_esc_knn": {
+          "0.00": 0.8254,
+          "0.10": 0.8385,
+          "0.20": 0.8493,
+          "0.30": 0.8648,
+          "0.40": 0.8672,
+          "0.50": 0.8684,
+          "0.75": 0.8612,
+          "1.00": 0.8589
+        },
+        "acc_vs_esc_margin": {
+          "0.00": 0.8254,
+          "0.10": 0.8421,
+          "0.20": 0.8541,
+          "0.30": 0.866,
+          "0.40": 0.8672,
+          "0.50": 0.8696,
+          "0.75": 0.8577,
+          "1.00": 0.8589
+        },
+        "lowbudget_area_knn": 0.8577,
+        "lowbudget_area_margin": 0.8598,
+        "knn_beats_margin": false
+      },
+      "VQA_RAD_yesno": {
+        "n": 251,
+        "acc_7b": 0.7809,
+        "acc_32b": 0.8526,
+        "auroc_helps_knn": 0.6892,
+        "auroc_helps_margin": 0.7528,
+        "acc_vs_esc_knn": {
+          "0.00": 0.7809,
+          "0.10": 0.7888,
+          "0.20": 0.8048,
+          "0.30": 0.8088,
+          "0.40": 0.8247,
+          "0.50": 0.8367,
+          "0.75": 0.8486,
+          "1.00": 0.8526
+        },
+        "acc_vs_esc_margin": {
+          "0.00": 0.7809,
+          "0.10": 0.8127,
+          "0.20": 0.8247,
+          "0.30": 0.8446,
+          "0.40": 0.8287,
+          "0.50": 0.8367,
+          "0.75": 0.8486,
+          "1.00": 0.8526
+        },
+        "lowbudget_area_knn": 0.8127,
+        "lowbudget_area_margin": 0.8295,
+        "knn_beats_margin": false
+      }
+    },
+    "datasets_where_knn_beats_margin": 0,
+    "n_datasets": 5,
+    "verdict": "kNN neighborhood-recovery vs the scalar margin gate on MCQ.  If kNN does not beat margin's low-budget accuracy area on most datasets, the escalation signal is intrinsically weak on MCQ (the recoverability wall), consistent with H2's own risk note (~0.6 AUROC on MCQ)."
+  },
+  "verdict": "H4: NO genuinely-new beat-32B slice (inside an always-32B dataset) is robust: across 8 splits the mean BH-FDR5 survivor count is 0.25 and the mean raw genuinely-new count (1.62) sits BELOW the label-permutation null (mean 5.61, p95 15); no new slice recurs in more than 5/8 splits (closest near-miss: MedXpertQA-MM|bsys=Respiratory certified in 5/8 splits).  Discovery instead reliably RE-FINDS the known PMC/MMMU wins as echoes (validates the F1 hand-gate).  The beat does NOT extend past PMC/MMMU via slice structure -> 6th independent confirmation of the recoverability wall (the honest deliverable).  H8: naive point routing overfits thin slices (7.5 held-out violations/split, fine family, 8 splits) -- the overfit risk is REAL.  Buhlmann credibility shrinkage helps only MARGINALLY (7.5->6.62) and is DOMINATED by the simple CI lower-bound guardrail F1 already deploys (7.5->0.25 at preserved beat +0.0117).  So the routing is made guardrail-honest by F1's existing CI-guardrail, NOT by the fancier actuarial estimator; H8's value is diagnostic (confirms overfit + validates the guardrail).  H2: kNN neighborhood-recovery beats the scalar margin gate on 0/5 MCQ datasets -> no consistent MCQ gain; the escalation signal is intrinsically weak on MCQ (recoverability wall)."
+}

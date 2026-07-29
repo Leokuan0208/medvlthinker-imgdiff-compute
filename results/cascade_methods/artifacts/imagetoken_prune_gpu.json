@@ -1,0 +1,50 @@
+{
+  "experiment": "G4 image-token pruning (FastV-style) on the 32B escalation forward",
+  "verdict": "NOT quick to wire -> feasibility + concrete implementation plan reported; the -26% FLOP projection STANDS (labeled projection, grounded by measured image-token fractions). No 32B pruning forward was run (disciplined: correct wiring is multi-hour + a wrong impl would fabricate a lesion-safety accuracy number).",
+  "measured_grounding": {
+    "note": "REAL numbers (offline, from ckpts/token_cache.json processor counts + existing repo artifacts).",
+    "image_token_fraction_of_prefill_fullres": {
+      "PMC-VQA": 0.852,
+      "SLAKE": 0.844,
+      "MedXpert-Reasoning": 0.683,
+      "MedXpert-Understanding": 0.797,
+      "PathVQA": 0.895,
+      "VQA-RAD": 0.918,
+      "MMMU": 0.644
+    },
+    "prefill_is_image_dominated": "escalation-heavy cells: VQA-RAD 0.918, SLAKE 0.844, PathVQA 0.895, PMC 0.852, MedXpert 0.68-0.80 -> the 32B short-answer forward IS prefill/image-token bound, the premise the projection rests on.",
+    "resolution_cap_analog_lesion_safety": {
+      "what": "cap320 vs full-res closed subsets (UNIFIED_METHOD_EXPERIMENTS.md L616-617) = encoder-side image-token REDUCTION, the measured analog of pruning.",
+      "PMC_VQA": "0.543->0.542 (-0.001, FREE)",
+      "SLAKE": "0.825->0.809 (-0.017)",
+      "VQA_RAD": "0.781->0.741 (-0.040)",
+      "implication": "cutting image information is FREE on PMC/pathology but COSTS on RADIOLOGY (SLAKE -0.017, VQA-RAD -0.040). So a 50% image-token prune on the escalation-heavy radiology cells carries REAL accuracy risk -> per-benchmark guardrail mandatory. FastV attention-guidance (keep salient tokens) is the hoped-for mitigation over uniform resolution-cap, but is UNVALIDATED for medical fine detail."
+    }
+  },
+  "projection_unchanged": {
+    "labeled": "PROJECTION (not measured)",
+    "claim": "prune 50% of the 32B image tokens after a shallow LLM layer -> forward FLOP-eq 4.57 -> ~3.37 (-26%), latency ~-26% of the prefill-bound 665 ms no-think forward.",
+    "consistency_check": "With image tokens ~85-92% of the sequence and MLP-dominated (hidden 5120, 64 layers) ~linear-in-tokens compute, dropping 0.5*0.9*N tokens after a shallow layer K~=3 gives LLM-transformer FLOP ratio ~[K+(L-K)*0.575]/L ~= 0.60 on the LLM stack; the unpruned vision encoder dilutes this toward the quoted -26% on the full 4.57 forward. Order-of-magnitude consistent; NOT independently re-measured."
+  },
+  "why_not_quick": [
+    "Production 32B inference in this repo is vLLM (verifier_32b_gpu.py, run_32b_vllm.py: LLM(..., tensor_parallel_size=tp)). vLLM's paged KV-cache + CUDA-graph capture do NOT support mid-network per-layer token dropping without a custom model plugin -> the deployable latency claim needs a vLLM surgery, not a flag.",
+    "Model is Qwen2_5_VLForConditionalGeneration (64 layers, hidden 5120) which uses M-RoPE: 3D (temporal,height,width) position ids derived from the image grid. FastV was designed for 1D-RoPE LLaVA; pruning image tokens mid-network requires correctly RE-INDEXING the 3D position ids of the retained tokens -> not a drop-in.",
+    "Vision-token span is dynamic (spatial-merge, variable image size, delimited by <|vision_start|>/<|vision_end|>) -> must be located per-sample.",
+    "Ranking tokens by attention needs attn_implementation='eager' (flash/sdpa don't return weights) -> slow + memory-heavy at 32B; KV cache must be pruned consistently for the subsequent decode steps.",
+    "A MEDICAL LESION-SAFETY accuracy claim (the point of Exp 2) requires a validated implementation; a half-correct one would produce a MISLEADING accuracy number (violates the no-fabricated-numbers rule)."
+  ],
+  "implementation_plan": {
+    "path_A_HF_smoke_recommended_first": [
+      "Load Lingshu-32B via Qwen2_5_VLForConditionalGeneration (HF), attn_implementation='eager'.",
+      "Locate image-token positions from input_ids via <|vision_start|>..<|vision_end|> (or the image-pad id).",
+      "Register a forward hook after decoder layer K (sweep K in {2,3,5}): read mean attention from the final text token(s) to image positions; keep top-r image tokens (r=0.5), drop the rest.",
+      "On drop: slice hidden_states, REBUILD the M-RoPE position_ids for retained tokens, shrink the causal mask; continue layers K+1..64 and generate (max_new_tokens small, greedy).",
+      "PARITY GATE: r=1.0 (no prune) MUST reproduce the full-token accuracy exactly (idx-level) before trusting any r<1 number.",
+      "Scope: ~200/benchmark on VQA-RAD-closed, SLAKE, MedXpert (escalation-heavy); r in {1.0, 0.5}; measure acc vs full-token + per-benchmark guardrail (no cell below always-7B). SHORT tp=2 runs, timeout -s KILL 1800, <=2 retries."
+    ],
+    "path_A_variant_7B_attention_guided": "the backlog's G4 novelty (reuse the 7B cheap-leg cross-attention to pick which tokens the 32B keeps) adds 7B<->32B image-grid alignment (different resolution/merge) -> defer; smoke the 32B-own-attention FastV first.",
+    "path_B_vLLM_production_for_latency_claim": "implement a custom Qwen2_5_VL vLLM model with a prune op after layer K (or a plugin) -> larger effort; needed only to convert the FLOP projection into a measured batch-1 latency win.",
+    "estimated_effort": "Path A smoke: several hours incl. M-RoPE re-indexing + parity validation. Path B: 1-2 days. Neither is 'quick'."
+  },
+  "recommendation": "Given the measured resolution-cap analog already shows image-token reduction is domain-selective (FREE on PMC, -0.04 on VQA-RAD), the highest-value next step is the Path-A HF smoke on VQA-RAD/SLAKE/MedXpert to test whether ATTENTION-GUIDED pruning preserves radiology lesion tokens better than uniform resolution-cap. Until then the -26% FLOP saving remains a PROJECTION, and G4 should be gated behind the per-benchmark radiology guardrail."
+}

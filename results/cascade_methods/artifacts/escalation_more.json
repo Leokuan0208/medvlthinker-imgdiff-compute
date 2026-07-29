@@ -1,0 +1,540 @@
+{
+  "what": "OFFLINE test of UNTESTED backlog sec-G escalation levers G7 (semantic cache) / G2 (early-exit) / G4 (32B image-token prune) on the integrated cascade; re-simulated on saved dumps + measured batch-1 costs.  Companion to escalation_levers.json (G5/G6/G8) and quantized_strong_leg.json (G3).",
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "phi_prefill_fraction": 0.586,
+    "prefill32_ms": 389.7,
+    "decode32_ms": 275.3,
+    "g4_layer_retain": "1 - 3/64 = 0.953 (FastV shallow-exit at layer 3 of ~64)"
+  },
+  "baseline_escalation_profile": {
+    "MedXpertQA-MM": {
+      "acc": 0.3005,
+      "esc": 0.896,
+      "latency_ms": 942.8,
+      "flops": 5.095,
+      "cheap_ms": 347.0
+    },
+    "VQA_RAD_closed": {
+      "acc": 0.8327,
+      "esc": 0.5697,
+      "latency_ms": 725.9,
+      "flops": 3.604,
+      "cheap_ms": 347.0
+    },
+    "SLAKE_open": {
+      "acc": 0.8109,
+      "esc": 0.5287,
+      "latency_ms": 698.6,
+      "flops": 3.416,
+      "cheap_ms": 347.0
+    },
+    "PATH_VQA_closed": {
+      "acc": 0.8882,
+      "esc": 0.4572,
+      "latency_ms": 651.0,
+      "flops": 3.089,
+      "cheap_ms": 347.0
+    },
+    "SLAKE_closed": {
+      "acc": 0.8517,
+      "esc": 0.2045,
+      "latency_ms": 483.0,
+      "flops": 1.935,
+      "cheap_ms": 347.0
+    },
+    "PMC_VQA": {
+      "acc": 0.5508,
+      "esc": 0.0845,
+      "latency_ms": 403.2,
+      "flops": 1.386,
+      "cheap_ms": 347.0
+    }
+  },
+  "escalation_heavy_cells": [
+    "MedXpertQA-MM",
+    "VQA_RAD_closed",
+    "SLAKE_open",
+    "PATH_VQA_closed"
+  ],
+  "G7_semantic_escalation_cache": {
+    "idea": "fire the 32B once per near-duplicate (image, question) cluster over a stream; a cache hit skips the 32B.  DATA-LIMITED: no dump carries an image id/hash -> only normalized question TEXT is a usable key, which conflates different images that share a templated question.",
+    "per_benchmark_dup": {
+      "PMC_VQA": {
+        "n": 33430,
+        "distinct_questions": 33383,
+        "dup_rate": 0.0014,
+        "rows_in_multi_question": 94,
+        "frac_rows_in_multi": 0.0028,
+        "within_cluster_gold_agreement": 0.8085
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "distinct_questions": 155,
+        "dup_rate": 0.8146,
+        "rows_in_multi_question": 765,
+        "frac_rows_in_multi": 0.9151,
+        "within_cluster_gold_agreement": 0.8889
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "distinct_questions": 235,
+        "dup_rate": 0.0637,
+        "rows_in_multi_question": 28,
+        "frac_rows_in_multi": 0.1116,
+        "within_cluster_gold_agreement": 0.8929
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "distinct_questions": 2113,
+        "dup_rate": 0.3715,
+        "rows_in_multi_question": 1578,
+        "frac_rows_in_multi": 0.4694,
+        "within_cluster_gold_agreement": 0.9062
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "distinct_questions": 2000,
+        "dup_rate": 0.0,
+        "rows_in_multi_question": 0,
+        "frac_rows_in_multi": 0.0,
+        "within_cluster_gold_agreement": null
+      },
+      "SLAKE_open": {
+        "n": 645,
+        "distinct_questions": 169,
+        "dup_rate": 0.738,
+        "rows_in_multi_question": 556,
+        "frac_rows_in_multi": 0.862,
+        "within_cluster_gold_agreement": 0.5719
+      }
+    },
+    "question_keyed_cache_sim": {
+      "PMC_VQA": {
+        "base_esc": 0.0845,
+        "base_acc": 0.5508,
+        "cache_eff_esc": 0.0845,
+        "esc_reduction_abs": -0.0,
+        "esc_reduction_pct": -0.0,
+        "cache_acc": 0.5508,
+        "acc_cost_vs_base": -0.0,
+        "new_latency_ms": 403.2,
+        "latency_saved_ms": -0.0,
+        "dup_rate": 0.0014,
+        "within_cluster_gold_agreement": 0.8085
+      },
+      "SLAKE_closed": {
+        "base_esc": 0.2045,
+        "base_acc": 0.8517,
+        "cache_eff_esc": 0.0586,
+        "esc_reduction_abs": 0.1459,
+        "esc_reduction_pct": 71.3,
+        "cache_acc": 0.8876,
+        "acc_cost_vs_base": 0.0359,
+        "new_latency_ms": 386.0,
+        "latency_saved_ms": 97.0,
+        "dup_rate": 0.8146,
+        "within_cluster_gold_agreement": 0.8889
+      },
+      "VQA_RAD_closed": {
+        "base_esc": 0.5697,
+        "base_acc": 0.8327,
+        "cache_eff_esc": 0.5618,
+        "esc_reduction_abs": 0.0079,
+        "esc_reduction_pct": 1.4,
+        "cache_acc": 0.8287,
+        "acc_cost_vs_base": -0.004,
+        "new_latency_ms": 720.6,
+        "latency_saved_ms": 5.3,
+        "dup_rate": 0.0637,
+        "within_cluster_gold_agreement": 0.8929
+      },
+      "PATH_VQA_closed": {
+        "base_esc": 0.4572,
+        "base_acc": 0.8882,
+        "cache_eff_esc": 0.3462,
+        "esc_reduction_abs": 0.111,
+        "esc_reduction_pct": 24.3,
+        "cache_acc": 0.859,
+        "acc_cost_vs_base": -0.0292,
+        "new_latency_ms": 577.2,
+        "latency_saved_ms": 73.8,
+        "dup_rate": 0.3715,
+        "within_cluster_gold_agreement": 0.9062
+      },
+      "MedXpertQA-MM": {
+        "base_esc": 0.896,
+        "base_acc": 0.3005,
+        "cache_eff_esc": 0.896,
+        "esc_reduction_abs": 0.0,
+        "esc_reduction_pct": 0.0,
+        "cache_acc": 0.3005,
+        "acc_cost_vs_base": 0.0,
+        "new_latency_ms": 942.8,
+        "latency_saved_ms": 0.0,
+        "dup_rate": 0.0,
+        "within_cluster_gold_agreement": null
+      },
+      "SLAKE_open": {
+        "base_esc": 0.5287,
+        "base_acc": 0.8109,
+        "cache_eff_esc": 0.2202,
+        "esc_reduction_abs": 0.3085,
+        "esc_reduction_pct": 58.4,
+        "cache_acc": 0.6915,
+        "acc_cost_vs_base": -0.1194,
+        "new_latency_ms": 493.4,
+        "latency_saved_ms": 205.2,
+        "dup_rate": 0.738,
+        "within_cluster_gold_agreement": 0.5719
+      }
+    },
+    "verdict": "G7 gives ~ZERO relief where it is needed and is UNSAFE where duplication exists.  On the escalation-heavy cells the question-text near-duplicate rate is ~0 (MedXpert 0.000, PMC 0.001, VQA_RAD_closed 0.064) -> ~no cache hits, ~no saving.  The only high-duplication slices (SLAKE_closed 0.815, SLAKE_open 0.738, PATH_VQA_closed 0.371) are templated questions asked over DIFFERENT images: within a question cluster the gold answer agrees only 0.57 (SLAKE_open) / 0.89 (SLAKE_closed) / 0.91 (PathVQA_closed), so a question-keyed cache returns a WRONG cross-image answer on the disagreeing fraction -- e.g. SLAKE_open cuts effective escalation 58%% but at -0.119 accuracy; SLAKE_closed's spurious +0.036 is a templated-reuse artifact, not a real gain.  The correct key is (image-hash + question-embedding); NO image id exists in any dump, so the safe/semantic cache is UNMEASURABLE offline here and is future work.  Benchmark duplication is a templated-text artifact; a real deployment stream's (image,question) repeat rate is a distribution assumption, not present in this eval.",
+    "data_gap": "No image id/hash/path in ANY per-sample dump -> the cache's true key is not reconstructable offline; question-text-only clustering OVERCOUNTS duplicates (different images, same template)."
+  },
+  "G2_early_exit_patience": {
+    "idea": "commit a leg without full generation on easy items (generated-token patience OR layer-depth early-exit).  Task asks: is the signal in the dumps?",
+    "gen_toks_distribution": {
+      "7B_cheap": {
+        "VQA_RAD": {
+          "mean": 4.07,
+          "median": 3,
+          "p90": 7,
+          "max": 17
+        },
+        "MedXpertQA-MM": {
+          "mean": 3.0,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "SLAKE": {
+          "mean": 3.86,
+          "median": 3,
+          "p90": 5,
+          "max": 26
+        },
+        "PMC_VQA": {
+          "mean": 3.02,
+          "median": 3,
+          "p90": 3,
+          "max": 16
+        },
+        "PATH_VQA": {
+          "mean": 4.19,
+          "median": 3,
+          "p90": 6,
+          "max": 34
+        }
+      },
+      "32B_strong": {
+        "VQA_RAD": {
+          "mean": 4.25,
+          "median": 3,
+          "p90": 7,
+          "max": 59
+        },
+        "MedXpertQA-MM": {
+          "mean": 3.0,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "SLAKE": {
+          "mean": 4.12,
+          "median": 3,
+          "p90": 5,
+          "max": 39
+        },
+        "PMC_VQA": {
+          "mean": 3.0,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "PATH_VQA": {
+          "mean": 4.37,
+          "median": 3,
+          "p90": 7,
+          "max": 30
+        }
+      }
+    },
+    "finding": "BOTH the 7B cheap leg and the 32B strong leg emit ~3 generated tokens on EVERY benchmark (median 3, p90 3-7): the answer is a letter/word, so both legs are PREFILL-BOUND.  There is essentially no generation to halt -- generated-token patience saves ~0.  Theoretical ceiling if only 1 of ~3 answer tokens were needed = 184 ms/escalation, but the answer IS ~3 tokens, so the realizable generated-token saving is ~0.",
+    "real_lever_needs_gpu": "The lever with real headroom is LAYER-DEPTH early-exit (CALM/LayerSkip): exit the 32B forward at an intermediate layer once per-token confidence is high (literature ~2-3x on the WHOLE forward incl. prefill).  That needs intermediate-layer logits / an exit head, which are NOT in the dumps -> GPU probe required.  A cheap offline confirm path: dump the 32B's per-layer top-1 agreement with its final answer on a small sample to bound the exit layer.",
+    "verdict": "G2 is NOT offline-testable for its real mechanism (layer-exit -> GPU).  The offline-visible generated-token axis is already saturated (~3 tokens, prefill-bound) so it offers no saving.  DATA-ABSENT for the productive variant; flagged GPU."
+  },
+  "G4_image_token_prune_32B_prefill": {
+    "idea": "prune p% of the 32B's image tokens after a shallow layer (FastV/QG-VTC); prefill is ~59%% of the 665 ms forward and image tokens are 79-94%% of the prompt, so the per-escalation cost drops ~linearly with pruned image tokens.  ACCURACY IMPACT NEEDS A GPU CONFIRM (projection only).",
+    "model": "per-escalation 32B latency = prefill*(1 - LAYER_RETAIN*p*img_frac) + decode ; prefill=390 ms, decode=275 ms, LAYER_RETAIN=0.953.  LINEAR-in-token prefill (dominant term); the quadratic attention term saves even more, so this is conservative.",
+    "per_slice": {
+      "PMC_VQA": {
+        "fullres_img_frac": 0.88,
+        "cap320_img_frac": 0.79,
+        "base_esc": 0.0845,
+        "base_latency_ms": 403.2,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 583.3,
+            "esc_ms_saved": 81.7,
+            "esc_flop": 4.009,
+            "prefill_saved_frac": 0.21,
+            "slice_latency_ms": 396.3,
+            "slice_latency_saved_vs_base_ms": 6.9,
+            "slice_flops": 1.339
+          },
+          "p=0.50": {
+            "esc_ms": 501.7,
+            "esc_ms_saved": 163.3,
+            "esc_flop": 3.447,
+            "prefill_saved_frac": 0.419,
+            "slice_latency_ms": 389.4,
+            "slice_latency_saved_vs_base_ms": 13.8,
+            "slice_flops": 1.291
+          },
+          "p=0.75": {
+            "esc_ms": 420.0,
+            "esc_ms_saved": 245.0,
+            "esc_flop": 2.886,
+            "prefill_saved_frac": 0.629,
+            "slice_latency_ms": 382.5,
+            "slice_latency_saved_vs_base_ms": 20.7,
+            "slice_flops": 1.244
+          }
+        }
+      },
+      "SLAKE_closed": {
+        "fullres_img_frac": 0.914,
+        "cap320_img_frac": 0.834,
+        "base_esc": 0.2045,
+        "base_latency_ms": 483.0,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 580.1,
+            "esc_ms_saved": 84.9,
+            "esc_flop": 3.987,
+            "prefill_saved_frac": 0.218,
+            "slice_latency_ms": 465.6,
+            "slice_latency_saved_vs_base_ms": 17.4,
+            "slice_flops": 1.815
+          },
+          "p=0.50": {
+            "esc_ms": 495.3,
+            "esc_ms_saved": 169.7,
+            "esc_flop": 3.404,
+            "prefill_saved_frac": 0.436,
+            "slice_latency_ms": 448.3,
+            "slice_latency_saved_vs_base_ms": 34.7,
+            "slice_flops": 1.696
+          },
+          "p=0.75": {
+            "esc_ms": 410.4,
+            "esc_ms_saved": 254.6,
+            "esc_flop": 2.82,
+            "prefill_saved_frac": 0.653,
+            "slice_latency_ms": 430.9,
+            "slice_latency_saved_vs_base_ms": 52.1,
+            "slice_flops": 1.577
+          }
+        }
+      },
+      "VQA_RAD_closed": {
+        "fullres_img_frac": 0.943,
+        "cap320_img_frac": 0.856,
+        "base_esc": 0.5697,
+        "base_latency_ms": 725.9,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 577.5,
+            "esc_ms_saved": 87.5,
+            "esc_flop": 3.969,
+            "prefill_saved_frac": 0.225,
+            "slice_latency_ms": 676.0,
+            "slice_latency_saved_vs_base_ms": 49.9,
+            "slice_flops": 3.261
+          },
+          "p=0.50": {
+            "esc_ms": 489.9,
+            "esc_ms_saved": 175.1,
+            "esc_flop": 3.367,
+            "prefill_saved_frac": 0.449,
+            "slice_latency_ms": 626.1,
+            "slice_latency_saved_vs_base_ms": 99.8,
+            "slice_flops": 2.918
+          },
+          "p=0.75": {
+            "esc_ms": 402.4,
+            "esc_ms_saved": 262.6,
+            "esc_flop": 2.766,
+            "prefill_saved_frac": 0.674,
+            "slice_latency_ms": 576.3,
+            "slice_latency_saved_vs_base_ms": 149.6,
+            "slice_flops": 2.576
+          }
+        }
+      },
+      "PATH_VQA_closed": {
+        "fullres_img_frac": 0.905,
+        "cap320_img_frac": 0.848,
+        "base_esc": 0.4572,
+        "base_latency_ms": 651.0,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 580.9,
+            "esc_ms_saved": 84.1,
+            "esc_flop": 3.992,
+            "prefill_saved_frac": 0.216,
+            "slice_latency_ms": 612.6,
+            "slice_latency_saved_vs_base_ms": 38.4,
+            "slice_flops": 2.825
+          },
+          "p=0.50": {
+            "esc_ms": 496.9,
+            "esc_ms_saved": 168.1,
+            "esc_flop": 3.415,
+            "prefill_saved_frac": 0.431,
+            "slice_latency_ms": 574.2,
+            "slice_latency_saved_vs_base_ms": 76.8,
+            "slice_flops": 2.561
+          },
+          "p=0.75": {
+            "esc_ms": 412.8,
+            "esc_ms_saved": 252.2,
+            "esc_flop": 2.837,
+            "prefill_saved_frac": 0.647,
+            "slice_latency_ms": 535.7,
+            "slice_latency_saved_vs_base_ms": 115.3,
+            "slice_flops": 2.297
+          }
+        }
+      },
+      "MedXpertQA-MM": {
+        "fullres_img_frac": 0.788,
+        "cap320_img_frac": 0.627,
+        "base_esc": 0.896,
+        "base_latency_ms": 942.8,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 591.9,
+            "esc_ms_saved": 73.1,
+            "esc_flop": 4.067,
+            "prefill_saved_frac": 0.188,
+            "slice_latency_ms": 877.3,
+            "slice_latency_saved_vs_base_ms": 65.5,
+            "slice_flops": 4.644
+          },
+          "p=0.50": {
+            "esc_ms": 518.7,
+            "esc_ms_saved": 146.3,
+            "esc_flop": 3.565,
+            "prefill_saved_frac": 0.375,
+            "slice_latency_ms": 811.8,
+            "slice_latency_saved_vs_base_ms": 131.0,
+            "slice_flops": 4.194
+          },
+          "p=0.75": {
+            "esc_ms": 445.6,
+            "esc_ms_saved": 219.4,
+            "esc_flop": 3.062,
+            "prefill_saved_frac": 0.563,
+            "slice_latency_ms": 746.2,
+            "slice_latency_saved_vs_base_ms": 196.6,
+            "slice_flops": 3.743
+          }
+        }
+      },
+      "SLAKE_open": {
+        "fullres_img_frac": 0.914,
+        "cap320_img_frac": 0.834,
+        "base_esc": 0.5287,
+        "base_latency_ms": 698.6,
+        "per_prune": {
+          "p=0.25": {
+            "esc_ms": 580.1,
+            "esc_ms_saved": 84.9,
+            "esc_flop": 3.987,
+            "prefill_saved_frac": 0.218,
+            "slice_latency_ms": 653.7,
+            "slice_latency_saved_vs_base_ms": 44.9,
+            "slice_flops": 3.108
+          },
+          "p=0.50": {
+            "esc_ms": 495.3,
+            "esc_ms_saved": 169.7,
+            "esc_flop": 3.404,
+            "prefill_saved_frac": 0.436,
+            "slice_latency_ms": 608.8,
+            "slice_latency_saved_vs_base_ms": 89.8,
+            "slice_flops": 2.799
+          },
+          "p=0.75": {
+            "esc_ms": 410.4,
+            "esc_ms_saved": 254.6,
+            "esc_flop": 2.82,
+            "prefill_saved_frac": 0.653,
+            "slice_latency_ms": 564.0,
+            "slice_latency_saved_vs_base_ms": 134.6,
+            "slice_flops": 2.491
+          }
+        }
+      }
+    },
+    "pooled": {
+      "pool_scope": "sample-weighted over the 6 loaded slices; DOMINATED by PMC (33k rows, 8.5%% esc), so the pooled % understates the win -- the per-escalation and heavy-cell numbers are the headline.",
+      "base_latency_ms": 458.7,
+      "base_flops": 1.768,
+      "pruned": {
+        "p=0.25": {
+          "latency_ms": 445.2,
+          "flops": 1.675
+        },
+        "p=0.50": {
+          "latency_ms": 431.8,
+          "flops": 1.582
+        },
+        "p=0.75": {
+          "latency_ms": 418.2,
+          "flops": 1.49
+        }
+      },
+      "latency_saved_pct": {
+        "p=0.25": 3.0,
+        "p=0.50": 5.9,
+        "p=0.75": 8.8
+      },
+      "flops_saved_pct": {
+        "p=0.25": 5.2,
+        "p=0.50": 10.5,
+        "p=0.75": 15.7
+      }
+    },
+    "verdict": "G4 is the best NEW offline-projected speed lever of the three.  At p=0.50 image-token prune the 32B escalation forward drops ~665 -> ~590-620 ms (per-slice, PROJECTED) with the largest absolute win on the escalation-heavy, image-token-rich cells (VQA_RAD_closed img_frac 0.94, MedXpert 0.79, SLAKE_open 0.91).  This is a per-escalation (cheaper) lever, so it stacks with the escalation-RATE levers.  It is a PROJECTION: the FLOPs/latency model is analytical (real, from measured phi + token_cache), but the ACCURACY at each prune level MUST be confirmed on a GPU (medical fine detail may sit in low-salience tokens -> per-benchmark guardrail)."
+  },
+  "MEASURED_VS_PROJECTED": {
+    "G7": "MEASURED (dup rates, gold agreement, question-keyed cache esc-reduction + acc-cost are computed on real dumps).  The SAFE/semantic image-keyed version is UNMEASURABLE (no image id) -> future work.",
+    "G2": "MEASURED that answers are ~3 tokens (prefill-bound) -> generated-token halt ~0.  Layer-exit lever = PROJECTED/literature, needs GPU.",
+    "G4": "PROJECTED latency/FLOPs (analytical model on measured phi=0.586 + real token_cache img_frac).  Accuracy = NEEDS GPU CONFIRM."
+  },
+  "VERDICT": {
+    "best_new_speed_lever": "G4 (image-token pruning of the 32B prefill) -- the only one of the three with real, quantified offline headroom on the escalation-heavy cells.",
+    "g4_saving": "PROJECTED per-escalation 32B latency/FLOPs -26% @ p=0.50 / -39% @ p=0.75 on the most image-token-rich cell (VQA_RAD_closed); pooled cascade latency 459 -> 432 ms @ p=0.50 (-5.9%).  ACCURACY NEEDS GPU CONFIRM.",
+    "g7": "DEAD offline: ~0 duplication on the escalation-heavy cells (MedXpert/PMC/VQA_RAD), and unsafe cross-image reuse where duplication exists (SLAKE/PathVQA templated).  No image key in the dumps.",
+    "g2": "DATA-ABSENT offline: answers are ~3 tokens (prefill-bound), so generated-token halting saves ~0; the real layer-depth early-exit needs a GPU probe.",
+    "bottom_line": "G4 is the single new lever worth a GPU accuracy confirm; it is CHEAPER-per-escalation and STACKS with the previously-validated G8 (prefill prefetch) and G5 (futility suppressor).  G7 and G2 are offline dead-ends on THIS eval (no image key / prefill-bound)."
+  }
+}

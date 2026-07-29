@@ -1,0 +1,1804 @@
+{
+  "title": "paper_baselines -- CORE results table: OUR method vs the strongest single-model 32B strategies (incl. oracle-mode-32B = per-benchmark best of think/no-think), per-benchmark + pooled, all axes, with paired-bootstrap 95% CIs. Recomputed live per-sample; no GPU.",
+  "reproduce": "python3 src/cascade_methods/paper_baselines.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "energy_j": 45.8,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "energy_j": 25.3,
+      "flop": 1.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "energy_j": 127.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "energy_j": 2001.9,
+      "flop": 4.57
+    },
+    "FUSE_both_legs": {
+      "ms_par": 665.0,
+      "ms_seq": 1012.0,
+      "energy_j": 172.8,
+      "flop": 5.57
+    },
+    "cheap_draw": {
+      "ms": 522.0,
+      "energy_j": 71.1,
+      "flop": 2.0
+    },
+    "think_delta_open": {
+      "slake_open": -0.195,
+      "vqa_rad_open": -0.12,
+      "pathvqa_open": -0.13
+    }
+  },
+  "systems": {
+    "always_7b": "cheap floor: 7B-nt on MCQ, 7B greedy on open",
+    "always_32b_nt": "strong reference: one 32B no-think forward",
+    "always_32b_think": "naive baseline: 32B think on everything",
+    "oracle_mode_32b": "HONEST strong baseline: per-benchmark best of {think,no-think}; acc=max, cost=that mode",
+    "method_compute_lean": "margin-cascade MCQ | Pandora bo-N+verifier open | keep-7B MMMU (method_final.json compute-lean)",
+    "method_accuracy_max": "F1 slice-router (F3 fusion on PMC) MCQ | Pandora open | keep-7B MMMU (method_final.json accuracy-max)"
+  },
+  "oracle_mode_selection": {
+    "PMC_VQA": "no-think",
+    "SLAKE_closed": "think",
+    "VQA_RAD_closed": "no-think",
+    "PATH_VQA_closed": "no-think",
+    "MedXpertQA-MM": "no-think",
+    "MMMU-Medical-val": "think",
+    "SLAKE_open": "no-think",
+    "VQA_RAD_open": "no-think",
+    "PATH_VQA_open": "no-think"
+  },
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "cascade",
+      "method_am_policy": "F3_confadv(fusion)",
+      "systems": {
+        "always_7b": {
+          "acc": 0.5427,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.5518,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.5494,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.5518,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.5508,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 403.2,
+          "lat_par_ms": 403.2,
+          "flops": 1.386,
+          "energy_j": 56.5
+        },
+        "method_accuracy_max": {
+          "acc": 0.5653,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 1012.0,
+          "lat_par_ms": 665.0,
+          "flops": 5.57,
+          "energy_j": 172.8
+        }
+      }
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "oracle_mode": "think",
+      "method_cl_policy": "cascade",
+      "method_am_policy": "always_32b_nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.8254,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.8589,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.8636,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.8636,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "method_compute_lean": {
+          "acc": 0.8517,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 483.0,
+          "lat_par_ms": 483.0,
+          "flops": 1.935,
+          "energy_j": 71.8
+        },
+        "method_accuracy_max": {
+          "acc": 0.8589,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        }
+      }
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "cascade",
+      "method_am_policy": "always_32b_nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.7809,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.8526,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.8406,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.8526,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.8327,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 725.9,
+          "lat_par_ms": 725.9,
+          "flops": 3.604,
+          "energy_j": 118.2
+        },
+        "method_accuracy_max": {
+          "acc": 0.8526,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        }
+      }
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "cascade",
+      "method_am_policy": "always_32b_nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.8409,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.8891,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.8891,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.8891,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.8882,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 651.0,
+          "lat_par_ms": 651.0,
+          "flops": 3.089,
+          "energy_j": 103.9
+        },
+        "method_accuracy_max": {
+          "acc": 0.8891,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        }
+      }
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "cascade",
+      "method_am_policy": "always_32b_nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.2615,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.3065,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.304,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.3065,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.3005,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 942.8,
+          "lat_par_ms": 942.8,
+          "flops": 5.095,
+          "energy_j": 159.6
+        },
+        "method_accuracy_max": {
+          "acc": 0.3065,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        }
+      }
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "oracle_mode": "think",
+      "method_cl_policy": "always_7b",
+      "method_am_policy": "always_7b",
+      "systems": {
+        "always_7b": {
+          "acc": 0.8,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.6333,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.66,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.66,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "method_compute_lean": {
+          "acc": 0.8,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "method_accuracy_max": {
+          "acc": 0.8,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        }
+      }
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "pandora-N+verifier->32B-nt",
+      "method_am_policy": "pandora-N+verifier->32B-nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.7364,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.8186,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.6236,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.8186,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.8093,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 1905.9,
+          "lat_par_ms": 627.2,
+          "flops": 7.622,
+          "energy_j": 265.4
+        },
+        "method_accuracy_max": {
+          "acc": 0.8093,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 1905.9,
+          "lat_par_ms": 627.2,
+          "flops": 7.622,
+          "energy_j": 265.4
+        }
+      }
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "pandora-N+verifier->32B-nt",
+      "method_am_policy": "pandora-N+verifier->32B-nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.465,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.6,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.48,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.6,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.595,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2124.1,
+          "lat_par_ms": 605.1,
+          "flops": 8.391,
+          "energy_j": 293.9
+        },
+        "method_accuracy_max": {
+          "acc": 0.595,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2124.1,
+          "lat_par_ms": 605.1,
+          "flops": 8.391,
+          "energy_j": 293.9
+        }
+      }
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "oracle_mode": "no-think",
+      "method_cl_policy": "pandora-N+verifier->32B-nt",
+      "method_am_policy": "pandora-N+verifier->32B-nt",
+      "systems": {
+        "always_7b": {
+          "acc": 0.324,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        "always_32b_nt": {
+          "acc": 0.376,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "always_32b_think": {
+          "acc": 0.246,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "acc": 0.376,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        "method_compute_lean": {
+          "acc": 0.452,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 3099.8,
+          "lat_par_ms": 759.2,
+          "flops": 12.598,
+          "energy_j": 435.2
+        },
+        "method_accuracy_max": {
+          "acc": 0.452,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 3099.8,
+          "lat_par_ms": 759.2,
+          "flops": 12.598,
+          "energy_j": 435.2
+        }
+      }
+    }
+  },
+  "pooled": {
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "systems": {
+        "always_7b": {
+          "acc": 0.5558,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8,
+          "flops_vs_always32": 0.219
+        },
+        "always_32b_nt": {
+          "acc": 0.5732,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0,
+          "flops_vs_always32": 1.0
+        },
+        "always_32b_think": {
+          "acc": 0.5632,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9,
+          "flops_vs_always32": 1.0
+        },
+        "oracle_mode_32b": {
+          "acc": 0.5733,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 894.4,
+          "lat_par_ms": 894.4,
+          "flops": 4.57,
+          "energy_j": 170.6,
+          "flops_vs_always32": 1.0
+        },
+        "method_compute_lean": {
+          "acc": 0.5749,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 578.1,
+          "lat_par_ms": 468.6,
+          "flops": 2.244,
+          "energy_j": 83.5,
+          "flops_vs_always32": 0.491
+        },
+        "method_accuracy_max": {
+          "acc": 0.5869,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 1049.6,
+          "lat_par_ms": 666.3,
+          "flops": 5.695,
+          "energy_j": 176.6,
+          "flops_vs_always32": 1.246
+        }
+      }
+    },
+    "mcq_only": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val"
+      ],
+      "n": 40029,
+      "systems": {
+        "always_7b": {
+          "acc": 0.562,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8,
+          "flops_vs_always32": 0.219
+        },
+        "always_32b_nt": {
+          "acc": 0.5765,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0,
+          "flops_vs_always32": 1.0
+        },
+        "always_32b_think": {
+          "acc": 0.5745,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9,
+          "flops_vs_always32": 1.0
+        },
+        "oracle_mode_32b": {
+          "acc": 0.5767,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 907.8,
+          "lat_par_ms": 907.8,
+          "flops": 4.57,
+          "energy_j": 173.2,
+          "flops_vs_always32": 1.0
+        },
+        "method_compute_lean": {
+          "acc": 0.5756,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 454.5,
+          "lat_par_ms": 454.5,
+          "flops": 1.739,
+          "energy_j": 66.3,
+          "flops_vs_always32": 0.38
+        },
+        "method_accuracy_max": {
+          "acc": 0.5883,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 953.6,
+          "lat_par_ms": 663.8,
+          "flops": 5.392,
+          "energy_j": 164.9,
+          "flops_vs_always32": 1.18
+        }
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "systems": {
+        "always_7b": {
+          "acc": 0.4495,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8,
+          "flops_vs_always32": 0.219
+        },
+        "always_32b_nt": {
+          "acc": 0.5168,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0,
+          "flops_vs_always32": 1.0
+        },
+        "always_32b_think": {
+          "acc": 0.3698,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9,
+          "flops_vs_always32": 1.0
+        },
+        "oracle_mode_32b": {
+          "acc": 0.5168,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0,
+          "flops_vs_always32": 1.0
+        },
+        "method_compute_lean": {
+          "acc": 0.5625,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2688.2,
+          "lat_par_ms": 709.7,
+          "flops": 10.871,
+          "energy_j": 376.4,
+          "flops_vs_always32": 2.379
+        },
+        "method_accuracy_max": {
+          "acc": 0.5625,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2688.2,
+          "lat_par_ms": 709.7,
+          "flops": 10.871,
+          "energy_j": 376.4,
+          "flops_vs_always32": 2.379
+        }
+      }
+    }
+  },
+  "paired_bootstrap_ci": {
+    "method_compute_lean": {
+      "always_7b": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0081,
+            "lo": 0.0062,
+            "hi": 0.0101,
+            "sig": true,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": 0.0263,
+            "lo": 0.0084,
+            "hi": 0.0443,
+            "sig": true,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": 0.0518,
+            "lo": 0.012,
+            "hi": 0.0956,
+            "sig": true,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": 0.0473,
+            "lo": 0.0357,
+            "hi": 0.0589,
+            "sig": true,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": 0.039,
+            "lo": 0.0165,
+            "hi": 0.0615,
+            "sig": true,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": 0.0729,
+            "lo": 0.0434,
+            "hi": 0.1039,
+            "sig": true,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": 0.13,
+            "lo": 0.08,
+            "hi": 0.185,
+            "sig": true,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.128,
+            "lo": 0.1087,
+            "hi": 0.1473,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0191,
+            "lo": 0.0167,
+            "hi": 0.0214,
+            "sig": true,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": 0.0136,
+            "lo": 0.0113,
+            "hi": 0.0158,
+            "sig": true,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.113,
+            "lo": 0.0972,
+            "hi": 0.1288,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      },
+      "always_32b_nt": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": -0.001,
+            "lo": -0.0058,
+            "hi": 0.0039,
+            "sig": false,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": -0.0072,
+            "lo": -0.0239,
+            "hi": 0.0096,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": -0.0199,
+            "lo": -0.0398,
+            "hi": 0.0,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": -0.0009,
+            "lo": -0.0042,
+            "hi": 0.0024,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": -0.006,
+            "lo": -0.012,
+            "hi": -0.0005,
+            "sig": true,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.1667,
+            "lo": 0.0867,
+            "hi": 0.2467,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": -0.0093,
+            "lo": -0.0357,
+            "hi": 0.0171,
+            "sig": false,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": -0.005,
+            "lo": -0.06,
+            "hi": 0.05,
+            "sig": false,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.076,
+            "lo": 0.056,
+            "hi": 0.096,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0017,
+            "lo": -0.0022,
+            "hi": 0.0057,
+            "sig": false,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": -0.0008,
+            "lo": -0.0048,
+            "hi": 0.0033,
+            "sig": false,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.0456,
+            "lo": 0.0299,
+            "hi": 0.0614,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      },
+      "always_32b_think": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0014,
+            "lo": -0.0035,
+            "hi": 0.0063,
+            "sig": false,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": -0.012,
+            "lo": -0.0299,
+            "hi": 0.0048,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": -0.008,
+            "lo": -0.0359,
+            "hi": 0.0199,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": -0.0009,
+            "lo": -0.0042,
+            "hi": 0.0024,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": -0.0035,
+            "lo": -0.025,
+            "hi": 0.0175,
+            "sig": false,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.14,
+            "lo": 0.0533,
+            "hi": 0.2267,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": 0.1857,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          },
+          "VQA_RAD_open": {
+            "delta": 0.115,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          },
+          "PATH_VQA_open": {
+            "delta": 0.206,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0011,
+            "lo": -0.003,
+            "hi": 0.0053,
+            "sig": false,
+            "n": 40029,
+            "note": "open-text cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded (32B-think open acc is a measured-delta estimate, no per-sample dump); CI is over the real-vector cells only",
+            "point_delta_all_cells": 0.0117
+          },
+          "mcq_only": {
+            "delta": 0.0011,
+            "lo": -0.0031,
+            "hi": 0.0054,
+            "sig": false,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.1927,
+            "estimated": true,
+            "n": 0,
+            "note": "all cells have estimated 32B-think acc (no per-sample dump); point delta only"
+          }
+        }
+      },
+      "oracle_mode_32b": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": -0.001,
+            "lo": -0.0058,
+            "hi": 0.0039,
+            "sig": false,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": -0.012,
+            "lo": -0.0299,
+            "hi": 0.006,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": -0.0199,
+            "lo": -0.0398,
+            "hi": 0.0,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": -0.0009,
+            "lo": -0.0042,
+            "hi": 0.0024,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": -0.006,
+            "lo": -0.012,
+            "hi": -0.0005,
+            "sig": true,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.14,
+            "lo": 0.0533,
+            "hi": 0.2267,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": -0.0093,
+            "lo": -0.0372,
+            "hi": 0.0171,
+            "sig": false,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": -0.005,
+            "lo": -0.06,
+            "hi": 0.05,
+            "sig": false,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.076,
+            "lo": 0.0553,
+            "hi": 0.096,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0015,
+            "lo": -0.0025,
+            "hi": 0.0055,
+            "sig": false,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": -0.001,
+            "lo": -0.0051,
+            "hi": 0.0031,
+            "sig": false,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.0456,
+            "lo": 0.0299,
+            "hi": 0.0614,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      }
+    },
+    "method_accuracy_max": {
+      "always_7b": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0226,
+            "lo": 0.0187,
+            "hi": 0.0266,
+            "sig": true,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": 0.0335,
+            "lo": 0.0084,
+            "hi": 0.0586,
+            "sig": true,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": 0.0717,
+            "lo": 0.0239,
+            "hi": 0.1195,
+            "sig": true,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": 0.0482,
+            "lo": 0.0357,
+            "hi": 0.0601,
+            "sig": true,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": 0.045,
+            "lo": 0.022,
+            "hi": 0.068,
+            "sig": true,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": 0.0729,
+            "lo": 0.0419,
+            "hi": 0.1023,
+            "sig": true,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": 0.13,
+            "lo": 0.08,
+            "hi": 0.185,
+            "sig": true,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.128,
+            "lo": 0.1087,
+            "hi": 0.148,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0311,
+            "lo": 0.0276,
+            "hi": 0.0346,
+            "sig": true,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": 0.0263,
+            "lo": 0.0226,
+            "hi": 0.03,
+            "sig": true,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.113,
+            "lo": 0.0977,
+            "hi": 0.1288,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      },
+      "always_32b_nt": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0135,
+            "lo": 0.0101,
+            "hi": 0.0169,
+            "sig": true,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.1667,
+            "lo": 0.0867,
+            "hi": 0.2467,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": -0.0093,
+            "lo": -0.0357,
+            "hi": 0.0171,
+            "sig": false,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": -0.005,
+            "lo": -0.06,
+            "hi": 0.05,
+            "sig": false,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.076,
+            "lo": 0.056,
+            "hi": 0.096,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0138,
+            "lo": 0.0109,
+            "hi": 0.0166,
+            "sig": true,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": 0.0119,
+            "lo": 0.009,
+            "hi": 0.0148,
+            "sig": true,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.0456,
+            "lo": 0.0299,
+            "hi": 0.0614,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      },
+      "always_32b_think": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0159,
+            "lo": 0.0121,
+            "hi": 0.0196,
+            "sig": true,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": -0.0048,
+            "lo": -0.012,
+            "hi": 0.0024,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": 0.012,
+            "lo": -0.008,
+            "hi": 0.0319,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": 0.0025,
+            "lo": -0.0185,
+            "hi": 0.024,
+            "sig": false,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.14,
+            "lo": 0.0533,
+            "hi": 0.2267,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": 0.1857,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          },
+          "VQA_RAD_open": {
+            "delta": 0.115,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          },
+          "PATH_VQA_open": {
+            "delta": 0.206,
+            "estimated": true,
+            "note": "32B-think open-text acc is a measured-delta estimate; no per-sample CI"
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0139,
+            "lo": 0.0106,
+            "hi": 0.0171,
+            "sig": true,
+            "n": 40029,
+            "note": "open-text cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded (32B-think open acc is a measured-delta estimate, no per-sample dump); CI is over the real-vector cells only",
+            "point_delta_all_cells": 0.0237
+          },
+          "mcq_only": {
+            "delta": 0.0139,
+            "lo": 0.0106,
+            "hi": 0.0172,
+            "sig": true,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.1927,
+            "estimated": true,
+            "n": 0,
+            "note": "all cells have estimated 32B-think acc (no per-sample dump); point delta only"
+          }
+        }
+      },
+      "oracle_mode_32b": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "delta": 0.0135,
+            "lo": 0.01,
+            "hi": 0.0169,
+            "sig": true,
+            "n": 33430
+          },
+          "SLAKE_closed": {
+            "delta": -0.0048,
+            "lo": -0.0132,
+            "hi": 0.0024,
+            "sig": false,
+            "n": 836
+          },
+          "VQA_RAD_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 251
+          },
+          "PATH_VQA_closed": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 3362
+          },
+          "MedXpertQA-MM": {
+            "delta": 0.0,
+            "lo": 0.0,
+            "hi": 0.0,
+            "sig": false,
+            "n": 2000
+          },
+          "MMMU-Medical-val": {
+            "delta": 0.14,
+            "lo": 0.0533,
+            "hi": 0.2267,
+            "sig": true,
+            "n": 150
+          },
+          "SLAKE_open": {
+            "delta": -0.0093,
+            "lo": -0.0357,
+            "hi": 0.0171,
+            "sig": false,
+            "n": 645
+          },
+          "VQA_RAD_open": {
+            "delta": -0.005,
+            "lo": -0.06,
+            "hi": 0.05,
+            "sig": false,
+            "n": 200
+          },
+          "PATH_VQA_open": {
+            "delta": 0.076,
+            "lo": 0.056,
+            "hi": 0.0967,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "delta": 0.0136,
+            "lo": 0.0108,
+            "hi": 0.0165,
+            "sig": true,
+            "n": 42374
+          },
+          "mcq_only": {
+            "delta": 0.0117,
+            "lo": 0.0087,
+            "hi": 0.0146,
+            "sig": true,
+            "n": 40029
+          },
+          "open_only": {
+            "delta": 0.0456,
+            "lo": 0.0294,
+            "hi": 0.0614,
+            "sig": true,
+            "n": 2345
+          }
+        }
+      }
+    }
+  },
+  "pareto_frontier": {
+    "full_suite": {
+      "points": [
+        {
+          "system": "always_7b",
+          "acc": 0.5558,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        {
+          "system": "always_32b_nt",
+          "acc": 0.5732,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        {
+          "system": "always_32b_think",
+          "acc": 0.5632,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        {
+          "system": "oracle_mode_32b",
+          "acc": 0.5733,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 894.4,
+          "lat_par_ms": 894.4,
+          "flops": 4.57,
+          "energy_j": 170.6
+        },
+        {
+          "system": "method_compute_lean",
+          "acc": 0.5749,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 578.1,
+          "lat_par_ms": 468.6,
+          "flops": 2.244,
+          "energy_j": 83.5
+        },
+        {
+          "system": "method_accuracy_max",
+          "acc": 0.5869,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 1049.6,
+          "lat_par_ms": 666.3,
+          "flops": 5.695,
+          "energy_j": 176.6
+        }
+      ],
+      "pareto_optimal_flops": [
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean"
+      ],
+      "pareto_optimal_lat_par": [
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean"
+      ],
+      "pareto_optimal_lat_seq": [
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean"
+      ]
+    },
+    "mcq_only": {
+      "points": [
+        {
+          "system": "always_7b",
+          "acc": 0.562,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        {
+          "system": "always_32b_nt",
+          "acc": 0.5765,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        {
+          "system": "always_32b_think",
+          "acc": 0.5745,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        {
+          "system": "oracle_mode_32b",
+          "acc": 0.5767,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 907.8,
+          "lat_par_ms": 907.8,
+          "flops": 4.57,
+          "energy_j": 173.2
+        },
+        {
+          "system": "method_compute_lean",
+          "acc": 0.5756,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 454.5,
+          "lat_par_ms": 454.5,
+          "flops": 1.739,
+          "energy_j": 66.3
+        },
+        {
+          "system": "method_accuracy_max",
+          "acc": 0.5883,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 953.6,
+          "lat_par_ms": 663.8,
+          "flops": 5.392,
+          "energy_j": 164.9
+        }
+      ],
+      "pareto_optimal_flops": [
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean",
+        "oracle_mode_32b"
+      ],
+      "pareto_optimal_lat_par": [
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean"
+      ],
+      "pareto_optimal_lat_seq": [
+        "always_32b_nt",
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean",
+        "oracle_mode_32b"
+      ]
+    },
+    "open_only": {
+      "points": [
+        {
+          "system": "always_7b",
+          "acc": 0.4495,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 347.0,
+          "lat_par_ms": 347.0,
+          "flops": 1.0,
+          "energy_j": 45.8
+        },
+        {
+          "system": "always_32b_nt",
+          "acc": 0.5168,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        {
+          "system": "always_32b_think",
+          "acc": 0.3698,
+          "acc_is_estimated": true,
+          "lat_seq_ms": 10521.6,
+          "lat_par_ms": 10521.6,
+          "flops": 4.57,
+          "energy_j": 2001.9
+        },
+        {
+          "system": "oracle_mode_32b",
+          "acc": 0.5168,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 665.0,
+          "lat_par_ms": 665.0,
+          "flops": 4.57,
+          "energy_j": 127.0
+        },
+        {
+          "system": "method_compute_lean",
+          "acc": 0.5625,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2688.2,
+          "lat_par_ms": 709.7,
+          "flops": 10.871,
+          "energy_j": 376.4
+        },
+        {
+          "system": "method_accuracy_max",
+          "acc": 0.5625,
+          "acc_is_estimated": false,
+          "lat_seq_ms": 2688.2,
+          "lat_par_ms": 709.7,
+          "flops": 10.871,
+          "energy_j": 376.4
+        }
+      ],
+      "pareto_optimal_flops": [
+        "always_32b_nt",
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean",
+        "oracle_mode_32b"
+      ],
+      "pareto_optimal_lat_par": [
+        "always_32b_nt",
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean",
+        "oracle_mode_32b"
+      ],
+      "pareto_optimal_lat_seq": [
+        "always_32b_nt",
+        "always_7b",
+        "method_accuracy_max",
+        "method_compute_lean",
+        "oracle_mode_32b"
+      ]
+    }
+  },
+  "verdict": {
+    "compute-lean": {
+      "method_acc": 0.5749,
+      "oracle_mode_32b_acc": 0.5733,
+      "pooled_full_suite_delta_vs_oracle": {
+        "delta": 0.0015,
+        "lo": -0.0025,
+        "hi": 0.0055,
+        "sig": false,
+        "n": 42374
+      },
+      "pooled_mcq_delta_vs_oracle": {
+        "delta": -0.001,
+        "lo": -0.0051,
+        "hi": 0.0031,
+        "sig": false,
+        "n": 40029
+      },
+      "benchmarks_method_SIG_beats_oracle": [
+        "MMMU-Medical-val",
+        "PATH_VQA_open"
+      ],
+      "benchmarks_method_SIG_below_oracle": [
+        "MedXpertQA-MM"
+      ],
+      "cost_vs_oracle": {
+        "method_flops": 2.244,
+        "oracle_flops": 4.57,
+        "method_lat_par_ms": 468.6,
+        "oracle_lat_par_ms": 894.4,
+        "method_energy_j": 83.5,
+        "oracle_energy_j": 170.6
+      }
+    },
+    "accuracy-max": {
+      "method_acc": 0.5869,
+      "oracle_mode_32b_acc": 0.5733,
+      "pooled_full_suite_delta_vs_oracle": {
+        "delta": 0.0136,
+        "lo": 0.0108,
+        "hi": 0.0165,
+        "sig": true,
+        "n": 42374
+      },
+      "pooled_mcq_delta_vs_oracle": {
+        "delta": 0.0117,
+        "lo": 0.0087,
+        "hi": 0.0146,
+        "sig": true,
+        "n": 40029
+      },
+      "benchmarks_method_SIG_beats_oracle": [
+        "PMC_VQA",
+        "MMMU-Medical-val",
+        "PATH_VQA_open"
+      ],
+      "benchmarks_method_SIG_below_oracle": [],
+      "cost_vs_oracle": {
+        "method_flops": 5.695,
+        "oracle_flops": 4.57,
+        "method_lat_par_ms": 666.3,
+        "oracle_lat_par_ms": 894.4,
+        "method_energy_j": 176.6,
+        "oracle_energy_j": 170.6
+      }
+    },
+    "summary": "Compute-lean essentially MATCHES oracle-mode-32B on pooled accuracy (small, near-zero/insig delta) while being far cheaper; its win is COST, not accuracy. Accuracy-max BEATS oracle-mode-32B on pooled accuracy, driven by the PMC F3-fusion cell (n=33430, ~79% of the pool). Where the method genuinely beats the best single 32B, per-benchmark, is: MMMU (keep-7B, 7B>>32B), PathVQA-open (verifier bo-N), and PMC (fusion, accuracy-max only). On the radiology/pathology closed sets the method matches or slightly trails oracle-mode-32B (guardrail keeps it safe). The honest headline is thus: MATCH oracle-mode-32B at a fraction of the cost (compute-lean), or BEAT it modestly via PMC fusion + MMMU + open-text (accuracy-max); the always-32B-THINK 'more accurate' claim is real but weak (think self-sabotages)."
+  },
+  "data_gaps": [
+    "always-32B-THINK open-text accuracy is ESTIMATED (judged 32B-no-think + measured modal think-delta -0.195/-0.120/-0.130); no per-sample judged think dump on open -> method-vs-THINK CI is MCQ-pool only; the full-suite vs-THINK delta is a flagged point estimate. Every OTHER comparison (vs oracle-mode-32B, vs 32B-no-think, vs 7B) has real per-sample vectors on ALL cells incl. open.",
+    "PATH_VQA_closed has no 32B-think dump -> think=no-think there; oracle picks no-think.",
+    "oracle-mode-32B is an ORACLE upper bound on single-32B mode selection: it peeks at which mode wins per benchmark. It is the fairest STRONG baseline ('best the big model alone can do'), not a deployable system (real mode-routing would cost an extra decision).",
+    "paired bootstrap resamples QUESTIONS (sampling noise); held-out tau/lambda are fixed per item, so calibration variance is not in the CI.",
+    "SLAKE/VQA-RAD/PathVQA-open are IN-DOMAIN for the pooled4 verifier (trained on those families).",
+    "OmniMedVQA-32B excluded (tp=2 NCCL hang) -> ALL-7 pool not reportable; verdict unchanged."
+  ]
+}

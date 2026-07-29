@@ -127,8 +127,8 @@ def main():
 
     out = {m: res[m] for m in res}
     json.dump({m: {k: float(v) for k, v in res[m].items()} for m in res},
-              open("results/cascade_methods/final_robustness_rescue.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/final_robustness_rescue.json")
+              open("results/cascade_methods/artifacts/final_robustness_rescue.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/final_robustness_rescue.json")
     print(f"\nHEADLINES (frozen gate, competent-4):")
     print(f"  R : calls {dep['call']*100:.0f}%->{res['R']['call']*100:.0f}%, backbone {dep['backbone']*100:.0f}%->{res['R']['backbone']*100:.0f}%, acc {res['R']['acc']:.4f} (~parity)")
     print(f"  V : calls {dep['call']*100:.0f}%->{res['V']['call']*100:.0f}%, backbone {dep['backbone']*100:.0f}%->{res['V']['backbone']*100:.0f}%, acc {res['V']['acc']:.4f} (no loss)")

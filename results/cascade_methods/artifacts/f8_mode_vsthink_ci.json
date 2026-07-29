@@ -1,0 +1,265 @@
+{
+  "title": "FLOP-negative accuracy-max mode (F8 certified-veto + F10 L2D) vs always-32B-THINK: paired-bootstrap 95% CI using the MEASURED per-sample 32B-THINK vectors (MCQ real + open measured-judged). Closes the one headline row that lacked a vs-THINK CI.",
+  "reproduce": "python3 src/cascade_methods/f8_mode_vsthink_ci.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "method_vector": "F8+F10 accuracy-max (method_final_mmmu_corrected accuracy_max_v2_F8F10), Variant B; per-sample delivered-ok reconstructed held-out 5-fold cross-fit.",
+  "think_vector": "always-32B-THINK per-sample: MCQ real okT (paper_baselines.build_cells; PATH_VQA_closed has no think dump -> okT=32B-no-think), OPEN measured judged-think (ckpts/openvqa/strong_lingshu_think/ckpt_*_lingshu32b_think.judge.jsonl, opentext_32b_think_full.measured_open_think()).",
+  "headline": {
+    "mode": "accuracy-max (F8 certified-veto on PMC + F10 team-objective L2D on open); FLOP-negative 0.93x",
+    "variant": "B (MMMU excluded)",
+    "method_acc": 0.5836,
+    "acc_32b_think_measured": 0.5591,
+    "d_vs_think": 0.0245,
+    "ci95": [
+      0.0216,
+      0.0274
+    ],
+    "sig": true,
+    "n": 42224,
+    "note": "Paper's accuracy-max row: acc 0.5836, 0.93x FLOP-eq. This CI replaces the prior POINT estimate (+0.0245, no CI) with a paired-bootstrap 95% CI against the MEASURED per-sample 32B-THINK."
+  },
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "method_acc": 0.5613,
+      "acc_32b_think_measured": 0.5494,
+      "acc_32b_nothink": 0.5518,
+      "policy": "F8-certified-veto",
+      "d_vs_think": 0.0119,
+      "ci": {
+        "delta": 0.0119,
+        "lo": 0.0088,
+        "hi": 0.015,
+        "sig": true,
+        "n": 33430
+      }
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "method_acc": 0.8589,
+      "acc_32b_think_measured": 0.8636,
+      "acc_32b_nothink": 0.8589,
+      "policy": "always_32b_nt",
+      "d_vs_think": -0.0048,
+      "ci": {
+        "delta": -0.0048,
+        "lo": -0.012,
+        "hi": 0.0024,
+        "sig": false,
+        "n": 836
+      }
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "method_acc": 0.8526,
+      "acc_32b_think_measured": 0.8406,
+      "acc_32b_nothink": 0.8526,
+      "policy": "always_32b_nt",
+      "d_vs_think": 0.012,
+      "ci": {
+        "delta": 0.012,
+        "lo": -0.008,
+        "hi": 0.0319,
+        "sig": false,
+        "n": 251
+      }
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "method_acc": 0.8891,
+      "acc_32b_think_measured": 0.8891,
+      "acc_32b_nothink": 0.8891,
+      "policy": "always_32b_nt",
+      "d_vs_think": 0.0,
+      "ci": {
+        "delta": 0.0,
+        "lo": 0.0,
+        "hi": 0.0,
+        "sig": false,
+        "n": 3362
+      }
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "method_acc": 0.3065,
+      "acc_32b_think_measured": 0.304,
+      "acc_32b_nothink": 0.3065,
+      "policy": "always_32b_nt",
+      "d_vs_think": 0.0025,
+      "ci": {
+        "delta": 0.0025,
+        "lo": -0.0185,
+        "hi": 0.0235,
+        "sig": false,
+        "n": 2000
+      }
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "method_acc": 0.8,
+      "acc_32b_think_measured": 0.66,
+      "acc_32b_nothink": 0.6333,
+      "policy": "always_7b",
+      "d_vs_think": 0.14,
+      "ci": {
+        "delta": 0.14,
+        "lo": 0.0533,
+        "hi": 0.2267,
+        "sig": true,
+        "n": 150
+      }
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "method_acc": 0.8202,
+      "acc_32b_think_measured": 0.6791,
+      "acc_32b_nothink": 0.8186,
+      "policy": "pandora-N + F10-L2D->32B-nt",
+      "d_vs_think": 0.1411,
+      "ci": {
+        "delta": 0.1411,
+        "lo": 0.107,
+        "hi": 0.1767,
+        "sig": true,
+        "n": 645
+      }
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "method_acc": 0.605,
+      "acc_32b_think_measured": 0.545,
+      "acc_32b_nothink": 0.6,
+      "policy": "pandora-N + F10-L2D->32B-nt",
+      "d_vs_think": 0.06,
+      "ci": {
+        "delta": 0.06,
+        "lo": -0.005,
+        "hi": 0.125,
+        "sig": false,
+        "n": 200
+      }
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "method_acc": 0.462,
+      "acc_32b_think_measured": 0.1087,
+      "acc_32b_nothink": 0.376,
+      "policy": "pandora-N + F10-L2D->32B-nt",
+      "d_vs_think": 0.3533,
+      "ci": {
+        "delta": 0.3533,
+        "lo": 0.326,
+        "hi": 0.3793,
+        "sig": true,
+        "n": 1500
+      }
+    }
+  },
+  "pooled": {
+    "variant_b_mmmu_excluded": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42224,
+      "method_acc": 0.5836,
+      "acc_32b_think_measured": 0.5591,
+      "acc_32b_nothink": 0.5729,
+      "d_vs_think": 0.0245,
+      "ci": {
+        "delta": 0.0245,
+        "lo": 0.0216,
+        "hi": 0.0274,
+        "sig": true,
+        "n": 42224
+      }
+    },
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "method_acc": 0.5844,
+      "acc_32b_think_measured": 0.5594,
+      "acc_32b_nothink": 0.5732,
+      "d_vs_think": 0.0249,
+      "ci": {
+        "delta": 0.0249,
+        "lo": 0.0219,
+        "hi": 0.0278,
+        "sig": true,
+        "n": 42374
+      }
+    },
+    "mcq_only_mmmu_excluded": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM"
+      ],
+      "n": 39879,
+      "method_acc": 0.5842,
+      "acc_32b_think_measured": 0.5742,
+      "acc_32b_nothink": 0.5762,
+      "d_vs_think": 0.0101,
+      "ci": {
+        "delta": 0.0101,
+        "lo": 0.0073,
+        "hi": 0.0128,
+        "sig": true,
+        "n": 39879
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "method_acc": 0.5727,
+      "acc_32b_think_measured": 0.3028,
+      "acc_32b_nothink": 0.5168,
+      "d_vs_think": 0.2699,
+      "ci": {
+        "delta": 0.2699,
+        "lo": 0.249,
+        "hi": 0.2908,
+        "sig": true,
+        "n": 2345
+      }
+    }
+  },
+  "data_gaps": [
+    "PATH_VQA_closed (MCQ) still has no 32B-think dump -> okT = 32B-no-think (think~=no-think on perception closed); unrelated to the now-measured OPEN cells.",
+    "SLAKE/VQA-RAD/PathVQA-open are IN-DOMAIN for the pooled4 verifier (unchanged caveat).",
+    "paired bootstrap resamples QUESTIONS; held-out tau/lambda/veto thresholds are fixed per item, so calibration variance is not in the CI."
+  ]
+}

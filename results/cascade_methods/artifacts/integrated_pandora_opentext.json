@@ -1,0 +1,521 @@
+{
+  "method": "Integrated format-aware cascade with PANDORA adaptive-N open-text arm (7B-nt + margin gate -> 32B-nt for MCQ | 7B Pandora-adaptive-N best-of-<=8 + verifier SELECTION -> 32B-nt for open-text | keep-7B on MMMU) vs always-Lingshu-32B-THINK",
+  "baseline_naive": "always-Lingshu-32B-THINK (batch-1 10521 ms) AND always-Lingshu-32B-NO-THINK (665 ms)",
+  "change_vs_integrated_method": "open-text arm ONLY: fixed best-of-8 -> Pandora Weitzman adaptive-N; MCQ arm unchanged. Held-out 5-fold nested (lambda picked on TRAIN to hold the fixed-bo8 delivered accuracy at min FLOPs; frozen policy applied to held-out TEST).",
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "flop": 1.0
+    },
+    "BO8_fixed": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "C_CHEAP_F_per_draw": 2.0,
+    "C_STRONG_F": 4.57,
+    "think_delta_open": {
+      "slake_open": -0.195,
+      "vqa_rad_open": -0.12,
+      "pathvqa_open": -0.13
+    }
+  },
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "gate": "margin(7B)",
+      "acc_7b": 0.5427,
+      "acc_32b_nothink": 0.5518,
+      "acc_32b_think": 0.5494,
+      "method": {
+        "acc": 0.5508,
+        "esc": 0.0845,
+        "latency_ms": 403.2,
+        "flops": 1.386,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.0014,
+      "d_acc_vs_nothink": -0.001,
+      "latency_saved_vs_think_pct": 96.2,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": true
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "gate": "margin(7B)",
+      "acc_7b": 0.8254,
+      "acc_32b_nothink": 0.8589,
+      "acc_32b_think": 0.8636,
+      "method": {
+        "acc": 0.8516,
+        "esc": 0.2045,
+        "latency_ms": 483.0,
+        "flops": 1.935,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.012,
+      "d_acc_vs_nothink": -0.0072,
+      "latency_saved_vs_think_pct": 95.4,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "gate": "margin(7B)",
+      "acc_7b": 0.7809,
+      "acc_32b_nothink": 0.8526,
+      "acc_32b_think": 0.8406,
+      "method": {
+        "acc": 0.8328,
+        "esc": 0.5696,
+        "latency_ms": 725.8,
+        "flops": 3.603,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0079,
+      "d_acc_vs_nothink": -0.0198,
+      "latency_saved_vs_think_pct": 93.1,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "gate": "margin(7B)",
+      "acc_7b": 0.8409,
+      "acc_32b_nothink": 0.8891,
+      "acc_32b_think": 0.8891,
+      "method": {
+        "acc": 0.8882,
+        "esc": 0.4572,
+        "latency_ms": 651.0,
+        "flops": 3.089,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0009,
+      "d_acc_vs_nothink": -0.0009,
+      "latency_saved_vs_think_pct": 93.8,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": false
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "gate": "margin(7B)",
+      "acc_7b": 0.2615,
+      "acc_32b_nothink": 0.3065,
+      "acc_32b_think": 0.304,
+      "method": {
+        "acc": 0.3005,
+        "esc": 0.896,
+        "latency_ms": 942.8,
+        "flops": 5.095,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0035,
+      "d_acc_vs_nothink": -0.006,
+      "latency_saved_vs_think_pct": 91.0,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true,
+      "note": "reasoning bench but 32B-think(0.304)~=32B-nt(0.307); strong=no-think"
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "gate": "none (keep 7B)",
+      "scoring": "judge",
+      "acc_7b": 0.8,
+      "acc_32b_nothink": 0.6333,
+      "acc_32b_think": 0.66,
+      "method": {
+        "policy": "keep 7B (7B > 32B-think)",
+        "acc": 0.8,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0
+      },
+      "d_acc_vs_think": 0.14,
+      "d_acc_vs_nothink": 0.1667,
+      "note": "Lingshu-7B MMMU anomaly (0.80); the router simply keeps 7B -> beats always-32B-think by +0.140"
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "gate": "pandora-weitzman(adaptive-N + verifier-select)",
+      "acc_7b": 0.7364,
+      "acc_32b_nothink": 0.8186,
+      "acc_32b_think": "0.6236 (est: 32B-nt + measured think-delta -0.195)",
+      "method": {
+        "acc": 0.8093,
+        "esc": 0.1581,
+        "latency_ms": 1905.9,
+        "latency_ms_batched": 627.2,
+        "flops": 7.622,
+        "energy_j": 265.4,
+        "meanN": 3.45,
+        "cheap_leg": "pandora adaptive-N (seq)",
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.1857,
+      "d_acc_vs_nothink": -0.0093,
+      "latency_saved_vs_think_pct": 81.9,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.7798,
+      "cheap_acc_greedy": 0.7364,
+      "arm": "pandora-adaptive-N",
+      "target_acc_held": 0.8155,
+      "fixed_bo8": {
+        "acc": 0.8155,
+        "esc": 0.1256,
+        "flops": 16.574,
+        "latency_ms": 605.5,
+        "latency_ms_batched": 605.5,
+        "meanN": 8.0
+      },
+      "flops_saved_vs_fixed_pct": 54.0,
+      "picked_lambdas": [
+        0.12622,
+        0.10262,
+        0.09253,
+        0.00064,
+        0.10262
+      ]
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "gate": "pandora-weitzman(adaptive-N + verifier-select)",
+      "acc_7b": 0.465,
+      "acc_32b_nothink": 0.6,
+      "acc_32b_think": "0.4800 (est: 32B-nt + measured think-delta -0.120)",
+      "method": {
+        "acc": 0.595,
+        "esc": 0.125,
+        "latency_ms": 2124.1,
+        "latency_ms_batched": 605.1,
+        "flops": 8.391,
+        "energy_j": 293.9,
+        "meanN": 3.91,
+        "cheap_leg": "pandora adaptive-N (seq)",
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.115,
+      "d_acc_vs_nothink": -0.005,
+      "latency_saved_vs_think_pct": 79.8,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.575,
+      "cheap_acc_greedy": 0.465,
+      "arm": "pandora-adaptive-N",
+      "target_acc_held": 0.585,
+      "fixed_bo8": {
+        "acc": 0.585,
+        "esc": 0.055,
+        "flops": 16.251,
+        "latency_ms": 558.6,
+        "latency_ms_batched": 558.6,
+        "meanN": 8.0
+      },
+      "flops_saved_vs_fixed_pct": 48.4,
+      "picked_lambdas": [
+        0.11381,
+        0.07523,
+        0.11381,
+        0.12622,
+        0.11381
+      ]
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "gate": "pandora-weitzman(adaptive-N + verifier-select)",
+      "acc_7b": 0.324,
+      "acc_32b_nothink": 0.376,
+      "acc_32b_think": "0.2460 (est: 32B-nt + measured think-delta -0.130)",
+      "method": {
+        "acc": 0.452,
+        "esc": 0.3567,
+        "latency_ms": 3099.8,
+        "latency_ms_batched": 759.2,
+        "flops": 12.598,
+        "energy_j": 435.2,
+        "meanN": 5.484,
+        "cheap_leg": "pandora adaptive-N (seq)",
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.206,
+      "d_acc_vs_nothink": 0.076,
+      "latency_saved_vs_think_pct": 70.5,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.4533,
+      "cheap_acc_greedy": 0.324,
+      "arm": "pandora-adaptive-N",
+      "target_acc_held": 0.4533,
+      "fixed_bo8": {
+        "acc": 0.4533,
+        "esc": 0.0007,
+        "flops": 16.003,
+        "latency_ms": 522.4,
+        "latency_ms_batched": 522.4,
+        "meanN": 8.0
+      },
+      "flops_saved_vs_fixed_pct": 21.3,
+      "picked_lambdas": [
+        0.04484,
+        0.03287,
+        0.04043,
+        0.03646,
+        0.01295
+      ]
+    }
+  },
+  "pooled": {
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "sample_weighted": {
+        "acc_method": 0.5749,
+        "acc_32b_think": 0.5631,
+        "acc_32b_nothink": 0.5732,
+        "d_acc_vs_think": 0.0117,
+        "d_acc_vs_nothink": 0.0017,
+        "esc": 0.1683,
+        "method_latency_ms": 578.1,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 94.5,
+        "method_flops": 2.244,
+        "think_flops": 4.57,
+        "method_latency_ms_seq": 578.1,
+        "method_latency_ms_batched": 468.6
+      },
+      "macro_avg": {
+        "acc_method": 0.6756,
+        "acc_32b_think": 0.6063,
+        "d_acc_vs_think": 0.0693
+      }
+    },
+    "mcq_only": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val"
+      ],
+      "n": 40029,
+      "sample_weighted": {
+        "acc_method": 0.5756,
+        "acc_32b_think": 0.5745,
+        "acc_32b_nothink": 0.5765,
+        "d_acc_vs_think": 0.0011,
+        "d_acc_vs_nothink": -0.0009,
+        "esc": 0.1616,
+        "method_latency_ms": 454.5,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 95.7,
+        "method_flops": 1.738,
+        "think_flops": 4.57,
+        "method_latency_ms_seq": 454.5,
+        "method_latency_ms_batched": 454.5
+      },
+      "macro_avg": {
+        "acc_method": 0.704,
+        "acc_32b_think": 0.6845,
+        "d_acc_vs_think": 0.0195
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "sample_weighted": {
+        "acc_method": 0.5625,
+        "acc_32b_think": 0.3698,
+        "acc_32b_nothink": 0.5168,
+        "d_acc_vs_think": 0.1927,
+        "d_acc_vs_nothink": 0.0456,
+        "esc": 0.2823,
+        "method_latency_ms": 2688.2,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 74.5,
+        "method_flops": 10.871,
+        "think_flops": 4.57,
+        "method_latency_ms_seq": 2688.2,
+        "method_latency_ms_batched": 709.8
+      },
+      "macro_avg": {
+        "acc_method": 0.6188,
+        "acc_32b_think": 0.4499,
+        "d_acc_vs_think": 0.1689
+      }
+    }
+  },
+  "baseline_fixed_bo8_pooled": {
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "sample_weighted": {
+        "acc_method": 0.575,
+        "acc_32b_think": 0.5631,
+        "acc_32b_nothink": 0.5732,
+        "d_acc_vs_think": 0.0118,
+        "d_acc_vs_nothink": 0.0018,
+        "esc": 0.1548,
+        "method_latency_ms": 459.6,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 95.6,
+        "method_flops": 2.538,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.6753,
+        "acc_32b_think": 0.6063,
+        "d_acc_vs_think": 0.069
+      }
+    },
+    "mcq_only": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val"
+      ],
+      "n": 40029,
+      "sample_weighted": {
+        "acc_method": 0.5756,
+        "acc_32b_think": 0.5745,
+        "acc_32b_nothink": 0.5765,
+        "d_acc_vs_think": 0.0011,
+        "d_acc_vs_nothink": -0.0009,
+        "esc": 0.1616,
+        "method_latency_ms": 454.5,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 95.7,
+        "method_flops": 1.738,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.704,
+        "acc_32b_think": 0.6845,
+        "d_acc_vs_think": 0.0195
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "sample_weighted": {
+        "acc_method": 0.5642,
+        "acc_32b_think": 0.3698,
+        "acc_32b_nothink": 0.5168,
+        "d_acc_vs_think": 0.1943,
+        "d_acc_vs_nothink": 0.0473,
+        "esc": 0.0397,
+        "method_latency_ms": 548.3,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 94.8,
+        "method_flops": 16.181,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.6179,
+        "acc_32b_think": 0.4499,
+        "d_acc_vs_think": 0.1681
+      }
+    }
+  },
+  "open_arm_comparison": {
+    "always_32bnt_flops": 4.57,
+    "fixed_bo8": {
+      "flops": 16.181,
+      "acc": 0.5642,
+      "latency_ms": 548.3
+    },
+    "pandora": {
+      "flops": 10.871,
+      "acc": 0.5625,
+      "latency_ms_seq": 2688.2,
+      "latency_ms_batched": 709.8
+    },
+    "open_flops_saved_vs_fixed_pct": 32.8,
+    "open_flops_gap_vs_32bnt_fixed": 11.611,
+    "open_flops_gap_vs_32bnt_pandora": 6.301,
+    "open_flops_gap_closed_pct": 45.7,
+    "acc_held": -0.0017
+  },
+  "verdict": {
+    "question": "Does Pandora adaptive-N cut the open-text FLOP overage while holding the accuracy win (vs always-32B-THINK and always-32B-NO-THINK) and the latency win?",
+    "open_text_flops": "YES. Open-arm FLOPs 16.18 -> 10.87 (-33% vs fixed best-of-8), by cutting mean draws 8 -> 4.28. This closes 46% of the open arm's FLOP gap over always-32B-no-think (4.57).",
+    "accuracy_held": "method pooled acc 0.5749 (was 0.5750 fixed-bo8); d_vs_think=+0.0117 (was +0.0118), d_vs_nothink=+0.0017 (was +0.0018). Iso-accuracy target held per benchmark within the held-out gap.",
+    "latency": "still crushes always-32B-THINK (10521 ms): full-suite method lat_seq 578 ms (-95%); parallel-draw floor 469 ms. Adaptive draws are sequential so the OPEN arm's latency rises vs the parallel fixed-bo8 arm (FLOP<->latency trade), but the pooled method stays ~95% faster than 32B-THINK.",
+    "flop_parity_vs_32b_nothink": "full-suite method FLOPs 2.538 -> 2.244 (always-32B-nt=4.57): the full method was ALREADY below 4.57 (open arm diluted by the cheap MCQ arm); Pandora widens that margin. The OPEN-ONLY arm moves from 16.18 to 10.87 toward the 4.57 floor (46% of the gap closed) but remains above it -- best-of-N is inherently multi-forward.",
+    "note_vs_task_quote": "task quoted the current win as +0.0238 vs think / +0.0138 vs no-think; the LIVE integrated_method.py pipeline reproduces +0.0118 / +0.0018 (full-suite, sample-weighted). Numbers here are computed from that live pipeline, not the quote."
+  },
+  "data_gaps": [
+    "OmniMedVQA-32B MISSING (tp=2 NCCL hang; tp=1 no gpu-mem window on 1x80GB) -> excluded (7B-only).",
+    "SLAKE_open best-of-N verifier dump FILLED (ckpts/train/lora_verifier_pooled4/transfer_dump_slake_open_lingshu7b.json; pooled4 verifier scored pointwise over the existing K=8 sc8 candidates). bo8+verifier-conf now used: cheap-leg 0.780 (vs 0.730 greedy) and reaches 32B-nt parity at ~13% escalation vs ~53% for the old greedy+seqlogprob fallback. NOTE: slake_open is IN-DOMAIN for pooled4 (verifier trained on slake+pathvqa+kvasir+vqa_rad) -- SAME situation as the vqa_rad_open/pathvqa_open cells that already use it.",
+    "32B-THINK judged open-text accuracy is ESTIMATED (32B-nt judged + measured modal-space think-delta); a judged 32B-think open-text dump would remove the estimate.",
+    "always-32B-THINK batch-1 latency = 10521 ms measured on OPEN-TEXT cap320 (opentext_32b_think.json); MCQ reasoning traces (MMMU/MedXpert reason ~275-320 gen tokens) would be >= this, so it is representative-to-conservative for the think baseline.",
+    "PATH_VQA_closed has no 32B-think dump -> think acc set = 32B-no-think (think~=no-think on perception).",
+    "Pandora open arm adaptive draws are SEQUENTIAL -> latency reported as honest lat_seq (meanN*522ms) with the parallel-draw floor lat_bat (522ms) also given; the FLOP cut trades against sequential latency (both still << always-32B-THINK 10521ms).",
+    "Open-text datasets for the Pandora arm = slake_open/vqa_rad_open/pathvqa_open (the integrated MedVQA suite); pandora_controller.py's kvasir/radimagenet are NOT part of the integrated method."
+  ]
+}

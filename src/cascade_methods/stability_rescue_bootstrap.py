@@ -99,5 +99,5 @@ json.dump({"n": n, "acc_dep": float(ok_dep.mean()), "acc_res": float(ok_res.mean
            "call_dep": float(esc_dep.mean()), "call_res": float(esc_res.mean()),
            "dacc_ci": list(map(float, ci(dA))), "dbb_ci": list(map(float, ci([v for v in dB]))),
            "dcall_ci": list(map(float, ci(dC)))},
-          open("results/cascade_methods/stability_rescue_bootstrap.json", "w"), indent=1)
-print("-> results/cascade_methods/stability_rescue_bootstrap.json")
+          open("results/cascade_methods/artifacts/stability_rescue_bootstrap.json", "w"), indent=1)
+print("-> results/cascade_methods/artifacts/stability_rescue_bootstrap.json")

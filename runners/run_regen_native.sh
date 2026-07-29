@@ -11,14 +11,15 @@ python3 src/labeling/run_peer_eval.py --model_path google/medgemma-27b-it --tag 
   --max_side 768 --max_images 2 --max_model_len 16384 > logs/nt_medgemma_complete.log 2>&1
 echo "  medgemma native rows now: $(cat ckpts/acc_gen/medgemma27b/think_native/*.jsonl 2>/dev/null | wc -l)"
 echo "=== 2) native-think comparison $(date +%H:%M) ==="
-python3 src/cascade_methods/compare_native_think.py > results/cascade_methods/native_think_compare.txt 2>&1
+python3 src/cascade_methods/compare_native_think.py > results/cascade_methods/artifacts/native_think_compare.txt 2>&1
 echo "=== 3) acc_allmethods (all 5, NATIVE think) ==="
-{ for fam in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_allmethods.py --family $fam 2>/dev/null; done; } > results/cascade_methods/acc_allmethods_all.txt 2>&1
+{ for fam in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_allmethods.py --family $fam 2>/dev/null; done; } > results/cascade_methods/artifacts/acc_allmethods_all.txt 2>&1
 echo "=== 4) acc_2size (all 5, NATIVE think) ==="
-{ for fam in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_2size.py --family $fam 2>/dev/null; done; } > results/cascade_methods/acc_2size_all.txt 2>&1
+{ for fam in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_2size.py --family $fam 2>/dev/null; done; } > results/cascade_methods/artifacts/acc_2size_all.txt 2>&1
 echo "=== 5) regenerate master charts + tables + full record ==="
 python3 src/cascade_methods/make_master_charts.py > logs/regen_charts.log 2>&1
 python3 src/cascade_methods/make_full_record.py >> logs/regen_charts.log 2>&1
 echo "=== REGEN_NATIVE_DONE $(date +%H:%M) ==="
-for f in master_data.csv MASTER_TABLES.md FULL_RECORD.md native_think_compare.txt; do echo "  $f: $(wc -l < results/cascade_methods/$f 2>/dev/null) lines"; done
+for f in master_data.csv native_think_compare.txt; do echo "  $f: $(wc -l < results/cascade_methods/artifacts/$f 2>/dev/null) lines"; done
+for f in MASTER_TABLES.md FULL_RECORD.md; do echo "  $f: $(wc -l < results/cascade_methods/docs/archive_mcq/$f 2>/dev/null) lines"; done
 ls paper/figs/master/*.png 2>/dev/null | wc -l | xargs echo "  master charts:"

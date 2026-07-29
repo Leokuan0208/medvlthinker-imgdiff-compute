@@ -1,0 +1,372 @@
+{
+  "method": "Integrated format-aware cascade (7B-nt + margin gate -> 32B-nt for MCQ | 7B best-of-8 + verifier selection -> 32B-nt for open-text | keep-7B on MMMU) vs always-Lingshu-32B-THINK",
+  "baseline": "always-Lingshu-32B-THINK (naive big-thinking-model-for-everything; measured batch-1 10.5 s/query)",
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "think_delta_open": {
+      "slake_open": -0.195,
+      "vqa_rad_open": -0.12,
+      "pathvqa_open": -0.13
+    }
+  },
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "gate": "margin(7B)",
+      "acc_7b": 0.5427,
+      "acc_32b_nothink": 0.5518,
+      "acc_32b_think": 0.5494,
+      "method": {
+        "acc": 0.5508,
+        "esc": 0.0845,
+        "latency_ms": 403.2,
+        "flops": 1.386,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.0014,
+      "d_acc_vs_nothink": -0.001,
+      "latency_saved_vs_think_pct": 96.2,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": true
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "gate": "margin(7B)",
+      "acc_7b": 0.8254,
+      "acc_32b_nothink": 0.8589,
+      "acc_32b_think": 0.8636,
+      "method": {
+        "acc": 0.8516,
+        "esc": 0.2045,
+        "latency_ms": 483.0,
+        "flops": 1.935,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.012,
+      "d_acc_vs_nothink": -0.0072,
+      "latency_saved_vs_think_pct": 95.4,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "gate": "margin(7B)",
+      "acc_7b": 0.7809,
+      "acc_32b_nothink": 0.8526,
+      "acc_32b_think": 0.8406,
+      "method": {
+        "acc": 0.8328,
+        "esc": 0.5696,
+        "latency_ms": 725.8,
+        "flops": 3.603,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0079,
+      "d_acc_vs_nothink": -0.0198,
+      "latency_saved_vs_think_pct": 93.1,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "gate": "margin(7B)",
+      "acc_7b": 0.8409,
+      "acc_32b_nothink": 0.8891,
+      "acc_32b_think": 0.8891,
+      "method": {
+        "acc": 0.8882,
+        "esc": 0.4572,
+        "latency_ms": 651.0,
+        "flops": 3.089,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0009,
+      "d_acc_vs_nothink": -0.0009,
+      "latency_saved_vs_think_pct": 93.8,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": false
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "gate": "margin(7B)",
+      "acc_7b": 0.2615,
+      "acc_32b_nothink": 0.3065,
+      "acc_32b_think": 0.304,
+      "method": {
+        "acc": 0.3005,
+        "esc": 0.896,
+        "latency_ms": 942.8,
+        "flops": 5.095,
+        "cheap_leg_ms": 347.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": -0.0035,
+      "d_acc_vs_nothink": -0.006,
+      "latency_saved_vs_think_pct": 91.0,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": false,
+      "think_dump_real": true,
+      "note": "reasoning bench but 32B-think(0.304)~=32B-nt(0.307); strong=no-think"
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "gate": "none (keep 7B)",
+      "scoring": "judge",
+      "acc_7b": 0.8,
+      "acc_32b_nothink": 0.6333,
+      "acc_32b_think": 0.66,
+      "method": {
+        "policy": "keep 7B (7B > 32B-think)",
+        "acc": 0.8,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0
+      },
+      "d_acc_vs_think": 0.14,
+      "d_acc_vs_nothink": 0.1667,
+      "note": "Lingshu-7B MMMU anomaly (0.80); the router simply keeps 7B -> beats always-32B-think by +0.140"
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "gate": "verifier-conf",
+      "acc_7b": 0.7364,
+      "acc_32b_nothink": 0.8186,
+      "acc_32b_think": "0.6236 (est: 32B-nt + measured think-delta -0.195)",
+      "method": {
+        "acc": 0.8155,
+        "esc": 0.1256,
+        "latency_ms": 605.5,
+        "flops": 16.574,
+        "cheap_leg_ms": 522.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.1919,
+      "d_acc_vs_nothink": -0.0031,
+      "latency_saved_vs_think_pct": 94.2,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.7798,
+      "cheap_acc_greedy": 0.7364,
+      "arm": "bo8+verifier"
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "gate": "verifier-conf",
+      "acc_7b": 0.465,
+      "acc_32b_nothink": 0.6,
+      "acc_32b_think": "0.4800 (est: 32B-nt + measured think-delta -0.120)",
+      "method": {
+        "acc": 0.585,
+        "esc": 0.055,
+        "latency_ms": 558.6,
+        "flops": 16.251,
+        "cheap_leg_ms": 522.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.105,
+      "d_acc_vs_nothink": -0.015,
+      "latency_saved_vs_think_pct": 94.7,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.575,
+      "cheap_acc_greedy": 0.465,
+      "arm": "bo8+verifier"
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "gate": "verifier-conf",
+      "acc_7b": 0.324,
+      "acc_32b_nothink": 0.376,
+      "acc_32b_think": "0.2460 (est: 32B-nt + measured think-delta -0.130)",
+      "method": {
+        "acc": 0.4533,
+        "esc": 0.0007,
+        "latency_ms": 522.4,
+        "flops": 16.003,
+        "cheap_leg_ms": 522.0,
+        "strong_leg": "32B-no-think"
+      },
+      "d_acc_vs_think": 0.2073,
+      "d_acc_vs_nothink": 0.0773,
+      "latency_saved_vs_think_pct": 95.0,
+      "faster_than_think": true,
+      "at_least_as_acc_as_think": true,
+      "think_dump_real": false,
+      "cheap_acc_bestofN": 0.4533,
+      "cheap_acc_greedy": 0.324,
+      "arm": "bo8+verifier"
+    }
+  },
+  "gate_comparison_mcq": {
+    "n": 37879,
+    "cheap_7bnt_acc": 0.5769,
+    "strong_32bnt_acc": 0.5905,
+    "gates": {
+      "margin (7B, deployed by FALC)": {
+        "auroc_detect": 0.7254,
+        "min_esc_at_32bnt_parity": 0.1562
+      },
+      "conf/MSP (7B)": {
+        "auroc_detect": 0.7318,
+        "min_esc_at_32bnt_parity": 0.2026
+      },
+      "CASP-stability (7B cap320-vs-full)": {
+        "auroc_detect": 0.7241,
+        "min_esc_at_32bnt_parity": 0.155
+      },
+      "agreement (7B-nt vs 32B-nt)": {
+        "auroc_detect": 0.6565,
+        "min_esc_at_32bnt_parity": 0.1996
+      }
+    },
+    "casp_frac_stable": 0.9895,
+    "agree_rate": 0.6953,
+    "p_7b_correct_if_agree": 0.6868,
+    "p_7b_correct_if_disagree": 0.3262,
+    "p_7b_correct_if_casp_stable": 0.5524,
+    "p_7b_correct_if_casp_unstable": 0.438,
+    "verdict": "MARGIN is the best MCQ gate on real Lingshu data (top AUROC 0.725). CASP-stability does NOT beat it: Lingshu-7B is 98.9% cap320-vs-full stable, so the CASP signal is INERT and collapses to the margin tiebreak (its min-esc/AUROC == margin only because it IS margin for the 98.9% stable majority + escalates the 1.1% unstable). Agreement is the WORST ranker (AUROC 0.657) AND, being a committee signal, needs the 32B run -> defeats the purpose of a cheap gate. => the task premise 'CASP/agreement beat FALC's margin gate' does NOT hold for Lingshu; FALC's margin choice was correct. (Agreement is still INFORMATIVE as a binary trust signal: P(7B right|agree)=0.69 vs |disagree=0.33; but a continuous margin dominates it as an escalation ranker. This matches the repo's own verified finding: no trained gate beats margin on MCQ.)"
+  },
+  "pooled": {
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "sample_weighted": {
+        "acc_method": 0.575,
+        "acc_32b_think": 0.5631,
+        "acc_32b_nothink": 0.5732,
+        "d_acc_vs_think": 0.0118,
+        "d_acc_vs_nothink": 0.0018,
+        "esc": 0.1548,
+        "method_latency_ms": 459.6,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 95.6,
+        "method_flops": 2.538,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.6753,
+        "acc_32b_think": 0.6063,
+        "d_acc_vs_think": 0.069
+      }
+    },
+    "mcq_only": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val"
+      ],
+      "n": 40029,
+      "sample_weighted": {
+        "acc_method": 0.5756,
+        "acc_32b_think": 0.5745,
+        "acc_32b_nothink": 0.5765,
+        "d_acc_vs_think": 0.0011,
+        "d_acc_vs_nothink": -0.0009,
+        "esc": 0.1616,
+        "method_latency_ms": 454.5,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 95.7,
+        "method_flops": 1.738,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.704,
+        "acc_32b_think": 0.6845,
+        "d_acc_vs_think": 0.0195
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "sample_weighted": {
+        "acc_method": 0.5642,
+        "acc_32b_think": 0.3698,
+        "acc_32b_nothink": 0.5168,
+        "d_acc_vs_think": 0.1943,
+        "d_acc_vs_nothink": 0.0473,
+        "esc": 0.0397,
+        "method_latency_ms": 548.3,
+        "think_latency_ms": 10521.6,
+        "latency_saved_vs_think_pct": 94.8,
+        "method_flops": 16.181,
+        "think_flops": 4.57
+      },
+      "macro_avg": {
+        "acc_method": 0.6179,
+        "acc_32b_think": 0.4499,
+        "d_acc_vs_think": 0.1681
+      }
+    }
+  },
+  "verdict": {
+    "faster_than_always_32b_think": "YES on every benchmark: method batch-1 latency 347-942 ms vs 10521 ms (-96% pooled)",
+    "more_accurate_than_always_32b_think": "YES pooled: 0.5750 vs 0.5631 (d=+0.0118). Open-text is the accuracy engine (7B best-of-8 + verifier beats 32B, which itself beats 32B-THINK by +0.12..+0.20); MMMU keep-7B beats 32B-think by +0.140; perception MCQ matches 32B-nt(~=think).",
+    "flops": "MIXED (honest): MCQ arm SAVES FLOPs (1.0 + esc*4.57 << 4.57); open-text best-of-8 arm COSTS more FLOPs (16 cheap forwards) but buys the latency+accuracy win. Pooled method FLOPs 2.54.",
+    "agreement_vs_casp": "MARGIN is the best MCQ gate on real Lingshu data (top AUROC 0.725). CASP-stability does NOT beat it: Lingshu-7B is 98.9% cap320-vs-full stable, so the CASP signal is INERT and collapses to the margin tiebreak (its min-esc/AUROC == margin only because it IS margin for the 98.9% stable majority + escalates the 1.1% unstable). Agreement is the WORST ranker (AUROC 0.657) AND, being a committee signal, needs the 32B run -> defeats the purpose of a cheap gate. => the task premise 'CASP/agreement beat FALC's margin gate' does NOT hold for Lingshu; FALC's margin choice was correct. (Agreement is still INFORMATIVE as a binary trust signal: P(7B right|agree)=0.69 vs |disagree=0.33; but a continuous margin dominates it as an escalation ranker. This matches the repo's own verified finding: no trained gate beats margin on MCQ.)",
+    "router_vs_unified": "ROUTER (format-specific gates) is required. The MCQ margin gate has NO open-text analog (open answers have no single-letter logprob margin) and the trained verifier is open-text-specific; a single unified gate signal does not transfer. A weak unified proxy (7B seqlogprob) works passably for open-text (SLAKE gate) but is beaten by margin on MCQ and by verifier-conf on open -> keep the 2-arm router. First read: unified-single-policy underperforms the router.",
+    "vs_always_32b_nothink": "for honesty: method also beats/ties always-32B-NO-THINK pooled (0.5750 vs 0.5732, d=+0.0018) while being faster on MCQ (cheap leg 347 ms vs 665 ms) -- the open-text bo8 arm is where the accuracy gain over no-think comes from."
+  },
+  "data_gaps": [
+    "OmniMedVQA-32B MISSING (tp=2 NCCL hang; tp=1 no gpu-mem window on 1x80GB) -> excluded (7B-only).",
+    "SLAKE_open best-of-N verifier dump FILLED (ckpts/train/lora_verifier_pooled4/transfer_dump_slake_open_lingshu7b.json; pooled4 verifier scored pointwise over the existing K=8 sc8 candidates). bo8+verifier-conf now used: cheap-leg 0.780 (vs 0.730 greedy) and reaches 32B-nt parity at ~13% escalation vs ~53% for the old greedy+seqlogprob fallback. NOTE: slake_open is IN-DOMAIN for pooled4 (verifier trained on slake+pathvqa+kvasir+vqa_rad) -- SAME situation as the vqa_rad_open/pathvqa_open cells that already use it.",
+    "32B-THINK judged open-text accuracy is ESTIMATED (32B-nt judged + measured modal-space think-delta); a judged 32B-think open-text dump would remove the estimate.",
+    "always-32B-THINK batch-1 latency = 10521 ms measured on OPEN-TEXT cap320 (opentext_32b_think.json); MCQ reasoning traces (MMMU/MedXpert reason ~275-320 gen tokens) would be >= this, so it is representative-to-conservative for the think baseline.",
+    "PATH_VQA_closed has no 32B-think dump -> think acc set = 32B-no-think (think~=no-think on perception)."
+  ]
+}

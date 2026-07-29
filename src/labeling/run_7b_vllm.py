@@ -15,8 +15,9 @@ CHUNK = 256
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--n", type=int, default=4000)
+ap.add_argument("--model_path", default=MODEL, help="override to reproduce other models e.g. Lingshu-7B/32B")
 ap.add_argument("--datasets", nargs="+",
-                default=["MedXpert-Reasoning","MedXpert-Understanding","PMC-VQA","SLAKE","VQA-RAD","PathVQA"])
+                default=["MedXpert-Reasoning","MedXpert-Understanding","PMC-VQA","SLAKE","VQA-RAD","PathVQA","MMMU"])
 ap.add_argument("--shard", default="0/1")
 ap.add_argument("--ckpt_dir", default="ckpts/gate_7b_vllm")
 ap.add_argument("--tp", type=int, default=2)
@@ -59,7 +60,7 @@ def parse_opts(s):
     except Exception: return dict(re.findall(r'"([A-J])"\s*:\s*"((?:[^"\\]|\\.)*)"', s))
 def gold(ex): return str(ex["answer_label"]).strip().upper()[:1]
 
-proc = AutoProcessor.from_pretrained(MODEL)
+proc = AutoProcessor.from_pretrained(A.model_path)
 LET = re.compile(r"\b([A-J])\b")
 LETTER_SET = set(chr(ord('A')+k) for k in range(10))
 def _lid(L):
@@ -89,8 +90,8 @@ def build(ex):
     if imgs: r["multi_modal_data"]={"image":imgs}
     return r
 
-print(f"loading 7B vLLM (TP={A.tp}, nothink, max_tokens={A.max_tokens})...", flush=True)
-llm=LLM(model=MODEL,tensor_parallel_size=A.tp,dtype="bfloat16",gpu_memory_utilization=A.gpu_mem,
+print(f"loading {A.model_path} vLLM (TP={A.tp}, nothink, max_tokens={A.max_tokens})...", flush=True)
+llm=LLM(model=A.model_path,tensor_parallel_size=A.tp,dtype="bfloat16",gpu_memory_utilization=A.gpu_mem,
         max_model_len=A.max_model_len,limit_mm_per_prompt={"image":A.max_images},trust_remote_code=True)
 sp=SamplingParams(temperature=0.0,max_tokens=A.max_tokens,logprobs=20)
 t0=time.time(); tn=0

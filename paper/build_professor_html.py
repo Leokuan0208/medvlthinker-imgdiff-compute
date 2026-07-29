@@ -2,7 +2,7 @@
 """Build the professor-facing slide deck, reusing the weekly-update template's CSS + nav JS."""
 import base64, os
 ROOT=os.path.expanduser("~/medvlthinker-imgdiff-compute")
-TPL=os.path.join(ROOT,"weekly-update-results (4).html")
+TPL=os.path.join(ROOT,"meetings/report_template.html")
 lines=open(TPL,encoding="utf-8").read().split("\n")
 head="\n".join(lines[:187])  # through </head>
 # inject MathJax for real equations
@@ -177,7 +177,7 @@ S.append(slide('''<div class="eyebrow"><span class="dot"></span>Where it stands<
 <div class="callout win"><b>Training &mdash; the verifier (accuracy):</b> recovers 40&ndash;78% of the oracle gap for answers <i>and</i> boxes (incl. a real chest-X-ray benchmark), a test-time-scaling method that lets a 7B beat a 32B.</div>
 </div>
 <p class="body">Tied together by the <b>luck floor</b>: untrained routing/selection over a frozen model is bounded; the two levers that move the needle are <b>structure</b> and <b>a little training</b>.</p>
-<div class="callout note"><b>Next steps:</b> push the verifier further (a larger verifier, more datasets, reuse across generator models) to strengthen the novelty. Full detail: <span class="kbd">paper/cvgip2026_draft.md</span> &middot; deep-dives in <span class="kbd">results/cascade_methods/</span> &middot; reading order in <span class="kbd">READING_GUIDE.md</span>.</div>'''))
+<div class="callout note"><b>Next steps:</b> push the verifier further (a larger verifier, more datasets, reuse across generator models) to strengthen the novelty. Full detail: <span class="kbd">paper/cvgip2026_draft.md</span> &middot; deep-dives in <span class="kbd">results/cascade_methods/artifacts/</span> &middot; reading order in <span class="kbd">READING_GUIDE.md</span>.</div>'''))
 
 close='''</main></div>
 <button class="edge left" id="prev" aria-label="Previous slide"><span class="chevbtn">&#8249;</span></button>

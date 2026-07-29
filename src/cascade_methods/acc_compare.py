@@ -3,7 +3,7 @@
 acc_compare.py - head-to-head of three cascade methods on 5 metrics (accuracy, escalation rate,
 latency, FLOPs, energy), honest held-out (50/50 calib/test, thresholds chosen on calib to reach
 calib-parity = always-32B-think acc at MIN latency, 20 seeds). Latency & energy from REAL measured
-batch-1 data (results/cascade_methods/latency_*.jsonl + rt_cascade for 32B-think).
+batch-1 data (results/cascade_methods/artifacts/latency_*.jsonl + rt_cascade for 32B-think).
 
   M1 = ACC (ours)   : 7B-nothink@cap320 -> 32B-NOTHINK@cap320 -> 32B-think@fullres
   M2 = SOTA 2-tier  : 7B-THINK@fullres  -> 32B-think@fullres                  (both models reason)
@@ -38,9 +38,9 @@ def fit_models():
     """lat(config,gen) and energy(config,gen), NAMESPACED by model ('7b:'/'32b:') because the config
     key 'think@fullres' collides across the 7B and 32B files. From measured batch-1 + rt_cascade."""
     lat, en = {}, {}
-    files = [("7b", "results/cascade_methods/latency_7b.jsonl"),
-             ("7b", "results/cascade_methods/latency_7b_think.jsonl"),
-             ("32b", "results/cascade_methods/latency_32b.jsonl")]
+    files = [("7b", "results/cascade_methods/artifacts/latency_7b.jsonl"),
+             ("7b", "results/cascade_methods/artifacts/latency_7b_think.jsonl"),
+             ("32b", "results/cascade_methods/artifacts/latency_32b.jsonl")]
     rows = defaultdict(list)
     for model, f in files:
         if os.path.exists(J(f)):

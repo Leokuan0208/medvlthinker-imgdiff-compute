@@ -71,8 +71,8 @@ def main():
             par = "Y" if c["acc"] >= r["parity"] - 1e-9 else "n"
             g = "Y" if r["guardrail_ok"] else f"n({len(r['worse'])})"
             print(f"{name:<22}{oa}   {c['esc']*100:>7.1f}%{c['backbone']*100:>8.1f}%{c['acc']:>8.4f}{par:>6}{g:>7}")
-        os.makedirs(os.path.join(REPO, "results/cascade_methods"), exist_ok=True)
-        out = os.path.join(REPO, f"results/cascade_methods/leaderboard_{sub_name}.json")
+        os.makedirs(os.path.join(REPO, "results/cascade_methods/artifacts"), exist_ok=True)
+        out = os.path.join(REPO, f"results/cascade_methods/artifacts/leaderboard_{sub_name}.json")
         json.dump({k: {"oracle": v["oracle"], "calib": v["calib"], "guardrail_ok": v["guardrail_ok"],
                        "worse": v["worse"], "parity": v["parity"]} for k, v in results.items()},
                   open(out, "w"), indent=2, default=float)

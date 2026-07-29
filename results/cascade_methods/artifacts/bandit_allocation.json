@@ -1,0 +1,587 @@
+{
+ "method": "bandit_allocation_C7_pure_exploration",
+ "coverage_model": "oracle@B = mean_q P(a correct sample among B i.i.d. with-replacement draws); identical to generator_portfolio for apples-to-apples",
+ "reward_signal": "trained verifier per-sample score (only test-time-available signal); ceilings use true correctness (idealised)",
+ "protocol": "held-out 5-fold CV (same split/SEED as generator_portfolio); adaptive params fit on train folds; MC nfit=150/neval=500 reps",
+ "policies": [
+  "single_best(fixed)",
+  "uniform(fixed)",
+  "markowitz(fixed)",
+  "thompson_soft(adaptive)",
+  "ucbe(adaptive)",
+  "ceiling_clairvoyant(idealised)",
+  "ceiling_split_oracle(perfect-free-signal)"
+ ],
+ "budgets": [
+  2,
+  4,
+  8
+ ],
+ "configs": {
+  "kvasir_open": {
+   "n": 1200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "harness_roundrobin_vs_analytic_uniform": 1.3263464768820121e-05,
+   "budgets": {
+    "2": {
+     "single_best": 0.42805989583333337,
+     "uniform": 0.4253949652777778,
+     "markowitz": 0.4480989583333333,
+     "thompson_soft": {
+      "heldout": 0.4220933333333333,
+      "se": 0.015096087931425582,
+      "params": [
+       5.0,
+       10.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.40007833333333337,
+      "se": 0.015987330400455645,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.531875,
+     "ceiling_split_oracle": 0.4572018229166667,
+     "delta_thompson_vs_uniform": -0.003301631944444494,
+     "delta_ucbe_vs_uniform": -0.025316631944444445,
+     "delta_markowitz_vs_uniform": 0.022703993055555483,
+     "delta_ceiling_clair_vs_uniform": 0.10648003472222217,
+     "delta_best_adaptive_vs_uniform": -0.003301631944444494
+    },
+    "4": {
+     "single_best": 0.4917250569661459,
+     "uniform": 0.5191548665364584,
+     "markowitz": 0.5261092122395834,
+     "thompson_soft": {
+      "heldout": 0.5169366666666667,
+      "se": 0.015119964405087435,
+      "params": [
+       10.0,
+       10.0,
+       10.0,
+       5.0,
+       5.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.5231866666666667,
+      "se": 0.014693487219399866,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.61003173828125,
+     "ceiling_split_oracle": 0.5082310709635417,
+     "delta_thompson_vs_uniform": -0.0022181998697916594,
+     "delta_ucbe_vs_uniform": 0.004031800130208318,
+     "delta_markowitz_vs_uniform": 0.006954345703125031,
+     "delta_ceiling_clair_vs_uniform": 0.09087687174479164,
+     "delta_best_adaptive_vs_uniform": 0.004031800130208318
+    },
+    "8": {
+     "single_best": 0.5438250485559305,
+     "uniform": 0.5954499301314354,
+     "markowitz": 0.5974246331055959,
+     "thompson_soft": {
+      "heldout": 0.59226,
+      "se": 0.013419922327561269,
+      "params": [
+       0.5,
+       2.0,
+       1.0,
+       5.0,
+       5.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.597795,
+      "se": 0.013686725269804712,
+      "params": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.6732781821489334,
+     "ceiling_split_oracle": 0.5395005516688028,
+     "delta_thompson_vs_uniform": -0.0031899301314354256,
+     "delta_ucbe_vs_uniform": 0.002345069868564531,
+     "delta_markowitz_vs_uniform": 0.0019747029741604694,
+     "delta_ceiling_clair_vs_uniform": 0.07782825201749799,
+     "delta_best_adaptive_vs_uniform": 0.002345069868564531
+    }
+   }
+  },
+  "radimagenet_open": {
+   "n": 2000,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "harness_roundrobin_vs_analytic_uniform": 0.00013144602108006165,
+   "budgets": {
+    "2": {
+     "single_best": 0.36915624999999996,
+     "uniform": 0.3623880208333333,
+     "markowitz": 0.393046875,
+     "thompson_soft": {
+      "heldout": 0.351424,
+      "se": 0.005714233631905505,
+      "params": [
+       5.0,
+       10.0,
+       5.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.36437200000000003,
+      "se": 0.004871262310736294,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.4652421875,
+     "ceiling_split_oracle": 0.42683039062500006,
+     "delta_thompson_vs_uniform": -0.01096402083333331,
+     "delta_ucbe_vs_uniform": 0.001983979166666705,
+     "delta_markowitz_vs_uniform": 0.030658854166666694,
+     "delta_ceiling_clair_vs_uniform": 0.10285416666666669,
+     "delta_best_adaptive_vs_uniform": 0.001983979166666705
+    },
+    "4": {
+     "single_best": 0.42228466796874997,
+     "uniform": 0.44238427734374997,
+     "markowitz": 0.45241552734375007,
+     "thompson_soft": {
+      "heldout": 0.42817299999999997,
+      "se": 0.005990134723025853,
+      "params": [
+       5.0,
+       10.0,
+       5.0,
+       2.0,
+       5.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.44332400000000005,
+      "se": 0.005087432407413392,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.5225853271484375,
+     "ceiling_split_oracle": 0.4670767822265625,
+     "delta_thompson_vs_uniform": -0.014211277343749995,
+     "delta_ucbe_vs_uniform": 0.000939722656250086,
+     "delta_markowitz_vs_uniform": 0.010031250000000103,
+     "delta_ceiling_clair_vs_uniform": 0.08020104980468756,
+     "delta_best_adaptive_vs_uniform": 0.000939722656250086
+    },
+    "8": {
+     "single_best": 0.4672612665891648,
+     "uniform": 0.50008844602108,
+     "markowitz": 0.5126301833987237,
+     "thompson_soft": {
+      "heldout": 0.492371,
+      "se": 0.005025890319137504,
+      "params": [
+       1.0,
+       1.0,
+       0.5,
+       1.0,
+       0.5
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.498942,
+      "se": 0.004870877898284866,
+      "params": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.5733486097753048,
+     "ceiling_split_oracle": 0.4922011422157288,
+     "delta_thompson_vs_uniform": -0.007717446021080043,
+     "delta_ucbe_vs_uniform": -0.0011464460210800498,
+     "delta_markowitz_vs_uniform": 0.012541737377643636,
+     "delta_ceiling_clair_vs_uniform": 0.07326016375422473,
+     "delta_best_adaptive_vs_uniform": -0.0011464460210800498
+    }
+   }
+  },
+  "vqa_rad_open": {
+   "n": 200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "harness_roundrobin_vs_analytic_uniform": 0.001095754692554518,
+   "budgets": {
+    "2": {
+     "single_best": 0.504140625,
+     "uniform": 0.5387239583333333,
+     "markowitz": 0.56328125,
+     "thompson_soft": {
+      "heldout": 0.52976,
+      "se": 0.03490985677426935,
+      "params": [
+       5.0,
+       10.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.53889,
+      "se": 0.042644836733184956,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.644765625,
+     "ceiling_split_oracle": 0.59205859375,
+     "delta_thompson_vs_uniform": -0.0089639583333333,
+     "delta_ucbe_vs_uniform": 0.00016604166666667197,
+     "delta_markowitz_vs_uniform": 0.024557291666666647,
+     "delta_ceiling_clair_vs_uniform": 0.1060416666666667,
+     "delta_best_adaptive_vs_uniform": 0.00016604166666667197
+    },
+    "4": {
+     "single_best": 0.542532958984375,
+     "uniform": 0.631678466796875,
+     "markowitz": 0.6288281249999998,
+     "thompson_soft": {
+      "heldout": 0.62483,
+      "se": 0.03610633808626957,
+      "params": [
+       5.0,
+       10.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.63104,
+      "se": 0.03726770854238291,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.703985595703125,
+     "ceiling_split_oracle": 0.6382446777343751,
+     "delta_thompson_vs_uniform": -0.006848466796875008,
+     "delta_ucbe_vs_uniform": -0.0006384667968749591,
+     "delta_markowitz_vs_uniform": -0.0028503417968751554,
+     "delta_ceiling_clair_vs_uniform": 0.07230712890625002,
+     "delta_best_adaptive_vs_uniform": -0.0006384667968749591
+    },
+    "8": {
+     "single_best": 0.5794376739859581,
+     "uniform": 0.6911642453074456,
+     "markowitz": 0.6877145478129387,
+     "thompson_soft": {
+      "heldout": 0.68709,
+      "se": 0.04147268197259493,
+      "params": [
+       0.5,
+       1.0,
+       0.5,
+       1.0,
+       0.5
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.68773,
+      "se": 0.042443001778856314,
+      "params": [
+       0.5,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.7451999142765999,
+     "ceiling_split_oracle": 0.6642217046737671,
+     "delta_thompson_vs_uniform": -0.004074245307445601,
+     "delta_ucbe_vs_uniform": -0.003434245307445627,
+     "delta_markowitz_vs_uniform": -0.0034496974945068537,
+     "delta_ceiling_clair_vs_uniform": 0.05403566896915435,
+     "delta_best_adaptive_vs_uniform": -0.003434245307445627
+    }
+   }
+  },
+  "POOLED_3ds_3gen": {
+   "n": 3400,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "harness_roundrobin_vs_analytic_uniform": 8.36302172436687e-05,
+   "budgets": {
+    "2": {
+     "single_best": 0.35897518382352944,
+     "uniform": 0.39499846813725487,
+     "markowitz": 0.41530790441176474,
+     "thompson_soft": {
+      "heldout": 0.3871382352941176,
+      "se": 0.004912452752090596,
+      "params": [
+       10.0,
+       10.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.387374705882353,
+      "se": 0.0037662096720864615,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.4993198529411765,
+     "ceiling_split_oracle": 0.447305330882353,
+     "delta_thompson_vs_uniform": -0.00786023284313725,
+     "delta_ucbe_vs_uniform": -0.007623762254901856,
+     "delta_markowitz_vs_uniform": 0.020309436274509873,
+     "delta_ceiling_clair_vs_uniform": 0.10432138480392161,
+     "delta_best_adaptive_vs_uniform": -0.007623762254901856
+    },
+    "4": {
+     "single_best": 0.4209942267922794,
+     "uniform": 0.4806147317325367,
+     "markowitz": 0.4855682014016544,
+     "thompson_soft": {
+      "heldout": 0.4705811764705882,
+      "se": 0.004286482898617288,
+      "params": [
+       5.0,
+       10.0,
+       10.0,
+       10.0,
+       5.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.4829141176470588,
+      "se": 0.004819682056018551,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.5641193704044117,
+     "ceiling_split_oracle": 0.4916826171875,
+     "delta_thompson_vs_uniform": -0.01003355526194849,
+     "delta_ucbe_vs_uniform": 0.002299385914522112,
+     "delta_markowitz_vs_uniform": 0.004953469669117694,
+     "delta_ceiling_clair_vs_uniform": 0.08350463867187502,
+     "delta_best_adaptive_vs_uniform": 0.002299385914522112
+    },
+    "8": {
+     "single_best": 0.46689330924959743,
+     "uniform": 0.5449851933121681,
+     "markowitz": 0.5473650676187347,
+     "thompson_soft": {
+      "heldout": 0.5394941176470589,
+      "se": 0.0037838435906283234,
+      "params": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.5449423529411764,
+      "se": 0.004070135409189107,
+      "params": [
+       1.0,
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.6187267708778381,
+     "ceiling_split_oracle": 0.5189855443169089,
+     "delta_thompson_vs_uniform": -0.005491075665109202,
+     "delta_ucbe_vs_uniform": -4.284037099167026e-05,
+     "delta_markowitz_vs_uniform": 0.0023798743065666095,
+     "delta_ceiling_clair_vs_uniform": 0.07374157756567001,
+     "delta_best_adaptive_vs_uniform": -4.284037099167026e-05
+    }
+   }
+  },
+  "pathvqa_open_2gen": {
+   "n": 1500,
+   "generators": [
+    "Lingshu-7B",
+    "InternVL3-8B"
+   ],
+   "harness_roundrobin_vs_analytic_uniform": 0.00020701227951047674,
+   "budgets": {
+    "2": {
+     "single_best": 0.3574791666666667,
+     "uniform": 0.32966666666666666,
+     "markowitz": 0.3574791666666667,
+     "thompson_soft": {
+      "heldout": 0.31389066666666665,
+      "se": 0.006546044980664963,
+      "params": [
+       10.0,
+       10.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.32900266666666667,
+      "se": 0.00691251348401337,
+      "params": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.3927395833333333,
+     "ceiling_split_oracle": 0.36619416666666665,
+     "delta_thompson_vs_uniform": -0.015776000000000012,
+     "delta_ucbe_vs_uniform": -0.0006639999999999979,
+     "delta_markowitz_vs_uniform": 0.027812500000000018,
+     "delta_ceiling_clair_vs_uniform": 0.06307291666666665,
+     "delta_best_adaptive_vs_uniform": -0.0006639999999999979
+    },
+    "4": {
+     "single_best": 0.41743326822916665,
+     "uniform": 0.40150390625000004,
+     "markowitz": 0.4196119791666667,
+     "thompson_soft": {
+      "heldout": 0.399864,
+      "se": 0.008733296844707486,
+      "params": [
+       10.0,
+       5.0,
+       10.0,
+       10.0,
+       10.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.4050773333333334,
+      "se": 0.008831602748715051,
+      "params": [
+       0.05,
+       0.05,
+       0.05,
+       0.1,
+       0.1
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.46147054036458335,
+     "ceiling_split_oracle": 0.41575924479166665,
+     "delta_thompson_vs_uniform": -0.001639906250000045,
+     "delta_ucbe_vs_uniform": 0.003573427083333358,
+     "delta_markowitz_vs_uniform": 0.018108072916666662,
+     "delta_ceiling_clair_vs_uniform": 0.059966634114583306,
+     "delta_best_adaptive_vs_uniform": 0.003573427083333358
+    },
+    "8": {
+     "single_best": 0.4679854993025462,
+     "uniform": 0.46919901227951044,
+     "markowitz": 0.4817425394058228,
+     "thompson_soft": {
+      "heldout": 0.47022266666666673,
+      "se": 0.010431700319485586,
+      "params": [
+       5.0,
+       10.0,
+       5.0,
+       5.0,
+       5.0
+      ]
+     },
+     "ucbe": {
+      "heldout": 0.4716893333333333,
+      "se": 0.010241131578102096,
+      "params": [
+       0.5,
+       0.25,
+       0.25,
+       1.0,
+       0.25
+      ]
+     },
+     "ceiling_clairvoyant_insample": 0.5194845261176427,
+     "ceiling_split_oracle": 0.4475172114054362,
+     "delta_thompson_vs_uniform": 0.001023654387156292,
+     "delta_ucbe_vs_uniform": 0.0024903210538228526,
+     "delta_markowitz_vs_uniform": 0.012543527126312348,
+     "delta_ceiling_clair_vs_uniform": 0.05028551383813229,
+     "delta_best_adaptive_vs_uniform": 0.0024903210538228526
+    }
+   }
+  }
+ },
+ "verdict": "NEGATIVE: per-question ADAPTIVE bandit allocation does NOT beat fixed uniform pooling for oracle@B (best pooled held-out bandit \u0394=+0.002 over B in [2, 4, 8]; Thompson/UCB-E track uniform, sometimes losing to exploration cost) -- just like Markowitz (\u0394=+0.020). WHY: the optimistic in-sample clairvoyant ceiling suggests per-question structure (\u0394=+0.104), but it double-dips on the same 8 samples; the DE-BIASED split-oracle ceiling (perfect but finite FREE correctness signal, arm chosen on an independent half) shrinks to \u0394=+0.052 and INVERTS at B=8 (\u0394=-0.026) because single-arm concentration cannot match uniform's cross-arm coverage. So the reachable headroom is small AND the verifier score is too weak to capture it: fixed uniform pooling is already near-optimal for oracle@B (mirrors the Markowitz finding; consistent with the selection wall)."
+}

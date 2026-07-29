@@ -1,0 +1,433 @@
+{
+  "title": "THE DECISIVE EXPERIMENT -- matched-prompt reasoning vs direct on open-text medical VQA (Lingshu-32B, same judge, same evaluated idx). Does 'reasoning hurts perception open-text VQA' survive when the reasoning arm keeps the direct arm's persona and answer-style constraints and differs ONLY by the reason-first instruction?",
+  "reproduce": [
+    "bash runners/run_openvqa_think_matched.sh    # arm A generation (chunked, tp=2 guarded)",
+    "bash runners/run_openvqa_think_matched2.sh   # arm B generation (decisive arm)",
+    "bash runners/run_judge_think_matched.sh ; bash runners/run_judge_think_matched2.sh",
+    "python3 src/cascade_methods/matched_prompt_reasoning.py",
+    "(runners/run_matched_prompt_chain.sh serializes B + both judges on the shared GPUs)"
+  ],
+  "no_gpu_this_script": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "arms_compared": [
+    "direct",
+    "reason_unmatched"
+  ],
+  "arms_missing": {
+    "direct_unstyled": [
+      "slake_open: missing dump",
+      "vqa_rad_open: missing dump",
+      "pathvqa_open: missing dump"
+    ],
+    "reason_matched_A": [
+      "slake_open: missing judge",
+      "vqa_rad_open: missing judge",
+      "pathvqa_open: missing judge"
+    ],
+    "reason_matched_B": [
+      "slake_open: missing judge",
+      "vqa_rad_open: missing judge",
+      "pathvqa_open: missing dump"
+    ]
+  },
+  "decisive_arm": "reason_matched_B",
+  "prompts": {
+    "direct": {
+      "constant": "SYS",
+      "text": "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain.",
+      "dir": "ckpts/openvqa/strong_lingshu",
+      "tag": "lingshu32b"
+    },
+    "direct_unstyled": {
+      "constant": "SYS_DIRECT_UNSTYLED",
+      "text": "You will solve a problem/request. Give only the short final answer.",
+      "dir": "ckpts/openvqa/strong_lingshu_direct_unstyled",
+      "tag": "lingshu32b_direct_unstyled"
+    },
+    "reason_unmatched": {
+      "constant": "SYS_THINK",
+      "text": "You will solve a problem/request. You should provide your thoughts within <think> </think> tags before providing the answer. After </think>, give only the short final answer.",
+      "dir": "ckpts/openvqa/strong_lingshu_think",
+      "tag": "lingshu32b_think"
+    },
+    "reason_matched_A": {
+      "constant": "SYS_THINK_MATCHED",
+      "text": "You are an expert medical image analyst. You should provide your thoughts within <think> </think> tags before providing the answer. After </think>, answer the question with a short, specific phrase. Do not explain.",
+      "dir": "ckpts/openvqa/strong_lingshu_think_matched",
+      "tag": "lingshu32b_think_matched"
+    },
+    "reason_matched_B": {
+      "constant": "SYS_THINK_MATCHED2",
+      "text": "You will solve a problem/request. You should provide your thoughts within <think> </think> tags before providing the answer. You are an expert medical image analyst. After </think>, answer the question with a short, specific phrase. Do not explain.",
+      "dir": "ckpts/openvqa/strong_lingshu_think_matched2",
+      "tag": "lingshu32b_think_matched2"
+    }
+  },
+  "prompt_design": {
+    "SYS_THINK_MATCHED": "arm A -- the literal matched prompt: SYS's persona ('You are an expert medical image analyst'), its answer-style constraint ('answer the question with a short, specific phrase') and its no-explanation constraint, plus the <think></think> reason-first instruction. It PARAPHRASES the reasoning trigger, and this model family only emits a trace when the trigger sentences appear verbatim (CLAUDE.md s8) -- see diagnostics.reasoning_trace_rate: reasoning is mostly OFF in this arm, so it measures 'reasoning requested but not performed', not matched reasoning.",
+    "SYS_THINK_MATCHED2": "arm B -- THE DECISIVE ARM: SYS_THINK's trigger sentences kept VERBATIM (trace fires) with its answer-style clause 'After </think>, give only the short final answer' replaced by the direct arm's persona + 'answer the question with a short, specific phrase' + 'Do not explain'. Reasoning ON; the only difference from the direct arm is the reason-first instruction. Ordering caveat: the persona sentence sits after the trigger sentences (it must, or the trace stops firing), whereas in SYS it comes first.",
+    "source_of_truth": "src/labeling/run_openvqa.py, read by ast at runtime."
+  },
+  "held_constant": "model (Lingshu-32B, same snapshot), cap320, greedy temp=0 n_samples=1, max_model_len 4096, max_tokens 512 (reasoning arms), tp=2, answer extraction (text after the LAST </think>), evaluated idx sets, and the judge (run_judge.py judge_ok, neutral MedVLThinker/Qwen2.5-32B grader).",
+  "per_dataset": {
+    "SLAKE_open": {
+      "dataset_key": "slake_open",
+      "n": 645,
+      "acc_direct": 0.8186,
+      "acc_reason_unmatched": 0.6791,
+      "d_reason_unmatched_minus_direct": -0.1395,
+      "ci_reason_unmatched_vs_direct": {
+        "delta": -0.1395,
+        "lo": -0.1736,
+        "hi": -0.107,
+        "sig": true,
+        "n": 645
+      },
+      "degenerate_subset_n": 46,
+      "taxonomy_vocab_size_golds_seen_5plus": 33,
+      "diagnostics": {
+        "direct": {
+          "n": 645,
+          "taxonomy_token_rate": 0.7132,
+          "answer_words": {
+            "mean": 1.77,
+            "median": 1.0,
+            "p90": 3.0,
+            "max": 12.0
+          },
+          "answer_chars": {
+            "mean": 11.6,
+            "median": 6.0,
+            "p90": 19.0,
+            "max": 85.0
+          },
+          "gen_tokens": {
+            "mean": 4.76,
+            "median": 4.0,
+            "p90": 7.0,
+            "max": 18.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0,
+          "taxonomy_token_rate_degenerate_subset": 0.4783
+        },
+        "reason_unmatched": {
+          "n": 645,
+          "taxonomy_token_rate": 0.5225,
+          "answer_words": {
+            "mean": 4.23,
+            "median": 1.0,
+            "p90": 5.0,
+            "max": 139.0
+          },
+          "answer_chars": {
+            "mean": 27.95,
+            "median": 6.0,
+            "p90": 39.60000000000002,
+            "max": 958.0
+          },
+          "gen_tokens": {
+            "mean": 122.41,
+            "median": 124.0,
+            "p90": 157.0,
+            "max": 229.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0388,
+          "taxonomy_token_rate_degenerate_subset": 0.1739
+        }
+      },
+      "subset_decomposition": {
+        "degenerate_taxonomy_family": {
+          "n": 46,
+          "acc_direct": 0.6087,
+          "acc_reason_unmatched": 0.3043,
+          "d_reason_unmatched_minus_direct": -0.3043
+        },
+        "non_degenerate": {
+          "n": 599,
+          "acc_direct": 0.8347,
+          "acc_reason_unmatched": 0.7078,
+          "d_reason_unmatched_minus_direct": -0.1269
+        },
+        "by_gold_length": {
+          "1": {
+            "n": 438,
+            "acc_direct": 0.9132,
+            "acc_reason_unmatched": 0.8037,
+            "d_reason_unmatched_minus_direct": -0.1096
+          },
+          "2": {
+            "n": 106,
+            "acc_direct": 0.7547,
+            "acc_reason_unmatched": 0.5943,
+            "d_reason_unmatched_minus_direct": -0.1604
+          },
+          "3-4": {
+            "n": 64,
+            "acc_direct": 0.4062,
+            "acc_reason_unmatched": 0.25,
+            "d_reason_unmatched_minus_direct": -0.1562
+          },
+          "5+": {
+            "n": 37,
+            "acc_direct": 0.5946,
+            "acc_reason_unmatched": 0.1892,
+            "d_reason_unmatched_minus_direct": -0.4054
+          }
+        }
+      },
+      "trace_conditional": {}
+    },
+    "VQA_RAD_open": {
+      "dataset_key": "vqa_rad_open",
+      "n": 200,
+      "acc_direct": 0.6,
+      "acc_reason_unmatched": 0.545,
+      "d_reason_unmatched_minus_direct": -0.055,
+      "ci_reason_unmatched_vs_direct": {
+        "delta": -0.055,
+        "lo": -0.115,
+        "hi": 0.005,
+        "sig": false,
+        "n": 200
+      },
+      "degenerate_subset_n": 19,
+      "taxonomy_vocab_size_golds_seen_5plus": 4,
+      "diagnostics": {
+        "direct": {
+          "n": 200,
+          "taxonomy_token_rate": 0.15,
+          "answer_words": {
+            "mean": 1.97,
+            "median": 1.5,
+            "p90": 3.0,
+            "max": 20.0
+          },
+          "answer_chars": {
+            "mean": 14.09,
+            "median": 11.0,
+            "p90": 25.0,
+            "max": 182.0
+          },
+          "gen_tokens": {
+            "mean": 5.63,
+            "median": 5.0,
+            "p90": 8.0,
+            "max": 40.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.005,
+          "taxonomy_token_rate_degenerate_subset": 0.0526
+        },
+        "reason_unmatched": {
+          "n": 200,
+          "taxonomy_token_rate": 0.115,
+          "answer_words": {
+            "mean": 3.53,
+            "median": 2.0,
+            "p90": 6.099999999999994,
+            "max": 107.0
+          },
+          "answer_chars": {
+            "mean": 22.91,
+            "median": 14.0,
+            "p90": 43.099999999999994,
+            "max": 695.0
+          },
+          "gen_tokens": {
+            "mean": 104.54,
+            "median": 130.0,
+            "p90": 163.1,
+            "max": 213.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.025,
+          "taxonomy_token_rate_degenerate_subset": 0.0526
+        }
+      },
+      "subset_decomposition": {
+        "degenerate_taxonomy_family": {
+          "n": 19,
+          "acc_direct": 0.3684,
+          "acc_reason_unmatched": 0.4737,
+          "d_reason_unmatched_minus_direct": 0.1053
+        },
+        "non_degenerate": {
+          "n": 181,
+          "acc_direct": 0.6243,
+          "acc_reason_unmatched": 0.5525,
+          "d_reason_unmatched_minus_direct": -0.0718
+        },
+        "by_gold_length": {
+          "1": {
+            "n": 91,
+            "acc_direct": 0.8462,
+            "acc_reason_unmatched": 0.7143,
+            "d_reason_unmatched_minus_direct": -0.1319
+          },
+          "2": {
+            "n": 51,
+            "acc_direct": 0.4902,
+            "acc_reason_unmatched": 0.4314,
+            "d_reason_unmatched_minus_direct": -0.0588
+          },
+          "3-4": {
+            "n": 38,
+            "acc_direct": 0.4211,
+            "acc_reason_unmatched": 0.4211,
+            "d_reason_unmatched_minus_direct": 0.0
+          },
+          "5+": {
+            "n": 20,
+            "acc_direct": 0.1,
+            "acc_reason_unmatched": 0.3,
+            "d_reason_unmatched_minus_direct": 0.2
+          }
+        }
+      },
+      "trace_conditional": {}
+    },
+    "PATH_VQA_open": {
+      "dataset_key": "pathvqa_open",
+      "n": 1500,
+      "acc_direct": 0.376,
+      "acc_reason_unmatched": 0.1087,
+      "d_reason_unmatched_minus_direct": -0.2673,
+      "ci_reason_unmatched_vs_direct": {
+        "delta": -0.2673,
+        "lo": -0.2927,
+        "hi": -0.2427,
+        "sig": true,
+        "n": 1500
+      },
+      "degenerate_subset_n": 948,
+      "taxonomy_vocab_size_golds_seen_5plus": 35,
+      "diagnostics": {
+        "direct": {
+          "n": 1500,
+          "taxonomy_token_rate": 0.508,
+          "answer_words": {
+            "mean": 1.95,
+            "median": 1.0,
+            "p90": 4.0,
+            "max": 21.0
+          },
+          "answer_chars": {
+            "mean": 16.07,
+            "median": 12.0,
+            "p90": 27.0,
+            "max": 145.0
+          },
+          "gen_tokens": {
+            "mean": 5.64,
+            "median": 5.0,
+            "p90": 8.0,
+            "max": 29.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0007,
+          "taxonomy_token_rate_degenerate_subset": 0.7553
+        },
+        "reason_unmatched": {
+          "n": 1500,
+          "taxonomy_token_rate": 0.1033,
+          "answer_words": {
+            "mean": 4.28,
+            "median": 2.0,
+            "p90": 11.0,
+            "max": 128.0
+          },
+          "answer_chars": {
+            "mean": 31.8,
+            "median": 19.0,
+            "p90": 73.0,
+            "max": 860.0
+          },
+          "gen_tokens": {
+            "mean": 141.47,
+            "median": 141.0,
+            "p90": 172.0,
+            "max": 261.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0647,
+          "taxonomy_token_rate_degenerate_subset": 0.1508
+        }
+      },
+      "subset_decomposition": {
+        "degenerate_taxonomy_family": {
+          "n": 948,
+          "acc_direct": 0.4662,
+          "acc_reason_unmatched": 0.0949,
+          "d_reason_unmatched_minus_direct": -0.3713
+        },
+        "non_degenerate": {
+          "n": 552,
+          "acc_direct": 0.221,
+          "acc_reason_unmatched": 0.1322,
+          "d_reason_unmatched_minus_direct": -0.0888
+        },
+        "by_gold_length": {
+          "1": {
+            "n": 800,
+            "acc_direct": 0.465,
+            "acc_reason_unmatched": 0.0938,
+            "d_reason_unmatched_minus_direct": -0.3713
+          },
+          "2": {
+            "n": 334,
+            "acc_direct": 0.3473,
+            "acc_reason_unmatched": 0.1317,
+            "d_reason_unmatched_minus_direct": -0.2156
+          },
+          "3-4": {
+            "n": 197,
+            "acc_direct": 0.2792,
+            "acc_reason_unmatched": 0.1574,
+            "d_reason_unmatched_minus_direct": -0.1218
+          },
+          "5+": {
+            "n": 169,
+            "acc_direct": 0.1243,
+            "acc_reason_unmatched": 0.0769,
+            "d_reason_unmatched_minus_direct": -0.0473
+          }
+        }
+      },
+      "trace_conditional": {}
+    }
+  },
+  "pooled_open": {
+    "n": 2345,
+    "benchmarks": [
+      "SLAKE_open",
+      "VQA_RAD_open",
+      "PATH_VQA_open"
+    ],
+    "acc_direct": 0.5168,
+    "acc_reason_unmatched": 0.3028,
+    "d_reason_unmatched_minus_direct": -0.2141,
+    "ci_reason_unmatched_vs_direct": {
+      "delta": -0.2141,
+      "lo": -0.2341,
+      "hi": -0.194,
+      "sig": true,
+      "n": 2345
+    }
+  },
+  "taxonomy_definition": "normalized (lowercase, non-alphanumerics stripped) gold strings occurring >=5 times among the dataset's evaluated idx; emission rate = fraction of items whose normalized final answer is in that vocabulary. Identical definition to pathvqa_judge_audit.py's 'answer_is_a_dataset_taxonomy_token_*'.",
+  "caveats": [
+    "The direct arm's dump is the pre-existing one the headline uses (max_tokens 64; PathVQA generated at tp=1, SLAKE/VQA-RAD at tp=2); only the reasoning arms were re-generated. Any tp-related numerical drift is a pre-existing property of the headline, not introduced here.",
+    "run_openvqa.py's extract() keeps the LAST line after the final </think>; both matched dumps were written with --save_raw so this step and the trace rate are re-verifiable offline.",
+    "PathVQA-open's evaluated 1500 is a prefix of the 3357-item open test set and over-samples the degenerate taxonomy family (0.632 vs 0.562 overall) -- unchanged from the audit.",
+    "Arm B changes the persona sentence's POSITION relative to SYS (it must follow the verbatim trigger sentences). Position, not content, is the residual difference from the direct prompt."
+  ]
+}

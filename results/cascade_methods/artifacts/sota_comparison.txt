@@ -1,0 +1,36 @@
+
+################  SOTA COMPARISON  [COMPETENT-4]  n=6050  think-parity=0.6451  ################
+  baselines: always-7B=0.6221  always-32B-nothink=0.6582  always-32B-think=0.6451 (=100% backbone)
+
+  GATE METHOD                   STRONG=think         STRONG=nothink(ours)
+  (SOTA gates)          oracle@par    honest     oracle@par        honest
+  margin(FrugalGPT)         41.1%     69.5%p         26.5%        48.6%p
+  MSP/Chow                  44.9%   61.9%p!1         29.1%        43.5%p
+  entropy                   50.4%   30.7%x!1         33.1%      22.7%x!1
+  Gini/DOCTOR               49.1%   59.1%p!1         30.6%        41.6%p
+  prob_margin               38.9%     67.7%p         27.9%        47.4%p
+
+  3-TIER (ours)       -> oracle@parity bb=28.7%  esc1=30% esc2(think)=0%
+
+  CP-Router (conformal APS set-size): for 5-option MCQ the set-size decision
+    is monotone in top1prob => its frontier == MSP/Chow above; reported as that row.
+
+################  SOTA COMPARISON  [ALL-6]  n=8220  think-parity=0.5723  ################
+  baselines: always-7B=0.5262  always-32B-nothink=0.5684  always-32B-think=0.5723 (=100% backbone)
+
+  GATE METHOD                   STRONG=think         STRONG=nothink(ours)
+  (SOTA gates)          oracle@par    honest     oracle@par        honest
+  margin(FrugalGPT)         75.1%     73.6%x         never        49.6%x
+  MSP/Chow                  72.9%   70.6%x!1         never        47.5%x
+  entropy                   77.0%   53.4%x!1         never      35.8%x!1
+  Gini/DOCTOR               74.5%   69.1%x!1         never        46.4%x
+  prob_margin               73.7%     73.4%x         never        49.4%x
+
+  3-TIER (ours)       -> oracle@parity bb=60.5%  esc1=63% esc2(think)=10%
+
+  CP-Router (conformal APS set-size): for 5-option MCQ the set-size decision
+    is monotone in top1prob => its frontier == MSP/Chow above; reported as that row.
+
+Legend: oracle@par = min backbone%% at parity (eval-swept threshold, gate ceiling); honest =
+PMC-train err-rate threshold (p=hit parity, x=miss, !k=fails guardrail on k benchmarks).
+Headline: compare the best SOTA gate on STRONG=think vs the SAME gates on STRONG=nothink (ours).

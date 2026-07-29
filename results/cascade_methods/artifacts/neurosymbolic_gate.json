@@ -1,0 +1,113 @@
+{
+  "idea": "H9",
+  "scope": "COMPETENT-4",
+  "n": 6050,
+  "tau": 0.4264123185919304,
+  "acc_7b_base": 0.6221,
+  "parity_always32b_think": 0.6451,
+  "constraints": {
+    "C1_negation": {
+      "coverage": 0.0121,
+      "n_flagged": 73,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 0.4247,
+      "lift": 1.124,
+      "prec_both_wrong": 0.3151,
+      "recovery": 0.1096,
+      "recovery_margin_equalbudget": 0.2192,
+      "recall_of_errors": 0.0136
+    },
+    "C2_laterality_q": {
+      "coverage": 0.039,
+      "n_flagged": 236,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 0.4153,
+      "lift": 1.099,
+      "prec_both_wrong": 0.25,
+      "recovery": 0.1653,
+      "recovery_margin_equalbudget": 0.2712,
+      "recall_of_errors": 0.0429
+    },
+    "C3_laterality_contradiction": {
+      "coverage": 0.0002,
+      "n_flagged": 1,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 1.0,
+      "lift": 2.647,
+      "prec_both_wrong": 1.0,
+      "recovery": 0.0,
+      "recovery_margin_equalbudget": 0.0,
+      "recall_of_errors": 0.0004
+    },
+    "C4_dup_options": {
+      "coverage": 0.0002,
+      "n_flagged": 1,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 1.0,
+      "lift": 2.647,
+      "prec_both_wrong": 1.0,
+      "recovery": 0.0,
+      "recovery_margin_equalbudget": 0.0,
+      "recall_of_errors": 0.0004
+    },
+    "C5_numeric_options": {
+      "coverage": 0.0435,
+      "n_flagged": 263,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 0.5095,
+      "lift": 1.348,
+      "prec_both_wrong": 0.3422,
+      "recovery": 0.1673,
+      "recovery_margin_equalbudget": 0.2548,
+      "recall_of_errors": 0.0586
+    },
+    "COMBINED_neg_or_latcontra_or_dup": {
+      "coverage": 0.0124,
+      "n_flagged": 75,
+      "base_err_rate": 0.3779,
+      "prec_wrong": 0.44,
+      "lift": 1.164,
+      "prec_both_wrong": 0.3333,
+      "recovery": 0.1067,
+      "recovery_margin_equalbudget": 0.2267,
+      "recall_of_errors": 0.0144
+    }
+  },
+  "notes": {
+    "C5_numeric": "Numeric/unit range validity is NOT checkable offline without an external medical knowledge base (a number in an option is not per se implausible). Reported coverage only; a real check needs a domain KB / parser -> out of offline scope.",
+    "coverage_bottleneck": "Cleanly text-checkable medical constraints fire on a tiny slice of generic VQA; most shared confident-wrong errors are PERCEPTUAL, not logical violations, so they are unreachable by symbolic answer-text constraints."
+  },
+  "dup_merge_correction": {
+    "n_dup": 1,
+    "n_changed": 1,
+    "acc_before": 0.6221,
+    "acc_after": 0.6221,
+    "acc_delta": 0.0
+  },
+  "shared_confident_wrong": {
+    "n_both_wrong": 1334,
+    "n_both_wrong_and_agree": 1118,
+    "frac_both_wrong_and_agree": 0.1848,
+    "shared_caught_by_any_constraint": 16,
+    "frac_shared_caught": 0.0143
+  },
+  "cascade_baseline_margin_gate": {
+    "acc": 0.6418,
+    "esc": 0.2412,
+    "flops_pct_of_32b": 33.37
+  },
+  "cascade_plus_negation_trigger": {
+    "acc": 0.6421,
+    "esc": 0.2491,
+    "flops_pct_of_32b": 34.22,
+    "d_acc_vs_gate": 0.0003,
+    "d_esc_vs_gate": 0.0079
+  },
+  "cascade_plus_combined_trigger": {
+    "acc": 0.6421,
+    "esc": 0.2493,
+    "flops_pct_of_32b": 34.25,
+    "d_acc_vs_gate": 0.0003,
+    "d_esc_vs_gate": 0.0081
+  }
+}

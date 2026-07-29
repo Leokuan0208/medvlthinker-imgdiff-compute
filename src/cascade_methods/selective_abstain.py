@@ -147,4 +147,4 @@ a2.set_title("The 'money plot': error-detection lifts\nfrom MCQ to open-ended (s
 fig.suptitle("Selective abstention for open-ended medical VLMs (training-free)", fontsize=11)
 fig.tight_layout(rect=[0, 0, 1, 0.95]); os.makedirs("paper/figs/open", exist_ok=True)
 fig.savefig("paper/figs/open/fig_selective.png", dpi=140); print("\n-> paper/figs/open/fig_selective.png")
-json.dump(results, open("results/cascade_methods/selective_abstain.json", "w"), indent=1, default=float)
+json.dump(results, open("results/cascade_methods/artifacts/selective_abstain.json", "w"), indent=1, default=float)

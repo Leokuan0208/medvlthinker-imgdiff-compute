@@ -1,0 +1,4121 @@
+{
+  "title": "method_final_mmmu_corrected -- CORE results with the MMMU cell CORRECTED (leaked Lingshu-7B 0.80 NOT banked as a beat-32B win). Two variants (A: escalate MMMU->32B-think; B: exclude MMMU) x three method settings (compute-lean, accuracy-max-v1 F3, accuracy-max-v2 F8+F10) vs always-32B-think / -no-think / oracle-mode-32B; pooled sample-weighted + macro, paired-bootstrap 95% CIs, FLOP-eq/latency/energy, Pareto frontier. Recomputed live per-sample; no GPU.",
+  "reproduce": "python3 src/cascade_methods/method_final_mmmu_corrected.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "mmmu_correction": {
+    "leaked_7b_mmmu": 0.8,
+    "published_lingshu7b_mmmu": 0.54,
+    "delta_over_published": 0.26,
+    "order_robust_debiased_7b": 0.7708,
+    "debiased_32b": 0.6321,
+    "root_cause": "train-set contamination (7B-and-MMMU-specific; +26 over the Lingshu paper's own 7B number; order-robust under full cyclic option permutation -> NOT a parsing/position artifact). See results/cascade_methods/artifacts/mmmu_fix.json.",
+    "action": "Do NOT bank the MMMU keep-7B 0.80 as a headline beat-32B win. Variant A escalates MMMU to the 32B (reasoning->think); Variant B excludes MMMU. Macro must be reported corrected."
+  },
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "energy_j": 45.8,
+      "flop": 1.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "energy_j": 127.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "energy_j": 2001.9,
+      "flop": 4.57
+    },
+    "FUSE_both_legs": {
+      "ms_par": 665.0,
+      "ms_seq": 1012.0,
+      "energy_j": 172.8,
+      "flop": 5.57
+    },
+    "cheap_draw": {
+      "ms": 522.0,
+      "energy_j": 71.1,
+      "flop": 2.0
+    }
+  },
+  "baselines": {
+    "always_32b_think": "naive baseline: 32B think on everything",
+    "always_32b_nt": "strong reference: one 32B no-think forward",
+    "oracle_mode_32b": "HONEST strong baseline: per-benchmark best of {think,no-think}; acc=max, cost=that mode",
+    "always_7b": "cheap floor (carried for the Pareto point set)"
+  },
+  "method_settings": {
+    "compute_lean": "margin-cascade MCQ | Pandora bo-N + verifier open | MMMU corrected",
+    "accuracy_max_v1_F3": "F1 slice-router, F3 confidence-advantage FUSION on PMC | Pandora open | MMMU corrected",
+    "accuracy_max_v2_F8F10": "F1 slice-router, F8 certified weak-veto on PMC | F10 team-objective L2D open | MMMU corrected"
+  },
+  "variants": {
+    "A_mmmu_escalate_32b_think": {
+      "description": "MMMU is reasoning -> escalate 100% to the 32B in THINK mode; the method's MMMU accuracy = 32B-think (0.66), cost = 32B-think, added at n=150. The leaked 7B 0.80 is NOT used. Baselines (think/no-think/oracle-mode) unchanged.",
+      "data": {
+        "cell_order": [
+          "PMC_VQA",
+          "SLAKE_closed",
+          "VQA_RAD_closed",
+          "PATH_VQA_closed",
+          "MedXpertQA-MM",
+          "MMMU-Medical-val",
+          "SLAKE_open",
+          "VQA_RAD_open",
+          "PATH_VQA_open"
+        ],
+        "n_total": 42374,
+        "baselines_per_benchmark": {
+          "PMC_VQA": {
+            "always_7b": 0.5427,
+            "always_32b_think": 0.5494,
+            "always_32b_nt": 0.5518,
+            "oracle_mode_32b": 0.5518
+          },
+          "SLAKE_closed": {
+            "always_7b": 0.8254,
+            "always_32b_think": 0.8636,
+            "always_32b_nt": 0.8589,
+            "oracle_mode_32b": 0.8636
+          },
+          "VQA_RAD_closed": {
+            "always_7b": 0.7809,
+            "always_32b_think": 0.8406,
+            "always_32b_nt": 0.8526,
+            "oracle_mode_32b": 0.8526
+          },
+          "PATH_VQA_closed": {
+            "always_7b": 0.8409,
+            "always_32b_think": 0.8891,
+            "always_32b_nt": 0.8891,
+            "oracle_mode_32b": 0.8891
+          },
+          "MedXpertQA-MM": {
+            "always_7b": 0.2615,
+            "always_32b_think": 0.304,
+            "always_32b_nt": 0.3065,
+            "oracle_mode_32b": 0.3065
+          },
+          "MMMU-Medical-val": {
+            "always_7b": 0.8,
+            "always_32b_think": 0.66,
+            "always_32b_nt": 0.6333,
+            "oracle_mode_32b": 0.66
+          },
+          "SLAKE_open": {
+            "always_7b": 0.7364,
+            "always_32b_think": 0.6236,
+            "always_32b_nt": 0.8186,
+            "oracle_mode_32b": 0.8186
+          },
+          "VQA_RAD_open": {
+            "always_7b": 0.465,
+            "always_32b_think": 0.48,
+            "always_32b_nt": 0.6,
+            "oracle_mode_32b": 0.6
+          },
+          "PATH_VQA_open": {
+            "always_7b": 0.324,
+            "always_32b_think": 0.246,
+            "always_32b_nt": 0.376,
+            "oracle_mode_32b": 0.376
+          }
+        },
+        "modes": {
+          "compute_lean": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.5508,
+                "flops": 1.386,
+                "lat_par_ms": 403.2,
+                "lat_seq_ms": 403.2,
+                "energy_j": 56.5
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8517,
+                "flops": 1.935,
+                "lat_par_ms": 483.0,
+                "lat_seq_ms": 483.0,
+                "energy_j": 71.8
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8327,
+                "flops": 3.604,
+                "lat_par_ms": 725.9,
+                "lat_seq_ms": 725.9,
+                "energy_j": 118.2
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8882,
+                "flops": 3.089,
+                "lat_par_ms": 651.0,
+                "lat_seq_ms": 651.0,
+                "energy_j": 103.9
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.3005,
+                "flops": 5.095,
+                "lat_par_ms": 942.8,
+                "lat_seq_ms": 942.8,
+                "energy_j": 159.6
+              },
+              "MMMU-Medical-val": {
+                "n": 150,
+                "format": "MCQ",
+                "policy": "escalate->32B-think (MMMU corrected)",
+                "method_acc": 0.66,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "lat_seq_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.8093,
+                "flops": 7.622,
+                "lat_par_ms": 627.2,
+                "lat_seq_ms": 1905.9,
+                "energy_j": 265.4
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.595,
+                "flops": 8.391,
+                "lat_par_ms": 605.1,
+                "lat_seq_ms": 2124.1,
+                "energy_j": 293.9
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.452,
+                "flops": 12.598,
+                "lat_par_ms": 759.2,
+                "lat_seq_ms": 3099.8,
+                "energy_j": 435.2
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5744,
+                  "acc_macro": 0.66,
+                  "flops": 2.257,
+                  "energy_j": 90.4,
+                  "lat_par_ms": 504.6,
+                  "lat_seq_ms": 614.1,
+                  "flops_vs_always32": 0.494
+                },
+                "always_7b": {
+                  "acc_sw": 0.5558,
+                  "acc_macro": 0.6196,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5632,
+                  "acc_macro": 0.6063,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5732,
+                  "acc_macro": 0.6541,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5733,
+                  "acc_macro": 0.6576,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 170.6,
+                  "lat_par_ms": 894.4,
+                  "lat_seq_ms": 894.4,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42374
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5751,
+                  "acc_macro": 0.6806,
+                  "flops": 1.752,
+                  "energy_j": 73.7,
+                  "lat_par_ms": 492.6,
+                  "lat_seq_ms": 492.6,
+                  "flops_vs_always32": 0.383
+                },
+                "always_7b": {
+                  "acc_sw": 0.562,
+                  "acc_macro": 0.6752,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5745,
+                  "acc_macro": 0.6845,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5765,
+                  "acc_macro": 0.682,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5767,
+                  "acc_macro": 0.6873,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 173.2,
+                  "lat_par_ms": 907.8,
+                  "lat_seq_ms": 907.8,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 40029
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5625,
+                  "acc_macro": 0.6188,
+                  "flops": 10.871,
+                  "energy_j": 376.4,
+                  "lat_par_ms": 709.7,
+                  "lat_seq_ms": 2688.2,
+                  "flops_vs_always32": 2.379
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0014,
+                    "lo": -0.0036,
+                    "hi": 0.0063,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.012,
+                    "lo": -0.0299,
+                    "hi": 0.006,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.008,
+                    "lo": -0.0359,
+                    "hi": 0.0199,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.0035,
+                    "lo": -0.025,
+                    "hi": 0.018,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1857,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.115,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.206,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0006,
+                    "lo": -0.0036,
+                    "hi": 0.0048,
+                    "sig": false,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0112,
+                    "macro_ci": {
+                      "delta": -0.0038,
+                      "lo": -0.0107,
+                      "hi": 0.0029,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0538,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.0006,
+                    "lo": -0.0036,
+                    "hi": 0.0048,
+                    "sig": false,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0006,
+                    "macro_ci": {
+                      "delta": -0.0038,
+                      "lo": -0.0106,
+                      "hi": 0.0028,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": -0.0038
+                  },
+                  "open_only": {
+                    "delta": 0.1927,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": -0.001,
+                    "lo": -0.0059,
+                    "hi": 0.0039,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0072,
+                    "lo": -0.0239,
+                    "hi": 0.0084,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.0199,
+                    "lo": -0.0398,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.006,
+                    "lo": -0.012,
+                    "hi": -0.0005,
+                    "sig": true,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0267,
+                    "lo": -0.0467,
+                    "hi": 0.1,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0186,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.056,
+                    "hi": 0.096,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0012,
+                    "lo": -0.0027,
+                    "hi": 0.0052,
+                    "sig": false,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.0012,
+                    "macro_ci": {
+                      "delta": 0.0059,
+                      "lo": -0.0053,
+                      "hi": 0.0178,
+                      "sig": false,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0059
+                  },
+                  "mcq_only": {
+                    "delta": -0.0014,
+                    "lo": -0.0055,
+                    "hi": 0.0028,
+                    "sig": false,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": -0.0014,
+                    "macro_ci": {
+                      "delta": -0.0014,
+                      "lo": -0.0146,
+                      "hi": 0.0122,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": -0.0014
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0299,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0018,
+                      "hi": 0.0426,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": -0.001,
+                    "lo": -0.0058,
+                    "hi": 0.0039,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.012,
+                    "lo": -0.0299,
+                    "hi": 0.006,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.0199,
+                    "lo": -0.0398,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.006,
+                    "lo": -0.012,
+                    "hi": -0.0005,
+                    "sig": true,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0372,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.056,
+                    "hi": 0.096,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.001,
+                    "lo": -0.0029,
+                    "hi": 0.005,
+                    "sig": false,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.001,
+                    "macro_ci": {
+                      "delta": 0.0024,
+                      "lo": -0.0055,
+                      "hi": 0.0103,
+                      "sig": false,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0024
+                  },
+                  "mcq_only": {
+                    "delta": -0.0016,
+                    "lo": -0.0057,
+                    "hi": 0.0025,
+                    "sig": false,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": -0.0016,
+                    "macro_ci": {
+                      "delta": -0.0066,
+                      "lo": -0.0114,
+                      "hi": -0.002,
+                      "sig": true,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": -0.0066
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0294,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0018,
+                      "hi": 0.0428,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              }
+            }
+          },
+          "accuracy_max_v1_F3": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "F3_confadv(fusion)",
+                "method_acc": 0.5653,
+                "flops": 5.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 1012.0,
+                "energy_j": 172.8
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8589,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8526,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8891,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.3065,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MMMU-Medical-val": {
+                "n": 150,
+                "format": "MCQ",
+                "policy": "escalate->32B-think (MMMU corrected)",
+                "method_acc": 0.66,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "lat_seq_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.8093,
+                "flops": 7.622,
+                "lat_par_ms": 627.2,
+                "lat_seq_ms": 1905.9,
+                "energy_j": 265.4
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.595,
+                "flops": 8.391,
+                "lat_par_ms": 605.1,
+                "lat_seq_ms": 2124.1,
+                "energy_j": 293.9
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.452,
+                "flops": 12.598,
+                "lat_par_ms": 759.2,
+                "lat_seq_ms": 3099.8,
+                "energy_j": 435.2
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5864,
+                  "acc_macro": 0.6654,
+                  "flops": 5.708,
+                  "energy_j": 183.6,
+                  "lat_par_ms": 702.4,
+                  "lat_seq_ms": 1085.6,
+                  "flops_vs_always32": 1.249
+                },
+                "always_7b": {
+                  "acc_sw": 0.5558,
+                  "acc_macro": 0.6196,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5632,
+                  "acc_macro": 0.6063,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5732,
+                  "acc_macro": 0.6541,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5733,
+                  "acc_macro": 0.6576,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 170.6,
+                  "lat_par_ms": 894.4,
+                  "lat_seq_ms": 894.4,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42374
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5878,
+                  "acc_macro": 0.6887,
+                  "flops": 5.405,
+                  "energy_j": 172.3,
+                  "lat_par_ms": 701.9,
+                  "lat_seq_ms": 991.7,
+                  "flops_vs_always32": 1.183
+                },
+                "always_7b": {
+                  "acc_sw": 0.562,
+                  "acc_macro": 0.6752,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5745,
+                  "acc_macro": 0.6845,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5765,
+                  "acc_macro": 0.682,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5767,
+                  "acc_macro": 0.6873,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 173.2,
+                  "lat_par_ms": 907.8,
+                  "lat_seq_ms": 907.8,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 40029
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5625,
+                  "acc_macro": 0.6188,
+                  "flops": 10.871,
+                  "energy_j": 376.4,
+                  "lat_par_ms": 709.7,
+                  "lat_seq_ms": 2688.2,
+                  "flops_vs_always32": 2.379
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0159,
+                    "lo": 0.0121,
+                    "hi": 0.0196,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.012,
+                    "lo": -0.008,
+                    "hi": 0.0319,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0025,
+                    "lo": -0.0185,
+                    "hi": 0.023,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1857,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.115,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.206,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0133,
+                    "lo": 0.01,
+                    "hi": 0.0166,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0233,
+                    "macro_ci": {
+                      "delta": 0.0043,
+                      "lo": -0.0008,
+                      "hi": 0.0095,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0591,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.0133,
+                    "lo": 0.0101,
+                    "hi": 0.0167,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0133,
+                    "macro_ci": {
+                      "delta": 0.0043,
+                      "lo": -0.0007,
+                      "hi": 0.0094,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0043
+                  },
+                  "open_only": {
+                    "delta": 0.1927,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0135,
+                    "lo": 0.0101,
+                    "hi": 0.0169,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0267,
+                    "lo": -0.0467,
+                    "hi": 0.1,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.0553,
+                    "hi": 0.096,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0133,
+                    "lo": 0.0104,
+                    "hi": 0.0161,
+                    "sig": true,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.0133,
+                    "macro_ci": {
+                      "delta": 0.0113,
+                      "lo": 0.0003,
+                      "hi": 0.0224,
+                      "sig": true,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0113
+                  },
+                  "mcq_only": {
+                    "delta": 0.0114,
+                    "lo": 0.0084,
+                    "hi": 0.0143,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0114,
+                    "macro_ci": {
+                      "delta": 0.0067,
+                      "lo": -0.0055,
+                      "hi": 0.0191,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0067
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0294,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0011,
+                      "hi": 0.0422,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0135,
+                    "lo": 0.0101,
+                    "hi": 0.017,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.0553,
+                    "hi": 0.0953,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0131,
+                    "lo": 0.0102,
+                    "hi": 0.0159,
+                    "sig": true,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.0131,
+                    "macro_ci": {
+                      "delta": 0.0078,
+                      "lo": 0.0007,
+                      "hi": 0.0152,
+                      "sig": true,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0078
+                  },
+                  "mcq_only": {
+                    "delta": 0.0112,
+                    "lo": 0.0083,
+                    "hi": 0.014,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0112,
+                    "macro_ci": {
+                      "delta": 0.0015,
+                      "lo": 0.0001,
+                      "hi": 0.0027,
+                      "sig": true,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0015
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0303,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.002,
+                      "hi": 0.042,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              }
+            }
+          },
+          "accuracy_max_v2_F8F10": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "F8-certified-veto",
+                "method_acc": 0.5613,
+                "flops": 3.741,
+                "lat_par_ms": 745.9,
+                "lat_seq_ms": 745.9,
+                "energy_j": 122.0
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8589,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8526,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8891,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.3065,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MMMU-Medical-val": {
+                "n": 150,
+                "format": "MCQ",
+                "policy": "escalate->32B-think (MMMU corrected)",
+                "method_acc": 0.66,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "lat_seq_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.8202,
+                "flops": 7.842,
+                "lat_par_ms": 659.1,
+                "lat_seq_ms": 1937.8,
+                "energy_j": 271.5
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.605,
+                "flops": 9.511,
+                "lat_par_ms": 768.0,
+                "lat_seq_ms": 2287.1,
+                "energy_j": 325.0
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.462,
+                "flops": 12.178,
+                "lat_par_ms": 698.0,
+                "lat_seq_ms": 3038.7,
+                "energy_j": 423.5
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5839,
+                  "acc_macro": 0.6684,
+                  "flops": 4.259,
+                  "energy_j": 143.3,
+                  "lat_par_ms": 765.3,
+                  "lat_seq_ms": 874.8,
+                  "flops_vs_always32": 0.932
+                },
+                "always_7b": {
+                  "acc_sw": 0.5558,
+                  "acc_macro": 0.6196,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5632,
+                  "acc_macro": 0.6063,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5732,
+                  "acc_macro": 0.6541,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5733,
+                  "acc_macro": 0.6576,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 170.6,
+                  "lat_par_ms": 894.4,
+                  "lat_seq_ms": 894.4,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42374
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5845,
+                  "acc_macro": 0.6881,
+                  "flops": 3.878,
+                  "energy_j": 129.8,
+                  "lat_par_ms": 769.5,
+                  "lat_seq_ms": 769.5,
+                  "flops_vs_always32": 0.849
+                },
+                "always_7b": {
+                  "acc_sw": 0.562,
+                  "acc_macro": 0.6752,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5745,
+                  "acc_macro": 0.6845,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5765,
+                  "acc_macro": 0.682,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5767,
+                  "acc_macro": 0.6873,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 173.2,
+                  "lat_par_ms": 907.8,
+                  "lat_seq_ms": 907.8,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 40029
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5727,
+                  "acc_macro": 0.6291,
+                  "flops": 10.757,
+                  "energy_j": 373.3,
+                  "lat_par_ms": 693.3,
+                  "lat_seq_ms": 2671.8,
+                  "flops_vs_always32": 2.354
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0119,
+                    "lo": 0.0089,
+                    "hi": 0.015,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.012,
+                    "lo": -0.008,
+                    "hi": 0.0319,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0025,
+                    "lo": -0.0185,
+                    "hi": 0.024,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1966,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.125,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.216,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.01,
+                    "lo": 0.0073,
+                    "hi": 0.0128,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0207,
+                    "macro_ci": {
+                      "delta": 0.0036,
+                      "lo": -0.0015,
+                      "hi": 0.0087,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0621,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.01,
+                    "lo": 0.0073,
+                    "hi": 0.0128,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.01,
+                    "macro_ci": {
+                      "delta": 0.0036,
+                      "lo": -0.0016,
+                      "hi": 0.0086,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0036
+                  },
+                  "open_only": {
+                    "delta": 0.2029,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0095,
+                    "lo": 0.0072,
+                    "hi": 0.0118,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0267,
+                    "lo": -0.0467,
+                    "hi": 0.1,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.0016,
+                    "lo": -0.0202,
+                    "hi": 0.0248,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.005,
+                    "lo": -0.045,
+                    "hi": 0.055,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.086,
+                    "lo": 0.0647,
+                    "hi": 0.1067,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0107,
+                    "lo": 0.0087,
+                    "hi": 0.0127,
+                    "sig": true,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.0107,
+                    "macro_ci": {
+                      "delta": 0.0143,
+                      "lo": 0.0038,
+                      "hi": 0.0246,
+                      "sig": true,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0143
+                  },
+                  "mcq_only": {
+                    "delta": 0.0081,
+                    "lo": 0.0061,
+                    "hi": 0.01,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0081,
+                    "macro_ci": {
+                      "delta": 0.006,
+                      "lo": -0.0062,
+                      "hi": 0.0183,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.006
+                  },
+                  "open_only": {
+                    "delta": 0.0559,
+                    "lo": 0.0409,
+                    "hi": 0.0712,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0559,
+                    "macro_ci": {
+                      "delta": 0.0309,
+                      "lo": 0.0122,
+                      "hi": 0.0502,
+                      "sig": true,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0309
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0095,
+                    "lo": 0.0073,
+                    "hi": 0.0119,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "MMMU-Medical-val": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 150
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.0016,
+                    "lo": -0.0202,
+                    "hi": 0.0233,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.005,
+                    "lo": -0.045,
+                    "hi": 0.055,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.086,
+                    "lo": 0.0653,
+                    "hi": 0.1073,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0105,
+                    "lo": 0.0085,
+                    "hi": 0.0125,
+                    "sig": true,
+                    "n": 42374,
+                    "sw_point_delta_all_cells": 0.0105,
+                    "macro_ci": {
+                      "delta": 0.0108,
+                      "lo": 0.0042,
+                      "hi": 0.0171,
+                      "sig": true,
+                      "cells": 9
+                    },
+                    "macro_point_all_cells": 0.0108
+                  },
+                  "mcq_only": {
+                    "delta": 0.0079,
+                    "lo": 0.0059,
+                    "hi": 0.0098,
+                    "sig": true,
+                    "n": 40029,
+                    "sw_point_delta_all_cells": 0.0079,
+                    "macro_ci": {
+                      "delta": 0.0008,
+                      "lo": -0.0005,
+                      "hi": 0.002,
+                      "sig": false,
+                      "cells": 6
+                    },
+                    "macro_point_all_cells": 0.0008
+                  },
+                  "open_only": {
+                    "delta": 0.0559,
+                    "lo": 0.0401,
+                    "hi": 0.0716,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0559,
+                    "macro_ci": {
+                      "delta": 0.0309,
+                      "lo": 0.0114,
+                      "hi": 0.0502,
+                      "sig": true,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0309
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pareto_frontier": {
+          "full_suite": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.5558,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5732,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.5632,
+                "acc_is_estimated": true,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.5733,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 894.4,
+                "energy_j": 170.6
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5744,
+                "acc_is_estimated": false,
+                "flops": 2.257,
+                "lat_par_ms": 504.6,
+                "energy_j": 90.4
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5864,
+                "acc_is_estimated": false,
+                "flops": 5.708,
+                "lat_par_ms": 702.4,
+                "energy_j": 183.6
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5839,
+                "acc_is_estimated": false,
+                "flops": 4.259,
+                "lat_par_ms": 765.3,
+                "energy_j": 143.3
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_accuracy_max_v2_F8F10",
+              "method_compute_lean"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_compute_lean"
+            ]
+          },
+          "mcq_only": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.562,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5765,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.5745,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.5767,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 907.8,
+                "energy_j": 173.2
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5751,
+                "acc_is_estimated": false,
+                "flops": 1.752,
+                "lat_par_ms": 492.6,
+                "energy_j": 73.7
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5878,
+                "acc_is_estimated": false,
+                "flops": 5.405,
+                "lat_par_ms": 701.9,
+                "energy_j": 172.3
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5845,
+                "acc_is_estimated": false,
+                "flops": 3.878,
+                "lat_par_ms": 769.5,
+                "energy_j": 129.8
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_accuracy_max_v2_F8F10",
+              "method_compute_lean"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_32b_nt",
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_compute_lean"
+            ]
+          },
+          "open_only": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.4495,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5168,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.3698,
+                "acc_is_estimated": true,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.5168,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5625,
+                "acc_is_estimated": false,
+                "flops": 10.871,
+                "lat_par_ms": 709.7,
+                "energy_j": 376.4
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5625,
+                "acc_is_estimated": false,
+                "flops": 10.871,
+                "lat_par_ms": 709.7,
+                "energy_j": 376.4
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5727,
+                "acc_is_estimated": false,
+                "flops": 10.757,
+                "lat_par_ms": 693.3,
+                "energy_j": 373.3
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_32b_nt",
+              "always_7b",
+              "method_accuracy_max_v2_F8F10",
+              "oracle_mode_32b"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_32b_nt",
+              "always_7b",
+              "method_accuracy_max_v2_F8F10",
+              "oracle_mode_32b"
+            ]
+          }
+        }
+      }
+    },
+    "B_mmmu_excluded": {
+      "description": "MMMU rows dropped entirely (8-cell suite = 5 MCQ + 3 open). Neither the method nor the baselines see MMMU.",
+      "data": {
+        "cell_order": [
+          "PMC_VQA",
+          "SLAKE_closed",
+          "VQA_RAD_closed",
+          "PATH_VQA_closed",
+          "MedXpertQA-MM",
+          "SLAKE_open",
+          "VQA_RAD_open",
+          "PATH_VQA_open"
+        ],
+        "n_total": 42224,
+        "baselines_per_benchmark": {
+          "PMC_VQA": {
+            "always_7b": 0.5427,
+            "always_32b_think": 0.5494,
+            "always_32b_nt": 0.5518,
+            "oracle_mode_32b": 0.5518
+          },
+          "SLAKE_closed": {
+            "always_7b": 0.8254,
+            "always_32b_think": 0.8636,
+            "always_32b_nt": 0.8589,
+            "oracle_mode_32b": 0.8636
+          },
+          "VQA_RAD_closed": {
+            "always_7b": 0.7809,
+            "always_32b_think": 0.8406,
+            "always_32b_nt": 0.8526,
+            "oracle_mode_32b": 0.8526
+          },
+          "PATH_VQA_closed": {
+            "always_7b": 0.8409,
+            "always_32b_think": 0.8891,
+            "always_32b_nt": 0.8891,
+            "oracle_mode_32b": 0.8891
+          },
+          "MedXpertQA-MM": {
+            "always_7b": 0.2615,
+            "always_32b_think": 0.304,
+            "always_32b_nt": 0.3065,
+            "oracle_mode_32b": 0.3065
+          },
+          "SLAKE_open": {
+            "always_7b": 0.7364,
+            "always_32b_think": 0.6236,
+            "always_32b_nt": 0.8186,
+            "oracle_mode_32b": 0.8186
+          },
+          "VQA_RAD_open": {
+            "always_7b": 0.465,
+            "always_32b_think": 0.48,
+            "always_32b_nt": 0.6,
+            "oracle_mode_32b": 0.6
+          },
+          "PATH_VQA_open": {
+            "always_7b": 0.324,
+            "always_32b_think": 0.246,
+            "always_32b_nt": 0.376,
+            "oracle_mode_32b": 0.376
+          }
+        },
+        "modes": {
+          "compute_lean": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.5508,
+                "flops": 1.386,
+                "lat_par_ms": 403.2,
+                "lat_seq_ms": 403.2,
+                "energy_j": 56.5
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8517,
+                "flops": 1.935,
+                "lat_par_ms": 483.0,
+                "lat_seq_ms": 483.0,
+                "energy_j": 71.8
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8327,
+                "flops": 3.604,
+                "lat_par_ms": 725.9,
+                "lat_seq_ms": 725.9,
+                "energy_j": 118.2
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.8882,
+                "flops": 3.089,
+                "lat_par_ms": 651.0,
+                "lat_seq_ms": 651.0,
+                "energy_j": 103.9
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "cascade",
+                "method_acc": 0.3005,
+                "flops": 5.095,
+                "lat_par_ms": 942.8,
+                "lat_seq_ms": 942.8,
+                "energy_j": 159.6
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.8093,
+                "flops": 7.622,
+                "lat_par_ms": 627.2,
+                "lat_seq_ms": 1905.9,
+                "energy_j": 265.4
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.595,
+                "flops": 8.391,
+                "lat_par_ms": 605.1,
+                "lat_seq_ms": 2124.1,
+                "energy_j": 293.9
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.452,
+                "flops": 12.598,
+                "lat_par_ms": 759.2,
+                "lat_seq_ms": 3099.8,
+                "energy_j": 435.2
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5741,
+                  "acc_macro": 0.66,
+                  "flops": 2.248,
+                  "energy_j": 83.6,
+                  "lat_par_ms": 469.0,
+                  "lat_seq_ms": 578.9,
+                  "flops_vs_always32": 0.492
+                },
+                "always_7b": {
+                  "acc_sw": 0.5549,
+                  "acc_macro": 0.5971,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5628,
+                  "acc_macro": 0.5995,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5729,
+                  "acc_macro": 0.6567,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.573,
+                  "acc_macro": 0.6573,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 164.1,
+                  "lat_par_ms": 860.2,
+                  "lat_seq_ms": 860.2,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42224
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5748,
+                  "acc_macro": 0.6848,
+                  "flops": 1.741,
+                  "energy_j": 66.4,
+                  "lat_par_ms": 454.9,
+                  "lat_seq_ms": 454.9,
+                  "flops_vs_always32": 0.381
+                },
+                "always_7b": {
+                  "acc_sw": 0.5611,
+                  "acc_macro": 0.6503,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5742,
+                  "acc_macro": 0.6893,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5762,
+                  "acc_macro": 0.6918,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5763,
+                  "acc_macro": 0.6927,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 166.3,
+                  "lat_par_ms": 871.6,
+                  "lat_seq_ms": 871.6,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 39879
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5625,
+                  "acc_macro": 0.6188,
+                  "flops": 10.871,
+                  "energy_j": 376.4,
+                  "lat_par_ms": 709.7,
+                  "lat_seq_ms": 2688.2,
+                  "flops_vs_always32": 2.379
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0014,
+                    "lo": -0.0034,
+                    "hi": 0.0063,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.012,
+                    "lo": -0.0299,
+                    "hi": 0.006,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.008,
+                    "lo": -0.0359,
+                    "hi": 0.0199,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.0035,
+                    "lo": -0.0245,
+                    "hi": 0.0175,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1857,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.115,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.206,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0006,
+                    "lo": -0.0036,
+                    "hi": 0.0048,
+                    "sig": false,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0113,
+                    "macro_ci": {
+                      "delta": -0.0046,
+                      "lo": -0.0128,
+                      "hi": 0.0035,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0605,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.0006,
+                    "lo": -0.0036,
+                    "hi": 0.005,
+                    "sig": false,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0006,
+                    "macro_ci": {
+                      "delta": -0.0046,
+                      "lo": -0.0127,
+                      "hi": 0.0036,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": -0.0046
+                  },
+                  "open_only": {
+                    "delta": 0.1927,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": -0.001,
+                    "lo": -0.0059,
+                    "hi": 0.0039,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0072,
+                    "lo": -0.0239,
+                    "hi": 0.0084,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.0199,
+                    "lo": -0.0398,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.006,
+                    "lo": -0.0115,
+                    "hi": -0.0005,
+                    "sig": true,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.056,
+                    "hi": 0.096,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0011,
+                    "lo": -0.0028,
+                    "hi": 0.0051,
+                    "sig": false,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.0011,
+                    "macro_ci": {
+                      "delta": 0.0033,
+                      "lo": -0.0055,
+                      "hi": 0.0121,
+                      "sig": false,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0033
+                  },
+                  "mcq_only": {
+                    "delta": -0.0015,
+                    "lo": -0.0056,
+                    "hi": 0.0026,
+                    "sig": false,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": -0.0015,
+                    "macro_ci": {
+                      "delta": -0.007,
+                      "lo": -0.0125,
+                      "hi": -0.0017,
+                      "sig": true,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": -0.007
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0299,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0012,
+                      "hi": 0.0423,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": -0.001,
+                    "lo": -0.0056,
+                    "hi": 0.0039,
+                    "sig": false,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.012,
+                    "lo": -0.0299,
+                    "hi": 0.006,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": -0.0199,
+                    "lo": -0.0398,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": -0.0009,
+                    "lo": -0.0042,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": -0.006,
+                    "lo": -0.0115,
+                    "hi": -0.0005,
+                    "sig": true,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.056,
+                    "hi": 0.0967,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.001,
+                    "lo": -0.0029,
+                    "hi": 0.0049,
+                    "sig": false,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.001,
+                    "macro_ci": {
+                      "delta": 0.0027,
+                      "lo": -0.0062,
+                      "hi": 0.0118,
+                      "sig": false,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0027
+                  },
+                  "mcq_only": {
+                    "delta": -0.0016,
+                    "lo": -0.0057,
+                    "hi": 0.0025,
+                    "sig": false,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": -0.0016,
+                    "macro_ci": {
+                      "delta": -0.008,
+                      "lo": -0.0138,
+                      "hi": -0.0025,
+                      "sig": true,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": -0.008
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0299,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0012,
+                      "hi": 0.0422,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              }
+            }
+          },
+          "accuracy_max_v1_F3": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "F3_confadv(fusion)",
+                "method_acc": 0.5653,
+                "flops": 5.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 1012.0,
+                "energy_j": 172.8
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8589,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8526,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8891,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.3065,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.8093,
+                "flops": 7.622,
+                "lat_par_ms": 627.2,
+                "lat_seq_ms": 1905.9,
+                "energy_j": 265.4
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.595,
+                "flops": 8.391,
+                "lat_par_ms": 605.1,
+                "lat_seq_ms": 2124.1,
+                "energy_j": 293.9
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N+verifier->32B-nt",
+                "method_acc": 0.452,
+                "flops": 12.598,
+                "lat_par_ms": 759.2,
+                "lat_seq_ms": 3099.8,
+                "energy_j": 435.2
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5862,
+                  "acc_macro": 0.6661,
+                  "flops": 5.712,
+                  "energy_j": 177.1,
+                  "lat_par_ms": 667.5,
+                  "lat_seq_ms": 1052.1,
+                  "flops_vs_always32": 1.25
+                },
+                "always_7b": {
+                  "acc_sw": 0.5549,
+                  "acc_macro": 0.5971,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5628,
+                  "acc_macro": 0.5995,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5729,
+                  "acc_macro": 0.6567,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.573,
+                  "acc_macro": 0.6573,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 164.1,
+                  "lat_par_ms": 860.2,
+                  "lat_seq_ms": 860.2,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42224
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5876,
+                  "acc_macro": 0.6945,
+                  "flops": 5.408,
+                  "energy_j": 165.4,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 955.9,
+                  "flops_vs_always32": 1.183
+                },
+                "always_7b": {
+                  "acc_sw": 0.5611,
+                  "acc_macro": 0.6503,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5742,
+                  "acc_macro": 0.6893,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5762,
+                  "acc_macro": 0.6918,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5763,
+                  "acc_macro": 0.6927,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 166.3,
+                  "lat_par_ms": 871.6,
+                  "lat_seq_ms": 871.6,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 39879
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5625,
+                  "acc_macro": 0.6188,
+                  "flops": 10.871,
+                  "energy_j": 376.4,
+                  "lat_par_ms": 709.7,
+                  "lat_seq_ms": 2688.2,
+                  "flops_vs_always32": 2.379
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0159,
+                    "lo": 0.0121,
+                    "hi": 0.0196,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.012,
+                    "lo": -0.008,
+                    "hi": 0.0319,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0025,
+                    "lo": -0.019,
+                    "hi": 0.0235,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1857,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.115,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.206,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0134,
+                    "lo": 0.01,
+                    "hi": 0.0166,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0233,
+                    "macro_ci": {
+                      "delta": 0.0051,
+                      "lo": -0.0009,
+                      "hi": 0.0114,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0665,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.0134,
+                    "lo": 0.0101,
+                    "hi": 0.0167,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0134,
+                    "macro_ci": {
+                      "delta": 0.0051,
+                      "lo": -0.0008,
+                      "hi": 0.0112,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0051
+                  },
+                  "open_only": {
+                    "delta": 0.1927,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0135,
+                    "lo": 0.0099,
+                    "hi": 0.017,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.0553,
+                    "hi": 0.096,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0132,
+                    "lo": 0.0104,
+                    "hi": 0.0162,
+                    "sig": true,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.0132,
+                    "macro_ci": {
+                      "delta": 0.0094,
+                      "lo": 0.0011,
+                      "hi": 0.0177,
+                      "sig": true,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0094
+                  },
+                  "mcq_only": {
+                    "delta": 0.0113,
+                    "lo": 0.0085,
+                    "hi": 0.0141,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0113,
+                    "macro_ci": {
+                      "delta": 0.0027,
+                      "lo": 0.002,
+                      "hi": 0.0034,
+                      "sig": true,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0027
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0299,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0011,
+                      "hi": 0.0421,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0135,
+                    "lo": 0.0101,
+                    "hi": 0.0169,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": -0.0093,
+                    "lo": -0.0357,
+                    "hi": 0.0171,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": -0.005,
+                    "lo": -0.06,
+                    "hi": 0.05,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.076,
+                    "lo": 0.056,
+                    "hi": 0.0967,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0131,
+                    "lo": 0.0103,
+                    "hi": 0.016,
+                    "sig": true,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.0131,
+                    "macro_ci": {
+                      "delta": 0.0088,
+                      "lo": 0.0006,
+                      "hi": 0.017,
+                      "sig": true,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0088
+                  },
+                  "mcq_only": {
+                    "delta": 0.0112,
+                    "lo": 0.0083,
+                    "hi": 0.0141,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0112,
+                    "macro_ci": {
+                      "delta": 0.0017,
+                      "lo": 0.0001,
+                      "hi": 0.0033,
+                      "sig": true,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0017
+                  },
+                  "open_only": {
+                    "delta": 0.0456,
+                    "lo": 0.0303,
+                    "hi": 0.0614,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0456,
+                    "macro_ci": {
+                      "delta": 0.0206,
+                      "lo": -0.0014,
+                      "hi": 0.0426,
+                      "sig": false,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0206
+                  }
+                }
+              }
+            }
+          },
+          "accuracy_max_v2_F8F10": {
+            "per_benchmark": {
+              "PMC_VQA": {
+                "n": 33430,
+                "format": "MCQ",
+                "policy": "F8-certified-veto",
+                "method_acc": 0.5613,
+                "flops": 3.741,
+                "lat_par_ms": 745.9,
+                "lat_seq_ms": 745.9,
+                "energy_j": 122.0
+              },
+              "SLAKE_closed": {
+                "n": 836,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8589,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "VQA_RAD_closed": {
+                "n": 251,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8526,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "PATH_VQA_closed": {
+                "n": 3362,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.8891,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "MedXpertQA-MM": {
+                "n": 2000,
+                "format": "MCQ",
+                "policy": "always_32b_nt",
+                "method_acc": 0.3065,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "lat_seq_ms": 665.0,
+                "energy_j": 127.0
+              },
+              "SLAKE_open": {
+                "n": 645,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.8202,
+                "flops": 7.842,
+                "lat_par_ms": 659.1,
+                "lat_seq_ms": 1937.8,
+                "energy_j": 271.5
+              },
+              "VQA_RAD_open": {
+                "n": 200,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.605,
+                "flops": 9.511,
+                "lat_par_ms": 768.0,
+                "lat_seq_ms": 2287.1,
+                "energy_j": 325.0
+              },
+              "PATH_VQA_open": {
+                "n": 1500,
+                "format": "open",
+                "policy": "pandora-N + F10-L2D->32B-nt",
+                "method_acc": 0.462,
+                "flops": 12.178,
+                "lat_par_ms": 698.0,
+                "lat_seq_ms": 3038.7,
+                "energy_j": 423.5
+              }
+            },
+            "pooled": {
+              "full_suite": {
+                "method": {
+                  "acc_sw": 0.5836,
+                  "acc_macro": 0.6694,
+                  "flops": 4.257,
+                  "energy_j": 136.7,
+                  "lat_par_ms": 730.6,
+                  "lat_seq_ms": 840.5,
+                  "flops_vs_always32": 0.932
+                },
+                "always_7b": {
+                  "acc_sw": 0.5549,
+                  "acc_macro": 0.5971,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5628,
+                  "acc_macro": 0.5995,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5729,
+                  "acc_macro": 0.6567,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.573,
+                  "acc_macro": 0.6573,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 164.1,
+                  "lat_par_ms": 860.2,
+                  "lat_seq_ms": 860.2,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 42224
+              },
+              "mcq_only": {
+                "method": {
+                  "acc_sw": 0.5842,
+                  "acc_macro": 0.6937,
+                  "flops": 3.875,
+                  "energy_j": 122.8,
+                  "lat_par_ms": 732.8,
+                  "lat_seq_ms": 732.8,
+                  "flops_vs_always32": 0.848
+                },
+                "always_7b": {
+                  "acc_sw": 0.5611,
+                  "acc_macro": 0.6503,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.5742,
+                  "acc_macro": 0.6893,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5762,
+                  "acc_macro": 0.6918,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5763,
+                  "acc_macro": 0.6927,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 166.3,
+                  "lat_par_ms": 871.6,
+                  "lat_seq_ms": 871.6,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 39879
+              },
+              "open_only": {
+                "method": {
+                  "acc_sw": 0.5727,
+                  "acc_macro": 0.6291,
+                  "flops": 10.757,
+                  "energy_j": 373.3,
+                  "lat_par_ms": 693.3,
+                  "lat_seq_ms": 2671.8,
+                  "flops_vs_always32": 2.354
+                },
+                "always_7b": {
+                  "acc_sw": 0.4495,
+                  "acc_macro": 0.5085,
+                  "acc_is_estimated": false,
+                  "flops": 1.0,
+                  "energy_j": 45.8,
+                  "lat_par_ms": 347.0,
+                  "lat_seq_ms": 347.0,
+                  "flops_vs_always32": 0.219
+                },
+                "always_32b_think": {
+                  "acc_sw": 0.3698,
+                  "acc_macro": 0.4499,
+                  "acc_is_estimated": true,
+                  "flops": 4.57,
+                  "energy_j": 2001.9,
+                  "lat_par_ms": 10521.6,
+                  "lat_seq_ms": 10521.6,
+                  "flops_vs_always32": 1.0
+                },
+                "always_32b_nt": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "oracle_mode_32b": {
+                  "acc_sw": 0.5168,
+                  "acc_macro": 0.5982,
+                  "acc_is_estimated": false,
+                  "flops": 4.57,
+                  "energy_j": 127.0,
+                  "lat_par_ms": 665.0,
+                  "lat_seq_ms": 665.0,
+                  "flops_vs_always32": 1.0
+                },
+                "_n": 2345
+              }
+            },
+            "paired_bootstrap_ci": {
+              "always_32b_think": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0119,
+                    "lo": 0.0089,
+                    "hi": 0.0149,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.012,
+                    "lo": -0.008,
+                    "hi": 0.0319,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0025,
+                    "lo": -0.018,
+                    "hi": 0.0235,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.1966,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.125,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.216,
+                    "estimated": true,
+                    "note": "32B-think open acc is a measured-delta estimate; no per-sample CI"
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0101,
+                    "lo": 0.0073,
+                    "hi": 0.0128,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0208,
+                    "macro_ci": {
+                      "delta": 0.0043,
+                      "lo": -0.0016,
+                      "hi": 0.0104,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0699,
+                    "note": "open cells ['SLAKE_open', 'VQA_RAD_open', 'PATH_VQA_open'] excluded from the per-sample CI (32B-think open acc is a measured-delta estimate); CI over the real-vector cells only"
+                  },
+                  "mcq_only": {
+                    "delta": 0.0101,
+                    "lo": 0.0073,
+                    "hi": 0.0129,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0101,
+                    "macro_ci": {
+                      "delta": 0.0043,
+                      "lo": -0.0017,
+                      "hi": 0.0104,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0043
+                  },
+                  "open_only": {
+                    "delta": 0.2029,
+                    "estimated": true,
+                    "n": 0,
+                    "note": "all cells estimated (32B-think open); point delta only"
+                  }
+                }
+              },
+              "always_32b_nt": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0095,
+                    "lo": 0.0072,
+                    "hi": 0.0118,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.0016,
+                    "lo": -0.0202,
+                    "hi": 0.0233,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.005,
+                    "lo": -0.045,
+                    "hi": 0.055,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.086,
+                    "lo": 0.0647,
+                    "hi": 0.1073,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0107,
+                    "lo": 0.0086,
+                    "hi": 0.0127,
+                    "sig": true,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.0107,
+                    "macro_ci": {
+                      "delta": 0.0128,
+                      "lo": 0.0054,
+                      "hi": 0.0199,
+                      "sig": true,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0128
+                  },
+                  "mcq_only": {
+                    "delta": 0.008,
+                    "lo": 0.006,
+                    "hi": 0.01,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.008,
+                    "macro_ci": {
+                      "delta": 0.0019,
+                      "lo": 0.0014,
+                      "hi": 0.0024,
+                      "sig": true,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.0019
+                  },
+                  "open_only": {
+                    "delta": 0.0559,
+                    "lo": 0.0405,
+                    "hi": 0.0716,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0559,
+                    "macro_ci": {
+                      "delta": 0.0309,
+                      "lo": 0.0115,
+                      "hi": 0.0503,
+                      "sig": true,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0309
+                  }
+                }
+              },
+              "oracle_mode_32b": {
+                "per_benchmark": {
+                  "PMC_VQA": {
+                    "delta": 0.0095,
+                    "lo": 0.0072,
+                    "hi": 0.0118,
+                    "sig": true,
+                    "n": 33430
+                  },
+                  "SLAKE_closed": {
+                    "delta": -0.0048,
+                    "lo": -0.012,
+                    "hi": 0.0024,
+                    "sig": false,
+                    "n": 836
+                  },
+                  "VQA_RAD_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 251
+                  },
+                  "PATH_VQA_closed": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 3362
+                  },
+                  "MedXpertQA-MM": {
+                    "delta": 0.0,
+                    "lo": 0.0,
+                    "hi": 0.0,
+                    "sig": false,
+                    "n": 2000
+                  },
+                  "SLAKE_open": {
+                    "delta": 0.0016,
+                    "lo": -0.0202,
+                    "hi": 0.0233,
+                    "sig": false,
+                    "n": 645
+                  },
+                  "VQA_RAD_open": {
+                    "delta": 0.005,
+                    "lo": -0.045,
+                    "hi": 0.055,
+                    "sig": false,
+                    "n": 200
+                  },
+                  "PATH_VQA_open": {
+                    "delta": 0.086,
+                    "lo": 0.0653,
+                    "hi": 0.1067,
+                    "sig": true,
+                    "n": 1500
+                  }
+                },
+                "pooled": {
+                  "full_suite": {
+                    "delta": 0.0106,
+                    "lo": 0.0085,
+                    "hi": 0.0126,
+                    "sig": true,
+                    "n": 42224,
+                    "sw_point_delta_all_cells": 0.0106,
+                    "macro_ci": {
+                      "delta": 0.0122,
+                      "lo": 0.0051,
+                      "hi": 0.0194,
+                      "sig": true,
+                      "cells": 8
+                    },
+                    "macro_point_all_cells": 0.0122
+                  },
+                  "mcq_only": {
+                    "delta": 0.0079,
+                    "lo": 0.006,
+                    "hi": 0.0099,
+                    "sig": true,
+                    "n": 39879,
+                    "sw_point_delta_all_cells": 0.0079,
+                    "macro_ci": {
+                      "delta": 0.001,
+                      "lo": -0.0007,
+                      "hi": 0.0025,
+                      "sig": false,
+                      "cells": 5
+                    },
+                    "macro_point_all_cells": 0.001
+                  },
+                  "open_only": {
+                    "delta": 0.0559,
+                    "lo": 0.0405,
+                    "hi": 0.0712,
+                    "sig": true,
+                    "n": 2345,
+                    "sw_point_delta_all_cells": 0.0559,
+                    "macro_ci": {
+                      "delta": 0.0309,
+                      "lo": 0.0114,
+                      "hi": 0.0499,
+                      "sig": true,
+                      "cells": 3
+                    },
+                    "macro_point_all_cells": 0.0309
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pareto_frontier": {
+          "full_suite": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.5549,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5729,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.5628,
+                "acc_is_estimated": true,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.573,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 860.2,
+                "energy_j": 164.1
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5741,
+                "acc_is_estimated": false,
+                "flops": 2.248,
+                "lat_par_ms": 469.0,
+                "energy_j": 83.6
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5862,
+                "acc_is_estimated": false,
+                "flops": 5.712,
+                "lat_par_ms": 667.5,
+                "energy_j": 177.1
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5836,
+                "acc_is_estimated": false,
+                "flops": 4.257,
+                "lat_par_ms": 730.6,
+                "energy_j": 136.7
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_accuracy_max_v2_F8F10",
+              "method_compute_lean"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_compute_lean"
+            ]
+          },
+          "mcq_only": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.5611,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5762,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.5742,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.5763,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 871.6,
+                "energy_j": 166.3
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5748,
+                "acc_is_estimated": false,
+                "flops": 1.741,
+                "lat_par_ms": 454.9,
+                "energy_j": 66.4
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5876,
+                "acc_is_estimated": false,
+                "flops": 5.408,
+                "lat_par_ms": 665.0,
+                "energy_j": 165.4
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5842,
+                "acc_is_estimated": false,
+                "flops": 3.875,
+                "lat_par_ms": 732.8,
+                "energy_j": 122.8
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_accuracy_max_v2_F8F10",
+              "method_compute_lean"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_7b",
+              "method_accuracy_max_v1_F3",
+              "method_compute_lean"
+            ]
+          },
+          "open_only": {
+            "points": [
+              {
+                "system": "always_7b",
+                "acc": 0.4495,
+                "acc_is_estimated": false,
+                "flops": 1.0,
+                "lat_par_ms": 347.0,
+                "energy_j": 45.8
+              },
+              {
+                "system": "always_32b_nt",
+                "acc": 0.5168,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "always_32b_think",
+                "acc": 0.3698,
+                "acc_is_estimated": true,
+                "flops": 4.57,
+                "lat_par_ms": 10521.6,
+                "energy_j": 2001.9
+              },
+              {
+                "system": "oracle_mode_32b",
+                "acc": 0.5168,
+                "acc_is_estimated": false,
+                "flops": 4.57,
+                "lat_par_ms": 665.0,
+                "energy_j": 127.0
+              },
+              {
+                "system": "method_compute_lean",
+                "acc": 0.5625,
+                "acc_is_estimated": false,
+                "flops": 10.871,
+                "lat_par_ms": 709.7,
+                "energy_j": 376.4
+              },
+              {
+                "system": "method_accuracy_max_v1_F3",
+                "acc": 0.5625,
+                "acc_is_estimated": false,
+                "flops": 10.871,
+                "lat_par_ms": 709.7,
+                "energy_j": 376.4
+              },
+              {
+                "system": "method_accuracy_max_v2_F8F10",
+                "acc": 0.5727,
+                "acc_is_estimated": false,
+                "flops": 10.757,
+                "lat_par_ms": 693.3,
+                "energy_j": 373.3
+              }
+            ],
+            "pareto_optimal_flops": [
+              "always_32b_nt",
+              "always_7b",
+              "method_accuracy_max_v2_F8F10",
+              "oracle_mode_32b"
+            ],
+            "pareto_optimal_lat_par": [
+              "always_32b_nt",
+              "always_7b",
+              "method_accuracy_max_v2_F8F10",
+              "oracle_mode_32b"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "headline_robustness_check": {
+    "expected_from_task": {
+      "accuracy_max_v2_d_vs_think_approx": 0.0207,
+      "d_vs_oracle_approx": 0.013
+    },
+    "measured_accuracy_max_v2_variantA": {
+      "pooled_sw_acc": 0.5839,
+      "d_vs_think_sw_point": 0.0207,
+      "d_vs_think_mcq_ci": {
+        "delta": 0.01,
+        "lo": 0.0073,
+        "hi": 0.0128,
+        "sig": true,
+        "n": 40029,
+        "sw_point_delta_all_cells": 0.01,
+        "macro_ci": {
+          "delta": 0.0036,
+          "lo": -0.0016,
+          "hi": 0.0086,
+          "sig": false,
+          "cells": 6
+        },
+        "macro_point_all_cells": 0.0036
+      },
+      "d_vs_oracle_sw_ci": {
+        "delta": 0.0105,
+        "lo": 0.0085,
+        "hi": 0.0125,
+        "sig": true
+      }
+    },
+    "verdict": "Sample-weighted accuracy-max-v2 headline is ROBUST to the MMMU correction: escalating MMMU (0.80->0.66) moves the vs-THINK delta only ~-0.0005 (MMMU is 0.35% of the pool), landing at +0.0207 (point, full-suite) vs always-32B-THINK. The headline is CARRIED BY PMC fusion/veto + the open-text verifier arm, NOT the MMMU anomaly. vs oracle-mode-32B the v2 delta is +0.0105 (95% CI [+0.0085,+0.0125]) -- note the ~+0.013-vs-oracle figure quoted in the task corresponds to accuracy-max-V1 (F3 fusion, higher acc/cost); V2 (F8, FLOP-negative) sits slightly lower vs oracle but keeps the +0.0207-vs-THINK headline."
+  },
+  "data_gaps": [
+    "always-32B-THINK open-text accuracy is ESTIMATED (judged 32B-no-think + measured modal think-delta -0.195/-0.120/-0.130); no per-sample judged think dump on open -> method-vs-THINK CI is the MCQ pool only; the full-suite vs-THINK delta is a flagged sample-weighted point estimate. Every OTHER comparison (vs oracle-mode-32B, vs 32B-no-think, vs 7B) has real per-sample vectors on ALL cells incl. open.",
+    "PATH_VQA_closed has no 32B-think dump -> think=no-think there; oracle picks no-think.",
+    "oracle-mode-32B is an ORACLE upper bound on single-32B mode selection (peeks at which mode wins per benchmark); the fairest STRONG baseline, not a deployable system.",
+    "paired bootstrap resamples QUESTIONS (sampling noise); held-out tau/lambda/threshold are fixed per item, so calibration variance is not in the CI.",
+    "SLAKE/VQA-RAD/PathVQA-open are IN-DOMAIN for the pooled4 verifier (trained on those families).",
+    "MMMU n=150 = 0.35% of the pooled 42374; the sample-weighted headline barely moves under either correction, but MACRO (equal-weight per benchmark) does move materially -> report the corrected macro."
+  ]
+}

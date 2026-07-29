@@ -1,0 +1,20 @@
+/usr/local/lib/python3.12/dist-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+calib(PMC-train) n=3000  eval(competent-4) n=6050
+
+=== (A) LEARNABILITY DISSECTION — PMC-train -> competent-4 transfer AUROC (same features) ===
+  target                                     logistic    MLP
+  recoverability 1[32B-think right]|7B-wrong    0.581  0.579   <- the WALL
+  stability 1[pred7==pred32think]               0.714  0.714   <- learnable target
+  which-tier 1[7B-nt correct]                   0.685  0.685
+  => re-TARGETING the label (recoverability->stability) moves AUROC; MLP≈logistic (capacity doesn't).
+
+=== (B) DEPLOYED: tier-0 gate swap in ACC, calibrated on PMC-train, tested on competent-4 ===
+  parity(always-32B-think)=0.645  always-7B=0.622
+  tier-0 gate                 acc   esc0  think  FLOPs%  lat(s) guardfail
+  ACC margin gate           0.660    65%    25%   60.3%   5.90s        0
+  CASP-Stability (logistic)  0.651    42%    19%   45.3%   4.56s        0
+  CASP-Stability (MLP)      0.651    42%    19%   45.4%   4.57s        0
+
+VERDICT: CASP wins if it reaches parity at LOWER FLOPs/latency than margin, guardrail-clean.
+(Pre-registered: stability cuts COMPUTE at iso-accuracy; it cannot raise accuracy above always-32B-think.)

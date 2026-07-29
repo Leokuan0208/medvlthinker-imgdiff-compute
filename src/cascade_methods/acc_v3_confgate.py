@@ -156,8 +156,8 @@ def main():
         print("  "+f"{'method':<28}"+"".join(f"{ABBR[d]:>8}" for d in names))
         for nm,_ in MODES:
             if reach[nm]>=20: print("  "+f"{nm:<28}"+"".join(f"{np.mean(resb[nm][d]):>8.3f}" for d in names))
-    os.makedirs(J("results/cascade_methods/rescue_allfam"),exist_ok=True)
-    json.dump(DUMP,open(J(f"results/cascade_methods/rescue_allfam/accv3_{A.family}.json"),"w"),indent=1)
-    print(f"\n-> results/cascade_methods/rescue_allfam/accv3_{A.family}.json")
+    os.makedirs(J("results/cascade_methods/artifacts/rescue_allfam"),exist_ok=True)
+    json.dump(DUMP,open(J(f"results/cascade_methods/artifacts/rescue_allfam/accv3_{A.family}.json"),"w"),indent=1)
+    print(f"\n-> results/cascade_methods/artifacts/rescue_allfam/accv3_{A.family}.json")
 if __name__ == "__main__":
     main()

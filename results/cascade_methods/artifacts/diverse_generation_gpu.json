@@ -1,0 +1,501 @@
+{
+ "meta": {
+  "design": "matched iid@8 (mcq_gen_verify lingshu7b) vs diverse portfolio M=15 (diversity_generate_gpu), same model/cap/verifier/scorer; diverse restricted to iid idx set",
+  "select_n_dpp": 8,
+  "portfolio": [
+   "base",
+   "anatomy",
+   "modality",
+   "differential",
+   "concise"
+  ],
+  "temp_ladder": [
+   0.7,
+   1.0,
+   1.3
+  ]
+ },
+ "per_dataset": {
+  "vqa_rad_open": {
+   "n_common": 200,
+   "M_diverse": 15,
+   "oracle": {
+    "iid@8": 0.41,
+    "diverse_dpp@8": 0.455,
+    "diverse_full@M": 0.48,
+    "curve_iid": [
+     0.27,
+     0.31,
+     0.34,
+     0.36,
+     0.375,
+     0.4,
+     0.41,
+     0.41
+    ],
+    "curve_diverse_full": [
+     0.29,
+     0.32,
+     0.37,
+     0.385,
+     0.39,
+     0.405,
+     0.42,
+     0.445,
+     0.45,
+     0.465,
+     0.48,
+     0.48,
+     0.48,
+     0.48,
+     0.48
+    ],
+    "curve_diverse_dpp8": [
+     0.3,
+     0.35,
+     0.39,
+     0.4,
+     0.425,
+     0.45,
+     0.455,
+     0.455
+    ]
+   },
+   "oracle_lift": {
+    "dpp8_minus_iid8": 0.045,
+    "ci95": [
+     0.01,
+     0.08
+    ],
+    "fullM_minus_iid8": 0.07,
+    "ci95_full": [
+     0.035,
+     0.11
+    ]
+   },
+   "verifier_bo_n": {
+    "iid@8": {
+     "sel_acc": 0.28,
+     "sel_eff": 0.6829,
+     "n_present": 82,
+     "confident_distractor_rate": 0.3171
+    },
+    "diverse_dpp@8": {
+     "sel_acc": 0.34,
+     "sel_eff": 0.7473,
+     "n_present": 91,
+     "confident_distractor_rate": 0.2527
+    },
+    "diverse_full@M": {
+     "sel_acc": 0.36,
+     "sel_eff": 0.75,
+     "n_present": 96,
+     "confident_distractor_rate": 0.25
+    },
+    "delta_dpp8_minus_iid": {
+     "sel_acc": 0.06,
+     "ci95": [
+      0.02,
+      0.105
+     ]
+    },
+    "delta_fullM_minus_iid": {
+     "sel_acc": 0.08,
+     "ci95": [
+      0.035,
+      0.125
+     ]
+    }
+   },
+   "distractor_injection": {
+    "n_new_coverage": 15,
+    "n_new_coverage_verifier_converted": 5,
+    "new_coverage_conversion_rate": 0.3333,
+    "n_lost_coverage_diverse_vs_iid8": 1
+   },
+   "cost": {
+    "gen_samples_iid": 8,
+    "gen_samples_diverse": 15,
+    "verify_calls_iid": 8,
+    "verify_calls_diverse": 15,
+    "extra_gen_factor": 1.88
+   }
+  },
+  "slake_open": {
+   "n_common": 645,
+   "M_diverse": 15,
+   "oracle": {
+    "iid@8": 0.8558,
+    "diverse_dpp@8": 0.8698,
+    "diverse_full@M": 0.8775,
+    "curve_iid": [
+     0.7194,
+     0.7659,
+     0.7845,
+     0.8062,
+     0.8202,
+     0.8279,
+     0.8419,
+     0.8558
+    ],
+    "curve_diverse_full": [
+     0.7008,
+     0.7504,
+     0.7659,
+     0.7984,
+     0.8233,
+     0.8341,
+     0.8419,
+     0.8543,
+     0.8574,
+     0.8636,
+     0.8682,
+     0.8744,
+     0.8744,
+     0.876,
+     0.8775
+    ],
+    "curve_diverse_dpp8": [
+     0.7163,
+     0.7659,
+     0.8031,
+     0.8264,
+     0.845,
+     0.8543,
+     0.8682,
+     0.8698
+    ]
+   },
+   "oracle_lift": {
+    "dpp8_minus_iid8": 0.014,
+    "ci95": [
+     -0.0031,
+     0.0326
+    ],
+    "fullM_minus_iid8": 0.0217,
+    "ci95_full": [
+     0.0047,
+     0.0403
+    ]
+   },
+   "verifier_bo_n": {
+    "iid@8": {
+     "sel_acc": 0.7101,
+     "sel_eff": 0.8297,
+     "n_present": 552,
+     "confident_distractor_rate": 0.1703
+    },
+    "diverse_dpp@8": {
+     "sel_acc": 0.7147,
+     "sel_eff": 0.8217,
+     "n_present": 561,
+     "confident_distractor_rate": 0.1783
+    },
+    "diverse_full@M": {
+     "sel_acc": 0.724,
+     "sel_eff": 0.8251,
+     "n_present": 566,
+     "confident_distractor_rate": 0.1749
+    },
+    "delta_dpp8_minus_iid": {
+     "sel_acc": 0.0047,
+     "ci95": [
+      -0.0248,
+      0.0357
+     ]
+    },
+    "delta_fullM_minus_iid": {
+     "sel_acc": 0.014,
+     "ci95": [
+      -0.0171,
+      0.0434
+     ]
+    }
+   },
+   "distractor_injection": {
+    "n_new_coverage": 24,
+    "n_new_coverage_verifier_converted": 11,
+    "new_coverage_conversion_rate": 0.4583,
+    "n_lost_coverage_diverse_vs_iid8": 10
+   },
+   "cost": {
+    "gen_samples_iid": 8,
+    "gen_samples_diverse": 15,
+    "verify_calls_iid": 8,
+    "verify_calls_diverse": 15,
+    "extra_gen_factor": 1.88
+   }
+  },
+  "pathvqa_open": {
+   "n_common": 178,
+   "M_diverse": 15,
+   "oracle": {
+    "iid@8": 0.1461,
+    "diverse_dpp@8": 0.1573,
+    "diverse_full@M": 0.1966,
+    "curve_iid": [
+     0.0674,
+     0.0899,
+     0.1011,
+     0.118,
+     0.1236,
+     0.1348,
+     0.1461,
+     0.1461
+    ],
+    "curve_diverse_full": [
+     0.0843,
+     0.1011,
+     0.1011,
+     0.1124,
+     0.118,
+     0.1348,
+     0.1517,
+     0.1517,
+     0.1517,
+     0.1629,
+     0.1742,
+     0.1798,
+     0.1854,
+     0.191,
+     0.1966
+    ],
+    "curve_diverse_dpp8": [
+     0.1011,
+     0.118,
+     0.1292,
+     0.1404,
+     0.1461,
+     0.1517,
+     0.1573,
+     0.1573
+    ]
+   },
+   "oracle_lift": {
+    "dpp8_minus_iid8": 0.0112,
+    "ci95": [
+     -0.0281,
+     0.0506
+    ],
+    "fullM_minus_iid8": 0.0506,
+    "ci95_full": [
+     0.0111,
+     0.0955
+    ]
+   },
+   "verifier_bo_n": {
+    "iid@8": {
+     "sel_acc": 0.0955,
+     "sel_eff": 0.6538,
+     "n_present": 26,
+     "confident_distractor_rate": 0.3462
+    },
+    "diverse_dpp@8": {
+     "sel_acc": 0.118,
+     "sel_eff": 0.75,
+     "n_present": 28,
+     "confident_distractor_rate": 0.25
+    },
+    "diverse_full@M": {
+     "sel_acc": 0.1292,
+     "sel_eff": 0.6571,
+     "n_present": 35,
+     "confident_distractor_rate": 0.3429
+    },
+    "delta_dpp8_minus_iid": {
+     "sel_acc": 0.0225,
+     "ci95": [
+      -0.0056,
+      0.0562
+     ]
+    },
+    "delta_fullM_minus_iid": {
+     "sel_acc": 0.0337,
+     "ci95": [
+      0.0056,
+      0.0674
+     ]
+    }
+   },
+   "distractor_injection": {
+    "n_new_coverage": 13,
+    "n_new_coverage_verifier_converted": 5,
+    "new_coverage_conversion_rate": 0.3846,
+    "n_lost_coverage_diverse_vs_iid8": 4
+   },
+   "cost": {
+    "gen_samples_iid": 8,
+    "gen_samples_diverse": 15,
+    "verify_calls_iid": 8,
+    "verify_calls_diverse": 15,
+    "extra_gen_factor": 1.88
+   }
+  },
+  "pmc_content": {
+   "n_common": 600,
+   "M_diverse": 15,
+   "oracle": {
+    "iid@8": 0.505,
+    "diverse_dpp@8": 0.545,
+    "diverse_full@M": 0.615,
+    "curve_iid": [
+     0.2767,
+     0.3467,
+     0.4017,
+     0.435,
+     0.4617,
+     0.47,
+     0.49,
+     0.505
+    ],
+    "curve_diverse_full": [
+     0.3017,
+     0.3667,
+     0.4,
+     0.44,
+     0.4683,
+     0.4883,
+     0.5067,
+     0.5283,
+     0.5383,
+     0.555,
+     0.57,
+     0.58,
+     0.5967,
+     0.6067,
+     0.615
+    ],
+    "curve_diverse_dpp8": [
+     0.3067,
+     0.3667,
+     0.41,
+     0.445,
+     0.47,
+     0.4867,
+     0.515,
+     0.545
+    ]
+   },
+   "oracle_lift": {
+    "dpp8_minus_iid8": 0.04,
+    "ci95": [
+     0.005,
+     0.075
+    ],
+    "fullM_minus_iid8": 0.11,
+    "ci95_full": [
+     0.075,
+     0.145
+    ]
+   },
+   "verifier_bo_n": {
+    "iid@8": {
+     "sel_acc": 0.29,
+     "sel_eff": 0.5743,
+     "n_present": 303,
+     "confident_distractor_rate": 0.4257
+    },
+    "diverse_dpp@8": {
+     "sel_acc": 0.2967,
+     "sel_eff": 0.5443,
+     "n_present": 327,
+     "confident_distractor_rate": 0.4557
+    },
+    "diverse_full@M": {
+     "sel_acc": 0.305,
+     "sel_eff": 0.4959,
+     "n_present": 369,
+     "confident_distractor_rate": 0.5041
+    },
+    "delta_dpp8_minus_iid": {
+     "sel_acc": 0.0067,
+     "ci95": [
+      -0.0233,
+      0.0367
+     ]
+    },
+    "delta_fullM_minus_iid": {
+     "sel_acc": 0.015,
+     "ci95": [
+      -0.0117,
+      0.0417
+     ]
+    }
+   },
+   "distractor_injection": {
+    "n_new_coverage": 93,
+    "n_new_coverage_verifier_converted": 11,
+    "new_coverage_conversion_rate": 0.1183,
+    "n_lost_coverage_diverse_vs_iid8": 27
+   },
+   "cost": {
+    "gen_samples_iid": 8,
+    "gen_samples_diverse": 15,
+    "verify_calls_iid": 8,
+    "verify_calls_diverse": 15,
+    "extra_gen_factor": 1.88
+   }
+  }
+ },
+ "pooled": {
+  "n_common": 1623,
+  "oracle": {
+   "iid@8": 0.5933,
+   "diverse_dpp@8": 0.6205,
+   "diverse_full@M": 0.6568
+  },
+  "oracle_lift": {
+   "dpp8_minus_iid8": 0.0271,
+   "ci95": [
+    0.0099,
+    0.0431
+   ],
+   "fullM_minus_iid8": 0.0635,
+   "ci95_full": [
+    0.0468,
+    0.0801
+   ]
+  },
+  "verifier_bo_n": {
+   "iid@8": {
+    "sel_acc": 0.4344,
+    "sel_eff": 0.7321,
+    "confident_distractor_rate": 0.2679
+   },
+   "diverse_dpp@8": {
+    "sel_acc": 0.4486,
+    "sel_eff": 0.7229,
+    "confident_distractor_rate": 0.2771
+   },
+   "diverse_full@M": {
+    "sel_acc": 0.459,
+    "sel_eff": 0.6989,
+    "confident_distractor_rate": 0.3011
+   },
+   "delta_dpp8_minus_iid": {
+    "sel_acc": 0.0142,
+    "ci95": [
+     -0.0025,
+     0.0308
+    ]
+   },
+   "delta_fullM_minus_iid": {
+    "sel_acc": 0.0246,
+    "ci95": [
+     0.008,
+     0.0419
+    ]
+   }
+  }
+ },
+ "verdict": [
+  "POOLED n=1623",
+  "ORACLE  iid@8=0.593  diverse-DPP@8=0.621 (\u0394+0.027 CI[0.0099, 0.0431])  diverse-full@M=0.657 (\u0394+0.064 CI[0.0468, 0.0801])",
+  "VERIF   iid bo-8 acc=0.434 eff=0.732  | diverse-DPP acc=0.449 (\u0394+0.014 CI[-0.0025, 0.0308])  | diverse-full acc=0.459 (\u0394+0.025 CI[0.008, 0.0419])",
+  "DISTRACTOR  confident-distractor-rate  iid=0.268  diverse-full=0.301",
+  "",
+  "=> oracle@8 (matched budget) raised by diverse gen: YES",
+  "=> oracle@M (extra budget) raised vs iid@8: YES",
+  "=> lift CONVERTS to verifier selection accuracy: YES"
+ ]
+}

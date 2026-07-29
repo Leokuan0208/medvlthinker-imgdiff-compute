@@ -202,6 +202,6 @@ def main():
             R = res[m]; a = ci(R, "acc"); f = ci(R, "fl"); g = ci(R, "bad")
             print(f"    {m:<30} acc[{a[0]:.4f},{a[1]:.4f}] FLOPs%[{f[0]*100:.1f},{f[1]*100:.1f}] guard[{g[0]:.0f},{g[1]:.0f}]")
     DUMP["lat_fits"] = {t: LAT[t] for t in TIERS}; DUMP["en_fits"] = {t: EN[t] for t in TIERS}
-    json.dump(DUMP, open(J(f"results/cascade_methods/allmethods_{A.family}.json"), "w"), indent=1)
-    print(f"\n[dump] results/cascade_methods/allmethods_{A.family}.json")
+    json.dump(DUMP, open(J(f"results/cascade_methods/artifacts/allmethods_{A.family}.json"), "w"), indent=1)
+    print(f"\n[dump] results/cascade_methods/artifacts/allmethods_{A.family}.json")
 if __name__ == "__main__": main()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""make_full_record.py - consolidate EVERY data point + method detail into results/cascade_methods/FULL_RECORD.md.
+"""make_full_record.py - consolidate EVERY data point + method detail into results/cascade_methods/docs/archive_mcq/FULL_RECORD.md.
 Reads master_data.csv, allmethods_<fam>.json (lat/en fits, parity), the LoRA result.json, and PEAK_VRAM from
 logs. No fabricated numbers — everything is read from real artifacts. Run after acc_allmethods + make_master_charts."""
 import os, json, csv, glob, re
-REPO = os.path.expanduser("~/medvlthinker-imgdiff-compute"); RES = os.path.join(REPO, "results/cascade_methods")
+REPO = os.path.expanduser("~/medvlthinker-imgdiff-compute"); RES = os.path.join(REPO, "results/cascade_methods/artifacts")
 FAMS = ["medvlthinker", "lingshu", "qoq", "chiron", "medgemma"]
 LAB = {"medvlthinker": "MedVLThinker 7B/32B (Qwen2.5-VL)", "lingshu": "Lingshu 7B/32B (Qwen2.5-VL)",
        "qoq": "QoQ-Med-VL 7B/32B (Qwen2.5-VL)", "chiron": "Chiron-o1 2B/8B (InternVL3)", "medgemma": "MedGemma 4B/27B (Gemma3)"}
@@ -128,5 +128,5 @@ w("- `master_data.csv` — every (family×pool×method) row, all metrics + 7 per
   "- `ckpts/train/lora_stability/` — LoRA adapter + result.json. `ckpts/acc_gen/<fam>/lat/<tier>/` — batch-1 lat+energy samples.\n"
   "- Code: `src/cascade_methods/acc_allmethods.py`, `acc_2size.py`, `make_master_charts.py`; "
   "`src/training_methods/{casp_stability.py,lora_stability_router.py}`; `src/labeling/{run_vlm_eval,run_peer_eval,run_7b_selfverify_vllm,nvml_power}.py`.\n")
-open(os.path.join(RES, "FULL_RECORD.md"), "w").write("\n".join(O) + "\n")
-print("wrote results/cascade_methods/FULL_RECORD.md (%d lines)" % (len(O) + 1))
+open(os.path.join(os.path.dirname(RES), "docs/archive_mcq/FULL_RECORD.md"), "w").write("\n".join(O) + "\n")
+print("wrote results/cascade_methods/docs/archive_mcq/FULL_RECORD.md (%d lines)" % (len(O) + 1))

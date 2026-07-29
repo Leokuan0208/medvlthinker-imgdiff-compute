@@ -18,9 +18,9 @@ CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_peer_eval.py --model_path manglu
 echo "=== MedGemma big-think native batch-1 ==="
 python3 src/labeling/run_peer_eval.py --model_path google/medgemma-27b-it --tag lat --think --system "You are a helpful medical assistant." --think_instr "$MEDGEMMA_INSTR" --batch1 --max_tokens 1024 --datasets $DS --n $N --ckpt_dir ckpts/acc_gen/medgemma/lat/big_think --tp 2 --gpu_mem 0.90 --max_side 896 --max_images 4 > logs/natlat_medgemma.log 2>&1
 echo "=== regenerate analyses + charts + record $(date +%H:%M) ==="
-python3 src/cascade_methods/compare_native_think.py > results/cascade_methods/native_think_compare.txt 2>&1
-{ for f in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_allmethods.py --family $f 2>/dev/null; done; } > results/cascade_methods/acc_allmethods_all.txt 2>&1
-{ for f in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_2size.py --family $f 2>/dev/null; done; } > results/cascade_methods/acc_2size_all.txt 2>&1
+python3 src/cascade_methods/compare_native_think.py > results/cascade_methods/artifacts/native_think_compare.txt 2>&1
+{ for f in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_allmethods.py --family $f 2>/dev/null; done; } > results/cascade_methods/artifacts/acc_allmethods_all.txt 2>&1
+{ for f in medvlthinker lingshu qoq chiron medgemma; do python3 src/cascade_methods/acc_2size.py --family $f 2>/dev/null; done; } > results/cascade_methods/artifacts/acc_2size_all.txt 2>&1
 python3 src/cascade_methods/make_master_charts.py > logs/regen_charts2.log 2>&1
 python3 src/cascade_methods/make_full_record.py >> logs/regen_charts2.log 2>&1
 echo "=== NATLAT_REGEN_DONE $(date +%H:%M) ==="

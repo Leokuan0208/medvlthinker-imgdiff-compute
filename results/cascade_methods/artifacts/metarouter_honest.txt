@@ -1,0 +1,30 @@
+self-verify present: True   meta features: ['margin', 'maxlogprob', 'top1prob', 'prob_margin', 'entropy', 'entropy2', 'gini', 'n_opts', 'cap_disagree', 'cap_nuniq', 'verify']
+
+################  HONEST (calib/test split, 30 seeds)  [ALL-6]  ################
+  method                   esc%@parity   Δsota sig  |   esc%@parity+guardrail   Δsota sig
+  SOTA prob_margin           61.8±1.3   +0.0      |              64.3±1.5   +0.0    
+  p7-gate (no 32B)           55.4±0.9   -6.4 ***  |              79.3±2.6  +14.9 ***
+  meta-Δ logprob             57.0±1.1   -4.8 ***  |              85.6±2.9  +21.3 ***
+  meta-Δ +xcap               58.1±1.0   -3.7 ***  |              88.3±2.0  +24.0 ***
+  meta-Δ +verify             58.7±1.9   -3.1      |              93.9±1.5  +29.6 ***
+  meta-Δ full                54.9±1.7   -7.0 ***  |              91.6±2.5  +27.2 ***
+
+################  HONEST (calib/test split, 30 seeds)  [ALL-5 (excl MedXpert)]  ################
+  method                   esc%@parity   Δsota sig  |   esc%@parity+guardrail   Δsota sig
+  SOTA prob_margin           35.2±1.6   +0.0      |              40.9±2.2   +0.0    
+  p7-gate (no 32B)           36.0±1.3   +0.8      |              58.4±3.4  +17.4 ***
+  meta-Δ logprob             39.5±1.6   +4.3 ***  |              51.2±2.9  +10.3 ***
+  meta-Δ +xcap               35.3±2.2   +0.1      |              48.3±3.3   +7.3 ***
+  meta-Δ +verify             28.8±2.2   -6.4 ***  |              62.5±4.8  +21.5 ***
+  meta-Δ full                26.9±1.1   -8.3 ***  |              58.6±4.5  +17.7 ***
+
+################  HONEST (calib/test split, 30 seeds)  [COMPETENT-4]  ################
+  method                   esc%@parity   Δsota sig  |   esc%@parity+guardrail   Δsota sig
+  SOTA prob_margin           29.5±1.5   +0.0      |              37.6±2.7   +0.0    
+  p7-gate (no 32B)           33.1±1.4   +3.6 ***  |              52.6±3.9  +15.0 ***
+  meta-Δ logprob             33.3±1.6   +3.8 ***  |              50.2±3.8  +12.6 ***
+  meta-Δ +xcap               27.9±1.7   -1.7      |              43.5±4.4   +5.9    
+  meta-Δ +verify             19.4±1.7  -10.2 ***  |              48.3±6.1  +10.7 ***
+  meta-Δ full                22.3±1.0   -7.2 ***  |              51.7±5.1  +14.0 ***
+
+Lower test esc% at acc>=parity wins. meta-delta is the novel deferral-aware router.

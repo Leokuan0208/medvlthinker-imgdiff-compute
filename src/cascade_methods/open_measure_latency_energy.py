@@ -18,16 +18,27 @@ ap.add_argument("--mode", choices=["gen","verify"], required=True)
 ap.add_argument("--adapter", default=""); ap.add_argument("--n", type=int, default=25)
 ap.add_argument("--warmup", type=int, default=3); ap.add_argument("--max_new", type=int, default=32)
 ap.add_argument("--out", default=""); ap.add_argument("--device_map", default="")
+ap.add_argument("--think", action="store_true", help="gen mode only: use the native <think> reasoning system prompt (long reasoning generation)")
 A = ap.parse_args()
 MAXPX, MINPX = 1280*28*28//4, 4*28*28  # cap320 (matches run_openvqa default)
 DEV = "cuda"
 SYS_GEN = "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain."
+SYS_THINK = ("You will solve a problem/request. You should provide your thoughts within "
+             "<think> </think> tags before providing the answer. After </think>, give only the short final answer.")
 SYS_VER = ("You are a careful medical exam grader. Given a question and a proposed answer, decide whether the "
            "proposed answer is correct. Respond with only 'Yes' or 'No'.")
 # ---- NVML power sampler (integrates W over the timed call) ----
-pynvml.nvmlInit(); NG = pynvml.nvmlDeviceGetCount()
-HS = [pynvml.nvmlDeviceGetHandleByIndex(i) for i in range(NG)]
-def watts(): return sum(pynvml.nvmlDeviceGetPowerUsage(h) for h in HS)/1000.0  # W across visible GPUs
+pynvml.nvmlInit()
+# NVML uses PHYSICAL indices regardless of CUDA_VISIBLE_DEVICES -> sample ONLY the visible GPU(s),
+# else energy is contaminated by the other card's load (e.g. a concurrent job on GPU0).
+_vis = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+_toks = [x.strip() for x in _vis.split(",") if x.strip() != ""]
+if _toks and all(t.isdigit() for t in _toks):
+    _idxs = [int(t) for t in _toks]                       # integer indices: NVML physical index == visible index (PCI order)
+else:                                                     # UUID-form or unset -> can't map to an NVML index reliably; sample all GPUs
+    _idxs = list(range(pynvml.nvmlDeviceGetCount()))
+HS = [pynvml.nvmlDeviceGetHandleByIndex(i) for i in _idxs]; NG = len(HS)
+def watts(): return sum(pynvml.nvmlDeviceGetPowerUsage(h) for h in HS)/1000.0  # W across VISIBLE GPUs only
 class E:
     def __init__(s): s.go=False; s.j=0.0
     def __enter__(s):
@@ -70,7 +81,7 @@ def build(q,img,ans=None):
         msgs=[{"role":"system","content":SYS_VER},{"role":"user","content":[
             {"type":"image","image":img,"max_pixels":MAXPX,"min_pixels":MINPX},{"type":"text","text":body}]}]
     else:
-        msgs=[{"role":"system","content":SYS_GEN},{"role":"user","content":[
+        msgs=[{"role":"system","content":(SYS_THINK if A.think else SYS_GEN)},{"role":"user","content":[
             {"type":"image","image":img,"max_pixels":MAXPX,"min_pixels":MINPX},{"type":"text","text":q}]}]
     text=proc.apply_chat_template(msgs,tokenize=False,add_generation_prompt=True)
     igs,vids=process_vision_info(msgs)

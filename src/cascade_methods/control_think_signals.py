@@ -96,9 +96,9 @@ def main():
             print(f"  {sig:<22}{lat:>8.2f}s{acc:>9.4f}{e0*100:>7.0f}%{th*100:>7.0f}%{tag}")
             OUT[label][sig] = dict(lat=float(lat), acc=float(acc), esc0=float(e0), think=float(th))
         print(f"  (parity={parity:.4f}; 'none'=ACC-v2. If random/bignt_conf <= stability, the signal is not special.)")
-    os.makedirs("results/cascade_methods/rescue_allfam", exist_ok=True)
-    json.dump(OUT, open("results/cascade_methods/rescue_allfam/control_think_signals.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/rescue_allfam/control_think_signals.json")
+    os.makedirs("results/cascade_methods/artifacts/rescue_allfam", exist_ok=True)
+    json.dump(OUT, open("results/cascade_methods/artifacts/rescue_allfam/control_think_signals.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/rescue_allfam/control_think_signals.json")
 
 if __name__ == "__main__":
     main()

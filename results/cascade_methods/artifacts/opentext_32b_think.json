@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "model": "lingshu-medical-mllm/Lingshu-32B",
+    "measured": "2026-07-07",
+    "purpose": "open-text always-big-THINK baseline (latency+energy+accuracy) for the reframe; fills the missing 32B-think open-text cell",
+    "setup": {
+      "cap": "cap320",
+      "think_prompt": "native <think> reasoning system prompt (SYS_THINK)",
+      "accuracy_scorer": "run_openvqa exact-match/contains modal_ok (same scorer as the open-text pipeline)",
+      "accuracy_engine": "vLLM tp=2, greedy (temp0, n_samples=1), max_tokens=512, n=200/dataset (first-200, paired by idx w/ existing no-think dumps in ckpts/openvqa/strong_lingshu)",
+      "latency_engine": "HF batch-1, single GPU, cap320 real vqa_rad images, per-visible-GPU NVML energy, n=15 after 3 warmup, max_new=1024 (SAME harness that produced the canonical no-think 665ms)"
+    }
+  },
+  "latency_energy_think": {
+    "lat_ms_mean": 10521.6,
+    "lat_ms_median": 12896.2,
+    "energy_j_mean": 2001.9,
+    "gen_tok_mean": 98.3,
+    "prefill_tok_mean": 335.8,
+    "n": 15,
+    "gpus": 1
+  },
+  "latency_energy_nothink_reference": {
+    "lat_ms_mean": 665.0,
+    "lat_ms_median": 696.4,
+    "energy_j_mean": 126.9,
+    "gen_tok_mean": 5.6,
+    "source": "logs/latency_opentext.jsonl via open_measure_latency_energy.py (GEN32), n=25; the deployed strong-leg number"
+  },
+  "latency_think_vs_nothink": {
+    "latency_ratio_mean": 15.8,
+    "energy_ratio_mean": 15.8
+  },
+  "accuracy_per_dataset": {
+    "slake_open": {
+      "n_paired": 200,
+      "think_modal_acc": 0.7,
+      "nothink_modal_acc": 0.895,
+      "delta_think_minus_nothink": -0.195,
+      "think_gen_tokens_mean": 114.7
+    },
+    "vqa_rad_open": {
+      "n_paired": 200,
+      "think_modal_acc": 0.425,
+      "nothink_modal_acc": 0.545,
+      "delta_think_minus_nothink": -0.12,
+      "think_gen_tokens_mean": 104.5
+    },
+    "pathvqa_open": {
+      "n_paired": 200,
+      "think_modal_acc": 0.035,
+      "nothink_modal_acc": 0.17,
+      "delta_think_minus_nothink": -0.135,
+      "think_gen_tokens_mean": 141.5
+    }
+  },
+  "accuracy_pooled": {
+    "n_paired": 600,
+    "think_modal_acc": 0.3867,
+    "nothink_modal_acc": 0.5367,
+    "delta_think_minus_nothink": -0.15,
+    "think_gen_tokens_mean": 120.2
+  },
+  "verdict": "open-text 32B THINK is ~16x slower and ~16x more energy than 32B no-think, and LOWER accuracy on all 3 perception datasets (pooled 0.387 think vs 0.537 no-think, delta -0.150). Reasoning overthinks open-text perception VQA -> always-big-THINK is a strictly worse strong leg than always-big-no-think on both cost and accuracy."
+}

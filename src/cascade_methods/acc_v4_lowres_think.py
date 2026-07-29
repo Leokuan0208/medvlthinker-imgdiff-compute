@@ -117,7 +117,7 @@ def main():
         print("  "+f"{'method':<34}"+"".join(f"{ABBR[d]:>8}" for d in names))
         for nm,_,_ in METHODS:
             if reach[nm]>=20: print("  "+f"{nm:<34}"+"".join(f"{np.mean(resb[nm][d]):>8.3f}" for d in names))
-    json.dump(DUMP,open(J("results/cascade_methods/rescue_allfam/accv4_medvlthinker.json"),"w"),indent=1)
-    print("\n-> results/cascade_methods/rescue_allfam/accv4_medvlthinker.json")
+    json.dump(DUMP,open(J("results/cascade_methods/artifacts/rescue_allfam/accv4_medvlthinker.json"),"w"),indent=1)
+    print("\n-> results/cascade_methods/artifacts/rescue_allfam/accv4_medvlthinker.json")
 if __name__ == "__main__":
     main()

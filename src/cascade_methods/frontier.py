@@ -154,9 +154,9 @@ def report(cap="cap320", subset=("ALL-6", ALL6)):
 
     # save
     os.makedirs(os.path.join(os.path.expanduser('~/medvlthinker-imgdiff-compute'),
-                             "results/cascade_methods"), exist_ok=True)
+                             "results/cascade_methods/artifacts"), exist_ok=True)
     out = os.path.join(os.path.expanduser('~/medvlthinker-imgdiff-compute'),
-                       f"results/cascade_methods/frontier_{name}_{cap}.json")
+                       f"results/cascade_methods/artifacts/frontier_{name}_{cap}.json")
     json.dump(dict(subset=name, cap=cap, parity=parity, always7=a7, floor=floor,
                    oracle_parity=orp, rows=rows), open(out, "w"), indent=2, default=float)
     print(f"\nsaved -> {out}")

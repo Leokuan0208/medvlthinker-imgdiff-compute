@@ -73,5 +73,5 @@ print("\n  capture% = fraction of the small+big complementarity headroom (oracle
 print(f"  {'mean':<13}" + "".join(f"{np.nanmean([rows[f][k] for f in FAM]):>{[9,8,10,11,9,9][k-1]+(1 if k==6 else 0)}.3f}" for k in range(1,6)) + f"{np.nanmean([rows[f][5] for f in FAM]):>9.0f}%")
 json.dump({f: {"small": rows[f][0], "big": rows[f][1], "fuse_perfam": rows[f][2], "fuse_lofo": rows[f][3],
                "oracle": rows[f][4], "capture_pct": rows[f][5]} for f in FAM},
-          open("results/cascade_methods/calm_fuse.json", "w"), indent=1)
-print("\n  -> results/cascade_methods/calm_fuse.json")
+          open("results/cascade_methods/artifacts/calm_fuse.json", "w"), indent=1)
+print("\n  -> results/cascade_methods/artifacts/calm_fuse.json")

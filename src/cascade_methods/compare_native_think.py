@@ -40,6 +40,6 @@ for fam, (ntd, ftd, nvd) in FAM.items():
         ant = sum(p[0] * p[3] for _, p in w) / tot; aft = sum(p[1] * p[3] for _, p in w) / tot; anv = sum(p[2] * p[3] for _, p in w) / tot
         print(f"  {lab:<22}{ant:>9.3f}{aft:>9.3f}{anv:>9.3f}{anv-aft:>+10.3f}{anv-ant:>+9.3f}")
         out.setdefault(fam, {})[lab] = {"no_think": ant, "foreign_think": aft, "native_think": anv}
-json.dump(out, open("results/cascade_methods/native_think_compare.json", "w"), indent=1)
-print("\n-> results/cascade_methods/native_think_compare.json")
+json.dump(out, open("results/cascade_methods/artifacts/native_think_compare.json", "w"), indent=1)
+print("\n-> results/cascade_methods/artifacts/native_think_compare.json")
 print("READ: native>foreign => the foreign prompt was hurting (artifact). native<no-think still => real over-thinking.")

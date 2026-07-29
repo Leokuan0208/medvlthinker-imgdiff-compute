@@ -89,4 +89,4 @@ for ax, (name, dss) in zip(axes, SETS.items()):
 fig.suptitle("3-way triage (answer / escalate / abstain) vs 2-way abstention — open-ended medical VLM (Lingshu-7B→32B, judge)", fontsize=11)
 fig.tight_layout(rect=[0, 0, 1, 0.95]); os.makedirs("paper/figs/open", exist_ok=True)
 fig.savefig("paper/figs/open/fig_triage.png", dpi=140); print("-> paper/figs/open/fig_triage.png")
-json.dump(out, open("results/cascade_methods/triage_3way.json", "w"), indent=1)
+json.dump(out, open("results/cascade_methods/artifacts/triage_3way.json", "w"), indent=1)

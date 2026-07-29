@@ -1,0 +1,730 @@
+{
+ "method": "generator_portfolio_markowitz",
+ "coverage_model": "oracle@B = mean_q(1 - prod_m (1-p_mq)^{k_m}); p_mq=mean(sl_mq); with-replacement pass@k estimator applied identically to all methods",
+ "note": "no temperature variants on disk -> assets are the 3 models; portfolio allocation fit on train fold, scored held-out (5-fold CV)",
+ "budgets": [
+  2,
+  4,
+  8,
+  16
+ ],
+ "configs": {
+  "kvasir_open": {
+   "n": 1200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "return_persample": {
+    "Lingshu-7B": 0.2815625,
+    "MedVLThinker-7B": 0.32,
+    "InternVL3-8B": 0.35989583333333336
+   },
+   "return_greedy": {
+    "Lingshu-7B": 0.28583333333333333,
+    "MedVLThinker-7B": 0.3433333333333333,
+    "InternVL3-8B": 0.3616666666666667
+   },
+   "error_phi": {
+    "Lingshu-7B": {
+     "Lingshu-7B": 1.0,
+     "MedVLThinker-7B": 0.5602833742952034,
+     "InternVL3-8B": 0.5564136191641171
+    },
+    "MedVLThinker-7B": {
+     "Lingshu-7B": 0.5602833742952034,
+     "MedVLThinker-7B": 1.0,
+     "InternVL3-8B": 0.5697919615826053
+    },
+    "InternVL3-8B": {
+     "Lingshu-7B": 0.5564136191641171,
+     "MedVLThinker-7B": 0.5697919615826053,
+     "InternVL3-8B": 1.0
+    }
+   },
+   "mean_offdiag_error_phi": 0.5621629850139752,
+   "ceiling_full_pool": 0.6860997594719879,
+   "budgets": {
+    "2": {
+     "single_best": {
+      "gen": "InternVL3-8B",
+      "insample": 0.4280598958333333,
+      "heldout": 0.42805989583333337
+     },
+     "uniform": {
+      "insample": 0.4253949652777778,
+      "heldout": 0.4253949652777778
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 0,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.44809895833333335,
+      "heldout": 0.4480989583333333,
+      "greedy_alloc": [
+       0,
+       1,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.022703993055555483,
+     "delta_portfolio_vs_single_heldout": 0.020039062499999927
+    },
+    "4": {
+     "single_best": {
+      "gen": "InternVL3-8B",
+      "insample": 0.4917250569661458,
+      "heldout": 0.4917250569661459
+     },
+     "uniform": {
+      "insample": 0.5191548665364584,
+      "heldout": 0.5191548665364584
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 1,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 2
+      },
+      "insample": 0.5261092122395833,
+      "heldout": 0.5261092122395834,
+      "greedy_alloc": [
+       1,
+       1,
+       2
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.006954345703125031,
+     "delta_portfolio_vs_single_heldout": 0.03438415527343752
+    },
+    "8": {
+     "single_best": {
+      "gen": "InternVL3-8B",
+      "insample": 0.5438250485559305,
+      "heldout": 0.5438250485559305
+     },
+     "uniform": {
+      "insample": 0.5954499301314354,
+      "heldout": 0.5954499301314354
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 2,
+       "MedVLThinker-7B": 3,
+       "InternVL3-8B": 3
+      },
+      "insample": 0.5984342902898788,
+      "heldout": 0.5974246331055959,
+      "greedy_alloc": [
+       2,
+       3,
+       3
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.0019747029741604694,
+     "delta_portfolio_vs_single_heldout": 0.0535995845496654
+    },
+    "16": {
+     "single_best": {
+      "gen": "InternVL3-8B",
+      "insample": 0.5777538587906317,
+      "heldout": 0.5777538587906317
+     },
+     "uniform": {
+      "insample": 0.657814012646076,
+      "heldout": 0.657814012646076
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 4,
+       "MedVLThinker-7B": 5,
+       "InternVL3-8B": 7
+      },
+      "insample": 0.6592073913617199,
+      "heldout": 0.6592073913617199,
+      "greedy_alloc": [
+       4,
+       5,
+       7
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.0013933787156439337,
+     "delta_portfolio_vs_single_heldout": 0.08145353257108823
+    }
+   }
+  },
+  "radimagenet_open": {
+   "n": 2000,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "return_persample": {
+    "Lingshu-7B": 0.311375,
+    "MedVLThinker-7B": 0.201625,
+    "InternVL3-8B": 0.2788125
+   },
+   "return_greedy": {
+    "Lingshu-7B": 0.3285,
+    "MedVLThinker-7B": 0.2045,
+    "InternVL3-8B": 0.285
+   },
+   "error_phi": {
+    "Lingshu-7B": {
+     "Lingshu-7B": 1.0,
+     "MedVLThinker-7B": 0.4899957446702682,
+     "InternVL3-8B": 0.5607038226121787
+    },
+    "MedVLThinker-7B": {
+     "Lingshu-7B": 0.4899957446702682,
+     "MedVLThinker-7B": 1.0,
+     "InternVL3-8B": 0.5751446261925293
+    },
+    "InternVL3-8B": {
+     "Lingshu-7B": 0.5607038226121787,
+     "MedVLThinker-7B": 0.5751446261925293,
+     "InternVL3-8B": 1.0
+    }
+   },
+   "mean_offdiag_error_phi": 0.5419480644916587,
+   "ceiling_full_pool": 0.5791018255388133,
+   "budgets": {
+    "2": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.36915625,
+      "heldout": 0.36915624999999996
+     },
+     "uniform": {
+      "insample": 0.3623880208333334,
+      "heldout": 0.3623880208333333
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 1,
+       "MedVLThinker-7B": 0,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.393046875,
+      "heldout": 0.393046875,
+      "greedy_alloc": [
+       1,
+       0,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.030658854166666694,
+     "delta_portfolio_vs_single_heldout": 0.023890625000000054
+    },
+    "4": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.42228466796875,
+      "heldout": 0.42228466796874997
+     },
+     "uniform": {
+      "insample": 0.44238427734375,
+      "heldout": 0.44238427734374997
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 2,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.454439208984375,
+      "heldout": 0.45241552734375007,
+      "greedy_alloc": [
+       2,
+       1,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.010031250000000103,
+     "delta_portfolio_vs_single_heldout": 0.030130859375000096
+    },
+    "8": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.4672612665891647,
+      "heldout": 0.4672612665891648
+     },
+     "uniform": {
+      "insample": 0.50008844602108,
+      "heldout": 0.50008844602108
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 5,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 2
+      },
+      "insample": 0.5126301833987236,
+      "heldout": 0.5126301833987237,
+      "greedy_alloc": [
+       5,
+       1,
+       2
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.012541737377643636,
+     "delta_portfolio_vs_single_heldout": 0.0453689168095589
+    },
+    "16": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.4980993542811627,
+      "heldout": 0.49809935428116264
+     },
+     "uniform": {
+      "insample": 0.5526609926416912,
+      "heldout": 0.5526609926416912
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 9,
+       "MedVLThinker-7B": 3,
+       "InternVL3-8B": 4
+      },
+      "insample": 0.5610651658813977,
+      "heldout": 0.5605300503516323,
+      "greedy_alloc": [
+       9,
+       3,
+       4
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.007869057709941063,
+     "delta_portfolio_vs_single_heldout": 0.06243069607046964
+    }
+   }
+  },
+  "vqa_rad_open": {
+   "n": 200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "return_persample": {
+    "Lingshu-7B": 0.440625,
+    "MedVLThinker-7B": 0.39125,
+    "InternVL3-8B": 0.4125
+   },
+   "return_greedy": {
+    "Lingshu-7B": 0.465,
+    "MedVLThinker-7B": 0.42,
+    "InternVL3-8B": 0.445
+   },
+   "error_phi": {
+    "Lingshu-7B": {
+     "Lingshu-7B": 1.0,
+     "MedVLThinker-7B": 0.5471741680756653,
+     "InternVL3-8B": 0.4360089254346754
+    },
+    "MedVLThinker-7B": {
+     "Lingshu-7B": 0.5471741680756653,
+     "MedVLThinker-7B": 1.0,
+     "InternVL3-8B": 0.5834108406807067
+    },
+    "InternVL3-8B": {
+     "Lingshu-7B": 0.4360089254346754,
+     "MedVLThinker-7B": 0.5834108406807067,
+     "InternVL3-8B": 1.0
+    }
+   },
+   "mean_offdiag_error_phi": 0.5221979780636824,
+   "ceiling_full_pool": 0.7523990833335609,
+   "budgets": {
+    "2": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.504140625,
+      "heldout": 0.504140625
+     },
+     "uniform": {
+      "insample": 0.5387239583333333,
+      "heldout": 0.5387239583333333
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 1,
+       "MedVLThinker-7B": 0,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.56328125,
+      "heldout": 0.56328125,
+      "greedy_alloc": [
+       1,
+       0,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.024557291666666647,
+     "delta_portfolio_vs_single_heldout": 0.05914062499999995
+    },
+    "4": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.556768798828125,
+      "heldout": 0.542532958984375
+     },
+     "uniform": {
+      "insample": 0.631678466796875,
+      "heldout": 0.631678466796875
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 2,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.636329345703125,
+      "heldout": 0.6288281249999998,
+      "greedy_alloc": [
+       2,
+       1,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": -0.0028503417968751554,
+     "delta_portfolio_vs_single_heldout": 0.08629516601562481
+    },
+    "8": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.5960035398602486,
+      "heldout": 0.5794376739859581
+     },
+     "uniform": {
+      "insample": 0.6911642453074455,
+      "heldout": 0.6911642453074456
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 3,
+       "MedVLThinker-7B": 2,
+       "InternVL3-8B": 3
+      },
+      "insample": 0.6930533722043037,
+      "heldout": 0.6877145478129387,
+      "greedy_alloc": [
+       3,
+       2,
+       3
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": -0.0034496974945068537,
+     "delta_portfolio_vs_single_heldout": 0.10827687382698059
+    },
+    "16": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.6199837262484895,
+      "heldout": 0.6011643963540387
+     },
+     "uniform": {
+      "insample": 0.7338292431497466,
+      "heldout": 0.7338292431497466
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 6,
+       "MedVLThinker-7B": 5,
+       "InternVL3-8B": 5
+      },
+      "insample": 0.7340914892818259,
+      "heldout": 0.7285844054013343,
+      "greedy_alloc": [
+       6,
+       5,
+       5
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": -0.005244837748412334,
+     "delta_portfolio_vs_single_heldout": 0.12742000904729556
+    }
+   }
+  },
+  "POOLED_3ds_3gen": {
+   "n": 3400,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "return_persample": {
+    "Lingshu-7B": 0.3084558823529412,
+    "MedVLThinker-7B": 0.2545588235294118,
+    "InternVL3-8B": 0.31529411764705884
+   },
+   "return_greedy": {
+    "Lingshu-7B": 0.3214705882352941,
+    "MedVLThinker-7B": 0.2661764705882353,
+    "InternVL3-8B": 0.3214705882352941
+   },
+   "error_phi": {
+    "Lingshu-7B": {
+     "Lingshu-7B": 1.0,
+     "MedVLThinker-7B": 0.5087890600716402,
+     "InternVL3-8B": 0.5469455109176852
+    },
+    "MedVLThinker-7B": {
+     "Lingshu-7B": 0.5087890600716402,
+     "MedVLThinker-7B": 1.0,
+     "InternVL3-8B": 0.5786093349466933
+    },
+    "InternVL3-8B": {
+     "Lingshu-7B": 0.5469455109176852,
+     "MedVLThinker-7B": 0.5786093349466933,
+     "InternVL3-8B": 1.0
+    }
+   },
+   "mean_offdiag_error_phi": 0.5447813019786728,
+   "ceiling_full_pool": 0.6270597585619776,
+   "budgets": {
+    "2": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.36666360294117645,
+      "heldout": 0.35897518382352944
+     },
+     "uniform": {
+      "insample": 0.39499846813725487,
+      "heldout": 0.39499846813725487
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 1,
+       "MedVLThinker-7B": 0,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.4153079044117647,
+      "heldout": 0.41530790441176474,
+      "greedy_alloc": [
+       1,
+       0,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.020309436274509873,
+     "delta_portfolio_vs_single_heldout": 0.0563327205882353
+    },
+    "4": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.42099422679227944,
+      "heldout": 0.4209942267922794
+     },
+     "uniform": {
+      "insample": 0.4806147317325367,
+      "heldout": 0.4806147317325367
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 2,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.4855682014016544,
+      "heldout": 0.4855682014016544,
+      "greedy_alloc": [
+       2,
+       1,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.004953469669117694,
+     "delta_portfolio_vs_single_heldout": 0.06457397460937503
+    },
+    "8": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.46689330924959743,
+      "heldout": 0.46689330924959743
+     },
+     "uniform": {
+      "insample": 0.5449851933121681,
+      "heldout": 0.5449851933121681
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 4,
+       "MedVLThinker-7B": 1,
+       "InternVL3-8B": 3
+      },
+      "insample": 0.5481053768010701,
+      "heldout": 0.5473650676187347,
+      "greedy_alloc": [
+       4,
+       1,
+       3
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.0023798743065666095,
+     "delta_portfolio_vs_single_heldout": 0.08047175836913728
+    },
+    "16": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.49778254163698454,
+      "heldout": 0.49778254163698443
+     },
+     "uniform": {
+      "insample": 0.6004307791437126,
+      "heldout": 0.6004307791437127
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 7,
+       "MedVLThinker-7B": 4,
+       "InternVL3-8B": 5
+      },
+      "insample": 0.6030485069653578,
+      "heldout": 0.6026550740241584,
+      "greedy_alloc": [
+       7,
+       4,
+       5
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.002224294880445732,
+     "delta_portfolio_vs_single_heldout": 0.10487253238717398
+    }
+   }
+  },
+  "pathvqa_open_2gen": {
+   "n": 1500,
+   "generators": [
+    "Lingshu-7B",
+    "InternVL3-8B"
+   ],
+   "return_persample": {
+    "Lingshu-7B": 0.2936666666666667,
+    "InternVL3-8B": 0.07875
+   },
+   "return_greedy": {
+    "Lingshu-7B": 0.324,
+    "InternVL3-8B": 0.08066666666666666
+   },
+   "error_phi": {
+    "Lingshu-7B": {
+     "Lingshu-7B": 1.0,
+     "InternVL3-8B": 0.1663228112496732
+    },
+    "InternVL3-8B": {
+     "Lingshu-7B": 0.1663228112496732,
+     "InternVL3-8B": 1.0
+    }
+   },
+   "mean_offdiag_error_phi": 0.1663228112496732,
+   "ceiling_full_pool": 0.5245467458384003,
+   "budgets": {
+    "2": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.3574791666666667,
+      "heldout": 0.3574791666666667
+     },
+     "uniform": {
+      "insample": 0.32966666666666666,
+      "heldout": 0.32966666666666666
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 2,
+       "InternVL3-8B": 0
+      },
+      "insample": 0.3574791666666667,
+      "heldout": 0.3574791666666667,
+      "greedy_alloc": [
+       2,
+       0
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.027812500000000018,
+     "delta_portfolio_vs_single_heldout": 0.0
+    },
+    "4": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.41743326822916665,
+      "heldout": 0.41743326822916665
+     },
+     "uniform": {
+      "insample": 0.40150390625,
+      "heldout": 0.40150390625000004
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 3,
+       "InternVL3-8B": 1
+      },
+      "insample": 0.41961197916666665,
+      "heldout": 0.4196119791666667,
+      "greedy_alloc": [
+       3,
+       1
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.018108072916666662,
+     "delta_portfolio_vs_single_heldout": 0.00217871093750005
+    },
+    "8": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.4679854993025462,
+      "heldout": 0.4679854993025462
+     },
+     "uniform": {
+      "insample": 0.4691990122795105,
+      "heldout": 0.46919901227951044
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 6,
+       "InternVL3-8B": 2
+      },
+      "insample": 0.48174253940582273,
+      "heldout": 0.4817425394058228,
+      "greedy_alloc": [
+       6,
+       2
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.012543527126312348,
+     "delta_portfolio_vs_single_heldout": 0.013757040103276608
+    },
+    "16": {
+     "single_best": {
+      "gen": "Lingshu-7B",
+      "insample": 0.5017829772700658,
+      "heldout": 0.5017829772700658
+     },
+     "uniform": {
+      "insample": 0.5245467458384003,
+      "heldout": 0.5245467458384003
+     },
+     "portfolio": {
+      "alloc": {
+       "Lingshu-7B": 11,
+       "InternVL3-8B": 5
+      },
+      "insample": 0.531087828175742,
+      "heldout": 0.531087828175742,
+      "greedy_alloc": [
+       11,
+       5
+      ]
+     },
+     "delta_portfolio_vs_uniform_heldout": 0.0065410823373416305,
+     "delta_portfolio_vs_single_heldout": 0.02930485090567614
+    }
+   }
+  }
+ }
+}

@@ -97,6 +97,6 @@ print(f"\n  BAR = confidence: cheap-wrong {base_cw:.3f}, recoverable {base_rec:.
 print("  (especially on Lingshu-7B, the calibrated case) is a ROBUST gate beating confidence.")
 DUMP["signals"]["FUSION"]={"cw":float(fcw[0]),"rec":float(frec[0])}
 import os as _o
-_o.makedirs("results/cascade_methods",exist_ok=True)
-json.dump(DUMP,open("results/cascade_methods/open_gate_search%s.json"%("_xfam" if XFAM else ""),"w"),indent=1)
-print("-> results/cascade_methods/open_gate_search%s.json"%("_xfam" if XFAM else ""))
+_o.makedirs("results/cascade_methods/artifacts",exist_ok=True)
+json.dump(DUMP,open("results/cascade_methods/artifacts/open_gate_search%s.json"%("_xfam" if XFAM else ""),"w"),indent=1)
+print("-> results/cascade_methods/artifacts/open_gate_search%s.json"%("_xfam" if XFAM else ""))

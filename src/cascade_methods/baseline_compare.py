@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-baseline_compare.py - CORRECTED training-free gate bake-off (post-audit, results/cascade_methods/
+baseline_compare.py - CORRECTED training-free gate bake-off (post-audit, results/cascade_methods/artifacts/
 baseline_audit.json). Canonical 2-tier cascade 7B-nothink@cap320 -> 32B-think@fullres; each gate
 escalates the 7B's answer. Honest 50/50 calib/test split (threshold/alpha chosen on calib to reach
 calib-parity at MIN escalation; metrics on test), 20 seeds. Reports escalation% + FLOPs% at iso-accuracy.

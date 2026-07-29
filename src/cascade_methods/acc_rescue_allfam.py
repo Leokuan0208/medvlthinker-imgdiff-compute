@@ -251,9 +251,9 @@ def main():
     DUMP = {"family": A.family, "pools": {}}
     for label, names in [("ALL-6", ALL6), ("ALL-5", ALL5), ("COMPETENT-4", COMPETENT)]:
         run_pool(D, names, label, DUMP)
-    os.makedirs(J("results/cascade_methods/rescue_allfam"), exist_ok=True)
-    json.dump(DUMP, open(J(f"results/cascade_methods/rescue_allfam/{A.family}.json"), "w"), indent=1)
-    print(f"\n-> results/cascade_methods/rescue_allfam/{A.family}.json")
+    os.makedirs(J("results/cascade_methods/artifacts/rescue_allfam"), exist_ok=True)
+    json.dump(DUMP, open(J(f"results/cascade_methods/artifacts/rescue_allfam/{A.family}.json"), "w"), indent=1)
+    print(f"\n-> results/cascade_methods/artifacts/rescue_allfam/{A.family}.json")
 
 if __name__ == "__main__":
     main()

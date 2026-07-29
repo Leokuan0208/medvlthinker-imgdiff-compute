@@ -1,0 +1,379 @@
+{
+ "_SUPERSEDED_FINDING1_2026-07-29": "SUPERSEDED 2026-07-29 for FINDING 1 ONLY. The think arms behind finding1_reasoning_vs_perception were PROMPT-UNMATCHED (and resolution-unmatched for MedVLThinker). Do not read this key programmatically. Canonical replacement: artifacts/finding1_corrected_2026-07-29.json (code src/cascade_methods/finding1_corrected.py); audit: artifacts/finding1_prompt_matching_audit.json. Corrected: 17/20 perception cells strictly negative (not 15/20), 14/20 with 95% CIs excluding zero, pooled -0.0401 [-0.0456,-0.0347] over 30250 paired samples. WITHDRAWN: all 7 Lingshu cells (its native-think prompt had no reasoning trigger; 3.0 generated tokens) and QoQ-Med-VL's reasoning cells. The reasoning half is MODEL-DEPENDENT, not universal (12/15 point-positive, only 4/15 CI-significant, 1/15 significantly negative). Lingshu's 1.2x think:no-think latency ratio is a format-prompt ratio, not a reasoning ratio. Findings 2 and 3 in this file are unaffected. A verbatim copy of this file as published on 2026-07-08 is generalization_superseded_2026-07-08.json.",
+ "_meta": {
+  "title": "Cross-family external validity of the paper's key findings (OFFLINE, no GPU)",
+  "date": "2026-07-08",
+  "sources": {
+   "finding1": "results/cascade_methods/artifacts/master_data.csv (ALL-6, NGC harness, 5 medical VLM families); recomputed here as dThink = (always-big-think per-benchmark) - (always-big-nt per-benchmark). Supplementary 2 non-medical architectures from artifacts/overthink_generalize.txt. Faithful reasoning-regime deltas from reframe_vs_bigthink.json -> MedEvalKit eval_results_*.",
+   "finding2": "docs/archive_mcq/OPENENDED_CASCADE.md \u00a72c; docs/current/RESEARCH_RESULTS_2026-07.md \u00a71.5 gate bake-off; docs/current/VERIFIED_FACTS.md.",
+   "finding3": "docs/archive_mcq/TRAINED_VERIFIER_RESULT.md; docs/current/VERIFIED_FACTS.md \u00a7F/H/I; docs/current/RESEARCH_RESULTS_2026-07.md \u00a71.3."
+  },
+  "no_fabrication": "Finding-1 deltas recomputed from master_data.csv; Findings 2/3 quoted verbatim from cited docs. No new GPU runs."
+ },
+ "finding1_reasoning_vs_perception": {
+  "_SUPERSEDED_2026-07-29": "SUPERSEDED 2026-07-29 for FINDING 1 ONLY. The think arms behind finding1_reasoning_vs_perception were PROMPT-UNMATCHED (and resolution-unmatched for MedVLThinker). Do not read this key programmatically. Canonical replacement: artifacts/finding1_corrected_2026-07-29.json (code src/cascade_methods/finding1_corrected.py); audit: artifacts/finding1_prompt_matching_audit.json. Corrected: 17/20 perception cells strictly negative (not 15/20), 14/20 with 95% CIs excluding zero, pooled -0.0401 [-0.0456,-0.0347] over 30250 paired samples. WITHDRAWN: all 7 Lingshu cells (its native-think prompt had no reasoning trigger; 3.0 generated tokens) and QoQ-Med-VL's reasoning cells. The reasoning half is MODEL-DEPENDENT, not universal (12/15 point-positive, only 4/15 CI-significant, 1/15 significantly negative). Lingshu's 1.2x think:no-think latency ratio is a format-prompt ratio, not a reasoning ratio. Findings 2 and 3 in this file are unaffected. A verbatim copy of this file as published on 2026-07-08 is generalization_superseded_2026-07-08.json.",
+  "claim": "Reasoning (think) HURTS or is flat on perception VQA (SLAKE/VQA-RAD/PathVQA/PMC) and HELPS on reasoning (MMMU/MedXpert). External validity = does the sign pattern hold across model families, not just Lingshu.",
+  "per_family": {
+   "medvlthinker": {
+    "think_over_nt_latency_ratio": 49.1,
+    "bignt_latency_s": 0.231,
+    "bigthink_latency_s": 11.338,
+    "per_benchmark_dThink_minus_nt": {
+     "PMC": {
+      "regime": "perception",
+      "nothink": 0.551,
+      "think": 0.5565,
+      "dThink_minus_nt": 0.0055
+     },
+     "SLAKE": {
+      "regime": "perception",
+      "nothink": 0.8486,
+      "think": 0.7644,
+      "dThink_minus_nt": -0.0842
+     },
+     "VQARAD": {
+      "regime": "perception",
+      "nothink": 0.8529,
+      "think": 0.7757,
+      "dThink_minus_nt": -0.0772
+     },
+     "PathV": {
+      "regime": "perception",
+      "nothink": 0.6612,
+      "think": 0.6725,
+      "dThink_minus_nt": 0.0113
+     },
+     "MMMU": {
+      "regime": "reasoning",
+      "nothink": 0.6235,
+      "think": 0.6882,
+      "dThink_minus_nt": 0.0647
+     },
+     "MX-R": {
+      "regime": "reasoning",
+      "nothink": 0.2787,
+      "think": 0.3257,
+      "dThink_minus_nt": 0.047
+     },
+     "MX-U": {
+      "regime": "reasoning",
+      "nothink": 0.2924,
+      "think": 0.3845,
+      "dThink_minus_nt": 0.0921
+     }
+    }
+   },
+   "lingshu": {
+    "think_over_nt_latency_ratio": 1.2,
+    "bignt_latency_s": 0.27,
+    "bigthink_latency_s": 0.322,
+    "per_benchmark_dThink_minus_nt": {
+     "PMC": {
+      "regime": "perception",
+      "nothink": 0.64,
+      "think": 0.6515,
+      "dThink_minus_nt": 0.0115
+     },
+     "SLAKE": {
+      "regime": "perception",
+      "nothink": 0.8942,
+      "think": 0.8846,
+      "dThink_minus_nt": -0.0096
+     },
+     "VQARAD": {
+      "regime": "perception",
+      "nothink": 0.8162,
+      "think": 0.7463,
+      "dThink_minus_nt": -0.0699
+     },
+     "PathV": {
+      "regime": "perception",
+      "nothink": 0.8614,
+      "think": 0.8444,
+      "dThink_minus_nt": -0.017
+     },
+     "MMMU": {
+      "regime": "reasoning",
+      "nothink": 0.6294,
+      "think": 0.6176,
+      "dThink_minus_nt": -0.0118
+     },
+     "MX-R": {
+      "regime": "reasoning",
+      "nothink": 0.296,
+      "think": 0.2967,
+      "dThink_minus_nt": 0.0007
+     },
+     "MX-U": {
+      "regime": "reasoning",
+      "nothink": 0.3285,
+      "think": 0.3375,
+      "dThink_minus_nt": 0.009
+     }
+    }
+   },
+   "qoq": {
+    "think_over_nt_latency_ratio": 42.8,
+    "bignt_latency_s": 0.227,
+    "bigthink_latency_s": 9.719,
+    "per_benchmark_dThink_minus_nt": {
+     "PMC": {
+      "regime": "perception",
+      "nothink": 0.52,
+      "think": 0.4355,
+      "dThink_minus_nt": -0.0845
+     },
+     "SLAKE": {
+      "regime": "perception",
+      "nothink": 0.7236,
+      "think": 0.6587,
+      "dThink_minus_nt": -0.0649
+     },
+     "VQARAD": {
+      "regime": "perception",
+      "nothink": 0.7426,
+      "think": 0.6654,
+      "dThink_minus_nt": -0.0772
+     },
+     "PathV": {
+      "regime": "perception",
+      "nothink": 0.6383,
+      "think": 0.5756,
+      "dThink_minus_nt": -0.0627
+     },
+     "MMMU": {
+      "regime": "reasoning",
+      "nothink": 0.6235,
+      "think": 0.6941,
+      "dThink_minus_nt": 0.0706
+     },
+     "MX-R": {
+      "regime": "reasoning",
+      "nothink": 0.2324,
+      "think": 0.2324,
+      "dThink_minus_nt": 0.0
+     },
+     "MX-U": {
+      "regime": "reasoning",
+      "nothink": 0.2888,
+      "think": 0.2509,
+      "dThink_minus_nt": -0.0379
+     }
+    }
+   },
+   "chiron": {
+    "think_over_nt_latency_ratio": 14.6,
+    "bignt_latency_s": 0.291,
+    "bigthink_latency_s": 4.246,
+    "per_benchmark_dThink_minus_nt": {
+     "PMC": {
+      "regime": "perception",
+      "nothink": 0.596,
+      "think": 0.5245,
+      "dThink_minus_nt": -0.0715
+     },
+     "SLAKE": {
+      "regime": "perception",
+      "nothink": 0.8101,
+      "think": 0.7019,
+      "dThink_minus_nt": -0.1082
+     },
+     "VQARAD": {
+      "regime": "perception",
+      "nothink": 0.7721,
+      "think": 0.6801,
+      "dThink_minus_nt": -0.092
+     },
+     "PathV": {
+      "regime": "perception",
+      "nothink": 0.6645,
+      "think": 0.6136,
+      "dThink_minus_nt": -0.0509
+     },
+     "MMMU": {
+      "regime": "reasoning",
+      "nothink": 0.5706,
+      "think": 0.5706,
+      "dThink_minus_nt": 0.0
+     },
+     "MX-R": {
+      "regime": "reasoning",
+      "nothink": 0.2202,
+      "think": 0.2258,
+      "dThink_minus_nt": 0.0056
+     },
+     "MX-U": {
+      "regime": "reasoning",
+      "nothink": 0.2477,
+      "think": 0.2805,
+      "dThink_minus_nt": 0.0328
+     }
+    }
+   },
+   "medgemma": {
+    "think_over_nt_latency_ratio": 45.1,
+    "bignt_latency_s": 0.282,
+    "bigthink_latency_s": 12.722,
+    "per_benchmark_dThink_minus_nt": {
+     "PMC": {
+      "regime": "perception",
+      "nothink": 0.4745,
+      "think": 0.4665,
+      "dThink_minus_nt": -0.008
+     },
+     "SLAKE": {
+      "regime": "perception",
+      "nothink": 0.7933,
+      "think": 0.7981,
+      "dThink_minus_nt": 0.0048
+     },
+     "VQARAD": {
+      "regime": "perception",
+      "nothink": 0.7684,
+      "think": 0.75,
+      "dThink_minus_nt": -0.0184
+     },
+     "PathV": {
+      "regime": "perception",
+      "nothink": 0.6041,
+      "think": 0.644,
+      "dThink_minus_nt": 0.0399
+     },
+     "MMMU": {
+      "regime": "reasoning",
+      "nothink": 0.5118,
+      "think": 0.5,
+      "dThink_minus_nt": -0.0118
+     },
+     "MX-R": {
+      "regime": "reasoning",
+      "nothink": 0.249,
+      "think": 0.2891,
+      "dThink_minus_nt": 0.0401
+     },
+     "MX-U": {
+      "regime": "reasoning",
+      "nothink": 0.2617,
+      "think": 0.3267,
+      "dThink_minus_nt": 0.065
+     }
+    }
+   }
+  },
+  "consistency_perception": {
+   "definition": "perception cell = one family x one perception benchmark; dThink_minus_nt <= 0 means think does NOT help (premise holds).",
+   "n_perception_cells": 20,
+   "n_le_0_strict": 15,
+   "n_le_0_within_noise(<=+0.02)": 19,
+   "perception_cells_where_think_WINS(>+0.02)": [
+    "medgemma:PathV (+0.0399)"
+   ],
+   "read": "15/20 perception cells have think<=no-think strictly; 19/20 within a +/-0.02 noise band. VQA-RAD is negative for ALL 5 families; SLAKE negative for 4/5 (MedGemma +0.005 ~ 0). The only genuine perception win is MedGemma:PathVQA (+0.040)."
+  },
+  "consistency_reasoning": {
+   "read": "Think helps reasoning for the GENUINE-think families: MedVLThinker (MMMU +0.065, MX-R +0.047, MX-U +0.092) and QoQ (MMMU +0.071). Muted/absent where the model has no promptable think mode (Lingshu: MMMU -0.012, latency ratio 1.2x -> it answers directly) or inverse-scales (Chiron: MMMU 0.0). Corroborated on a faithful harness below."
+  },
+  "faithful_reasoning_regime_MedEvalKit": {
+   "source": "reframe_vs_bigthink.json -> MedEvalKit eval_results_{lingshu32b,mvt32b,iv3_38b}_reason",
+   "MMMU_150": {
+    "lingshu32b": 0.027,
+    "mvt32b": 0.1,
+    "iv3_38b": 0.12
+   },
+   "MedXpert_2000": {
+    "lingshu32b": -0.003,
+    "mvt32b": 0.045,
+    "iv3_38b": 0.031
+   },
+   "read": "think>no-think on reasoning for MVT and InternVL3-38B (3rd family); Lingshu tiny/none (no real think mode)."
+  },
+  "supplementary_non_medical_architectures": {
+   "source": "artifacts/overthink_generalize.txt (POOLED over 4 perception benchmarks; separate run, signs agree, magnitudes differ from NGC harness)",
+   "InternVL2.5-8B": {
+    "POOLED_perc_dThink": -0.008,
+    "note": "3/4 perception benchmarks negative"
+   },
+   "Phi-3.5-V": {
+    "POOLED_perc_dThink": -0.019,
+    "note": "4/4 perception benchmarks negative"
+   },
+   "read": "Two additional distinct architectures (InternVL2.5, Phi-3.5-V, general-domain) both POOLED-negative on perception -> premise is not Qwen/medical-specific."
+  },
+  "verdict": "STRONGLY CROSS-FAMILY on the perception half (5 medical families + 2 extra architectures; 15/20 cells <=0 strict, 19/20 within noise; VQA-RAD negative in all 5, SLAKE 4/5). The reasoning half (think helps) is cross-family for genuine-think models (MedVLThinker, InternVL3, QoQ-on-MMMU) but muted where no real think mode exists (Lingshu) or the model inverse-scales (Chiron)."
+ },
+ "finding2_format_signal_gap": {
+  "claim": "The routing-signal ceiling (~0.6 AUROC on MCQ) is a benchmark artifact; open-ended free-text unlocks a much stronger 'when to trust the cheap model' signal (~0.87 AUROC).",
+  "mcq_ceiling_evidence": {
+   "source": "RESEARCH_RESULTS_2026-07.md \u00a71.5 gate bake-off, MedVLThinker competent-4 MCQ (cheap 0.622 / strong 0.645)",
+   "AUROC_detect_range": "0.643 (7B self-verify) .. 0.693 (learned-RICH)",
+   "AUROC_recover_range": "0.506 .. 0.614",
+   "read": "Every gate (margin/maxprob/entropy/self-verify/learned) saturates near the ~0.6 wall on MCQ. Cross-family corroboration: in the 5-family ACC bake-off all 10 gate methods cluster within ~0.003 accuracy per family (2SIZE_VALIDATION.md), i.e. no gate separates -> MCQ signal is weak across families (indirect)."
+  },
+  "opentext_signal_evidence": {
+   "source": "OPENENDED_CASCADE.md \u00a72c (AUROC for 'cheap 7B is WRONG', pooled SLAKE-open+VQA-RAD-open)",
+   "MedVLThinker-7B_cheap": {
+    "confidence_AUROC": 0.735,
+    "self_consistency_AUROC": 0.781
+   },
+   "Lingshu-7B_cheap": {
+    "confidence_AUROC": 0.866,
+    "self_consistency_AUROC": 0.845
+   },
+   "verifier_discrimination_AUROC": {
+    "value": 0.924,
+    "n": 8512,
+    "source": "VERIFIED_FACTS.md line 31"
+   },
+   "read": "Open-text routing AUROC is 0.735-0.781 for MedVLThinker-7B (MCQ-RL-tuned, miscalibrated) and 0.845-0.866 for Lingshu-7B (natively calibrated) - BOTH well above the ~0.6 MCQ ceiling. Answers are median 1-2 tokens, so the driver is 4-option discreteness, NOT answer length."
+  },
+  "verdict": "CROSS-FAMILY IN DIRECTION (open-text signal >> MCQ ~0.6 for BOTH MedVLThinker-7B [0.735-0.781] and Lingshu-7B [0.845-0.866]). The PEAK ~0.87 magnitude is Lingshu-specific (calibration-dependent): MedVLThinker's miscalibration caps it lower, but still clears the MCQ wall. The MCQ ~0.6 saturation itself is primarily established on MedVLThinker (the deployed family), with indirect cross-family support from the all-gates-cluster result."
+ },
+ "finding3_trained_verifier_bestofN": {
+  "claim": "A trained best-of-N outcome verifier beats training-free selection (self-consistency / zero-shot P(True)) and matches/beats the 32B on open-ended VQA.",
+  "headline_lingshu": {
+   "source": "TRAINED_VERIFIER_RESULT.md + VERIFIED_FACTS.md \u00a7F/I",
+   "base": "LoRA-finetuned Lingshu-7B verifier, 4 datasets, n=1064 grouped held-out",
+   "greedy": 0.413,
+   "self_consistency": 0.411,
+   "trained_verifier": 0.501,
+   "oracle@8": 0.592,
+   "gap_captured_pct": 49,
+   "vs_32B": "verifier 0.501 vs 32B same-split 0.462 (+0.039 [+0.010,+0.066] seed0); TIE on seed1 -> HONEST: matches/competitive, not 'beats' unconditionally"
+  },
+  "cross_family_medvlthinker": {
+   "source": "VERIFIED_FACTS.md \u00a7H (MedVLThinker-7B verifier, from scratch, SLAKE+VQA-RAD)",
+   "SLAKE": {
+    "greedy": 0.564,
+    "trained": 0.622,
+    "gap_captured_pct": 42,
+    "note": "works"
+   },
+   "VQARAD": {
+    "greedy": 0.5,
+    "trained": 0.47,
+    "note": "FAILS (n=54 noisy)"
+   },
+   "POOLED": {
+    "greedy": 0.547,
+    "trained": 0.583,
+    "gap_captured_pct": 25,
+    "note": "positive but weaker than Lingshu (49%)"
+   },
+   "read": "The method transfers to the ORIGINAL MedVLThinker family (positive pooled) but non-uniformly; base-model quality matters. The Lingshu-trained verifier even transfers ONTO MedVLThinker outputs better (49-61%) than a from-scratch MVT verifier (25%)."
+  },
+  "bestofN_signal_on_medvlthinker": {
+   "source": "OPENENDED_CASCADE.md \u00a72c",
+   "note": "self-consistency / answer-diversity best-of-N error-detection was demonstrated on MedVLThinker-7B (SC AUROC 0.781 > confidence 0.735) - the original family."
+  },
+  "generator_portfolio_multifamily": {
+   "source": "RESEARCH_RESULTS_2026-07.md \u00a71.3",
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "note": "The best-of-N cheap-generator pool spans 3 families."
+  },
+  "verdict": "CROSS-FAMILY BUT BASE-QUALITY-DEPENDENT. Trained verifier demonstrated on TWO base families - Lingshu-7B (headline, 49% of oracle gap, 4 datasets, 2 seeds) and MedVLThinker-7B (from-scratch, 25% pooled, partial). The robust cross-family claim is 'training beats training-free selection and zero-shot self-verify'; the 'beats the 32B' claim is seed-dependent even on Lingshu (downgrade to matches/competitive). Best-of-N selection signal + 3-family generator portfolio confirm the mechanism is not Lingshu-only."
+ }
+}

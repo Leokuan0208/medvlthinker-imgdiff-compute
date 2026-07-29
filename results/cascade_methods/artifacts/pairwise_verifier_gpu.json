@@ -1,0 +1,585 @@
+{
+ "mode": "REAL_PAIRWISE",
+ "note": "Pairwise verdicts are REAL: same weights as the pointwise verifier (Lingshu-7B + pooled4 LoRA) prompted A-vs-B, both orders averaged for position debias. This tests whether a pairwise/active-comparison verifier beats the POINTWISE verifier on selection accuracy (the 74-82% ceiling).",
+ "verdict_dir": "ckpts/pairwise",
+ "tag": "lingshu7b",
+ "params": {
+  "BETA": 1.0,
+  "SIGMA0": 0.6,
+  "BETA_TS": 0.5,
+  "MC": 256,
+  "NEARTIE": 0.1,
+  "SEEDS": [
+   0,
+   1,
+   2
+  ],
+  "PCONF_GRID": [
+   0.5,
+   0.6,
+   0.7,
+   0.8,
+   0.85,
+   0.9,
+   0.95,
+   0.99
+  ]
+ },
+ "families": {
+  "Lingshu(real-pairwise)": {
+   "name": "Lingshu(real-pairwise)",
+   "datasets": {
+    "vqa_rad_open": {
+     "greedy": {
+      "sel_acc": 0.27,
+      "sel_eff": 0.6585365853658537,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 82
+     },
+     "oracle@N": {
+      "sel_acc": 0.41,
+      "sel_eff": 1.0,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 82
+     },
+     "pointwise": {
+      "sel_acc": 0.28,
+      "sel_eff": 0.6829268292682927,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 82
+     },
+     "knockout": {
+      "sel_acc": 0.34,
+      "sel_eff": 0.8292682926829268,
+      "cost": 7.0,
+      "n": 200,
+      "n_present": 82
+     },
+     "copeland_det": {
+      "sel_acc": 0.35,
+      "sel_eff": 0.8536585365853658,
+      "cost": 28.0,
+      "n": 200,
+      "n_present": 82
+     },
+     "active_frontier": [
+      {
+       "p_conf": 0.5,
+       "sel_acc": 0.31,
+       "sel_eff": 0.7560975609756097,
+       "cost": 8.411666666666667,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.6,
+       "sel_acc": 0.3116666666666667,
+       "sel_eff": 0.7601626016260162,
+       "cost": 12.353333333333332,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.7,
+       "sel_acc": 0.31,
+       "sel_eff": 0.7560975609756099,
+       "cost": 16.13,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.8,
+       "sel_acc": 0.31666666666666665,
+       "sel_eff": 0.7723577235772358,
+       "cost": 19.75166666666667,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.85,
+       "sel_acc": 0.3216666666666667,
+       "sel_eff": 0.7845528455284554,
+       "cost": 21.758333333333336,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.9,
+       "sel_acc": 0.325,
+       "sel_eff": 0.7926829268292683,
+       "cost": 23.93166666666667,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.95,
+       "sel_acc": 0.33,
+       "sel_eff": 0.8048780487804879,
+       "cost": 25.743333333333336,
+       "n": 200,
+       "n_present": 82
+      },
+      {
+       "p_conf": 0.99,
+       "sel_acc": 0.33,
+       "sel_eff": 0.8048780487804879,
+       "cost": 27.341666666666665,
+       "n": 200,
+       "n_present": 82
+      }
+     ],
+     "neartie": {
+      "n": 79,
+      "pointwise": 0.7088607594936709,
+      "knockout": 0.8227848101265823,
+      "copeland_det": 0.8481012658227848,
+      "active_p90": 0.8016877637130801
+     }
+    },
+    "pathvqa_open": {
+     "greedy": {
+      "sel_acc": 0.06741573033707865,
+      "sel_eff": 0.46153846153846156,
+      "cost": 0.0,
+      "n": 178,
+      "n_present": 26
+     },
+     "oracle@N": {
+      "sel_acc": 0.14606741573033707,
+      "sel_eff": 1.0,
+      "cost": 0.0,
+      "n": 178,
+      "n_present": 26
+     },
+     "pointwise": {
+      "sel_acc": 0.09550561797752809,
+      "sel_eff": 0.6538461538461539,
+      "cost": 0.0,
+      "n": 178,
+      "n_present": 26
+     },
+     "knockout": {
+      "sel_acc": 0.08239700374531835,
+      "sel_eff": 0.564102564102564,
+      "cost": 7.0,
+      "n": 178,
+      "n_present": 26
+     },
+     "copeland_det": {
+      "sel_acc": 0.0898876404494382,
+      "sel_eff": 0.6153846153846154,
+      "cost": 28.0,
+      "n": 178,
+      "n_present": 26
+     },
+     "active_frontier": [
+      {
+       "p_conf": 0.5,
+       "sel_acc": 0.09737827715355804,
+       "sel_eff": 0.6666666666666666,
+       "cost": 3.440074906367042,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.6,
+       "sel_acc": 0.09737827715355804,
+       "sel_eff": 0.6666666666666666,
+       "cost": 5.853932584269663,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.7,
+       "sel_acc": 0.09176029962546815,
+       "sel_eff": 0.6282051282051282,
+       "cost": 9.249063670411985,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.8,
+       "sel_acc": 0.08614232209737827,
+       "sel_eff": 0.5897435897435896,
+       "cost": 12.94007490636704,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.85,
+       "sel_acc": 0.08801498127340823,
+       "sel_eff": 0.6025641025641025,
+       "cost": 15.59925093632959,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.9,
+       "sel_acc": 0.08801498127340823,
+       "sel_eff": 0.6025641025641025,
+       "cost": 18.812734082397004,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.95,
+       "sel_acc": 0.08801498127340823,
+       "sel_eff": 0.6025641025641025,
+       "cost": 21.9812734082397,
+       "n": 178,
+       "n_present": 26
+      },
+      {
+       "p_conf": 0.99,
+       "sel_acc": 0.08801498127340823,
+       "sel_eff": 0.6025641025641025,
+       "cost": 25.833333333333332,
+       "n": 178,
+       "n_present": 26
+      }
+     ],
+     "neartie": {
+      "n": 22,
+      "pointwise": 0.7727272727272727,
+      "knockout": 0.6515151515151515,
+      "copeland_det": 0.6818181818181818,
+      "active_p90": 0.6969696969696969
+     }
+    },
+    "slake_open": {
+     "greedy": {
+      "sel_acc": 0.72,
+      "sel_eff": 0.8571428571428571,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 168
+     },
+     "oracle@N": {
+      "sel_acc": 0.84,
+      "sel_eff": 1.0,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 168
+     },
+     "pointwise": {
+      "sel_acc": 0.715,
+      "sel_eff": 0.8511904761904762,
+      "cost": 0.0,
+      "n": 200,
+      "n_present": 168
+     },
+     "knockout": {
+      "sel_acc": 0.7583333333333333,
+      "sel_eff": 0.9027777777777777,
+      "cost": 7.0,
+      "n": 200,
+      "n_present": 168
+     },
+     "copeland_det": {
+      "sel_acc": 0.755,
+      "sel_eff": 0.8988095238095238,
+      "cost": 28.0,
+      "n": 200,
+      "n_present": 168
+     },
+     "active_frontier": [
+      {
+       "p_conf": 0.5,
+       "sel_acc": 0.7266666666666666,
+       "sel_eff": 0.8650793650793651,
+       "cost": 11.968333333333332,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.6,
+       "sel_acc": 0.73,
+       "sel_eff": 0.8690476190476191,
+       "cost": 15.691666666666668,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.7,
+       "sel_acc": 0.7333333333333333,
+       "sel_eff": 0.8730158730158729,
+       "cost": 19.465,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.8,
+       "sel_acc": 0.7466666666666667,
+       "sel_eff": 0.888888888888889,
+       "cost": 22.623333333333335,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.85,
+       "sel_acc": 0.7483333333333333,
+       "sel_eff": 0.890873015873016,
+       "cost": 24.176666666666666,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.9,
+       "sel_acc": 0.7483333333333334,
+       "sel_eff": 0.8908730158730158,
+       "cost": 25.25166666666667,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.95,
+       "sel_acc": 0.75,
+       "sel_eff": 0.8928571428571429,
+       "cost": 26.19166666666667,
+       "n": 200,
+       "n_present": 168
+      },
+      {
+       "p_conf": 0.99,
+       "sel_acc": 0.75,
+       "sel_eff": 0.8928571428571429,
+       "cost": 27.353333333333335,
+       "n": 200,
+       "n_present": 168
+      }
+     ],
+     "neartie": {
+      "n": 160,
+      "pointwise": 0.8875,
+      "knockout": 0.9166666666666667,
+      "copeland_det": 0.9125,
+      "active_p90": 0.9104166666666667
+     }
+    }
+   },
+   "pooled": {
+    "greedy": {
+     "sel_acc": 0.3633217993079585,
+     "sel_eff": 0.7608695652173914,
+     "cost": 0.0,
+     "n": 578,
+     "n_present": 276
+    },
+    "oracle@N": {
+     "sel_acc": 0.47750865051903113,
+     "sel_eff": 1.0,
+     "cost": 0.0,
+     "n": 578,
+     "n_present": 276
+    },
+    "pointwise": {
+     "sel_acc": 0.3737024221453287,
+     "sel_eff": 0.782608695652174,
+     "cost": 0.0,
+     "n": 578,
+     "n_present": 276
+    },
+    "knockout": {
+     "sel_acc": 0.4054209919261822,
+     "sel_eff": 0.8490338164251207,
+     "cost": 7.0,
+     "n": 578,
+     "n_present": 276
+    },
+    "copeland_det": {
+     "sel_acc": 0.4100346020761246,
+     "sel_eff": 0.8586956521739131,
+     "cost": 28.0,
+     "n": 578,
+     "n_present": 276
+    },
+    "active_frontier": [
+     {
+      "p_conf": 0.5,
+      "sel_acc": 0.38869665513264123,
+      "sel_eff": 0.8140096618357487,
+      "cost": 8.111303344867359,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.6,
+      "sel_acc": 0.39042675893886963,
+      "sel_eff": 0.8176328502415459,
+      "cost": 11.506920415224911,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.7,
+      "sel_acc": 0.3892733564013841,
+      "sel_eff": 0.8152173913043478,
+      "cost": 15.164936562860436,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.8,
+      "sel_acc": 0.3944636678200692,
+      "sel_eff": 0.8260869565217391,
+      "cost": 18.647635524798154,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.85,
+      "sel_acc": 0.3973471741637831,
+      "sel_eff": 0.8321256038647343,
+      "cost": 20.69838523644752,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.9,
+      "sel_acc": 0.3985005767012687,
+      "sel_eff": 0.8345410628019323,
+      "cost": 22.81199538638985,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.95,
+      "sel_acc": 0.4008073817762399,
+      "sel_eff": 0.8393719806763285,
+      "cost": 24.739907727797004,
+      "n": 578,
+      "n_present": 276
+     },
+     {
+      "p_conf": 0.99,
+      "sel_acc": 0.4008073817762399,
+      "sel_eff": 0.8393719806763285,
+      "cost": 26.881199538638985,
+      "n": 578,
+      "n_present": 276
+     }
+    ],
+    "active_heldout": {
+     "p_conf_fit": 0.9,
+     "sel_acc": 0.4244521337946943,
+     "sel_eff": 0.845977011494253,
+     "cost": 23.598615916955016,
+     "n": 289,
+     "n_present": 145
+    },
+    "heldout_pointwise": {
+     "sel_acc": 0.39792387543252594,
+     "sel_eff": 0.7931034482758621,
+     "cost": 0.0,
+     "n": 289,
+     "n_present": 145
+    },
+    "heldout_copeland_det": {
+     "sel_acc": 0.4463667820069204,
+     "sel_eff": 0.8896551724137931,
+     "cost": 28.0,
+     "n": 289,
+     "n_present": 145
+    },
+    "heldout_knockout": {
+     "sel_acc": 0.44059976931949246,
+     "sel_eff": 0.8781609195402299,
+     "cost": 7.0,
+     "n": 289,
+     "n_present": 145
+    },
+    "neartie": {
+     "n": 261,
+     "pointwise": 0.8237547892720306,
+     "knockout": 0.8659003831417624,
+     "copeland_det": 0.8735632183908046,
+     "active_p90": 0.859514687100894
+    }
+   },
+   "n_datasets": 3
+  }
+ },
+ "verdict": {
+  "lines": [
+   "REAL pairwise verdicts (NOT simulated).",
+   "pooled n=578 over 3 datasets.",
+   "selection ACCURACY  pointwise=0.374  round-robin(real)=0.410 (\u0394+0.036)  knockout(real)=0.405  active(real,best)=0.401",
+   "selection EFFICIENCY pointwise=0.783  round-robin(real)=0.859 (\u0394+0.076)  knockout(real)=0.849  active(real,best)=0.839",
+   "=> REAL pairwise BEATS pointwise-argmax on selection accuracy (\u0394acc up to +0.036)."
+  ],
+  "pointwise_sel_acc": 0.3737024221453287,
+  "pointwise_sel_eff": 0.782608695652174,
+  "roundrobin_real_sel_acc": 0.4100346020761246,
+  "roundrobin_real_sel_eff": 0.8586956521739131,
+  "knockout_real_sel_acc": 0.4054209919261822,
+  "active_real_best_sel_acc": 0.4008073817762399,
+  "beats_pointwise": true,
+  "n": 578,
+  "n_datasets": 3
+ },
+ "per_dataset_pointwise_vs_real": {
+  "vqa_rad_open": {
+   "n": 200,
+   "pointwise_sel_acc": 0.28,
+   "pointwise_sel_eff": 0.6829268292682927,
+   "roundrobin_real_sel_acc": 0.35,
+   "roundrobin_real_sel_eff": 0.8536585365853658,
+   "knockout_real_sel_acc": 0.34,
+   "oracle_sel_acc": 0.41
+  },
+  "pathvqa_open": {
+   "n": 178,
+   "pointwise_sel_acc": 0.09550561797752809,
+   "pointwise_sel_eff": 0.6538461538461539,
+   "roundrobin_real_sel_acc": 0.0898876404494382,
+   "roundrobin_real_sel_eff": 0.6153846153846154,
+   "knockout_real_sel_acc": 0.08239700374531835,
+   "oracle_sel_acc": 0.14606741573033707
+  },
+  "slake_open": {
+   "n": 200,
+   "pointwise_sel_acc": 0.715,
+   "pointwise_sel_eff": 0.8511904761904762,
+   "roundrobin_real_sel_acc": 0.755,
+   "roundrobin_real_sel_eff": 0.8988095238095238,
+   "knockout_real_sel_acc": 0.7583333333333333,
+   "oracle_sel_acc": 0.84
+  }
+ },
+ "bootstrap_ci": {
+  "n": 578,
+  "n_present": 276,
+  "copeland_minus_pointwise_acc": {
+   "delta": 0.0363,
+   "ci95": [
+    0.0156,
+    0.0554
+   ]
+  },
+  "copeland_minus_pointwise_eff": {
+   "delta": 0.0761,
+   "ci95": [
+    0.0362,
+    0.1159
+   ]
+  },
+  "knockout_minus_pointwise_acc": {
+   "delta": 0.0317,
+   "ci95": [
+    0.0144,
+    0.0496
+   ]
+  },
+  "neartie_copeland_minus_pointwise_acc": {
+   "n": 261,
+   "delta": 0.0498,
+   "ci95": [
+    0.0115,
+    0.0881
+   ]
+  }
+ }
+}

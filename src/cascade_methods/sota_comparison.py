@@ -152,7 +152,7 @@ def main():
         if ft:
             print(f"\n  {'3-TIER (ours)':<20}-> oracle@parity bb={ft['bb']*100:.1f}%  "
                   f"esc1={ft['esc1']*100:.0f}% esc2(think)={ft['esc2']*100:.0f}%")
-        # CP-Router note (CORRECTED after audit -> results/cascade_methods/baseline_audit.json):
+        # CP-Router note (CORRECTED after audit -> results/cascade_methods/artifacts/baseline_audit.json):
         # The earlier "set-size monotone in top1prob => == MSP/Chow" claim was WRONG: our eval has 5-10
         # options (not <=5), and LAC set-size equals MSP only when 1-q_hat>=0.5 (rules diverge up to ~18%
         # at the alphas CP-Router targets). Faithful CP-Router (LAC set-size + FBE alpha*) lives in

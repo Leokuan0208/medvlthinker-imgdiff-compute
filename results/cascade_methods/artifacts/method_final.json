@@ -1,0 +1,1688 @@
+{
+  "title": "method_final -- unified format-aware cascade with a Pareto knob (compute-lean | accuracy-max) and an optional INT4 cost-mode; all numbers recomputed live from per-sample dumps + measured cost constants + held-out (5-fold) calibration.",
+  "reproduce": "python3 src/cascade_methods/method_final.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "FUSE_both_legs": {
+      "ms": 665.0,
+      "flop": 5.57
+    },
+    "cheap_draw_ms": 522.0,
+    "think_delta_open": {
+      "slake_open": -0.195,
+      "vqa_rad_open": -0.12,
+      "pathvqa_open": -0.13
+    }
+  },
+  "int4_projection": {
+    "fp16_ms": 665.0,
+    "int4_ms": 582.7,
+    "ratio": 0.8763,
+    "decode_ms_per_tok": 68.57,
+    "prefill_ms": 527.9,
+    "nothink_decode_ms": 137.1,
+    "decode_speedup": 2.5,
+    "mac_flop": 4.57,
+    "throughput_effective_flop_this_leg": 4.005,
+    "source": "latency PROJECTED (composition-grounded, latency_32b.jsonl); MAC-FLOP unchanged; accuracy PROJECTED (literature W4A16 <=1%)"
+  },
+  "int4_accuracy_delta_bracket": [
+    0.005,
+    0.01
+  ],
+  "baselines": {
+    "always_32b_think": {
+      "desc": "naive: big THINK model on everything (measured batch-1 10521.6 ms)",
+      "latency_ms": 10521.6,
+      "flops": 4.57,
+      "acc_full_suite": 0.5632
+    },
+    "always_32b_nothink": {
+      "desc": "strong reference: run only the 32B, no think",
+      "latency_ms": 665.0,
+      "flops": 4.57,
+      "acc_full_suite": 0.5732
+    }
+  },
+  "modes": {
+    "compute_lean": {
+      "mode": "compute-lean",
+      "f1_router_choices": null,
+      "per_benchmark": {
+        "PMC_VQA": {
+          "format": "MCQ",
+          "n": 33430,
+          "policy": "margin-cascade -> 32B-nt",
+          "acc_7b": 0.5427,
+          "acc_32b_nt": 0.5518,
+          "acc_32b_think": 0.5494,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.5508,
+          "esc": 0.0845,
+          "meanN": 1.0,
+          "flops": 1.386,
+          "lat_seq": 403.2,
+          "lat_par": 403.2,
+          "d_vs_think": 0.0014,
+          "d_vs_nothink": -0.001,
+          "strong_share": 0.0845
+        },
+        "SLAKE_closed": {
+          "format": "MCQ",
+          "n": 836,
+          "policy": "margin-cascade -> 32B-nt",
+          "acc_7b": 0.8254,
+          "acc_32b_nt": 0.8589,
+          "acc_32b_think": 0.8636,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8516,
+          "esc": 0.2045,
+          "meanN": 1.0,
+          "flops": 1.935,
+          "lat_seq": 483.0,
+          "lat_par": 483.0,
+          "d_vs_think": -0.012,
+          "d_vs_nothink": -0.0072,
+          "strong_share": 0.2045
+        },
+        "VQA_RAD_closed": {
+          "format": "MCQ",
+          "n": 251,
+          "policy": "margin-cascade -> 32B-nt",
+          "acc_7b": 0.7809,
+          "acc_32b_nt": 0.8526,
+          "acc_32b_think": 0.8406,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8328,
+          "esc": 0.5696,
+          "meanN": 1.0,
+          "flops": 3.603,
+          "lat_seq": 725.8,
+          "lat_par": 725.8,
+          "d_vs_think": -0.0079,
+          "d_vs_nothink": -0.0198,
+          "strong_share": 0.5696
+        },
+        "PATH_VQA_closed": {
+          "format": "MCQ",
+          "n": 3362,
+          "policy": "margin-cascade -> 32B-nt",
+          "acc_7b": 0.8409,
+          "acc_32b_nt": 0.8891,
+          "acc_32b_think": 0.8891,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": false,
+          "method_acc": 0.8882,
+          "esc": 0.4572,
+          "meanN": 1.0,
+          "flops": 3.089,
+          "lat_seq": 651.0,
+          "lat_par": 651.0,
+          "d_vs_think": -0.0009,
+          "d_vs_nothink": -0.0009,
+          "strong_share": 0.4572
+        },
+        "MedXpertQA-MM": {
+          "format": "MCQ",
+          "n": 2000,
+          "policy": "margin-cascade -> 32B-nt",
+          "acc_7b": 0.2615,
+          "acc_32b_nt": 0.3065,
+          "acc_32b_think": 0.304,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.3005,
+          "esc": 0.896,
+          "meanN": 1.0,
+          "flops": 5.095,
+          "lat_seq": 942.8,
+          "lat_par": 942.8,
+          "d_vs_think": -0.0035,
+          "d_vs_nothink": -0.006,
+          "strong_share": 0.896
+        },
+        "MMMU-Medical-val": {
+          "format": "MCQ",
+          "n": 150,
+          "policy": "keep-7B",
+          "acc_7b": 0.8,
+          "acc_32b_nt": 0.6333,
+          "acc_32b_think": 0.66,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8,
+          "esc": 0.0,
+          "meanN": 1.0,
+          "flops": 1.0,
+          "lat_seq": 347.0,
+          "lat_par": 347.0,
+          "d_vs_think": 0.14,
+          "d_vs_nothink": 0.1667,
+          "strong_share": 0.0
+        },
+        "SLAKE_open": {
+          "format": "open",
+          "n": 645,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.7364,
+          "acc_32b_nt": 0.8186,
+          "acc_32b_think": 0.6236,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.8093,
+          "esc": 0.1581,
+          "meanN": 3.45,
+          "flops": 7.622,
+          "lat_seq": 1905.9,
+          "lat_par": 627.2,
+          "d_vs_think": 0.1857,
+          "d_vs_nothink": -0.0093,
+          "strong_share": 0.1581,
+          "iso_target_heldout": 0.8155
+        },
+        "VQA_RAD_open": {
+          "format": "open",
+          "n": 200,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.465,
+          "acc_32b_nt": 0.6,
+          "acc_32b_think": 0.48,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.595,
+          "esc": 0.125,
+          "meanN": 3.91,
+          "flops": 8.391,
+          "lat_seq": 2124.1,
+          "lat_par": 605.1,
+          "d_vs_think": 0.115,
+          "d_vs_nothink": -0.005,
+          "strong_share": 0.125,
+          "iso_target_heldout": 0.585
+        },
+        "PATH_VQA_open": {
+          "format": "open",
+          "n": 1500,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.324,
+          "acc_32b_nt": 0.376,
+          "acc_32b_think": 0.246,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.452,
+          "esc": 0.3567,
+          "meanN": 5.484,
+          "flops": 12.598,
+          "lat_seq": 3099.8,
+          "lat_par": 759.2,
+          "d_vs_think": 0.206,
+          "d_vs_nothink": 0.076,
+          "strong_share": 0.3567,
+          "iso_target_heldout": 0.4533
+        }
+      },
+      "pooled": {
+        "full_suite": {
+          "benchmarks": [
+            "PMC_VQA",
+            "SLAKE_closed",
+            "VQA_RAD_closed",
+            "PATH_VQA_closed",
+            "MedXpertQA-MM",
+            "MMMU-Medical-val",
+            "SLAKE_open",
+            "VQA_RAD_open",
+            "PATH_VQA_open"
+          ],
+          "n": 42374,
+          "sample_weighted": {
+            "acc_method": 0.5749,
+            "acc_32b_nt": 0.5732,
+            "acc_32b_think": 0.5632,
+            "d_vs_think": 0.0117,
+            "d_vs_nothink": 0.0017,
+            "esc": 0.1683,
+            "flops": 2.244,
+            "lat_seq_ms": 578.1,
+            "lat_par_ms": 468.6,
+            "lat_saved_vs_think_seq_pct": 94.5,
+            "lat_saved_vs_think_par_pct": 95.5,
+            "flops_vs_always32": 0.491
+          },
+          "macro_avg": {
+            "acc_method": 0.6756,
+            "acc_32b_nt": 0.6541,
+            "acc_32b_think": 0.6063,
+            "d_vs_think": 0.0693,
+            "d_vs_nothink": 0.0215
+          }
+        },
+        "mcq_only": {
+          "benchmarks": [
+            "PMC_VQA",
+            "SLAKE_closed",
+            "VQA_RAD_closed",
+            "PATH_VQA_closed",
+            "MedXpertQA-MM",
+            "MMMU-Medical-val"
+          ],
+          "n": 40029,
+          "sample_weighted": {
+            "acc_method": 0.5756,
+            "acc_32b_nt": 0.5765,
+            "acc_32b_think": 0.5745,
+            "d_vs_think": 0.0011,
+            "d_vs_nothink": -0.0008,
+            "esc": 0.1616,
+            "flops": 1.739,
+            "lat_seq_ms": 454.5,
+            "lat_par_ms": 454.5,
+            "lat_saved_vs_think_seq_pct": 95.7,
+            "lat_saved_vs_think_par_pct": 95.7,
+            "flops_vs_always32": 0.38
+          },
+          "macro_avg": {
+            "acc_method": 0.704,
+            "acc_32b_nt": 0.682,
+            "acc_32b_think": 0.6845,
+            "d_vs_think": 0.0195,
+            "d_vs_nothink": 0.022
+          }
+        },
+        "open_only": {
+          "benchmarks": [
+            "SLAKE_open",
+            "VQA_RAD_open",
+            "PATH_VQA_open"
+          ],
+          "n": 2345,
+          "sample_weighted": {
+            "acc_method": 0.5625,
+            "acc_32b_nt": 0.5168,
+            "acc_32b_think": 0.3698,
+            "d_vs_think": 0.1927,
+            "d_vs_nothink": 0.0456,
+            "esc": 0.2823,
+            "flops": 10.871,
+            "lat_seq_ms": 2688.2,
+            "lat_par_ms": 709.7,
+            "lat_saved_vs_think_seq_pct": 74.5,
+            "lat_saved_vs_think_par_pct": 93.3,
+            "flops_vs_always32": 2.379
+          },
+          "macro_avg": {
+            "acc_method": 0.6188,
+            "acc_32b_nt": 0.5982,
+            "acc_32b_think": 0.4499,
+            "d_vs_think": 0.1689,
+            "d_vs_nothink": 0.0206
+          }
+        }
+      },
+      "int4_cost_mode": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "format": "MCQ",
+            "n": 33430,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.5427,
+            "acc_32b_nt": 0.5518,
+            "acc_32b_think": 0.5494,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.5508,
+            "esc": 0.0845,
+            "meanN": 1.0,
+            "flops": 1.386,
+            "lat_seq": 396.3,
+            "lat_par": 396.3,
+            "d_vs_think": 0.0014,
+            "d_vs_nothink": -0.001,
+            "strong_share": 0.0845,
+            "acc_int4_proj_lo": 0.5499,
+            "acc_int4_proj_hi": 0.5504
+          },
+          "SLAKE_closed": {
+            "format": "MCQ",
+            "n": 836,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.8254,
+            "acc_32b_nt": 0.8589,
+            "acc_32b_think": 0.8636,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8516,
+            "esc": 0.2045,
+            "meanN": 1.0,
+            "flops": 1.935,
+            "lat_seq": 466.2,
+            "lat_par": 466.2,
+            "d_vs_think": -0.012,
+            "d_vs_nothink": -0.0072,
+            "strong_share": 0.2045,
+            "acc_int4_proj_lo": 0.8496,
+            "acc_int4_proj_hi": 0.8506
+          },
+          "VQA_RAD_closed": {
+            "format": "MCQ",
+            "n": 251,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.7809,
+            "acc_32b_nt": 0.8526,
+            "acc_32b_think": 0.8406,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8328,
+            "esc": 0.5696,
+            "meanN": 1.0,
+            "flops": 3.603,
+            "lat_seq": 678.9,
+            "lat_par": 678.9,
+            "d_vs_think": -0.0079,
+            "d_vs_nothink": -0.0198,
+            "strong_share": 0.5696,
+            "acc_int4_proj_lo": 0.8271,
+            "acc_int4_proj_hi": 0.8299
+          },
+          "PATH_VQA_closed": {
+            "format": "MCQ",
+            "n": 3362,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.8409,
+            "acc_32b_nt": 0.8891,
+            "acc_32b_think": 0.8891,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": false,
+            "method_acc": 0.8882,
+            "esc": 0.4572,
+            "meanN": 1.0,
+            "flops": 3.089,
+            "lat_seq": 613.4,
+            "lat_par": 613.4,
+            "d_vs_think": -0.0009,
+            "d_vs_nothink": -0.0009,
+            "strong_share": 0.4572,
+            "acc_int4_proj_lo": 0.8836,
+            "acc_int4_proj_hi": 0.8859
+          },
+          "MedXpertQA-MM": {
+            "format": "MCQ",
+            "n": 2000,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.2615,
+            "acc_32b_nt": 0.3065,
+            "acc_32b_think": 0.304,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.3005,
+            "esc": 0.896,
+            "meanN": 1.0,
+            "flops": 5.095,
+            "lat_seq": 869.1,
+            "lat_par": 869.1,
+            "d_vs_think": -0.0035,
+            "d_vs_nothink": -0.006,
+            "strong_share": 0.896,
+            "acc_int4_proj_lo": 0.2915,
+            "acc_int4_proj_hi": 0.296
+          },
+          "MMMU-Medical-val": {
+            "format": "MCQ",
+            "n": 150,
+            "policy": "keep-7B",
+            "acc_7b": 0.8,
+            "acc_32b_nt": 0.6333,
+            "acc_32b_think": 0.66,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8,
+            "esc": 0.0,
+            "meanN": 1.0,
+            "flops": 1.0,
+            "lat_seq": 347.0,
+            "lat_par": 347.0,
+            "d_vs_think": 0.14,
+            "d_vs_nothink": 0.1667,
+            "strong_share": 0.0,
+            "acc_int4_proj_lo": 0.8,
+            "acc_int4_proj_hi": 0.8
+          },
+          "SLAKE_open": {
+            "format": "open",
+            "n": 645,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.7364,
+            "acc_32b_nt": 0.8186,
+            "acc_32b_think": 0.6236,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.8093,
+            "esc": 0.1581,
+            "meanN": 3.45,
+            "flops": 7.622,
+            "lat_seq": 1892.8,
+            "lat_par": 614.1,
+            "d_vs_think": 0.1857,
+            "d_vs_nothink": -0.0093,
+            "strong_share": 0.1581,
+            "iso_target_heldout": 0.8155,
+            "acc_int4_proj_lo": 0.8077,
+            "acc_int4_proj_hi": 0.8085
+          },
+          "VQA_RAD_open": {
+            "format": "open",
+            "n": 200,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.465,
+            "acc_32b_nt": 0.6,
+            "acc_32b_think": 0.48,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.595,
+            "esc": 0.125,
+            "meanN": 3.91,
+            "flops": 8.391,
+            "lat_seq": 2113.9,
+            "lat_par": 594.8,
+            "d_vs_think": 0.115,
+            "d_vs_nothink": -0.005,
+            "strong_share": 0.125,
+            "iso_target_heldout": 0.585,
+            "acc_int4_proj_lo": 0.5938,
+            "acc_int4_proj_hi": 0.5944
+          },
+          "PATH_VQA_open": {
+            "format": "open",
+            "n": 1500,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.324,
+            "acc_32b_nt": 0.376,
+            "acc_32b_think": 0.246,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.452,
+            "esc": 0.3567,
+            "meanN": 5.484,
+            "flops": 12.598,
+            "lat_seq": 3070.5,
+            "lat_par": 729.8,
+            "d_vs_think": 0.206,
+            "d_vs_nothink": 0.076,
+            "strong_share": 0.3567,
+            "iso_target_heldout": 0.4533,
+            "acc_int4_proj_lo": 0.4484,
+            "acc_int4_proj_hi": 0.4502
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val",
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 42374,
+            "sample_weighted": {
+              "acc_method": 0.5749,
+              "acc_32b_nt": 0.5732,
+              "acc_32b_think": 0.5632,
+              "d_vs_think": 0.0117,
+              "d_vs_nothink": 0.0017,
+              "esc": 0.1683,
+              "flops": 2.244,
+              "lat_seq_ms": 564.2,
+              "lat_par_ms": 454.7,
+              "lat_saved_vs_think_seq_pct": 94.6,
+              "lat_saved_vs_think_par_pct": 95.7,
+              "flops_vs_always32": 0.491,
+              "acc_method_int4_proj": [
+                0.5732,
+                0.574
+              ],
+              "d_vs_think_int4_proj": [
+                0.01,
+                0.0109
+              ],
+              "d_vs_nothink_int4_proj": [
+                0.0,
+                0.0009
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.6756,
+              "acc_32b_nt": 0.6541,
+              "acc_32b_think": 0.6063,
+              "d_vs_think": 0.0693,
+              "d_vs_nothink": 0.0215
+            }
+          },
+          "mcq_only": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val"
+            ],
+            "n": 40029,
+            "sample_weighted": {
+              "acc_method": 0.5756,
+              "acc_32b_nt": 0.5765,
+              "acc_32b_think": 0.5745,
+              "d_vs_think": 0.0011,
+              "d_vs_nothink": -0.0008,
+              "esc": 0.1616,
+              "flops": 1.739,
+              "lat_seq_ms": 441.2,
+              "lat_par_ms": 441.2,
+              "lat_saved_vs_think_seq_pct": 95.8,
+              "lat_saved_vs_think_par_pct": 95.8,
+              "flops_vs_always32": 0.38,
+              "acc_method_int4_proj": [
+                0.574,
+                0.5748
+              ],
+              "d_vs_think_int4_proj": [
+                -0.0005,
+                0.0003
+              ],
+              "d_vs_nothink_int4_proj": [
+                -0.0025,
+                -0.0017
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.704,
+              "acc_32b_nt": 0.682,
+              "acc_32b_think": 0.6845,
+              "d_vs_think": 0.0195,
+              "d_vs_nothink": 0.022
+            }
+          },
+          "open_only": {
+            "benchmarks": [
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 2345,
+            "sample_weighted": {
+              "acc_method": 0.5625,
+              "acc_32b_nt": 0.5168,
+              "acc_32b_think": 0.3698,
+              "d_vs_think": 0.1927,
+              "d_vs_nothink": 0.0456,
+              "esc": 0.2823,
+              "flops": 10.871,
+              "lat_seq_ms": 2665.0,
+              "lat_par_ms": 686.5,
+              "lat_saved_vs_think_seq_pct": 74.7,
+              "lat_saved_vs_think_par_pct": 93.5,
+              "flops_vs_always32": 2.379,
+              "acc_method_int4_proj": [
+                0.5597,
+                0.5611
+              ],
+              "d_vs_think_int4_proj": [
+                0.1898,
+                0.1912
+              ],
+              "d_vs_nothink_int4_proj": [
+                0.0428,
+                0.0442
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.6188,
+              "acc_32b_nt": 0.5982,
+              "acc_32b_think": 0.4499,
+              "d_vs_think": 0.1689,
+              "d_vs_nothink": 0.0206
+            }
+          }
+        }
+      },
+      "compute_lean_fixed_bo8_reference": {
+        "note": "compute-lean with the FIXED best-of-8 open arm (integrated_method.py); the Pandora open arm holds this accuracy at lower FLOPs. This row makes the +0.0118 vs-think headline explicit.",
+        "per_benchmark": {
+          "PMC_VQA": {
+            "format": "MCQ",
+            "n": 33430,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.5427,
+            "acc_32b_nt": 0.5518,
+            "acc_32b_think": 0.5494,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.5508,
+            "esc": 0.0845,
+            "meanN": 1.0,
+            "flops": 1.386,
+            "lat_seq": 403.2,
+            "lat_par": 403.2,
+            "d_vs_think": 0.0014,
+            "d_vs_nothink": -0.001,
+            "strong_share": 0.0845
+          },
+          "SLAKE_closed": {
+            "format": "MCQ",
+            "n": 836,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.8254,
+            "acc_32b_nt": 0.8589,
+            "acc_32b_think": 0.8636,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8516,
+            "esc": 0.2045,
+            "meanN": 1.0,
+            "flops": 1.935,
+            "lat_seq": 483.0,
+            "lat_par": 483.0,
+            "d_vs_think": -0.012,
+            "d_vs_nothink": -0.0072,
+            "strong_share": 0.2045
+          },
+          "VQA_RAD_closed": {
+            "format": "MCQ",
+            "n": 251,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.7809,
+            "acc_32b_nt": 0.8526,
+            "acc_32b_think": 0.8406,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8328,
+            "esc": 0.5696,
+            "meanN": 1.0,
+            "flops": 3.603,
+            "lat_seq": 725.8,
+            "lat_par": 725.8,
+            "d_vs_think": -0.0079,
+            "d_vs_nothink": -0.0198,
+            "strong_share": 0.5696
+          },
+          "PATH_VQA_closed": {
+            "format": "MCQ",
+            "n": 3362,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.8409,
+            "acc_32b_nt": 0.8891,
+            "acc_32b_think": 0.8891,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": false,
+            "method_acc": 0.8882,
+            "esc": 0.4572,
+            "meanN": 1.0,
+            "flops": 3.089,
+            "lat_seq": 651.0,
+            "lat_par": 651.0,
+            "d_vs_think": -0.0009,
+            "d_vs_nothink": -0.0009,
+            "strong_share": 0.4572
+          },
+          "MedXpertQA-MM": {
+            "format": "MCQ",
+            "n": 2000,
+            "policy": "margin-cascade -> 32B-nt",
+            "acc_7b": 0.2615,
+            "acc_32b_nt": 0.3065,
+            "acc_32b_think": 0.304,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.3005,
+            "esc": 0.896,
+            "meanN": 1.0,
+            "flops": 5.095,
+            "lat_seq": 942.8,
+            "lat_par": 942.8,
+            "d_vs_think": -0.0035,
+            "d_vs_nothink": -0.006,
+            "strong_share": 0.896
+          },
+          "MMMU-Medical-val": {
+            "format": "MCQ",
+            "n": 150,
+            "policy": "keep-7B",
+            "acc_7b": 0.8,
+            "acc_32b_nt": 0.6333,
+            "acc_32b_think": 0.66,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8,
+            "esc": 0.0,
+            "meanN": 1.0,
+            "flops": 1.0,
+            "lat_seq": 347.0,
+            "lat_par": 347.0,
+            "d_vs_think": 0.14,
+            "d_vs_nothink": 0.1667,
+            "strong_share": 0.0
+          },
+          "SLAKE_open": {
+            "format": "open",
+            "n": 645,
+            "policy": "bo8+verifier->32B-nt",
+            "acc_7b": 0.7364,
+            "acc_32b_nt": 0.8186,
+            "acc_32b_think": 0.6236,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.8155,
+            "esc": 0.1256,
+            "meanN": 1.0,
+            "flops": 16.574,
+            "lat_seq": 605.5,
+            "lat_par": 605.5,
+            "d_vs_think": 0.1919,
+            "d_vs_nothink": -0.0031,
+            "strong_share": 0.1256
+          },
+          "VQA_RAD_open": {
+            "format": "open",
+            "n": 200,
+            "policy": "bo8+verifier->32B-nt",
+            "acc_7b": 0.465,
+            "acc_32b_nt": 0.6,
+            "acc_32b_think": 0.48,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.585,
+            "esc": 0.055,
+            "meanN": 1.0,
+            "flops": 16.251,
+            "lat_seq": 558.6,
+            "lat_par": 558.6,
+            "d_vs_think": 0.105,
+            "d_vs_nothink": -0.015,
+            "strong_share": 0.055
+          },
+          "PATH_VQA_open": {
+            "format": "open",
+            "n": 1500,
+            "policy": "bo8+verifier->32B-nt",
+            "acc_7b": 0.324,
+            "acc_32b_nt": 0.376,
+            "acc_32b_think": 0.246,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.4533,
+            "esc": 0.0007,
+            "meanN": 1.0,
+            "flops": 16.003,
+            "lat_seq": 522.4,
+            "lat_par": 522.4,
+            "d_vs_think": 0.2073,
+            "d_vs_nothink": 0.0773,
+            "strong_share": 0.0007
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val",
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 42374,
+            "sample_weighted": {
+              "acc_method": 0.575,
+              "acc_32b_nt": 0.5732,
+              "acc_32b_think": 0.5632,
+              "d_vs_think": 0.0118,
+              "d_vs_nothink": 0.0018,
+              "esc": 0.1548,
+              "flops": 2.538,
+              "lat_seq_ms": 459.7,
+              "lat_par_ms": 459.7,
+              "lat_saved_vs_think_seq_pct": 95.6,
+              "lat_saved_vs_think_par_pct": 95.6,
+              "flops_vs_always32": 0.555
+            },
+            "macro_avg": {
+              "acc_method": 0.6753,
+              "acc_32b_nt": 0.6541,
+              "acc_32b_think": 0.6063,
+              "d_vs_think": 0.069,
+              "d_vs_nothink": 0.0212
+            }
+          },
+          "mcq_only": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val"
+            ],
+            "n": 40029,
+            "sample_weighted": {
+              "acc_method": 0.5756,
+              "acc_32b_nt": 0.5765,
+              "acc_32b_think": 0.5745,
+              "d_vs_think": 0.0011,
+              "d_vs_nothink": -0.0008,
+              "esc": 0.1616,
+              "flops": 1.739,
+              "lat_seq_ms": 454.5,
+              "lat_par_ms": 454.5,
+              "lat_saved_vs_think_seq_pct": 95.7,
+              "lat_saved_vs_think_par_pct": 95.7,
+              "flops_vs_always32": 0.38
+            },
+            "macro_avg": {
+              "acc_method": 0.704,
+              "acc_32b_nt": 0.682,
+              "acc_32b_think": 0.6845,
+              "d_vs_think": 0.0195,
+              "d_vs_nothink": 0.022
+            }
+          },
+          "open_only": {
+            "benchmarks": [
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 2345,
+            "sample_weighted": {
+              "acc_method": 0.5642,
+              "acc_32b_nt": 0.5168,
+              "acc_32b_think": 0.3698,
+              "d_vs_think": 0.1944,
+              "d_vs_nothink": 0.0473,
+              "esc": 0.0397,
+              "flops": 16.181,
+              "lat_seq_ms": 548.4,
+              "lat_par_ms": 548.4,
+              "lat_saved_vs_think_seq_pct": 94.8,
+              "lat_saved_vs_think_par_pct": 94.8,
+              "flops_vs_always32": 3.541
+            },
+            "macro_avg": {
+              "acc_method": 0.6179,
+              "acc_32b_nt": 0.5982,
+              "acc_32b_think": 0.4499,
+              "d_vs_think": 0.1681,
+              "d_vs_nothink": 0.0197
+            }
+          }
+        }
+      }
+    },
+    "accuracy_max": {
+      "mode": "accuracy-max",
+      "f1_router_choices": {
+        "PMC_VQA": "F3_confadv",
+        "SLAKE_closed": "always_32b_nt",
+        "VQA_RAD_closed": "always_32b_nt",
+        "PATH_VQA_closed": "always_32b_nt",
+        "MedXpertQA-MM": "always_32b_nt",
+        "MMMU-Medical-val": "always_7b"
+      },
+      "per_benchmark": {
+        "PMC_VQA": {
+          "format": "MCQ",
+          "n": 33430,
+          "policy": "fusion(F3_confadv)",
+          "acc_7b": 0.5427,
+          "acc_32b_nt": 0.5518,
+          "acc_32b_think": 0.5494,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.5653,
+          "esc": 1.0,
+          "meanN": 1.0,
+          "flops": 5.57,
+          "lat_seq": 1012.0,
+          "lat_par": 665.0,
+          "d_vs_think": 0.0159,
+          "d_vs_nothink": 0.0135,
+          "strong_share": 1.0
+        },
+        "SLAKE_closed": {
+          "format": "MCQ",
+          "n": 836,
+          "policy": "always-32B-nt",
+          "acc_7b": 0.8254,
+          "acc_32b_nt": 0.8589,
+          "acc_32b_think": 0.8636,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8589,
+          "esc": 1.0,
+          "meanN": 1.0,
+          "flops": 4.57,
+          "lat_seq": 665.0,
+          "lat_par": 665.0,
+          "d_vs_think": -0.0047,
+          "d_vs_nothink": -0.0,
+          "strong_share": 1.0
+        },
+        "VQA_RAD_closed": {
+          "format": "MCQ",
+          "n": 251,
+          "policy": "always-32B-nt",
+          "acc_7b": 0.7809,
+          "acc_32b_nt": 0.8526,
+          "acc_32b_think": 0.8406,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8526,
+          "esc": 1.0,
+          "meanN": 1.0,
+          "flops": 4.57,
+          "lat_seq": 665.0,
+          "lat_par": 665.0,
+          "d_vs_think": 0.012,
+          "d_vs_nothink": -0.0,
+          "strong_share": 1.0
+        },
+        "PATH_VQA_closed": {
+          "format": "MCQ",
+          "n": 3362,
+          "policy": "always-32B-nt",
+          "acc_7b": 0.8409,
+          "acc_32b_nt": 0.8891,
+          "acc_32b_think": 0.8891,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": false,
+          "method_acc": 0.8891,
+          "esc": 1.0,
+          "meanN": 1.0,
+          "flops": 4.57,
+          "lat_seq": 665.0,
+          "lat_par": 665.0,
+          "d_vs_think": -0.0,
+          "d_vs_nothink": -0.0,
+          "strong_share": 1.0
+        },
+        "MedXpertQA-MM": {
+          "format": "MCQ",
+          "n": 2000,
+          "policy": "always-32B-nt",
+          "acc_7b": 0.2615,
+          "acc_32b_nt": 0.3065,
+          "acc_32b_think": 0.304,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.3065,
+          "esc": 1.0,
+          "meanN": 1.0,
+          "flops": 4.57,
+          "lat_seq": 665.0,
+          "lat_par": 665.0,
+          "d_vs_think": 0.0025,
+          "d_vs_nothink": 0.0,
+          "strong_share": 1.0
+        },
+        "MMMU-Medical-val": {
+          "format": "MCQ",
+          "n": 150,
+          "policy": "keep-7B",
+          "acc_7b": 0.8,
+          "acc_32b_nt": 0.6333,
+          "acc_32b_think": 0.66,
+          "acc_32b_think_is_est": false,
+          "think_dump_real": true,
+          "method_acc": 0.8,
+          "esc": 0.0,
+          "meanN": 1.0,
+          "flops": 1.0,
+          "lat_seq": 347.0,
+          "lat_par": 347.0,
+          "d_vs_think": 0.14,
+          "d_vs_nothink": 0.1667,
+          "strong_share": 0.0
+        },
+        "SLAKE_open": {
+          "format": "open",
+          "n": 645,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.7364,
+          "acc_32b_nt": 0.8186,
+          "acc_32b_think": 0.6236,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.8093,
+          "esc": 0.1581,
+          "meanN": 3.45,
+          "flops": 7.622,
+          "lat_seq": 1905.9,
+          "lat_par": 627.2,
+          "d_vs_think": 0.1857,
+          "d_vs_nothink": -0.0093,
+          "strong_share": 0.1581,
+          "iso_target_heldout": 0.8155
+        },
+        "VQA_RAD_open": {
+          "format": "open",
+          "n": 200,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.465,
+          "acc_32b_nt": 0.6,
+          "acc_32b_think": 0.48,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.595,
+          "esc": 0.125,
+          "meanN": 3.91,
+          "flops": 8.391,
+          "lat_seq": 2124.1,
+          "lat_par": 605.1,
+          "d_vs_think": 0.115,
+          "d_vs_nothink": -0.005,
+          "strong_share": 0.125,
+          "iso_target_heldout": 0.585
+        },
+        "PATH_VQA_open": {
+          "format": "open",
+          "n": 1500,
+          "policy": "pandora-N verifier->32B-nt",
+          "acc_7b": 0.324,
+          "acc_32b_nt": 0.376,
+          "acc_32b_think": 0.246,
+          "acc_32b_think_is_est": true,
+          "think_dump_real": false,
+          "method_acc": 0.452,
+          "esc": 0.3567,
+          "meanN": 5.484,
+          "flops": 12.598,
+          "lat_seq": 3099.8,
+          "lat_par": 759.2,
+          "d_vs_think": 0.206,
+          "d_vs_nothink": 0.076,
+          "strong_share": 0.3567,
+          "iso_target_heldout": 0.4533
+        }
+      },
+      "pooled": {
+        "full_suite": {
+          "benchmarks": [
+            "PMC_VQA",
+            "SLAKE_closed",
+            "VQA_RAD_closed",
+            "PATH_VQA_closed",
+            "MedXpertQA-MM",
+            "MMMU-Medical-val",
+            "SLAKE_open",
+            "VQA_RAD_open",
+            "PATH_VQA_open"
+          ],
+          "n": 42374,
+          "sample_weighted": {
+            "acc_method": 0.5869,
+            "acc_32b_nt": 0.5732,
+            "acc_32b_think": 0.5631,
+            "d_vs_think": 0.0238,
+            "d_vs_nothink": 0.0137,
+            "esc": 0.9567,
+            "flops": 5.695,
+            "lat_seq_ms": 1049.6,
+            "lat_par_ms": 666.3,
+            "lat_saved_vs_think_seq_pct": 90.0,
+            "lat_saved_vs_think_par_pct": 93.7,
+            "flops_vs_always32": 1.246
+          },
+          "macro_avg": {
+            "acc_method": 0.681,
+            "acc_32b_nt": 0.6541,
+            "acc_32b_think": 0.6063,
+            "d_vs_think": 0.0747,
+            "d_vs_nothink": 0.0269
+          }
+        },
+        "mcq_only": {
+          "benchmarks": [
+            "PMC_VQA",
+            "SLAKE_closed",
+            "VQA_RAD_closed",
+            "PATH_VQA_closed",
+            "MedXpertQA-MM",
+            "MMMU-Medical-val"
+          ],
+          "n": 40029,
+          "sample_weighted": {
+            "acc_method": 0.5883,
+            "acc_32b_nt": 0.5765,
+            "acc_32b_think": 0.5745,
+            "d_vs_think": 0.0139,
+            "d_vs_nothink": 0.0119,
+            "esc": 0.9963,
+            "flops": 5.392,
+            "lat_seq_ms": 953.6,
+            "lat_par_ms": 663.8,
+            "lat_saved_vs_think_seq_pct": 90.9,
+            "lat_saved_vs_think_par_pct": 93.7,
+            "flops_vs_always32": 1.18
+          },
+          "macro_avg": {
+            "acc_method": 0.712,
+            "acc_32b_nt": 0.682,
+            "acc_32b_think": 0.6845,
+            "d_vs_think": 0.0276,
+            "d_vs_nothink": 0.03
+          }
+        },
+        "open_only": {
+          "benchmarks": [
+            "SLAKE_open",
+            "VQA_RAD_open",
+            "PATH_VQA_open"
+          ],
+          "n": 2345,
+          "sample_weighted": {
+            "acc_method": 0.5625,
+            "acc_32b_nt": 0.5168,
+            "acc_32b_think": 0.3698,
+            "d_vs_think": 0.1927,
+            "d_vs_nothink": 0.0456,
+            "esc": 0.2823,
+            "flops": 10.871,
+            "lat_seq_ms": 2688.2,
+            "lat_par_ms": 709.7,
+            "lat_saved_vs_think_seq_pct": 74.5,
+            "lat_saved_vs_think_par_pct": 93.3,
+            "flops_vs_always32": 2.379
+          },
+          "macro_avg": {
+            "acc_method": 0.6188,
+            "acc_32b_nt": 0.5982,
+            "acc_32b_think": 0.4499,
+            "d_vs_think": 0.1689,
+            "d_vs_nothink": 0.0206
+          }
+        }
+      },
+      "int4_cost_mode": {
+        "per_benchmark": {
+          "PMC_VQA": {
+            "format": "MCQ",
+            "n": 33430,
+            "policy": "fusion(F3_confadv)",
+            "acc_7b": 0.5427,
+            "acc_32b_nt": 0.5518,
+            "acc_32b_think": 0.5494,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.5653,
+            "esc": 1.0,
+            "meanN": 1.0,
+            "flops": 5.57,
+            "lat_seq": 929.7,
+            "lat_par": 582.7,
+            "d_vs_think": 0.0159,
+            "d_vs_nothink": 0.0135,
+            "strong_share": 1.0,
+            "acc_int4_proj_lo": 0.5553,
+            "acc_int4_proj_hi": 0.5603
+          },
+          "SLAKE_closed": {
+            "format": "MCQ",
+            "n": 836,
+            "policy": "always-32B-nt",
+            "acc_7b": 0.8254,
+            "acc_32b_nt": 0.8589,
+            "acc_32b_think": 0.8636,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8589,
+            "esc": 1.0,
+            "meanN": 1.0,
+            "flops": 4.57,
+            "lat_seq": 582.7,
+            "lat_par": 582.7,
+            "d_vs_think": -0.0047,
+            "d_vs_nothink": -0.0,
+            "strong_share": 1.0,
+            "acc_int4_proj_lo": 0.8489,
+            "acc_int4_proj_hi": 0.8539
+          },
+          "VQA_RAD_closed": {
+            "format": "MCQ",
+            "n": 251,
+            "policy": "always-32B-nt",
+            "acc_7b": 0.7809,
+            "acc_32b_nt": 0.8526,
+            "acc_32b_think": 0.8406,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8526,
+            "esc": 1.0,
+            "meanN": 1.0,
+            "flops": 4.57,
+            "lat_seq": 582.7,
+            "lat_par": 582.7,
+            "d_vs_think": 0.012,
+            "d_vs_nothink": -0.0,
+            "strong_share": 1.0,
+            "acc_int4_proj_lo": 0.8426,
+            "acc_int4_proj_hi": 0.8476
+          },
+          "PATH_VQA_closed": {
+            "format": "MCQ",
+            "n": 3362,
+            "policy": "always-32B-nt",
+            "acc_7b": 0.8409,
+            "acc_32b_nt": 0.8891,
+            "acc_32b_think": 0.8891,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": false,
+            "method_acc": 0.8891,
+            "esc": 1.0,
+            "meanN": 1.0,
+            "flops": 4.57,
+            "lat_seq": 582.7,
+            "lat_par": 582.7,
+            "d_vs_think": -0.0,
+            "d_vs_nothink": -0.0,
+            "strong_share": 1.0,
+            "acc_int4_proj_lo": 0.8791,
+            "acc_int4_proj_hi": 0.8841
+          },
+          "MedXpertQA-MM": {
+            "format": "MCQ",
+            "n": 2000,
+            "policy": "always-32B-nt",
+            "acc_7b": 0.2615,
+            "acc_32b_nt": 0.3065,
+            "acc_32b_think": 0.304,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.3065,
+            "esc": 1.0,
+            "meanN": 1.0,
+            "flops": 4.57,
+            "lat_seq": 582.7,
+            "lat_par": 582.7,
+            "d_vs_think": 0.0025,
+            "d_vs_nothink": 0.0,
+            "strong_share": 1.0,
+            "acc_int4_proj_lo": 0.2965,
+            "acc_int4_proj_hi": 0.3015
+          },
+          "MMMU-Medical-val": {
+            "format": "MCQ",
+            "n": 150,
+            "policy": "keep-7B",
+            "acc_7b": 0.8,
+            "acc_32b_nt": 0.6333,
+            "acc_32b_think": 0.66,
+            "acc_32b_think_is_est": false,
+            "think_dump_real": true,
+            "method_acc": 0.8,
+            "esc": 0.0,
+            "meanN": 1.0,
+            "flops": 1.0,
+            "lat_seq": 347.0,
+            "lat_par": 347.0,
+            "d_vs_think": 0.14,
+            "d_vs_nothink": 0.1667,
+            "strong_share": 0.0,
+            "acc_int4_proj_lo": 0.8,
+            "acc_int4_proj_hi": 0.8
+          },
+          "SLAKE_open": {
+            "format": "open",
+            "n": 645,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.7364,
+            "acc_32b_nt": 0.8186,
+            "acc_32b_think": 0.6236,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.8093,
+            "esc": 0.1581,
+            "meanN": 3.45,
+            "flops": 7.622,
+            "lat_seq": 1892.8,
+            "lat_par": 614.1,
+            "d_vs_think": 0.1857,
+            "d_vs_nothink": -0.0093,
+            "strong_share": 0.1581,
+            "iso_target_heldout": 0.8155,
+            "acc_int4_proj_lo": 0.8077,
+            "acc_int4_proj_hi": 0.8085
+          },
+          "VQA_RAD_open": {
+            "format": "open",
+            "n": 200,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.465,
+            "acc_32b_nt": 0.6,
+            "acc_32b_think": 0.48,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.595,
+            "esc": 0.125,
+            "meanN": 3.91,
+            "flops": 8.391,
+            "lat_seq": 2113.9,
+            "lat_par": 594.8,
+            "d_vs_think": 0.115,
+            "d_vs_nothink": -0.005,
+            "strong_share": 0.125,
+            "iso_target_heldout": 0.585,
+            "acc_int4_proj_lo": 0.5938,
+            "acc_int4_proj_hi": 0.5944
+          },
+          "PATH_VQA_open": {
+            "format": "open",
+            "n": 1500,
+            "policy": "pandora-N verifier->32B-nt",
+            "acc_7b": 0.324,
+            "acc_32b_nt": 0.376,
+            "acc_32b_think": 0.246,
+            "acc_32b_think_is_est": true,
+            "think_dump_real": false,
+            "method_acc": 0.452,
+            "esc": 0.3567,
+            "meanN": 5.484,
+            "flops": 12.598,
+            "lat_seq": 3070.5,
+            "lat_par": 729.8,
+            "d_vs_think": 0.206,
+            "d_vs_nothink": 0.076,
+            "strong_share": 0.3567,
+            "iso_target_heldout": 0.4533,
+            "acc_int4_proj_lo": 0.4484,
+            "acc_int4_proj_hi": 0.4502
+          }
+        },
+        "pooled": {
+          "full_suite": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val",
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 42374,
+            "sample_weighted": {
+              "acc_method": 0.5869,
+              "acc_32b_nt": 0.5732,
+              "acc_32b_think": 0.5631,
+              "d_vs_think": 0.0238,
+              "d_vs_nothink": 0.0137,
+              "esc": 0.9567,
+              "flops": 5.695,
+              "lat_seq_ms": 970.9,
+              "lat_par_ms": 587.6,
+              "lat_saved_vs_think_seq_pct": 90.8,
+              "lat_saved_vs_think_par_pct": 94.4,
+              "flops_vs_always32": 1.246,
+              "acc_method_int4_proj": [
+                0.5773,
+                0.5821
+              ],
+              "d_vs_think_int4_proj": [
+                0.0142,
+                0.019
+              ],
+              "d_vs_nothink_int4_proj": [
+                0.0042,
+                0.009
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.681,
+              "acc_32b_nt": 0.6541,
+              "acc_32b_think": 0.6063,
+              "d_vs_think": 0.0747,
+              "d_vs_nothink": 0.0269
+            }
+          },
+          "mcq_only": {
+            "benchmarks": [
+              "PMC_VQA",
+              "SLAKE_closed",
+              "VQA_RAD_closed",
+              "PATH_VQA_closed",
+              "MedXpertQA-MM",
+              "MMMU-Medical-val"
+            ],
+            "n": 40029,
+            "sample_weighted": {
+              "acc_method": 0.5883,
+              "acc_32b_nt": 0.5765,
+              "acc_32b_think": 0.5745,
+              "d_vs_think": 0.0139,
+              "d_vs_nothink": 0.0119,
+              "esc": 0.9963,
+              "flops": 5.392,
+              "lat_seq_ms": 871.6,
+              "lat_par_ms": 581.8,
+              "lat_saved_vs_think_seq_pct": 91.7,
+              "lat_saved_vs_think_par_pct": 94.5,
+              "flops_vs_always32": 1.18,
+              "acc_method_int4_proj": [
+                0.5784,
+                0.5834
+              ],
+              "d_vs_think_int4_proj": [
+                0.0039,
+                0.0089
+              ],
+              "d_vs_nothink_int4_proj": [
+                0.0019,
+                0.0069
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.712,
+              "acc_32b_nt": 0.682,
+              "acc_32b_think": 0.6845,
+              "d_vs_think": 0.0276,
+              "d_vs_nothink": 0.03
+            }
+          },
+          "open_only": {
+            "benchmarks": [
+              "SLAKE_open",
+              "VQA_RAD_open",
+              "PATH_VQA_open"
+            ],
+            "n": 2345,
+            "sample_weighted": {
+              "acc_method": 0.5625,
+              "acc_32b_nt": 0.5168,
+              "acc_32b_think": 0.3698,
+              "d_vs_think": 0.1927,
+              "d_vs_nothink": 0.0456,
+              "esc": 0.2823,
+              "flops": 10.871,
+              "lat_seq_ms": 2665.0,
+              "lat_par_ms": 686.5,
+              "lat_saved_vs_think_seq_pct": 74.7,
+              "lat_saved_vs_think_par_pct": 93.5,
+              "flops_vs_always32": 2.379,
+              "acc_method_int4_proj": [
+                0.5597,
+                0.5611
+              ],
+              "d_vs_think_int4_proj": [
+                0.1898,
+                0.1912
+              ],
+              "d_vs_nothink_int4_proj": [
+                0.0428,
+                0.0442
+              ]
+            },
+            "macro_avg": {
+              "acc_method": 0.6188,
+              "acc_32b_nt": 0.5982,
+              "acc_32b_think": 0.4499,
+              "d_vs_think": 0.1689,
+              "d_vs_nothink": 0.0206
+            }
+          }
+        }
+      }
+    }
+  },
+  "reconciliation": {
+    "headline_compute_lean": {
+      "d_vs_think": 0.0117,
+      "d_vs_nothink": 0.0017,
+      "acc": 0.5749,
+      "flops": 2.244
+    },
+    "headline_accuracy_max": {
+      "d_vs_think": 0.0238,
+      "d_vs_nothink": 0.0137,
+      "acc": 0.5869,
+      "flops": 5.695
+    },
+    "per_cell_delta": {
+      "PMC_VQA": {
+        "n": 33430,
+        "frac_of_pool": 0.7889,
+        "compute_lean_acc": 0.5508,
+        "accuracy_max_acc": 0.5653,
+        "cell_delta_acc": 0.0145,
+        "contribution_to_pooled_swacc": 0.01142,
+        "policy_cl": "margin-cascade -> 32B-nt",
+        "policy_am": "fusion(F3_confadv)"
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "frac_of_pool": 0.0197,
+        "compute_lean_acc": 0.8516,
+        "accuracy_max_acc": 0.8589,
+        "cell_delta_acc": 0.0072,
+        "contribution_to_pooled_swacc": 0.00014,
+        "policy_cl": "margin-cascade -> 32B-nt",
+        "policy_am": "always-32B-nt"
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "frac_of_pool": 0.0059,
+        "compute_lean_acc": 0.8328,
+        "accuracy_max_acc": 0.8526,
+        "cell_delta_acc": 0.0198,
+        "contribution_to_pooled_swacc": 0.00012,
+        "policy_cl": "margin-cascade -> 32B-nt",
+        "policy_am": "always-32B-nt"
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "frac_of_pool": 0.0793,
+        "compute_lean_acc": 0.8882,
+        "accuracy_max_acc": 0.8891,
+        "cell_delta_acc": 0.0009,
+        "contribution_to_pooled_swacc": 7e-05,
+        "policy_cl": "margin-cascade -> 32B-nt",
+        "policy_am": "always-32B-nt"
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "frac_of_pool": 0.0472,
+        "compute_lean_acc": 0.3005,
+        "accuracy_max_acc": 0.3065,
+        "cell_delta_acc": 0.006,
+        "contribution_to_pooled_swacc": 0.00028,
+        "policy_cl": "margin-cascade -> 32B-nt",
+        "policy_am": "always-32B-nt"
+      },
+      "MMMU-Medical-val": {
+        "n": 150,
+        "frac_of_pool": 0.0035,
+        "compute_lean_acc": 0.8,
+        "accuracy_max_acc": 0.8,
+        "cell_delta_acc": 0.0,
+        "contribution_to_pooled_swacc": 0.0,
+        "policy_cl": "keep-7B",
+        "policy_am": "keep-7B"
+      },
+      "SLAKE_open": {
+        "n": 645,
+        "frac_of_pool": 0.0152,
+        "compute_lean_acc": 0.8093,
+        "accuracy_max_acc": 0.8093,
+        "cell_delta_acc": 0.0,
+        "contribution_to_pooled_swacc": 0.0,
+        "policy_cl": "pandora-N verifier->32B-nt",
+        "policy_am": "pandora-N verifier->32B-nt"
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "frac_of_pool": 0.0047,
+        "compute_lean_acc": 0.595,
+        "accuracy_max_acc": 0.595,
+        "cell_delta_acc": 0.0,
+        "contribution_to_pooled_swacc": 0.0,
+        "policy_cl": "pandora-N verifier->32B-nt",
+        "policy_am": "pandora-N verifier->32B-nt"
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "frac_of_pool": 0.0354,
+        "compute_lean_acc": 0.452,
+        "accuracy_max_acc": 0.452,
+        "cell_delta_acc": 0.0,
+        "contribution_to_pooled_swacc": 0.0,
+        "policy_cl": "pandora-N verifier->32B-nt",
+        "policy_am": "pandora-N verifier->32B-nt"
+      }
+    },
+    "which_cells_the_fusion_touches": "ONLY the MCQ arm differs between the two knob settings; the open arm (Pandora verifier) is IDENTICAL in both.  Of the MCQ cells, the F1 guardrail deviates from always-32B on exactly two: PMC_VQA (margin-cascade -> fusion(F3_confadv)) and MMMU (keep-7B, already keep-7B in compute-lean too, so it does NOT move the delta).  The radiology/pathology closed sets + MedXpert switch margin-cascade -> always-32B (guardrail; they matched/slightly-trailed 32B under the cascade, so this recovers a few tenths of a point).  The load-bearing cell is PMC.",
+    "why_sample_weighted_moves": "PMC is n=33430 = 78.9% of the pooled 42374 samples.  Fusing that ONE cell lifts its acc by +0.0145, which alone adds +0.0114 to the pooled sample-weighted accuracy (=0.7889 x 0.0145); the non-PMC closed cells snapping to always-32B add a further ~+0.0006.  Together the pooled vs-think delta rises +0.0117 -> +0.0238. MACRO barely moves (+0.0693 -> +0.0747) because it weights all 9 benchmarks equally, so PMC's +0.0145 contributes only /9; macro was already dominated by MMMU(+0.14)/open(+0.19).",
+    "pandora_agent_flag_resolved": "integrated_pandora.py flagged: 'task quoted +0.0238 vs think / +0.0138 vs no-think; the LIVE integrated_method.py pipeline reproduces +0.0118 / +0.0018.'  RESOLVED: +0.0118 is the compute-lean knob (base margin router); +0.0238 is the accuracy-max knob (PMC slice-fusion).  Both are reproduced live above by ONE file.  The gap was that fusion lived in a separate script (beat32b_fusion.py) that the pandora pipeline did not include; method_final.py merges them under `mode`.",
+    "note_slake_open_consistency": "method_final.py also removes the within-repo inconsistency the old docs flagged: SLAKE-open uses bo8+verifier (Pandora-adaptive) in BOTH modes, whereas beat32b_fusion.py had used the greedy+seqlogprob FALC fallback.  This is why unified accuracy-max FLOPs (5.695, Pandora open) differ slightly from beat32b_fusion.py's separate-script 5.751 (fixed-bo8 open) at the same accuracy."
+  },
+  "headline": {
+    "compute_lean": "+0.0117 vs always-32B-THINK / +0.0017 vs always-32B-NO-THINK  @ 2.244 FLOP-eq, lat_seq 578 ms / lat_par 469 ms (holds the fixed-bo8 base router's +0.0118 iso)",
+    "accuracy_max": "+0.0238 vs always-32B-THINK / +0.0137 vs always-32B-NO-THINK  @ 5.695 FLOP-eq, lat_par 666 ms (PMC slice-fusion beats 32B; guardrail-safe elsewhere)"
+  },
+  "data_gaps": [
+    "32B-THINK open-text accuracy is ESTIMATED (judged 32B-no-think + measured modal think-delta -0.195/-0.120/-0.130); PathVQA-closed has no 32B-think dump -> think acc = no-think.",
+    "always-32B-THINK batch-1 latency 10521.6 ms measured on open-text cap320; MCQ reasoning traces would be >= this (representative-to-conservative).",
+    "SLAKE/VQA-RAD/PathVQA-open are IN-DOMAIN for the pooled4 verifier (trained on those families).",
+    "INT4 cost-mode: latency PROJECTED (composition-grounded), MAC-FLOP unchanged, accuracy PROJECTED (literature <=1%); a measured AWQ-Lingshu-32B run would replace the projection.",
+    "OmniMedVQA-32B excluded (tp=2 NCCL hang; 7B-only) -> pooled ALL-7 figure missing, verdict unchanged."
+  ]
+}

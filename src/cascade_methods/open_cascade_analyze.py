@@ -180,9 +180,9 @@ def main():
                   f"FLOPs conf={fmt(cflo,0,'')} vs SC={fmt(sflo,0,'')}   "
                   f"(esc conf={cl[2]*100:.0f}% vs SC={sl[2]*100:.0f}%)" if (cl and sl) else f"  @acc>={T:.3f}: unreachable")
         OUT["cost_frontier"] = dict(confidence_K1=cf, selfcons_K8=cs)
-    os.makedirs("results/cascade_methods", exist_ok=True)
-    json.dump(OUT, open("results/cascade_methods/open_cascade.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/open_cascade.json")
+    os.makedirs("results/cascade_methods/artifacts", exist_ok=True)
+    json.dump(OUT, open("results/cascade_methods/artifacts/open_cascade.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/open_cascade.json")
     print("\nREAD: if self-consistency AUROC >> confidence AND >> the ~0.6 MCQ ceiling, the open-ended setting")
     print("breaks the routing wall -> a genuinely better cascade gate (the publishable novel claim).")
 if __name__ == "__main__":

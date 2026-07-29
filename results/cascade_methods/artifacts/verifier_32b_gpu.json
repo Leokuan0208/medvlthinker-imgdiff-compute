@@ -1,0 +1,198 @@
+{
+  "experiment": "stronger (zero-shot) 32B verifier vs trained-7B verifier: does verifier CAPACITY break the selectability wall?",
+  "labels": "exact-match/substring oks (map_correct) -- conservative, applied identically to every verifier and to oracle. NOT LLM-judge; relative deltas are the valid read.",
+  "candidate_pool": "Lingshu-7B diverse pool (5-prompt x 3-temp, M<=15) from ckpts/openvqa/diverse; deduped to DISTINCT answers per question.",
+  "confound": "7B-trained = pooled4 LoRA (trained); 7B-zeroshot & 32B-zeroshot = base models, same VERIFY_SYS prompt. Pure capacity read = 32B-zeroshot vs 7B-zeroshot.",
+  "per_dataset": {
+    "vqa_rad_open": {
+      "n": 200,
+      "greedy": 0.29,
+      "sc_majority": 0.29,
+      "oracle_distinct": 0.48,
+      "mean_distinct": 7.335,
+      "verifiers": {
+        "7B-trained": {
+          "sel_acc": 0.365,
+          "sel_efficiency": 0.7604166666666666,
+          "conversion_of_SC_to_oracle_headroom": 0.3947368421052632
+        },
+        "7B-zeroshot": {
+          "sel_acc": 0.3,
+          "sel_efficiency": 0.625,
+          "conversion_of_SC_to_oracle_headroom": 0.05263157894736847
+        },
+        "32B-zeroshot": {
+          "sel_acc": 0.375,
+          "sel_efficiency": 0.78125,
+          "conversion_of_SC_to_oracle_headroom": 0.4473684210526317
+        }
+      },
+      "deltas_vs_32B": {
+        "32B_minus_7B-trained": {
+          "mean": 0.01,
+          "ci95": [
+            -0.04,
+            0.055
+          ],
+          "significant": false
+        },
+        "32B_minus_7B-zeroshot": {
+          "mean": 0.075,
+          "ci95": [
+            0.02,
+            0.13
+          ],
+          "significant": true
+        }
+      },
+      "verifiers_present": [
+        "7B-trained",
+        "7B-zeroshot",
+        "32B-zeroshot"
+      ]
+    },
+    "slake_open": {
+      "n": 200,
+      "greedy": 0.715,
+      "sc_majority": 0.75,
+      "oracle_distinct": 0.885,
+      "mean_distinct": 3.98,
+      "verifiers": {
+        "7B-trained": {
+          "sel_acc": 0.745,
+          "sel_efficiency": 0.8418079096045198,
+          "conversion_of_SC_to_oracle_headroom": -0.03703703703703707
+        },
+        "7B-zeroshot": {
+          "sel_acc": 0.66,
+          "sel_efficiency": 0.7457627118644068,
+          "conversion_of_SC_to_oracle_headroom": -0.6666666666666664
+        },
+        "32B-zeroshot": {
+          "sel_acc": 0.75,
+          "sel_efficiency": 0.847457627118644,
+          "conversion_of_SC_to_oracle_headroom": 0.0
+        }
+      },
+      "deltas_vs_32B": {
+        "32B_minus_7B-trained": {
+          "mean": 0.005,
+          "ci95": [
+            -0.04,
+            0.05
+          ],
+          "significant": false
+        },
+        "32B_minus_7B-zeroshot": {
+          "mean": 0.09,
+          "ci95": [
+            0.04,
+            0.14
+          ],
+          "significant": true
+        }
+      },
+      "verifiers_present": [
+        "7B-trained",
+        "7B-zeroshot",
+        "32B-zeroshot"
+      ]
+    },
+    "pmc_content": {
+      "n": 200,
+      "greedy": 0.315,
+      "sc_majority": 0.295,
+      "oracle_distinct": 0.65,
+      "mean_distinct": 12.875,
+      "verifiers": {
+        "7B-trained": {
+          "sel_acc": 0.315,
+          "sel_efficiency": 0.4846153846153846,
+          "conversion_of_SC_to_oracle_headroom": 0.05633802816901413
+        },
+        "7B-zeroshot": {
+          "sel_acc": 0.28,
+          "sel_efficiency": 0.4307692307692308,
+          "conversion_of_SC_to_oracle_headroom": -0.04225352112676044
+        },
+        "32B-zeroshot": {
+          "sel_acc": 0.315,
+          "sel_efficiency": 0.4846153846153846,
+          "conversion_of_SC_to_oracle_headroom": 0.05633802816901413
+        }
+      },
+      "deltas_vs_32B": {
+        "32B_minus_7B-trained": {
+          "mean": 0.0,
+          "ci95": [
+            -0.05,
+            0.05
+          ],
+          "significant": false
+        },
+        "32B_minus_7B-zeroshot": {
+          "mean": 0.035,
+          "ci95": [
+            -0.01,
+            0.08
+          ],
+          "significant": false
+        }
+      },
+      "verifiers_present": [
+        "7B-trained",
+        "7B-zeroshot",
+        "32B-zeroshot"
+      ]
+    }
+  },
+  "pooled": {
+    "n": 600,
+    "greedy": 0.44,
+    "sc_majority": 0.445,
+    "oracle_distinct": 0.6716666666666666,
+    "mean_distinct": 8.063333333333333,
+    "verifiers": {
+      "7B-trained": {
+        "sel_acc": 0.475,
+        "sel_efficiency": 0.707196029776675,
+        "conversion_of_SC_to_oracle_headroom": 0.13235294117647048
+      },
+      "7B-zeroshot": {
+        "sel_acc": 0.41333333333333333,
+        "sel_efficiency": 0.6153846153846154,
+        "conversion_of_SC_to_oracle_headroom": -0.13970588235294124
+      },
+      "32B-zeroshot": {
+        "sel_acc": 0.48,
+        "sel_efficiency": 0.7146401985111662,
+        "conversion_of_SC_to_oracle_headroom": 0.15441176470588228
+      }
+    },
+    "deltas_vs_32B": {
+      "32B_minus_7B-trained": {
+        "mean": 0.005,
+        "ci95": [
+          -0.023333333333333334,
+          0.03170833333333273
+        ],
+        "significant": false
+      },
+      "32B_minus_7B-zeroshot": {
+        "mean": 0.06666666666666667,
+        "ci95": [
+          0.03833333333333333,
+          0.095
+        ],
+        "significant": true
+      }
+    },
+    "datasets": [
+      "vqa_rad_open",
+      "slake_open",
+      "pmc_content"
+    ]
+  },
+  "missing": [],
+  "verdict_summary": "32B-zeroshot sel=0.480 vs 7B-trained sel=0.475 (delta=+0.005, CI[-0.023333333333333334, 0.03170833333333273], sig=False). Pure capacity: 32B-zeroshot vs 7B-zeroshot delta=+0.067 CI[0.03833333333333333, 0.095] sig=True. 32B leaves an oracle->selection gap of 0.192 (oracle=0.672); conversion=0.15."
+}

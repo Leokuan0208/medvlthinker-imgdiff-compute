@@ -92,4 +92,4 @@ fig.tight_layout(rect=[0,0,1,0.94]); os.makedirs("paper/figs/open",exist_ok=True
 fig.savefig("paper/figs/open/fig_open_ablations.png",dpi=140); print("-> paper/figs/open/fig_open_ablations.png")
 json.dump(dict(n=n,conf_auroc=conf_au,K_ablation=dict(zip(map(str,Ks),scau)),
     efficiency={ds:{"cheap":eff[ds][0],"strong":eff[ds][1],"oracle_gain":eff[ds][2],"conf_frac":eff[ds][3]} for ds in DS}),
-    open("results/cascade_methods/open_ablations.json","w"),indent=1)
+    open("results/cascade_methods/artifacts/open_ablations.json","w"),indent=1)

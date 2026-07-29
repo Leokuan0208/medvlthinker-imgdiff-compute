@@ -6,7 +6,7 @@ budget for RANDOM, the CONFIDENCE gate, and the ORACLE, on the same axes, for BO
   (B) OPEN : Lingshu-7B -> Lingshu-32B, LLM-judge, SLAKE+VQA-RAD+PathVQA open-ended
 The gap between CONFIDENCE and RANDOM (normalized by ORACLE-RANDOM) = how much routing signal is usable.
 Reports AURC-style "routing efficiency" = area(confidence-random)/area(oracle-random). Offline.
-Emits paper/figs/open/fig_deferral_curve.png + results/cascade_methods/deferral_curve.json.
+Emits paper/figs/open/fig_deferral_curve.png + results/cascade_methods/artifacts/deferral_curve.json.
 """
 import os, json
 import numpy as np
@@ -97,4 +97,4 @@ fig.tight_layout(rect=[0, 0, 1, 0.95]); os.makedirs("paper/figs/open", exist_ok=
 fig.savefig("paper/figs/open/fig_deferral_curve.png", dpi=140); print("-> paper/figs/open/fig_deferral_curve.png")
 json.dump({"mcq": {"detection_auroc": mcq[7], "headroom": mcq[6]-mcq[5], "cheap": mcq[5], "strong": mcq[6], "routing_eff": mcq[4]},
            "open": {"detection_auroc": opn[7], "headroom": opn[6]-opn[5], "cheap": opn[5], "strong": opn[6], "routing_eff": opn[4]}},
-          open("results/cascade_methods/deferral_curve.json", "w"), indent=1)
+          open("results/cascade_methods/artifacts/deferral_curve.json", "w"), indent=1)

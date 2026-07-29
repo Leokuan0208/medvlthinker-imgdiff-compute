@@ -1,0 +1,17 @@
+lat32 ≈ -1.38 + 0.0716·gen32   (R²=0.991, mean lat32=27.8s over 5440 escalated)
+lat7≈0.185s, 7B-energy≈1340J per cheap pass (verify pass modeled as one more)
+
+################  REAL-TIME LATENCY  [ALL-6]  (batch-1, measured-calibrated)  ################
+  policy             esc%  mean lat     p50      p90      p99   energy/q
+  SOTA conf-gate      63%    17.99s  17.19s    43.5s    68.6s     6009J
+  VADR                56%    17.87s  16.26s    46.7s    69.9s     7255J
+  -> VADR mean latency +1%  (+0.12s/query), p90 -7%, throughput +1%, energy -21%
+
+################  REAL-TIME LATENCY  [ALL-5 (excl MedXpert)]  (batch-1, measured-calibrated)  ################
+  policy             esc%  mean lat     p50      p90      p99   energy/q
+  SOTA conf-gate      35%     7.77s   0.19s    24.4s    37.1s     2974J
+  VADR                29%     6.55s   0.38s    22.9s    35.9s     3568J
+  -> VADR mean latency +16%  (+1.22s/query), p90 +6%, throughput +19%, energy -20%
+
+Note: verify pass modeled as one extra ~lat7 cheap forward (conservative). 32B latency dominates,
+so escalation-rate reduction -> latency reduction; the cheap verify pass barely registers.

@@ -102,9 +102,9 @@ def main():
 
     out = dict(max_acc_margin=float(max_acc_m), max_acc_bidir=float(best[1]),
                bidir_esc=float(best[0]), bidir_params=dict(tau=float(best[2][0]), k=int(best[2][1])))
-    os.makedirs("results/cascade_methods", exist_ok=True)
-    json.dump(out, open("results/cascade_methods/bidirectional_stability.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/bidirectional_stability.json")
+    os.makedirs("results/cascade_methods/artifacts", exist_ok=True)
+    json.dump(out, open("results/cascade_methods/artifacts/bidirectional_stability.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/bidirectional_stability.json")
 
 if __name__ == "__main__":
     main()

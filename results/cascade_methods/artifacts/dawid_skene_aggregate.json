@@ -1,0 +1,371 @@
+{
+ "method": "dawid_skene_grouped_one_coin",
+ "model": "grouped one-coin DS EM; per-source scalar reliability a_g shared across its samples; per-question uniform prior over answer clusters; DS weight per hit w=log(a(L-1)/(1-a)); clusters by exact/normalised string match",
+ "caveats": "within-generator samples are correlated (violates DS independence) -> DS-collapsed (1 vote/generator) is the correlation-robust variant; free-text answers fragment under string clustering (paraphrase splitting).",
+ "single_source": {
+  "Lingshu-7B": {
+   "kvasir_open": {
+    "n": 1200,
+    "sc_majority": 0.2875,
+    "ds_single_pure": 0.26166666666666666,
+    "ds_single_guarded": 0.2875,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.43833333333333335,
+    "oracle8": 0.49083333333333334,
+    "strong32b": 0.30083333333333334,
+    "reliability": 0.3952
+   },
+   "radimagenet_open": {
+    "n": 2000,
+    "sc_majority": 0.328,
+    "ds_single_pure": 0.3085,
+    "ds_single_guarded": 0.328,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.353,
+    "oracle8": 0.512,
+    "strong32b": 0.289,
+    "reliability": 0.4373
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "sc_majority": 0.46,
+    "ds_single_pure": 0.46,
+    "ds_single_guarded": 0.46,
+    "ds_pure_equals_majority": true,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.575,
+    "oracle8": 0.63,
+    "strong32b": 0.6,
+    "reliability": 0.5923
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "sc_majority": 0.32133333333333336,
+    "ds_single_pure": 0.2853333333333333,
+    "ds_single_guarded": 0.32133333333333336,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.4533333333333333,
+    "oracle8": 0.5166666666666667,
+    "strong32b": 0.376,
+    "reliability": 0.3665
+   }
+  },
+  "MedVLThinker-7B": {
+   "kvasir_open": {
+    "n": 1200,
+    "sc_majority": 0.33166666666666667,
+    "ds_single_pure": 0.29833333333333334,
+    "ds_single_guarded": 0.33166666666666667,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.4583333333333333,
+    "oracle8": 0.55,
+    "strong32b": 0.36083333333333334,
+    "reliability": 0.3386
+   },
+   "radimagenet_open": {
+    "n": 2000,
+    "sc_majority": 0.2045,
+    "ds_single_pure": 0.2045,
+    "ds_single_guarded": 0.2045,
+    "ds_pure_equals_majority": true,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.2385,
+    "oracle8": 0.317,
+    "strong32b": 0.202,
+    "reliability": 0.5059
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "sc_majority": 0.42,
+    "ds_single_pure": 0.4,
+    "ds_single_guarded": 0.42,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.52,
+    "oracle8": 0.6,
+    "strong32b": 0.525,
+    "reliability": 0.4667
+   }
+  },
+  "InternVL3-8B": {
+   "kvasir_open": {
+    "n": 1200,
+    "sc_majority": 0.36333333333333334,
+    "ds_single_pure": 0.3491666666666667,
+    "ds_single_guarded": 0.36333333333333334,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.4816666666666667,
+    "oracle8": 0.5925,
+    "strong32b": 0.38,
+    "reliability": 0.2427
+   },
+   "radimagenet_open": {
+    "n": 2000,
+    "sc_majority": 0.2845,
+    "ds_single_pure": 0.2845,
+    "ds_single_guarded": 0.2845,
+    "ds_pure_equals_majority": true,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.3025,
+    "oracle8": 0.398,
+    "strong32b": 0.3045,
+    "reliability": 0.5424
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "sc_majority": 0.44,
+    "ds_single_pure": 0.465,
+    "ds_single_guarded": 0.44,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.57,
+    "oracle8": 0.62,
+    "strong32b": 0.415,
+    "reliability": 0.4325
+   },
+   "pathvqa_open": {
+    "n": 3357,
+    "sc_majority": 0.08013106940720882,
+    "ds_single_pure": 0.07566279416145368,
+    "ds_single_guarded": 0.08013106940720882,
+    "ds_pure_equals_majority": false,
+    "ds_guarded_equals_majority": true,
+    "verifier_bo8": 0.11647304140601727,
+    "oracle8": 0.19243372058385463,
+    "strong32b": 0.09591897527554365,
+    "reliability": 0.1822
+   }
+  }
+ },
+ "multi_source": {
+  "kvasir_open": {
+   "n": 1200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "per_sample_acc": {
+    "Lingshu-7B": 0.2826,
+    "MedVLThinker-7B": 0.32,
+    "InternVL3-8B": 0.3598
+   },
+   "self_agreement": {
+    "Lingshu-7B": 0.4973,
+    "MedVLThinker-7B": 0.4347,
+    "InternVL3-8B": 0.3705
+   },
+   "self_consistency_pergen": {
+    "Lingshu-7B": 0.28833333333333333,
+    "MedVLThinker-7B": 0.33166666666666667,
+    "InternVL3-8B": 0.36083333333333334
+   },
+   "self_consistency_best": 0.36083333333333334,
+   "majority_pooled": 0.3,
+   "ds_pooled_pure": 0.24333333333333335,
+   "ds_pooled_guarded": 0.2991666666666667,
+   "ds_collapsed_guarded": 0.33166666666666667,
+   "verifier_pooled": 0.5466666666666666,
+   "oracle": 0.7308333333333333,
+   "reliabilities_pooled_pure": {
+    "Lingshu-7B": 0.3624,
+    "MedVLThinker-7B": 0.1656,
+    "InternVL3-8B": 0.0998
+   },
+   "reliabilities_pooled_guarded": {
+    "Lingshu-7B": 0.4512,
+    "MedVLThinker-7B": 0.287,
+    "InternVL3-8B": 0.1776
+   },
+   "ds_pooled_guarded_flips_vs_majority": 83,
+   "delta_ds_pure_vs_majority": -0.0567,
+   "delta_ds_guarded_vs_majority": -0.0008,
+   "delta_ds_guarded_vs_verifier": -0.2475
+  },
+  "radimagenet_open": {
+   "n": 2000,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "per_sample_acc": {
+    "Lingshu-7B": 0.3083,
+    "MedVLThinker-7B": 0.2033,
+    "InternVL3-8B": 0.279
+   },
+   "self_agreement": {
+    "Lingshu-7B": 0.5471,
+    "MedVLThinker-7B": 0.5803,
+    "InternVL3-8B": 0.5974
+   },
+   "self_consistency_pergen": {
+    "Lingshu-7B": 0.3265,
+    "MedVLThinker-7B": 0.2075,
+    "InternVL3-8B": 0.2835
+   },
+   "self_consistency_best": 0.3265,
+   "majority_pooled": 0.304,
+   "ds_pooled_pure": 0.2735,
+   "ds_pooled_guarded": 0.295,
+   "ds_collapsed_guarded": 0.2835,
+   "verifier_pooled": 0.3435,
+   "oracle": 0.625,
+   "reliabilities_pooled_pure": {
+    "Lingshu-7B": 0.1245,
+    "MedVLThinker-7B": 0.2382,
+    "InternVL3-8B": 0.5212
+   },
+   "reliabilities_pooled_guarded": {
+    "Lingshu-7B": 0.2167,
+    "MedVLThinker-7B": 0.3035,
+    "InternVL3-8B": 0.5428
+   },
+   "ds_pooled_guarded_flips_vs_majority": 636,
+   "delta_ds_pure_vs_majority": -0.0305,
+   "delta_ds_guarded_vs_majority": -0.009,
+   "delta_ds_guarded_vs_verifier": -0.0485
+  },
+  "vqa_rad_open": {
+   "n": 200,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "per_sample_acc": {
+    "Lingshu-7B": 0.4412,
+    "MedVLThinker-7B": 0.3962,
+    "InternVL3-8B": 0.4125
+   },
+   "self_agreement": {
+    "Lingshu-7B": 0.6194,
+    "MedVLThinker-7B": 0.555,
+    "InternVL3-8B": 0.5275
+   },
+   "self_consistency_pergen": {
+    "Lingshu-7B": 0.46,
+    "MedVLThinker-7B": 0.435,
+    "InternVL3-8B": 0.45
+   },
+   "self_consistency_best": 0.46,
+   "majority_pooled": 0.47,
+   "ds_pooled_pure": 0.48,
+   "ds_pooled_guarded": 0.485,
+   "ds_collapsed_guarded": 0.44,
+   "verifier_pooled": 0.615,
+   "oracle": 0.78,
+   "reliabilities_pooled_pure": {
+    "Lingshu-7B": 0.5225,
+    "MedVLThinker-7B": 0.2716,
+    "InternVL3-8B": 0.1206
+   },
+   "reliabilities_pooled_guarded": {
+    "Lingshu-7B": 0.5705,
+    "MedVLThinker-7B": 0.3307,
+    "InternVL3-8B": 0.2072
+   },
+   "ds_pooled_guarded_flips_vs_majority": 44,
+   "delta_ds_pure_vs_majority": 0.01,
+   "delta_ds_guarded_vs_majority": 0.015,
+   "delta_ds_guarded_vs_verifier": -0.13
+  },
+  "POOLED_3ds_3gen": {
+   "n": 3400,
+   "generators": [
+    "Lingshu-7B",
+    "MedVLThinker-7B",
+    "InternVL3-8B"
+   ],
+   "per_sample_acc": {
+    "Lingshu-7B": 0.3071,
+    "MedVLThinker-7B": 0.2558,
+    "InternVL3-8B": 0.3154
+   },
+   "self_agreement": {
+    "Lingshu-7B": 0.5337,
+    "MedVLThinker-7B": 0.5274,
+    "InternVL3-8B": 0.5132
+   },
+   "self_consistency_pergen": {
+    "Lingshu-7B": 0.32088235294117645,
+    "MedVLThinker-7B": 0.2647058823529412,
+    "InternVL3-8B": 0.3205882352941177
+   },
+   "self_consistency_best": 0.32088235294117645,
+   "majority_pooled": 0.3123529411764706,
+   "ds_pooled_pure": 0.2605882352941176,
+   "ds_pooled_guarded": 0.2988235294117647,
+   "ds_collapsed_guarded": 0.2752941176470588,
+   "verifier_pooled": 0.43117647058823527,
+   "oracle": 0.6714705882352942,
+   "reliabilities_pooled_pure": {
+    "Lingshu-7B": 0.2253,
+    "MedVLThinker-7B": 0.3883,
+    "InternVL3-8B": 0.2462
+   },
+   "reliabilities_pooled_guarded": {
+    "Lingshu-7B": 0.3462,
+    "MedVLThinker-7B": 0.4114,
+    "InternVL3-8B": 0.2997
+   },
+   "ds_pooled_guarded_flips_vs_majority": 527,
+   "delta_ds_pure_vs_majority": -0.0518,
+   "delta_ds_guarded_vs_majority": -0.0135,
+   "delta_ds_guarded_vs_verifier": -0.1324
+  },
+  "pathvqa_open_2gen": {
+   "n": 1500,
+   "generators": [
+    "Lingshu-7B",
+    "InternVL3-8B"
+   ],
+   "per_sample_acc": {
+    "Lingshu-7B": 0.2937,
+    "InternVL3-8B": 0.0787
+   },
+   "self_agreement": {
+    "Lingshu-7B": 0.5029,
+    "InternVL3-8B": 0.3426
+   },
+   "self_consistency_pergen": {
+    "Lingshu-7B": 0.32133333333333336,
+    "InternVL3-8B": 0.082
+   },
+   "self_consistency_best": 0.32133333333333336,
+   "majority_pooled": 0.30733333333333335,
+   "ds_pooled_pure": 0.31266666666666665,
+   "ds_pooled_guarded": 0.322,
+   "ds_collapsed_guarded": 0.32,
+   "verifier_pooled": 0.44533333333333336,
+   "oracle": 0.574,
+   "reliabilities_pooled_pure": {
+    "Lingshu-7B": 0.476,
+    "InternVL3-8B": 0.0089
+   },
+   "reliabilities_pooled_guarded": {
+    "Lingshu-7B": 0.488,
+    "InternVL3-8B": 0.0303
+   },
+   "ds_pooled_guarded_flips_vs_majority": 377,
+   "delta_ds_pure_vs_majority": 0.0053,
+   "delta_ds_guarded_vs_majority": 0.0147,
+   "delta_ds_guarded_vs_verifier": -0.1233
+  }
+ },
+ "single_source_guarded_ds_equals_majority_everywhere": true,
+ "single_source_pure_ds_equals_majority_everywhere": false,
+ "verdict": {
+  "single_source_guarded_ds_equals_majority": true,
+  "pooled_guarded_ds_beats_majority": false,
+  "pooled_guarded_ds_matches_or_beats_verifier": false,
+  "pooled_gap_guarded_ds_to_verifier": 0.1324,
+  "pooled_gap_guarded_ds_to_oracle": 0.3726,
+  "summary": "Guarded DS DOES NOT beat plain pooled majority (-0.013); it STAYS FAR BELOW the trained verifier (gap +0.132) and +0.373 below oracle. Unsupervised reliability tracks self-AGREEMENT (~0.52) not ACCURACY (~0.29): the generators are confidently-wrong, so cross-source agreement carries no correctness signal and cannot break the majority trap."
+ }
+}

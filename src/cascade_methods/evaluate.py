@@ -119,8 +119,8 @@ def main():
             ostr = f"esc{o['esc']*100:>4.0f}% bb{o['backbone']*100:>5.1f}%" if o else f"{'never':>16}"
             print(f"{name:<26}{ostr:>16}   {fmt(r.get('errrate'),parity):>34}   "
                   f"{fmt(r.get('calibparity'),parity):>34}   {fmt(r.get('deltapos'),parity):>34}")
-        os.makedirs(os.path.join(REPO, "results/cascade_methods"), exist_ok=True)
-        json.dump(results, open(os.path.join(REPO, f"results/cascade_methods/evaluate_{sub_name}.json"), "w"),
+        os.makedirs(os.path.join(REPO, "results/cascade_methods/artifacts"), exist_ok=True)
+        json.dump(results, open(os.path.join(REPO, f"results/cascade_methods/artifacts/evaluate_{sub_name}.json"), "w"),
                   indent=2, default=float)
     print("\nLegend: bb=backbone% (compute vs always-32B), p=hit parity?, g=never-worse-than-7B "
           "guardrail (Y / n<#failed>). Headline = lowest CALIB-PARITY bb with p=Y and g=Y.")

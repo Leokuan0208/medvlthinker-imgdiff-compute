@@ -1,0 +1,636 @@
+{
+  "goal": "Extend the combined-7B+32B ACCURACY beat past PMC_VQA. Champion to beat = F3 calibrated confidence-advantage fusion (beat32b_fusion.json): wins PMC +0.0135, gated OFF elsewhere.",
+  "data_flags": [
+    "results.json dumps only (pred, top-1 conf, top1-2 margin) per leg -- no full per-option logprob vector. F11 (BMA) and its PoE sibling are therefore DECISION-LEVEL (leg = hard pred + calibrated P(correct); mixture over the {7B-pred,32B-pred} candidates), NOT full-posterior. A full-posterior F11/F4 STRICTLY NEEDS re-dumped option logits => GPU.",
+    "Open-text dumps have no 32B prediction TEXT (only 32B judge_ok) => F10 has no cross-model agreement feature; it routes on 7B-side features (verifier score stats, seqlogprob, self-consistency) only. Still OFFLINE.",
+    "All four ideas are OFFLINE (no GPU). None of F8/F7/F11/F10 strictly needs new inference."
+  ],
+  "comparison_baseline_F3": {
+    "PMC_VQA": {
+      "acc": 0.5653,
+      "d_vs_32b": 0.0135,
+      "ci95": [
+        0.0103,
+        0.0169
+      ],
+      "beats_ci": true
+    },
+    "SLAKE_closed": {
+      "acc": 0.8457,
+      "d_vs_32b": -0.0132,
+      "ci95": [
+        -0.0239,
+        -0.0036
+      ],
+      "beats_ci": false
+    },
+    "VQA_RAD_closed": {
+      "acc": 0.8406,
+      "d_vs_32b": -0.012,
+      "ci95": [
+        -0.0478,
+        0.0199
+      ],
+      "beats_ci": false
+    },
+    "PATH_VQA_closed": {
+      "acc": 0.8843,
+      "d_vs_32b": -0.0048,
+      "ci95": [
+        -0.0134,
+        0.0039
+      ],
+      "beats_ci": false
+    },
+    "MedXpertQA-MM": {
+      "acc": 0.2965,
+      "d_vs_32b": -0.01,
+      "ci95": [
+        -0.0235,
+        0.004
+      ],
+      "beats_ci": false
+    },
+    "MMMU-Medical-val": {
+      "acc": 0.8067,
+      "d_vs_32b": 0.1733,
+      "ci95": [
+        0.1067,
+        0.24
+      ],
+      "beats_ci": true
+    }
+  },
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "FUSE_both_legs": {
+      "ms": 665.0,
+      "flop": 5.57
+    }
+  },
+  "F8_certified_veto": {
+    "per_benchmark": {
+      "PMC_VQA": {
+        "n": 33430,
+        "acc": 0.5613,
+        "acc_32b": 0.5518,
+        "d_vs_32b": 0.0095,
+        "ci95": [
+          0.0071,
+          0.0118
+        ],
+        "beats_ci": true,
+        "veto_rate": 0.4002,
+        "net_flips": 319
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "acc": 0.8589,
+        "acc_32b": 0.8589,
+        "d_vs_32b": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "beats_ci": false,
+        "veto_rate": 0.0,
+        "net_flips": 0
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "acc": 0.8526,
+        "acc_32b": 0.8526,
+        "d_vs_32b": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "beats_ci": false,
+        "veto_rate": 0.0,
+        "net_flips": 0
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "acc": 0.8891,
+        "acc_32b": 0.8891,
+        "d_vs_32b": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "beats_ci": false,
+        "veto_rate": 0.0,
+        "net_flips": 0
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "acc": 0.3065,
+        "acc_32b": 0.3065,
+        "d_vs_32b": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "beats_ci": false,
+        "veto_rate": 0.0,
+        "net_flips": 0
+      },
+      "MMMU-Medical-val": {
+        "n": 150,
+        "acc": 0.6333,
+        "acc_32b": 0.6333,
+        "d_vs_32b": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "beats_ci": false,
+        "veto_rate": 0.0,
+        "net_flips": 0
+      }
+    },
+    "pooled": {
+      "n": 40029,
+      "acc": 0.5844,
+      "acc_32b": 0.5765,
+      "d_vs_32b": 0.008,
+      "ci95": [
+        0.0061,
+        0.0099
+      ],
+      "veto_rate": 0.3342,
+      "flops_vs_always32b": 0.8846,
+      "flops_note": "7B runs on all items to decide veto; veto cells skip the 32B. Cheaper-than-F3 route to the PMC beat (F3 runs both legs everywhere = 1.22x)."
+    },
+    "newly_won_vs_F3": [],
+    "note": "Cross-fit conformal (Wilson-LB) certificate per (dataset x 7B-conf-bin): veto the 32B (take 7B) only where LB(7B precision) >= 32B accuracy on TRAIN. One-sided => guardrail-safe; vetoed cells are 7B-ONLY (cheaper). Extends the beat to a NEW cell iff a high-precision 7B bin exists inside a strong-32B dataset."
+  },
+  "F7_super_learner": {
+    "logistic_frugal": {
+      "per": {
+        "PMC_VQA": {
+          "n": 33430,
+          "acc": 0.5644,
+          "acc_32b": 0.5518,
+          "d_vs_32b": 0.0127,
+          "ci95": [
+            0.0102,
+            0.015
+          ],
+          "beats_ci": true,
+          "take7_rate": 0.4338
+        },
+        "SLAKE_closed": {
+          "n": 836,
+          "acc": 0.8565,
+          "acc_32b": 0.8589,
+          "d_vs_32b": -0.0024,
+          "ci95": [
+            -0.012,
+            0.006
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.1029
+        },
+        "VQA_RAD_closed": {
+          "n": 251,
+          "acc": 0.8486,
+          "acc_32b": 0.8526,
+          "d_vs_32b": -0.004,
+          "ci95": [
+            -0.0199,
+            0.008
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.0398
+        },
+        "PATH_VQA_closed": {
+          "n": 3362,
+          "acc": 0.8882,
+          "acc_32b": 0.8891,
+          "d_vs_32b": -0.0009,
+          "ci95": [
+            -0.0036,
+            0.0015
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.0384
+        },
+        "MedXpertQA-MM": {
+          "n": 2000,
+          "acc": 0.3045,
+          "acc_32b": 0.3065,
+          "d_vs_32b": -0.002,
+          "ci95": [
+            -0.004,
+            -0.0005
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.1535
+        },
+        "MMMU-Medical-val": {
+          "n": 150,
+          "acc": 0.8267,
+          "acc_32b": 0.6333,
+          "d_vs_32b": 0.1933,
+          "ci95": [
+            0.1133,
+            0.2667
+          ],
+          "beats_ci": true,
+          "take7_rate": 0.94
+        }
+      },
+      "pooled": {
+        "n": 40029,
+        "acc": 0.5875,
+        "acc_32b": 0.5765,
+        "d_vs_32b": 0.011,
+        "ci95": [
+          0.0089,
+          0.0132
+        ]
+      }
+    },
+    "gbm_rich": {
+      "per": {
+        "PMC_VQA": {
+          "n": 33430,
+          "acc": 0.5675,
+          "acc_32b": 0.5518,
+          "d_vs_32b": 0.0158,
+          "ci95": [
+            0.0125,
+            0.019
+          ],
+          "beats_ci": true,
+          "take7_rate": 0.5506
+        },
+        "SLAKE_closed": {
+          "n": 836,
+          "acc": 0.8589,
+          "acc_32b": 0.8589,
+          "d_vs_32b": 0.0,
+          "ci95": [
+            -0.0084,
+            0.0084
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.2943
+        },
+        "VQA_RAD_closed": {
+          "n": 251,
+          "acc": 0.8526,
+          "acc_32b": 0.8526,
+          "d_vs_32b": 0.0,
+          "ci95": [
+            -0.0239,
+            0.0239
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.259
+        },
+        "PATH_VQA_closed": {
+          "n": 3362,
+          "acc": 0.8873,
+          "acc_32b": 0.8891,
+          "d_vs_32b": -0.0018,
+          "ci95": [
+            -0.0083,
+            0.0051
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.3019
+        },
+        "MedXpertQA-MM": {
+          "n": 2000,
+          "acc": 0.305,
+          "acc_32b": 0.3065,
+          "d_vs_32b": -0.0015,
+          "ci95": [
+            -0.006,
+            0.003
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.129
+        },
+        "MMMU-Medical-val": {
+          "n": 150,
+          "acc": 0.8067,
+          "acc_32b": 0.6333,
+          "d_vs_32b": 0.1733,
+          "ci95": [
+            0.1067,
+            0.2467
+          ],
+          "beats_ci": true,
+          "take7_rate": 0.84
+        }
+      },
+      "pooled": {
+        "n": 40029,
+        "acc": 0.59,
+        "acc_32b": 0.5765,
+        "d_vs_32b": 0.0136,
+        "ci95": [
+          0.0108,
+          0.0164
+        ]
+      }
+    },
+    "newly_won_vs_F3_logistic": [],
+    "note": "Pooled cross-fit selector over calibrated low-dim features; take the leg with higher predicted correctness. Capacity ablation tests the CALM-Fuse post-mortem (frugal transfers / rich overfits)."
+  },
+  "F11_bma": {
+    "per_benchmark": {
+      "PMC_VQA": {
+        "additive": {
+          "n": 33430,
+          "acc": 0.5652,
+          "acc_32b": 0.5518,
+          "d_vs_32b": 0.0134,
+          "ci95": [
+            0.0102,
+            0.0165
+          ],
+          "beats_ci": true,
+          "mean_weight_7b": 0.4512
+        },
+        "poe": {
+          "acc": 0.5652,
+          "d_vs_32b": 0.0134,
+          "ci95": [
+            0.0104,
+            0.0165
+          ],
+          "beats_ci": true
+        }
+      },
+      "SLAKE_closed": {
+        "additive": {
+          "n": 836,
+          "acc": 0.8565,
+          "acc_32b": 0.8589,
+          "d_vs_32b": -0.0024,
+          "ci95": [
+            -0.0096,
+            0.0036
+          ],
+          "beats_ci": false,
+          "mean_weight_7b": 0.1197
+        },
+        "poe": {
+          "acc": 0.8565,
+          "d_vs_32b": -0.0024,
+          "ci95": [
+            -0.0096,
+            0.0036
+          ],
+          "beats_ci": false
+        }
+      },
+      "VQA_RAD_closed": {
+        "additive": {
+          "n": 251,
+          "acc": 0.8526,
+          "acc_32b": 0.8526,
+          "d_vs_32b": 0.0,
+          "ci95": [
+            -0.0239,
+            0.0239
+          ],
+          "beats_ci": false,
+          "mean_weight_7b": 0.0004
+        },
+        "poe": {
+          "acc": 0.8526,
+          "d_vs_32b": 0.0,
+          "ci95": [
+            -0.0239,
+            0.0239
+          ],
+          "beats_ci": false
+        }
+      },
+      "PATH_VQA_closed": {
+        "additive": {
+          "n": 3362,
+          "acc": 0.887,
+          "acc_32b": 0.8891,
+          "d_vs_32b": -0.0021,
+          "ci95": [
+            -0.0074,
+            0.0033
+          ],
+          "beats_ci": false,
+          "mean_weight_7b": 0.0054
+        },
+        "poe": {
+          "acc": 0.887,
+          "d_vs_32b": -0.0021,
+          "ci95": [
+            -0.0071,
+            0.0033
+          ],
+          "beats_ci": false
+        }
+      },
+      "MedXpertQA-MM": {
+        "additive": {
+          "n": 2000,
+          "acc": 0.3035,
+          "acc_32b": 0.3065,
+          "d_vs_32b": -0.003,
+          "ci95": [
+            -0.006,
+            -0.0005
+          ],
+          "beats_ci": false,
+          "mean_weight_7b": 0.1648
+        },
+        "poe": {
+          "acc": 0.304,
+          "d_vs_32b": -0.0025,
+          "ci95": [
+            -0.005,
+            0.0
+          ],
+          "beats_ci": false
+        }
+      },
+      "MMMU-Medical-val": {
+        "additive": {
+          "n": 150,
+          "acc": 0.8267,
+          "acc_32b": 0.6333,
+          "d_vs_32b": 0.1933,
+          "ci95": [
+            0.1133,
+            0.2667
+          ],
+          "beats_ci": true,
+          "mean_weight_7b": 0.9121
+        },
+        "poe": {
+          "acc": 0.8267,
+          "d_vs_32b": 0.1933,
+          "ci95": [
+            0.12,
+            0.2667
+          ],
+          "beats_ci": true
+        }
+      }
+    },
+    "pooled": {
+      "n": 40029,
+      "acc": 0.588,
+      "acc_32b": 0.5765,
+      "d_vs_32b": 0.0116,
+      "ci95": [
+        0.0089,
+        0.0142
+      ]
+    },
+    "newly_won_vs_F3": [],
+    "note": "Per-slice EM-fit additive mixture weights over the two legs' calibrated decision posteriors; argmax. Auto-gates by slice (weight->32B where the 7B is weak). PoE (multiplicative) shown as a contrast."
+  },
+  "F10_l2d_open": {
+    "per_benchmark": {
+      "SLAKE_open": {
+        "n": 645,
+        "acc_7b_bo8": 0.7798,
+        "acc_32b": 0.8186,
+        "oracle_union": 0.8853,
+        "oracle_headroom_vs_32b": 0.0667,
+        "F10_l2d": {
+          "acc": 0.8202,
+          "d_vs_32b": 0.0016,
+          "ci95": [
+            -0.0202,
+            0.0233
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.7938
+        },
+        "single_gate_tau": {
+          "acc": 0.8155,
+          "d_vs_32b": -0.0031,
+          "ci95": [
+            -0.031,
+            0.0248
+          ],
+          "beats_ci": false
+        },
+        "auroc_recoverability": {
+          "learned_multifeature": 0.6467,
+          "single_gate": 0.6811
+        },
+        "current_method_d_vs_32b": -0.0078,
+        "F10_improvement_over_current": 0.0094,
+        "current_method_already_won": false
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "acc_7b_bo8": 0.575,
+        "acc_32b": 0.6,
+        "oracle_union": 0.685,
+        "oracle_headroom_vs_32b": 0.085,
+        "F10_l2d": {
+          "acc": 0.605,
+          "d_vs_32b": 0.005,
+          "ci95": [
+            -0.045,
+            0.055
+          ],
+          "beats_ci": false,
+          "take7_rate": 0.63
+        },
+        "single_gate_tau": {
+          "acc": 0.585,
+          "d_vs_32b": -0.015,
+          "ci95": [
+            -0.075,
+            0.045
+          ],
+          "beats_ci": false
+        },
+        "auroc_recoverability": {
+          "learned_multifeature": 0.6658,
+          "single_gate": 0.6658
+        },
+        "current_method_d_vs_32b": -0.015,
+        "F10_improvement_over_current": 0.02,
+        "current_method_already_won": false
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "acc_7b_bo8": 0.4533,
+        "acc_32b": 0.376,
+        "oracle_union": 0.5247,
+        "oracle_headroom_vs_32b": 0.1487,
+        "F10_l2d": {
+          "acc": 0.462,
+          "d_vs_32b": 0.086,
+          "ci95": [
+            0.064,
+            0.106
+          ],
+          "beats_ci": true,
+          "take7_rate": 0.7353
+        },
+        "single_gate_tau": {
+          "acc": 0.4533,
+          "d_vs_32b": 0.0773,
+          "ci95": [
+            0.0533,
+            0.1007
+          ],
+          "beats_ci": true
+        },
+        "auroc_recoverability": {
+          "learned_multifeature": 0.7241,
+          "single_gate": 0.7408
+        },
+        "current_method_d_vs_32b": 0.0773,
+        "F10_improvement_over_current": 0.0087,
+        "current_method_already_won": true
+      }
+    },
+    "ci_certified_new_wins_vs_current": [],
+    "open_loss_slices_flipped_to_nonneg": [
+      "SLAKE_open",
+      "VQA_RAD_open"
+    ],
+    "note": "Learned consistent-L2D rejector over 7B-side open-text features, tuned to the TEAM-accuracy objective (beat), vs the deployed single-gate tau-cascade (which targets PARITY at min escalation, so it lands at/below 32B by design). Open-text = the recoverability-wall-weak half. F10 beats the tau-gate on all 3 open cells and lifts SLAKE/VQA-RAD_open from below-32B to iso/above; PATH_VQA_open (already won by the current verifier cascade) improves further. The multi-feature learned score does NOT have higher recoverability AUROC than the single gate -- the gain is from optimizing the right objective, not a better routing signal."
+  },
+  "verdict": {
+    "best_new_lever": "F10 learning-to-complement on OPEN-TEXT (only lever that moves the open arm above always-32B); F8 certified-veto is the best CHEAPER-and-safe MCQ variant.",
+    "F8_summary": "Certified veto is guardrail-safe by construction and CHEAPER than F3 (0.88x always-32B FLOPs vs F3's 1.22x; veto=7B-only cells 33% pooled). Accuracy \u0394 vs always-32B +0.0080 (CI [0.0061, 0.0099]). NEW accuracy cells vs F3: NONE -- it only certifies inside PMC (no high-precision 7B cell exists inside the strong-32B closed sets). Value = COST+SAFETY, not new accuracy.",
+    "F7_summary": "Frugal(logistic) pooled \u0394 vs 32B +0.0110 (CI [0.0089, 0.0132]); rich(GBM) pooled \u0394 +0.0136 (CI [0.0108, 0.0164]). NEW cells vs F3: NONE. HONEST: on these calibrated low-dim features the GBM does NOT catastrophically overfit (it nets slightly HIGHER pooled, via PMC, with only tiny <0.002 regressions on PathVQA/MedXpert) -- so the CALM-Fuse overfit story is NOT reproduced here; both frugal and rich stacks just reproduce PMC+MMMU and win nothing new.",
+    "F11_summary": "Additive BMA pooled \u0394 vs 32B +0.0116 (CI [0.0089, 0.0142]); NEW cells vs F3: NONE. Per-slice EM weight->32B auto-gates the strong slices (reproduces F3's PMC win, defaults toward 32B elsewhere) but is NOT perfectly guardrail-safe (small <0.003 leaks on SLAKE/PathVQA/MedXpert), unlike F1/F8 hard gating. PoE (multiplicative) ~= additive here.",
+    "F10_summary": "Open-text L2D (team-objective rejector) CI-certified beats always-32B on ['PATH_VQA_open']; and flips the open-text LOSSES ['SLAKE_open', 'VQA_RAD_open'] from below-32B to iso/above (point est +, CI still spans 0 at n=200-645). It beats the deployed parity-targeting tau-gate on all 3 open cells. Genuinely-NEW CI-certified slices (not already won by the current method): NONE (small-n CI) -- PATH_VQA_open was already won by the verifier cascade, F10 improves it further (+0.0773->+0.0860).",
+    "extends_past_pmc": "PARTIAL: on MCQ NO -- F8/F7/F11 all confirm the recoverability wall (no new closed slice beyond PMC). On OPEN-TEXT YES in direction -- F10 removes the two residual open-text losses (SLAKE/VQA-RAD_open) and improves the PathVQA_open win to +0.086; but the only small-n CI-CERTIFIED open beat remains PATH_VQA_open.",
+    "newly_won_slices_ci_certified_beyond_current": [],
+    "open_losses_repaired_by_F10": [
+      "SLAKE_open",
+      "VQA_RAD_open"
+    ],
+    "honesty": "Three independent MCQ methods (F8 certified veto, F7 super-learner, F11 BMA) INDEPENDENTLY confirm the recoverability wall: none certifies a NEW beat-32B closed slice beyond PMC. This SHARPENS the paper's story -- the MCQ beat is intrinsically bounded to comparable-skill/de-correlated slices (PMC), and the radiology/pathology/MedXpert closed sets are correctly kept at 32B. The one place the beat extends is OPEN-TEXT (wall weakest, AUROC~0.72-0.87): a team-objective L2D rejector (F10) eliminates the residual open losses and beats the parity-targeting tau-gate. F8 is the deployable bonus: a certified, never-worse, CHEAPER (0.9x FLOPs) route to the PMC beat, vs F3's +22%% FLOPs."
+  }
+}

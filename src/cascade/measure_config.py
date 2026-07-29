@@ -29,7 +29,7 @@ ap.add_argument("--warmup", type=int, default=3)
 ap.add_argument("--out", default="")
 A = ap.parse_args()
 CONFIGS = [tuple(c.split(":")) for c in A.configs.split(",")]
-OUT = A.out or f"results/cascade_methods/latency_{A.model}.jsonl"
+OUT = A.out or f"results/cascade_methods/artifacts/latency_{A.model}.jsonl"
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 
 class PowerSampler(threading.Thread):

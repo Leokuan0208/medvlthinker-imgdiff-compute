@@ -1,0 +1,384 @@
+{
+  "title": "G3: integrated cascade re-costed with an AWQ/GPTQ-INT4 strong leg (latency PROJECTED composition-grounded; accuracy & effective-FLOP PROJECTED)",
+  "baseline_method_source": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/integrated_method_vs_think.json",
+  "tractability_note": "Option 1 (pre-quantized Lingshu-32B for vLLM): NOT AVAILABLE. HF has only MLX (Apple-only), GGUF (llama.cpp, poor Qwen2.5-VL vision support), a bitsandbytes-NF4 *7B*, and dead/empty repos -- no AWQ/GPTQ-INT4 Lingshu-32B loadable in vLLM. Option 2 (quantize Lingshu-32B ourselves): NOT DONE (bounded) -- no quant libs installed (no autoawq/gptqmodel/llmcompressor), and calibrating+quantizing a 32B VLM is the rabbit hole the task forbids. Option 3 taken: re-cost analytically. Plan A was to MEASURE INT4-vs-FP16 batch-1 latency on the identical architecture (official Qwen/Qwen2.5-VL-32B-Instruct-AWQ, of which Lingshu-32B is a medical fine-tune; a ready vLLM benchmark is committed at src/cascade_methods/bench_int4_strong_leg.py) -- but a HF-CDN outage this session stalled 2 of 6 AWQ shards (xet/curl/hf_transfer all failed on those blobs). So latency is PROJECTED from the repo's OWN measured 32B prefill/decode composition; INT4 ACCURACY is projected from literature. Empirical AWQ latency + Lingshu-32B-INT4 accuracy = future work (re-run bench_int4_strong_leg.py when the CDN recovers; INT4-32B tp=1 ~20GB fits 1 GPU, memory-safe, avoids the OmniMed tp=2 hang).",
+  "flop_accounting_note": "A) MAC-FLOP = repo unit (7B-fwd-eq), weight-precision INDEPENDENT: INT4-32B = 4.57 (UNCHANGED; INT4 cuts bits/bytes, not multiply-accumulates). B) THROUGHPUT-EFFECTIVE FLOP = MAC/hardware-speedup: ~1.5x only for DECODE-heavy ops; the no-think strong leg is PREFILL-bound, so its throughput-effective figure is ~4.0 (near 4.57), far from 1.5. Note also: quantizing the strong leg but NOT the baseline is an apples-to-oranges comparison; a fair 'always-INT4-32B-nt' baseline scales identically, leaving the method/baseline FLOP RATIO ~invariant.",
+  "latency_composition_measured": {
+    "decode_ms_per_tok": 68.57,
+    "nothink_lat": 333.1,
+    "nothink_gen": 2.0,
+    "think_lat": 21865.2,
+    "think_gen": 316.0,
+    "nothink_decode_frac": 0.412
+  },
+  "int4_decode_speedup_bracket_literature": [
+    2.0,
+    2.5,
+    3.0
+  ],
+  "strong_leg_latency": {
+    "fp16_ms": 665.0,
+    "int4_ms": 582.7,
+    "ratio": 0.8763,
+    "prefill_ms": 527.9,
+    "nothink_decode_ms": 137.1,
+    "source": "PROJECTED (composition-grounded: prefill-bound no-think leg; INT4 speeds decode only)"
+  },
+  "int4_latency_ratio": {
+    "value": 0.8763,
+    "source": "PROJECTED (composition-grounded: prefill-bound no-think leg; INT4 speeds decode only)",
+    "detail": "composition-grounded projection (see latency_composition_measured)"
+  },
+  "strong_leg_flop_by_accounting": {
+    "A_mac_flop_repo_unit": 4.57,
+    "B_effective_literature": 1.5,
+    "B_effective_prefillbound_projected": 4.005
+  },
+  "int4_strong_leg_ms": 582.7,
+  "accuracy_delta_projected": [
+    0.005,
+    0.01
+  ],
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "esc": 0.0845,
+      "fp16": {
+        "flops": 1.386,
+        "latency_ms": 403.2,
+        "acc": 0.5508
+      },
+      "acc_32b_nothink": 0.5518,
+      "int4_macflop_reponunit": {
+        "flops": 1.386,
+        "latency_ms": 396.2,
+        "acc": 0.55,
+        "esc": 0.0845,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 1.127,
+        "latency_ms": 396.2,
+        "acc": 0.55,
+        "esc": 0.0845,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 1.338,
+        "latency_ms": 396.2,
+        "acc": 0.55,
+        "esc": 0.0845,
+        "strong_fires": true
+      }
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "esc": 0.2045,
+      "fp16": {
+        "flops": 1.935,
+        "latency_ms": 483.0,
+        "acc": 0.8516
+      },
+      "acc_32b_nothink": 0.8589,
+      "int4_macflop_reponunit": {
+        "flops": 1.935,
+        "latency_ms": 466.2,
+        "acc": 0.8496,
+        "esc": 0.2045,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 1.307,
+        "latency_ms": 466.2,
+        "acc": 0.8496,
+        "esc": 0.2045,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 1.819,
+        "latency_ms": 466.2,
+        "acc": 0.8496,
+        "esc": 0.2045,
+        "strong_fires": true
+      }
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "esc": 0.5696,
+      "fp16": {
+        "flops": 3.603,
+        "latency_ms": 725.8,
+        "acc": 0.8328
+      },
+      "acc_32b_nothink": 0.8526,
+      "int4_macflop_reponunit": {
+        "flops": 3.603,
+        "latency_ms": 678.9,
+        "acc": 0.8271,
+        "esc": 0.5696,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 1.854,
+        "latency_ms": 678.9,
+        "acc": 0.8271,
+        "esc": 0.5696,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 3.281,
+        "latency_ms": 678.9,
+        "acc": 0.8271,
+        "esc": 0.5696,
+        "strong_fires": true
+      }
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "esc": 0.4572,
+      "fp16": {
+        "flops": 3.089,
+        "latency_ms": 651.0,
+        "acc": 0.8882
+      },
+      "acc_32b_nothink": 0.8891,
+      "int4_macflop_reponunit": {
+        "flops": 3.089,
+        "latency_ms": 613.4,
+        "acc": 0.8836,
+        "esc": 0.4572,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 1.686,
+        "latency_ms": 613.4,
+        "acc": 0.8836,
+        "esc": 0.4572,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 2.831,
+        "latency_ms": 613.4,
+        "acc": 0.8836,
+        "esc": 0.4572,
+        "strong_fires": true
+      }
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "esc": 0.896,
+      "fp16": {
+        "flops": 5.095,
+        "latency_ms": 942.8,
+        "acc": 0.3005
+      },
+      "acc_32b_nothink": 0.3065,
+      "int4_macflop_reponunit": {
+        "flops": 5.095,
+        "latency_ms": 869.1,
+        "acc": 0.2915,
+        "esc": 0.896,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 2.344,
+        "latency_ms": 869.1,
+        "acc": 0.2915,
+        "esc": 0.896,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 4.588,
+        "latency_ms": 869.1,
+        "acc": 0.2915,
+        "esc": 0.896,
+        "strong_fires": true
+      }
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "esc": 0.0,
+      "fp16": {
+        "flops": 1.0,
+        "latency_ms": 347.0,
+        "acc": 0.8
+      },
+      "acc_32b_nothink": 0.6333,
+      "int4_macflop_reponunit": {
+        "flops": 1.0,
+        "latency_ms": 347.0,
+        "acc": 0.8,
+        "esc": 0.0,
+        "strong_fires": false
+      },
+      "int4_effective_literature": {
+        "flops": 1.0,
+        "latency_ms": 347.0,
+        "acc": 0.8,
+        "esc": 0.0,
+        "strong_fires": false
+      },
+      "int4_effective_prefillbound": {
+        "flops": 1.0,
+        "latency_ms": 347.0,
+        "acc": 0.8,
+        "esc": 0.0,
+        "strong_fires": false
+      }
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "esc": 0.1256,
+      "fp16": {
+        "flops": 16.574,
+        "latency_ms": 605.5,
+        "acc": 0.8155
+      },
+      "acc_32b_nothink": 0.8186,
+      "int4_macflop_reponunit": {
+        "flops": 16.574,
+        "latency_ms": 595.2,
+        "acc": 0.8142,
+        "esc": 0.1256,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 16.188,
+        "latency_ms": 595.2,
+        "acc": 0.8142,
+        "esc": 0.1256,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 16.503,
+        "latency_ms": 595.2,
+        "acc": 0.8142,
+        "esc": 0.1256,
+        "strong_fires": true
+      }
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "esc": 0.055,
+      "fp16": {
+        "flops": 16.251,
+        "latency_ms": 558.6,
+        "acc": 0.585
+      },
+      "acc_32b_nothink": 0.6,
+      "int4_macflop_reponunit": {
+        "flops": 16.251,
+        "latency_ms": 554.0,
+        "acc": 0.5844,
+        "esc": 0.055,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 16.082,
+        "latency_ms": 554.0,
+        "acc": 0.5844,
+        "esc": 0.055,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 16.22,
+        "latency_ms": 554.0,
+        "acc": 0.5844,
+        "esc": 0.055,
+        "strong_fires": true
+      }
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "esc": 0.0007,
+      "fp16": {
+        "flops": 16.003,
+        "latency_ms": 522.4,
+        "acc": 0.4533
+      },
+      "acc_32b_nothink": 0.376,
+      "int4_macflop_reponunit": {
+        "flops": 16.003,
+        "latency_ms": 522.4,
+        "acc": 0.4533,
+        "esc": 0.0007,
+        "strong_fires": true
+      },
+      "int4_effective_literature": {
+        "flops": 16.001,
+        "latency_ms": 522.4,
+        "acc": 0.4533,
+        "esc": 0.0007,
+        "strong_fires": true
+      },
+      "int4_effective_prefillbound": {
+        "flops": 16.003,
+        "latency_ms": 522.4,
+        "acc": 0.4533,
+        "esc": 0.0007,
+        "strong_fires": true
+      }
+    }
+  },
+  "pooled": {
+    "full_suite": {
+      "n": 42374,
+      "fp16_flops": 2.538,
+      "fp16_latency_ms": 459.6,
+      "fp16_acc": 0.575,
+      "int4_macflop_flops": 2.538,
+      "int4_lit_flops": 2.063,
+      "int4_lit_latency_ms": 446.9,
+      "int4_prefillbound_eff_flops": 2.45,
+      "int4_latency_ms": 446.9,
+      "int4_acc": 0.5735,
+      "always_32bnt_flops": 4.57,
+      "acc_32b_nothink": 0.5732
+    },
+    "mcq_only": {
+      "n": 40029,
+      "fp16_flops": 1.738,
+      "fp16_latency_ms": 454.5,
+      "fp16_acc": 0.5756,
+      "int4_macflop_flops": 1.738,
+      "int4_lit_flops": 1.243,
+      "int4_lit_latency_ms": 441.1,
+      "int4_prefillbound_eff_flops": 1.647,
+      "int4_latency_ms": 441.1,
+      "int4_acc": 0.574,
+      "always_32bnt_flops": 4.57,
+      "acc_32b_nothink": 0.5765
+    },
+    "open_only": {
+      "n": 2345,
+      "fp16_flops": 16.181,
+      "fp16_latency_ms": 548.3,
+      "fp16_acc": 0.5642,
+      "int4_macflop_flops": 16.181,
+      "int4_lit_flops": 16.059,
+      "int4_lit_latency_ms": 545.1,
+      "int4_prefillbound_eff_flops": 16.159,
+      "int4_latency_ms": 545.1,
+      "int4_acc": 0.5637,
+      "always_32bnt_flops": 4.57,
+      "acc_32b_nothink": 0.5168
+    }
+  },
+  "verdict": {
+    "central_question": "Does an INT4 strong leg make the integrated method faster on FLOPs (not just latency) vs always-32B-no-think, while holding the accuracy win?",
+    "A_under_repo_MAC_FLOP_unit": "NO. The repo's FLOP unit is MAC-count (7B-forward-equivalents); INT4 is a memory/precision optimization with ZERO MAC reduction, so a 32B-INT4 forward is still 4.57 FLOP-eq. Method FLOPs are literally unchanged: full-suite 2.538, mcq 1.738, open 16.181. INT4 helps LATENCY/energy/VRAM, not MAC-FLOPs.",
+    "B_under_throughput_effective_FLOP": "PARTIALLY, and only where escalation is FREQUENT. If you credit INT4 with the task's ~1.5 effective-FLOP-eq strong leg, the method's high-escalation MCQ cells drop below always-32B-nt (4.57): MedXpert 5.09->2.34, VQA_RAD_closed 3.60->1.85, PathVQA_closed 3.09->1.69. But the OPEN-TEXT arm is UNCHANGED (16.0->~16.0): its FLOP is 97-98% best-of-8 cheap 7B forwards, the strong leg is only 2-3%, so quantizing the strong leg CANNOT close the open-text FLOP gap. Pooled full-suite (already 2.54<4.57 at FP16) -> 2.06.",
+    "latency": "PROJECTED, composition-grounded (NOT a flat literature factor). KEY FINDING: the strong leg is 32B-NO-THINK, which the repo's OWN measured 32B latency (latency_32b.jsonl, decode=69 ms/tok) shows is PREFILL-DOMINATED (~2 gen tok; decode is only ~21% of the 665 ms leg). AWQ-INT4 accelerates ONLY memory-bound DECODE (~2.0-3.0x on A100), not compute-bound PREFILL (dequant to fp16) nor the FP16-kept vision tower. So the strong leg drops only 665 ms -> 582 ms (ratio ~0.88, a ~12% cut) -- NOT the ~2.5-3x the task hypothesizes. The full INT4 decode win DOES apply to the always-32B-THINK baseline (~300 decode tok): ~10521 ms -> ~4525 ms -- but the method already beats that baseline by ~23x on latency, so quantizing it is moot for the comparison.",
+    "accuracy": "PROJECTED HOLD. INT4 medical accuracy loss <=1% (literature, W4A16 AWQ/GPTQ on Qwen2.5-VL-class). It only touches the ESCALATED subset -> method-acc drop = esc*delta = full-suite -0.0008..-0.0015 (esc=0.15). Win vs 32B-THINK (+0.0118) is robustly held; the razor-thin +0.0018 vs 32B-NO-THINK could erode to +0.0003..+0.0010. Open-text accuracy win is FULLY preserved (its engine is the UNquantized 7B best-of-8, not the strong leg).",
+    "bottom_line": "The task's hypothesis ('INT4 strong leg ~1.5x FLOPs / ~2.5x faster, making the method faster on FLOPs too') does NOT hold as stated, for two structural reasons this analysis surfaces: (1) FLOPs -- under the repo's MAC-count unit INT4 gives ZERO reduction; only under a throughput-effective accounting does the strong leg get cheaper, and even then it fixes only the HIGH-escalation MCQ cells (MedXpert, VQA_RAD/PathVQA closed), NOT the open-text FLOP overage (which is 97-98pct best-of-8 cheap-7B forwards -- the strong leg is only 2-3pct there, so strong-leg quantization is the WRONG lever for it). (2) Latency -- the ~2.5x INT4 speedup is a DECODE-heavy number; the method's strong leg is 32B-NO-THINK = PREFILL-bound (~2 gen tok, decode ~21pct of the call), so INT4 cuts it only ~12pct (665->583 ms), not ~2.5x. INT4 IS a real energy/VRAM win and lets the escalation model fit tp=1 on one GPU (fixing the OmniMed tp=2 hang). NET: INT4 strong leg is worth adopting for VRAM/energy/deployability and cleans up the MCQ FLOP story under a throughput-effective view, but it does NOT make the method uniformly FLOP-dominant vs always-32B-nt and does NOT materially change latency (which the method already wins by ~23x). The open-text FLOP overage needs a different lever: fewer best-of-N samples or a cheaper verifier."
+  }
+}

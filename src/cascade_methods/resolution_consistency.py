@@ -192,9 +192,9 @@ def main():
                always_cheap=allcheap, always_strong=allstrong,
                margin_frontier=[(float(t), float(e), float(a)) for (t, e, a) in fm],
                candidates={k: [(float(x), float(e), float(a)) for (x, e, a) in v] for k, v in cand.items()})
-    os.makedirs("results/cascade_methods", exist_ok=True)
-    json.dump(out, open("results/cascade_methods/resolution_consistency.json", "w"), indent=1)
-    print("\n  -> results/cascade_methods/resolution_consistency.json")
+    os.makedirs("results/cascade_methods/artifacts", exist_ok=True)
+    json.dump(out, open("results/cascade_methods/artifacts/resolution_consistency.json", "w"), indent=1)
+    print("\n  -> results/cascade_methods/artifacts/resolution_consistency.json")
 
 if __name__ == "__main__":
     main()

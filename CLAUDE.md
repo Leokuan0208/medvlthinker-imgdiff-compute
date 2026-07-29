@@ -2,7 +2,7 @@
 
 > ## ⚠️ CRITICAL RULES — READ FIRST, ALWAYS APPLY ⚠️
 >
-> **These five rules override default behavior and apply to every task in this repo. Do not skip them.**
+> **These seven rules override default behavior and apply to every task in this repo. Do not skip them.**
 >
 > 1. **Ask, don't assume.** If something is unclear, ask before writing a single line. Never make silent
 >    assumptions about intent, architecture, or requirements.
@@ -14,6 +14,19 @@
 >    before proceeding. Confidence without certainty causes more damage than admitting a gap.
 > 5. **Suggest better ways.** I'm always open to ideas on better ways to do things — don't hesitate to
 >    suggest a better approach, especially one with long-lasting impact over a tactical change.
+> 6. **⛔ ABSTENTION IS PERMANENTLY FORBIDDEN** (made permanent 2026-07-07, `progress/progress_July_07.md`
+>    §15). Never research, build, test, or propose abstention / reject-option / defer-to-human /
+>    selective-prediction-as-a-method. **The method must always return an answer.** Reusing that
+>    literature's *math* inside an answer-producing mechanism is fine (the "certified veto" keeps the
+>    cheap model's answer — that is not abstention). Files from the June abstention work still exist in
+>    `src/cascade_methods/` and `docs/archive_mcq/SELECTIVE_ABSTENTION.md`; they are **historical record
+>    only** and must not be revived as a direction.
+> 7. **No fabricated numbers — ever.** Every figure in any doc, paper, slide or site must come verbatim
+>    from real experimental output, and must name the file it came from. If a number is needed and not
+>    available, recompute it from checkpoints or say "not measured". Never invent, never interpolate
+>    silently, never relabel an estimate as a measurement. (This rule was already in §7; it is promoted
+>    here because it was violated by *labelling* — three docs printed "Baselines (measured): 0.5632"
+>    when that value's open-text cells were estimates.)
 
 > **What this file is.** This is a context/briefing file for Claude Code. When Claude Code
 > opens this folder it reads `CLAUDE.md` automatically. The purpose of this file is to (1)
@@ -22,8 +35,12 @@
 > followed so the reorganization does not break anything.
 >
 > **History — the original task was a *cleanup*** (move/rename files into `src/<stage>/`). That is
-> **done** (see §5). The **rules & landmines** below still apply to any file moves. The active work
-> is now a research loop, summarized in §0.
+> **done**. The **rules & landmines** (§6/§7/§8) still apply to any file moves. The active work is a
+> research program, summarized in §0.
+>
+> **⚠️ This file is a briefing, not a numbers source.** For any figure, read
+> `results/cascade_methods/docs/current/PROJECT_RETROSPECTIVE_2026-07-29.md` (§4 for the results, §10
+> for the corrections log). §0/§1 below give the shape of the project; the retrospective owns the values.
 >
 > **About the author.** The researcher (Leo / Li-Wen Kuan) is an engineering student who is
 > relatively new to computer science. When you explain a command or a plan, be explicit and
@@ -31,73 +48,158 @@
 
 ---
 
-## 0. Current status (updated 2026-06-18) — read this first
+## 0. Current status (2026-07-29) — read this first
 
-The cleanup is finished. Active work = a **cascade-method research loop** (find a cascade that beats
-the deployed margin gate). **Session progress log (read first for the full story, comparison charts
-vs FrugalGPT/CP-Router/AutoMix/etc., and the math): [`progress_June_17.md`](progress_June_17.md) in the
-repo root; the cross-family + native-prompt continuation (5 families/3 architectures, native think, all-methods
-bake-off w/ measured latency+energy, the negative novel-method search, the cost-fix) is in
-[`progress_June_20-22.md`](progress_June_20-22.md) (+ `results/cascade_methods/{2SIZE_VALIDATION,FULL_RECORD,
-NOVEL_METHOD_FLD}.md`, `MASTER_TABLES.md`, `master_data.csv`); the 2026-06-24 continuation (Visual-Stability
-Rescue, ACC-v3/v4, and the headline **open-ended ceiling-break** — routing AUROC ~0.6→~0.87, the MCQ
-"gate is saturated" result is a benchmark artifact) is in [`progress_June_24.md`](progress_June_24.md) (+
-`results/cascade_methods/{NOVEL_METHOD_VISUAL_STABILITY,RESCUE_INTO_ACCV2,ACCV3_V4_AND_NOVELTY,
-OPENENDED_CASCADE}.md`, paper §5.7); the 2026-06-25→26 continuation — the luck-floor characterization (§5.9)
-and the genuine positive, a **trained outcome verifier** breaking it for free-text answers AND grounding
-boxes (incl. a real MS-CXR benchmark; §5.10) — is in [`progress_June_25-26.md`](progress_June_25-26.md) (+
-`results/cascade_methods/{OPENENDED_SELECTION_LUCKFLOOR,TRAINED_VERIFIER_RESULT,BOX_VERIFIER_RESULT,
-NEW_DIRECTIONS_2026-06-25}.md`).** Full account also in **`results/cascade_methods/README.md`** + `FINDINGS.md` +
-`METHOD_ACC.md` + `METHOD_MATH.md`; code in **`src/cascade_methods/`**. Two outcomes:
+> # ➜ THE ENTRY DOCUMENT IS THE RETROSPECTIVE
+> **`results/cascade_methods/docs/current/PROJECT_RETROSPECTIVE_2026-07-29.md`** (1,972 lines) is the
+> definitive account of the whole project, 2026-06-17 → 2026-07-29: the arc and every pivot (§2), the
+> method as it stands (§3), **the canonical results with CIs (§4)**, what generalizes (§5), a catalog of
+> ~90 negative results (§6), **the honest holes (§7)**, what to do next (§8), practical notes + a
+> codename glossary (§9), and **the corrections log (§10)**. Read it before anything else, and before
+> quoting any number from any other document in this repo.
+>
+> Second-best single artifact: **`meetings/progress_report_professor_2026-07-27.html`** — the whole
+> project in 13 source-cited sections.
 
-1. **The deployed margin gate (τ=0.426, ~74% backbone) is essentially optimal among training-free
-   GATES.** No decision rule (confidence / conformal / learned / recoverability / self-verification)
-   beats it in a way that is novel + real-efficiency-positive + per-benchmark guardrail-safe.
-   "Will the 32B fix it?" (recoverability) is only ~0.6 AUROC from any cheap signal. The
-   verification-augmented deferral router (VADR) is a dead end (not novel; its one new claim fails).
+### What the project is now
 
-2. **The genuine improvement is structural: the Adaptive-Compute Cascade (ACC).** A confidence-gated
-   3-tier cascade over compute *configurations*: **7B-nothink@cap320 → 32B-NO-THINK@cap320 →
-   32B-think@fullres**. The big model's *fast* no-think mode (≈0.34s vs ≈11s for think) is inserted
-   as an intermediate tier (gated by its own logprob margin), so the slow think pass fires only on
-   the ~18% reasoning residual. Honest held-out, **real measured batch-1 latency**, at parity with
-   always-32B-think: **latency 11.34s→2.27s (−80%) on ALL-6, 8.88s→0.44s (−95%) on ALL-5; FLOPs
-   100→52% / 100→25%; energy ~5×; guardrail-cleaner.** Mechanism: thinking *overthinks* perception VQA
-   (32B-no-think ≥ 32B-think on the 4 competent sets). Scope: competent-4 (MMMU/MedXpert excluded).
-   Novelty: incremental-but-defensible systems contribution (closest prior art CAR, arXiv 2505.15154).
-   Spec: `results/cascade_methods/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
+A **format-aware adaptive cascade** between **Lingshu-7B** and **Lingshu-32B**, evaluated on the
+**MedEvalKit** harness (the harness that faithfully reproduces Lingshu's published numbers). It detects
+**from the prompt text alone** whether a question is multiple-choice or open-ended and runs a different
+policy for each, with one knob at two settings. Spec: `docs/current/METHOD_FINAL_2026-07.md` (mechanism
+correct, numbers pre-date the 2026-07-08 measurement). Code: `src/cascade_methods/method_final.py`.
+Prose: `paper/adaptive-cascade-medvqa_ieee_2026-07-08.{tex,pdf}` — **the deliverable**.
 
-New gitignored checkpoints from the loop (see RESULTS.md): `ckpts/gate_32b_modes/`,
-`ckpts/gate_32b_pmctrain*/`, `ckpts/gate_7b_verify*/`, `results/cascade_methods/latency_*.jsonl`.
-The standing no-fabricated-numbers rule applies to everything above — all figures are from real
-checkpoint output.
+- **Multiple-choice arm:** 7B-direct → confidence-**margin** gate → 32B-**direct**.
+- **Open-text arm:** 7B best-of-N (adaptive N, Weitzman optimal-search) → **trained LoRA outcome
+  verifier** picks the best → escalate to 32B-direct on low verifier confidence.
+- The 32B's *reasoning* mode is the **baseline**, never a deployed tier on Lingshu.
+
+### The canonical headline (Variant B = MMMU excluded, 5 benchmarks / 8 cells / **n = 42,224**)
+
+Source: `artifacts/f8_mode_vsthink_ci.json` (2026-07-09) + `artifacts/opentext_32b_think_full.json`.
+Baseline **always-32B-with-reasoning = 0.5591 (measured)**; always-32B-direct 0.5729; always-7B 0.5549.
+
+| setting | accuracy | compute (× one 32B pass) | latency (par.) | Δ vs 32B-reasoning, 95% CI |
+|---|---|---|---|---|
+| **compute-lean** | 0.5741 | **0.49×** | 469 ms | **+0.0150 [+0.0107, +0.0192]** SIG |
+| **accuracy-max** (certified veto + learn-to-defer) | 0.5836 | **0.93×** | 731 ms | **+0.0245 [+0.0216, +0.0274]** SIG ← *canonical* |
+| accuracy-max⁺ (fusion variant) | 0.5862 | 1.25× | 668 ms | +0.0271 [+0.0237, +0.0305] SIG |
+
+**+0.0245 at 0.93× is the one canonical number.** It is the only value that is simultaneously the
+FLOP-negative deployed configuration, MMMU-clean, measured (not estimated), and CI-certified. Four
+older values circulate for the *same* operating point (+0.0212 / +0.0207 / +0.0238 / +0.0275) — they
+differ by lever, pool, and estimated-vs-measured open cells. **Before quoting any `+0.02xx` value,
+read the decode table in retrospective §10.3.**
+
+### The three findings that generalize (retrospective §5)
+
+1. **Reasoning hurts perception; on reasoning-heavy benchmarks it helps *some* families**
+   *(re-derived 2026-07-29 — see the correction note below)*. On prompt- and resolution-matched arms,
+   thinking is strictly worse than answering directly in **17/20** perception cells across 5 medical
+   families — **14/20** with 95% CIs excluding zero, pooled **−0.0401 [−0.0456, −0.0347]** over
+   **30,250** paired samples, **19/20** no better than +0.02 — and it reproduces at the same strength on
+   arms that differ by nothing but the reasoning instruction. On reasoning-heavy benchmarks CoT helps
+   MedVLThinker-32B / MedGemma-27B / InternVL3-38B but **not** Lingshu-32B or QoQ-Med-VL-32B: the
+   reasoning-side gain is **model-dependent, not universal**. Cost: 15–49× latency where a real think
+   mode exists (MedVLThinker 49×, MedGemma 45×, QoQ 43×, Chiron 15×).
+2. **Answer format determines whether routing signals work at all** — routing AUROC ~0.6 on 4-option
+   MCQ vs ~0.87 on free text. The cause is option discreteness, not answer length.
+3. **Training, not size, is the active ingredient in verification** — a trained 7B verifier beats or
+   ties a zero-shot 32B verifier, confirmed three independent times.
+
+> ### ⚠️ Finding 1 was corrected on 2026-07-29 — do not quote the old numbers
+> Sources (use verbatim): **`results/cascade_methods/artifacts/finding1_corrected_2026-07-29.json`**
+> and the audit **`.../finding1_prompt_matching_audit.json`**. Code:
+> `src/cascade_methods/finding1_corrected.py`. Narrative: **retrospective §5.1, §10.1 C20–C25,
+> §10.2 X15–X19, §10.5**.
+> - **15/20 → 17/20.** The published arms were prompt-unmatched (and resolution-unmatched for
+>   MedVLThinker). Three independent correction policies all give 17/20; **15/20 was the outlier**.
+>   Two cells flip positive→negative (MedVLThinker PMC-VQA +0.0055 → −0.0075; Lingshu PMC-VQA
+>   +0.0115 → −0.0425).
+> - **WITHDRAWN — all 7 Lingshu-32B cells, both directions.** Its "native think" instruction
+>   (`runners/run_native_think.sh:7`) is an answer-**format** string with no reasoning trigger (3.0
+>   generated tokens). The repaired reasoning arm says perception 4/4 strictly negative, pooled
+>   **−0.0866 [−0.0972, −0.0757]**, and reasoning **nothing**. ⇒ **Never cite Lingshu-32B as evidence
+>   that reasoning helps.** Its **1.2× "think:no-think" ratio is not a reasoning ratio.**
+> - **WITHDRAWN — QoQ-Med-VL-32B as reasoning evidence** (MMMU +0.071 → +0.012, CI spans zero;
+>   MedXpert-Understanding significantly **negative**, −0.043, p = 0.022).
+> - **MedGemma-27B on PathVQA is a real, significant exception** (+0.0413 [+0.0220, +0.0607], fully
+>   matched) — the only perception cell where CoT genuinely helps.
+> - **The open-text half of Finding 1 is PROVISIONAL.** `src/labeling/run_openvqa.py:26/27` has a live
+>   style/length grading channel (the direct arm alone carries a persona and "short, specific phrase /
+>   Do not explain"). A matched-prompt re-run is in flight. Do not quote the open-text
+>   think-vs-direct delta (Δ = −0.154) until it lands.
+> - **`MedEvalKit/` has two local uncommitted edits** (`utils/question_formats.py:11`,
+>   `utils/MMMU/data_utils.py:158`, mtime 2026-07-02) that added a reasoning trigger but **deleted** the
+>   answer-format clause the direct arm still carries. Pre-edit `eval_results_*_think` dumps are invalid
+>   as reasoning evidence; post-edit `*_reason` dumps reason but are format-unmatched.
+>   **`MedEvalKit/` is a protected dependency — do not modify it**; the revert/repair is Leo's call.
+> - **Lesson to apply going forward:** prompts are **not** persisted in the checkpoint rows (they live
+>   only in `runners/*.sh` shell variables and module constants). **Persist the prompt in every new
+>   checkpoint, and assert mean generated tokens on every think arm.**
+
+### The two walls (the negative-results contribution)
+
+- **Recoverability wall** — "will the strong model fix *this* error?" is ~0.5–0.6 AUROC from anything
+  cheap. **16 independent mechanisms** hit it.
+- **Selection wall** — a verifier converts only **74–82%** of oracle-of-N. **13 attempts** hit it,
+  killed three ways (capacity, compounding, pre-filtering).
+- Related: the **coverage** wall is 4.5× the selection wall (40.8% of questions have no correct answer
+  anywhere in an 8-sample pool). Generator work outranks verifier work.
+
+### Decisions and caveats that a new session must know
+
+- **MMMU-Medical is EXCLUDED** (2026-07-08). Lingshu-7B scores 0.80 there vs its own published 54.0 and
+  beats its own 32B; an adversarial audit (model identity PASS, image ablation, control model) concluded
+  **genuine weights, consistent with train-set contamination outside our control**. Do **not** bank the
+  MMMU keep-7B "+0.140 beat-the-32B win" — three July-7 docs did, and it was retracted. Retrospective
+  §2.12, C12.
+- **The honest framing (§8.5)** is *"matches the strong model at roughly half the compute, with a
+  significant accuracy gain on two specific cells — open-ended free text and PMC-VQA — plus a measured
+  characterization of why the remaining cells are unwinnable."* Not a suite-wide accuracy advantage.
+- **Known critical holes** (§7): the vs-reasoning baseline is a no-reasoning run on ~90% of the pool
+  charged at reasoning cost (hole 1); 89% of the headline delta comes from 2 of 8 cells (hole 2); the
+  open-text verifier scores items it was trained on, ~31% inflation (hole 4). These are open, not fixed.
+- **Preservation risk:** the last commit is `8cdefef` (2026-07-02). The entire Lingshu/July chain — the
+  IEEE paper, the July diaries, `paper/figs_final/`, the July-27 deck, and every headline script under
+  `src/cascade_methods/` — is **untracked**. Committing is the top-priority task (§8.1 item 2).
+- The earlier MedVLThinker work (margin gate τ=0.426, the 3-tier ACC cascade) is **historical**, not the
+  live method — see §1 below.
 
 ---
 
 ## 1. The project in one paragraph
 
-This is a **medical Vision-Language Model (VLM) compute-efficiency** research project. A VLM is
-a model that takes an **image + a text question** and produces a text answer — here, the images
-are medical (radiology, pathology, etc.) and the task is multiple-choice medical visual question
-answering (VQA). The headline result is a **two-model cascade**: a small, cheap **7B** model
-answers most questions, and a large, expensive **32B** model is only called ("escalated to")
-when the small model is not confident. A simple **confidence gate** decides when to escalate.
-The point of the paper is **efficiency, not accuracy**: the cascade matches the big model's
-accuracy while using much less compute. The deliverable is a conference paper for **CVGIP 2026**.
+This is a **test-time-compute for medical Vision-Language Models** research project. A VLM takes an
+**image + a text question** and returns a text answer — here the images are medical (radiology,
+pathology, endoscopy) and the task is medical visual question answering (VQA), in **both** formats:
+multiple-choice and open-ended free text. The thesis: **the accuracy–cost tension in medical VQA is not
+a law, it is a consequence of spending test-time compute uniformly** — the same reasoning, the same
+number of samples, the same model, on every question regardless of what the question needs. The method
+is a cascade that spends selectively. **The deliverable is `paper/adaptive-cascade-medvqa_ieee_2026-07-08.pdf`**
+(9 pages, IEEEtran). The original CVGIP 2026 target and its drafts are in `paper/archive/`.
 
-**Current headline numbers (treat as ground truth for context, do not edit experimental data):**
+**Live headline numbers → §0 above, and retrospective §4.** Do not quote numbers from this file.
 
-- Both models are `MedVLThinker-*-RL_m23k` (a 7B and a 32B variant).
-- The gate is a **frozen confidence-margin threshold**, `τ (tau) = 0.426`, trained on a clean
-  PMC-VQA training split (all eval samples held out).
-- Serving the 7B at a reduced image resolution ("**cap320**"), the cascade reaches **exact
-  parity** with always-using-32B accuracy (`0.572 = 0.572`) at about **74%** of the
-  always-32B compute (measured with prefill-inclusive FLOPs).
-- The cascade is **never worse than always-7B** on any of the six benchmarks.
-- Six benchmarks total. **Four "competent" benchmarks** where the method works:
-  **PMC-VQA, SLAKE, VQA-RAD, PathVQA**. **Two "excluded" benchmarks**: **MMMU** and
-  **MedXpert** (both models are near chance on MedXpert; these are intentionally excluded
-  from the main claims).
+### Historical headline (2026-06, MedVLThinker era — NOT the current result)
+
+Kept because ~half the repo, all the June diaries, and `docs/archive_mcq/` are written against it.
+
+- Models `MedVLThinker-7B/32B-RL_m23k`; a **frozen margin gate τ = 0.426** calibrated on a held-out
+  PMC-VQA train sample; cheap leg served at reduced resolution (**cap320**).
+- Parity with always-32B (`0.5718` vs `0.572`) at **73.6%** of always-32B prefill-inclusive compute,
+  63.3% escalation, over **6 benchmarks / 8,220 samples** (`progress/progress_June_17.md` §0).
+- Its successor, the 3-tier **compute-configuration cascade** (ACC: 7B-direct@cap320 → 32B-direct@cap320
+  → 32B-reasoning@fullres): at parity with always-32B-reasoning, **latency 11.34 s → 2.27 s (−80%),
+  energy 6,318.8 J → 1,181.9 J (~5.3×), compute 100 → 52%** on the 6-benchmark pool
+  (`artifacts/master_data.csv`, canonicalized in `INCONSISTENCIES.md` X1). Spec:
+  `docs/current/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
+- Its scope was the **four "competent" benchmarks** (PMC-VQA, SLAKE, VQA-RAD, PathVQA); MMMU and
+  MedXpert were excluded (both models near chance on MedXpert).
+- **This era's evaluation harness is the internal NGC one, not MedEvalKit** — retrospective §9.3 lists
+  three separate evaluation contexts (A faithful MedEvalKit / B internal 5-family bake-off / C custom
+  open-text judged pipeline). **Never cross-multiply numbers across them.**
 
 ---
 
@@ -118,19 +220,41 @@ the paper). The arc, oldest to newest:
    model*. → **definitively killed**: a "luck-floor" audit showed the oracle was ~29σ below
    the random-allocation floor, i.e. one model's confidence signals are mutually redundant and
    carry no routable signal.
-4. **Cross-model 7B→32B cascade** (the current, successful direction). The structural fix was
-   to route *between two different models*, not within one. This is the live work.
+4. **Cross-model 7B→32B cascade** (2026-06-17). The structural fix was to route *between two
+   different models*, not within one. Produced the τ=0.426 margin gate (§1, historical).
+5. **Compute-configuration cascade — "ACC"** (2026-06-17/22). The gate turned out to be
+   un-improvable, but the *strong leg was running in the wrong mode*: reasoning **over-thinks**
+   perception VQA. Route over compute configurations instead of models. Validated across 5 families
+   (re-derived on prompt-matched arms 2026-07-29: **17/20** perception cells — see §0).
+6. **Open-ended answers + a trained verifier** (2026-06-24/26). Every routing signal is degenerate on
+   4-option MCQ (AUROC ~0.6) and works on free text (~0.87). Every *training-free* selector sits at the
+   random-pick floor; a small **trained** LoRA verifier broke that floor — the only thing in the whole
+   project that did.
+7. **The faithful protocol** (2026-07-01). Abandoned the internal harness for **MedEvalKit**, which
+   reproduces Lingshu's published numbers exactly (Lingshu-32B MMMU 0.633 vs paper 62.3). Primary
+   family switched to **Lingshu**. Every claim is now anchored to a public baseline.
+8. **The format-aware adaptive cascade + the honest baseline** (2026-07-04/08) — **the live work.**
+   One router over answer format; and the realization that the project had been comparing itself
+   against the *cheapest* way of running the big model rather than the way a user would deploy it.
 
-So in the repo you will find three layers: **live cascade code** (keep, organize),
-**dependency repos** (`MedRAG/`, `MedVLThinker/` — never move), and **archived dead
-directions** (keep but tuck away in `archive/`).
+So in the repo you will find four layers: **live July/Lingshu code** (`src/cascade_methods/` — the
+~10-file headline chain: `method_final.py`, `paper_baselines.py`, `integrated_method.py`,
+`beat32b_*.py`, `opentext_32b_think_full.py`, `f8_mode_vsthink_ci.py`), **June MCQ-era code** (rooted at
+`src/cascade_methods/harness.py`, imported by 39 files — superseded as a source of headline numbers but
+still the reproducibility anchor for `docs/archive_mcq/`), **dependency repos** (`MedRAG/`,
+`MedVLThinker/`, `MedEvalKit/` — never move), and **archived dead directions** (`archive/`).
 
 ---
 
 ## 3. Key terms (glossary)
 
+> A **codename glossary** (ACC, VADR, FALC, CASP/CCPS, F3/F8/F10, Pandora, G1–G8, H1–H9, Variant A/B)
+> is in retrospective §9.5 — you need it to read the older documents.
+
 - **VLM** — vision-language model; image + text in, text out.
-- **VQA** — visual question answering. Here it's multiple-choice (the model picks A/B/C/D...).
+- **VQA** — visual question answering. **Two formats**, and the distinction is load-bearing:
+  *multiple-choice* (pick A/B/C/D) and *open-ended* (free text). Routing signals behave completely
+  differently between them (retrospective §5.2).
 - **7B / 32B** — model sizes (billions of parameters). 32B is the big, accurate, expensive one.
 - **Cascade** — run the cheap model first; only call the expensive model on hard cases.
 - **Gate / router** — the small decision rule that decides "escalate to 32B or not."
@@ -142,211 +266,106 @@ directions** (keep but tuck away in `archive/`).
   Lower cap = fewer image tokens = cheaper. "cap320" is the chosen operating point.
 - **Prefill-inclusive FLOPs** — honest compute accounting that includes the cost of reading the
   prompt+image, not just generating the answer. (An earlier decode-only estimate was too rosy.)
-- **think / no-think** — these models can emit a `<think>...</think>` reasoning trace or answer
-  directly. The 7B cheap leg runs **no-think**; the 32B runs **think**.
+- **think / no-think** (also written *reasoning* / *direct*) — these models can emit a
+  `<think>...</think>` reasoning trace or answer directly. **In the live Lingshu method BOTH legs run
+  direct**; 32B-with-reasoning is only the *baseline*. (In the June MedVLThinker era the 32B leg ran
+  think — that is why old docs say "the 32B runs think".)
 - **RAG / retrieval** — pulling in external text (e.g. textbooks) to help answer. Part of a
-  *killed* direction; `MedRAG/` and `retrieve.py` are its leftovers.
+  *killed* direction; `MedRAG/` and `retrieve.py` are its leftovers. Ruled out with zero GPU time: the
+  32B fixes genuinely-unknown errors *equally* on knowledge (38%) and perception (36%) questions ⇒
+  the deficit is capacity, not retrievable knowledge.
 - **HistGBM / Conformal / FBE / CP-Router** — fancier gate alternatives that were tested and
   **lost** to the simple margin threshold. Their scripts are real results, kept as ablations.
 - **HF vs vLLM** — two ways to run the models. **vLLM** is fast (~35× speedup) but hides true
   GPU memory use. **HF** (HuggingFace transformers) is slower but measures real VRAM, so it's
   used for the live cascade memory/energy measurement.
+- **Verifier** — a small LoRA-fine-tuned model scoring `P(correct | image, question, candidate)`; used
+  to pick the best of N sampled open-text answers. `ckpts/train/lora_verifier_pooled4`.
+- **best-of-N / oracle-of-N** — sample N answers and keep one / the best possible one. The gap between
+  them is the **selection wall**; the fraction of questions with *no* correct answer in the pool is the
+  **coverage wall**.
+- **Recoverability** — "will the strong model fix *this* cheap-model error?" ~0.6 AUROC ceiling; the
+  binding limit of every gate. **Distinct from *detection*** ("is the cheap model wrong?", ~0.87 on open
+  text). Gates must be ranked by recoverability — ranking by detection is a known, costly mistake here.
+- **Luck floor** — the recurring shape of this project's negatives: a large oracle gap that no
+  frozen-model signal can harvest, sometimes provably below a random-allocation permutation floor.
+- **Guardrail** — "never worse than always-cheap on any single benchmark". Pooled wins routinely hide
+  per-benchmark damage; the guardrail is what killed several of them.
+- **Variant A / Variant B** — MMMU escalated / **MMMU excluded** (Variant B, n=42,224, is what the paper
+  reports).
+- **Certified veto** — keep the cheap answer where a Wilson lower bound on its precision beats the strong
+  model's accuracy, so the strong model is never run there. **It is not abstention** — it answers.
 
 ---
 
-## 4. Current repository inventory (verify against the live tree first)
+## 4. Repository inventory — **see `STRUCTURE.md`**
 
-> **Important:** this inventory was reconciled against the live tree on **2026-06-17** (the
-> `src/` layout, the `ckpts/` contents, and the `rt_cascade_cap320.jsonl` location all match
-> disk as of then). It can still drift as new runs land. **Before acting, run a real listing**
-> and reconcile it with this list (see the procedure in §6). Treat anything below as "expected,
-> confirm on disk," not "guaranteed present."
+`STRUCTURE.md` is the live per-file index (every directory + a one-line purpose for every script);
+`results/cascade_methods/README.md` indexes the writeups and artifacts. This section used to duplicate
+both and drifted badly, so it is now a pointer plus the handful of facts the landmines in §7 depend on.
 
-### 4.1 Active Python code — now under `src/` (see §5 for the full map)
+**Always verify against the live tree before acting** — run a real listing and reconcile
+(procedure in §6). Treat any inventory in any doc as "expected, confirm on disk".
 
-> **Note (post-2026-06-16 cleanup):** these scripts were moved out of the old `scripts/` into
-> `src/<stage>/` and renamed for clarity. The table below uses the **original** names for the
-> historical record; see §5 for each file's current path/name. The descriptions still hold.
+### 4.1 The parts that matter for safety
 
-These are the live scripts. Names in (parentheses) note history.
+- **`ckpts/` (gitignored, resumable).** Scripts write per-sample JSONL and resume from the last
+  completed line. **Moving a checkpoint folder while a run could resume into it orphans that resume
+  state.** As of 2026-07-29 it holds, besides the June MCQ dirs (`gate_7b_*`, `gate_32b*`, `pmctrain/`,
+  `_legacy/`, `router_margin.pkl`, `token_cache.json`, `rt_cascade_cap320.jsonl`):
+  `train/` (LoRA adapters, incl. `lora_verifier_pooled4` — the deployed verifier), `openvqa/`
+  (open-text generations + judge labels), `ground/` (grounding/box outputs), `pairwise/` +
+  `pairwise_diverse/`, `acc_gen/` (5-family + peer-architecture dumps), `peer/`,
+  `gate_lingshu{7b,32b}_mcq/`, `mcq_gen_verify/`.
+- **Checkpoint JSONL schema** (so you can read them without guessing): `idx, gold, pred, ok, parse_ok,
+  opt_logprobs (letter→logprob dict), gen_tokens, latency_s, raw_output`. The live cascade JSONL uses
+  `idx, dataset, escalate, ok, final` (+ in some versions `pred7, pred32, gold, margin, latency_s,
+  energy_j, gen7, gen32`).
+- **Shard-tag convention.** Single-shard runs carry **no `_sKofN` suffix**; only genuinely sharded runs
+  are tagged (e.g. `gate_7b_think/` keeps `_s0of2`/`_s1of2`). Labelers write the tag only when `N>1`;
+  every reader treats `(?:_s\d+of\d+)?` as optional, so both forms load and shards merge by `idx`.
+- **Faithful-eval outputs live in `MedEvalKit/eval_results_*/`** — which is **gitignored vendor
+  territory**. Every faithful MCQ number in the paper is read from there. Do not clean that directory.
+- **`results/cascade_methods/artifacts/`** holds ~107 numeric `.json` outputs (gitignored,
+  regeneratable). The headline chain is `method_final.json`, `method_final_v2.json`,
+  `method_final_mmmu_corrected.json`, `paper_baselines.json`, `opentext_32b_think_full.json`,
+  **`f8_mode_vsthink_ci.json`** (the canonical headline CI).
+- **`archive/`, `docs/archive_mcq/`, `_legacy/`** are the record of negative results. Move, never delete.
 
-| File | What it does | Stage |
-|---|---|---|
-| `gate_router.py` | Runs a model over a dataset and writes per-sample JSONL checkpoints (the "labeler"). Produces the confidence signals the gate uses. **Has a relative `CKPT_DIR`** — see landmines. | gate / labeling |
-| `run_32b_vllm.py` | Runs the 32B (vLLM, think mode) to produce the strong-model labels in `ckpts/gate_32b/`. | labeling (strong) |
-| `run_7b_prune_sweep.py` | Sweeps image-resolution caps (`max_pixels`) on the 7B to produce the cheap-leg checkpoints across cap80/160/320/640/fullres. | sweep |
-| `tokens_per_cap.py` | Processor-only token-count cache builder (how many image tokens each cap costs). | sweep |
-| `grid_resolution_tau.py` | The calibrated 5×5 resolution×τ grid with prefill-inclusive FLOPs accounting; this is where the cap320 / τ=0.426 operating point comes from. | sweep / calibration |
-| `rt_cascade.py` | The **live** co-resident cascade: 7B on GPU0, 32B on GPU1, real escalation, dual-GPU power logging via NVML. Writes `rt_cascade_cap320.jsonl`. | cascade (live) |
-| `rt_analyze.py` | Analyzes the live run: per-benchmark escalation 2×2, gate discrimination, faithfulness vs vLLM labels. | cascade (analysis) |
-| `cascade_breakdown.py` | Offline per-benchmark cascade breakdown from validated vLLM labels. | cascade (analysis) |
-| `analyze_router.py` | The current analyzer for the gate/router checkpoints (superseded the old `analyze.py`). | analysis |
-| `analyze_7b_think.py` | Merges 7B-think shards and runs the harness sanity check. | analysis |
-| `fbe_and_signals.py` | Offline "bake-off" comparing the margin gate vs FBE / conformal / HistGBM, entirely on saved checkpoints (no new inference). Source of the "fancier gates lose" ablation. | analysis (ablation) |
-| `oracle_luck_floor.py` | The luck-floor audit that killed single-model routing (~−29σ). | analysis (negative result) |
-| `recompute_energy2.py` | Recomputes the energy-saved numbers from checkpoint data (replaces an earlier flat-power proxy). | analysis |
-| `build_subset.py` | Builds `subset.csv`, a small evaluation slice. | data prep |
-| `retrieve.py` | MedRAG retrieval (`--corpus` arg). **Leftover from the killed RAG direction**; keep for record. | legacy (retrieval) |
+### 4.2 Dead directions still on disk (keep, don't revive)
 
-> Some scripts **import from each other** and several **hard-code file paths** (to weights, to
-> datasets under `/data/dan/...`, and to checkpoint folders). This is why renaming is risky —
-> see landmines.
-
-### 4.2 Checkpoints — `ckpts/` (gitignored, often resumable, do not casually move)
-
-- `gate_7b_pmctrain/ckpt_nothink.jsonl` — 3,000 rows, PMC-VQA **train** split. The gate's
-  calibration data (at full resolution).
-- `gate_7b_pmctrain_prune/<cap>/ckpt_nothink.jsonl` — the **same** held-out PMC-VQA train
-  calibration sample re-run at each resolution cap (`cap80/160/320/640`). This is what
-  `refit_gate_tau_per_cap.py` uses to refit τ per cap (so cap320 gets its own threshold).
-- `gate_7b_prune/<cap>/ckpt_*_nothink_norag.jsonl` — the cheap 7B leg (no-think) across
-  resolution caps (`cap80/160/320/640`); 8,220 rows per benchmark set. The chosen operating
-  point is `cap320`.
-- `gate_7b_vllm/ckpt_*_nothink_norag.jsonl` — the cheap 7B no-think leg at **full resolution**
-  over the full 6-benchmark eval (the "fullres" cheap baseline; same schema as `gate_7b_prune`).
-- `gate_7b_think/ckpt_*_think_norag_s{0,1}of2.jsonl` — the 7B **think** baseline, run in 2
-  shards (see the shard-tag note below). Used for the think-vs-no-think comparison, not the gate.
-- `gate_32b/ckpt_*_think_norag.jsonl` — the strong 32B leg; 8,220 rows. (`opt_logprobs`
-  is empty here because the 32B is a reasoning model.)
-- `pmctrain/ckpt_{nothink,think}.jsonl` — an earlier PMC-VQA train labeling pair (no-think and
-  think) kept alongside the newer `gate_7b_pmctrain*` dirs.
-
-> **Shard-tag convention (updated 2026-06-16):** checkpoints/feats from a **single-shard** run
-> carry **no `_sKofN` suffix** (the redundant `_s0of1` was stripped). Only genuinely **sharded**
-> runs are tagged — e.g. `gate_7b_think/` and `archive/single-model-routing/gate_7b_rag_axes/`
-> (the archived RAG-axes grid, formerly `ckpts/gate_7b_v2/`) keep `_s0of2`/`_s1of2`. The labelers
-> write the tag only when `N>1` (`SHARD_TAG`), and every reader treats `(?:_s\d+of\d+)?` as
-> optional, so both forms load and shards still merge by `idx`.
-- `router_margin.pkl` — the **gate artifact** itself: keys `gate`, `tau`, `signal`,
-  `trained_on`. This is the **deployable result** — the frozen margin gate (τ=0.426).
-- `router_learned.pkl`, `router_learned_6ds.pkl`, `router_conformal_6ds.pkl` — pickled
-  **alternative** gates (HistGBM "learned" and conformal CP-Router), one over the 4 competent
-  benchmarks and one over all 6 (`_6ds`). These are the *losing* ablation gates (see
-  `src/analysis/ablations/`), kept so the bake-off is reproducible. **Not deployed.**
-- `token_cache.json` — processor-only image-token-count cache (output of
-  `src/sweep/tokens_per_cap.py`), keyed by cap; feeds the FLOPs accounting.
-- `rt_cascade_cap320.jsonl` — output of the live cascade run. **Now lives in `ckpts/`**
-  (`ckpts/rt_cascade_cap320.jsonl`), and that is the default `--jsonl`/`--cascade`/`--out` path
-  for every script that reads or writes it. (An earlier draft placed it at the repo root; it
-  was moved into `ckpts/` with everything else, and all default paths were updated to match.)
-- `_legacy/` — old field-poor checkpoints from the 3B and early-7B runs (`gate_ckpts/`,
-  `gate_ckpts_7b/`). Keep, do not delete.
-
-**Checkpoint JSONL schema** (so you can read them without guessing): per-sample keys are
-`idx, gold, pred, ok, parse_ok, opt_logprobs (letter→logprob dict), gen_tokens, latency_s,
-raw_output`. The live cascade JSONL uses `idx, dataset, escalate, ok, final` (and in some
-versions `pred7, pred32, gold, margin, latency_s, energy_j, gen7, gen32`).
-
-### 4.3 Other top-level items
-
-- `logs/` — `nohup` output from long runs. Gitignored.
-- `data/` — small inputs like `subset.csv`. Gitignored.
-- `results/` — run artifacts (may be empty). Gitignored.
-- `feats/`, `feats_full/` — saved hidden-state features (`feat_*_L14.npz`, layer-14
-  activations) extracted for the killed single-model-routing probes. `feats/` holds the early
-  3-benchmark subset; `feats_full/` holds all 6. `*.npz` is gitignored. Leftovers from a killed
-  direction — kept for record, not used by the live cascade.
-- `archive/` — killed directions. Subfolders: `image-difficulty/` (complexity / difficulty /
-  lesion files), `old-gate-scripts/` (`gate_probe.py`, `gate_rag.py`, old `analyze.py`), and
-  `single-model-routing/` (the killed direction #3: `oracle_luck_floor.py`, `router_scalar.py`,
-  `router_hidden.py`, `analyze_router.py`, `pmcvqa_recoverability.py`, `extract_features.py`,
-  `gap_router_probe.py`, plus `cascade_complementarity_check[_corrected].py` and
-  `validate_think_harness_vs_paper.py` — all early scripts that read the dead n≈500 RAG-axes
-  grid — and the grid's data itself, `gate_7b_rag_axes/` (formerly `ckpts/gate_7b_v2/`,
-  gitignored). Kept as the negative-result record).
-- `MedRAG/` — **dependency git repo. DO NOT MOVE OR RENAME.** `retrieve.py` imports from it.
-- `MedVLThinker/` — **dependency git repo. DO NOT MOVE OR RENAME.** The eval stack uses it.
-- `README.md`, `RESULTS.md` (the written-up results / numbers log), `.gitignore`,
-  `env_backup_*.txt` (a local env snapshot, gitignored).
+`archive/image-difficulty/`, `archive/old-gate-scripts/`, `archive/single-model-routing/` (incl. the
+n≈500 RAG-axes grid), `src/legacy_retrieval/retrieve.py` + `MedRAG/` (killed RAG direction), and the
+six **abstention** scripts still sitting in `src/cascade_methods/` (`selective_abstain.py`,
+`abstain_calibration.py`, `triage_3way.py`, `deferral_curve.py`, `methods_deferral.py`,
+`lingshu_deferral_apgr.py`) — historical record only, see CRITICAL RULE 6.
 
 ---
 
-## 5. Repository structure (AS BUILT — the cleanup is done)
+## 5. Repository structure — **see `STRUCTURE.md`**
 
-The 2026-06-16 cleanup moved every active script out of the old flat `scripts/` into `src/`,
-grouped by pipeline stage, and gave each file a self-explanatory name. **`scripts/` no longer
-exists.** Killed directions were moved to `archive/`. Dependencies, checkpoints, and data were
-left untouched. **Always launch scripts from the repo root** (see §7).
-
-> **`STRUCTURE.md` is the live per-file index** (every directory + a one-line purpose for every script) —
-> read it to find a file fast. **2026-06-26 declutter:** the 23 root `run_*.sh` launchers moved into
-> `runners/` (each self-`cd`s to the repo root, so behavior is unchanged; launch as `bash runners/<x>.sh`).
-> The terse `src/cascade_methods/` names were intentionally **left as-is** (the paper's repro index, the five
-> `progress_*.md` logs, and ~36 imports reference them) and are documented in `STRUCTURE.md` instead.
+The 2026-06-16 cleanup moved every active script out of the old flat `scripts/` into `src/<stage>/`.
+That is done and `scripts/` no longer exists. The full tree used to be duplicated here; it now lives in
+one place, **`STRUCTURE.md`**, which is kept current. Top-level shape, for orientation only:
 
 ```
-medvlthinker-imgdiff-compute/
-├── CLAUDE.md   README.md   RESULTS.md   .gitignore
-│
-├── src/                          # all ACTIVE python (was: scripts/)
-│   ├── labeling/                 # run a model over data → per-sample JSONL checkpoints
-│   │   ├── run_7b_hf_labeler.py  # (was gate_router.py) — HF labeler, OOM-guarded
-│   │   ├── run_7b_vllm.py        # cheap 7B no-think, full eval
-│   │   ├── run_7b_think_vllm.py  # 7B think baseline
-│   │   ├── run_32b_hf.py         # (was run_32b.py)
-│   │   ├── run_32b_vllm.py       # strong 32B labels (TP=2)
-│   │   └── run_pmctrain_vllm.py  # label the held-out PMC-VQA train sample
-│   ├── sweep/                    # resolution / compute sweeps + calibration
-│   │   ├── run_7b_prune_sweep.py   tokens_per_cap.py   grid_resolution_tau.py
-│   │   ├── cascade_resolution_sweep.py   cascade_heldout_frontier.py
-│   ├── gate/                     # train + freeze the DEPLOYED margin gate
-│   │   ├── train_margin_gate.py        # (was router_train.py) → ckpts/router_margin.pkl
-│   │   └── refit_gate_tau_per_cap.py   # (was router_tau_per_cap.py)
-│   ├── cascade/                  # the LIVE cascade + real-time measurement
-│   │   ├── live_cascade.py             # (was rt_cascade.py) → rt_cascade_cap320.jsonl
-│   │   ├── measure_single_leg.py       # (was rt_measure.py)
-│   │   ├── report_cascade_from_legs.py # (was rt_report.py)
-│   │   └── analyze_live_cascade.py     # (was rt_analyze.py)
-│   ├── analysis/
-│   │   ├── cascade/              # analyses of the live cascade
-│   │   │   ├── cascade_per_benchmark_breakdown.py        # (was cascade_breakdown.py)
-│   │   │   ├── cascade_cost_decode_flops.py              # (was router_cost.py)
-│   │   │   ├── cascade_cost_prefill_flops.py             # (was router_cost_prefill.py)
-│   │   │   ├── cascade_cost_accuracy_pareto.py           # (was router_pareto.py)
-│   │   │   ├── cascade_gain_bootstrap_ci.py              # (was router_bootstrap.py)
-│   │   │   ├── frozen_gate_transfer_bootstrap_ci.py      # (was router_train_bootstrap.py)
-│   │   │   ├── margin_gate_mechanism_diag.py             # (was router_signal_diag.py)
-│   │   │   ├── gate_head_to_head.py                      # (was head_to_head.py)
-│   │   │   ├── cascade_escalation_signal_early.py        # (was router_escalate.py; superseded)
-│   │   │   ├── recompute_energy.py                       # (was recompute_energy2.py; CORRECTED)
-│   │   │   └── recompute_energy_superseded.py            # (was recompute_energy.py)
-│   │   └── ablations/           # gate alternatives that LOST to the margin gate
-│   │       ├── gate_ablation_bakeoff.py                  # (was fbe_and_signals.py)
-│   │       ├── gate_alt_conformal.py / _6datasets.py     # (was router_conformal[_6ds].py)
-│   │       └── gate_alt_learned_gbm.py / _6datasets.py   # (was router_learned[_6ds].py)
-│   ├── reporting/               # build the paper's tables + harness validation
-│   │   ├── build_table1_accuracy.py        # (was extract_paper_numbers.py)
-│   │   ├── build_table2_efficiency.py      # (was extract_efficiency.py)
-│   │   ├── report_efficiency_per_dataset.py# (was extract_efficiency_perdataset.py)
-│   │   ├── report_cascade_per_dataset.py   # (was extract_perdataset_report.py)
-│   │   ├── report_medxpert_dilution.py     # (was medxpert_impact.py)
-│   │   ├── merge_7b_think_and_validate.py  # (was analyze_7b_think.py)
-│   │   └── inspect_timing_fields.py        # (was check_timing_fields.py, root)
-│   ├── data_prep/
-│   │   ├── build_eval_subset.py            # (was build_subset.py)
-│   │   ├── sample_pmcvqa_train_heldout.py  # (was pmcvqa_train_sample.py)
-│   │   └── prep_pmcvqa_train_sample.py     # (was prep_pmctrain_sample.py)
-│   └── legacy_retrieval/
-│       └── retrieve.py          # killed RAG direction, kept for record
-│
-├── ckpts/  logs/  data/  results/  feats/  feats_full/   # gitignored data — UNTOUCHED
-│   └── ckpts/rt_cascade_cap320.jsonl   # live cascade output — default --jsonl/--out of many scripts
-├── archive/                     # killed directions (keep, don't delete)
-│   ├── image-difficulty/        old-gate-scripts/
-│   └── single-model-routing/    # oracle_luck_floor, router_scalar/hidden, analyze_router,
-│                                #   pmcvqa_recoverability, extract_features, gap_router_probe,
-│                                #   cascade_complementarity_check[_corrected], validate_think_harness_vs_paper
-│                                #   (all read the dead RAG-axes grid), + gate_7b_rag_axes/ data (gitignored)
-│
-├── MedRAG/                      # dependency repo — DO NOT MOVE/RENAME
-└── MedVLThinker/                # dependency repo — DO NOT MOVE/RENAME
+src/{labeling,sweep,gate,cascade,cascade_methods,training_methods,analysis,reporting,data_prep,legacy_retrieval}
+runners/            38 shell launchers (each cd's to the repo root)
+progress/           13 dated daily diaries (June 17 -> July 8) — the primary narrative record
+paper/              the IEEE deliverable + build scripts + figs_final/;  paper/archive/ = superseded drafts
+meetings/           dated .html decks (the 2026-07-27 one is the best summary in the repo)
+docx/               generated Word exports
+results/cascade_methods/{docs/current,docs/archive_mcq,artifacts,claude_judge}
+ckpts/ logs/ data/ feats*/          gitignored data & checkpoints
+archive/            killed directions
+MedRAG/ MedVLThinker/ MedEvalKit/   dependency repos — DO NOT MOVE/RENAME
 ```
 
-**Naming conventions used:** lowercase, `_`-separated, names that describe the *role* and read
-clearly **without** the folder for context (Leo's request). Archived files kept their original
-names so they still match the `logs/*.log` files keyed to them.
-
----
+**Naming conventions:** lowercase, `_`-separated, names that describe the *role* and read clearly
+without the folder for context. Archived files kept their original names so they still match the
+`logs/*.log` files keyed to them. The terse `src/cascade_methods/` names are **deliberately not
+renamed** (the paper's repro index, the progress logs and ~36 imports reference them); `STRUCTURE.md`
+is the descriptive index for them instead.
 
 ## 6. Safe cleanup procedure (follow this order)
 
@@ -392,9 +411,12 @@ that discipline:
 
 ## 7. Rules & landmines (read before moving anything)
 
-- **`MedRAG/` and `MedVLThinker/` are separate git repositories and live dependencies.**
-  `retrieve.py` imports from `MedRAG`; the eval stack uses `MedVLThinker`. Moving or renaming
-  either breaks imports for zero benefit. **Leave them at the root, untouched.**
+- **`MedRAG/`, `MedVLThinker/` and `MedEvalKit/` are separate git repositories and live
+  dependencies.** `retrieve.py` imports from `MedRAG`; the June eval stack uses `MedVLThinker`;
+  **`MedEvalKit/` is the faithful harness every current paper number comes from, and its
+  `eval_results_*/` output directories hold the primary evaluation dumps.** Moving or renaming any of
+  them breaks imports for zero benefit. **Leave them at the root, untouched — and do not "clean"
+  `MedEvalKit/eval_results_*`.**
 - **`ckpts/` checkpoints are resumable and gitignored.** Scripts write per-sample JSONL and
   resume from the last completed line if restarted. **Moving a checkpoint folder while a run
   could resume into it orphans that resume state.** Do not relocate `ckpts/` contents as part of
@@ -414,6 +436,14 @@ that discipline:
 - **No fabricated numbers — ever.** This is a standing, non-negotiable rule for this project.
   Every figure in the paper, slides, or site must come verbatim from real experimental output.
   If a number is needed and not available, recompute it from checkpoints; never invent it.
+  **Also never mislabel provenance:** an estimate is an estimate until it is measured, and a number
+  copied by hand into a deck is not "read from an artifact". Both failure modes have happened here
+  (retrospective §7 hole 14, §10.2 X8). See CRITICAL RULE 7.
+- **The July/Lingshu work is not in git.** Last commit `8cdefef` (2026-07-02). 44 untracked `.py`
+  files under `src/` include the entire live headline chain; the IEEE paper, the July diaries and the
+  2026-07-27 deck are untracked; `results/` and `MedEvalKit/` are gitignored. **The method, its inputs
+  and its outputs currently exist on one disk.** Do not delete or relocate anything untracked, and
+  treat "commit the working tree" as the standing top-priority chore.
 - **Code-delivery convention Leo uses:** brand-new files / standalone scripts are delivered as
   a heredoc (`cat > path << 'EOF' ... EOF`) so he can paste them whole. **Edits to existing
   files** are delivered as a plain code block (the snippet to change), which Leo applies himself
@@ -430,19 +460,46 @@ that discipline:
 ## 8. Environment & where things live (for running, not editing)
 
 - **Repo:** `~/medvlthinker-imgdiff-compute`
-- **Weights:** 7B at `/data/dan/weights/MedVLThinker-7B-RL_m23k`; 32B at
+- **Weights (June era):** 7B at `/data/dan/weights/MedVLThinker-7B-RL_m23k`; 32B at
   `/data/dan/weights/MedVLThinker-32B-RL_m23k`. (A legacy `MedVLThinker-3B-RL_m23k` exists from
   the early phase.)
-- **Eval data:** `/data/dan/dataset/MedVLThinker-Eval` — 8,220 samples across the six
+- **Weights (current era):** Lingshu-7B / Lingshu-32B and the peer families live in the HF cache,
+  `/data/dan/hf_cache/hub/`. ⚠️ **The runners hard-code HuggingFace snapshot-hash paths** (e.g.
+  `models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd4…`) — a cache refresh changes the hash
+  and breaks them.
+- **Eval data (June era):** `/data/dan/dataset/MedVLThinker-Eval` — 8,220 samples across the six
   benchmarks (`pmc_vqa`, `pathvqa_closed`, `slake_closed`, `vqa_rad_closed`, `MMMU-medical`,
   `MedXpertQA-MM`). Train splits: PMC-VQA at `/data/dan/dataset/pmc_vqa_train`; others under
   `/data/dan/dataset/{vqa_rad, path_vqa, slake}`.
+- **Eval data (current era):** `/data/dan/dataset/medevalkit/` — the MedEvalKit datasets. Faithful-run
+  sizes: PMC-VQA 33,430 · SLAKE 2,094 · VQA-RAD 451 · PathVQA 6,719 · MMMU 150 · MedXpert 2,000 ·
+  OmniMedVQA 88,996.
 - **Inference:** vLLM (NGC container, ~35× faster) for bulk labeling; HuggingFace transformers
-  for the live cascade VRAM/energy measurement.
-- **Critical model quirk:** these models only emit a `<think>` trace when the system prompt is
-  *exactly*: "You will solve a problem/request. You should provide your thoughts within
+  for the live cascade VRAM/energy measurement. **Three** Python environments exist, only two were ever
+  documented — the third is **`/data/dan/medeval_venv/bin/python`** (vLLM 0.9.0.1), used by 12 runner
+  invocations and required for every MedEvalKit run. MedEvalKit recipe: the Qwen2_5_VL wrapper,
+  `datasets_path=hf`, `TORCHDYNAMO_DISABLE`, seed 42.
+- **Critical model quirk (MedVLThinker):** these models only emit a `<think>` trace when the system
+  prompt is *exactly*: "You will solve a problem/request. You should provide your thoughts within
   `<think>` `</think>` tags before providing the answer." Without that exact prompt they answer
   directly. Don't paraphrase it.
+- **Companion correction (Lingshu):** "Lingshu has no promptable reasoning mode" was asserted on
+  2026-07-01 and **retracted within 24 hours** — it was a weak-prompt artifact. With a proper prompt,
+  generated tokens go **3 → 174** (267 with real `<think>` tags). MedEvalKit's `--reasoning True` flag
+  only appends *"put the letter in \boxed{}"*, which is **not** a reasoning prompt. This is the root of
+  retrospective hole 1: the dumps named `..._think` for PMC / SLAKE-closed / VQA-RAD-closed average
+  3–4 generated tokens and are **not genuine reasoning runs**.
+  **Extended 2026-07-29:** the *internal* (NGC-harness) Lingshu "native think" arm has the same defect —
+  `runners/run_native_think.sh:7` passes only *"Answer with the option's letter … in one `\boxed{}`"*,
+  and that arm generates **3.0** tokens across all 7 benchmarks. All 7 published Lingshu think-vs-direct
+  cells are therefore **withdrawn**; the genuinely-reasoning replacement is
+  `ckpts/acc_gen/lingshu32b/think_fullres` (150–259 tokens). Independently, `MedEvalKit`'s reason prompt
+  is only a *reasoning* prompt because of two **local uncommitted edits** (§0) — upstream it was the
+  direct arm's format string. **Before trusting any think/reasoning dump in this repo, check its mean
+  generated tokens.**
+- **Known infra wall:** Lingshu-32B / InternVL3-38B under MedEvalKit with `tp=2` on OmniMedVQA hangs
+  deterministically in an NCCL collective. Every mitigation was tried and failed (retrospective §9.2);
+  `tp=1` is impossible (64 GB weights on an 80 GB card). Do not re-litigate it without reading §9.2.
 
 ---
 
@@ -450,12 +507,18 @@ that discipline:
 
 When you encounter a file and aren't sure where it belongs:
 
-- Is it `MedRAG/` or `MedVLThinker/`? → **dependency, leave at root, don't touch.**
+- Is it `MedRAG/`, `MedVLThinker/` or `MedEvalKit/`? → **dependency, leave at root, don't touch.**
 - Is it a `.jsonl`, `.pkl`, or under `ckpts/`/`logs/`/`results/`? → **data/checkpoint, gitignored,
   do not move during a code cleanup unless told the run is done.**
 - Does its name contain `complexity`, `difficulty`, `lesion`, `gate_probe`, `gate_rag`? →
   **killed direction → `archive/`.**
 - Is it `retrieve.py` / RAG-related? → **legacy retrieval, keep for record (own subfolder).**
-- Is it one of the active scripts in §4.1? → **goes under the new `src/<stage>/` grouping.**
+- Does its name contain `abstain`, `deferral_curve`, `triage`? → **the forbidden direction.
+  Historical record only; do not run, extend, or cite as a live method (CRITICAL RULE 6).**
+- Is it a live script? → it belongs under `src/<stage>/`; find it in **`STRUCTURE.md`**.
 - Unsure? → **leave it, list it, and ask Leo.** Never guess-delete.
-```
+
+> **A meta-lesson from the retrospective (§9.6):** the failure mode in this repository is *not*
+> sloppiness — it is that **corrections were made in new files instead of being propagated back into
+> the old ones**. When you fix a number, fix it everywhere it appears, or add an explicit supersession
+> banner to every stale copy. That is why §0 above names one canonical value and one canonical source.

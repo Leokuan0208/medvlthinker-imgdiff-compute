@@ -1,0 +1,96 @@
+{
+  "title": "ADVERSARIAL verification: is Lingshu-7B MMMU-medical ~0.80 an our-end bug or genuine?",
+  "date": "2026-07-08",
+  "no_fabricated_numbers": true,
+  "bottom_line": "GENUINE Lingshu-7B score. NOT an our-end bug. Under image-ablation the score collapses from 0.827 (real image) to 0.62 (blank/noise) / 0.593 (text-only); and the non-medical base model (Qwen2.5-VL-7B-Instruct, Lingshu's base) scores 0.5667 through the IDENTICAL harness vs Lingshu-7B's 0.8267. The image is genuinely used and the +26 over the published Lingshu-7B 54.0 is a model-specific (Lingshu-7B) effect consistent with train-set contamination outside our control.",
+  "checks": {
+    "1_model_identity": {
+      "result": "PASS - genuinely Lingshu-7B (8.29B params, Qwen2.5-VL-7B arch: hidden=3584, 28 layers, visual tower present, 16GB bf16 across 4 shards). Run log confirms served_model_name=lingshu-medical-mllm/Lingshu-7B produced the 120/150=0.80. NOT a 32B or mislabeled checkpoint.",
+      "params_B": 8.29,
+      "arch": "Qwen2_5_VLForConditionalGeneration",
+      "hidden_size": 3584,
+      "layers": 28,
+      "snapshot": "b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9"
+    },
+    "2_image_ablation_DECISIVE": {
+      "lingshu7b": {
+        "image": {
+          "acc_all": 0.8267,
+          "acc_mc_only": 0.8414,
+          "right_all": 124,
+          "total": 150
+        },
+        "blank": {
+          "acc_all": 0.62,
+          "acc_mc_only": 0.6345,
+          "right_all": 93,
+          "total": 150
+        },
+        "noise": {
+          "acc_all": 0.62,
+          "acc_mc_only": 0.6345,
+          "right_all": 93,
+          "total": 150
+        },
+        "noimg": {
+          "acc_all": 0.5933,
+          "acc_mc_only": 0.6,
+          "right_all": 89,
+          "total": 150
+        }
+      },
+      "control_qwen7b_base": {
+        "image": {
+          "acc_all": 0.5667,
+          "acc_mc_only": 0.5793,
+          "right_all": 85,
+          "total": 150
+        },
+        "blank": {
+          "acc_all": 0.4467,
+          "acc_mc_only": 0.4621,
+          "right_all": 67,
+          "total": 150
+        },
+        "noise": {
+          "acc_all": 0.4467,
+          "acc_mc_only": 0.4552,
+          "right_all": 67,
+          "total": 150
+        },
+        "noimg": {
+          "acc_all": 0.4333,
+          "acc_mc_only": 0.4414,
+          "right_all": 65,
+          "total": 150
+        }
+      },
+      "result": "PASS/decisive - image genuinely drives the score. Lingshu-7B: image 0.8267 -> blank 0.62 / noise 0.62 / text-only 0.5933 (drop ~0.23). Not a wiring bug (prompt dump shows vision_start/image_pad tokens present); not purely text-answerable (removing image costs ~23 pts)."
+    },
+    "3_gold_subset": {
+      "result": "PASS - 150 official MMMU Health&Medicine VALIDATION items (5 subjects x 30), all unique ids; 0 gold-letter mismatches and 0 option-set mismatches vs the official cached arrow; correct split (val, not dev/test); no idx/gold misalignment; all 150 have an image reaching the loader."
+    },
+    "4_control_model_DECISIVE": {
+      "result": "PASS/decisive - base Qwen2.5-VL-7B-Instruct (Lingshu's base, no medical/MMMU tuning) scores 0.5667 through the SAME harness vs Lingshu-7B 0.8267. Harness is NOT broken (non-tuned model lands in the expected ~0.55-0.58 range); the 0.80+ is specific to the Lingshu-7B weights.",
+      "qwen7b_base_image_acc": 0.5667,
+      "lingshu7b_image_acc": 0.8267
+    },
+    "5_prompt_leakage": {
+      "result": "PASS - full chat-template string fed to vLLM dumped for sample items: system 'You are a helpful assistant.' + <|vision_start|><|image_pad|>...<|vision_end|> + question + labeled options + 'Answer with the option's letter from the given choices directly.' The gold answer letter is NEVER indicated; no answer-key/metadata leak."
+    },
+    "6_independent_rescore": {
+      "result": "PASS - re-scoring the canonical Lingshu-7B outputs with an independent (non-MedEvalKit) strict parser gives 123/150 = 0.82 vs MedEvalKit 120/150 = 0.80. 0 no-parse. The 3 disagreements are MedEvalKit UNDER-counting (open-question '.'-suffix + one rfind quirk). 0.80 is NOT a scoring artifact (if anything MedEvalKit is slightly conservative)."
+    },
+    "cross_check_harness_faithful": {
+      "result": "Same 7B + same harness reproduces the Lingshu PAPER on non-MMMU benchmarks: PMC-VQA 54.3 (paper 56.3), MedXpert-MM 26.2 (26.7), SLAKE-closed 82.5 (83.1). Only MMMU is +26 anomalous -> a global harness bug is ruled out; the anomaly is MMMU-and-Lingshu7B-specific."
+    }
+  },
+  "most_decisive_evidence": "IMAGE-ABLATION x CONTROL: through one identical harness, Lingshu-7B goes 0.827(real image) -> 0.593(no image) while the base Qwen2.5-VL-7B scores only 0.567 WITH the real image. A wiring/parse/gold bug on our end could not (a) make accuracy depend ~23 pts on image content AND (b) leave the untuned base model at chance-ish 0.57. The 0.80 is the Lingshu-7B weights' genuine output.",
+  "verdict": "(b) GENUINE Lingshu-7B score, not an our-end bug. The +26 vs published 54.0 is a Lingshu-7B-specific gap (plausible MMMU train-set contamination) OUTSIDE our control. Recommendation for the method stands: do NOT bank MMMU keep-7B as a headline beat-32B win; exclude or escalate MMMU (sample-weighted headline moves ~ -0.0005).",
+  "artifacts": {
+    "lingshu7b_ablation": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/mmmu_verify_lingshu7b.json",
+    "qwen7b_base_ablation": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/mmmu_verify_qwen7b_base.json",
+    "eval_script": "MedEvalKit/mmmu_verify_eval.py",
+    "independent_rescore": "/tmp/independent_rescore.py (result inlined)"
+  }
+}

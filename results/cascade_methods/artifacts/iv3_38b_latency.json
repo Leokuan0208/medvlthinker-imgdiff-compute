@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "model": "OpenGVLab/InternVL3-38B",
+    "measured": "2026-07-07",
+    "purpose": "real batch-1 latency+energy for IV3-38B (removes the router's amortized-batch-latency proxy caveat for the 38B peer strong leg)",
+    "setup": {
+      "engine": "vLLM tp=2 (both A100-80GB), batch-1 (max_num_seqs=1, one request at a time), real VQA-RAD images (max_side=896), NVML energy summed over both GPUs via run_peer_eval --batch1",
+      "no_think": "MCQ letter answer, max_tokens=12",
+      "think": "CoT reasoning then 'Answer: X', max_tokens=1024",
+      "n": "10 questions per mode",
+      "peak_vram_gb": 153.9
+    }
+  },
+  "no_think": {
+    "mode": "no_think",
+    "n": 10,
+    "lat_ms_mean": 1409.3,
+    "lat_ms_median": 1630.4,
+    "lat_ms_p90": 2251.6,
+    "energy_j_mean": 598.0,
+    "energy_j_median": 677.0,
+    "gen_tok_mean": 2.0
+  },
+  "think": {
+    "mode": "think",
+    "n": 10,
+    "lat_ms_mean": 6220.0,
+    "lat_ms_median": 6702.1,
+    "lat_ms_p90": 7929.0,
+    "energy_j_mean": 3275.6,
+    "energy_j_median": 3382.3,
+    "gen_tok_mean": 173.2
+  },
+  "think_vs_nothink": {
+    "latency_ratio_mean": 4.4,
+    "energy_ratio_mean": 5.5
+  },
+  "verdict": "IV3-38B measured batch-1: no-think 1409 ms / 598 J (gen_tok 2.0), think 6220 ms / 3276 J (gen_tok 173.2). Think is ~4.4x slower and ~5.5x more energy at batch-1. These are MEASURED (not amortized-batch) numbers for the 38B peer strong leg."
+}

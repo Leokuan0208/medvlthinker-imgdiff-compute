@@ -1,0 +1,163 @@
+{
+  "idea": "H1",
+  "scope": "COMPETENT-4 (+MMMU context)",
+  "tau": 0.4264123185919304,
+  "per_benchmark": {
+    "PMC-VQA": {
+      "n": 2000,
+      "K": 4,
+      "letters": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "acc_7b_base": 0.543,
+      "acc_prior_adapt": 0.544,
+      "d_prior_adapt": 0.001,
+      "acc_uniform_strip": 0.5335,
+      "d_uniform_strip": -0.0095,
+      "acc_entropy_min": 0.319,
+      "d_entropy_min": -0.224,
+      "acc_label_prop": 0.5245,
+      "d_label_prop": -0.0185,
+      "acc_oracle_goldprior_heldout": 0.5505,
+      "acc_base_on_same_heldout": 0.5443,
+      "d_oracle_goldprior": 0.0062,
+      "acc_7b_think": 0.503,
+      "d_7b_think_vs_nothink": -0.04
+    },
+    "SLAKE": {
+      "n": 416,
+      "K": 3,
+      "letters": [
+        "A",
+        "B",
+        "C"
+      ],
+      "acc_7b_base": 0.762,
+      "acc_prior_adapt": 0.762,
+      "d_prior_adapt": 0.0,
+      "acc_uniform_strip": 0.7524,
+      "d_uniform_strip": -0.0096,
+      "acc_entropy_min": 0.488,
+      "d_entropy_min": -0.274,
+      "acc_label_prop": 0.7139,
+      "d_label_prop": -0.0481,
+      "acc_oracle_goldprior_heldout": 0.7375,
+      "acc_base_on_same_heldout": 0.7519,
+      "d_oracle_goldprior": -0.0144,
+      "acc_7b_think": 0.6587,
+      "d_7b_think_vs_nothink": -0.1033
+    },
+    "VQA-RAD": {
+      "n": 272,
+      "K": 3,
+      "letters": [
+        "A",
+        "B",
+        "C"
+      ],
+      "acc_7b_base": 0.761,
+      "acc_prior_adapt": 0.761,
+      "d_prior_adapt": 0.0,
+      "acc_uniform_strip": 0.7684,
+      "d_uniform_strip": 0.0074,
+      "acc_entropy_min": 0.5294,
+      "d_entropy_min": -0.2316,
+      "acc_label_prop": 0.761,
+      "d_label_prop": 0.0,
+      "acc_oracle_goldprior_heldout": 0.7794,
+      "acc_base_on_same_heldout": 0.7706,
+      "d_oracle_goldprior": 0.0088,
+      "acc_7b_think": 0.7022,
+      "d_7b_think_vs_nothink": -0.0588
+    },
+    "PathVQA": {
+      "n": 3362,
+      "K": 2,
+      "letters": [
+        "A",
+        "B"
+      ],
+      "acc_7b_base": 0.6407,
+      "acc_prior_adapt": 0.6407,
+      "d_prior_adapt": 0.0,
+      "acc_uniform_strip": 0.6416,
+      "d_uniform_strip": 0.0009,
+      "acc_entropy_min": 0.5402,
+      "d_entropy_min": -0.1005,
+      "acc_label_prop": 0.6746,
+      "d_label_prop": 0.0339,
+      "acc_oracle_goldprior_heldout": 0.6449,
+      "acc_base_on_same_heldout": 0.6456,
+      "d_oracle_goldprior": -0.0007,
+      "acc_7b_think": 0.655,
+      "d_7b_think_vs_nothink": 0.0143
+    },
+    "MMMU": {
+      "n": 170,
+      "K": 5,
+      "letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "acc_7b_base": 0.5471,
+      "acc_prior_adapt": 0.5471,
+      "d_prior_adapt": 0.0,
+      "acc_uniform_strip": 0.5529,
+      "d_uniform_strip": 0.0059,
+      "acc_entropy_min": 0.2294,
+      "d_entropy_min": -0.3176,
+      "acc_oracle_goldprior_heldout": 0.54,
+      "acc_base_on_same_heldout": 0.5459,
+      "d_oracle_goldprior": -0.0059,
+      "acc_7b_think": 0.5471,
+      "d_7b_think_vs_nothink": -0.0
+    }
+  },
+  "notes": {
+    "temperature_scaling": "Monotone per-logit scaling preserves argmax => 7B accuracy delta is exactly 0. It only rescales the margin, i.e. it re-tunes the escalation threshold; not an accuracy lever for the cheap leg. Confirmed by construction (no run needed).",
+    "gpu_followup": "Full TTT/TENT/MEMO (updating LayerNorm affines or a LoRA by entropy-min backprop over the 7B) needs gradients+GPU and CANNOT be simulated from logit dumps -- a per-letter bias is the strictest offline upper bound of what a LOGIT-space test-time adaptation can do; weight-space adaptation could in principle exceed it but risks the known entropy-collapse-to-confident-wrong failure.",
+    "heldout": "Label-free methods use only the unlabeled test batch (transductive TTT setting; no gold in the fit). Oracle uses calib->test 50/50, 10 seeds averaged."
+  },
+  "pooled_competent4_7b_acc": {
+    "base": 0.6221,
+    "prior": 0.6225,
+    "uniform": 0.6192,
+    "entropy": 0.463,
+    "labelprop": 0.6316
+  },
+  "pooled_competent4_7b_delta": {
+    "prior": 0.0004,
+    "uniform": -0.0029,
+    "entropy": -0.1591,
+    "labelprop": 0.0095
+  },
+  "integrated_cascade_competent4": {
+    "base": {
+      "acc": 0.6418181818181818,
+      "esc": 0.24115702479338844,
+      "flops_pct_of_32b": 33.37464866936911
+    },
+    "prior": {
+      "acc": 0.6418181818181818,
+      "esc": 0.24115702479338844,
+      "flops_pct_of_32b": 33.37464866936911
+    },
+    "uniform": {
+      "acc": 0.6360330578512396,
+      "esc": 0.21289256198347106,
+      "flops_pct_of_32b": 30.446076828838233
+    },
+    "entropy": {
+      "acc": 0.4633057851239669,
+      "esc": 0.00033057851239669424,
+      "flops_pct_of_32b": 8.983991835120085
+    }
+  },
+  "parity_always32b_think": 0.6451
+}

@@ -1,0 +1,832 @@
+{
+ "_meta": {
+  "title": "Reframe: regime-adaptive allocator (ACC 3-tier + format router) vs always-32B-THINK baseline",
+  "date": "2026-07-07",
+  "framing": "Baseline = always-32B-THINK ('use the big thinking model for everything'). Method = REGIME-ADAPTIVE 3-tier allocator: MCQ -> ACC (7B-nt -> 32B-nt -> 32B-think, gated so slow think fires only on the reasoning residual); open-text -> 7B best-of-N + trained verifier. Think helps ONLY on reasoning (MMMU/MedXpert); on perception no-think >= think, so think ~never fires.",
+  "no_fabrication": "Every number copied from master_data.csv (measured batch-1 latency/energy), MedEvalKit eval_results_*_reason total_results.json, or the cited doc/artifact. CPU analysis only; no new GPU runs.",
+  "harness_note": "TWO eval contexts, kept separate: (1) the 5-family ACC MCQ bake-off (master_data.csv, NGC harness) carries the MEASURED batch-1 latency/energy and the pooled efficiency; (2) the faithful 3-family MedEvalKit eval (eval_results_*) carries the reasoning-regime think deltas. Do not cross-multiply accuracies between harnesses.",
+  "method_row": "Ours (ACC-v2: agreement) = the canonical deployed method row in master_data.csv"
+ },
+ "think_vs_nothink_ratios_ALL6": {
+  "medvlthinker": {
+   "family": "MedVLThinker 7B->32B",
+   "genuine_think_mode": true,
+   "think_lat_s": 11.338,
+   "nothink_lat_s": 0.231,
+   "lat_ratio_think_over_nt": 49.1,
+   "think_energy_j": 6318.8,
+   "nothink_energy_j": 77.8,
+   "energy_ratio": 81.2,
+   "think_acc": 0.5723,
+   "bignt_acc": 0.5573,
+   "cheap_acc": 0.5262
+  },
+  "lingshu": {
+   "family": "Lingshu 7B->32B",
+   "genuine_think_mode": false,
+   "think_lat_s": 0.322,
+   "nothink_lat_s": 0.27,
+   "lat_ratio_think_over_nt": 1.2,
+   "think_energy_j": 113.2,
+   "nothink_energy_j": 88.1,
+   "energy_ratio": 1.3,
+   "think_acc": 0.6611,
+   "bignt_acc": 0.6675,
+   "cheap_acc": 0.6175
+  },
+  "qoq": {
+   "family": "QoQ-Med (cheap->strong; exact params unverified)",
+   "genuine_think_mode": true,
+   "think_lat_s": 9.719,
+   "nothink_lat_s": 0.227,
+   "lat_ratio_think_over_nt": 42.8,
+   "think_energy_j": 5381.6,
+   "nothink_energy_j": 68.8,
+   "energy_ratio": 78.2,
+   "think_acc": 0.4689,
+   "bignt_acc": 0.522,
+   "cheap_acc": 0.5094
+  },
+  "chiron": {
+   "family": "Chiron (cheap->strong; exact params unverified)",
+   "genuine_think_mode": true,
+   "think_lat_s": 4.246,
+   "nothink_lat_s": 0.291,
+   "lat_ratio_think_over_nt": 14.6,
+   "think_energy_j": 1175.6,
+   "nothink_energy_j": 38.8,
+   "energy_ratio": 30.3,
+   "think_acc": 0.5076,
+   "bignt_acc": 0.5512,
+   "cheap_acc": 0.6024
+  },
+  "medgemma": {
+   "family": "MedGemma (cheap->strong; exact params unverified)",
+   "genuine_think_mode": true,
+   "think_lat_s": 12.722,
+   "nothink_lat_s": 0.282,
+   "lat_ratio_think_over_nt": 45.1,
+   "think_energy_j": 6534.5,
+   "nothink_energy_j": 63.9,
+   "energy_ratio": 102.3,
+   "think_acc": 0.5253,
+   "bignt_acc": 0.5001,
+   "cheap_acc": 0.5146
+  }
+ },
+ "per_family_vs_bigthink": [
+  {
+   "family": "MedVLThinker 7B->32B",
+   "key": "medvlthinker",
+   "pool": "ALL-6",
+   "bigthink_acc": 0.5723,
+   "method_acc": 0.5693,
+   "dAcc_vs_bigthink": -0.003,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": false,
+   "bigthink_lat_s": 11.338,
+   "method_lat_s": 2.273,
+   "lat_pct_of_bigthink": 20.0,
+   "lat_reduction_pct": 80.0,
+   "method_flops_pct_of_bigthink": 52.0,
+   "bigthink_energy_j": 6318.8,
+   "method_energy_j": 1181.9,
+   "energy_pct_of_bigthink": 18.7,
+   "think_escalation_pct": 15.1,
+   "esc_past_7B_pct": 71.7,
+   "guardrail_fails": 0.0
+  },
+  {
+   "family": "MedVLThinker 7B->32B",
+   "key": "medvlthinker",
+   "pool": "ALL-5",
+   "bigthink_acc": 0.6463,
+   "method_acc": 0.645,
+   "dAcc_vs_bigthink": -0.0013,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": false,
+   "bigthink_lat_s": 8.882,
+   "method_lat_s": 0.436,
+   "lat_pct_of_bigthink": 4.9,
+   "lat_reduction_pct": 95.1,
+   "method_flops_pct_of_bigthink": 24.9,
+   "bigthink_energy_j": 4915.9,
+   "method_energy_j": 172.8,
+   "energy_pct_of_bigthink": 3.5,
+   "think_escalation_pct": 2.3,
+   "esc_past_7B_pct": 35.1,
+   "guardrail_fails": 0.05
+  },
+  {
+   "family": "Lingshu 7B->32B",
+   "key": "lingshu",
+   "pool": "ALL-6",
+   "bigthink_acc": 0.6611,
+   "method_acc": 0.6614,
+   "dAcc_vs_bigthink": 0.0003,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 0.322,
+   "method_lat_s": 0.295,
+   "lat_pct_of_bigthink": 91.6,
+   "lat_reduction_pct": 8.4,
+   "method_flops_pct_of_bigthink": 48.6,
+   "bigthink_energy_j": 113.2,
+   "method_energy_j": 76.3,
+   "energy_pct_of_bigthink": 67.4,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 60.7,
+   "guardrail_fails": 1.0
+  },
+  {
+   "family": "Lingshu 7B->32B",
+   "key": "lingshu",
+   "pool": "ALL-5",
+   "bigthink_acc": 0.7746,
+   "method_acc": 0.7726,
+   "dAcc_vs_bigthink": -0.002,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": false,
+   "bigthink_lat_s": 0.322,
+   "method_lat_s": 0.246,
+   "lat_pct_of_bigthink": 76.4,
+   "lat_reduction_pct": 23.6,
+   "method_flops_pct_of_bigthink": 38.9,
+   "bigthink_energy_j": 113.2,
+   "method_energy_j": 60.6,
+   "energy_pct_of_bigthink": 53.5,
+   "think_escalation_pct": 0.6,
+   "esc_past_7B_pct": 42.0,
+   "guardrail_fails": 1.15
+  },
+  {
+   "family": "QoQ-Med (cheap->strong; exact params unverified)",
+   "key": "qoq",
+   "pool": "ALL-6",
+   "bigthink_acc": 0.4689,
+   "method_acc": 0.5095,
+   "dAcc_vs_bigthink": 0.0406,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 9.719,
+   "method_lat_s": 0.121,
+   "lat_pct_of_bigthink": 1.2,
+   "lat_reduction_pct": 98.8,
+   "method_flops_pct_of_bigthink": 8.8,
+   "bigthink_energy_j": 5381.6,
+   "method_energy_j": 17.6,
+   "energy_pct_of_bigthink": 0.3,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 0.0,
+   "guardrail_fails": 0.0
+  },
+  {
+   "family": "QoQ-Med (cheap->strong; exact params unverified)",
+   "key": "qoq",
+   "pool": "ALL-5",
+   "bigthink_acc": 0.5432,
+   "method_acc": 0.6048,
+   "dAcc_vs_bigthink": 0.0616,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 8.491,
+   "method_lat_s": 0.121,
+   "lat_pct_of_bigthink": 1.4,
+   "lat_reduction_pct": 98.6,
+   "method_flops_pct_of_bigthink": 9.1,
+   "bigthink_energy_j": 4692.0,
+   "method_energy_j": 17.6,
+   "energy_pct_of_bigthink": 0.4,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 0.0,
+   "guardrail_fails": 0.0
+  },
+  {
+   "family": "Chiron (cheap->strong; exact params unverified)",
+   "key": "chiron",
+   "pool": "ALL-6",
+   "bigthink_acc": 0.5076,
+   "method_acc": 0.6023,
+   "dAcc_vs_bigthink": 0.0947,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 4.246,
+   "method_lat_s": 0.195,
+   "lat_pct_of_bigthink": 4.6,
+   "lat_reduction_pct": 95.4,
+   "method_flops_pct_of_bigthink": 19.3,
+   "bigthink_energy_j": 1175.6,
+   "method_energy_j": 17.4,
+   "energy_pct_of_bigthink": 1.5,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 0.0,
+   "guardrail_fails": 0.0
+  },
+  {
+   "family": "Chiron (cheap->strong; exact params unverified)",
+   "key": "chiron",
+   "pool": "ALL-5",
+   "bigthink_acc": 0.5926,
+   "method_acc": 0.7249,
+   "dAcc_vs_bigthink": 0.1323,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 3.657,
+   "method_lat_s": 0.195,
+   "lat_pct_of_bigthink": 5.3,
+   "lat_reduction_pct": 94.7,
+   "method_flops_pct_of_bigthink": 19.9,
+   "bigthink_energy_j": 1005.7,
+   "method_energy_j": 17.4,
+   "energy_pct_of_bigthink": 1.7,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 0.0,
+   "guardrail_fails": 0.0
+  },
+  {
+   "family": "MedGemma (cheap->strong; exact params unverified)",
+   "key": "medgemma",
+   "pool": "ALL-6",
+   "bigthink_acc": 0.5253,
+   "method_acc": 0.5219,
+   "dAcc_vs_bigthink": -0.0034,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": false,
+   "bigthink_lat_s": 12.722,
+   "method_lat_s": 3.369,
+   "lat_pct_of_bigthink": 26.5,
+   "lat_reduction_pct": 73.5,
+   "method_flops_pct_of_bigthink": 68.4,
+   "bigthink_energy_j": 6534.5,
+   "method_energy_j": 1613.5,
+   "energy_pct_of_bigthink": 24.7,
+   "think_escalation_pct": 20.0,
+   "esc_past_7B_pct": 55.2,
+   "guardrail_fails": 1.15
+  },
+  {
+   "family": "MedGemma (cheap->strong; exact params unverified)",
+   "key": "medgemma",
+   "pool": "ALL-5",
+   "bigthink_acc": 0.5979,
+   "method_acc": 0.6028,
+   "dAcc_vs_bigthink": 0.0049,
+   "parity_met(dAcc>=-0.005)": true,
+   "method_beats_bigthink": true,
+   "bigthink_lat_s": 9.76,
+   "method_lat_s": 0.179,
+   "lat_pct_of_bigthink": 1.8,
+   "lat_reduction_pct": 98.2,
+   "method_flops_pct_of_bigthink": 11.5,
+   "bigthink_energy_j": 4990.1,
+   "method_energy_j": 15.8,
+   "energy_pct_of_bigthink": 0.3,
+   "think_escalation_pct": 0.0,
+   "esc_past_7B_pct": 0.0,
+   "guardrail_fails": 0.0
+  }
+ ],
+ "per_benchmark_accuracy_ALL6_NGChar": {
+  "medvlthinker": {
+   "PMC": {
+    "regime": "perception",
+    "think": 0.5565,
+    "nothink": 0.551,
+    "dThink_minus_nt": 0.005,
+    "method": 0.5613
+   },
+   "SLAKE": {
+    "regime": "perception",
+    "think": 0.7644,
+    "nothink": 0.8486,
+    "dThink_minus_nt": -0.084,
+    "method": 0.8416
+   },
+   "VQARAD": {
+    "regime": "perception",
+    "think": 0.7757,
+    "nothink": 0.8529,
+    "dThink_minus_nt": -0.077,
+    "method": 0.8609
+   },
+   "PathV": {
+    "regime": "perception",
+    "think": 0.6725,
+    "nothink": 0.6612,
+    "dThink_minus_nt": 0.011,
+    "method": 0.6791
+   },
+   "MMMU": {
+    "regime": "reasoning",
+    "think": 0.6882,
+    "nothink": 0.6235,
+    "dThink_minus_nt": 0.065,
+    "method": 0.643
+   },
+   "MX-R": {
+    "regime": "reasoning",
+    "think": 0.3257,
+    "nothink": 0.2787,
+    "dThink_minus_nt": 0.047,
+    "method": 0.2821
+   },
+   "MX-U": {
+    "regime": "reasoning",
+    "think": 0.3845,
+    "nothink": 0.2924,
+    "dThink_minus_nt": 0.092,
+    "method": 0.3103
+   }
+  },
+  "lingshu": {
+   "PMC": {
+    "regime": "perception",
+    "think": 0.6515,
+    "nothink": 0.64,
+    "dThink_minus_nt": 0.011,
+    "method": 0.6381
+   },
+   "SLAKE": {
+    "regime": "perception",
+    "think": 0.8846,
+    "nothink": 0.8942,
+    "dThink_minus_nt": -0.01,
+    "method": 0.8631
+   },
+   "VQARAD": {
+    "regime": "perception",
+    "think": 0.7463,
+    "nothink": 0.8162,
+    "dThink_minus_nt": -0.07,
+    "method": 0.8135
+   },
+   "PathV": {
+    "regime": "perception",
+    "think": 0.8444,
+    "nothink": 0.8614,
+    "dThink_minus_nt": -0.017,
+    "method": 0.8539
+   },
+   "MMMU": {
+    "regime": "reasoning",
+    "think": 0.6176,
+    "nothink": 0.6294,
+    "dThink_minus_nt": -0.012,
+    "method": 0.7122
+   },
+   "MX-R": {
+    "regime": "reasoning",
+    "think": 0.2967,
+    "nothink": 0.296,
+    "dThink_minus_nt": 0.001,
+    "method": 0.2852
+   },
+   "MX-U": {
+    "regime": "reasoning",
+    "think": 0.3375,
+    "nothink": 0.3285,
+    "dThink_minus_nt": 0.009,
+    "method": 0.3174
+   }
+  },
+  "qoq": {
+   "PMC": {
+    "regime": "perception",
+    "think": 0.4355,
+    "nothink": 0.52,
+    "dThink_minus_nt": -0.085,
+    "method": 0.5115
+   },
+   "SLAKE": {
+    "regime": "perception",
+    "think": 0.6587,
+    "nothink": 0.7236,
+    "dThink_minus_nt": -0.065,
+    "method": 0.7212
+   },
+   "VQARAD": {
+    "regime": "perception",
+    "think": 0.6654,
+    "nothink": 0.7426,
+    "dThink_minus_nt": -0.077,
+    "method": 0.7226
+   },
+   "PathV": {
+    "regime": "perception",
+    "think": 0.5756,
+    "nothink": 0.6383,
+    "dThink_minus_nt": -0.063,
+    "method": 0.6403
+   },
+   "MMMU": {
+    "regime": "reasoning",
+    "think": 0.6941,
+    "nothink": 0.6235,
+    "dThink_minus_nt": 0.071,
+    "method": 0.5287
+   },
+   "MX-R": {
+    "regime": "reasoning",
+    "think": 0.2324,
+    "nothink": 0.2324,
+    "dThink_minus_nt": 0.0,
+    "method": 0.2061
+   },
+   "MX-U": {
+    "regime": "reasoning",
+    "think": 0.2509,
+    "nothink": 0.2888,
+    "dThink_minus_nt": -0.038,
+    "method": 0.2302
+   }
+  },
+  "chiron": {
+   "PMC": {
+    "regime": "perception",
+    "think": 0.5245,
+    "nothink": 0.596,
+    "dThink_minus_nt": -0.072,
+    "method": 0.5395
+   },
+   "SLAKE": {
+    "regime": "perception",
+    "think": 0.7019,
+    "nothink": 0.8101,
+    "dThink_minus_nt": -0.108,
+    "method": 0.8182
+   },
+   "VQARAD": {
+    "regime": "perception",
+    "think": 0.6801,
+    "nothink": 0.7721,
+    "dThink_minus_nt": -0.092,
+    "method": 0.7518
+   },
+   "PathV": {
+    "regime": "perception",
+    "think": 0.6136,
+    "nothink": 0.6645,
+    "dThink_minus_nt": -0.051,
+    "method": 0.8377
+   },
+   "MMMU": {
+    "regime": "reasoning",
+    "think": 0.5706,
+    "nothink": 0.5706,
+    "dThink_minus_nt": 0.0,
+    "method": 0.407
+   },
+   "MX-R": {
+    "regime": "reasoning",
+    "think": 0.2258,
+    "nothink": 0.2202,
+    "dThink_minus_nt": 0.006,
+    "method": 0.2047
+   },
+   "MX-U": {
+    "regime": "reasoning",
+    "think": 0.2805,
+    "nothink": 0.2477,
+    "dThink_minus_nt": 0.033,
+    "method": 0.2536
+   }
+  },
+  "medgemma": {
+   "PMC": {
+    "regime": "perception",
+    "think": 0.4665,
+    "nothink": 0.4745,
+    "dThink_minus_nt": -0.008,
+    "method": 0.4678
+   },
+   "SLAKE": {
+    "regime": "perception",
+    "think": 0.7981,
+    "nothink": 0.7933,
+    "dThink_minus_nt": 0.005,
+    "method": 0.8498
+   },
+   "VQARAD": {
+    "regime": "perception",
+    "think": 0.75,
+    "nothink": 0.7684,
+    "dThink_minus_nt": -0.018,
+    "method": 0.8243
+   },
+   "PathV": {
+    "regime": "perception",
+    "think": 0.644,
+    "nothink": 0.6041,
+    "dThink_minus_nt": 0.04,
+    "method": 0.642
+   },
+   "MMMU": {
+    "regime": "reasoning",
+    "think": 0.5,
+    "nothink": 0.5118,
+    "dThink_minus_nt": -0.012,
+    "method": 0.5523
+   },
+   "MX-R": {
+    "regime": "reasoning",
+    "think": 0.2891,
+    "nothink": 0.249,
+    "dThink_minus_nt": 0.04,
+    "method": 0.2557
+   },
+   "MX-U": {
+    "regime": "reasoning",
+    "think": 0.3267,
+    "nothink": 0.2617,
+    "dThink_minus_nt": 0.065,
+    "method": 0.2788
+   }
+  }
+ },
+ "reasoning_regime_faithful_MedEvalKit": {
+  "source": "MedEvalKit/eval_results_{lingshu32b,mvt32b,iv3_38b}_reason/{}/*/total_results.json vs no-think dirs",
+  "MMMU_150": {
+   "lingshu32b": {
+    "think": 0.66,
+    "nothink": 0.6333,
+    "d": 0.027
+   },
+   "mvt32b": {
+    "think": 0.7133,
+    "nothink": 0.6133,
+    "d": 0.1
+   },
+   "iv3_38b": {
+    "think": 0.7333,
+    "nothink": 0.6133,
+    "d": 0.12
+   }
+  },
+  "MedXpert_2000": {
+   "lingshu32b": {
+    "think": 0.304,
+    "nothink": 0.3065,
+    "d": -0.003
+   },
+   "mvt32b": {
+    "think": 0.3445,
+    "nothink": 0.2995,
+    "d": 0.045
+   },
+   "iv3_38b": {
+    "think": 0.3005,
+    "nothink": 0.2695,
+    "d": 0.031
+   }
+  },
+  "note": "Think helps ONLY on reasoning, and only for MVT/IV3 strongly; Lingshu's reason-dir MMMU gain is small (+0.027) and its other 'think' variants (eval_results_lingshu32b_{think,cot,reason_mmmu}) show 0.6267 = NO gain, i.e. Lingshu has no reliable promptable think mode (latency ratio 1.2x confirms). MedXpert think gain is ~0 for Lingshu."
+ },
+ "reasoning_regime_3tier_efficiency_MVT": {
+  "source": "UNIFIED_METHOD_EXPERIMENTS.md 2026-07-01 '3-tier cascade test' (MedVLThinker, NGC think tier)",
+  "config": "7B-nt -> 32B-nt -> 32B-think, margin-gated, min-cost @ iso-accuracy(match always-32B-think)",
+  "MMMU": {
+   "bigthink_acc": 0.688,
+   "cascade_acc": 0.688,
+   "to_32Bnt_pct": 68,
+   "think_fire_pct": 28,
+   "flops_pct_of_bigthink": 78,
+   "lat_energy_pct": 31,
+   "verdict": "WIN"
+  },
+  "MedXpert_Reasoning": {
+   "bigthink_acc": 0.326,
+   "cascade_acc": 0.326,
+   "to_32Bnt_pct": 100,
+   "think_fire_pct": 92,
+   "flops_pct_of_bigthink": 143,
+   "verdict": "NO WIN (7B near-floor -> escalate ~all)"
+  },
+  "MedXpert_Understanding": {
+   "bigthink_acc": 0.384,
+   "cascade_acc": 0.384,
+   "to_32Bnt_pct": 96,
+   "think_fire_pct": 96,
+   "flops_pct_of_bigthink": 151,
+   "verdict": "NO WIN"
+  }
+ },
+ "perception_regime_framing": {
+  "benchmarks": [
+   "SLAKE",
+   "VQA_RAD",
+   "PMC_VQA",
+   "PathVQA",
+   "OmniMedVQA"
+  ],
+  "claim": "On perception, 32B-no-think is EQUAL-OR-MORE accurate than 32B-think AND ~35x faster; so always-32B-THINK is a strictly Pareto-dominated baseline here and the method's win is huge (think ~never fires).",
+  "evidence_per_benchmark_dThink(think-minus-nt)_ALL6": {
+   "SLAKE": {
+    "MVT": -0.084,
+    "lingshu": -0.01,
+    "qoq": -0.065,
+    "chiron": -0.108,
+    "medgemma": 0.005
+   },
+   "VQARAD": {
+    "MVT": -0.077,
+    "lingshu": -0.07,
+    "qoq": -0.077,
+    "chiron": -0.092,
+    "medgemma": -0.018
+   },
+   "PMC": {
+    "MVT": 0.005,
+    "lingshu": 0.011,
+    "qoq": -0.085,
+    "chiron": -0.072,
+    "medgemma": -0.008
+   },
+   "PathV": {
+    "MVT": 0.011,
+    "lingshu": -0.017,
+    "qoq": -0.063,
+    "chiron": -0.051,
+    "medgemma": 0.04
+   }
+  },
+  "read": "think mostly HURTS or is flat on perception (esp SLAKE/VQA-RAD); no-think dominates. Method routes these to the fast no-think tiers.",
+  "latency_anchor": "On the perception-dominated ALL-5 pool, method latency is 0.12-0.44s vs always-32B-think 8.5-12.7s (genuine-think families) = -95 to -99%.",
+  "faithful_2tier_flops_vs_nothink_baseline": {
+   "source": "UNIFIED_METHOD_EXPERIMENTS.md faithful MedEvalKit 2-tier cascade (vs always-32B-NO-THINK, not think)",
+   "note": "vs the WEAKER no-think baseline the 2-tier already saves FLOPs where 7B competitive; vs always-THINK the saving is strictly larger (think is costlier).",
+   "PMC_VQA": {
+    "lingshu_flops": "-69%",
+    "mvt_flops": "-49%",
+    "esc": "9%/29%"
+   },
+   "SLAKE_closed": {
+    "lingshu_flops": "-56%",
+    "esc": "22%"
+   },
+   "VQA_RAD_closed": {
+    "lingshu_flops": "-17%",
+    "mvt_flops": "-41%"
+   }
+  }
+ },
+ "router_restored_middle_tier": {
+  "as_built_router_source": "unified_router.json (pooled MCQ+open, 50/50 calib/test, 20 seeds)",
+  "as_built_baseline": "always-32B-NO-THINK (as reported)",
+  "as_built": {
+   "Lingshu": {
+    "acc": 0.549,
+    "strong": 0.546,
+    "flops_pct_of_nt": 47.7,
+    "escM_pct": 7.6,
+    "escO_pct": 0.0
+   },
+   "MedVLThinker": {
+    "acc": 0.522,
+    "strong": 0.522,
+    "flops_pct_of_nt": 60.0,
+    "escM_pct": 25.7,
+    "escO_pct": 4.8
+   },
+   "InternVL3": {
+    "acc": 0.514,
+    "strong": 0.512,
+    "flops_pct_of_nt": 82.1,
+    "escM_pct": 39.6,
+    "escO_pct": 10.7
+   }
+  },
+  "reframe_key_finding": "The AS-BUILT router already escalates MCQ to 32B-NO-THINK (its strong dir loads eval_results_*_full first), so it already AVOIDS the think-tax on perception, i.e. it already matches always-32B-no-think. Its gap vs the CORRECT baseline (always-32B-THINK) is that it NEVER fires think, so it does not capture the reasoning think-gains (per-benchmark: MMMU MVT +0.100 / IV3 +0.120; MedXpert MVT +0.045 / IV3 +0.031).",
+  "mcq_pool_composition": {
+   "total_mcq_items": 39422,
+   "reasoning_items(MMMU150+MedXpert2000)": 2150,
+   "reasoning_fraction_pct": 5.45,
+   "implication": "reasoning is only 5.45% of the MCQ stream, so the pooled think-gain is small (see below) but the PER-BENCHMARK MMMU/MedXpert parity is recovered."
+  },
+  "restore_gated_think_tier_pooled_accuracy_recovered": {
+   "MVT": 0.0027,
+   "IV3": 0.002,
+   "Lingshu": -0.0,
+   "note": "tiny pooled effect (~+0.002-0.003) because PMC (33430) dominates; the value is per-benchmark, not pooled-MCQ."
+  },
+  "middle_tier_value_LOADBEARING": {
+   "source": "METHOD_ACC.md head-to-head (acc_compare.py, ALL-6/ALL-5, 20 seeds, measured latency/energy). M1 ACC = 7B-nt->32B-NT->32B-think (WITH the no-think middle). M2 = 7B-THINK->32B-think (no no-think middle, escalate-to-think). M3 = 7B-nt->7B-THINK->32B-think (7B-think middle instead of 32B-nt).",
+   "ALL6": {
+    "M2_2tier_think": {
+     "acc": 0.5725,
+     "think_esc_pct": 86,
+     "flops_pct": 105,
+     "lat_s": 29.8,
+     "energy_j": 7049
+    },
+    "M3_3tier_think": {
+     "acc": 0.5697,
+     "think_esc_pct": 65,
+     "flops_pct": 89,
+     "lat_s": 23.2,
+     "energy_j": 5499
+    },
+    "M1_ACC_margin": {
+     "acc": 0.5694,
+     "think_esc_pct": 19,
+     "flops_pct": 55,
+     "lat_s": 5.9,
+     "energy_j": 1505
+    },
+    "M1b_ACC_agreement": {
+     "acc": 0.571,
+     "think_esc_pct": 14,
+     "flops_pct": 54,
+     "lat_s": 4.86,
+     "energy_j": 1220
+    }
+   },
+   "ALL5": {
+    "M2_2tier_think": {
+     "acc": 0.6437,
+     "think_esc_pct": 73,
+     "flops_pct": 91,
+     "lat_s": 20.3,
+     "energy_j": 4735
+    },
+    "M3_3tier_think": {
+     "acc": 0.6401,
+     "think_esc_pct": 31,
+     "flops_pct": 48,
+     "lat_s": 9.0,
+     "energy_j": 2090
+    },
+    "M1_ACC": {
+     "acc": 0.6457,
+     "think_esc_pct": 1,
+     "flops_pct": 27,
+     "lat_s": 0.49,
+     "energy_j": 88
+    }
+   },
+   "delta_restore_no_think_middle(M1_vs_M2)_ALL6": {
+    "think_esc": "86%->19%",
+    "flops": "105%->55%",
+    "latency": "29.8s->5.9s (-80%)",
+    "energy": "7049->1505J (-79%)"
+   },
+   "delta_vs_7Bthink_middle(M1_vs_M3)_ALL6": {
+    "think_esc": "65%->19%",
+    "flops": "89%->55%",
+    "latency": "23.2s->5.9s (-75%)",
+    "energy": "5499->1505J (-73%)"
+   }
+  },
+  "verdict": "Restoring the 32B-no-think middle tier is the load-bearing structural win: it turns an escalate-everything-to-think cascade (M2, FLOPs>100%, ~30s latency) into the ACC (55% FLOPs, ~5s latency) at matched accuracy, by reserving slow think for the ~14-19% genuine-reasoning residual. Inside the format router this is the MCQ arm; the pooled-MCQ accuracy delta is small (perception dominates) but the per-benchmark reasoning parity and the latency/energy win are large."
+ },
+ "cheap_tier_boosters": {
+  "question": "Do verifier / best-of-N / diverse-generation cut cheap-tier error enough to reduce think-tier escalations?",
+  "open_text_verifier_bestofN": {
+   "effect": "raises the cheap open-text tier greedy 0.385 -> verifier-bo8 0.501 (pooled Lingshu) = a real cheap-tier accuracy boost",
+   "but": "open-text arm is 2-tier NO-THINK (best-of-N REPLACES the think tier); there is NO think tier to reduce there.",
+   "flops": "Pareto-DOMINATED (end_to_end_consolidation.json: diverse/bo-N NOT on the FLOPs envelope; iid->Pandora dominates). best-of-N base = 2N cheap fwd, break-even vs one 32B fwd is N<=2.",
+   "source": "MASTER \u00a78, RESEARCH_RESULTS \u00a71.1/\u00a72.6"
+  },
+  "mcq_verifier": {
+   "effect": "best-of-N DEGENERATES on single-letter MCQ (UGV content-mode collapses PMC 0.534->0.132; verifier gain +0.004)",
+   "implication": "cannot boost the cheap MCQ tier -> does NOT reduce MCQ think-escalations. Think-escalation on MCQ is set by the genuine reasoning residual, which no cheap-tier booster fixes.",
+   "source": "RESEARCH_RESULTS \u00a72.1"
+  },
+  "diverse_generation": {
+   "oracle_lift": "+0.027 matched / +0.064 @M=15",
+   "converts_to": "+0.025 verifier bo-N acc",
+   "flops": "1.875x gen cost, Pareto-dominated",
+   "source": "\u00a72.3(a)/\u00a72.6(4)"
+  },
+  "cross_model_pool": {
+   "oracle_lift": "+0.11..+0.15",
+   "selection_conversion": "~+0.002 over uniform (selectability wall)",
+   "source": "\u00a71.3/\u00a72.5(b)"
+  },
+  "real_pairwise_verifier": {
+   "sel_acc": "+0.036 (closes ~35% of pointwise->oracle gap)",
+   "does_not_compound_with_diverse": true,
+   "source": "\u00a72.3(b)/\u00a72.6(1)"
+  },
+  "net_verdict": "As cheap-tier boosters that REDUCE THINK ESCALATIONS in the 3-tier MCQ structure: value ~= NIL. They are open-text-only (MCQ verifier degenerates), the open-text arm has no think tier, and every open-text lever is Pareto-dominated on FLOPs by escalating to the cheap-fast strong leg (the \u00a72.6 re-grounding: deployable lever = the ROUTER, not best-of-N). They lift the OPEN-TEXT accuracy ceiling but do not translate into fewer slow-think calls."
+ },
+ "blocked_on_GPU_measurements": {
+  "M1_opentext_32B_THINK_latency": {
+   "what": "batch-1 wall-clock latency (and energy) of the strong 32B in THINK mode on open-text",
+   "why_blocked": "the open-text strong leg was only ever run NO-THINK (measured gen32=665ms). No open-text think latency exists.",
+   "impact": "the OPEN-TEXT arm cannot be costed against the always-32B-THINK baseline on latency/energy; only FLOPs (prefill-eq) and accuracy are computable now.",
+   "computable_now_instead": "open-text FLOPs (N<=2 break-even), accuracy vs 32B-no-think (verifier beats/matches), latency vs 32B-NO-THINK (parallel bo-N ~522ms < 665ms)."
+  },
+  "M3_IV3_38B_latency_energy": {
+   "what": "batch-1 latency/energy for the InternVL3 8B/38B family (no ACC-family latency row exists for IV3)",
+   "why_blocked": "master_data.csv measured batch-1 only for Lingshu-7B/32B and MVT-7B/32B; InternVL3 never latency-profiled.",
+   "impact": "IV3 enters the reframe ONLY via FLOPs proxy (unified_router 82.1%) + accuracy + reason-dir think deltas (MMMU +0.120, MedXpert +0.031). Its vs-always-38B-THINK latency/energy is unquantified.",
+   "computable_now_instead": "IV3 FLOPs%, escalation rate, and reasoning think-gain (accuracy only)."
+  },
+  "ALL7_OmniMed_strong_think": {
+   "what": "OmniMedVQA strong 32B/38B leg (needed for the ALL-7 pool)",
+   "why_blocked": "deterministic tp=2 NCCL collective hang on the OmniMed strong run (ruled out chunking/timeouts over ~2 days).",
+   "impact": "the pooled ALL-7 (adding OmniMed) vs-always-32B-THINK number is NOT reportable (no OmniMed strong-think acc/cost). ALL-6 is the computable pool.",
+   "why_conclusion_unchanged": "OmniMed is keep-cheap (cheap Lingshu 0.827 ~ paper strong 0.834); the method keeps-cheap at ~0% escalation, so the missing strong number changes no cascade verdict, only the pooled ALL-7 figure."
+  }
+ }
+}

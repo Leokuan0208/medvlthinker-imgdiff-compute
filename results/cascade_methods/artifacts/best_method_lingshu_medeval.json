@@ -1,0 +1,400 @@
+{
+  "method": "FALC \u2014 Format-Aware Lingshu Cascade (7B-nothink -> 32B-nothink; margin gate for MCQ/closed, verifier/seqlogprob gate for open-text; held-out 5-fold tau at iso-32B-acc)",
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "J": 45.8,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "J": 25.3,
+      "flop": 1.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "J": 127.0,
+      "flop": 4.57
+    },
+    "always32": {
+      "ms": 665.0,
+      "J": 127.0,
+      "flop": 4.57
+    }
+  },
+  "strong_leg_is_nothink_because": "32B-think <= 32B-nothink on every MedEvalKit benchmark (measured)",
+  "bottom_line": {
+    "faster": "YES (pooled, sample-weighted): batch-1 latency 484.2ms vs 665ms (+27%), FLOPs 1.934 vs 4.57 (+58%)",
+    "more_accurate": "AT PARITY: sample-weighted cascade 0.5711 vs 32B 0.573 (d=-0.002); strictly MORE accurate only on macro-avg WITH MMMU (0.665 vs 0.6541, d=+0.011), which rides the known Lingshu-7B MMMU anomaly",
+    "where_it_wins": "benchmarks with small 32B headroom -> low escalation stays under the latency crossover (esc<48% MCQ / <22% open): PMC(8%), MMMU(0%), SLAKE-closed(20%), PATH-closed(46%).",
+    "where_it_falls_short": "benchmarks where 7B is weak/near-floor -> must escalate heavily, so slower than always-32B: MedXpert(90%), VQA_RAD-closed(57%), all open-text(53-91%).",
+    "note": "pooled 'faster' is real but dominated by PMC_VQA (33k samples, 8% esc); per-benchmark the cascade is faster on 4/6 closed-MCQ sets and slower on the high-headroom (open/reasoning) sets."
+  },
+  "notes": [
+    "SLAKE-open scoring: current committed Claude-judge files give 7B=0.730 / 32B=0.819 (harness modal_ok=0.763 agrees); the older open_cascade_lingshu.json 0.419/0.847 used a different/older pass. Same judge used for both legs here (fair). Gate=seqlogprob (free single-gen signal).",
+    "VQA_RAD/PATH_VQA-open gate=trained verifier (lora_verifier_pooled4) confidence; costs +VER7 (175ms) on the cheap leg. cheap answer = 7B greedy (greedy_ok); best-of-N deliberately NOT used (8x gen+verify = 4176ms would blow the batch-1 latency budget vs 665ms).",
+    "Held-out = 5-fold cross-fit: tau chosen on 4/5 (min escalation s.t. cascade acc >= that fold's 32B acc), evaluated on the held-out 1/5, averaged. No peeking.",
+    "MMMU cascade keeps 7B (esc 0%) because Lingshu-7B (0.80) already exceeds 32B (0.633) there."
+  ],
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "scoring": "EM",
+      "gate": "margin",
+      "acc_7b": 0.5427,
+      "acc_32b": 0.5518,
+      "headroom_32b": 0.0091,
+      "cascade_iso": {
+        "acc": 0.5508,
+        "d_acc_vs32": -0.001,
+        "esc": 0.0845,
+        "latency_ms": 403.2,
+        "flops": 1.386,
+        "energy_J": 56.5,
+        "faster": true,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.5625,
+        "d_acc_vs32": 0.0107,
+        "esc": 0.3898,
+        "latency_ms": 606.2,
+        "flops": 2.781
+      },
+      "oracle_iso": {
+        "acc": 0.5518,
+        "esc": 0.0873
+      },
+      "verdict": "faster_but_slightly_less_accurate"
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "scoring": "EM/judge",
+      "gate": "margin",
+      "acc_7b": 0.8,
+      "acc_32b": 0.6333,
+      "headroom_32b": -0.1667,
+      "cascade_iso": {
+        "acc": 0.8,
+        "d_acc_vs32": 0.1667,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0,
+        "energy_J": 45.8,
+        "faster": true,
+        "at_least_as_acc": true
+      },
+      "cascade_maxacc": {
+        "acc": 0.8133,
+        "d_acc_vs32": 0.18,
+        "esc": 0.0867,
+        "latency_ms": 404.6,
+        "flops": 1.396
+      },
+      "oracle_iso": {
+        "acc": 0.8,
+        "esc": 0.0
+      },
+      "verdict": "faster_AND_more_accurate"
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "scoring": "EM",
+      "gate": "margin",
+      "acc_7b": 0.2615,
+      "acc_32b": 0.3065,
+      "headroom_32b": 0.045,
+      "cascade_iso": {
+        "acc": 0.3005,
+        "d_acc_vs32": -0.006,
+        "esc": 0.896,
+        "latency_ms": 942.8,
+        "flops": 5.095,
+        "energy_J": 159.6,
+        "faster": false,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.3035,
+        "d_acc_vs32": -0.003,
+        "esc": 0.956,
+        "latency_ms": 982.7,
+        "flops": 5.369
+      },
+      "oracle_iso": {
+        "acc": 0.3065,
+        "esc": 0.883
+      },
+      "verdict": "slower (needs high escalation; no cheap win)"
+    },
+    "SLAKE_closed": {
+      "format": "closed",
+      "n": 836,
+      "scoring": "EM",
+      "gate": "margin",
+      "acc_7b": 0.8254,
+      "acc_32b": 0.8589,
+      "headroom_32b": 0.0335,
+      "cascade_iso": {
+        "acc": 0.8516,
+        "d_acc_vs32": -0.0072,
+        "esc": 0.2045,
+        "latency_ms": 483.0,
+        "flops": 1.935,
+        "energy_J": 71.8,
+        "faster": true,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.8613,
+        "d_acc_vs32": 0.0024,
+        "esc": 0.4377,
+        "latency_ms": 638.1,
+        "flops": 3.0
+      },
+      "oracle_iso": {
+        "acc": 0.8589,
+        "esc": 0.2153
+      },
+      "verdict": "faster_but_slightly_less_accurate"
+    },
+    "VQA_RAD_closed": {
+      "format": "closed",
+      "n": 251,
+      "scoring": "EM",
+      "gate": "margin",
+      "acc_7b": 0.7809,
+      "acc_32b": 0.8526,
+      "headroom_32b": 0.0717,
+      "cascade_iso": {
+        "acc": 0.8328,
+        "d_acc_vs32": -0.0198,
+        "esc": 0.5696,
+        "latency_ms": 725.8,
+        "flops": 3.603,
+        "energy_J": 118.1,
+        "faster": false,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.8328,
+        "d_acc_vs32": -0.0198,
+        "esc": 0.5736,
+        "latency_ms": 728.5,
+        "flops": 3.622
+      },
+      "oracle_iso": {
+        "acc": 0.8526,
+        "esc": 0.6096
+      },
+      "verdict": "slower (needs high escalation; no cheap win)"
+    },
+    "PATH_VQA_closed": {
+      "format": "closed",
+      "n": 3362,
+      "scoring": "EM",
+      "gate": "margin",
+      "acc_7b": 0.8409,
+      "acc_32b": 0.8891,
+      "headroom_32b": 0.0482,
+      "cascade_iso": {
+        "acc": 0.8882,
+        "d_acc_vs32": -0.0009,
+        "esc": 0.4572,
+        "latency_ms": 651.0,
+        "flops": 3.089,
+        "energy_J": 103.9,
+        "faster": true,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.8885,
+        "d_acc_vs32": -0.0006,
+        "esc": 0.4917,
+        "latency_ms": 674.0,
+        "flops": 3.247
+      },
+      "oracle_iso": {
+        "acc": 0.8891,
+        "esc": 0.4661
+      },
+      "verdict": "faster_but_slightly_less_accurate"
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "scoring": "open (judged)",
+      "gate": "seqlogprob",
+      "acc_7b": 0.7302,
+      "acc_32b": 0.8186,
+      "headroom_32b": 0.0884,
+      "cascade_iso": {
+        "acc": 0.8109,
+        "d_acc_vs32": -0.0078,
+        "esc": 0.5287,
+        "latency_ms": 698.6,
+        "flops": 3.416,
+        "energy_J": 112.9,
+        "faster": false,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.8109,
+        "d_acc_vs32": -0.0078,
+        "esc": 0.5333,
+        "latency_ms": 701.7,
+        "flops": 3.437
+      },
+      "oracle_iso": {
+        "acc": 0.8186,
+        "esc": 0.707
+      },
+      "verdict": "slower (needs high escalation; no cheap win)"
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "scoring": "open (judged)",
+      "gate": "verifier-conf",
+      "acc_7b": 0.465,
+      "acc_32b": 0.6,
+      "headroom_32b": 0.135,
+      "cascade_iso": {
+        "acc": 0.58,
+        "d_acc_vs32": -0.02,
+        "esc": 0.91,
+        "latency_ms": 1127.2,
+        "flops": 6.159,
+        "energy_J": 186.7,
+        "faster": false,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.58,
+        "d_acc_vs32": -0.02,
+        "esc": 0.91,
+        "latency_ms": 1127.2,
+        "flops": 6.159
+      },
+      "oracle_iso": {
+        "acc": 0.6,
+        "esc": 0.97
+      },
+      "verdict": "slower (needs high escalation; no cheap win)"
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "scoring": "open (judged)",
+      "gate": "verifier-conf",
+      "acc_7b": 0.324,
+      "acc_32b": 0.376,
+      "headroom_32b": 0.052,
+      "cascade_iso": {
+        "acc": 0.37,
+        "d_acc_vs32": -0.006,
+        "esc": 0.848,
+        "latency_ms": 1085.9,
+        "flops": 5.875,
+        "energy_J": 178.8,
+        "faster": false,
+        "at_least_as_acc": false
+      },
+      "cascade_maxacc": {
+        "acc": 0.38,
+        "d_acc_vs32": 0.004,
+        "esc": 0.9313,
+        "latency_ms": 1141.3,
+        "flops": 6.256
+      },
+      "oracle_iso": {
+        "acc": 0.3773,
+        "esc": 0.868
+      },
+      "verdict": "slower (needs high escalation; no cheap win)"
+    },
+    "OmniMedVQA": {
+      "format": "MCQ",
+      "n": 88996,
+      "acc_7b": 0.8274,
+      "acc_32b": null,
+      "status": "32B_MISSING (cannot score cascade)"
+    }
+  },
+  "pooled": {
+    "suite_no_mmmu_no_omni": {
+      "benchmarks": [
+        "PMC_VQA",
+        "MedXpertQA-MM",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42224,
+      "macro_avg": {
+        "acc_7b": 0.5963,
+        "acc_32b": 0.6567,
+        "acc_cascade": 0.6481,
+        "d_acc_vs32": -0.0086
+      },
+      "sample_weighted": {
+        "acc_7b": 0.5549,
+        "acc_32b": 0.573,
+        "acc_cascade": 0.5711,
+        "d_acc_vs32": -0.0018,
+        "esc": 0.1957,
+        "cascade_latency_ms": 484.2,
+        "always32_latency_ms": 665.0,
+        "latency_saved_pct": 27.2,
+        "cascade_flops": 1.934,
+        "always32_flops": 4.57,
+        "flops_saved_pct": 57.7
+      }
+    },
+    "suite_with_mmmu": {
+      "benchmarks": [
+        "PMC_VQA",
+        "MMMU-Medical-val",
+        "MedXpertQA-MM",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "macro_avg": {
+        "acc_7b": 0.619,
+        "acc_32b": 0.6541,
+        "acc_cascade": 0.665,
+        "d_acc_vs32": 0.0109
+      },
+      "sample_weighted": {
+        "acc_7b": 0.5557,
+        "acc_32b": 0.5732,
+        "acc_cascade": 0.5719,
+        "d_acc_vs32": -0.0012,
+        "esc": 0.195,
+        "cascade_latency_ms": 483.7,
+        "always32_latency_ms": 665.0,
+        "latency_saved_pct": 27.3,
+        "cascade_flops": 1.931,
+        "always32_flops": 4.57,
+        "flops_saved_pct": 57.7
+      }
+    }
+  },
+  "data_gaps": [
+    "OmniMedVQA-32B MISSING (n=88996): cannot score the cascade or always-32B there; 7B=0.827 only. Re-confirmed BLOCKED (2026-07-07): tp=2 hangs (NCCL worker-died, pre-existing); tp=1 has no viable gpu_memory_utilization window on one 80GB A100 -- util<=0.88 => 'no KV cache blocks', util>=0.90 => vision-tower activation OOM. Needs >2 GPUs, quantization, or a smaller strong model.",
+    "MMMU: Lingshu-7B=0.80 >> 32B=0.633 is a known Lingshu-7B-specific MedEvalKit anomaly (excluded from robust efficiency claims); n=150 only.",
+    "SLAKE-open uses free 7B seqlogprob gate (no verifier transfer dump); VQA_RAD/PATH_VQA-open use trained verifier.",
+    "32B-THINK batch-1 latency pending (opentext_32b_think.json) \u2014 NOT needed: think never beats no-think for Lingshu, so the strong leg is no-think."
+  ]
+}

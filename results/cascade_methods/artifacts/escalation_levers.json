@@ -1,0 +1,760 @@
+{
+  "what": "OFFLINE escalation speed levers (backlog sec-G: G5 suppressor / G6 2-of-2 gate / G8 prefill prefetch) applied to the integrated format-aware cascade; re-simulated on saved dumps + measured batch-1 costs.  Baseline where the win is 'lost' = always-32B-NO-THINK (665 ms).",
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "VER7": {
+      "ms": 175.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "always32_nothink_ms": 665.0,
+    "always32_think_ms": 10521.6,
+    "g8_prefill_fraction_phi": 0.586,
+    "g8_prefill32_ms": 389.7,
+    "g8_decode32_ms": 275.3,
+    "g8_phi_source": "latency_32b.jsonl: nothink@cap320 195ms prefill + 138ms decode(2tok); decode step 68.6ms/tok from think@cap320 lever arm; phi CONSERVATIVE"
+  },
+  "baseline_per_slice": {
+    "PMC_VQA": {
+      "acc": 0.5507927011666168,
+      "esc": 0.08453484893807957,
+      "latency_ms": 403.2,
+      "flops": 1.386
+    },
+    "SLAKE_closed": {
+      "acc": 0.8516746411483254,
+      "esc": 0.20454545454545456,
+      "latency_ms": 483.0,
+      "flops": 1.935
+    },
+    "VQA_RAD_closed": {
+      "acc": 0.8326693227091634,
+      "esc": 0.5697211155378487,
+      "latency_ms": 725.9,
+      "flops": 3.604
+    },
+    "PATH_VQA_closed": {
+      "acc": 0.8881618084473528,
+      "esc": 0.45716835217132656,
+      "latency_ms": 651.0,
+      "flops": 3.089
+    },
+    "MedXpertQA-MM": {
+      "acc": 0.3005,
+      "esc": 0.896,
+      "latency_ms": 942.8,
+      "flops": 5.095
+    },
+    "MMMU-Medical-val": {
+      "acc": 0.8,
+      "esc": 0.0,
+      "latency_ms": 347.0,
+      "flops": 1.0
+    },
+    "SLAKE_open": {
+      "acc": 0.8108527131782945,
+      "esc": 0.5286821705426357,
+      "latency_ms": 698.6,
+      "flops": 3.416
+    },
+    "VQA_RAD_open": {
+      "acc": 0.585,
+      "esc": 0.055,
+      "latency_ms": 558.6,
+      "flops": 16.251
+    },
+    "PATH_VQA_open": {
+      "acc": 0.4533333333333333,
+      "esc": 0.0006666666666666666,
+      "latency_ms": 522.4,
+      "flops": 16.003
+    }
+  },
+  "baseline_pooled": {
+    "n": 42374,
+    "acc": 0.5749,
+    "esc": 0.161,
+    "latency_ms": 461.1,
+    "flops": 2.337
+  },
+  "slower_than_always_32b_nothink": {
+    "cells": [
+      "VQA_RAD_closed",
+      "MedXpertQA-MM",
+      "SLAKE_open"
+    ],
+    "detail": {
+      "VQA_RAD_closed": {
+        "latency_ms": 725.9,
+        "esc": 0.5697
+      },
+      "MedXpertQA-MM": {
+        "latency_ms": 942.8,
+        "esc": 0.896
+      },
+      "SLAKE_open": {
+        "latency_ms": 698.6,
+        "esc": 0.5287
+      }
+    }
+  },
+  "G8_prefill_prefetch": {
+    "idea": "run the 32B image-prefill concurrently with the 7B pass; escalation pays only max(cheap, prefill32)+decode32.  ZERO accuracy change.  saving/esc = min(cheap_leg, prefill32).",
+    "per_slice": {
+      "PMC_VQA": {
+        "acc": 0.5507927011666168,
+        "esc": 0.08453484893807957,
+        "latency_ms": 373.9,
+        "flops": 3.838,
+        "latency_saved_vs_base_ms": 29.3,
+        "extra_prefetch_flops": 2.452,
+        "now_faster_than_32bnt": true
+      },
+      "SLAKE_closed": {
+        "acc": 0.8516746411483254,
+        "esc": 0.20454545454545456,
+        "latency_ms": 412.0,
+        "flops": 4.065,
+        "latency_saved_vs_base_ms": 71.0,
+        "extra_prefetch_flops": 2.13,
+        "now_faster_than_32bnt": true
+      },
+      "VQA_RAD_closed": {
+        "acc": 0.8326693227091634,
+        "esc": 0.5697211155378487,
+        "latency_ms": 528.2,
+        "flops": 4.756,
+        "latency_saved_vs_base_ms": 197.7,
+        "extra_prefetch_flops": 1.152,
+        "now_faster_than_32bnt": true
+      },
+      "PATH_VQA_closed": {
+        "acc": 0.8881618084473528,
+        "esc": 0.45716835217132656,
+        "latency_ms": 492.4,
+        "flops": 4.543,
+        "latency_saved_vs_base_ms": 158.6,
+        "extra_prefetch_flops": 1.454,
+        "now_faster_than_32bnt": true
+      },
+      "MedXpertQA-MM": {
+        "acc": 0.3005,
+        "esc": 0.896,
+        "latency_ms": 631.9,
+        "flops": 5.374,
+        "latency_saved_vs_base_ms": 310.9,
+        "extra_prefetch_flops": 0.279,
+        "now_faster_than_32bnt": true
+      },
+      "MMMU-Medical-val": {
+        "acc": 0.8,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0,
+        "latency_saved_vs_base_ms": 0.0,
+        "extra_prefetch_flops": 0.0,
+        "now_faster_than_32bnt": true
+      },
+      "SLAKE_open": {
+        "acc": 0.8108527131782945,
+        "esc": 0.5286821705426357,
+        "latency_ms": 515.1,
+        "flops": 4.678,
+        "latency_saved_vs_base_ms": 183.5,
+        "extra_prefetch_flops": 1.262,
+        "now_faster_than_32bnt": true
+      },
+      "VQA_RAD_open": {
+        "acc": 0.585,
+        "esc": 0.055,
+        "latency_ms": 537.1,
+        "flops": 18.782,
+        "latency_saved_vs_base_ms": 21.5,
+        "extra_prefetch_flops": 2.531,
+        "now_faster_than_32bnt": true
+      },
+      "PATH_VQA_open": {
+        "acc": 0.4533333333333333,
+        "esc": 0.0006666666666666666,
+        "latency_ms": 522.2,
+        "flops": 18.679,
+        "latency_saved_vs_base_ms": 0.2,
+        "extra_prefetch_flops": 2.676,
+        "now_faster_than_32bnt": true
+      }
+    },
+    "pooled": {
+      "latency_ms": 405.2,
+      "latency_saved_vs_base_ms": 55.9,
+      "latency_saved_vs_base_pct": 12.1,
+      "acc": 0.5749,
+      "flops_with_unconditional_prefetch": 4.575,
+      "flops_base": 2.337
+    },
+    "phi_sensitivity_pooled_latency_ms": {
+      "phi=0.400": 418.2,
+      "phi=0.500": 407.5,
+      "phi=0.586": 405.2,
+      "phi=0.700": 405.2,
+      "phi=0.800": 405.2
+    },
+    "slower_cells_after_g8": [],
+    "flops_caveat": "unconditional prefetch pays the 32B PREFILL on EVERY query -> pooled FLOPs 2.337 -> 4.575 (~= always-32B 4.57): G8 trades FLOPs/energy for latency, only 'free' when the 2nd GPU is idle.",
+    "slice_gated_deployable": {
+      "rule": "prefetch only on slices with base esc >= 0.40 (high-esc: VQA_RAD_closed/PATH_VQA_closed/MedXpert/SLAKE_open); low-esc slices keep cheap FLOPs and are already fast.",
+      "per_slice": {
+        "PMC_VQA": {
+          "acc": 0.5507927011666168,
+          "esc": 0.08453484893807957,
+          "latency_ms": 403.2,
+          "flops": 1.386,
+          "prefetch_on": false
+        },
+        "SLAKE_closed": {
+          "acc": 0.8516746411483254,
+          "esc": 0.20454545454545456,
+          "latency_ms": 483.0,
+          "flops": 1.935,
+          "prefetch_on": false
+        },
+        "VQA_RAD_closed": {
+          "acc": 0.8326693227091634,
+          "esc": 0.5697211155378487,
+          "latency_ms": 528.2,
+          "flops": 4.756,
+          "prefetch_on": true
+        },
+        "PATH_VQA_closed": {
+          "acc": 0.8881618084473528,
+          "esc": 0.45716835217132656,
+          "latency_ms": 492.4,
+          "flops": 4.543,
+          "prefetch_on": true
+        },
+        "MedXpertQA-MM": {
+          "acc": 0.3005,
+          "esc": 0.896,
+          "latency_ms": 631.9,
+          "flops": 5.374,
+          "prefetch_on": true
+        },
+        "MMMU-Medical-val": {
+          "acc": 0.8,
+          "esc": 0.0,
+          "latency_ms": 347.0,
+          "flops": 1.0,
+          "prefetch_on": false
+        },
+        "SLAKE_open": {
+          "acc": 0.8108527131782945,
+          "esc": 0.5286821705426357,
+          "latency_ms": 515.1,
+          "flops": 4.678,
+          "prefetch_on": true
+        },
+        "VQA_RAD_open": {
+          "acc": 0.585,
+          "esc": 0.055,
+          "latency_ms": 558.6,
+          "flops": 16.251,
+          "prefetch_on": false
+        },
+        "PATH_VQA_open": {
+          "acc": 0.4533333333333333,
+          "esc": 0.0006666666666666666,
+          "latency_ms": 522.4,
+          "flops": 16.003,
+          "prefetch_on": false
+        }
+      },
+      "pooled": {
+        "latency_ms": 429.8,
+        "latency_saved_vs_base_pct": 6.8,
+        "flops": 2.492,
+        "flops_base": 2.337,
+        "acc": 0.5749
+      },
+      "slower_cells_after": [],
+      "note": "captures nearly all the per-cell latency win (all slower cells still flip) at a FRACTION of the FLOPs cost of unconditional prefetch (PMC's 33k queries no longer prefetch)."
+    },
+    "note": "prefill32=390ms > MCQ cheap leg 347ms -> the whole 7B pass hides under the 32B prefill on every MCQ escalation (robust for any phi>=347/665=0.522; measured 0.586).  FLOPs cost = prefetched prefills on non-escalations (idle-2nd-GPU assumption; energy not free)."
+  },
+  "G5_recoverability_suppressor": {
+    "idea": "per-slice held-out futility switch: suppress a slice's escalation entirely if its train escalated-set net recovery (fix-rate minus break-rate) buys <= eps accuracy.",
+    "recovery_diagnostics": {
+      "PMC_VQA": {
+        "recov_P32ok_given_7wrong": 0.3398,
+        "break_P32wrong_given_7right": 0.5194,
+        "net_gain_per_escalation": 0.0962
+      },
+      "SLAKE_closed": {
+        "recov_P32ok_given_7wrong": 0.56,
+        "break_P32wrong_given_7right": 0.2083,
+        "net_gain_per_escalation": 0.1287
+      },
+      "VQA_RAD_closed": {
+        "recov_P32ok_given_7wrong": 0.5122,
+        "break_P32wrong_given_7right": 0.0784,
+        "net_gain_per_escalation": 0.0909
+      },
+      "PATH_VQA_closed": {
+        "recov_P32ok_given_7wrong": 0.6152,
+        "break_P32wrong_given_7right": 0.1151,
+        "net_gain_per_escalation": 0.1034
+      },
+      "MedXpertQA-MM": {
+        "recov_P32ok_given_7wrong": 0.2246,
+        "break_P32wrong_given_7right": 0.4794,
+        "net_gain_per_escalation": 0.0435
+      },
+      "SLAKE_open": {
+        "recov_P32ok_given_7wrong": 0.4813,
+        "break_P32wrong_given_7right": 0.1381,
+        "net_gain_per_escalation": 0.1525
+      },
+      "VQA_RAD_open": {
+        "recov_P32ok_given_7wrong": 0.1818,
+        "break_P32wrong_given_7right": NaN,
+        "net_gain_per_escalation": 0.1818
+      },
+      "PATH_VQA_open": {
+        "recov_P32ok_given_7wrong": 0.0,
+        "break_P32wrong_given_7right": NaN,
+        "net_gain_per_escalation": 0.0
+      }
+    },
+    "eps_frontier": [
+      {
+        "eps": -1.0,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": []
+      },
+      {
+        "eps": 0.0,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.01,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.02,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.03,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.04,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.045,
+        "acc": 0.5749,
+        "d_acc_vs_base": 0.0,
+        "latency_ms": 461.1,
+        "flops": 2.337,
+        "esc": 0.161,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.05,
+        "acc": 0.5739,
+        "d_acc_vs_base": -0.001,
+        "latency_ms": 449.6,
+        "flops": 2.258,
+        "esc": 0.1437,
+        "suppressed_slices": [
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.06,
+        "acc": 0.5731,
+        "d_acc_vs_base": -0.0018,
+        "latency_ms": 432.9,
+        "flops": 2.144,
+        "esc": 0.1187,
+        "suppressed_slices": [
+          "MedXpertQA-MM",
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.08,
+        "acc": 0.5729,
+        "d_acc_vs_base": -0.002,
+        "latency_ms": 432.5,
+        "flops": 2.141,
+        "esc": 0.118,
+        "suppressed_slices": [
+          "MedXpertQA-MM",
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.1,
+        "acc": 0.5712,
+        "d_acc_vs_base": -0.0037,
+        "latency_ms": 423.0,
+        "flops": 2.075,
+        "esc": 0.1037,
+        "suppressed_slices": [
+          "MedXpertQA-MM",
+          "PATH_VQA_open"
+        ]
+      },
+      {
+        "eps": 0.13,
+        "acc": 0.5622,
+        "d_acc_vs_base": -0.0127,
+        "latency_ms": 361.5,
+        "flops": 1.653,
+        "esc": 0.0112,
+        "suppressed_slices": [
+          "PMC_VQA",
+          "VQA_RAD_closed",
+          "PATH_VQA_closed",
+          "MedXpertQA-MM",
+          "PATH_VQA_open"
+        ]
+      }
+    ],
+    "detail_at_eps": {
+      "eps=0.000": {
+        "PMC_VQA": {
+          "acc": 0.5507927011666168,
+          "esc": 0.08453484893807957,
+          "latency_ms": 403.2,
+          "flops": 1.386,
+          "suppressed": 0.0
+        },
+        "SLAKE_closed": {
+          "acc": 0.8516746411483254,
+          "esc": 0.20454545454545456,
+          "latency_ms": 483.0,
+          "flops": 1.935,
+          "suppressed": 0.0
+        },
+        "VQA_RAD_closed": {
+          "acc": 0.8326693227091634,
+          "esc": 0.5697211155378487,
+          "latency_ms": 725.9,
+          "flops": 3.604,
+          "suppressed": 0.0
+        },
+        "PATH_VQA_closed": {
+          "acc": 0.8881618084473528,
+          "esc": 0.45716835217132656,
+          "latency_ms": 651.0,
+          "flops": 3.089,
+          "suppressed": 0.0
+        },
+        "MedXpertQA-MM": {
+          "acc": 0.3005,
+          "esc": 0.896,
+          "latency_ms": 942.8,
+          "flops": 5.095,
+          "suppressed": 0.0
+        },
+        "MMMU-Medical-val": {
+          "acc": 0.8,
+          "esc": 0.0,
+          "latency_ms": 347.0,
+          "flops": 1.0,
+          "suppressed": 1.0
+        },
+        "SLAKE_open": {
+          "acc": 0.8108527131782945,
+          "esc": 0.5286821705426357,
+          "latency_ms": 698.6,
+          "flops": 3.416,
+          "suppressed": 0.0
+        },
+        "VQA_RAD_open": {
+          "acc": 0.585,
+          "esc": 0.055,
+          "latency_ms": 558.6,
+          "flops": 16.251,
+          "suppressed": 0.0
+        },
+        "PATH_VQA_open": {
+          "acc": 0.4533333333333333,
+          "esc": 0.0,
+          "latency_ms": 522.0,
+          "flops": 16.0,
+          "suppressed": 1.0
+        }
+      },
+      "eps=0.045": {
+        "PMC_VQA": {
+          "acc": 0.5507927011666168,
+          "esc": 0.08453484893807957,
+          "latency_ms": 403.2,
+          "flops": 1.386,
+          "suppressed": 0.0
+        },
+        "SLAKE_closed": {
+          "acc": 0.8516746411483254,
+          "esc": 0.20454545454545456,
+          "latency_ms": 483.0,
+          "flops": 1.935,
+          "suppressed": 0.0
+        },
+        "VQA_RAD_closed": {
+          "acc": 0.8326693227091634,
+          "esc": 0.5697211155378487,
+          "latency_ms": 725.9,
+          "flops": 3.604,
+          "suppressed": 0.0
+        },
+        "PATH_VQA_closed": {
+          "acc": 0.8881618084473528,
+          "esc": 0.45716835217132656,
+          "latency_ms": 651.0,
+          "flops": 3.089,
+          "suppressed": 0.0
+        },
+        "MedXpertQA-MM": {
+          "acc": 0.3005,
+          "esc": 0.896,
+          "latency_ms": 942.8,
+          "flops": 5.095,
+          "suppressed": 0.0
+        },
+        "MMMU-Medical-val": {
+          "acc": 0.8,
+          "esc": 0.0,
+          "latency_ms": 347.0,
+          "flops": 1.0,
+          "suppressed": 1.0
+        },
+        "SLAKE_open": {
+          "acc": 0.8108527131782945,
+          "esc": 0.5286821705426357,
+          "latency_ms": 698.6,
+          "flops": 3.416,
+          "suppressed": 0.0
+        },
+        "VQA_RAD_open": {
+          "acc": 0.585,
+          "esc": 0.055,
+          "latency_ms": 558.6,
+          "flops": 16.251,
+          "suppressed": 0.0
+        },
+        "PATH_VQA_open": {
+          "acc": 0.4533333333333333,
+          "esc": 0.0,
+          "latency_ms": 522.0,
+          "flops": 16.0,
+          "suppressed": 1.0
+        }
+      }
+    },
+    "verdict": "No slice is TRULY futile (net gain ~0) while also escalating heavily.  MedXpert -- the named futile slice -- has the WORST recovery (P(32B fixes 7B error)=0.225, P(32B breaks 7B correct)=0.479) and is grossly INEFFICIENT (+0.039 acc for +596 ms), but escalation is still net-POSITIVE, and its margin-bins are flat (no recoverable subset to isolate -- the recoverability wall).  So strict ~0-cost suppression only drops the already-tiny PATH_VQA_open/VQA_RAD_open escalations (negligible latency).  Suppressing MedXpert is a TRADE, not free: -0.039 on MedXpert (still >= 7B floor) = -0.0018 POOLED, and it flips MedXpert 943->347 ms.  G5 is a knob, not a free lunch; the free lunch is G8."
+  },
+  "G6_two_stage_gate": {
+    "idea": "AND-gate: escalate only if margin-low AND a 2nd cheap signal agrees.  NO aligned 7B self-verify P(True) dump exists for the Lingshu MCQ suite -> tested with CASP-stability (7B cap320-vs-full), the only available 2nd signal (which is 98.9% inert).",
+    "per_slice": {
+      "PMC_VQA": {
+        "esc_and": 0.0023,
+        "acc_and": 0.5428,
+        "esc_margin_matched": 0.0023,
+        "acc_margin_matched": 0.5428,
+        "d_acc_and_minus_margin": 0.0001,
+        "casp_unstable_rate": 0.0096
+      },
+      "SLAKE_closed": {
+        "esc_and": 0.0203,
+        "acc_and": 0.8266,
+        "esc_margin_matched": 0.0203,
+        "acc_margin_matched": 0.8289,
+        "d_acc_and_minus_margin": -0.0024,
+        "casp_unstable_rate": 0.0227
+      },
+      "VQA_RAD_closed": {
+        "esc_and": 0.0916,
+        "acc_and": 0.8008,
+        "esc_margin_matched": 0.0916,
+        "acc_margin_matched": 0.8088,
+        "d_acc_and_minus_margin": -0.008,
+        "casp_unstable_rate": 0.0956
+      }
+    },
+    "verdict": "G6 does NOT beat the single margin gate: at matched escalation the AND(margin, casp-unstable) set is no more recoverable than the lowest-margin set (CASP is 98.9% inert, so the AND just drops recoverable low-margin cases -> equal-or-worse acc at equal esc).  A genuinely orthogonal 2nd signal (a trained 7B self-verify) is not available for MCQ; SKIP per task note.  Confirms the repo finding: no cheap composite beats margin on MCQ."
+  },
+  "COMBINED_best": {
+    "recipe": "G8 slice-gated prefill prefetch (zero-acc) + G5 at eps*=0.060 (suppress MedXpert, the one futile-inefficient slice) -> a knob for a further latency cut at -0.0018 pooled acc",
+    "eps_star": 0.06,
+    "per_slice": {
+      "PMC_VQA": {
+        "acc": 0.5507927011666168,
+        "esc": 0.0845,
+        "latency_ms": 403.2,
+        "flops": 1.386,
+        "suppressed": 0.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "SLAKE_closed": {
+        "acc": 0.8516746411483254,
+        "esc": 0.2045,
+        "latency_ms": 483.0,
+        "flops": 1.935,
+        "suppressed": 0.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "VQA_RAD_closed": {
+        "acc": 0.8326693227091634,
+        "esc": 0.5697,
+        "latency_ms": 528.2,
+        "flops": 4.756,
+        "suppressed": 0.0,
+        "g8_prefetch_on": true,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "PATH_VQA_closed": {
+        "acc": 0.8881618084473528,
+        "esc": 0.4572,
+        "latency_ms": 492.4,
+        "flops": 4.543,
+        "suppressed": 0.0,
+        "g8_prefetch_on": true,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "MedXpertQA-MM": {
+        "acc": 0.2615,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0,
+        "suppressed": 1.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "MMMU-Medical-val": {
+        "acc": 0.8,
+        "esc": 0.0,
+        "latency_ms": 347.0,
+        "flops": 1.0,
+        "suppressed": 1.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "SLAKE_open": {
+        "acc": 0.8108527131782945,
+        "esc": 0.5287,
+        "latency_ms": 515.1,
+        "flops": 4.678,
+        "suppressed": 0.0,
+        "g8_prefetch_on": true,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "VQA_RAD_open": {
+        "acc": 0.585,
+        "esc": 0.055,
+        "latency_ms": 558.6,
+        "flops": 16.251,
+        "suppressed": 0.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      },
+      "PATH_VQA_open": {
+        "acc": 0.4533333333333333,
+        "esc": 0.0,
+        "latency_ms": 522.0,
+        "flops": 16.0,
+        "suppressed": 1.0,
+        "g8_prefetch_on": false,
+        "faster_than_32bnt": true,
+        "faster_than_32bthink": true
+      }
+    },
+    "pooled": {
+      "acc": 0.5731,
+      "d_acc_vs_base": -0.0018,
+      "latency_ms": 416.4,
+      "latency_saved_vs_base_pct": 9.7,
+      "latency_saved_vs_32bthink_pct": 96.0,
+      "flops": 2.285
+    },
+    "slower_than_32bnt_after": []
+  },
+  "VERDICT": {
+    "best_speed_lever": "G8 (parallel 32B prefill prefetch) -- the only ~0-accuracy-cost lever with real headroom; it alone flips ALL slower cells back under always-32B-nothink.",
+    "g8_effect": "pooled batch-1 latency 461 -> 405 ms (-12%) at IDENTICAL accuracy; slower cells ['VQA_RAD_closed', 'MedXpertQA-MM', 'SLAKE_open'] -> NONE.",
+    "g5_effect": "G5 is a trade, not free: the named futile slice (MedXpert) is inefficient but net-positive, so ~0-cost suppression saves ~nothing; suppressing MedXpert costs -0.0018 pooled for a 943->347 ms MedXpert win (per-benchmark -0.039, still >= 7B floor).",
+    "g6_effect": "G6 no gain (no orthogonal 2nd signal on MCQ; CASP inert).",
+    "answer": "Combined G8+G5(eps*) : pooled latency 416 ms (-10% vs 665 always-32B-nt-cell / -96.0% vs 32B-think) at -0.0018 pooled accuracy; every previously-slower cell (MedXpert/VQA_RAD_closed/SLAKE_open) is now <= always-32B-nothink."
+  },
+  "data_gaps": [
+    "G8 prefill fraction phi=0.586 is measured on MVT-32B nothink@cap320 (latency_32b.jsonl), transferred as a FRACTION to the Lingshu 665ms constant; it is conservative (short no-think decode attends less KV than the think-context lever arm used for the 68.6ms/tok decode step). A direct Lingshu-32B prefill/decode split would remove the transfer.",
+    "G6 has NO aligned 7B self-verify P(True) dump for the Lingshu MCQ suite; CASP-stability (the only 2nd signal) is 98.9% inert, so G6 is under-powered by data, not disproven for a truly-orthogonal signal.",
+    "G8 unconditional-prefetch FLOPs assume an idle 2nd GPU (dual-A100); the prefetched-prefill energy is real even when latency is hidden. A cheap slice-level esc-prior gate bounds the wasted prefill."
+  ]
+}

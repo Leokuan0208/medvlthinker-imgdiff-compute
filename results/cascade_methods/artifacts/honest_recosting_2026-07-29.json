@@ -1,0 +1,1129 @@
+{
+  "title": "Honest re-costing of the always-32B-with-reasoning baseline (PROJECT_RETROSPECTIVE 2026-07-29 \u00a77 holes 1 and 2). Charges every cell the latency/energy/FLOPs implied by its OWN measured generation length instead of one global reasoning constant, and independently checks the concentration and macro-average facts.",
+  "reproduce": "python3 src/cascade_methods/honest_recosting.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "pool": "Variant B (MMMU excluded): 5 benchmarks / 8 cells / n=42224",
+  "provenance": {
+    "latency_32b_jsonl_medians": {
+      "nothink@cap320": {
+        "n": 60,
+        "lat_ms": 333.15,
+        "gen": 2.0,
+        "energy_j": 61.2,
+        "prefill_tok": 344.5
+      },
+      "nothink@fullres": {
+        "n": 60,
+        "lat_ms": 443.85,
+        "gen": 2.0,
+        "energy_j": 83.45,
+        "prefill_tok": 537.5
+      },
+      "think@fullres": {
+        "n": 60,
+        "lat_ms": 22983.25,
+        "gen": 318.0,
+        "energy_j": 5990.2,
+        "prefill_tok": 544.5
+      },
+      "think@cap320": {
+        "n": 60,
+        "lat_ms": 21865.2,
+        "gen": 316.0,
+        "energy_j": 5795.2,
+        "prefill_tok": 351.5
+      }
+    },
+    "decode_ms_per_tok": 68.573,
+    "decode_j_per_tok": 18.261,
+    "decode_derivation": "(think@cap320 21865.2 ms - nothink@cap320 333.1 ms) / (316 - 2 tok) = 68.573 ms/tok; energy identically = 18.261 J/tok  [artifacts/latency_32b.jsonl, n=60/config, medians]",
+    "anchor_direct": {
+      "lat_ms": 665.0,
+      "energy_j": 126.9,
+      "gen_tok": 5.6,
+      "n": 25,
+      "source": "opentext_32b_think.json:latency_energy_nothink_reference"
+    },
+    "anchor_think": {
+      "lat_ms": 10521.6,
+      "energy_j": 2001.9,
+      "gen_tok": 98.3,
+      "n": 15,
+      "lat_ms_median": 12896.2,
+      "source": "opentext_32b_think.json:latency_energy_think"
+    },
+    "prefill_ms": 280.99,
+    "prefill_j": 24.638,
+    "prefill_frac_of_665": 0.4225,
+    "prefill_derivation": "P = 665.0 ms - 5.6 tok x 68.573 ms/tok = 281.0 ms (prefill fraction 0.423 of the 665 ms direct forward)",
+    "energy_intercept_crosscheck": {
+      "from_665_anchor": 24.638,
+      "from_latency_32b_jsonl": 24.678,
+      "agreement": "99.8%",
+      "note": "two independent measurement runs agree on the energy intercept to <1% -- the energy model is well identified."
+    },
+    "latency_intercept_crosscheck": {
+      "from_665_anchor": 280.99,
+      "from_latency_32b_jsonl": 196.0,
+      "note": "the two runs do NOT agree on the latency intercept (281 vs 196 ms) because the 665 ms anchor was measured on open-text VQA-RAD images and the 333 ms point on PMC-VQA cap320 images. We anchor on 665 ms because that is the constant the paper uses."
+    },
+    "repo_prefill_split_claims": {
+      "escalation_levers_phi": {
+        "value": 0.586,
+        "implied_prefill_ms": 389.7,
+        "source": "src/cascade_methods/escalation_levers.py:36 (PHI_CENTRAL)",
+        "verdict": "VERIFIED AS A REPO CONSTANT but INTERNALLY INCONSISTENT: phi=195.9/333.1 is the prefill fraction of the 333 ms cap320 point, then rescaled proportionally to 665 ms. Rescaling a prefill fraction proportionally is not physical -- at gen=5.6 the decode term must be 5.6 x 68.57 = 383.9 ms, not 0.414 x 665 = 275 ms."
+      },
+      "quantized_strong_leg_prefill": {
+        "value_ms": 527.9,
+        "source": "src/cascade_methods/quantized_strong_leg.py:96 (PREFILL_MS)",
+        "verdict": "VERIFIED AS A REPO CONSTANT but assumes the 665 ms leg emits 2 tokens; its own source file records gen_tok_mean = 5.6 for that leg."
+      },
+      "resolution": "Three mutually inconsistent decompositions of the same 665 ms constant exist in the repo (390 / 528 / 281 ms). This file uses 281.0 ms as primary (the only one that reproduces the 665 ms anchor at the anchor's own measured generation length) and carries the other two as a sensitivity band."
+    },
+    "flop_ratio_32b_over_7b": 4.571,
+    "flop_ratio_derivation": "32.0B / 7.0B = 4.571 -- reproduces the repo's hard-coded 4.57 literal, which no file in the repo derives (retrospective \u00a77 hole 14c).",
+    "prefill_tok_ref": 335.8
+  },
+  "part1_verify_the_premise": {
+    "threshold_mean_gen_tok": 50.0,
+    "per_cell": {
+      "PMC_VQA": {
+        "n": 33430,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "gen_direct": {
+          "mean": 3.0,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 3.0
+        },
+        "gen_reasoning": {
+          "mean": 3.09,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 7.0
+        },
+        "agreement": 0.92,
+        "acc_reasoning": 0.5494,
+        "acc_direct": 0.5518,
+        "verdict": "NOT-REASONED",
+        "prompt_sample": "swer with the option's letter from the given choices and put the letter in one \"\\boxed{}\"."
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "gen_direct": {
+          "mean": 3.24,
+          "median": 3.0,
+          "p90": 4.0,
+          "max": 5.0
+        },
+        "gen_reasoning": {
+          "mean": 3.33,
+          "median": 3.0,
+          "p90": 4.0,
+          "max": 6.0
+        },
+        "agreement": 0.9701,
+        "acc_reasoning": 0.8636,
+        "acc_direct": 0.8589,
+        "verdict": "NOT-REASONED",
+        "prompt_sample": "r?\nAnswer the question using a single word or phrase and put the answer in one \"\\boxed{}\"."
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "gen_direct": {
+          "mean": 3.01,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 5.0
+        },
+        "gen_reasoning": {
+          "mean": 3.01,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 5.0
+        },
+        "agreement": 0.9721,
+        "acc_reasoning": 0.8406,
+        "acc_direct": 0.8526,
+        "verdict": "NOT-REASONED",
+        "prompt_sample": ""
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "reasoning_dump": null,
+        "gen_direct": {
+          "mean": 3.0,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 3.0
+        },
+        "gen_reasoning": null,
+        "agreement": null,
+        "verdict": "NO-DUMP",
+        "note": "no 32B reasoning dump exists; the repo imputes reasoning-accuracy = direct-accuracy (paper_baselines.build_cells okT=ok32) yet still charges the full reasoning LATENCY/ENERGY constant."
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "reasoning_dump": "eval_results_lingshu32b_reason",
+        "gen_direct": {
+          "mean": 3.0,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 3.0
+        },
+        "gen_reasoning": {
+          "mean": 320.33,
+          "median": 315.0,
+          "p90": 404.0,
+          "max": 2048.0
+        },
+        "agreement": 0.229,
+        "acc_reasoning": 0.304,
+        "acc_direct": 0.3065,
+        "verdict": "REASONED",
+        "note": "agreement measured on the extracted \\boxed{} answer, not the raw response."
+      },
+      "MMMU-Medical-val": {
+        "n": 150,
+        "reasoning_dump": "eval_results_lingshu32b_reason",
+        "gen_direct": {
+          "mean": 2.63,
+          "median": 3.0,
+          "p90": 3.0,
+          "max": 6.0
+        },
+        "gen_reasoning": {
+          "mean": 275.37,
+          "median": 266.5,
+          "p90": 401.2,
+          "max": 1037.0
+        },
+        "agreement": 0.7067,
+        "verdict": "REASONED",
+        "note": "EXCLUDED from Variant B (contamination); reported for completeness."
+      },
+      "SLAKE_open": {
+        "n": 645,
+        "reasoning_dump": "ckpts/openvqa/strong_lingshu_think",
+        "gen_direct": {
+          "mean": 4.76,
+          "median": 4.0,
+          "p90": 7.0,
+          "max": 18.0
+        },
+        "gen_reasoning": {
+          "mean": 122.41,
+          "median": 124.0,
+          "p90": 157.0,
+          "max": 229.0
+        },
+        "agreement": 0.4884,
+        "verdict": "REASONED"
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "reasoning_dump": "ckpts/openvqa/strong_lingshu_think",
+        "gen_direct": {
+          "mean": 5.63,
+          "median": 5.0,
+          "p90": 8.0,
+          "max": 40.0
+        },
+        "gen_reasoning": {
+          "mean": 104.54,
+          "median": 130.0,
+          "p90": 163.1,
+          "max": 213.0
+        },
+        "agreement": 0.395,
+        "verdict": "REASONED"
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "reasoning_dump": "ckpts/openvqa/strong_lingshu_think",
+        "gen_direct": {
+          "mean": 5.64,
+          "median": 5.0,
+          "p90": 8.0,
+          "max": 29.0
+        },
+        "gen_reasoning": {
+          "mean": 141.47,
+          "median": 141.0,
+          "p90": 172.0,
+          "max": 261.0
+        },
+        "agreement": 0.0527,
+        "verdict": "REASONED"
+      }
+    },
+    "cells_that_genuinely_reasoned": [
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open",
+      "PATH_VQA_open"
+    ],
+    "cells_that_did_not": [
+      "PMC_VQA",
+      "SLAKE_closed",
+      "VQA_RAD_closed",
+      "PATH_VQA_closed"
+    ],
+    "n_reasoned": 4345,
+    "n_total": 42224,
+    "frac_of_pool_genuinely_reasoned": 0.1029,
+    "verdict": "PREMISE CONFIRMED. 4345 of 42224 Variant-B items (10.3%) come from cells where the 32B reasoning-mode run emitted >= 50 generated tokens. On the other 89.7% the 'reasoning' run emitted ~3 tokens (or does not exist at all) and agrees with the direct-mode run on 92-97% of predictions -- it is a direct-mode run under a different name, billed at reasoning price."
+  },
+  "part2_corrected_cost_model": {
+    "M1_primary": {
+      "desc": "PRIMARY. Measured decode rate (68.57 ms/tok, 18.26 J/tok from latency_32b.jsonl); prefill intercept calibrated so the model reproduces the paper's own 665 ms / 126.9 J direct anchor at that anchor's own measured generation length (5.6 tok).",
+      "per_cell": {
+        "PMC_VQA": {
+          "gen_tok_charged": 3.09,
+          "reasoned": false,
+          "lat_ms": 492.88,
+          "energy_j": 81.06,
+          "flops": 4.57
+        },
+        "SLAKE_closed": {
+          "gen_tok_charged": 3.33,
+          "reasoned": false,
+          "lat_ms": 509.34,
+          "energy_j": 85.45,
+          "flops": 4.57
+        },
+        "VQA_RAD_closed": {
+          "gen_tok_charged": 3.01,
+          "reasoned": false,
+          "lat_ms": 487.39,
+          "energy_j": 79.6,
+          "flops": 4.57
+        },
+        "PATH_VQA_closed": {
+          "gen_tok_charged": 3.0,
+          "reasoned": false,
+          "lat_ms": 486.71,
+          "energy_j": 79.42,
+          "flops": 4.57
+        },
+        "MedXpertQA-MM": {
+          "gen_tok_charged": 320.33,
+          "reasoned": true,
+          "lat_ms": 22246.98,
+          "energy_j": 5874.18,
+          "flops": 8.85
+        },
+        "SLAKE_open": {
+          "gen_tok_charged": 122.41,
+          "reasoned": true,
+          "lat_ms": 8675.01,
+          "energy_j": 2259.97,
+          "flops": 6.15
+        },
+        "VQA_RAD_open": {
+          "gen_tok_charged": 104.54,
+          "reasoned": true,
+          "lat_ms": 7449.61,
+          "energy_j": 1933.64,
+          "flops": 5.9
+        },
+        "PATH_VQA_open": {
+          "gen_tok_charged": 141.47,
+          "reasoned": true,
+          "lat_ms": 9982.01,
+          "energy_j": 2608.02,
+          "flops": 6.39
+        }
+      },
+      "pooled_variant_b": {
+        "lat_ms": 2018.135,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "pooled_mcq_only": {
+        "lat_ms": 1583.676,
+        "energy_j": 371.543,
+        "flops": 4.787
+      },
+      "pooled_open_only": {
+        "lat_ms": 9406.534,
+        "energy_j": 2454.772,
+        "flops": 6.281
+      }
+    },
+    "M2_repo_phi_0586": {
+      "desc": "Sensitivity: the repo's literal prefill fraction phi=0.586 (escalation_levers.py) applied to 665 ms -> P=389.7 ms. Over-charges every cell by a constant 108.7 ms.",
+      "per_cell": {
+        "PMC_VQA": {
+          "gen_tok_charged": 3.09,
+          "reasoned": false,
+          "lat_ms": 601.58,
+          "energy_j": 81.06,
+          "flops": 4.57
+        },
+        "SLAKE_closed": {
+          "gen_tok_charged": 3.33,
+          "reasoned": false,
+          "lat_ms": 618.04,
+          "energy_j": 85.45,
+          "flops": 4.57
+        },
+        "VQA_RAD_closed": {
+          "gen_tok_charged": 3.01,
+          "reasoned": false,
+          "lat_ms": 596.09,
+          "energy_j": 79.6,
+          "flops": 4.57
+        },
+        "PATH_VQA_closed": {
+          "gen_tok_charged": 3.0,
+          "reasoned": false,
+          "lat_ms": 595.41,
+          "energy_j": 79.42,
+          "flops": 4.57
+        },
+        "MedXpertQA-MM": {
+          "gen_tok_charged": 320.33,
+          "reasoned": true,
+          "lat_ms": 22355.68,
+          "energy_j": 5874.18,
+          "flops": 8.85
+        },
+        "SLAKE_open": {
+          "gen_tok_charged": 122.41,
+          "reasoned": true,
+          "lat_ms": 8783.71,
+          "energy_j": 2259.97,
+          "flops": 6.15
+        },
+        "VQA_RAD_open": {
+          "gen_tok_charged": 104.54,
+          "reasoned": true,
+          "lat_ms": 7558.31,
+          "energy_j": 1933.64,
+          "flops": 5.9
+        },
+        "PATH_VQA_open": {
+          "gen_tok_charged": 141.47,
+          "reasoned": true,
+          "lat_ms": 10090.71,
+          "energy_j": 2608.02,
+          "flops": 6.39
+        }
+      },
+      "pooled_variant_b": {
+        "lat_ms": 2126.835,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "pooled_mcq_only": {
+        "lat_ms": 1692.376,
+        "energy_j": 371.543,
+        "flops": 4.787
+      },
+      "pooled_open_only": {
+        "lat_ms": 9515.234,
+        "energy_j": 2454.772,
+        "flops": 6.281
+      }
+    },
+    "M3_repo_quantized": {
+      "desc": "Sensitivity: quantized_strong_leg.py's decomposition (assumes the 665 ms leg emits 2 tokens) -> P=527.9 ms.",
+      "per_cell": {
+        "PMC_VQA": {
+          "gen_tok_charged": 3.09,
+          "reasoned": false,
+          "lat_ms": 739.74,
+          "energy_j": 81.06,
+          "flops": 4.57
+        },
+        "SLAKE_closed": {
+          "gen_tok_charged": 3.33,
+          "reasoned": false,
+          "lat_ms": 756.2,
+          "energy_j": 85.45,
+          "flops": 4.57
+        },
+        "VQA_RAD_closed": {
+          "gen_tok_charged": 3.01,
+          "reasoned": false,
+          "lat_ms": 734.26,
+          "energy_j": 79.6,
+          "flops": 4.57
+        },
+        "PATH_VQA_closed": {
+          "gen_tok_charged": 3.0,
+          "reasoned": false,
+          "lat_ms": 733.57,
+          "energy_j": 79.42,
+          "flops": 4.57
+        },
+        "MedXpertQA-MM": {
+          "gen_tok_charged": 320.33,
+          "reasoned": true,
+          "lat_ms": 22493.84,
+          "energy_j": 5874.18,
+          "flops": 8.85
+        },
+        "SLAKE_open": {
+          "gen_tok_charged": 122.41,
+          "reasoned": true,
+          "lat_ms": 8921.87,
+          "energy_j": 2259.97,
+          "flops": 6.15
+        },
+        "VQA_RAD_open": {
+          "gen_tok_charged": 104.54,
+          "reasoned": true,
+          "lat_ms": 7696.48,
+          "energy_j": 1933.64,
+          "flops": 5.9
+        },
+        "PATH_VQA_open": {
+          "gen_tok_charged": 141.47,
+          "reasoned": true,
+          "lat_ms": 10228.88,
+          "energy_j": 2608.02,
+          "flops": 6.39
+        }
+      },
+      "pooled_variant_b": {
+        "lat_ms": 2264.999,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "pooled_mcq_only": {
+        "lat_ms": 1830.54,
+        "energy_j": 371.543,
+        "flops": 4.787
+      },
+      "pooled_open_only": {
+        "lat_ms": 9653.398,
+        "energy_j": 2454.772,
+        "flops": 6.281
+      }
+    },
+    "M4_two_anchor_exact": {
+      "desc": "Sensitivity: P,D fitted to reproduce BOTH of the paper's own published constants exactly (665 ms @ 5.6 tok and 10,521.6 ms @ 98.3 tok) -> D=106.3 ms/tok. Charges the genuinely-reasoned cells the most; implies a physically implausible 70 ms prefill.",
+      "per_cell": {
+        "PMC_VQA": {
+          "gen_tok_charged": 3.09,
+          "reasoned": false,
+          "lat_ms": 398.12,
+          "energy_j": 81.06,
+          "flops": 4.57
+        },
+        "SLAKE_closed": {
+          "gen_tok_charged": 3.33,
+          "reasoned": false,
+          "lat_ms": 423.64,
+          "energy_j": 85.45,
+          "flops": 4.57
+        },
+        "VQA_RAD_closed": {
+          "gen_tok_charged": 3.01,
+          "reasoned": false,
+          "lat_ms": 389.61,
+          "energy_j": 79.6,
+          "flops": 4.57
+        },
+        "PATH_VQA_closed": {
+          "gen_tok_charged": 3.0,
+          "reasoned": false,
+          "lat_ms": 388.55,
+          "energy_j": 79.42,
+          "flops": 4.57
+        },
+        "MedXpertQA-MM": {
+          "gen_tok_charged": 320.33,
+          "reasoned": true,
+          "lat_ms": 34129.59,
+          "energy_j": 5874.18,
+          "flops": 8.85
+        },
+        "SLAKE_open": {
+          "gen_tok_charged": 122.41,
+          "reasoned": true,
+          "lat_ms": 13085.17,
+          "energy_j": 2259.97,
+          "flops": 6.15
+        },
+        "VQA_RAD_open": {
+          "gen_tok_charged": 104.54,
+          "reasoned": true,
+          "lat_ms": 11185.09,
+          "energy_j": 1933.64,
+          "flops": 5.9
+        },
+        "PATH_VQA_open": {
+          "gen_tok_charged": 141.47,
+          "reasoned": true,
+          "lat_ms": 15111.78,
+          "energy_j": 2608.02,
+          "flops": 6.39
+        }
+      },
+      "pooled_variant_b": {
+        "lat_ms": 2763.146,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "pooled_mcq_only": {
+        "lat_ms": 2089.483,
+        "energy_j": 371.543,
+        "flops": 4.787
+      },
+      "pooled_open_only": {
+        "lat_ms": 14219.452,
+        "energy_j": 2454.772,
+        "flops": 6.281
+      }
+    },
+    "M5_binary_allornothing": {
+      "desc": "Sensitivity: the retrospective's crude version -- charge the FULL 10,521.6 ms / 2,001.9 J wherever a genuine reasoning run exists and the full 665 ms / 126.9 J everywhere else. No length interpolation.",
+      "per_cell": {
+        "PMC_VQA": {
+          "gen_tok_charged": 3.09,
+          "reasoned": false,
+          "lat_ms": 665.0,
+          "energy_j": 126.9,
+          "flops": 4.57
+        },
+        "SLAKE_closed": {
+          "gen_tok_charged": 3.33,
+          "reasoned": false,
+          "lat_ms": 665.0,
+          "energy_j": 126.9,
+          "flops": 4.57
+        },
+        "VQA_RAD_closed": {
+          "gen_tok_charged": 3.01,
+          "reasoned": false,
+          "lat_ms": 665.0,
+          "energy_j": 126.9,
+          "flops": 4.57
+        },
+        "PATH_VQA_closed": {
+          "gen_tok_charged": 3.0,
+          "reasoned": false,
+          "lat_ms": 665.0,
+          "energy_j": 126.9,
+          "flops": 4.57
+        },
+        "MedXpertQA-MM": {
+          "gen_tok_charged": 320.33,
+          "reasoned": true,
+          "lat_ms": 10521.6,
+          "energy_j": 2001.9,
+          "flops": 8.85
+        },
+        "SLAKE_open": {
+          "gen_tok_charged": 122.41,
+          "reasoned": true,
+          "lat_ms": 10521.6,
+          "energy_j": 2001.9,
+          "flops": 6.15
+        },
+        "VQA_RAD_open": {
+          "gen_tok_charged": 104.54,
+          "reasoned": true,
+          "lat_ms": 10521.6,
+          "energy_j": 2001.9,
+          "flops": 5.9
+        },
+        "PATH_VQA_open": {
+          "gen_tok_charged": 141.47,
+          "reasoned": true,
+          "lat_ms": 10521.6,
+          "energy_j": 2001.9,
+          "flops": 6.39
+        }
+      },
+      "pooled_variant_b": {
+        "lat_ms": 1679.279,
+        "energy_j": 319.844,
+        "flops": 4.87
+      },
+      "pooled_mcq_only": {
+        "lat_ms": 1159.325,
+        "energy_j": 220.934,
+        "flops": 4.787
+      },
+      "pooled_open_only": {
+        "lat_ms": 10521.6,
+        "energy_j": 2001.9,
+        "flops": 6.281
+      }
+    }
+  },
+  "part3_corrected_headline": {
+    "baseline_as_charged_in_the_paper": {
+      "lat_ms": 10521.6,
+      "energy_j": 2001.9,
+      "flops": 4.57
+    },
+    "baseline_honestly_recosted": {
+      "M1_primary": {
+        "lat_ms": 2018.135,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "M2_repo_phi_0586": {
+        "lat_ms": 2126.835,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "M3_repo_quantized": {
+        "lat_ms": 2264.999,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "M4_two_anchor_exact": {
+        "lat_ms": 2763.146,
+        "energy_j": 487.24,
+        "flops": 4.87
+      },
+      "M5_binary_allornothing": {
+        "lat_ms": 1679.279,
+        "energy_j": 319.844,
+        "flops": 4.87
+      }
+    },
+    "method_cost_variant_b": {
+      "compute_lean": {
+        "lat_par_ms": 469.0,
+        "lat_seq_ms": 578.9,
+        "energy_j": 83.6,
+        "flops": 2.248
+      },
+      "accuracy_max": {
+        "lat_par_ms": 730.6,
+        "lat_seq_ms": 840.5,
+        "energy_j": 136.7,
+        "flops": 4.257
+      }
+    },
+    "corrected_advantage": {
+      "compute_lean": {
+        "M1_primary": {
+          "latency_par_pct": -76.8,
+          "latency_seq_pct": -71.3,
+          "energy_pct": -82.8,
+          "flops_x": 0.462
+        },
+        "M2_repo_phi_0586": {
+          "latency_par_pct": -77.9,
+          "latency_seq_pct": -72.8,
+          "energy_pct": -82.8,
+          "flops_x": 0.462
+        },
+        "M3_repo_quantized": {
+          "latency_par_pct": -79.3,
+          "latency_seq_pct": -74.4,
+          "energy_pct": -82.8,
+          "flops_x": 0.462
+        },
+        "M4_two_anchor_exact": {
+          "latency_par_pct": -83.0,
+          "latency_seq_pct": -79.0,
+          "energy_pct": -82.8,
+          "flops_x": 0.462
+        },
+        "M5_binary_allornothing": {
+          "latency_par_pct": -72.1,
+          "latency_seq_pct": -65.5,
+          "energy_pct": -73.9,
+          "flops_x": 0.462
+        },
+        "AS_CHARGED_for_comparison": {
+          "latency_par_pct": -95.5,
+          "latency_seq_pct": -94.5,
+          "energy_pct": -95.8,
+          "flops_x": 0.492
+        }
+      },
+      "accuracy_max": {
+        "M1_primary": {
+          "latency_par_pct": -63.8,
+          "latency_seq_pct": -58.4,
+          "energy_pct": -71.9,
+          "flops_x": 0.874
+        },
+        "M2_repo_phi_0586": {
+          "latency_par_pct": -65.6,
+          "latency_seq_pct": -60.5,
+          "energy_pct": -71.9,
+          "flops_x": 0.874
+        },
+        "M3_repo_quantized": {
+          "latency_par_pct": -67.7,
+          "latency_seq_pct": -62.9,
+          "energy_pct": -71.9,
+          "flops_x": 0.874
+        },
+        "M4_two_anchor_exact": {
+          "latency_par_pct": -73.6,
+          "latency_seq_pct": -69.6,
+          "energy_pct": -71.9,
+          "flops_x": 0.874
+        },
+        "M5_binary_allornothing": {
+          "latency_par_pct": -56.5,
+          "latency_seq_pct": -49.9,
+          "energy_pct": -57.3,
+          "flops_x": 0.874
+        },
+        "AS_CHARGED_for_comparison": {
+          "latency_par_pct": -93.1,
+          "latency_seq_pct": -92.0,
+          "energy_pct": -93.2,
+          "flops_x": 0.932
+        }
+      }
+    },
+    "vs_always_32b_direct_unchanged": {
+      "compute_lean": {
+        "latency_par_pct": -29.5,
+        "energy_pct": -34.1,
+        "flops_x": 0.492
+      },
+      "accuracy_max": {
+        "latency_par_pct": 9.9,
+        "energy_pct": 7.7,
+        "flops_x": 0.931
+      }
+    }
+  },
+  "part4a_concentration": {
+    "pooled_delta": 0.0245,
+    "per_cell": {
+      "PMC_VQA": {
+        "n": 33430,
+        "weight": 0.79173,
+        "delta": 0.0119,
+        "contribution": 0.009426
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "weight": 0.0198,
+        "delta": -0.0048,
+        "contribution": -9.5e-05
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "weight": 0.00594,
+        "delta": 0.012,
+        "contribution": 7.1e-05
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "weight": 0.07962,
+        "delta": 0.0,
+        "contribution": 0.0
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "weight": 0.04737,
+        "delta": 0.0025,
+        "contribution": 0.000118
+      },
+      "SLAKE_open": {
+        "n": 645,
+        "weight": 0.01528,
+        "delta": 0.1411,
+        "contribution": 0.002155
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "weight": 0.00474,
+        "delta": 0.06,
+        "contribution": 0.000284
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "weight": 0.03552,
+        "delta": 0.3533,
+        "contribution": 0.012552
+      }
+    },
+    "top2_cells": [
+      "PATH_VQA_open",
+      "PMC_VQA"
+    ],
+    "top2_share_pct": 89.7,
+    "third_cell": "SLAKE_open",
+    "remaining_max_contribution": 0.000284,
+    "claim": "89% of the +0.0245 delta comes from PathVQA-open + PMC-VQA",
+    "verdict": "CONFIRMED: PATH_VQA_open + PMC_VQA contribute 89.7% of the pooled +0.0245."
+  },
+  "part4b_zero_contribution_cells": {
+    "accuracy_max": {
+      "per_cell_delta_vs_32b_direct": {
+        "PMC_VQA": 0.0095,
+        "SLAKE_closed": 0.0,
+        "VQA_RAD_closed": 0.0,
+        "PATH_VQA_closed": 0.0,
+        "MedXpertQA-MM": 0.0,
+        "SLAKE_open": 0.0016,
+        "VQA_RAD_open": 0.005,
+        "PATH_VQA_open": 0.086
+      },
+      "cells_exactly_zero": [
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM"
+      ],
+      "n_zero": 4,
+      "n_cells": 8,
+      "pooled_sample_weighted": 0.0107,
+      "pooled_paired_ci": {
+        "delta": 0.0107,
+        "lo": 0.0086,
+        "hi": 0.0127,
+        "sig": true,
+        "n": 42224
+      }
+    },
+    "compute_lean": {
+      "per_cell_delta_vs_32b_direct": {
+        "PMC_VQA": -0.001,
+        "SLAKE_closed": -0.0072,
+        "VQA_RAD_closed": -0.0199,
+        "PATH_VQA_closed": -0.0009,
+        "MedXpertQA-MM": -0.006,
+        "SLAKE_open": -0.0093,
+        "VQA_RAD_open": -0.005,
+        "PATH_VQA_open": 0.076
+      },
+      "cells_exactly_zero": [],
+      "n_zero": 0,
+      "n_cells": 8,
+      "pooled_sample_weighted": 0.0011,
+      "pooled_paired_ci": {
+        "delta": 0.0011,
+        "lo": -0.0028,
+        "hi": 0.0052,
+        "sig": false,
+        "n": 42224
+      }
+    },
+    "claim": "against always-32B-direct, 5 of 8 cells contribute exactly zero",
+    "verdict": "PARTIALLY REFUTED. For accuracy-max exactly 4 of 8 cells are 0.0000 (SLAKE_closed, VQA_RAD_closed, PATH_VQA_closed, MedXpertQA-MM) -- not 5. The retrospective's own hole-2 body text lists the same 4 cells, so its heading '5 of 8' contradicts its own body. For compute-lean the count is 0 of 8. The substantive point stands and is arguably understated: the entire deployable-baseline win is carried by 4 cells."
+  },
+  "part4c_macro_average": {
+    "compute_lean": {
+      "mcq_only_vs_oracle_mode": {
+        "per_cell": {
+          "PMC_VQA": -0.001,
+          "SLAKE_closed": -0.012,
+          "VQA_RAD_closed": -0.0199,
+          "PATH_VQA_closed": -0.0009,
+          "MedXpertQA-MM": -0.006
+        },
+        "macro_delta": -0.008,
+        "ci95": [
+          -0.0139,
+          -0.0024
+        ],
+        "sig": true,
+        "n_cells": 5
+      },
+      "mcq_only_vs_32b_direct": {
+        "per_cell": {
+          "PMC_VQA": -0.001,
+          "SLAKE_closed": -0.0072,
+          "VQA_RAD_closed": -0.0199,
+          "PATH_VQA_closed": -0.0009,
+          "MedXpertQA-MM": -0.006
+        },
+        "macro_delta": -0.007,
+        "ci95": [
+          -0.0128,
+          -0.0016
+        ],
+        "sig": true,
+        "n_cells": 5
+      },
+      "all8_vs_32b_reasoning": {
+        "per_cell": {
+          "PMC_VQA": 0.0014,
+          "SLAKE_closed": -0.012,
+          "VQA_RAD_closed": -0.008,
+          "PATH_VQA_closed": -0.0009,
+          "MedXpertQA-MM": -0.0035,
+          "SLAKE_open": 0.1302,
+          "VQA_RAD_open": 0.05,
+          "PATH_VQA_open": 0.3433
+        },
+        "macro_delta": 0.0626,
+        "ci95": [
+          0.0516,
+          0.0735
+        ],
+        "sig": true,
+        "n_cells": 8
+      },
+      "all8_vs_32b_direct": {
+        "per_cell": {
+          "PMC_VQA": -0.001,
+          "SLAKE_closed": -0.0072,
+          "VQA_RAD_closed": -0.0199,
+          "PATH_VQA_closed": -0.0009,
+          "MedXpertQA-MM": -0.006,
+          "SLAKE_open": -0.0093,
+          "VQA_RAD_open": -0.005,
+          "PATH_VQA_open": 0.076
+        },
+        "macro_delta": 0.0033,
+        "ci95": [
+          -0.0054,
+          0.0122
+        ],
+        "sig": false,
+        "n_cells": 8
+      },
+      "all8_vs_oracle_mode": {
+        "per_cell": {
+          "PMC_VQA": -0.001,
+          "SLAKE_closed": -0.012,
+          "VQA_RAD_closed": -0.0199,
+          "PATH_VQA_closed": -0.0009,
+          "MedXpertQA-MM": -0.006,
+          "SLAKE_open": -0.0093,
+          "VQA_RAD_open": -0.005,
+          "PATH_VQA_open": 0.076
+        },
+        "macro_delta": 0.0027,
+        "ci95": [
+          -0.0063,
+          0.0114
+        ],
+        "sig": false,
+        "n_cells": 8
+      }
+    },
+    "accuracy_max": {
+      "mcq_only_vs_oracle_mode": {
+        "per_cell": {
+          "PMC_VQA": 0.0095,
+          "SLAKE_closed": -0.0048,
+          "VQA_RAD_closed": 0.0,
+          "PATH_VQA_closed": 0.0,
+          "MedXpertQA-MM": 0.0
+        },
+        "macro_delta": 0.0009,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "sig": false,
+        "n_cells": 5
+      },
+      "mcq_only_vs_32b_direct": {
+        "per_cell": {
+          "PMC_VQA": 0.0095,
+          "SLAKE_closed": 0.0,
+          "VQA_RAD_closed": 0.0,
+          "PATH_VQA_closed": 0.0,
+          "MedXpertQA-MM": 0.0
+        },
+        "macro_delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "sig": true,
+        "n_cells": 5
+      },
+      "all8_vs_32b_reasoning": {
+        "per_cell": {
+          "PMC_VQA": 0.0119,
+          "SLAKE_closed": -0.0048,
+          "VQA_RAD_closed": 0.012,
+          "PATH_VQA_closed": 0.0,
+          "MedXpertQA-MM": 0.0025,
+          "SLAKE_open": 0.1411,
+          "VQA_RAD_open": 0.06,
+          "PATH_VQA_open": 0.3533
+        },
+        "macro_delta": 0.072,
+        "ci95": [
+          0.0618,
+          0.0825
+        ],
+        "sig": true,
+        "n_cells": 8
+      },
+      "all8_vs_32b_direct": {
+        "per_cell": {
+          "PMC_VQA": 0.0095,
+          "SLAKE_closed": 0.0,
+          "VQA_RAD_closed": 0.0,
+          "PATH_VQA_closed": 0.0,
+          "MedXpertQA-MM": 0.0,
+          "SLAKE_open": 0.0016,
+          "VQA_RAD_open": 0.005,
+          "PATH_VQA_open": 0.086
+        },
+        "macro_delta": 0.0128,
+        "ci95": [
+          0.0056,
+          0.02
+        ],
+        "sig": true,
+        "n_cells": 8
+      },
+      "all8_vs_oracle_mode": {
+        "per_cell": {
+          "PMC_VQA": 0.0095,
+          "SLAKE_closed": -0.0048,
+          "VQA_RAD_closed": 0.0,
+          "PATH_VQA_closed": 0.0,
+          "MedXpertQA-MM": 0.0,
+          "SLAKE_open": 0.0016,
+          "VQA_RAD_open": 0.005,
+          "PATH_VQA_open": 0.086
+        },
+        "macro_delta": 0.0122,
+        "ci95": [
+          0.005,
+          0.0194
+        ],
+        "sig": true,
+        "n_cells": 8
+      }
+    },
+    "claim": "compute-lean has a significant, unreported macro LOSS: multiple-choice-only macro vs oracle-mode -0.0080 [-0.0138, -0.0025]",
+    "verdict": "CONFIRMED. compute-lean, MCQ-only (5 cells), macro delta vs oracle-mode-32B = -0.0080 [-0.0139, -0.0024] -- SIGNIFICANT; vs always-32B-direct = -0.0070 [-0.0128, -0.0016] -- SIGNIFICANT. Both are LOSSES and neither appears in any headline. 'Pareto-dominates' is a sample-weighted statement that is carried by one cell (PMC-VQA, 79% of the pool); under equal weight per benchmark the compute-lean multiple-choice arm is significantly WORSE than simply always running the 32B."
+  },
+  "part5_honest_claim": {
+    "defensible_claim": "On 5 medical-VQA benchmarks / 8 cells (n=42224), a format-aware adaptive cascade over a Lingshu-7B/32B pair matches a single always-32B forward pass in accuracy (+0.0011 [-0.0028, +0.0052], not significant) at 0.49x its compute and 0.71x its batch-1 latency; a higher-accuracy setting beats it (+0.0107 [+0.0086, +0.0127], significant) at 0.93x compute. The accuracy gain is concentrated: 90% of it comes from 2 of the 8 cells, and 4 of 8 cells are exactly tied with the strong model because the method simply runs the strong model there.",
+    "second_sentence": "Against a big model actually made to reason, the advantage is a 72-83% latency and ~83% energy reduction (not the previously reported 95-96%), because on ~90% of the pool the run labelled 'with reasoning' emitted ~3 tokens and was never a reasoning run.",
+    "must_be_withdrawn": [
+      "'-95.5% latency / -96% energy versus always-32B-with-reasoning'. The baseline was billed a 10,521.6 ms open-text reasoning constant on cells whose reasoning run emitted ~3 tokens. Corrected: -72% to -83% latency and -83% energy for compute-lean.",
+      "The field name `acc_32b_think_measured` for PATH_VQA_closed. There is no reasoning dump for that cell at all (n=3,362, 8.0% of the pool); its value is the direct-mode run copied over.",
+      "'Pareto-dominates' as an unqualified statement. It holds sample-weighted only; the equal-weight-per-benchmark multiple-choice macro is a significant LOSS (-0.0080 [-0.0139, -0.0024])."
+    ],
+    "must_be_softened": [
+      "The vs-reasoning framing generally. Report always-32B-direct and oracle-mode-32B as the primary baselines; both are sound and neither depends on this correction.",
+      "The accuracy headline +0.0245. It is real and CI-backed, but 89% of it is two cells and against the deployable direct-mode baseline it is +0.0106 with 4 of 8 cells contributing exactly zero."
+    ],
+    "what_survives_intact": [
+      "The FLOP-eq / compute claim. The paper charges the reasoning baseline the same flat 4.57 FLOP-eq as the direct baseline, so the 0.49x / 0.93x compute numbers are NOT inflated by this bug. Under length-aware FLOP accounting the reasoning baseline costs 4.870 FLOP-eq, so the method's compute advantage would IMPROVE to 0.462x / 0.874x.",
+      "Every comparison against always-32B-direct and oracle-mode-32B (accuracy AND cost).",
+      "The open-text arm's accuracy result, which is where the reasoning baseline is genuine (SLAKE/VQA-RAD/PathVQA-open all really do reason: 105-141 generated tokens)."
+    ]
+  },
+  "caveats": [
+    "The method's own cost vector is left at its published values: it never runs the 32B in reasoning mode, so this correction cannot change it. Its open-cell PARALLEL latency is separately unmeasured (retrospective \u00a77 hole 8); the sequential-latency advantage is reported alongside for that reason.",
+    "PATH_VQA_closed has no reasoning dump. It is charged its DIRECT-mode generation length, which is the assumption its imputed accuracy already makes. Charging it the full reasoning constant (as the paper does) while imputing its accuracy from the direct run is the inconsistency this file removes.",
+    "The 10,521.6 ms reasoning anchor is a mean over n=15 whose median is 12,896.2 ms (retrospective \u00a77 hole 9); the smaller mean is used throughout, which is conservative for the baseline and therefore conservative against the method.",
+    "Five cost-model calibrations are reported. The corrected latency advantage spans -72% to -83% across all five, so the conclusion does not depend on the choice."
+  ]
+}

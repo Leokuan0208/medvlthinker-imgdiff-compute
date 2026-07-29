@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 make_open_chart.py - charts for the open-ended self-consistency cascade (MedVLThinker-7B -> Lingshu-32B).
-Reads results/cascade_methods/open_cascade_lingshu.json. Outputs to paper/figs/open/.
+Reads results/cascade_methods/artifacts/open_cascade_lingshu.json. Outputs to paper/figs/open/.
 (1) accuracy-vs-escalation frontier: self-consistency gate vs confidence gate.
 (2) routing-signal AUROC bars (cheap-wrong + recoverability) with the ~0.6 MCQ ceiling reference.
 """
@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-D = json.load(open("results/cascade_methods/open_cascade_lingshu.json"))
+D = json.load(open("results/cascade_methods/artifacts/open_cascade_lingshu.json"))
 OUT = "paper/figs/open"; os.makedirs(OUT, exist_ok=True)
 
 def chart_frontier():

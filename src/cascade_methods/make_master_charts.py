@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 make_master_charts.py - EVERY data point across all families/methods into comparable charts + tables.
-Reads results/cascade_methods/allmethods_<family>.json (written by acc_allmethods.py) + PEAK_VRAM from
+Reads results/cascade_methods/artifacts/allmethods_<family>.json (written by acc_allmethods.py) + PEAK_VRAM from
 logs/lat_*.log. Emits: master_data.csv (one row per family x pool x method, all metrics + per-benchmark),
 MASTER_TABLES.md (markdown), and charts in paper/figs/master/. matplotlib + stdlib only.
 Run after: for f in medvlthinker lingshu qoq chiron medgemma; do python3 acc_allmethods.py --family $f; done
@@ -11,7 +11,7 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 REPO = os.path.expanduser("~/medvlthinker-imgdiff-compute")
-RES = os.path.join(REPO, "results/cascade_methods"); FIG = os.path.join(REPO, "paper/figs/master")
+RES = os.path.join(REPO, "results/cascade_methods/artifacts"); FIG = os.path.join(REPO, "paper/figs/master")
 os.makedirs(FIG, exist_ok=True)
 FAMS = ["medvlthinker", "lingshu", "qoq", "chiron", "medgemma"]
 FAM_LABEL = {"medvlthinker": "MedVLThinker 7B/32B", "lingshu": "Lingshu 7B/32B", "qoq": "QoQ-Med 7B/32B",
@@ -58,7 +58,7 @@ def poolkey(fam, want6):
     for k in D[fam]["pools"]:
         if (want6 and k == "ALL-6") or (not want6 and "5" in k): return k
     return None
-with open(os.path.join(RES, "MASTER_TABLES.md"), "w") as fh:
+with open(os.path.join(os.path.dirname(RES), "docs/archive_mcq/MASTER_TABLES.md"), "w") as fh:
     fh.write("# Master tables — every data point (5 families × all methods)\n\n")
     fh.write("Cost legend: FLOPs% vs always-big-think; latency = batch-1 (s); energy = batch-1 (J); guard = "
              "#benchmarks worse than always-small (0=clean). Source: `acc_allmethods.py` JSON dumps + NVML logs.\n\n")
@@ -200,7 +200,7 @@ if oc and gs:
                  "the gate stays near-optimal at confidence", fontsize=11)
     fig.tight_layout(rect=[0, 0, 1, 0.94]); fig.savefig(os.path.join(FIG, "fig_openended_ceiling.png"), dpi=150); plt.close(fig)
     # append an open-ended section to MASTER_TABLES.md
-    with open(os.path.join(RES, "MASTER_TABLES.md"), "a") as fh:
+    with open(os.path.join(os.path.dirname(RES), "docs/archive_mcq/MASTER_TABLES.md"), "a") as fh:
         fh.write("\n## Open-ended routing (§5.7) — Lingshu-7B → Lingshu-32B, LLM-judge\n\n")
         fh.write("Routing AUROC (predict the cheap model is wrong). MCQ ceiling ≈ 0.6 (§5.2).\n\n")
         fh.write("| dataset | confidence cheap-wrong | confidence recover |\n|---|---|---|\n")

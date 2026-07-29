@@ -184,9 +184,9 @@ def main():
           f"(Δesc={np.mean(resc_e)-np.mean(margin_e):+.3f} at acc Δ={np.mean(resc_a)-np.mean(margin_a):+.4f})")
     results["eval_cv"] = dict(margin_esc=float(np.mean(margin_e)), margin_acc=float(np.mean(margin_a)),
                               rescue_esc=float(np.mean(resc_e)), rescue_acc=float(np.mean(resc_a)))
-    os.makedirs("results/cascade_methods", exist_ok=True)
-    json.dump(results, open("results/cascade_methods/stability_rescue_validate.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/stability_rescue_validate.json")
+    os.makedirs("results/cascade_methods/artifacts", exist_ok=True)
+    json.dump(results, open("results/cascade_methods/artifacts/stability_rescue_validate.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/stability_rescue_validate.json")
 
 if __name__ == "__main__":
     main()

@@ -150,12 +150,12 @@ def main():
         print(f"  @ {tag:<32} margin: {sm:<28} rescue-3cap: {sr}")
     summary["frontier_margin"] = fm; summary["frontier_rescue3"] = fr
 
-    os.makedirs("results/cascade_methods", exist_ok=True)
+    os.makedirs("results/cascade_methods/artifacts", exist_ok=True)
     out = {k: ({kk: (float(vv) if not isinstance(vv, np.ndarray) else None) for kk, vv in v.items()}
                if isinstance(v, dict) else v)
            for k, v in summary.items()}
-    json.dump(out, open("results/cascade_methods/stability_rescue_cost.json", "w"), indent=1)
-    print("\n-> results/cascade_methods/stability_rescue_cost.json")
+    json.dump(out, open("results/cascade_methods/artifacts/stability_rescue_cost.json", "w"), indent=1)
+    print("\n-> results/cascade_methods/artifacts/stability_rescue_cost.json")
     # headline deltas
     h = summary["3-cap (cap80,160,640)"]
     print(f"\nHEADLINE (3-cap, parameter-free, frozen tau): "

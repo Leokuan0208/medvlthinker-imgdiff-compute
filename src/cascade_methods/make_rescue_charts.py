@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 make_rescue_charts.py - charts for integrating the Visual-Stability Rescue into ACC-v2.
-Reads results/cascade_methods/rescue_allfam/{medvlthinker,lingshu,qoq,control_think_signals}.json.
+Reads results/cascade_methods/artifacts/rescue_allfam/{medvlthinker,lingshu,qoq,control_think_signals}.json.
 Outputs PNGs to paper/figs/rescue/. Honest set: the control (resolution-stability is a WORSE
 think-skip signal than random/confidence), the per-family parity cost comparison, the MedVLThinker
 accuracy-latency frontier, and per-dataset accuracy at parity.
@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-RB = "results/cascade_methods/rescue_allfam"; OUT = "paper/figs/rescue"; os.makedirs(OUT, exist_ok=True)
+RB = "results/cascade_methods/artifacts/rescue_allfam"; OUT = "paper/figs/rescue"; os.makedirs(OUT, exist_ok=True)
 def load(f): return json.load(open(os.path.join(RB, f)))
 FAMS = ["medvlthinker", "lingshu", "qoq"]
 DATA = {f: load(f"{f}.json") for f in FAMS}

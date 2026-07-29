@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 make_detailed_table.py - detailed, readable tables (numbers) for the cascade methods across families.
-Reads results/cascade_methods/rescue_allfam/accv3_{family}.json (anchors + ACC-v1/v2/v3, honest
+Reads results/cascade_methods/artifacts/rescue_allfam/accv3_{family}.json (anchors + ACC-v1/v2/v3, honest
 50/50 calib/test x20 seeds, min-think@parity). Renders per-family PNG tables (metrics + per-dataset
 accuracy) AND a markdown master table. Outputs to paper/figs/rescue/.
 """
@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-RB = "results/cascade_methods/rescue_allfam"; OUT = "paper/figs/rescue"; os.makedirs(OUT, exist_ok=True)
+RB = "results/cascade_methods/artifacts/rescue_allfam"; OUT = "paper/figs/rescue"; os.makedirs(OUT, exist_ok=True)
 FAMS = ["medvlthinker", "lingshu", "qoq"]
 DATA = {f: json.load(open(f"{RB}/accv3_{f}.json")) for f in FAMS}
 ORDER = ["always-small-nt", "always-big-nt", "always-big-think", "ACC-v1 (confidence)",
@@ -111,7 +111,7 @@ def markdown():
                 cellvals = " | ".join((f"{r['bench'][b]:.3f}" if (r and b in r.get('bench',{})) else "—") for b in BENCHES)
                 lines.append(f"| {SHORT[m]} | {cellvals} |")
         lines.append("")
-    p = "results/cascade_methods/DETAILED_TABLES.md"; open(p, "w").write("\n".join(lines)); return p
+    p = "results/cascade_methods/docs/archive_mcq/DETAILED_TABLES.md"; open(p, "w").write("\n".join(lines)); return p
 
 if __name__ == "__main__":
     ps = []

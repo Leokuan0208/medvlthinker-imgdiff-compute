@@ -31,7 +31,7 @@ def margin(lp):
 def build_latency_model():
     """lat(config, gen_tok) in seconds, from measured batch-1 files + rt_cascade (think@fullres)."""
     model = {}
-    for f in ["results/cascade_methods/latency_32b.jsonl", "results/cascade_methods/latency_7b.jsonl"]:
+    for f in ["results/cascade_methods/artifacts/latency_32b.jsonl", "results/cascade_methods/artifacts/latency_7b.jsonl"]:
         if not os.path.exists(J(f)): continue
         rows = defaultdict(list)
         for l in open(J(f)):

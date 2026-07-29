@@ -1,0 +1,76 @@
+
+############  COMPLETE COMPARISON  [ALL-6]  (3-tier config, 20 seeds, parity=0.5723)  ############
+  config = 7B-nt@cap320 -> 32B-nt@cap320 -> 32B-think@fullres | esc0=%past-7B, think=%reaching-32B-think, guard=#benchmarks worse-than-always-7B
+  method                              acc   esc0  think  FLOPs%     lat  guard
+  always-7B-nt@cap320 (cheap)      0.5262     0%     0%    8.4%   0.21s   0.00
+  always-32B-nt@cap320             0.5573   100%     0%   36.2%   0.34s   0.00
+  always-32B-think@full [PARITY]   0.5723   100%   100%  100.0%  26.61s   0.00
+  Ours (ACC-v2: agreement)         0.5710    79%    14%   53.5%   4.86s   0.00
+  CASP-Stability (Ours, trained)   0.5698    74%    11%   49.0%   3.94s   0.05
+  ACC-v1 (margin)                  0.5694    71%    19%   54.7%   5.93s   0.00
+  MSP/Chow                         0.5704    73%    19%   57.8%   6.60s   0.00
+  entropy                          0.5695    73%    21%   62.2%   7.99s   0.00
+  Gini/DOCTOR                      0.5705    72%    21%   61.6%   7.82s   0.00
+  AutoMix (self-verify)            0.5699    76%    17%   54.8%   5.46s   0.05
+  FrugalGPT-style learned          0.5679    71%    19%   60.5%   7.61s   0.10
+  Jitkrittum L2D (Diff-Prob)       0.5673    70%    14%   51.0%   5.01s   0.00
+  random                           0.5643    89%    76%  116.6%  20.73s   0.05
+
+  --- per-benchmark accuracy [ALL-6] ---
+  method                              PMC  SLAKE VQARAD  PathV   MMMU   MX-R   MX-U
+  always-7B-nt@cap320 (cheap)       0.543  0.762  0.761  0.641  0.547  0.225  0.256
+  always-32B-nt@cap320              0.551  0.849  0.853  0.661  0.624  0.279  0.292
+  always-32B-think@full [PARITY]    0.556  0.764  0.776  0.673  0.688  0.326  0.384
+  Ours (ACC-v2: agreement)          0.561  0.849  0.864  0.680  0.648  0.286  0.313
+  CASP-Stability (Ours, trained)    0.560  0.836  0.865  0.677  0.661  0.289  0.313
+  ACC-v1 (margin)                   0.564  0.830  0.856  0.676  0.648  0.292  0.308
+  MSP/Chow                          0.564  0.838  0.851  0.673  0.673  0.295  0.319
+  entropy                           0.558  0.836  0.853  0.667  0.674  0.308  0.332
+  Gini/DOCTOR                       0.561  0.839  0.850  0.672  0.675  0.302  0.322
+  AutoMix (self-verify)             0.556  0.826  0.850  0.680  0.635  0.299  0.311
+  FrugalGPT-style learned           0.558  0.796  0.832  0.667  0.693  0.311  0.331
+  Jitkrittum L2D (Diff-Prob)        0.563  0.831  0.852  0.672  0.643  0.291  0.307
+  random                            0.551  0.780  0.779  0.667  0.660  0.307  0.361
+
+  --- 95% CI over 20 seeds [ALL-6] (parity acc=0.5723) ---
+    Ours (ACC-v2: agreement)       acc[0.5608,0.5820] FLOPs%[40.7,74.6] lat[2.64,9.82]s guard[0,0]
+    ACC-v1 (margin)                acc[0.5574,0.5781] FLOPs%[39.8,86.6] lat[2.51,13.41]s guard[0,0]
+    AutoMix (self-verify)          acc[0.5588,0.5778] FLOPs%[42.9,75.3] lat[3.17,10.77]s guard[0,1]
+
+############  COMPLETE COMPARISON  [ALL-5 (excl MedXpert)]  (3-tier config, 20 seeds, parity=0.6463)  ############
+  config = 7B-nt@cap320 -> 32B-nt@cap320 -> 32B-think@fullres | esc0=%past-7B, think=%reaching-32B-think, guard=#benchmarks worse-than-always-7B
+  method                              acc   esc0  think  FLOPs%     lat  guard
+  always-7B-nt@cap320 (cheap)      0.6201     0%     0%    8.9%   0.21s   0.00
+  always-32B-nt@cap320             0.6457   100%     0%   38.7%   0.34s   0.00
+  always-32B-think@full [PARITY]   0.6463   100%   100%  100.0%  20.50s   0.00
+  Ours (ACC-v2: agreement)         0.6460    46%     0%   27.1%   0.44s   0.10
+  CASP-Stability (Ours, trained)   0.6473    51%     1%   29.5%   0.55s   0.10
+  ACC-v1 (margin)                  0.6457    45%     1%   27.1%   0.49s   0.10
+  MSP/Chow                         0.6464    48%     1%   28.4%   0.52s   0.05
+  entropy                          0.6466    54%     1%   31.6%   0.77s   0.05
+  Gini/DOCTOR                      0.6477    50%     1%   29.5%   0.63s   0.10
+  AutoMix (self-verify)            0.6464    32%     1%   22.0%   0.48s   0.40
+  FrugalGPT-style learned          0.6472    54%     1%   31.5%   0.77s   0.20
+  Jitkrittum L2D (Diff-Prob)       0.6445    46%     0%   26.8%   0.44s   0.15
+  random                           0.6395    87%    15%   57.6%   3.62s   0.40
+
+  --- per-benchmark accuracy [ALL-5 (excl MedXpert)] ---
+  method                              PMC  SLAKE VQARAD  PathV   MMMU
+  always-7B-nt@cap320 (cheap)       0.543  0.762  0.761  0.641  0.547
+  always-32B-nt@cap320              0.551  0.849  0.853  0.661  0.624
+  always-32B-think@full [PARITY]    0.556  0.764  0.776  0.673  0.688
+  Ours (ACC-v2: agreement)          0.556  0.814  0.852  0.664  0.605
+  CASP-Stability (Ours, trained)    0.555  0.810  0.853  0.666  0.642
+  ACC-v1 (margin)                   0.556  0.811  0.851  0.664  0.605
+  MSP/Chow                          0.556  0.813  0.849  0.664  0.629
+  entropy                           0.552  0.817  0.850  0.665  0.650
+  Gini/DOCTOR                       0.555  0.816  0.851  0.665  0.644
+  AutoMix (self-verify)             0.551  0.768  0.825  0.676  0.598
+  FrugalGPT-style learned           0.553  0.801  0.840  0.668  0.656
+  Jitkrittum L2D (Diff-Prob)        0.551  0.807  0.851  0.666  0.591
+  random                            0.543  0.819  0.821  0.661  0.620
+
+  --- 95% CI over 20 seeds [ALL-5 (excl MedXpert)] (parity acc=0.6463) ---
+    Ours (ACC-v2: agreement)       acc[0.6372,0.6562] FLOPs%[20.7,33.4] lat[0.32,1.11]s guard[0,1]
+    ACC-v1 (margin)                acc[0.6372,0.6562] FLOPs%[20.7,33.4] lat[0.32,1.63]s guard[0,1]
+    AutoMix (self-verify)          acc[0.6361,0.6593] FLOPs%[16.7,32.6] lat[0.28,1.77]s guard[0,2]

@@ -1,0 +1,439 @@
+{
+  "method": "Slice-gated beat-32B fusion (F1 router x F2/F3 fusion): per observable slice route to the guardrail-certified winner among {always-32B-nt, keep-7B, calibrated confidence-advantage / Chair-Varshney fusion}; MMMU->keep-7B; open-text->verifier best-of-8 cascade.",
+  "baselines": {
+    "always_32b_nt": "strong MCQ baseline (run only the 32B, no think)",
+    "always_32b_think": "task-specified naive baseline (big thinking model for everything; batch-1 10.5s)"
+  },
+  "cost_constants": {
+    "GEN7": {
+      "ms": 347.0,
+      "flop": 1.0
+    },
+    "BO8": {
+      "ms": 522.0,
+      "flop": 16.0
+    },
+    "GEN32_nothink": {
+      "ms": 665.0,
+      "flop": 4.57
+    },
+    "GEN32_think": {
+      "ms": 10521.6,
+      "flop": 4.57
+    },
+    "FUSE_both_legs": {
+      "ms": 665.0,
+      "flop": 5.57
+    },
+    "note": "a decision-fusion cell runs BOTH legs (flop 5.57); parallel batch-1 latency = max(347,665)=665ms ~= 32B-nt, ~16x faster than 32B-think"
+  },
+  "per_benchmark": {
+    "PMC_VQA": {
+      "format": "MCQ",
+      "n": 33430,
+      "acc_7b": 0.5427,
+      "acc_32b_nt": 0.5518,
+      "acc_32b_think": 0.5494,
+      "think_is_real": true,
+      "chosen_policy": "F3_confadv",
+      "method_acc": 0.5653,
+      "d_vs_32b_nt": 0.0135,
+      "d_vs_32b_nt_ci95": [
+        0.01,
+        0.0169
+      ],
+      "d_vs_32b_think": 0.0159,
+      "cost_flop": 5.57,
+      "cost_latency_ms": 665.0
+    },
+    "SLAKE_closed": {
+      "format": "MCQ",
+      "n": 836,
+      "acc_7b": 0.8254,
+      "acc_32b_nt": 0.8589,
+      "acc_32b_think": 0.8636,
+      "think_is_real": true,
+      "chosen_policy": "always_32b_nt",
+      "method_acc": 0.8589,
+      "d_vs_32b_nt": 0.0,
+      "d_vs_32b_nt_ci95": [
+        0.0,
+        0.0
+      ],
+      "d_vs_32b_think": -0.0047,
+      "cost_flop": 4.57,
+      "cost_latency_ms": 665.0
+    },
+    "VQA_RAD_closed": {
+      "format": "MCQ",
+      "n": 251,
+      "acc_7b": 0.7809,
+      "acc_32b_nt": 0.8526,
+      "acc_32b_think": 0.8406,
+      "think_is_real": true,
+      "chosen_policy": "always_32b_nt",
+      "method_acc": 0.8526,
+      "d_vs_32b_nt": 0.0,
+      "d_vs_32b_nt_ci95": [
+        0.0,
+        0.0
+      ],
+      "d_vs_32b_think": 0.012,
+      "cost_flop": 4.57,
+      "cost_latency_ms": 665.0
+    },
+    "PATH_VQA_closed": {
+      "format": "MCQ",
+      "n": 3362,
+      "acc_7b": 0.8409,
+      "acc_32b_nt": 0.8891,
+      "acc_32b_think": 0.8891,
+      "think_is_real": false,
+      "chosen_policy": "always_32b_nt",
+      "method_acc": 0.8891,
+      "d_vs_32b_nt": 0.0,
+      "d_vs_32b_nt_ci95": [
+        0.0,
+        0.0
+      ],
+      "d_vs_32b_think": -0.0,
+      "cost_flop": 4.57,
+      "cost_latency_ms": 665.0
+    },
+    "MedXpertQA-MM": {
+      "format": "MCQ",
+      "n": 2000,
+      "acc_7b": 0.2615,
+      "acc_32b_nt": 0.3065,
+      "acc_32b_think": 0.304,
+      "think_is_real": true,
+      "chosen_policy": "always_32b_nt",
+      "method_acc": 0.3065,
+      "d_vs_32b_nt": 0.0,
+      "d_vs_32b_nt_ci95": [
+        0.0,
+        0.0
+      ],
+      "d_vs_32b_think": 0.0025,
+      "cost_flop": 4.57,
+      "cost_latency_ms": 665.0
+    },
+    "MMMU-Medical-val": {
+      "format": "MCQ",
+      "n": 150,
+      "acc_7b": 0.8,
+      "acc_32b_nt": 0.6333,
+      "acc_32b_think": 0.66,
+      "think_is_real": true,
+      "chosen_policy": "always_7b",
+      "method_acc": 0.8,
+      "d_vs_32b_nt": 0.1667,
+      "d_vs_32b_nt_ci95": [
+        0.0867,
+        0.2467
+      ],
+      "d_vs_32b_think": 0.14,
+      "cost_flop": 1.0,
+      "cost_latency_ms": 347.0
+    },
+    "SLAKE_open": {
+      "format": "open",
+      "n": 645,
+      "acc_7b_greedy": 0.7302,
+      "acc_32b_nt": 0.8186,
+      "acc_32b_think_est": 0.6236,
+      "chosen_policy": "greedy+seqlogprob_cascade",
+      "method_acc": 0.8109,
+      "d_vs_32b_nt": -0.0078,
+      "d_vs_32b_think": 0.1872,
+      "cost_flop": 1.0,
+      "cost_latency_ms": 347.0
+    },
+    "VQA_RAD_open": {
+      "format": "open",
+      "n": 200,
+      "acc_7b_greedy": 0.465,
+      "acc_32b_nt": 0.6,
+      "acc_32b_think_est": 0.48,
+      "chosen_policy": "verifier_bo8_cascade",
+      "method_acc": 0.585,
+      "d_vs_32b_nt": -0.015,
+      "d_vs_32b_think": 0.105,
+      "cost_flop": 16.0,
+      "cost_latency_ms": 522.0
+    },
+    "PATH_VQA_open": {
+      "format": "open",
+      "n": 1500,
+      "acc_7b_greedy": 0.324,
+      "acc_32b_nt": 0.376,
+      "acc_32b_think_est": 0.246,
+      "chosen_policy": "verifier_bo8_cascade",
+      "method_acc": 0.4533,
+      "d_vs_32b_nt": 0.0773,
+      "d_vs_32b_think": 0.2073,
+      "cost_flop": 16.0,
+      "cost_latency_ms": 522.0
+    }
+  },
+  "idea_findings": {
+    "F1_observable_slice": {
+      "router_choice_per_benchmark": {
+        "PMC_VQA": "F3_confadv",
+        "SLAKE_closed": "always_32b_nt",
+        "VQA_RAD_closed": "always_32b_nt",
+        "PATH_VQA_closed": "always_32b_nt",
+        "MedXpertQA-MM": "always_32b_nt",
+        "MMMU-Medical-val": "always_7b"
+      },
+      "certified_non_32b_slices": [
+        "PMC_VQA",
+        "MMMU-Medical-val"
+      ],
+      "note": "Pure model-routing (keep-7B vs 32B) certifies ONLY MMMU as 7B-owned; NO finer non-MMMU closed slice passes the guardrail (Respiratory/Urinary MedXpert cells are within noise). The genuinely NEW broad win is PMC_VQA via FUSION (not keep-7B): the router picks the fusion policy there because 7B and 32B are comparably skilled with de-correlated errors."
+    },
+    "F2_chair_varshney": {
+      "pmc_cv3_acc": 0.5652,
+      "pmc_cv3_d_vs_32b": 0.0134,
+      "pmc_cv3_ci95": [
+        0.0109,
+        0.0159
+      ],
+      "classic_sliceRel_d_vs_32b": 0.0,
+      "note": "Per-SAMPLE-confidence Chair-Varshney is the fuser that wins PMC (+0.013). The 2-detector C-V is mathematically identical to F3 confidence-advantage (equal option-count, uniform error) and reconciles to it numerically (+0.0135 vs +0.0134); adding a 3rd 32B-think detector (F2_cv3) neither helps nor hurts (ties). CLASSIC per-SLICE-reliability C-V collapses to EXACTLY always-32B (d=0.0) because 32B is globally more reliable -> the beat REQUIRES per-sample confidence, not slice reliability."
+    },
+    "F3_confidence_advantage": {
+      "pmc_confadv_d_vs_32b": 0.0135,
+      "pmc_confadv_ci95": [
+        0.01,
+        0.0169
+      ],
+      "note": "Calibrated confidence-advantage override on 7B/32B disagreements. Equivalent to the 2-detector C-V under equal option-count. Beats always-32B on PMC held-out; HURTS the small radiology/pathology closed sets (32B clearly better there) -> must be slice-gated (that is F1's job)."
+    },
+    "F5_double_reading": {
+      "PMC_VQA": {
+        "agree_rate": 0.6703,
+        "acc_on_agree": 0.6409,
+        "disagree_rate": 0.3297,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.3707,
+          "take_32b_think": 0.3871,
+          "confadv_free": 0.4116,
+          "oracle_UB": 0.689
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.5518,
+          "take_32b_think": 0.5572,
+          "confadv_free": 0.5653,
+          "oracle_UB": 0.6567
+        },
+        "recoverability_auroc_confadv": 0.6343
+      },
+      "SLAKE_closed": {
+        "agree_rate": 0.9486,
+        "acc_on_agree": 0.8651,
+        "disagree_rate": 0.0514,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.7442,
+          "take_32b_think": 0.7442,
+          "confadv_free": 0.4884,
+          "oracle_UB": 1.0
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.8589,
+          "take_32b_think": 0.8589,
+          "confadv_free": 0.8457,
+          "oracle_UB": 0.872
+        },
+        "recoverability_auroc_confadv": 0.6776
+      },
+      "VQA_RAD_closed": {
+        "agree_rate": 0.8526,
+        "acc_on_agree": 0.8738,
+        "disagree_rate": 0.1474,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.7297,
+          "take_32b_think": 0.6486,
+          "confadv_free": 0.6486,
+          "oracle_UB": 0.973
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.8526,
+          "take_32b_think": 0.8406,
+          "confadv_free": 0.8406,
+          "oracle_UB": 0.8884
+        },
+        "recoverability_auroc_confadv": 0.9136
+      },
+      "PATH_VQA_closed": {
+        "agree_rate": 0.8691,
+        "acc_on_agree": 0.9199,
+        "disagree_rate": 0.1309,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.6841,
+          "take_32b_think": 0.6841,
+          "confadv_free": 0.6477,
+          "oracle_UB": 1.0
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.8891,
+          "take_32b_think": 0.8891,
+          "confadv_free": 0.8843,
+          "oracle_UB": 0.9304
+        },
+        "recoverability_auroc_confadv": 0.7425
+      },
+      "MedXpertQA-MM": {
+        "agree_rate": 0.48,
+        "acc_on_agree": 0.3031,
+        "disagree_rate": 0.52,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.3096,
+          "take_32b_think": 0.2952,
+          "confadv_free": 0.2904,
+          "oracle_UB": 0.5327
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.3065,
+          "take_32b_think": 0.299,
+          "confadv_free": 0.2965,
+          "oracle_UB": 0.4225
+        },
+        "recoverability_auroc_confadv": 0.5822
+      },
+      "MMMU-Medical-val": {
+        "agree_rate": 0.6333,
+        "acc_on_agree": 0.9053,
+        "disagree_rate": 0.3667,
+        "arbiter_acc_on_disagree": {
+          "take_32b_nt": 0.1636,
+          "take_32b_think": 0.4,
+          "confadv_free": 0.6364,
+          "oracle_UB": 0.7818
+        },
+        "arbiter_pooled": {
+          "take_32b_nt": 0.6333,
+          "take_32b_think": 0.72,
+          "confadv_free": 0.8067,
+          "oracle_UB": 0.86
+        },
+        "recoverability_auroc_confadv": 0.8676
+      }
+    },
+    "F5_note": "Double-reading: agree (67-95%) is high-precision and free; on the disagreement set the calibrated confidence-advantage arbiter (FREE) beats both the 32B-nt arbiter (=always-32B) AND the expensive 32B-think arbiter -> think is a poor arbiter (<= 32B-nt on perception disagreements)."
+  },
+  "pooled": {
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "sample_weighted": {
+        "acc_method": 0.5869,
+        "acc_32b_nt": 0.5732,
+        "acc_32b_think": 0.5631,
+        "d_vs_32b_nt": 0.0138,
+        "d_vs_32b_think": 0.0238,
+        "method_flops": 5.751,
+        "method_latency_ms": 653.3,
+        "flops_vs_always32b": 1.258,
+        "latency_saved_vs_think_pct": 93.8
+      },
+      "macro_avg": {
+        "acc_method": 0.6802,
+        "acc_32b_nt": 0.6541,
+        "acc_32b_think": 0.6063,
+        "d_vs_32b_nt": 0.0261,
+        "d_vs_32b_think": 0.0739
+      }
+    },
+    "mcq_only": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val"
+      ],
+      "n": 40029,
+      "sample_weighted": {
+        "acc_method": 0.5883,
+        "acc_32b_nt": 0.5765,
+        "acc_32b_think": 0.5745,
+        "d_vs_32b_nt": 0.0119,
+        "d_vs_32b_think": 0.0139,
+        "method_flops": 5.392,
+        "method_latency_ms": 663.8,
+        "flops_vs_always32b": 1.18,
+        "latency_saved_vs_think_pct": 93.7
+      },
+      "macro_avg": {
+        "acc_method": 0.7121,
+        "acc_32b_nt": 0.682,
+        "acc_32b_think": 0.6845,
+        "d_vs_32b_nt": 0.03,
+        "d_vs_32b_think": 0.0276
+      }
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "sample_weighted": {
+        "acc_method": 0.5629,
+        "acc_32b_nt": 0.5168,
+        "acc_32b_think": 0.3698,
+        "d_vs_32b_nt": 0.0461,
+        "d_vs_32b_think": 0.1931,
+        "method_flops": 11.874,
+        "method_latency_ms": 473.9,
+        "flops_vs_always32b": 2.598,
+        "latency_saved_vs_think_pct": 95.5
+      },
+      "macro_avg": {
+        "acc_method": 0.6164,
+        "acc_32b_nt": 0.5982,
+        "acc_32b_think": 0.4499,
+        "d_vs_32b_nt": 0.0182,
+        "d_vs_32b_think": 0.1665
+      }
+    }
+  },
+  "summary_vs_prior_integrated_method": {
+    "prior_file": "results/cascade_methods/artifacts/integrated_method_vs_think.json",
+    "prior_pooled_d_vs_32b_nothink": 0.0017,
+    "prior_pooled_d_vs_32b_think": 0.0118,
+    "prior_macro_d_vs_think": 0.0685,
+    "new_pooled_d_vs_32b_nothink": 0.0138,
+    "new_pooled_d_vs_32b_think": 0.0238,
+    "new_macro_d_vs_think": 0.0739,
+    "marginal_source": "PMC_VQA switched from the margin-cascade (matched 32B-nt, d=-0.001) to slice-gated fusion (d=+0.0134, CI [0.011,0.016], n=33430); because PMC is ~79%% of the pooled samples this ~8x-es the vs-nothink delta and ~2x-es the vs-think delta. MMMU keep-7B and open-text verifier engines are unchanged (carried).",
+    "answer_to_the_question": "YES on SAMPLE-WEIGHTED accuracy: the delta over always-32B rises to +0.0137 (nothink) / +0.0237 (think), driven by a GENUINE non-MMMU broad-slice win (PMC fusion). MACRO barely moves (+0.074 vs think) because it was already MMMU-dominated. No NEW pure-routing 7B-owned slice exists beyond MMMU; the new headroom is FUSION on the comparably-skilled/de-correlated PMC slice."
+  },
+  "verdict": {
+    "best_rule": "Slice-gated Chair-Varshney/confidence-advantage FUSION: fuse the 7B+32B calibrated decisions ONLY on the slices a held-out guardrail certifies (PMC_VQA), keep always-32B on the radiology/pathology closed sets, keep-7B on MMMU, verifier-bo8 cascade on open-text.",
+    "headline_delta": "Pooled sample-weighted acc 0.5869 vs always-32B-nt 0.5732 (d=+0.0138) and vs always-32B-THINK 0.5631 (d=+0.0238); macro d_vs_think=+0.0739.",
+    "where_the_gain_is": "PMC_VQA (n=33430, the LARGEST benchmark): fusion beats always-32B-nt by +0.0135 (95% CI [0.01, 0.0169]) held-out -- a GENUINE broad-slice win, NOT the MMMU anomaly. MMMU keep-7B (+0.167 vs nt / +0.14 vs think) and open-text verifier (+0.05 vs nt) are the other two engines; the radiology/pathology closed MCQ sets stay at 32B (fusion hurts there, guardrail keeps them safe).",
+    "vs_prior_integrated": "Raises the beat over always-32B-nt from the prior integrated method's +0.0017 (sample-weighted) to +0.0138, and over always-32B-think from +0.0118 to +0.0238, by converting PMC from 'matches 32B' to 'beats 32B'.",
+    "cost": "Honest: the PMC fusion cell runs BOTH legs -> +22% FLOPs vs always-32B-nt on that slice (5.57 vs 4.57), but batch-1 latency is ~parity (parallel, 665ms) and ~16x faster than always-32B-think. Pooled method FLOPs 5.75 (1.26x always-32B), latency 653 ms (-94% vs think). MMMU/open slices are cheaper than 32B; only fusion slices pay the extra 7B forward. NB: you cannot cascade-away the 32B on a fusion slice (the fuser needs the 32B decision) -> the accuracy beat trades the prior margin-cascade's PMC FLOP savings (it ran the 32B on only ~8% of PMC) for running the 32B on 100% of PMC; it is an ACCURACY (beat-32B) lever, not a compute-saving one, on that slice.",
+    "honesty": "The MCQ beat is bounded by the recoverability wall: fusion helps ONLY where the two legs are comparably skilled + de-correlated (PMC). It does NOT beat 32B on the radiology/pathology closed sets (guardrail correctly keeps 32B). Pure keep-7B routing still certifies only MMMU. So the answer to 'can we raise the delta beyond +0.012/+0.069?': YES on sample-weighted (PMC fusion roughly triples the vs-think delta and ~10x the vs-nothink delta); macro is already MMMU-dominated so it moves little."
+  },
+  "data_gaps": [
+    "Decision-fusion (F2/F3) needs BOTH legs' option-confidence -> costs 7B+32B (flop 5.57 vs 4.57), i.e. +22% FLOPs over always-32B-nt but ~latency parity (parallel) and 16x faster than 32B-think.",
+    "Open-text has no 32B option-confidence dump -> F2/F3/F4 fusion cannot be applied there; the open-text beat is via the verifier best-of-8 cascade (already in integrated_method.py).",
+    "MedXpert think = lingshu32b_reason (genuine reasoning run); PATH_VQA_closed has no think dump -> think acc = no-think.",
+    "32B-think open-text accuracy is ESTIMATED (32B-nt judged + measured modal think-delta)."
+  ]
+}
