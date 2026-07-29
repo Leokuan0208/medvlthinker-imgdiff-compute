@@ -303,10 +303,12 @@ def two_by_two(V, arms):
         o["attribution_of_the_unmatched_gap"] = dict(
             share_output_convention=round(conv / -gap, 4),
             share_reasoning=round(rsn / gap, 4),
-            note="shares of the original direct-minus-reasoning gap (they sum to 1 by the identity above); "
-                 "the output-convention share is the part the unmatched comparison wrongly charged to "
-                 "reasoning. A NEGATIVE reasoning share means reasoning HELPED once the convention is held "
-                 "fixed, and the whole apparent loss (plus more) was the prompt.")
+            note="shares of the original direct-minus-reasoning gap; they sum to 1 by the identity above. "
+                 "share_output_convention is the part the unmatched comparison wrongly charged to reasoning "
+                 "(a share near 0 means the prompt confound did not drive the result; a share near 1 would "
+                 "mean it drove all of it, and a NEGATIVE share means the unstyled wording was, if anything, "
+                 "marginally BETTER for the direct arm). share_reasoning near 1 means the gap is genuinely "
+                 "the reasoning instruction.")
     o["verdict"] = verdict(rsn, o["reasoning_effect_at_unstyled"]["ci"], gap)
     o["verdict_basis"] = ("reasoning_effect_at_unstyled -- the clean contrast (same output convention both "
                           "sides, reasoning instruction the only difference)")
@@ -416,6 +418,7 @@ def build(propagate=True):
             "Arm B changes the persona sentence's POSITION relative to SYS (it must follow the verbatim trigger "
             "sentences). Position, not content, is the residual difference from the direct prompt.",
         ])
+    out["interpretation"] = interpretation(out)
     if propagate:
         out["headline_propagation"] = propagation(vecs, arms)
     os.makedirs(ART, exist_ok=True)
@@ -423,6 +426,54 @@ def build(propagate=True):
     console(out)
     print(f"\nwrote {OUT}")
     return out
+
+
+def interpretation(out):
+    """Spell out what the numbers mean, including the two traps a reader could fall into."""
+    p = out["pooled_open"]
+    t = p.get("two_by_two", {})
+    tc = {k: r.get("trace_conditional", {}).get(PRIMARY) for k, r in out["per_dataset"].items()}
+    return dict(
+        verdict=p.get("verdict"),
+        headline_sentence=(
+            "The prompt confound is REAL as a description of the two arms but contributes ~NOTHING to the "
+            "measured gap: giving the direct arm the reasoning arm's unstyled wording changes its accuracy by "
+            f"{t.get('output_convention_effect_reasoning_off', {}).get('delta')} (pooled, n={p.get('n')}, "
+            "not significant), while the reasoning instruction at that same fixed convention costs "
+            f"{t.get('reasoning_effect_at_unstyled', {}).get('delta')} "
+            f"(CI {t.get('reasoning_effect_at_unstyled', {}).get('ci', {}).get('lo')}..."
+            f"{t.get('reasoning_effect_at_unstyled', {}).get('ci', {}).get('hi')}, significant). "
+            "'Reasoning hurts perception open-text VQA' SURVIVES matched prompts."),
+        trap_1_matched_reasoning_prompts_stop_the_reasoning=dict(
+            what="Arms A and B score well ABOVE the unmatched reasoning arm (pooled "
+                 f"{p.get('acc_reason_matched_A')} / {p.get('acc_reason_matched_B')} vs "
+                 f"{p.get('acc_reason_unmatched')}), which naively reads as 'most of the gap was the prompt'.",
+            why_that_reading_is_wrong="Those arms only emit a <think> trace on part of the set (see "
+                 "diagnostics.reasoning_trace_rate: 0.27-0.78 by dataset, vs effectively all items for the "
+                 "unmatched prompt). Telling this model 'Do not explain' partly suppresses the very behaviour "
+                 "under test, so their accuracy is a MIXTURE of reasoning and direct answering, and their gain "
+                 "is dilution, not a prompt fix.",
+            evidence_trace_conditional={k: v for k, v in tc.items() if v},
+            evidence_summary="Split arm B by whether it actually reasoned: on trace-fired items it is far below "
+                             "the direct arm on the SAME items, while on no-trace items it matches the direct "
+                             "arm. The entire deficit sits on the items where reasoning happened.",
+            consequence="prompt_share_of_unmatched_gap_* for arms A/B is therefore an UPPER BOUND on the "
+                        "prompt's contribution, not an estimate of it; the clean 2x2 puts the real contribution "
+                        "at ~0."),
+        trap_2_taxonomy_rate_is_a_symptom_not_the_cause=dict(
+            what="The audit's diagnostic (direct emits a dataset-taxonomy token 75.5% of the time on PathVQA's "
+                 "degenerate family vs the reasoning arm's 15.1%) is confirmed here.",
+            but="It is not caused by the persona / 'short, specific phrase' / 'Do not explain' wording: the "
+                "UNSTYLED direct arm, which has none of that wording, still emits taxonomy tokens at "
+                "essentially the direct arm's rate (PathVQA degenerate family: 0.742 vs 0.755) and scores the "
+                "same. What collapses the taxonomy-token rate is reasoning itself."),
+        residual_caveats=[
+            "The clean contrast holds the output convention fixed at the UNSTYLED wording. The symmetric test "
+            "at the STYLED wording is not cleanly runnable on this model family because the styled wording "
+            "suppresses the trace -- arms A/B bound it, and both stay significantly below direct.",
+            "VQA-RAD-open (n=200) is under-powered: its clean reasoning effect is -0.0600 with a CI that "
+            "crosses zero, so that dataset alone is inconclusive in every arm.",
+        ])
 
 
 # ------------------------------------------------------------------ headline propagation

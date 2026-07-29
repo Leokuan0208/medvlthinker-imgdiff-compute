@@ -12,25 +12,12 @@
   "n_bootstrap": 10000,
   "arms_compared": [
     "direct",
-    "reason_unmatched"
+    "direct_unstyled",
+    "reason_unmatched",
+    "reason_matched_A",
+    "reason_matched_B"
   ],
-  "arms_missing": {
-    "direct_unstyled": [
-      "slake_open: missing dump",
-      "vqa_rad_open: missing dump",
-      "pathvqa_open: missing dump"
-    ],
-    "reason_matched_A": [
-      "slake_open: missing judge",
-      "vqa_rad_open: missing judge",
-      "pathvqa_open: missing judge"
-    ],
-    "reason_matched_B": [
-      "slake_open: missing judge",
-      "vqa_rad_open: missing judge",
-      "pathvqa_open: missing dump"
-    ]
-  },
+  "arms_missing": {},
   "decisive_arm": "reason_matched_B",
   "prompts": {
     "direct": {
@@ -75,15 +62,153 @@
       "dataset_key": "slake_open",
       "n": 645,
       "acc_direct": 0.8186,
+      "acc_direct_unstyled": 0.814,
       "acc_reason_unmatched": 0.6791,
+      "acc_reason_matched_A": 0.7194,
+      "acc_reason_matched_B": 0.7318,
+      "d_direct_unstyled_minus_direct": -0.0047,
+      "ci_direct_unstyled_vs_direct": {
+        "delta": -0.0047,
+        "lo": -0.0202,
+        "hi": 0.0109,
+        "sig": false,
+        "n": 645
+      },
       "d_reason_unmatched_minus_direct": -0.1395,
       "ci_reason_unmatched_vs_direct": {
         "delta": -0.1395,
-        "lo": -0.1736,
+        "lo": -0.1721,
         "hi": -0.107,
         "sig": true,
         "n": 645
       },
+      "d_reason_matched_A_minus_direct": -0.0992,
+      "ci_reason_matched_A_vs_direct": {
+        "delta": -0.0992,
+        "lo": -0.1271,
+        "hi": -0.0729,
+        "sig": true,
+        "n": 645
+      },
+      "d_reason_matched_A_minus_unmatched": 0.0403,
+      "ci_reason_matched_A_vs_unmatched": {
+        "delta": 0.0403,
+        "lo": 0.0093,
+        "hi": 0.0713,
+        "sig": true,
+        "n": 645
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_A": 0.2889,
+      "reasoning_share_of_unmatched_gap_reason_matched_A": 0.7111,
+      "verdict_reason_matched_A": "SURVIVES",
+      "d_reason_matched_B_minus_direct": -0.0868,
+      "ci_reason_matched_B_vs_direct": {
+        "delta": -0.0868,
+        "lo": -0.1147,
+        "hi": -0.0605,
+        "sig": true,
+        "n": 645
+      },
+      "d_reason_matched_B_minus_unmatched": 0.0527,
+      "ci_reason_matched_B_vs_unmatched": {
+        "delta": 0.0527,
+        "lo": 0.0248,
+        "hi": 0.0806,
+        "sig": true,
+        "n": 645
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_B": 0.3778,
+      "reasoning_share_of_unmatched_gap_reason_matched_B": 0.6222,
+      "verdict_reason_matched_B": "SURVIVES",
+      "two_by_two": {
+        "cells": {
+          "direct": {
+            "convention": "styled",
+            "reasoning": "off",
+            "acc": 0.8186
+          },
+          "direct_unstyled": {
+            "convention": "unstyled",
+            "reasoning": "off",
+            "acc": 0.814
+          },
+          "reason_unmatched": {
+            "convention": "unstyled",
+            "reasoning": "on",
+            "acc": 0.6791
+          },
+          "reason_matched_A": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.7194
+          },
+          "reason_matched_B": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.7318
+          }
+        },
+        "reasoning_effect_at_unstyled": {
+          "arms": "reason_unmatched - direct_unstyled",
+          "delta": -0.1349,
+          "ci": {
+            "delta": -0.1349,
+            "lo": -0.1674,
+            "hi": -0.1039,
+            "sig": true,
+            "n": 645
+          }
+        },
+        "output_convention_effect_reasoning_off": {
+          "arms": "direct - direct_unstyled",
+          "delta": 0.0047,
+          "ci": {
+            "delta": 0.0047,
+            "lo": -0.0109,
+            "hi": 0.0202,
+            "sig": false,
+            "n": 645
+          }
+        },
+        "original_unmatched_gap": {
+          "arms": "reason_unmatched - direct",
+          "delta": -0.1395,
+          "ci": {
+            "delta": -0.1395,
+            "lo": -0.1721,
+            "hi": -0.107,
+            "sig": true,
+            "n": 645
+          }
+        },
+        "reasoning_effect_at_styled": {
+          "arms": "reason_matched_B - direct",
+          "delta": -0.0868,
+          "ci": {
+            "delta": -0.0868,
+            "lo": -0.1147,
+            "hi": -0.0605,
+            "sig": true,
+            "n": 645
+          },
+          "caveat": "the styled reasoning prompt suppresses the <think> trace on part of the set (diagnostics.reasoning_trace_rate)"
+        },
+        "identity_check": {
+          "statement": "original_unmatched_gap == reasoning_effect_at_unstyled - output_convention_effect_reasoning_off",
+          "lhs": -0.1395,
+          "rhs": -0.1396,
+          "residual": 0.0001
+        },
+        "attribution_of_the_unmatched_gap": {
+          "share_output_convention": 0.0337,
+          "share_reasoning": 0.967,
+          "note": "shares of the original direct-minus-reasoning gap; they sum to 1 by the identity above. share_output_convention is the part the unmatched comparison wrongly charged to reasoning (a share near 0 means the prompt confound did not drive the result; a share near 1 would mean it drove all of it, and a NEGATIVE share means the unstyled wording was, if anything, marginally BETTER for the direct arm). share_reasoning near 1 means the gap is genuinely the reasoning instruction."
+        },
+        "verdict": "SURVIVES",
+        "verdict_basis": "reasoning_effect_at_unstyled -- the clean contrast (same output convention both sides, reasoning instruction the only difference)"
+      },
+      "verdict": "SURVIVES",
+      "verdict_arm": "reason_unmatched vs direct_unstyled (matched output convention)",
       "degenerate_subset_n": 46,
       "taxonomy_vocab_size_golds_seen_5plus": 33,
       "diagnostics": {
@@ -113,6 +238,34 @@
           "frac_answer_over_15_words": 0.0,
           "taxonomy_token_rate_degenerate_subset": 0.4783
         },
+        "direct_unstyled": {
+          "n": 645,
+          "taxonomy_token_rate": 0.7008,
+          "answer_words": {
+            "mean": 1.96,
+            "median": 1.0,
+            "p90": 3.0,
+            "max": 19.0
+          },
+          "answer_chars": {
+            "mean": 12.66,
+            "median": 6.0,
+            "p90": 23.600000000000023,
+            "max": 121.0
+          },
+          "gen_tokens": {
+            "mean": 4.96,
+            "median": 4.0,
+            "p90": 7.0,
+            "max": 24.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0047,
+          "taxonomy_token_rate_degenerate_subset": 0.4348,
+          "raw_retained_n": 645,
+          "reasoning_trace_rate": 0.0
+        },
         "reason_unmatched": {
           "n": 645,
           "taxonomy_token_rate": 0.5225,
@@ -138,55 +291,201 @@
           "frac_empty_answer": 0.0,
           "frac_answer_over_15_words": 0.0388,
           "taxonomy_token_rate_degenerate_subset": 0.1739
+        },
+        "reason_matched_A": {
+          "n": 645,
+          "taxonomy_token_rate": 0.5488,
+          "answer_words": {
+            "mean": 3.24,
+            "median": 1.0,
+            "p90": 4.0,
+            "max": 134.0
+          },
+          "answer_chars": {
+            "mean": 21.18,
+            "median": 7.0,
+            "p90": 25.600000000000023,
+            "max": 887.0
+          },
+          "gen_tokens": {
+            "mean": 87.21,
+            "median": 111.0,
+            "p90": 148.0,
+            "max": 191.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0171,
+          "taxonomy_token_rate_degenerate_subset": 0.3261,
+          "raw_retained_n": 645,
+          "reasoning_trace_rate": 0.6868
+        },
+        "reason_matched_B": {
+          "n": 645,
+          "taxonomy_token_rate": 0.5395,
+          "answer_words": {
+            "mean": 2.56,
+            "median": 1.0,
+            "p90": 4.0,
+            "max": 124.0
+          },
+          "answer_chars": {
+            "mean": 16.73,
+            "median": 7.0,
+            "p90": 25.600000000000023,
+            "max": 813.0
+          },
+          "gen_tokens": {
+            "mean": 86.43,
+            "median": 111.0,
+            "p90": 147.0,
+            "max": 200.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0078,
+          "taxonomy_token_rate_degenerate_subset": 0.2391,
+          "raw_retained_n": 645,
+          "reasoning_trace_rate": 0.6698
         }
       },
       "subset_decomposition": {
         "degenerate_taxonomy_family": {
           "n": 46,
           "acc_direct": 0.6087,
+          "acc_direct_unstyled": 0.6087,
           "acc_reason_unmatched": 0.3043,
-          "d_reason_unmatched_minus_direct": -0.3043
+          "acc_reason_matched_A": 0.4348,
+          "acc_reason_matched_B": 0.3696,
+          "d_direct_unstyled_minus_direct": 0.0,
+          "d_reason_unmatched_minus_direct": -0.3043,
+          "d_reason_matched_A_minus_direct": -0.1739,
+          "d_reason_matched_B_minus_direct": -0.2391
         },
         "non_degenerate": {
           "n": 599,
           "acc_direct": 0.8347,
+          "acc_direct_unstyled": 0.8297,
           "acc_reason_unmatched": 0.7078,
-          "d_reason_unmatched_minus_direct": -0.1269
+          "acc_reason_matched_A": 0.7412,
+          "acc_reason_matched_B": 0.7596,
+          "d_direct_unstyled_minus_direct": -0.005,
+          "d_reason_unmatched_minus_direct": -0.1269,
+          "d_reason_matched_A_minus_direct": -0.0935,
+          "d_reason_matched_B_minus_direct": -0.0751
         },
         "by_gold_length": {
           "1": {
             "n": 438,
             "acc_direct": 0.9132,
+            "acc_direct_unstyled": 0.8927,
             "acc_reason_unmatched": 0.8037,
-            "d_reason_unmatched_minus_direct": -0.1096
+            "acc_reason_matched_A": 0.8059,
+            "acc_reason_matched_B": 0.8265,
+            "d_direct_unstyled_minus_direct": -0.0205,
+            "d_reason_unmatched_minus_direct": -0.1096,
+            "d_reason_matched_A_minus_direct": -0.1073,
+            "d_reason_matched_B_minus_direct": -0.0868
           },
           "2": {
             "n": 106,
             "acc_direct": 0.7547,
+            "acc_direct_unstyled": 0.7736,
             "acc_reason_unmatched": 0.5943,
-            "d_reason_unmatched_minus_direct": -0.1604
+            "acc_reason_matched_A": 0.6698,
+            "acc_reason_matched_B": 0.6792,
+            "d_direct_unstyled_minus_direct": 0.0189,
+            "d_reason_unmatched_minus_direct": -0.1604,
+            "d_reason_matched_A_minus_direct": -0.0849,
+            "d_reason_matched_B_minus_direct": -0.0755
           },
           "3-4": {
             "n": 64,
             "acc_direct": 0.4062,
+            "acc_direct_unstyled": 0.4219,
             "acc_reason_unmatched": 0.25,
-            "d_reason_unmatched_minus_direct": -0.1562
+            "acc_reason_matched_A": 0.3281,
+            "acc_reason_matched_B": 0.2969,
+            "d_direct_unstyled_minus_direct": 0.0156,
+            "d_reason_unmatched_minus_direct": -0.1562,
+            "d_reason_matched_A_minus_direct": -0.0781,
+            "d_reason_matched_B_minus_direct": -0.1094
           },
           "5+": {
             "n": 37,
             "acc_direct": 0.5946,
+            "acc_direct_unstyled": 0.6757,
             "acc_reason_unmatched": 0.1892,
-            "d_reason_unmatched_minus_direct": -0.4054
+            "acc_reason_matched_A": 0.5135,
+            "acc_reason_matched_B": 0.5135,
+            "d_direct_unstyled_minus_direct": 0.0811,
+            "d_reason_unmatched_minus_direct": -0.4054,
+            "d_reason_matched_A_minus_direct": -0.0811,
+            "d_reason_matched_B_minus_direct": -0.0811
           }
         }
       },
-      "trace_conditional": {}
+      "trace_conditional": {
+        "direct_unstyled": {
+          "trace_fired": null,
+          "no_trace": {
+            "n": 645,
+            "frac": 1.0,
+            "acc_this_arm": 0.814,
+            "acc_direct_same_items": 0.8186,
+            "d_vs_direct": -0.0047
+          }
+        },
+        "reason_matched_A": {
+          "trace_fired": {
+            "n": 443,
+            "frac": 0.6868,
+            "acc_this_arm": 0.7404,
+            "acc_direct_same_items": 0.8781,
+            "d_vs_direct": -0.1377
+          },
+          "no_trace": {
+            "n": 202,
+            "frac": 0.3132,
+            "acc_this_arm": 0.6733,
+            "acc_direct_same_items": 0.6881,
+            "d_vs_direct": -0.0149
+          }
+        },
+        "reason_matched_B": {
+          "trace_fired": {
+            "n": 432,
+            "frac": 0.6698,
+            "acc_this_arm": 0.7616,
+            "acc_direct_same_items": 0.875,
+            "d_vs_direct": -0.1134
+          },
+          "no_trace": {
+            "n": 213,
+            "frac": 0.3302,
+            "acc_this_arm": 0.6714,
+            "acc_direct_same_items": 0.7042,
+            "d_vs_direct": -0.0329
+          }
+        }
+      }
     },
     "VQA_RAD_open": {
       "dataset_key": "vqa_rad_open",
       "n": 200,
       "acc_direct": 0.6,
+      "acc_direct_unstyled": 0.605,
       "acc_reason_unmatched": 0.545,
+      "acc_reason_matched_A": 0.555,
+      "acc_reason_matched_B": 0.555,
+      "d_direct_unstyled_minus_direct": 0.005,
+      "ci_direct_unstyled_vs_direct": {
+        "delta": 0.005,
+        "lo": -0.025,
+        "hi": 0.035,
+        "sig": false,
+        "n": 200
+      },
       "d_reason_unmatched_minus_direct": -0.055,
       "ci_reason_unmatched_vs_direct": {
         "delta": -0.055,
@@ -195,6 +494,133 @@
         "sig": false,
         "n": 200
       },
+      "d_reason_matched_A_minus_direct": -0.045,
+      "ci_reason_matched_A_vs_direct": {
+        "delta": -0.045,
+        "lo": -0.09,
+        "hi": 0.0,
+        "sig": false,
+        "n": 200
+      },
+      "d_reason_matched_A_minus_unmatched": 0.01,
+      "ci_reason_matched_A_vs_unmatched": {
+        "delta": 0.01,
+        "lo": -0.045,
+        "hi": 0.065,
+        "sig": false,
+        "n": 200
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_A": 0.1818,
+      "reasoning_share_of_unmatched_gap_reason_matched_A": 0.8182,
+      "verdict_reason_matched_A": "COLLAPSES",
+      "d_reason_matched_B_minus_direct": -0.045,
+      "ci_reason_matched_B_vs_direct": {
+        "delta": -0.045,
+        "lo": -0.095,
+        "hi": 0.005,
+        "sig": false,
+        "n": 200
+      },
+      "d_reason_matched_B_minus_unmatched": 0.01,
+      "ci_reason_matched_B_vs_unmatched": {
+        "delta": 0.01,
+        "lo": -0.045,
+        "hi": 0.065,
+        "sig": false,
+        "n": 200
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_B": 0.1818,
+      "reasoning_share_of_unmatched_gap_reason_matched_B": 0.8182,
+      "verdict_reason_matched_B": "COLLAPSES",
+      "two_by_two": {
+        "cells": {
+          "direct": {
+            "convention": "styled",
+            "reasoning": "off",
+            "acc": 0.6
+          },
+          "direct_unstyled": {
+            "convention": "unstyled",
+            "reasoning": "off",
+            "acc": 0.605
+          },
+          "reason_unmatched": {
+            "convention": "unstyled",
+            "reasoning": "on",
+            "acc": 0.545
+          },
+          "reason_matched_A": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.555
+          },
+          "reason_matched_B": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.555
+          }
+        },
+        "reasoning_effect_at_unstyled": {
+          "arms": "reason_unmatched - direct_unstyled",
+          "delta": -0.06,
+          "ci": {
+            "delta": -0.06,
+            "lo": -0.125,
+            "hi": 0.005,
+            "sig": false,
+            "n": 200
+          }
+        },
+        "output_convention_effect_reasoning_off": {
+          "arms": "direct - direct_unstyled",
+          "delta": -0.005,
+          "ci": {
+            "delta": -0.005,
+            "lo": -0.035,
+            "hi": 0.025,
+            "sig": false,
+            "n": 200
+          }
+        },
+        "original_unmatched_gap": {
+          "arms": "reason_unmatched - direct",
+          "delta": -0.055,
+          "ci": {
+            "delta": -0.055,
+            "lo": -0.115,
+            "hi": 0.005,
+            "sig": false,
+            "n": 200
+          }
+        },
+        "reasoning_effect_at_styled": {
+          "arms": "reason_matched_B - direct",
+          "delta": -0.045,
+          "ci": {
+            "delta": -0.045,
+            "lo": -0.095,
+            "hi": 0.005,
+            "sig": false,
+            "n": 200
+          },
+          "caveat": "the styled reasoning prompt suppresses the <think> trace on part of the set (diagnostics.reasoning_trace_rate)"
+        },
+        "identity_check": {
+          "statement": "original_unmatched_gap == reasoning_effect_at_unstyled - output_convention_effect_reasoning_off",
+          "lhs": -0.055,
+          "rhs": -0.055,
+          "residual": 0.0
+        },
+        "attribution_of_the_unmatched_gap": {
+          "share_output_convention": -0.0909,
+          "share_reasoning": 1.0909,
+          "note": "shares of the original direct-minus-reasoning gap; they sum to 1 by the identity above. share_output_convention is the part the unmatched comparison wrongly charged to reasoning (a share near 0 means the prompt confound did not drive the result; a share near 1 would mean it drove all of it, and a NEGATIVE share means the unstyled wording was, if anything, marginally BETTER for the direct arm). share_reasoning near 1 means the gap is genuinely the reasoning instruction."
+        },
+        "verdict": "COLLAPSES",
+        "verdict_basis": "reasoning_effect_at_unstyled -- the clean contrast (same output convention both sides, reasoning instruction the only difference)"
+      },
+      "verdict": "COLLAPSES",
+      "verdict_arm": "reason_unmatched vs direct_unstyled (matched output convention)",
       "degenerate_subset_n": 19,
       "taxonomy_vocab_size_golds_seen_5plus": 4,
       "diagnostics": {
@@ -224,6 +650,34 @@
           "frac_answer_over_15_words": 0.005,
           "taxonomy_token_rate_degenerate_subset": 0.0526
         },
+        "direct_unstyled": {
+          "n": 200,
+          "taxonomy_token_rate": 0.13,
+          "answer_words": {
+            "mean": 2.4,
+            "median": 2.0,
+            "p90": 3.0999999999999943,
+            "max": 32.0
+          },
+          "answer_chars": {
+            "mean": 16.09,
+            "median": 13.0,
+            "p90": 24.099999999999994,
+            "max": 177.0
+          },
+          "gen_tokens": {
+            "mean": 5.99,
+            "median": 5.0,
+            "p90": 8.0,
+            "max": 39.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.02,
+          "taxonomy_token_rate_degenerate_subset": 0.0,
+          "raw_retained_n": 200,
+          "reasoning_trace_rate": 0.0
+        },
         "reason_unmatched": {
           "n": 200,
           "taxonomy_token_rate": 0.115,
@@ -249,63 +703,336 @@
           "frac_empty_answer": 0.0,
           "frac_answer_over_15_words": 0.025,
           "taxonomy_token_rate_degenerate_subset": 0.0526
+        },
+        "reason_matched_A": {
+          "n": 200,
+          "taxonomy_token_rate": 0.14,
+          "answer_words": {
+            "mean": 2.63,
+            "median": 2.0,
+            "p90": 3.0,
+            "max": 98.0
+          },
+          "answer_chars": {
+            "mean": 22.73,
+            "median": 12.0,
+            "p90": 24.0,
+            "max": 1574.0
+          },
+          "gen_tokens": {
+            "mean": 39.84,
+            "median": 6.0,
+            "p90": 131.39999999999998,
+            "max": 512.0
+          },
+          "frac_at_gen_cap": 0.005,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.015,
+          "taxonomy_token_rate_degenerate_subset": 0.0526,
+          "raw_retained_n": 200,
+          "reasoning_trace_rate": 0.255
+        },
+        "reason_matched_B": {
+          "n": 200,
+          "taxonomy_token_rate": 0.14,
+          "answer_words": {
+            "mean": 2.28,
+            "median": 2.0,
+            "p90": 4.0,
+            "max": 20.0
+          },
+          "answer_chars": {
+            "mean": 15.89,
+            "median": 12.5,
+            "p90": 25.099999999999994,
+            "max": 170.0
+          },
+          "gen_tokens": {
+            "mean": 45.8,
+            "median": 7.0,
+            "p90": 140.1,
+            "max": 202.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.01,
+          "taxonomy_token_rate_degenerate_subset": 0.0526,
+          "raw_retained_n": 200,
+          "reasoning_trace_rate": 0.305
         }
       },
       "subset_decomposition": {
         "degenerate_taxonomy_family": {
           "n": 19,
           "acc_direct": 0.3684,
+          "acc_direct_unstyled": 0.4211,
           "acc_reason_unmatched": 0.4737,
-          "d_reason_unmatched_minus_direct": 0.1053
+          "acc_reason_matched_A": 0.4211,
+          "acc_reason_matched_B": 0.4211,
+          "d_direct_unstyled_minus_direct": 0.0526,
+          "d_reason_unmatched_minus_direct": 0.1053,
+          "d_reason_matched_A_minus_direct": 0.0526,
+          "d_reason_matched_B_minus_direct": 0.0526
         },
         "non_degenerate": {
           "n": 181,
           "acc_direct": 0.6243,
+          "acc_direct_unstyled": 0.6243,
           "acc_reason_unmatched": 0.5525,
-          "d_reason_unmatched_minus_direct": -0.0718
+          "acc_reason_matched_A": 0.5691,
+          "acc_reason_matched_B": 0.5691,
+          "d_direct_unstyled_minus_direct": 0.0,
+          "d_reason_unmatched_minus_direct": -0.0718,
+          "d_reason_matched_A_minus_direct": -0.0552,
+          "d_reason_matched_B_minus_direct": -0.0552
         },
         "by_gold_length": {
           "1": {
             "n": 91,
             "acc_direct": 0.8462,
+            "acc_direct_unstyled": 0.8352,
             "acc_reason_unmatched": 0.7143,
-            "d_reason_unmatched_minus_direct": -0.1319
+            "acc_reason_matched_A": 0.7802,
+            "acc_reason_matched_B": 0.7802,
+            "d_direct_unstyled_minus_direct": -0.011,
+            "d_reason_unmatched_minus_direct": -0.1319,
+            "d_reason_matched_A_minus_direct": -0.0659,
+            "d_reason_matched_B_minus_direct": -0.0659
           },
           "2": {
             "n": 51,
             "acc_direct": 0.4902,
+            "acc_direct_unstyled": 0.5098,
             "acc_reason_unmatched": 0.4314,
-            "d_reason_unmatched_minus_direct": -0.0588
+            "acc_reason_matched_A": 0.4902,
+            "acc_reason_matched_B": 0.4706,
+            "d_direct_unstyled_minus_direct": 0.0196,
+            "d_reason_unmatched_minus_direct": -0.0588,
+            "d_reason_matched_A_minus_direct": 0.0,
+            "d_reason_matched_B_minus_direct": -0.0196
           },
           "3-4": {
             "n": 38,
             "acc_direct": 0.4211,
+            "acc_direct_unstyled": 0.4211,
             "acc_reason_unmatched": 0.4211,
-            "d_reason_unmatched_minus_direct": 0.0
+            "acc_reason_matched_A": 0.3158,
+            "acc_reason_matched_B": 0.3158,
+            "d_direct_unstyled_minus_direct": 0.0,
+            "d_reason_unmatched_minus_direct": 0.0,
+            "d_reason_matched_A_minus_direct": -0.1053,
+            "d_reason_matched_B_minus_direct": -0.1053
           },
           "5+": {
             "n": 20,
             "acc_direct": 0.1,
+            "acc_direct_unstyled": 0.15,
             "acc_reason_unmatched": 0.3,
-            "d_reason_unmatched_minus_direct": 0.2
+            "acc_reason_matched_A": 0.15,
+            "acc_reason_matched_B": 0.2,
+            "d_direct_unstyled_minus_direct": 0.05,
+            "d_reason_unmatched_minus_direct": 0.2,
+            "d_reason_matched_A_minus_direct": 0.05,
+            "d_reason_matched_B_minus_direct": 0.1
           }
         }
       },
-      "trace_conditional": {}
+      "trace_conditional": {
+        "direct_unstyled": {
+          "trace_fired": null,
+          "no_trace": {
+            "n": 200,
+            "frac": 1.0,
+            "acc_this_arm": 0.605,
+            "acc_direct_same_items": 0.6,
+            "d_vs_direct": 0.005
+          }
+        },
+        "reason_matched_A": {
+          "trace_fired": {
+            "n": 51,
+            "frac": 0.255,
+            "acc_this_arm": 0.7255,
+            "acc_direct_same_items": 0.8235,
+            "d_vs_direct": -0.098
+          },
+          "no_trace": {
+            "n": 149,
+            "frac": 0.745,
+            "acc_this_arm": 0.4966,
+            "acc_direct_same_items": 0.5235,
+            "d_vs_direct": -0.0268
+          }
+        },
+        "reason_matched_B": {
+          "trace_fired": {
+            "n": 61,
+            "frac": 0.305,
+            "acc_this_arm": 0.7213,
+            "acc_direct_same_items": 0.8033,
+            "d_vs_direct": -0.082
+          },
+          "no_trace": {
+            "n": 139,
+            "frac": 0.695,
+            "acc_this_arm": 0.482,
+            "acc_direct_same_items": 0.5108,
+            "d_vs_direct": -0.0288
+          }
+        }
+      }
     },
     "PATH_VQA_open": {
       "dataset_key": "pathvqa_open",
       "n": 1500,
       "acc_direct": 0.376,
+      "acc_direct_unstyled": 0.38,
       "acc_reason_unmatched": 0.1087,
+      "acc_reason_matched_A": 0.2787,
+      "acc_reason_matched_B": 0.2667,
+      "d_direct_unstyled_minus_direct": 0.004,
+      "ci_direct_unstyled_vs_direct": {
+        "delta": 0.004,
+        "lo": -0.0087,
+        "hi": 0.0167,
+        "sig": false,
+        "n": 1500
+      },
       "d_reason_unmatched_minus_direct": -0.2673,
       "ci_reason_unmatched_vs_direct": {
         "delta": -0.2673,
-        "lo": -0.2927,
-        "hi": -0.2427,
+        "lo": -0.2933,
+        "hi": -0.2407,
         "sig": true,
         "n": 1500
       },
+      "d_reason_matched_A_minus_direct": -0.0973,
+      "ci_reason_matched_A_vs_direct": {
+        "delta": -0.0973,
+        "lo": -0.118,
+        "hi": -0.0767,
+        "sig": true,
+        "n": 1500
+      },
+      "d_reason_matched_A_minus_unmatched": 0.17,
+      "ci_reason_matched_A_vs_unmatched": {
+        "delta": 0.17,
+        "lo": 0.148,
+        "hi": 0.1927,
+        "sig": true,
+        "n": 1500
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_A": 0.6359,
+      "reasoning_share_of_unmatched_gap_reason_matched_A": 0.3641,
+      "verdict_reason_matched_A": "SURVIVES_PARTIALLY",
+      "d_reason_matched_B_minus_direct": -0.1093,
+      "ci_reason_matched_B_vs_direct": {
+        "delta": -0.1093,
+        "lo": -0.1313,
+        "hi": -0.0873,
+        "sig": true,
+        "n": 1500
+      },
+      "d_reason_matched_B_minus_unmatched": 0.158,
+      "ci_reason_matched_B_vs_unmatched": {
+        "delta": 0.158,
+        "lo": 0.136,
+        "hi": 0.1807,
+        "sig": true,
+        "n": 1500
+      },
+      "prompt_share_of_unmatched_gap_reason_matched_B": 0.591,
+      "reasoning_share_of_unmatched_gap_reason_matched_B": 0.409,
+      "verdict_reason_matched_B": "SURVIVES_PARTIALLY",
+      "two_by_two": {
+        "cells": {
+          "direct": {
+            "convention": "styled",
+            "reasoning": "off",
+            "acc": 0.376
+          },
+          "direct_unstyled": {
+            "convention": "unstyled",
+            "reasoning": "off",
+            "acc": 0.38
+          },
+          "reason_unmatched": {
+            "convention": "unstyled",
+            "reasoning": "on",
+            "acc": 0.1087
+          },
+          "reason_matched_A": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.2787
+          },
+          "reason_matched_B": {
+            "convention": "styled",
+            "reasoning": "on",
+            "acc": 0.2667
+          }
+        },
+        "reasoning_effect_at_unstyled": {
+          "arms": "reason_unmatched - direct_unstyled",
+          "delta": -0.2713,
+          "ci": {
+            "delta": -0.2713,
+            "lo": -0.2973,
+            "hi": -0.246,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "output_convention_effect_reasoning_off": {
+          "arms": "direct - direct_unstyled",
+          "delta": -0.004,
+          "ci": {
+            "delta": -0.004,
+            "lo": -0.016,
+            "hi": 0.008,
+            "sig": false,
+            "n": 1500
+          }
+        },
+        "original_unmatched_gap": {
+          "arms": "reason_unmatched - direct",
+          "delta": -0.2673,
+          "ci": {
+            "delta": -0.2673,
+            "lo": -0.2933,
+            "hi": -0.2413,
+            "sig": true,
+            "n": 1500
+          }
+        },
+        "reasoning_effect_at_styled": {
+          "arms": "reason_matched_B - direct",
+          "delta": -0.1093,
+          "ci": {
+            "delta": -0.1093,
+            "lo": -0.1313,
+            "hi": -0.0873,
+            "sig": true,
+            "n": 1500
+          },
+          "caveat": "the styled reasoning prompt suppresses the <think> trace on part of the set (diagnostics.reasoning_trace_rate)"
+        },
+        "identity_check": {
+          "statement": "original_unmatched_gap == reasoning_effect_at_unstyled - output_convention_effect_reasoning_off",
+          "lhs": -0.2673,
+          "rhs": -0.2673,
+          "residual": 0.0
+        },
+        "attribution_of_the_unmatched_gap": {
+          "share_output_convention": -0.015,
+          "share_reasoning": 1.015,
+          "note": "shares of the original direct-minus-reasoning gap; they sum to 1 by the identity above. share_output_convention is the part the unmatched comparison wrongly charged to reasoning (a share near 0 means the prompt confound did not drive the result; a share near 1 would mean it drove all of it, and a NEGATIVE share means the unstyled wording was, if anything, marginally BETTER for the direct arm). share_reasoning near 1 means the gap is genuinely the reasoning instruction."
+        },
+        "verdict": "SURVIVES",
+        "verdict_basis": "reasoning_effect_at_unstyled -- the clean contrast (same output convention both sides, reasoning instruction the only difference)"
+      },
+      "verdict": "SURVIVES",
+      "verdict_arm": "reason_unmatched vs direct_unstyled (matched output convention)",
       "degenerate_subset_n": 948,
       "taxonomy_vocab_size_golds_seen_5plus": 35,
       "diagnostics": {
@@ -335,6 +1062,34 @@
           "frac_answer_over_15_words": 0.0007,
           "taxonomy_token_rate_degenerate_subset": 0.7553
         },
+        "direct_unstyled": {
+          "n": 1500,
+          "taxonomy_token_rate": 0.51,
+          "answer_words": {
+            "mean": 2.75,
+            "median": 1.0,
+            "p90": 5.0,
+            "max": 55.0
+          },
+          "answer_chars": {
+            "mean": 20.67,
+            "median": 12.0,
+            "p90": 35.100000000000136,
+            "max": 344.0
+          },
+          "gen_tokens": {
+            "mean": 6.55,
+            "median": 5.0,
+            "p90": 10.0,
+            "max": 64.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.024,
+          "taxonomy_token_rate_degenerate_subset": 0.7416,
+          "raw_retained_n": 1500,
+          "reasoning_trace_rate": 0.0
+        },
         "reason_unmatched": {
           "n": 1500,
           "taxonomy_token_rate": 0.1033,
@@ -360,49 +1115,184 @@
           "frac_empty_answer": 0.0,
           "frac_answer_over_15_words": 0.0647,
           "taxonomy_token_rate_degenerate_subset": 0.1508
+        },
+        "reason_matched_A": {
+          "n": 1500,
+          "taxonomy_token_rate": 0.3593,
+          "answer_words": {
+            "mean": 2.5,
+            "median": 1.0,
+            "p90": 4.0,
+            "max": 110.0
+          },
+          "answer_chars": {
+            "mean": 20.44,
+            "median": 15.0,
+            "p90": 34.0,
+            "max": 738.0
+          },
+          "gen_tokens": {
+            "mean": 89.83,
+            "median": 121.0,
+            "p90": 159.0,
+            "max": 253.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0173,
+          "taxonomy_token_rate_degenerate_subset": 0.5464,
+          "raw_retained_n": 1500,
+          "reasoning_trace_rate": 0.634
+        },
+        "reason_matched_B": {
+          "n": 1500,
+          "taxonomy_token_rate": 0.33,
+          "answer_words": {
+            "mean": 2.91,
+            "median": 2.0,
+            "p90": 5.0,
+            "max": 117.0
+          },
+          "answer_chars": {
+            "mean": 23.34,
+            "median": 15.0,
+            "p90": 39.0,
+            "max": 800.0
+          },
+          "gen_tokens": {
+            "mean": 101.49,
+            "median": 128.0,
+            "p90": 163.10000000000014,
+            "max": 264.0
+          },
+          "frac_at_gen_cap": 0.0,
+          "frac_empty_answer": 0.0,
+          "frac_answer_over_15_words": 0.0213,
+          "taxonomy_token_rate_degenerate_subset": 0.4979,
+          "raw_retained_n": 1500,
+          "reasoning_trace_rate": 0.7107
         }
       },
       "subset_decomposition": {
         "degenerate_taxonomy_family": {
           "n": 948,
           "acc_direct": 0.4662,
+          "acc_direct_unstyled": 0.462,
           "acc_reason_unmatched": 0.0949,
-          "d_reason_unmatched_minus_direct": -0.3713
+          "acc_reason_matched_A": 0.3681,
+          "acc_reason_matched_B": 0.3376,
+          "d_direct_unstyled_minus_direct": -0.0042,
+          "d_reason_unmatched_minus_direct": -0.3713,
+          "d_reason_matched_A_minus_direct": -0.0981,
+          "d_reason_matched_B_minus_direct": -0.1287
         },
         "non_degenerate": {
           "n": 552,
           "acc_direct": 0.221,
+          "acc_direct_unstyled": 0.2391,
           "acc_reason_unmatched": 0.1322,
-          "d_reason_unmatched_minus_direct": -0.0888
+          "acc_reason_matched_A": 0.125,
+          "acc_reason_matched_B": 0.1449,
+          "d_direct_unstyled_minus_direct": 0.0181,
+          "d_reason_unmatched_minus_direct": -0.0888,
+          "d_reason_matched_A_minus_direct": -0.096,
+          "d_reason_matched_B_minus_direct": -0.0761
         },
         "by_gold_length": {
           "1": {
             "n": 800,
             "acc_direct": 0.465,
+            "acc_direct_unstyled": 0.46,
             "acc_reason_unmatched": 0.0938,
-            "d_reason_unmatched_minus_direct": -0.3713
+            "acc_reason_matched_A": 0.3738,
+            "acc_reason_matched_B": 0.3337,
+            "d_direct_unstyled_minus_direct": -0.005,
+            "d_reason_unmatched_minus_direct": -0.3713,
+            "d_reason_matched_A_minus_direct": -0.0912,
+            "d_reason_matched_B_minus_direct": -0.1313
           },
           "2": {
             "n": 334,
             "acc_direct": 0.3473,
+            "acc_direct_unstyled": 0.3533,
             "acc_reason_unmatched": 0.1317,
-            "d_reason_unmatched_minus_direct": -0.2156
+            "acc_reason_matched_A": 0.2305,
+            "acc_reason_matched_B": 0.2126,
+            "d_direct_unstyled_minus_direct": 0.006,
+            "d_reason_unmatched_minus_direct": -0.2156,
+            "d_reason_matched_A_minus_direct": -0.1168,
+            "d_reason_matched_B_minus_direct": -0.1347
           },
           "3-4": {
             "n": 197,
             "acc_direct": 0.2792,
+            "acc_direct_unstyled": 0.2995,
             "acc_reason_unmatched": 0.1574,
-            "d_reason_unmatched_minus_direct": -0.1218
+            "acc_reason_matched_A": 0.1472,
+            "acc_reason_matched_B": 0.2284,
+            "d_direct_unstyled_minus_direct": 0.0203,
+            "d_reason_unmatched_minus_direct": -0.1218,
+            "d_reason_matched_A_minus_direct": -0.132,
+            "d_reason_matched_B_minus_direct": -0.0508
           },
           "5+": {
             "n": 169,
             "acc_direct": 0.1243,
+            "acc_direct_unstyled": 0.1479,
             "acc_reason_unmatched": 0.0769,
-            "d_reason_unmatched_minus_direct": -0.0473
+            "acc_reason_matched_A": 0.0769,
+            "acc_reason_matched_B": 0.1006,
+            "d_direct_unstyled_minus_direct": 0.0237,
+            "d_reason_unmatched_minus_direct": -0.0473,
+            "d_reason_matched_A_minus_direct": -0.0473,
+            "d_reason_matched_B_minus_direct": -0.0237
           }
         }
       },
-      "trace_conditional": {}
+      "trace_conditional": {
+        "direct_unstyled": {
+          "trace_fired": null,
+          "no_trace": {
+            "n": 1500,
+            "frac": 1.0,
+            "acc_this_arm": 0.38,
+            "acc_direct_same_items": 0.376,
+            "d_vs_direct": 0.004
+          }
+        },
+        "reason_matched_A": {
+          "trace_fired": {
+            "n": 951,
+            "frac": 0.634,
+            "acc_this_arm": 0.1314,
+            "acc_direct_same_items": 0.2797,
+            "d_vs_direct": -0.1483
+          },
+          "no_trace": {
+            "n": 549,
+            "frac": 0.366,
+            "acc_this_arm": 0.5337,
+            "acc_direct_same_items": 0.5428,
+            "d_vs_direct": -0.0091
+          }
+        },
+        "reason_matched_B": {
+          "trace_fired": {
+            "n": 1066,
+            "frac": 0.7107,
+            "acc_this_arm": 0.1154,
+            "acc_direct_same_items": 0.273,
+            "d_vs_direct": -0.1576
+          },
+          "no_trace": {
+            "n": 434,
+            "frac": 0.2893,
+            "acc_this_arm": 0.6382,
+            "acc_direct_same_items": 0.629,
+            "d_vs_direct": 0.0092
+          }
+        }
+      }
     }
   },
   "pooled_open": {
@@ -413,15 +1303,153 @@
       "PATH_VQA_open"
     ],
     "acc_direct": 0.5168,
+    "acc_direct_unstyled": 0.5186,
     "acc_reason_unmatched": 0.3028,
+    "acc_reason_matched_A": 0.4235,
+    "acc_reason_matched_B": 0.4192,
+    "d_direct_unstyled_minus_direct": 0.0017,
+    "ci_direct_unstyled_vs_direct": {
+      "delta": 0.0017,
+      "lo": -0.0077,
+      "hi": 0.0111,
+      "sig": false,
+      "n": 2345
+    },
     "d_reason_unmatched_minus_direct": -0.2141,
     "ci_reason_unmatched_vs_direct": {
       "delta": -0.2141,
       "lo": -0.2341,
-      "hi": -0.194,
+      "hi": -0.1949,
       "sig": true,
       "n": 2345
-    }
+    },
+    "d_reason_matched_A_minus_direct": -0.0934,
+    "ci_reason_matched_A_vs_direct": {
+      "delta": -0.0934,
+      "lo": -0.1096,
+      "hi": -0.0776,
+      "sig": true,
+      "n": 2345
+    },
+    "d_reason_matched_A_minus_unmatched": 0.1207,
+    "ci_reason_matched_A_vs_unmatched": {
+      "delta": 0.1207,
+      "lo": 0.1032,
+      "hi": 0.1382,
+      "sig": true,
+      "n": 2345
+    },
+    "prompt_share_of_unmatched_gap_reason_matched_A": 0.5637,
+    "reasoning_share_of_unmatched_gap_reason_matched_A": 0.4363,
+    "verdict_reason_matched_A": "SURVIVES_PARTIALLY",
+    "d_reason_matched_B_minus_direct": -0.0977,
+    "ci_reason_matched_B_vs_direct": {
+      "delta": -0.0977,
+      "lo": -0.1143,
+      "hi": -0.0814,
+      "sig": true,
+      "n": 2345
+    },
+    "d_reason_matched_B_minus_unmatched": 0.1164,
+    "ci_reason_matched_B_vs_unmatched": {
+      "delta": 0.1164,
+      "lo": 0.0994,
+      "hi": 0.1335,
+      "sig": true,
+      "n": 2345
+    },
+    "prompt_share_of_unmatched_gap_reason_matched_B": 0.5438,
+    "reasoning_share_of_unmatched_gap_reason_matched_B": 0.4562,
+    "verdict_reason_matched_B": "SURVIVES_PARTIALLY",
+    "two_by_two": {
+      "cells": {
+        "direct": {
+          "convention": "styled",
+          "reasoning": "off",
+          "acc": 0.5168
+        },
+        "direct_unstyled": {
+          "convention": "unstyled",
+          "reasoning": "off",
+          "acc": 0.5186
+        },
+        "reason_unmatched": {
+          "convention": "unstyled",
+          "reasoning": "on",
+          "acc": 0.3028
+        },
+        "reason_matched_A": {
+          "convention": "styled",
+          "reasoning": "on",
+          "acc": 0.4235
+        },
+        "reason_matched_B": {
+          "convention": "styled",
+          "reasoning": "on",
+          "acc": 0.4192
+        }
+      },
+      "reasoning_effect_at_unstyled": {
+        "arms": "reason_unmatched - direct_unstyled",
+        "delta": -0.2158,
+        "ci": {
+          "delta": -0.2158,
+          "lo": -0.2354,
+          "hi": -0.1962,
+          "sig": true,
+          "n": 2345
+        }
+      },
+      "output_convention_effect_reasoning_off": {
+        "arms": "direct - direct_unstyled",
+        "delta": -0.0017,
+        "ci": {
+          "delta": -0.0017,
+          "lo": -0.0111,
+          "hi": 0.0077,
+          "sig": false,
+          "n": 2345
+        }
+      },
+      "original_unmatched_gap": {
+        "arms": "reason_unmatched - direct",
+        "delta": -0.2141,
+        "ci": {
+          "delta": -0.2141,
+          "lo": -0.2341,
+          "hi": -0.1945,
+          "sig": true,
+          "n": 2345
+        }
+      },
+      "reasoning_effect_at_styled": {
+        "arms": "reason_matched_B - direct",
+        "delta": -0.0977,
+        "ci": {
+          "delta": -0.0977,
+          "lo": -0.1143,
+          "hi": -0.0814,
+          "sig": true,
+          "n": 2345
+        },
+        "caveat": "the styled reasoning prompt suppresses the <think> trace on part of the set (diagnostics.reasoning_trace_rate)"
+      },
+      "identity_check": {
+        "statement": "original_unmatched_gap == reasoning_effect_at_unstyled - output_convention_effect_reasoning_off",
+        "lhs": -0.2141,
+        "rhs": -0.2141,
+        "residual": -0.0
+      },
+      "attribution_of_the_unmatched_gap": {
+        "share_output_convention": -0.0079,
+        "share_reasoning": 1.0079,
+        "note": "shares of the original direct-minus-reasoning gap; they sum to 1 by the identity above. share_output_convention is the part the unmatched comparison wrongly charged to reasoning (a share near 0 means the prompt confound did not drive the result; a share near 1 would mean it drove all of it, and a NEGATIVE share means the unstyled wording was, if anything, marginally BETTER for the direct arm). share_reasoning near 1 means the gap is genuinely the reasoning instruction."
+      },
+      "verdict": "SURVIVES",
+      "verdict_basis": "reasoning_effect_at_unstyled -- the clean contrast (same output convention both sides, reasoning instruction the only difference)"
+    },
+    "verdict": "SURVIVES",
+    "verdict_arm": "reason_unmatched vs direct_unstyled (matched output convention)"
   },
   "taxonomy_definition": "normalized (lowercase, non-alphanumerics stripped) gold strings occurring >=5 times among the dataset's evaluated idx; emission rate = fraction of items whose normalized final answer is in that vocabulary. Identical definition to pathvqa_judge_audit.py's 'answer_is_a_dataset_taxonomy_token_*'.",
   "caveats": [
@@ -429,5 +1457,254 @@
     "run_openvqa.py's extract() keeps the LAST line after the final </think>; both matched dumps were written with --save_raw so this step and the trace rate are re-verifiable offline.",
     "PathVQA-open's evaluated 1500 is a prefix of the 3357-item open test set and over-samples the degenerate taxonomy family (0.632 vs 0.562 overall) -- unchanged from the audit.",
     "Arm B changes the persona sentence's POSITION relative to SYS (it must follow the verbatim trigger sentences). Position, not content, is the residual difference from the direct prompt."
-  ]
+  ],
+  "interpretation": {
+    "verdict": "SURVIVES",
+    "headline_sentence": "The prompt confound is REAL as a description of the two arms but contributes ~NOTHING to the measured gap: giving the direct arm the reasoning arm's unstyled wording changes its accuracy by -0.0017 (pooled, n=2345, not significant), while the reasoning instruction at that same fixed convention costs -0.2158 (CI -0.2354...-0.1962, significant). 'Reasoning hurts perception open-text VQA' SURVIVES matched prompts.",
+    "trap_1_matched_reasoning_prompts_stop_the_reasoning": {
+      "what": "Arms A and B score well ABOVE the unmatched reasoning arm (pooled 0.4235 / 0.4192 vs 0.3028), which naively reads as 'most of the gap was the prompt'.",
+      "why_that_reading_is_wrong": "Those arms only emit a <think> trace on part of the set (see diagnostics.reasoning_trace_rate: 0.27-0.78 by dataset, vs effectively all items for the unmatched prompt). Telling this model 'Do not explain' partly suppresses the very behaviour under test, so their accuracy is a MIXTURE of reasoning and direct answering, and their gain is dilution, not a prompt fix.",
+      "evidence_trace_conditional": {
+        "SLAKE_open": {
+          "trace_fired": {
+            "n": 432,
+            "frac": 0.6698,
+            "acc_this_arm": 0.7616,
+            "acc_direct_same_items": 0.875,
+            "d_vs_direct": -0.1134
+          },
+          "no_trace": {
+            "n": 213,
+            "frac": 0.3302,
+            "acc_this_arm": 0.6714,
+            "acc_direct_same_items": 0.7042,
+            "d_vs_direct": -0.0329
+          }
+        },
+        "VQA_RAD_open": {
+          "trace_fired": {
+            "n": 61,
+            "frac": 0.305,
+            "acc_this_arm": 0.7213,
+            "acc_direct_same_items": 0.8033,
+            "d_vs_direct": -0.082
+          },
+          "no_trace": {
+            "n": 139,
+            "frac": 0.695,
+            "acc_this_arm": 0.482,
+            "acc_direct_same_items": 0.5108,
+            "d_vs_direct": -0.0288
+          }
+        },
+        "PATH_VQA_open": {
+          "trace_fired": {
+            "n": 1066,
+            "frac": 0.7107,
+            "acc_this_arm": 0.1154,
+            "acc_direct_same_items": 0.273,
+            "d_vs_direct": -0.1576
+          },
+          "no_trace": {
+            "n": 434,
+            "frac": 0.2893,
+            "acc_this_arm": 0.6382,
+            "acc_direct_same_items": 0.629,
+            "d_vs_direct": 0.0092
+          }
+        }
+      },
+      "evidence_summary": "Split arm B by whether it actually reasoned: on trace-fired items it is far below the direct arm on the SAME items, while on no-trace items it matches the direct arm. The entire deficit sits on the items where reasoning happened.",
+      "consequence": "prompt_share_of_unmatched_gap_* for arms A/B is therefore an UPPER BOUND on the prompt's contribution, not an estimate of it; the clean 2x2 puts the real contribution at ~0."
+    },
+    "trap_2_taxonomy_rate_is_a_symptom_not_the_cause": {
+      "what": "The audit's diagnostic (direct emits a dataset-taxonomy token 75.5% of the time on PathVQA's degenerate family vs the reasoning arm's 15.1%) is confirmed here.",
+      "but": "It is not caused by the persona / 'short, specific phrase' / 'Do not explain' wording: the UNSTYLED direct arm, which has none of that wording, still emits taxonomy tokens at essentially the direct arm's rate (PathVQA degenerate family: 0.742 vs 0.755) and scores the same. What collapses the taxonomy-token rate is reasoning itself."
+    },
+    "residual_caveats": [
+      "The clean contrast holds the output convention fixed at the UNSTYLED wording. The symmetric test at the STYLED wording is not cleanly runnable on this model family because the styled wording suppresses the trace -- arms A/B bound it, and both stay significantly below direct.",
+      "VQA-RAD-open (n=200) is under-powered: its clean reasoning effect is -0.0600 with a CI that crosses zero, so that dataset alone is inconclusive in every arm."
+    ]
+  },
+  "headline_propagation": {
+    "variant_b_mmmu_excluded": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42224,
+      "method_acc": 0.5836,
+      "think_reason_unmatched": {
+        "acc_32b_think": 0.5591,
+        "d_vs_think": 0.0245,
+        "ci95": [
+          0.0216,
+          0.0274
+        ],
+        "sig": true
+      },
+      "think_reason_matched_A": {
+        "acc_32b_think": 0.5658,
+        "d_vs_think": 0.0178,
+        "ci95": [
+          0.015,
+          0.0207
+        ],
+        "sig": true
+      },
+      "think_reason_matched_B": {
+        "acc_32b_think": 0.5656,
+        "d_vs_think": 0.018,
+        "ci95": [
+          0.0152,
+          0.021
+        ],
+        "sig": true
+      },
+      "headline_shift_reason_matched_A": -0.0067,
+      "headline_shift_reason_matched_B": -0.0065
+    },
+    "full_suite": {
+      "benchmarks": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed",
+        "PATH_VQA_closed",
+        "MedXpertQA-MM",
+        "MMMU-Medical-val",
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 42374,
+      "method_acc": 0.5844,
+      "think_reason_unmatched": {
+        "acc_32b_think": 0.5594,
+        "d_vs_think": 0.0249,
+        "ci95": [
+          0.022,
+          0.0279
+        ],
+        "sig": true
+      },
+      "think_reason_matched_A": {
+        "acc_32b_think": 0.5661,
+        "d_vs_think": 0.0182,
+        "ci95": [
+          0.0153,
+          0.0211
+        ],
+        "sig": true
+      },
+      "think_reason_matched_B": {
+        "acc_32b_think": 0.5659,
+        "d_vs_think": 0.0185,
+        "ci95": [
+          0.0156,
+          0.0213
+        ],
+        "sig": true
+      },
+      "headline_shift_reason_matched_A": -0.0067,
+      "headline_shift_reason_matched_B": -0.0064
+    },
+    "open_only": {
+      "benchmarks": [
+        "SLAKE_open",
+        "VQA_RAD_open",
+        "PATH_VQA_open"
+      ],
+      "n": 2345,
+      "method_acc": 0.5727,
+      "think_reason_unmatched": {
+        "acc_32b_think": 0.3028,
+        "d_vs_think": 0.2699,
+        "ci95": [
+          0.249,
+          0.2913
+        ],
+        "sig": true
+      },
+      "think_reason_matched_A": {
+        "acc_32b_think": 0.4235,
+        "d_vs_think": 0.1493,
+        "ci95": [
+          0.1309,
+          0.168
+        ],
+        "sig": true
+      },
+      "think_reason_matched_B": {
+        "acc_32b_think": 0.4192,
+        "d_vs_think": 0.1535,
+        "ci95": [
+          0.1343,
+          0.1727
+        ],
+        "sig": true
+      },
+      "headline_shift_reason_matched_A": -0.1206,
+      "headline_shift_reason_matched_B": -0.1164
+    },
+    "per_open_cell": {
+      "SLAKE_open": {
+        "n": 645,
+        "method_acc": 0.8202,
+        "think_reason_unmatched": 0.6791,
+        "think_reason_matched_A": 0.7194,
+        "think_reason_matched_B": 0.7318,
+        "d_vs_think_reason_unmatched": 0.1411,
+        "d_vs_think_reason_matched_A": 0.1008,
+        "d_vs_think_reason_matched_B": 0.0884,
+        "ci_vs_think_reason_matched_B": {
+          "delta": 0.0884,
+          "lo": 0.0558,
+          "hi": 0.1209,
+          "sig": true,
+          "n": 645
+        }
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "method_acc": 0.605,
+        "think_reason_unmatched": 0.545,
+        "think_reason_matched_A": 0.555,
+        "think_reason_matched_B": 0.555,
+        "d_vs_think_reason_unmatched": 0.06,
+        "d_vs_think_reason_matched_A": 0.05,
+        "d_vs_think_reason_matched_B": 0.05,
+        "ci_vs_think_reason_matched_B": {
+          "delta": 0.05,
+          "lo": -0.01,
+          "hi": 0.11,
+          "sig": false,
+          "n": 200
+        }
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "method_acc": 0.462,
+        "think_reason_unmatched": 0.1087,
+        "think_reason_matched_A": 0.2787,
+        "think_reason_matched_B": 0.2667,
+        "d_vs_think_reason_unmatched": 0.3533,
+        "d_vs_think_reason_matched_A": 0.1833,
+        "d_vs_think_reason_matched_B": 0.1953,
+        "ci_vs_think_reason_matched_B": {
+          "delta": 0.1953,
+          "lo": 0.17,
+          "hi": 0.22,
+          "sig": true,
+          "n": 1500
+        }
+      }
+    },
+    "note": "Baseline row reproduced from f8_mode_vsthink_ci.json (Variant B: method 0.5836 vs 32B-think 0.5591, d=+0.0245, n=42224). Each 'think_<arm>' row replaces ONLY the three open cells' always-32B-THINK vector with that arm's. The separate PathVQA judging correction (+0.019..+0.0226 scenarios in pathvqa_judge_audit.json) was hand-derived on the UNMATCHED reasoning answers and cannot be transferred to a different arm without re-labeling, so it is NOT stacked on top of these numbers."
+  }
 }
