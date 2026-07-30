@@ -2,14 +2,20 @@
 """Generate the three figures for paper/main.tex.
 
 All numbers are read directly from the result artifacts (no fabricated values):
-  - results/cascade_methods/artifacts/method_final_mmmu_corrected.json  (Pareto points, Variant A)
+  - results/cascade_methods/artifacts/macro_average_headline_2026-07-30.json
+        keys cost.pareto.honest_recost.{macro_cells, sample_weighted}
+        (accuracy--cost points for all 7 systems under the paper's PRIMARY 8-cell
+         equal-weight convention and, for contrast, the sample-weighted one.
+         Replaces method_final_mmmu_corrected.json, which was Variant A,
+         sample-weighted, and carried an ESTIMATED always_32b_reasoning = 0.5628.
+         The old figure is preserved as fig_pareto_superseded_2026-07-08.pdf.)
   - results/cascade_methods/artifacts/finding1_corrected_2026-07-29.json
         (cross-family think-minus-no-think deltas, PROMPT- AND RESOLUTION-MATCHED arms;
          policy P1_audit_best_matched. Replaces reframe_vs_bigthink.json, whose think arms
          were prompt-unmatched and produced the superseded 15/20 count.)
 
 Outputs (PDF, vector) into paper/figs_final/:
-  fig_pareto.pdf     -- accuracy vs {FLOP-eq, batch-1 latency} Pareto frontier
+  fig_pareto.pdf     -- accuracy vs cost under BOTH weightings (3 panels, \textwidth)
   fig_overthink.pdf  -- cross-family think-minus-no-think accuracy heatmap
   fig_schematic.pdf  -- schematic of the format-aware adaptive cascade
 
@@ -20,7 +26,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Rectangle
 from matplotlib.colors import LinearSegmentedColormap
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -62,64 +68,150 @@ def load(name):
         return json.load(f)
 
 # ===========================================================================
-# FIGURE 1 -- Pareto frontier on two cost axes
+# FIGURE 1 -- accuracy vs cost, under BOTH weighting conventions
+# ---------------------------------------------------------------------------
+# 2026-07-30 REBUILD.  The previous version read
+# method_final_mmmu_corrected.json (Variant A, sample-weighted, with an
+# ESTIMATED always_32b_reasoning accuracy of 0.5628) and so disagreed with the
+# main result table (tab:main, printed as TABLE III) on both axes once the paper
+# was re-based onto the 8-cell macro average.  It also drew the retired "Pareto-dominates every fixed way of using
+# the 32B" picture.  This version reads
+#   macro_average_headline_2026-07-30.json : cost.pareto.honest_recost.*
+# and plots three internally-consistent panels.  Each panel pairs an accuracy
+# with a cost computed under the SAME weighting -- the paper's setup section
+# forbids pairing a macro accuracy with a sample-weighted cost -- so panels
+# (a),(b) are equal-weight (tab:main "Acc. (macro)") and panel (c) is
+# sample-weighted (tab:main "Acc. (sw)" / "rel. FLOP (sw)").
+#
+# Costing basis: honest_recost, i.e. always-32B-reasoning and oracle
+# mode-select are charged their MEASURED per-cell generation rather than the
+# flat convention constant.  This is the basis of every claim the paper makes
+# against the reasoning baseline (-89.0% latency, -87.3% energy, 1.131x
+# FLOP-eq) and matches tab:main's footnote; tab:main's body charges the flat
+# constant, which is why the caption names the basis explicitly.
 # ===========================================================================
-def fig_pareto():
-    d = load("method_final_mmmu_corrected.json")
-    # MMMU-excluded suite (Variant B): 5 MCQ + 3 open, n = 42,224
-    pts = d["variants"]["B_mmmu_excluded"]["data"]["pareto_frontier"]["full_suite"]["points"]
-    P = {p["system"]: p for p in pts}
+PARETO_ART = "macro_average_headline_2026-07-30.json"
+ONE_32B_FLOPS = 4.57   # FLOP-eq of one 32B forward (= the measured 32B/7B ratio)
 
-    # display config: label, marker, color, is_method
+def fig_pareto():
+    d = load(PARETO_ART)
+    par = d["cost"]["pareto"]["honest_recost"]
+    MACRO = {p["system"]: p for p in par["macro_cells"]["points"]}
+    SW    = {p["system"]: p for p in par["sample_weighted"]["points"]}
+    ncell = d["pool"]["n_cells"]
+    nitem = d["pool"]["n_items"]
+
+    # display config: key, label (matching tab:main row names), marker, colour, is_method
     disp = [
-        ("always_7b",                    "7B (cheap floor)",       "o", OI["grey"],   False),
-        ("always_32b_think",             "32B think",              "X", OI["vermil"], False),
-        ("always_32b_nt",                "32B no-think",           "s", OI["orange"], False),
-        ("oracle_mode_32b",              "oracle mode-select 32B", "D", OI["purple"], False),
-        ("method_compute_lean",          "Ours: compute-lean",     "*", OI["blue"],   True),
-        ("method_accuracy_max_v2_F8F10", "Ours: accuracy-max",     "P", OI["green"],  True),
-        ("method_accuracy_max_v1_F3",    "Ours: accuracy-max$^{+}$","^", OI["sky"],   True),
+        ("always_7b",                 "always-7B (cheap floor)",        "o", OI["grey"],   False),
+        ("always_32b_reasoning",      "always-32B-reasoning",           "X", OI["vermil"], False),
+        ("always_32b_direct",         "always-32B-direct",              "s", OI["orange"], False),
+        ("oracle_mode_32b",           "oracle mode-select 32B",         "D", OI["purple"], False),
+        ("method_compute_lean",       "Ours: compute-lean",             "*", OI["blue"],   True),
+        ("method_accuracy_max_veto",  "Ours: accuracy-max",             "P", OI["green"],  True),
+        ("method_accuracy_max_fusion","Ours: accuracy-max$^{+}$(fusion)","^", OI["sky"],   True),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(7.1, 3.05))
+    fig, axes = plt.subplots(1, 3, figsize=(7.16, 2.95))
 
-    def frontier(ax, xkey, xlabel, logx):
-        for sys, lab, mk, col, meth in disp:
-            p = P[sys]
-            x, y = p[xkey], p["acc"]
-            ax.scatter(x, y, marker=mk, s=(150 if meth else 70),
-                       facecolor=col, edgecolor="#111111",
-                       linewidth=(0.9 if meth else 0.6),
-                       zorder=5 if meth else 4, label=lab)
-        # Pareto envelope (upper-left): non-dominated on (min x, max acc)
-        allp = [(P[s][xkey], P[s]["acc"], s) for s, *_ in disp]
-        allp.sort()
-        env, best = [], -1
-        for x, y, s in allp:
+    def panel(ax, P, xkey, xlabel, ylim, logx=False, vline=None, ylabel=None):
+        for sysk, lab, mk, col, meth in disp:
+            p = P[sysk]
+            hollow = (sysk == "oracle_mode_32b")   # sits on top of always-32B-direct
+            ax.scatter(p[xkey], p["acc"], marker=mk, s=(120 if meth else 78),
+                       facecolor=("none" if hollow else col),
+                       edgecolor=(col if hollow else "#111111"),
+                       linewidth=(1.3 if hollow else (0.9 if meth else 0.6)),
+                       zorder=(4 if hollow else (6 if meth else 5)), label=lab)
+        # non-dominated set (min cost, max accuracy).  Drawn as a staircase-free
+        # dashed guide: it shows the trade-off, NOT dominance.
+        allp = sorted((P[s][xkey], P[s]["acc"]) for s, *_ in disp)
+        env, best = [], -1.0
+        for x, y in allp:
             if y > best + 1e-12:
                 env.append((x, y)); best = y
         ex, ey = zip(*env)
-        ax.plot(ex, ey, color="#111111", lw=0.8, ls="--", alpha=0.55, zorder=2)
+        ax.plot(ex, ey, color="#111111", lw=0.8, ls="--", alpha=0.5, zorder=2,
+                label="non-dominated set")
+        if vline is not None:
+            ax.axvspan(ax.get_xlim()[0] if logx else 0, vline,
+                       color="#f0f0f0", zorder=0)
+            ax.axvline(vline, color="#555555", lw=0.8, ls=":", zorder=1)
         if logx:
             ax.set_xscale("log")
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel("accuracy (sample-weighted, n=42,224)")
-        ax.set_ylim(0.551, 0.590)
+        ax.set_xlabel(xlabel, fontsize=7.4)
+        if ylabel:
+            ax.set_ylabel(ylabel, fontsize=7.4)
+        ax.set_ylim(*ylim)
+        ax.tick_params(labelsize=7.0)
 
-    frontier(axes[0], "flops", "compute  (FLOP-equivalents per query)", False)
-    frontier(axes[1], "lat_par_ms", "batch-1 latency (ms, log scale)", True)
+    YMAC = (0.5885, 0.6790)
+    YSW  = (0.5495, 0.5945)
 
-    # shared legend below
+    # ---- (a) equal weight, compute -----------------------------------------
+    a = axes[0]
+    a.set_xlim(0, 7.6)
+    panel(a, MACRO, "flops", "compute (FLOP-eq per query)", YMAC,
+          vline=ONE_32B_FLOPS,
+          ylabel="accuracy — macro (%d cells, 1/%d each)" % (ncell, ncell))
+    a.text(ONE_32B_FLOPS - 0.20, 0.6775, "one 32B forward", rotation=90,
+           ha="right", va="top", fontsize=6.0, color="#555555")
+    a.text(0.12, 0.5905, "cheaper than one 32B forward", fontsize=5.9,
+           color="#555555", style="italic", va="bottom")
+    a.annotate("", xy=(MACRO["method_accuracy_max_veto"]["flops"], 0.6745),
+               xytext=(ONE_32B_FLOPS, 0.6745),
+               arrowprops=dict(arrowstyle="-|>", lw=0.8, color=OI["vermil"],
+                               shrinkA=0, shrinkB=0))
+    a.text(5.55, 0.6760, "$1.41\\times$", fontsize=6.2, color=OI["vermil"],
+           ha="center", va="bottom")
+
+    # ---- (b) equal weight, latency -----------------------------------------
+    b = axes[1]
+    b.set_xlim(280, 14000)
+    panel(b, MACRO, "lat_par_ms", "batch-1 latency (ms, log scale)", YMAC,
+          logx=True)
+    b.set_xticks([500, 1000, 2000, 5000, 10000])
+    b.set_xticklabels(["500", "1k", "2k", "5k", "10k"])
+    b.set_xticks([], minor=True)
+    r, v = MACRO["always_32b_reasoning"], MACRO["method_accuracy_max_veto"]
+    b.annotate("", xy=(v["lat_par_ms"] * 1.15, v["acc"] - 0.0015),
+               xytext=(r["lat_par_ms"] * 0.86, r["acc"] + 0.0015),
+               arrowprops=dict(arrowstyle="-|>", lw=0.9, color=OI["green"],
+                               connectionstyle="arc3,rad=0.18",
+                               shrinkA=2, shrinkB=2))
+    b.text(2050, 0.6330, "vs. a reasoning 32B:\n$+0.072$ acc,\n$-89\\%$ lat., $-87\\%$ energy",
+           fontsize=6.0, color=OI["green"], ha="center", va="center")
+
+    # ---- (c) sample-weighted, compute --------------------------------------
+    c = axes[2]
+    c.set_xlim(0, 7.6)
+    panel(c, SW, "flops", "compute (FLOP-eq per query)", YSW,
+          vline=ONE_32B_FLOPS,
+          ylabel="accuracy — sample-weighted, n=%s" % f"{nitem:,}")
+    c.text(ONE_32B_FLOPS + 0.30, 0.5938, "one 32B forward", rotation=90,
+           ha="left", va="top", fontsize=6.0, color="#555555")
+    c.text(0.12, 0.5505, "cheaper than one 32B forward", fontsize=5.9,
+           color="#555555", style="italic", va="bottom")
+    c.annotate("", xy=(SW["method_compute_lean"]["flops"], 0.5915),
+               xytext=(ONE_32B_FLOPS, 0.5915),
+               arrowprops=dict(arrowstyle="-|>", lw=0.8, color=OI["blue"],
+                               shrinkA=0, shrinkB=0))
+    c.text(3.30, 0.5921, "$0.49\\times$", fontsize=6.2, color=OI["blue"],
+           ha="center", va="bottom")
+
+    axes[0].set_title("(a) equal weight per cell — compute", fontsize=7.6)
+    axes[1].set_title("(b) equal weight per cell — latency", fontsize=7.6)
+    axes[2].set_title("(c) sample-weighted — compute", fontsize=7.6)
+
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False,
-               fontsize=6.6, handletextpad=0.3, columnspacing=1.0,
-               bbox_to_anchor=(0.5, -0.02))
-    axes[0].set_title("(a) accuracy vs. FLOPs", fontsize=8)
-    axes[1].set_title("(b) accuracy vs. latency", fontsize=8)
-    fig.tight_layout(rect=(0, 0.10, 1, 1))
+               fontsize=6.6, handletextpad=0.3, columnspacing=1.1,
+               bbox_to_anchor=(0.5, 0.0))
+    fig.tight_layout(rect=(0, 0.155, 1, 1))
+    fig.subplots_adjust(wspace=0.33)
     fig.savefig(os.path.join(OUT, "fig_pareto.pdf"), bbox_inches="tight")
     plt.close(fig)
-    print("wrote fig_pareto.pdf")
+    print("wrote fig_pareto.pdf  (macro + sample-weighted, honest_recost)")
 
 # ===========================================================================
 # FIGURE 2 -- cross-family "reasoning hurts perception" heatmap
@@ -162,8 +254,18 @@ def fig_overthink():
                     fontsize=6.6, color=("white" if abs(v) > 0.075 else "#111111"))
     # divider between perception (cols 0-3) and reasoning (cols 4-5)
     ax.axvline(3.5, color="#111111", lw=1.4)
-    ax.text(1.5, -0.72, "perception", ha="center", fontsize=7.5, style="italic")
-    ax.text(4.5, -0.72, "reasoning", ha="center", fontsize=7.5, style="italic")
+    # 2026-07-30: the reasoning block is HATCHED because its two arms differ in
+    # answer format as well as in the reasoning instruction.  A format-matched
+    # re-run (medeval_matched_direct_2026-07-29.json) leaves 0/9 reasoning-trigger
+    # effects CI-significant and 3/9 format effects significant, so these cells
+    # must not be read as a reasoning gain.
+    ax.add_patch(Rectangle((3.5, -0.5), 2.0, 5.0, facecolor="none",
+                           edgecolor="#3d3d3d", hatch="////", linewidth=0.0,
+                           alpha=0.45, zorder=2))
+    ax.text(1.5, -1.02, "perception", ha="center", fontsize=7.5, style="italic")
+    ax.text(4.5, -1.02, "reasoning", ha="center", fontsize=7.5, style="italic")
+    ax.text(4.5, -0.62, "(answer format not matched)",
+            ha="center", fontsize=6.6, color="#3d3d3d")
     cb = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.015)
     cb.set_label(r"$\Delta$ acc = think $-$ no-think" + "\n(orange: think helps; blue: think hurts)",
                  fontsize=6.6)

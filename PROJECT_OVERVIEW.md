@@ -476,9 +476,11 @@ units against always-32B's 4.57). (Detail: retrospective §6; `RESEARCH_RESULTS_
   the tree), and the 68-idea cross-field backlog (`METHOD_IDEAS_BACKLOG.md`).
 - **The paper:** `paper/adaptive-cascade-medvqa_ieee_2026-07-08.{tex,pdf}` — 9 pages, IEEEtran, and the *only* prose
   artifact besides the July-27 deck that carries the corrected numbers. Earlier drafts are in `paper/archive/`.
-  **⚠️ As of 2026-07-29 the `.tex` carries the corrected Finding 1 and the `.pdf` does not** — the PDF and
-  `paper/figs_final/fig_overthink.pdf` must be regenerated (`python3 paper/make_ieee_figs.py`, then
-  `bash paper/build_ieee.sh paper/adaptive-cascade-medvqa_ieee_2026-07-08.tex`). The **July-27 deck still shows the
+  **Rebuilt 2026-07-30 (12 pages):** `python3 paper/make_ieee_figs.py && bash paper/build_ieee.sh
+  paper/adaptive-cascade-medvqa_ieee_2026-07-08.tex`. The `.tex`, the `.pdf` and all three figures now carry the
+  corrected Finding 1 *and* the 8-cell macro re-basing; `fig_pareto.pdf` reads
+  `macro_average_headline_2026-07-30.json:cost.pareto.honest_recost` (superseded copy:
+  `fig_pareto_superseded_2026-07-08.pdf`) and `fig_overthink.pdf` hatches the format-confounded reasoning block. The **July-27 deck still shows the
   superseded 15/20** and its builder `paper/build_professor_html_2026-07-27.py` hard-codes it — fix that script
   before producing another deck.
 

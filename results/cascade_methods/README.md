@@ -139,8 +139,11 @@ Open-ended / verifier phase: `OPENENDED_CASCADE.md`, `OPENENDED_SELECTION_LUCKFL
    accuracy at ~a tenth of its latency and energy; accuracy-max also beats always-32B-**direct** on
    accuracy (+0.0128 [+0.0056, +0.0200]) at 1.41× its compute.
    Spec: `docs/current/METHOD_FINAL_2026-07.md`. Code: `src/cascade_methods/method_final.py`.
-   Paper: `paper/adaptive-cascade-medvqa_ieee_2026-07-08.pdf` (**the `.tex` carries the corrections; the
-   PDF and `paper/figs_final/fig_pareto.pdf` do NOT and were deliberately not rebuilt**).
+   Paper: `paper/adaptive-cascade-medvqa_ieee_2026-07-08.pdf` (**rebuilt 2026-07-30: the `.tex`, the PDF and
+   `paper/figs_final/fig_pareto.pdf` all carry the corrections. The Pareto figure is now built from
+   `macro_average_headline_2026-07-30.json:cost.pareto.honest_recost` and shows macro cost, macro latency and
+   sample-weighted cost in three internally-consistent panels; the old sample-weighted figure is kept as
+   `fig_pareto_superseded_2026-07-08.pdf`**).
 2. **Three findings that generalize** — (a) reasoning **hurts perception** across 5 families /
    3 architectures — **17/20 perception cells strictly negative**, 14/20 with 95% CIs excluding zero,
    pooled **−0.0401 [−0.0456, −0.0347]** on 30,250 paired samples *(re-derived 2026-07-29 from
@@ -187,8 +190,8 @@ Raw outputs written by the analysis scripts (~109 `.json` files). **The headline
 weightings, every delta with CI and leave-one-cell-out, and the `honest_headline` block**),
 `f8_mode_vsthink_ci.json` (the sample-weighted headline CI), `honest_recosting_2026-07-29.json`,
 `method_final.json` + `method_final_v2.json`, `method_final_mmmu_corrected.json` (**stale: Variant A,
-sample-weighted, 32B-reasoning = 0.5628 *estimated* — and still the file `paper/make_ieee_figs.py` builds
-the Pareto figure from, so figure and table now disagree; retrospective §7 hole 14**),
+sample-weighted, 32B-reasoning = 0.5628 *estimated*. No longer read by anything — `paper/make_ieee_figs.py`
+was repointed at `macro_average_headline_2026-07-30.json` on 2026-07-30, closing retrospective §7 hole 14**),
 `paper_baselines.json`, `opentext_32b_think_full.json`.
 **Finding 1's reasoning half:** `medeval_matched_direct_2026-07-29.json` is **canonical** for the
 format-vs-trigger decomposition. **Open-text verifier contamination:** `verifier_disjoint_split.json`

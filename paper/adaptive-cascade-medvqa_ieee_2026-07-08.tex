@@ -29,11 +29,13 @@
 %      Source: results/cascade_methods/artifacts/medeval_matched_direct_2026-07-29.json
 %  (3) The OPEN-TEXT accuracy claim is PROVISIONAL: a disjoint-verifier retrain
 %      is in flight (artifacts/verifier_disjoint_split.json).
-%  NOTE: the PDF was NOT rebuilt, and paper/make_ieee_figs.py still builds
-%  fig_pareto.pdf from method_final_mmmu_corrected.json (Variant A,
-%  SAMPLE-WEIGHTED, 32B-reasoning = 0.5628 estimated). Figure 2 therefore
-%  DISAGREES with Table I on both axes until make_ieee_figs.py is repointed at
-%  macro_average_headline_2026-07-30.json:cost.pareto.honest_recost.macro_cells.
+%  (4) 2026-07-30 (later): FIGURES REBUILT and this PDF recompiled.
+%      fig_pareto.pdf is now built from
+%      macro_average_headline_2026-07-30.json : cost.pareto.honest_recost
+%      (3 panels: macro compute, macro latency, sample-weighted compute; each
+%      panel internally consistent in its weighting). The old sample-weighted
+%      figure is preserved as figs_final/fig_pareto_superseded_2026-07-08.pdf.
+%      fig_overthink.pdf now HATCHES the reasoning block per correction (2).
 % ============================================================================
 \title{Adaptive Test-Time Compute for Medical Visual Question\\Answering: More Accurate than a Large Reasoning Model\\at a Fraction of its Latency and Energy}
 
@@ -227,7 +229,7 @@ instead of $c_{\text{cheap}}+c_{32}$. The cheap pass hides entirely under the 32
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_overthink.pdf}
-\caption{\textbf{Finding 1: reasoning over-thinks perception.} Accuracy change from adding a \texttt{<think>} trace (think $-$ no-think) for five medical model families, on the best prompt- and resolution-matched arms available for each family. Blue = thinking \emph{hurts}; orange = thinking \emph{helps}. Perception benchmarks (left of the divider) are blue in $17/20$ cells ($14/20$ with 95\% CIs excluding zero). The reasoning benchmarks (right) are shown for completeness only: their arms differ in \emph{answer format} as well as in the reasoning instruction, and a format-matched re-run attributes the effect to the format ($0/9$ trigger effects CI-significant vs.\ $3/9$ format effects; see \S\ref{sec:findings}).}
+\caption{\textbf{Finding 1: reasoning over-thinks perception.} Accuracy change from adding a \texttt{<think>} trace (think $-$ no-think) for five medical model families, on the best prompt- and resolution-matched arms available for each family. Blue = thinking \emph{hurts}; orange = thinking \emph{helps}. Perception benchmarks (left of the divider) are blue in $17/20$ cells ($14/20$ with 95\% CIs excluding zero). \textbf{The reasoning block on the right is hatched because it is not a reasoning gain}: those arms differ in \emph{answer format} as well as in the reasoning instruction, and a format-matched re-run attributes the effect to the format ($0/9$ trigger effects CI-significant vs.\ $3/9$ format effects; \S\ref{sec:findings}). It is shown for completeness and must be read as ``trigger $+$ format''. The third reasoning cell counted in Table~\ref{tab:overthink}, MMMU-Medical, is omitted here because it is excluded from the evaluation suite on contamination grounds (Limitations~(ix)). Source: \texttt{finding1\_corrected\_2026-07-29.json}, policy \texttt{P1\_audit\_best\_matched}.}
 \label{fig:overthink}
 \end{figure}
 
@@ -303,12 +305,12 @@ Table~\ref{tab:main} gives the headline. Under equal weight per benchmark cell, 
 
 The five-benchmark macro robustness check (\S\ref{sec:setup}) moves the accuracy deltas modestly and the sign of nothing: compute-lean $+0.0498$ ($[+0.0402,+0.0594]$) and accuracy-max $+0.0590$ ($[+0.0498,+0.0680]$) over always-32B-reasoning, at $1.098{\times}$ and $1.310{\times}$ the compute of one 32B forward.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_pareto.pdf}
-\caption{\textbf{Accuracy--cost frontier.} Accuracy vs.\ (a) FLOP-equivalents and (b) batch-1 latency (log scale); the dashed line is the non-dominated frontier. The method points are up-and-\emph{right} of the 32B strategies on the FLOP axis at equal weight (more accurate, more compute) and up-and-left on the latency axis against the reasoning baseline. \textbf{Note (2026-07-30): this figure has not yet been regenerated for the equal-weight convention}---\texttt{make\_ieee\_figs.py} still reads a sample-weighted artifact, so its axis values correspond to the ``Acc.\ (sw)'' and ``rel.\ FLOP (sw)'' columns of Table~\ref{tab:main}, not to the macro columns. Read Table~\ref{tab:main} for the headline.}
+\includegraphics[width=\textwidth]{fig_pareto.pdf}
+\caption{\textbf{Accuracy vs.\ cost, under both weightings.} Source: \texttt{macro\_average\_headline\_2026-07-30.json}, key \texttt{cost.pareto.honest\_recost}. Each panel pairs an accuracy with a cost computed under the \emph{same} weighting, since a macro accuracy must never be read against a sample-weighted cost (\S\ref{sec:setup}). \textbf{(a,b)}~equal weight per reporting cell ($8$ cells, $1/8$ each)---the paper's primary convention, i.e.\ the ``Acc.\ (macro)'' column of Table~\ref{tab:main}. \textbf{(c)}~sample-weighted over the $42{,}224$ items---the ``Acc.\ (sw)'' and ``rel.\ FLOP (sw)'' columns. The dotted line marks one always-32B forward ($4.57$ FLOP-eq); the shaded band is the region \emph{cheaper} than it. \textbf{The two cost panels disagree, and that is the point.} At equal weight no operating point is compute-cheaper than a single 32B forward ($1.196\times$, $1.410\times$, $1.435\times$); on this traffic mix two of the three are ($0.492\times$, $0.932\times$). Against a 32B actually made to reason the method wins on every axis but FLOP-eq: $+0.0720$ accuracy, $-89\%$ batch-1 latency, $-87\%$ energy, at $1.131\times$ its FLOP-eq. The dashed line is the non-dominated set; the method points lie on it because they are more \emph{accurate}, not because they are cheaper---``Pareto-optimal'' holds and ``Pareto-dominates'' does not (\S\ref{sec:main}). Costs are the \emph{honest re-cost}: always-32B-reasoning and oracle mode-select are charged their measured per-cell generation ($5.70$ FLOP-eq\,/\,$6{,}291$\,ms\,/\,$1{,}625$\,J and $4.57$\,/\,$645$\,ms\,/\,$122$\,J macro-weighted) instead of the flat convention cost carried in Table~\ref{tab:main}'s body; every other point is numerically identical to Table~\ref{tab:main}. Latency is the concurrent batch-1 figure. This figure supersedes \texttt{fig\_pareto\_superseded\_2026-07-08.pdf}, which was sample-weighted only and used an \emph{estimated} reasoning-baseline accuracy.}
 \label{fig:pareto}
-\end{figure}
+\end{figure*}
 
 \begin{table*}[t]
 \centering
