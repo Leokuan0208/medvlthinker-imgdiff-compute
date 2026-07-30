@@ -1,0 +1,101 @@
+{
+ "check1_reachability": {
+  "slake_open_qid_min": 11934,
+  "slake_open_qid_max": 12991,
+  "slake_open_n": 645,
+  "pathvqa_test_open_rowidx_count": 3357,
+  "pathvqa_test_open_rowidx_max": 6717,
+  "slake_qids_that_would_resolve_under_buggy_path": 0,
+  "actual_slake_dump_rows": 645,
+  "verdict": "the buggy path would have produced AT MOST 0 rows (scorer skips i not in IMG); the actual dump has 645 -> verifier_transfer_eval.py was NEVER the producer",
+  "passes": true
+ },
+ "check2_provenance": {
+  "actual_producer": "src/cascade_methods/gen_slake_open_bestofN.py (own load_slake_items(): /data/dan/dataset/slake/test.json + imgs/<img_name>)",
+  "producer_own_output": "ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_lingshu7b_bestofN_verified.jsonl",
+  "producer_rows": 645,
+  "dump_rows": 645,
+  "scores_identical": 645,
+  "scores_differing": 0,
+  "passes": true
+ },
+ "check3_image_ablation": {
+  "ablation_script": "src/training_methods/verifier_image_ablation_v2.py (defines its own correct slake_images() reading /data/dan/dataset/slake/test.json)",
+  "slake_cond_vs_correct_image_dump": {
+   "real": {
+    "n": 483,
+    "unmatched": 0,
+    "mean_abs_dev": 2.6480331262967626e-06,
+    "max_abs_dev": 5.000000000032756e-06,
+    "frac_within_0.01": 1.0
+   },
+   "blank_gray": {
+    "n": 483,
+    "unmatched": 0,
+    "mean_abs_dev": 0.31964565010351964,
+    "max_abs_dev": 0.9286070000000001,
+    "frac_within_0.01": 0.051759834368530024
+   },
+   "blank_black": {
+    "n": 483,
+    "unmatched": 0,
+    "mean_abs_dev": 0.3129446811594203,
+    "max_abs_dev": 0.9286070000000001,
+    "frac_within_0.01": 0.057971014492753624
+   },
+   "blank_matched": {
+    "n": 483,
+    "unmatched": 0,
+    "mean_abs_dev": 0.31751396894409933,
+    "max_abs_dev": 0.9286070000000001,
+    "frac_within_0.01": 0.06418219461697723
+   },
+   "mismatched": {
+    "n": 482,
+    "unmatched": 0,
+    "mean_abs_dev": 0.3332388423236514,
+    "max_abs_dev": 0.97887,
+    "frac_within_0.01": 0.15560165975103735
+   },
+   "no_image": {
+    "n": 482,
+    "unmatched": 0,
+    "mean_abs_dev": 0.30428118257261405,
+    "max_abs_dev": 0.901162,
+    "frac_within_0.01": 0.06431535269709543
+   }
+  },
+  "verdict": "SLAKE 'real' reproduces the correct-image dump (mean|dev| 2.6e-06 over n=483, 100% within 0.01) while every wrong/no-image condition deviates by ~0.32 -> the ablation scored the TRUE SLAKE images",
+  "passes": true
+ },
+ "check4_siblings": {
+  "scanned": 51,
+  "risky_scripts_fallthrough_without_own_slake_loader": {},
+  "verdict": "only verifier_transfer_eval.py had the fallthrough without a slake loader (now fixed); every other script defines its own correct slake_imgs()",
+  "passes": true
+ },
+ "git_history": {
+  "commits_touching_the_file": [
+   "a5b7f35 PMC-VQA provenance: name the split everywhere, retract a false claim, flag a cross-split comparison",
+   "b6251ba Open-text cascade: cost-frontier (verifier-bo2 beats weak-strong on acc+FLOPs), gate-honesty (held-out-\u03c4: gate redundant at N=8, selection is the lever); +reusable analysis scripts; instrument run_openvqa (logprobs/timing) + parameterize verifier eval",
+   "a315a06 Add radimagenet_open loaders (5th open-ended dataset) + MS-CXR grounding access",
+   "c2db22c Add cross-dataset transfer eval for the trained verifier"
+  ],
+  "introduced": "c2db22c (the file's first commit) -- no slake_open branch existed in ANY revision, so this is a latent gap, not a regression"
+ },
+ "bug": {
+  "file": "src/training_methods/verifier_transfer_eval.py",
+  "function": "imgs_for(ds)",
+  "description": "no slake_open branch; the else branch selected base=path_vqa/data for any ds other than vqa_rad_open, so imgs_for('slake_open') would have returned PathVQA images keyed by PathVQA row index",
+  "fix": "added an explicit slake_open branch mirroring run_openvqa.py's loader",
+  "datasets_the_else_branch_WAS_used_with": [
+   "vqa_rad_open (-> vqa_rad, correct)",
+   "pathvqa_open (-> path_vqa, correct)"
+  ]
+ },
+ "conclusion": {
+  "all_checks_pass": true,
+  "published_numbers_affected": "NONE",
+  "statement": "The bug was never executed for slake_open. The SLAKE open-text dump was produced by gen_slake_open_bestofN.py with the correct SLAKE images (byte-identical scores), the image ablation scored the true SLAKE images (all 483 'real' candidates reproduce the dump to <=5e-6), and the buggy path was structurally incapable of producing a non-empty SLAKE dump. The C_image_ablation conclusion that the verifier leans substantially on text priors on SLAKE therefore STANDS as published, and no re-run or correction is required. Transfer results for vqa_rad/pathvqa/kvasir/radimagenet went through correct branches and are likewise unaffected."
+ }
+}

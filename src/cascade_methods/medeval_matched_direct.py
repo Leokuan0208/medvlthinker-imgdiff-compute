@@ -296,6 +296,17 @@ def build():
             "no_gpu_this_script": True, "no_fabricated_numbers": True,
         },
         "dumps": {}, "pairing": {}, "cells": [], "missing": [], "verdict": {},
+        "run_incidents": {
+            "InternVL3-38B|MedXpertQA-MM": (
+                "First attempt failed (twice) with vLLM 'The decoder prompt (length 20183) is longer "
+                "than the maximum model length of 16384' -- one MedXpert item is ~20.2k tokens of "
+                "mostly image tiles. This is NOT the documented NCCL hang: it is deterministic, so "
+                "the retry reproduced it. ROOT CAUSE of the mismatch: the *_reason arm hit the same "
+                "wall at 16384 (logs/full_matrix.log:46223) and was re-run at MAX_MODEL_LEN=24000 "
+                "(runners/run_clean_latency_reruns.sh:23), as was its direct arm (line 21). So 24000 "
+                "is the value MATCHED to the reason arm; 16384 was our error. Re-run at 24000 with "
+                "JOB_TIMEOUT=9000 (the reason arm took 1h41m on this cell)."),
+        },
         "mmmu_open_item_audit": {
             "why": "The 5/150 MMMU 'open' items keep upstream's (still format-unmatched) strings. "
                    "If every arm scores them identically, the residual mismatch cannot affect any "
@@ -369,6 +380,14 @@ def build():
                 if "direct_unmatched" in have:
                     cell["delta_unmatched"] = paired_ci(vec["reason"], vec["direct_unmatched"])
                     cell["mcnemar_unmatched"] = mcnemar_exact(vec["reason"], vec["direct_unmatched"])
+                    # FORMAT effect: same absence of a reasoning trigger, only \boxed{} vs bare letter
+                    cell["delta_format"] = paired_ci(vec["direct_matched"], vec["direct_unmatched"])
+                    # full attribution of the published gain
+                    cell["attribution"] = {
+                        "total_published_gain(reason - truly_direct)": cell["delta_unmatched"]["delta"],
+                        "from_answer_format(boxed - bare, both trigger-free)": cell["delta_format"]["delta"],
+                        "from_explicit_reasoning_trigger(marginal)": cell["delta_matched"]["delta"],
+                    }
                     cell["delta_shift_from_matching"] = round(
                         cell["delta_matched"]["delta"] - cell["delta_unmatched"]["delta"], 4)
                     cell["format_effect_direct_matched_minus_unmatched"] = round(
@@ -437,10 +456,45 @@ def summarize(out):
                         "reasoning hurts" if sn and not sp else
                         "mixed" if sp and sn else "no significant effect"),
         }
+    fmt_sig = [c for c in primary if c.get("delta_format", {}).get("sig")
+               and c["delta_format"]["delta"] > 0]
+    expected = {(f, b) for f in FAMILIES for b in ("MMMU", "MedXpert")}
+    got = {(c["family"], c["benchmark"]) for c in out["cells"]}
+    out["not_obtained"] = [{"family": f, "benchmark": b,
+                            "incident": out["run_incidents"].get(
+                                f"{f}|{'MedXpertQA-MM' if b == 'MedXpert' else 'MMMU-Medical-val'}",
+                                "matched-direct dump absent")}
+                           for f, b in sorted(expected - got)]
+    out["coverage"] = f"{len(got)}/{len(expected)} (family x benchmark) matched-direct cells obtained"
     out["verdict"] = {
         "primary_cells": len(primary),
         "sig_positive": len(sig_pos), "sig_negative": len(sig_neg),
         "point_positive": len(pt_pos),
+        "format_effect_sig_positive": len(fmt_sig),
+        "headline": (
+            f"Under a MATCHED prompt the explicit reasoning trigger is worth ~nothing: "
+            f"{len(sig_pos)}/{len(primary)} primary cells are CI-significantly positive "
+            f"({len(sig_neg)} negative). The published gains were carried by the ANSWER FORMAT: "
+            f"requesting \\boxed{{}} alone makes the reasoning-tuned families (MedVLThinker-32B, "
+            f"InternVL3-38B) emit 280-580 reasoning tokens with no trigger present, and that "
+            f"format contrast is CI-significantly positive in {len(fmt_sig)}/{len(primary)} cells. "
+            f"Lingshu-32B never reasons without the trigger and gains nothing when it does."),
+        "what_the_project_should_claim": [
+            "DO NOT claim 'a reasoning instruction improves accuracy on reasoning-heavy benchmarks'. "
+            "Matched-prompt, the reasoning clause adds ~0 (0/7 cells CI-significant).",
+            "DO claim the weaker, supported version: on reasoning-heavy benchmarks, getting a "
+            "reasoning-tuned model to PRODUCE a reasoning trace raises accuracy substantially "
+            "(MedVLThinker MMMU +0.103, MedXpert-Reasoning +0.046; InternVL3 MMMU +0.124) -- but the "
+            "operative lever is the \\boxed{} answer format, not the reasoning instruction.",
+            "Lingshu-32B must not be cited as evidence that reasoning helps: with a genuinely "
+            "reasoning arm (275-322 tokens) vs a genuinely direct arm (3-4 tokens) it gains "
+            "+0.041 on MMMU (n.s.) and ~0 on both MedXpert splits.",
+            "The cascade's gated-reasoning tier is UNAFFECTED in value: the rung1->rung3 total "
+            "(non-reasoning cheap answer -> reasoning answer) is what a think tier delivers, and "
+            "that is unchanged. Only the ATTRIBUTION changes.",
+            "Any future think-vs-direct arm pair must be format-matched AND token-audited: a "
+            "'direct' arm that emits hundreds of tokens is not a direct arm.",
+        ],
         "per_family": fam_verdict,
         "mean_delta_shift_from_matching": round(float(np.mean(
             [c["delta_shift_from_matching"] for c in primary

@@ -37,14 +37,25 @@ say(){ echo "$(date -u +%H:%M:%S) $*" >> "$M"; }
 say "=== DISJOINT VERIFIER RETRAIN START ==="
 
 # ---- wait for BOTH GPUs to be free (cap 8h, never loop forever) -------------------------------
-waited=0
+# SUSTAINED-free, not instantaneously-free. A previous attempt died because another runner freed the
+# GPUs for ~20s BETWEEN its own jobs; this poll caught that gap, started vLLM, and the other job then
+# grabbed the memory back -> "Engine core initialization failed". Require N consecutive free readings
+# AND no competing eval/vLLM process, so a between-jobs gap can never be mistaken for an idle machine.
+waited=0; streak=0; NEED_STREAK=4      # 4 x 30s = 2 min of continuous idleness
 while true; do
   used=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | awk '{s+=$1} END {print s+0}')
-  [ "${used:-99999}" -lt 2000 ] && break
+  busyproc=$(pgrep -c -f 'medeval_matched_prompt|MedEvalKit|VLLM::EngineCore|run_full_matrix' 2>/dev/null || true)
+  if [ "${used:-99999}" -lt 2000 ] && [ "${busyproc:-0}" -eq 0 ]; then
+    streak=$((streak+1))
+    [ "$streak" -ge "$NEED_STREAK" ] && break
+  else
+    [ "$streak" -gt 0 ] && say "GPU idle streak reset (used=${used} MiB, procs=${busyproc})"
+    streak=0
+  fi
   if [ "$waited" -ge 28800 ]; then say "ABORT: GPUs still busy after 8h (${used} MiB)"; exit 1; fi
-  sleep 60; waited=$((waited+60))
+  sleep 30; waited=$((waited+30))
 done
-say "GPUs free (${used} MiB) after ${waited}s"
+say "GPUs sustained-free (${used} MiB, ${NEED_STREAK} consecutive checks) after ${waited}s"
 
 # ---- 1. generate sc8 candidates for the disjoint TRAIN pools ----------------------------------
 for DS in slake_open_train vqa_rad_open_train pathvqa_open_train; do

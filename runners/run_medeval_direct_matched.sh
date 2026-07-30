@@ -47,6 +47,10 @@ while true; do
 done
 echo "GPUs free (${used} MiB) after ${waited}s; starting $(date)" >> "$M"
 
+# Per-job wall-clock cap. Default 1h is ample for the short-generation cells, but the two
+# contaminated families REASON on the matched-direct prompt (280-580 tokens x 2000 items), and
+# the *_reason arm of IV3-38B x MedXpert measurably took 1h41m (logs/clean_latency.log 12:37:13
+# -> 14:18:13). A 1h cap would guarantee a false "hang" there, so JOB_TIMEOUT is overridable.
 # runjob: MODEL_NAME MODEL_PATH OUTDIR DATASET [MAX_MODEL_LEN]
 # NOTE the "/{}" in --output_path: kept identical to run_full_matrix_medeval.sh so the new dumps
 # have the same directory shape as the *_reason dumps they are compared against.
@@ -59,7 +63,7 @@ runjob(){
   local attempt
   for attempt in 1 2; do
     echo ">> RUN $OUT $DS attempt=$attempt $(date)" >> "$M"
-    timeout -s KILL 3600 env CUDA_VISIBLE_DEVICES=0,1 tensor_parallel_size=2 \
+    timeout -s KILL "${JOB_TIMEOUT:-3600}" env CUDA_VISIBLE_DEVICES=0,1 tensor_parallel_size=2 \
       MEDEVAL_PROMPT_LOG="$REPO/logs/medeval_direct_matched_prompts.jsonl" \
       ${MML:+MAX_MODEL_LEN=$MML} \
       "$PY" "$REPO/src/labeling/medeval_matched_prompt.py" -- \
@@ -82,10 +86,21 @@ runjob(){
 }
 
 # The three families that have *_reason dumps to compare against.
+#
+# InternVL3-38B needs a per-BENCHMARK context cap, matched to whatever its *_reason arm used:
+#   MMMU        -> 16384  (runners/run_full_matrix_medeval.sh, succeeded)
+#   MedXpertQA  -> 24000  (its prompts reach ~20.2k tokens; the reason arm FAILED at 16384 in
+#                          full_matrix.log:46223 and was re-run at mml=24000 by
+#                          runners/run_clean_latency_reruns.sh:23 -- as was its direct arm, line 21.
+#                          So 24000 is the matched value, not a new lever.)
 for DS in MMMU-Medical-val MedXpertQA-MM; do
+  case "$DS" in
+    MMMU-Medical-val) IV3_MML=16384; export JOB_TIMEOUT=3600 ;;
+    MedXpertQA-MM)    IV3_MML=24000; export JOB_TIMEOUT=9000 ;;   # reason arm took 1h41m here
+  esac
   runjob Qwen2.5-VL lingshu-medical-mllm/Lingshu-32B          eval_results_lingshu32b_direct_matched "$DS"
   runjob Qwen2.5-VL /data/dan/weights/MedVLThinker-32B-RL_m23k eval_results_mvt32b_direct_matched    "$DS"
-  runjob InternVL   OpenGVLab/InternVL3-38B                   eval_results_iv3_38b_direct_matched    "$DS" 16384
+  runjob InternVL   OpenGVLab/InternVL3-38B                   eval_results_iv3_38b_direct_matched    "$DS" "$IV3_MML"
 done
 
 echo "=== DIRECT_MATCHED_ALL_DONE $(date) ===" >> "$M"
