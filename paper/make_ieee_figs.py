@@ -16,7 +16,7 @@ All numbers are read directly from the result artifacts (no fabricated values):
 
 Outputs (PDF, vector) into paper/figs_final/:
   fig_pareto.pdf     -- accuracy vs cost under BOTH weightings (3 panels, \textwidth)
-  fig_overthink.pdf  -- cross-family think-minus-no-think accuracy heatmap
+  fig_overthink.pdf  -- cross-family think-minus-no-think accuracy heatmap (\textwidth)
   fig_schematic.pdf  -- schematic of the format-aware adaptive cascade
 
 Run from repo root:  python3 paper/make_ieee_figs.py
@@ -239,19 +239,26 @@ def fig_overthink():
     cmap = LinearSegmentedColormap.from_list(
         "bo", [OI["blue"], "#9ecae1", "#f2f2f2", "#fdd0a2", OI["vermil"]])
     vmax = 0.13   # widened from 0.11: the matched arms reach -0.1274 (MedVLThinker/SLAKE)
-    fig, ax = plt.subplots(figsize=(6.4, 2.55))
+    # 2026-07-30: promoted to a full-width figure* in the paper.  The figure is
+    # drawn at (almost exactly) \textwidth = 516pt = 7.153in, so \includegraphics
+    # [width=\textwidth] scales it ~1:1 and the fontsize= values below are the
+    # TRUE on-page point sizes.  (At \columnwidth it was printed at 54% and the
+    # cell numbers landed at ~3.6pt.)  Sizes are chosen against the document's
+    # own type scale -- 10pt body, 8pt captions, 7pt \scriptsize table notes --
+    # so that no text in this figure is the weakest text on the page.
+    fig, ax = plt.subplots(figsize=(7.30, 2.85))
     im = ax.imshow(M, cmap=cmap, vmin=-vmax, vmax=vmax, aspect="auto")
     ax.set_xticks(range(len(cols)))
-    ax.set_xticklabels([c[1] for c in cols], fontsize=7.5)
+    ax.set_xticklabels([c[1] for c in cols], fontsize=8.5)
     ax.set_yticks(range(len(fams)))
-    ax.set_yticklabels([f[1] for f in fams], fontsize=7.5)
+    ax.set_yticklabels([f[1] for f in fams], fontsize=8.5)
     ax.grid(False)
     # annotate
     for i in range(len(fams)):
         for j in range(len(cols)):
             v = M[i, j]
             ax.text(j, i, f"{v:+.3f}", ha="center", va="center",
-                    fontsize=6.6, color=("white" if abs(v) > 0.075 else "#111111"))
+                    fontsize=8.0, color=("white" if abs(v) > 0.075 else "#111111"))
     # divider between perception (cols 0-3) and reasoning (cols 4-5)
     ax.axvline(3.5, color="#111111", lw=1.4)
     # 2026-07-30: the reasoning block is HATCHED because its two arms differ in
@@ -262,14 +269,14 @@ def fig_overthink():
     ax.add_patch(Rectangle((3.5, -0.5), 2.0, 5.0, facecolor="none",
                            edgecolor="#3d3d3d", hatch="////", linewidth=0.0,
                            alpha=0.45, zorder=2))
-    ax.text(1.5, -1.02, "perception", ha="center", fontsize=7.5, style="italic")
-    ax.text(4.5, -1.02, "reasoning", ha="center", fontsize=7.5, style="italic")
-    ax.text(4.5, -0.62, "(answer format not matched)",
-            ha="center", fontsize=6.6, color="#3d3d3d")
+    ax.text(1.5, -1.00, "perception", ha="center", fontsize=9.0, style="italic")
+    ax.text(4.5, -1.00, "reasoning", ha="center", fontsize=9.0, style="italic")
+    ax.text(4.5, -0.68, "(answer format not matched)",
+            ha="center", fontsize=8.0, color="#3d3d3d")
     cb = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.015)
     cb.set_label(r"$\Delta$ acc = think $-$ no-think" + "\n(orange: think helps; blue: think hurts)",
-                 fontsize=6.6)
-    cb.ax.tick_params(labelsize=6.5)
+                 fontsize=8.0)
+    cb.ax.tick_params(labelsize=7.5)
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "fig_overthink.pdf"), bbox_inches="tight")
     plt.close(fig)

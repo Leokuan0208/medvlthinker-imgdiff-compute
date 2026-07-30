@@ -36,6 +36,14 @@
 %      panel internally consistent in its weighting). The old sample-weighted
 %      figure is preserved as figs_final/fig_pareto_superseded_2026-07-08.pdf.
 %      fig_overthink.pdf now HATCHES the reasoning block per correction (2).
+%  (5) 2026-07-30 (later still): fig_overthink is now a full-width figure* at
+%      \textwidth (it was printed at 54% of natural size in one column, which
+%      put its cell numbers at ~3.6pt); the figure is drawn at 7.3in so the
+%      fontsize= values in make_ieee_figs.py are the true on-page point sizes.
+%      Costs +1 page (12 -> 13); that trade was made deliberately.
+%      tab:main's footnote now also carries the ORACLE row's honest re-cost
+%      (4.57 FLOP-eq / 645 ms / 122 J macro), from the same artifact key
+%      cost.pareto.honest_recost.macro_cells, so the table and Fig. 3 agree.
 % ============================================================================
 \title{Adaptive Test-Time Compute for Medical Visual Question\\Answering: More Accurate than a Large Reasoning Model\\at a Fraction of its Latency and Energy}
 
@@ -226,12 +234,12 @@ instead of $c_{\text{cheap}}+c_{32}$. The cheap pass hides entirely under the 32
 \section{Results}\label{sec:results}
 \subsection{The three findings}\label{sec:findings}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_overthink.pdf}
+\includegraphics[width=\textwidth]{fig_overthink.pdf}
 \caption{\textbf{Finding 1: reasoning over-thinks perception.} Accuracy change from adding a \texttt{<think>} trace (think $-$ no-think) for five medical model families, on the best prompt- and resolution-matched arms available for each family. Blue = thinking \emph{hurts}; orange = thinking \emph{helps}. Perception benchmarks (left of the divider) are blue in $17/20$ cells ($14/20$ with 95\% CIs excluding zero). \textbf{The reasoning block on the right is hatched because it is not a reasoning gain}: those arms differ in \emph{answer format} as well as in the reasoning instruction, and a format-matched re-run attributes the effect to the format ($0/9$ trigger effects CI-significant vs.\ $3/9$ format effects; \S\ref{sec:findings}). It is shown for completeness and must be read as ``trigger $+$ format''. The third reasoning cell counted in Table~\ref{tab:overthink}, MMMU-Medical, is omitted here because it is excluded from the evaluation suite on contamination grounds (Limitations~(ix)). Source: \texttt{finding1\_corrected\_2026-07-29.json}, policy \texttt{P1\_audit\_best\_matched}.}
 \label{fig:overthink}
-\end{figure}
+\end{figure*}
 
 \textbf{Finding 1: chain-of-thought hurts perception; on reasoning-heavy questions it helps only some models.} On multiple-choice perception VQA the effect is cross-family and it is measured on \emph{matched} arms (Fig.~\ref{fig:overthink}, Table~\ref{tab:overthink}): across five medical families, $17$ of $20$ perception cells have think $<$ no-think strictly, $14$ of $20$ with 95\% paired-bootstrap CIs excluding zero, and $19$ of $20$ no better than $+0.02$; the pooled effect is $\Delta{=}-0.0401$ \ci{-0.0456}{-0.0347} over $30{,}250$ paired samples. VQA-RAD is negative in all five families. The count is insensitive to how the arms are matched: three independent matching policies (best-matched arm; strict resolution \emph{and} answer-format matching; strict with MedVLThinker matched at full rather than reduced resolution) all give $17/20$ and a pooled $\Delta$ between $-0.0401$ and $-0.0405$. Restricting to the subset of cells whose two arms differ by \emph{nothing but the reasoning instruction} reproduces it at the same strength: $6/8$ strictly negative for Chiron-o1-8B and MedGemma-27B, pooled $-0.0273$ \ci{-0.0367}{-0.0176} ($n{=}12{,}100$), and $7/8$ for the two non-medical control architectures. Because multiple-choice gold is a single letter graded by exact equality, the only channel an unmatched prompt has is answer \emph{extraction} failure; we measure that at $0$--$3.4\%$ per cell, and charging every extraction failure against the finding changes no count. The one genuine exception is MedGemma-27B on PathVQA, $+0.0413$ \ci{+0.0220}{+0.0607}, which survives full prompt matching and which we therefore report as a real exception rather than an artifact.
 
@@ -292,7 +300,7 @@ oracle mode-select 32B           & 0.6573 & 0.5730 & 4.57 & 1.00$\times$ / 1.00$
 \;\;accuracy-max$^{+}$ (fusion)  & 0.6661 & 0.5862 & 6.56 & 1.435$\times$ / 1.250$\times$ & 665 & 209 & $+0.0686$~\ci{+0.0582}{+0.0790} & $+0.0094$~\ci{+0.0013}{+0.0176} \\
 \bottomrule
 \end{tabular}
-\\[2pt]{\scriptsize The always-32B-reasoning row is charged a flat $4.57$ FLOP-eq and $10{,}522$\,ms by our cost convention, regardless of how much it generates. Honestly re-costed from its measured per-cell generation ($3.0$--$3.3$ tokens on four of the five multiple-choice cells, $104$--$320$ on the rest), it is $5.70$ FLOP-eq / $6{,}291$\,ms / $1{,}625$\,J macro-weighted, against which accuracy-max is $-89.0\%$ latency, $-87.3\%$ energy and $1.131{\times}$ FLOP-eq. Latency for the free-text arm is reported both concurrent and sequential ($1{,}292$--$1{,}350$\,ms sequential for the method rows) because the adaptive draws are sequential by construction and their overlap was never measured.}
+\\[2pt]{\scriptsize The always-32B-reasoning row is charged a flat $4.57$ FLOP-eq and $10{,}522$\,ms by our cost convention, regardless of how much it generates. Honestly re-costed from its measured per-cell generation ($3.0$--$3.3$ tokens on four of the five multiple-choice cells, $104$--$320$ on the rest), it is $5.70$ FLOP-eq / $6{,}291$\,ms / $1{,}625$\,J macro-weighted, against which accuracy-max is $-89.0\%$ latency, $-87.3\%$ energy and $1.131{\times}$ FLOP-eq. The oracle mode-select row is charged by the same convention: it selects the reasoning mode on exactly one of the eight cells (SLAKE-closed) and pays the flat reasoning constant on that one cell, which is the entire reason its body row reads $1{,}897$\,ms / $361$\,J instead of the $665$\,ms / $127$\,J of one direct forward. Re-costed on the same measured basis---that cell's reasoning arm emits $3.3$ tokens---it is $4.57$ FLOP-eq / $645$\,ms / $122$\,J macro-weighted, and that is what Fig.~\ref{fig:pareto} plots for it. Latency for the free-text arm is reported both concurrent and sequential ($1{,}292$--$1{,}350$\,ms sequential for the method rows) because the adaptive draws are sequential by construction and their overlap was never measured.}
 \end{table*}
 
 Table~\ref{tab:main} gives the headline. Under equal weight per benchmark cell, the \emph{accuracy-max} operating point reaches $0.6694$: $+0.0720$ over always-32B-reasoning (95\% CI $[+0.0614,+0.0824]$), $+0.0128$ over a single always-32B-direct forward ($[+0.0056,+0.0200]$), and $+0.0122$ over the non-deployable oracle mode-selection baseline ($[+0.0049,+0.0195]$)---all significant. The \emph{compute-lean} point reaches $0.6600$: $+0.0626$ ($[+0.0514,+0.0734]$) over the reasoning baseline, and a tie against always-32B-direct ($+0.0033$, $[-0.0054,+0.0121]$). Both are far above the cheap floor ($+0.0629$ and $+0.0723$ over always-7B).
