@@ -1,0 +1,878 @@
+{
+ "what": "UNCONTAMINATED re-measurement of the open-text best-of-N arm: verifiers retrained on strictly disjoint splits (no eval question, no eval image) vs the deployed verifier, which was trained on 67-73% of the items it was scored on.",
+ "date": "2026-07-30",
+ "judge": "src/labeling/run_judge.py (MedVLThinker-32B, judge_ok) -- the SAME judge as the headline",
+ "contaminated_adapter": "ckpts/train/lora_verifier_pooled4",
+ "candidate_pools": "ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b_sc8.jsonl -- UNCHANGED. Candidates and judge labels are verifier-independent (verified: all three contaminated dumps' preds/sl/greedy_ok reproduce exactly from the raw sc8+judge files), so only the verifier SCORES were recomputed; nothing was regenerated.",
+ "comparability_asserted": "identical candidate lists, identical judge labels, identical greedy/SC/oracle across all arms (asserted in code, run aborts otherwise)",
+ "harness_validated": "running this script with clean==contaminated reproduces METHOD_FINAL_2026-07.md's open-arm cells exactly (SLAKE 0.8155@12.6%, VQA-RAD 0.5850@5.5%, PathVQA 0.4533@0.1%, pooled 0.5642)",
+ "nboot": 10000,
+ "seed": 0,
+ "split": {
+  "design": "option_c_hybrid: in-domain OFFICIAL TRAIN splits (image-disjoint) + 2 out-of-domain pools",
+  "levels": {
+   "L1_image_disjoint": "no eval image, no eval item; question TEMPLATES may recur",
+   "L2_strict": "L1 and no eval question TEXT at all (subset of L1)"
+  },
+  "seed": 0,
+  "eval": {
+   "slake_open": {
+    "n_items": 645,
+    "n_images": 96,
+    "n_distinct_question_texts": 169
+   },
+   "vqa_rad_open": {
+    "n_items": 200,
+    "n_images": 120,
+    "n_distinct_question_texts": 194
+   },
+   "pathvqa_open": {
+    "n_items": 1500,
+    "n_images": 312,
+    "n_distinct_question_texts": 310
+   }
+  },
+  "eval_total_items": 2345,
+  "eval_total_images": 528,
+  "option_a_feasibility_rejected": {
+   "slake_open": {
+    "n_images": 96,
+    "n_train_images": 67,
+    "n_eval_images": 29,
+    "n_train_items": 459,
+    "n_surviving_eval_items": 186,
+    "pct_eval_lost": 71.2
+   },
+   "vqa_rad_open": {
+    "n_images": 120,
+    "n_train_images": 84,
+    "n_eval_images": 36,
+    "n_train_items": 146,
+    "n_surviving_eval_items": 54,
+    "pct_eval_lost": 73.0
+   },
+   "pathvqa_open": {
+    "n_images": 312,
+    "n_train_images": 218,
+    "n_eval_images": 94,
+    "n_train_items": 1079,
+    "n_surviving_eval_items": 421,
+    "pct_eval_lost": 71.9
+   }
+  },
+  "train": {
+   "slake_open_train": {
+    "pool_items": 2976,
+    "dropped_eval_image": 0,
+    "L1_image_disjoint_items": 2976,
+    "L1_images": 449,
+    "L2_strict_items": 353,
+    "L2_images": 197,
+    "dropped_eval_question_text": 2623
+   },
+   "vqa_rad_open_train": {
+    "pool_items": 853,
+    "dropped_eval_image": 311,
+    "L1_image_disjoint_items": 542,
+    "L1_images": 155,
+    "L2_strict_items": 490,
+    "L2_images": 151,
+    "dropped_eval_question_text": 52
+   },
+   "pathvqa_open_train": {
+    "pool_items": 9903,
+    "dropped_eval_image": 0,
+    "L1_image_disjoint_items": 9903,
+    "L1_images": 2577,
+    "L2_strict_items": 2597,
+    "L2_images": 1004,
+    "dropped_eval_question_text": 7306
+   },
+   "kvasir_open": {
+    "pool_items": 1200,
+    "dropped_eval_image": 0,
+    "L1_image_disjoint_items": 1200,
+    "L1_images": 1048,
+    "L2_strict_items": 1200,
+    "L2_images": 1048,
+    "dropped_eval_question_text": 0,
+    "already_generated": true
+   },
+   "radimagenet_open": {
+    "pool_items": 2000,
+    "dropped_eval_image": 0,
+    "L1_image_disjoint_items": 2000,
+    "L1_images": 1000,
+    "L2_strict_items": 1850,
+    "L2_images": 1000,
+    "dropped_eval_question_text": 150,
+    "already_generated": true
+   }
+  },
+  "train_total_L1_items": 16621,
+  "train_total_L2_items": 6490,
+  "train_total_L1_images": 5229,
+  "disjointness_assertion": {
+   "image_pixel_hash_intersection": 0,
+   "question_item_intersection": 0,
+   "question_id_intersection": 0,
+   "L2_question_text_intersection": 0,
+   "L1_question_text_shared_by_design": 184,
+   "raw_numeric_id_coincidences_different_split_files_not_same_item": {
+    "slake_open_train": 0,
+    "vqa_rad_open_train": 48,
+    "pathvqa_open_train": 751,
+    "kvasir_open": 0,
+    "radimagenet_open": 0
+   },
+   "n_train_images": 5229,
+   "n_eval_images": 528,
+   "n_train_question_items": 14094,
+   "n_eval_question_items": 1803,
+   "method": "images: md5 of decoded RGB pixels (WxH + raw bytes), catches re-encoded copies. questions: item identity = (dataset family, normalized question text, image pixel hash), because raw row ids are not comparable across different split files.",
+   "asserted_in_code": [
+    "assert not inter_img",
+    "assert not inter_item",
+    "assert not inter_qid",
+    "assert not (q_L2 & eval_qtext)"
+   ]
+  },
+  "needs_generation": [
+   "slake_open_train",
+   "vqa_rad_open_train",
+   "pathvqa_open_train"
+  ]
+ },
+ "levels": {
+  "L1_image_disjoint": {
+   "status": "ok",
+   "adapter": "ckpts/train/lora_verifier_disjoint",
+   "definition": "no eval image and no eval item in training; question TEMPLATES may recur with other images",
+   "train_config": {
+    "split": "results/cascade_methods/artifacts/verifier_disjoint_split.json",
+    "level": "L1",
+    "train_sources": [
+     "slake_open_train",
+     "vqa_rad_open_train",
+     "pathvqa_open_train",
+     "kvasir_open",
+     "radimagenet_open"
+    ],
+    "n_train_questions": 16621,
+    "n_train_examples": 10364,
+    "available_examples_per_source": {
+     "kvasir_open": 5692,
+     "pathvqa_open_train": 46992,
+     "radimagenet_open": 8155,
+     "slake_open_train": 5852,
+     "vqa_rad_open_train": 1848
+    },
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "contaminated_reference_composition": {
+     "slake": 894,
+     "pathvqa": 4973,
+     "vqa_rad": 522,
+     "kvasir": 3975
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "match_composition": true,
+    "pos_rate": 0.19924739482825163,
+    "skipped_examples": 0,
+    "steps": 5182,
+    "epochs": 1,
+    "bs": 2,
+    "accum": 8,
+    "lr": 0.0001,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+     "q_proj",
+     "k_proj",
+     "v_proj",
+     "o_proj",
+     "gate_proj",
+     "up_proj",
+     "down_proj"
+    ],
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "cap_div": 1,
+    "max_pixels": 1003520,
+    "seed": 0,
+    "train_minutes": 107.7,
+    "early_stopped": false
+   },
+   "selection_stage": {
+    "slake_open": {
+     "n_questions": 645,
+     "n_candidates": 5160,
+     "greedy": 0.7364341085271318,
+     "self_consistency": 0.7364341085271318,
+     "verifier_clean": 0.7472868217054264,
+     "verifier_contaminated": 0.7798449612403101,
+     "oracle_at_8": 0.8790697674418605,
+     "auroc_candidate_clean": 0.8869852668420095,
+     "auroc_candidate_contaminated": 0.9220768621278904,
+     "oracle_conversion_clean": 0.0760869565217394,
+     "oracle_conversion_contaminated": 0.3043478260869568,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.010852713178294615,
+       "ci": [
+        -0.01705426356589146,
+        0.03875968992248058
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.010852713178294615,
+       "ci": [
+        -0.01705426356589146,
+        0.03875968992248058
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.04341085271317835,
+       "ci": [
+        0.015503875968992276,
+        0.07135658914728633
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.032558139534883734,
+       "ci": [
+        -0.05736434108527133,
+        -0.009302325581395321
+       ]
+      }
+     }
+    },
+    "vqa_rad_open": {
+     "n_questions": 200,
+     "n_candidates": 1600,
+     "greedy": 0.465,
+     "self_consistency": 0.46,
+     "verifier_clean": 0.48,
+     "verifier_contaminated": 0.575,
+     "oracle_at_8": 0.63,
+     "auroc_candidate_clean": 0.8286580292404612,
+     "auroc_candidate_contaminated": 0.9285066761757598,
+     "oracle_conversion_clean": 0.09090909090909066,
+     "oracle_conversion_contaminated": 0.6666666666666663,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.014999999999999958,
+       "ci": [
+        -0.034999999999999976,
+        0.065
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.019999999999999962,
+       "ci": [
+        -0.02999999999999997,
+        0.07
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.10999999999999993,
+       "ci": [
+        0.06499999999999995,
+        0.15999999999999998
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.09499999999999997,
+       "ci": [
+        -0.14012499999999994,
+        -0.04999999999999999
+       ]
+      }
+     }
+    },
+    "pathvqa_open": {
+     "n_questions": 1500,
+     "n_candidates": 12000,
+     "greedy": 0.324,
+     "self_consistency": 0.32066666666666666,
+     "verifier_clean": 0.37333333333333335,
+     "verifier_contaminated": 0.4533333333333333,
+     "oracle_at_8": 0.5166666666666667,
+     "auroc_candidate_clean": 0.867796278897109,
+     "auroc_candidate_contaminated": 0.9393274540546882,
+     "oracle_conversion_clean": 0.2560553633217993,
+     "oracle_conversion_contaminated": 0.6712802768166087,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.04933333333333334,
+       "ci": [
+        0.03200000000000003,
+        0.06666666666666671
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.052666666666666695,
+       "ci": [
+        0.03533333333333333,
+        0.07
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.1293333333333333,
+       "ci": [
+        0.10999999999999999,
+        0.14866666666666667
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.07999999999999996,
+       "ci": [
+        -0.09666666666666668,
+        -0.064
+       ]
+      }
+     }
+    },
+    "POOLED": {
+     "n_questions": 2345,
+     "n_candidates": 18760,
+     "greedy": 0.4494669509594883,
+     "self_consistency": 0.44690831556503197,
+     "verifier_clean": 0.48528784648187634,
+     "verifier_contaminated": 0.5535181236673774,
+     "oracle_at_8": 0.6260127931769722,
+     "auroc_candidate_clean": 0.8855921901711237,
+     "auroc_candidate_contaminated": 0.9432689143172824,
+     "oracle_conversion_clean": 0.20289855072463767,
+     "oracle_conversion_contaminated": 0.5893719806763287,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.03582089552238804,
+       "ci": [
+        0.021321961620469065,
+        0.05031982942430702
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.03837953091684437,
+       "ci": [
+        0.024307036247334768,
+        0.05287846481876335
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.1040511727078891,
+       "ci": [
+        0.08911513859275048,
+        0.11897654584221751
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.06823027718550106,
+       "ci": [
+        -0.08102345415778256,
+        -0.05543710021321957
+       ]
+      }
+     }
+    }
+   },
+   "inflation": {
+    "slake_open": {
+     "clean_gain": 0.010852713178294615,
+     "contaminated_gain": 0.04341085271317835,
+     "inflation_x": 3.99999999999999
+    },
+    "vqa_rad_open": {
+     "clean_gain": 0.014999999999999958,
+     "contaminated_gain": 0.10999999999999993,
+     "inflation_x": 7.333333333333349
+    },
+    "pathvqa_open": {
+     "clean_gain": 0.04933333333333334,
+     "contaminated_gain": 0.1293333333333333,
+     "inflation_x": 2.6216216216216206
+    },
+    "POOLED": {
+     "clean_gain": 0.03582089552238804,
+     "contaminated_gain": 0.1040511727078891,
+     "inflation_x": 2.9047619047619055
+    }
+   },
+   "end_to_end_open_arm": {
+    "slake_open": {
+     "clean": {
+      "n": 645,
+      "cheap_leg_bo8_verifier": 0.7472868217054264,
+      "strong_32b_nothink": 0.8186046511627907,
+      "arm_accuracy": 0.8093023255813954,
+      "escalation_rate": 0.6
+     },
+     "contaminated": {
+      "n": 645,
+      "cheap_leg_bo8_verifier": 0.7798449612403101,
+      "strong_32b_nothink": 0.8186046511627907,
+      "arm_accuracy": 0.8155038759689923,
+      "escalation_rate": 0.12558139534883722
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": -0.006201550387596955
+    },
+    "vqa_rad_open": {
+     "clean": {
+      "n": 200,
+      "cheap_leg_bo8_verifier": 0.48,
+      "strong_32b_nothink": 0.6,
+      "arm_accuracy": 0.59,
+      "escalation_rate": 0.805
+     },
+     "contaminated": {
+      "n": 200,
+      "cheap_leg_bo8_verifier": 0.575,
+      "strong_32b_nothink": 0.6,
+      "arm_accuracy": 0.585,
+      "escalation_rate": 0.05499999999999999
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": 0.0050000000000000044
+    },
+    "pathvqa_open": {
+     "clean": {
+      "n": 1500,
+      "cheap_leg_bo8_verifier": 0.37333333333333335,
+      "strong_32b_nothink": 0.376,
+      "arm_accuracy": 0.37733333333333335,
+      "escalation_rate": 0.05533333333333333
+     },
+     "contaminated": {
+      "n": 1500,
+      "cheap_leg_bo8_verifier": 0.4533333333333333,
+      "strong_32b_nothink": 0.376,
+      "arm_accuracy": 0.4533333333333333,
+      "escalation_rate": 0.0006666666666666668
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": -0.07599999999999996
+    },
+    "POOLED_OPEN_ARM": {
+     "n": 2345,
+     "clean": 0.5142857142857142,
+     "contaminated": 0.564179104477612,
+     "delta": -0.04989339019189776,
+     "reported_in_METHOD_FINAL": 0.5642,
+     "first_order_effect_on_full_suite_pooled": -0.002761127106244401,
+     "full_suite_pooled_reported": 0.575,
+     "full_suite_pooled_corrected_first_order": 0.5722388728937555,
+     "caveat": "first-order: only the open-arm cell is recomputed. The MCQ arm (n=40029, 94.5% of the pooled suite) does not use the trained verifier and is unaffected."
+    }
+   }
+  },
+  "L2_strict": {
+   "status": "ok",
+   "adapter": "ckpts/train/lora_verifier_disjoint_l2",
+   "definition": "L1 and no eval question TEXT at all -- conservative bound; starves the in-domain SLAKE pool",
+   "train_config": {
+    "split": "results/cascade_methods/artifacts/verifier_disjoint_split.json",
+    "level": "L2",
+    "train_sources": [
+     "slake_open_train",
+     "vqa_rad_open_train",
+     "pathvqa_open_train",
+     "kvasir_open",
+     "radimagenet_open"
+    ],
+    "n_train_questions": 6490,
+    "n_train_examples": 10364,
+    "available_examples_per_source": {
+     "kvasir_open": 5692,
+     "pathvqa_open_train": 16411,
+     "radimagenet_open": 7853,
+     "slake_open_train": 1035,
+     "vqa_rad_open_train": 1663
+    },
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "contaminated_reference_composition": {
+     "slake": 894,
+     "pathvqa": 4973,
+     "vqa_rad": 522,
+     "kvasir": 3975
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "match_composition": true,
+    "pos_rate": 0.17753763025858743,
+    "skipped_examples": 0,
+    "steps": 5182,
+    "epochs": 1,
+    "bs": 2,
+    "accum": 8,
+    "lr": 0.0001,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+     "q_proj",
+     "k_proj",
+     "v_proj",
+     "o_proj",
+     "gate_proj",
+     "up_proj",
+     "down_proj"
+    ],
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "cap_div": 1,
+    "max_pixels": 1003520,
+    "seed": 0,
+    "train_minutes": 106.3,
+    "early_stopped": false
+   },
+   "selection_stage": {
+    "slake_open": {
+     "n_questions": 645,
+     "n_candidates": 5160,
+     "greedy": 0.7364341085271318,
+     "self_consistency": 0.7364341085271318,
+     "verifier_clean": 0.7364341085271318,
+     "verifier_contaminated": 0.7798449612403101,
+     "oracle_at_8": 0.8790697674418605,
+     "auroc_candidate_clean": 0.8413725398593,
+     "auroc_candidate_contaminated": 0.9220768621278904,
+     "oracle_conversion_clean": 0.0,
+     "oracle_conversion_contaminated": 0.3043478260869568,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.0,
+       "ci": [
+        -0.027906976744186074,
+        0.027906976744186074
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.0,
+       "ci": [
+        -0.027906976744186074,
+        0.027906976744186074
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.04341085271317835,
+       "ci": [
+        0.015503875968992276,
+        0.07135658914728633
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.04341085271317835,
+       "ci": [
+        -0.06666666666666665,
+        -0.020155038759689936
+       ]
+      }
+     }
+    },
+    "vqa_rad_open": {
+     "n_questions": 200,
+     "n_candidates": 1600,
+     "greedy": 0.465,
+     "self_consistency": 0.46,
+     "verifier_clean": 0.465,
+     "verifier_contaminated": 0.575,
+     "oracle_at_8": 0.63,
+     "auroc_candidate_clean": 0.83779943737866,
+     "auroc_candidate_contaminated": 0.9285066761757598,
+     "oracle_conversion_clean": 0.0,
+     "oracle_conversion_contaminated": 0.6666666666666663,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": 0.0,
+       "ci": [
+        -0.044999999999999984,
+        0.044999999999999984
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": 0.0050000000000000044,
+       "ci": [
+        -0.03999999999999998,
+        0.04999999999999999
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.10999999999999993,
+       "ci": [
+        0.06499999999999995,
+        0.15999999999999998
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.10999999999999993,
+       "ci": [
+        -0.15999999999999998,
+        -0.06499999999999995
+       ]
+      }
+     }
+    },
+    "pathvqa_open": {
+     "n_questions": 1500,
+     "n_candidates": 12000,
+     "greedy": 0.324,
+     "self_consistency": 0.32066666666666666,
+     "verifier_clean": 0.30533333333333335,
+     "verifier_contaminated": 0.4533333333333333,
+     "oracle_at_8": 0.5166666666666667,
+     "auroc_candidate_clean": 0.6999872679165156,
+     "auroc_candidate_contaminated": 0.9393274540546882,
+     "oracle_conversion_clean": -0.0968858131487889,
+     "oracle_conversion_contaminated": 0.6712802768166087,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": -0.018666666666666665,
+       "ci": [
+        -0.03866666666666668,
+        0.001333333333333353
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": -0.01533333333333331,
+       "ci": [
+        -0.03600000000000003,
+        0.004666666666666652
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.1293333333333333,
+       "ci": [
+        0.10999999999999999,
+        0.14866666666666667
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.14799999999999996,
+       "ci": [
+        -0.1686666666666667,
+        -0.128
+       ]
+      }
+     }
+    },
+    "POOLED": {
+     "n_questions": 2345,
+     "n_candidates": 18760,
+     "greedy": 0.4494669509594883,
+     "self_consistency": 0.44690831556503197,
+     "verifier_clean": 0.4375266524520256,
+     "verifier_contaminated": 0.5535181236673774,
+     "oracle_at_8": 0.6260127931769722,
+     "auroc_candidate_clean": 0.7959995160886104,
+     "auroc_candidate_contaminated": 0.9432689143172824,
+     "oracle_conversion_clean": -0.067632850241546,
+     "oracle_conversion_contaminated": 0.5893719806763287,
+     "contrasts": {
+      "clean_verifier_minus_greedy": {
+       "point": -0.011940298507462699,
+       "ci": [
+        -0.027718550106609785,
+        0.0034115138592750727
+       ]
+      },
+      "clean_verifier_minus_sc": {
+       "point": -0.009381663113006367,
+       "ci": [
+        -0.02515991471215351,
+        0.00639658848614072
+       ]
+      },
+      "contaminated_verifier_minus_greedy": {
+       "point": 0.1040511727078891,
+       "ci": [
+        0.08911513859275048,
+        0.11897654584221751
+       ]
+      },
+      "clean_minus_contaminated": {
+       "point": -0.1159914712153518,
+       "ci": [
+        -0.1309168443496802,
+        -0.1010660980810234
+       ]
+      }
+     }
+    }
+   },
+   "inflation": {
+    "slake_open": {
+     "clean_gain": 0.0,
+     "contaminated_gain": 0.04341085271317835,
+     "inflation_x": null
+    },
+    "vqa_rad_open": {
+     "clean_gain": 0.0,
+     "contaminated_gain": 0.10999999999999993,
+     "inflation_x": null
+    },
+    "pathvqa_open": {
+     "clean_gain": -0.018666666666666665,
+     "contaminated_gain": 0.1293333333333333,
+     "inflation_x": -6.928571428571428
+    },
+    "POOLED": {
+     "clean_gain": -0.011940298507462699,
+     "contaminated_gain": 0.1040511727078891,
+     "inflation_x": -8.714285714285703
+    }
+   },
+   "end_to_end_open_arm": {
+    "slake_open": {
+     "clean": {
+      "n": 645,
+      "cheap_leg_bo8_verifier": 0.7364341085271318,
+      "strong_32b_nothink": 0.8186046511627907,
+      "arm_accuracy": 0.8170542635658915,
+      "escalation_rate": 0.8992248062015504
+     },
+     "contaminated": {
+      "n": 645,
+      "cheap_leg_bo8_verifier": 0.7798449612403101,
+      "strong_32b_nothink": 0.8186046511627907,
+      "arm_accuracy": 0.8155038759689923,
+      "escalation_rate": 0.12558139534883722
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": 0.0015503875968991832
+    },
+    "vqa_rad_open": {
+     "clean": {
+      "n": 200,
+      "cheap_leg_bo8_verifier": 0.465,
+      "strong_32b_nothink": 0.6,
+      "arm_accuracy": 0.5900000000000001,
+      "escalation_rate": 0.8
+     },
+     "contaminated": {
+      "n": 200,
+      "cheap_leg_bo8_verifier": 0.575,
+      "strong_32b_nothink": 0.6,
+      "arm_accuracy": 0.585,
+      "escalation_rate": 0.05499999999999999
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": 0.0050000000000001155
+    },
+    "pathvqa_open": {
+     "clean": {
+      "n": 1500,
+      "cheap_leg_bo8_verifier": 0.30533333333333335,
+      "strong_32b_nothink": 0.376,
+      "arm_accuracy": 0.3773333333333333,
+      "escalation_rate": 0.8
+     },
+     "contaminated": {
+      "n": 1500,
+      "cheap_leg_bo8_verifier": 0.4533333333333333,
+      "strong_32b_nothink": 0.376,
+      "arm_accuracy": 0.4533333333333333,
+      "escalation_rate": 0.0006666666666666668
+     },
+     "delta_arm_accuracy_clean_minus_contaminated": -0.07600000000000001
+    },
+    "POOLED_OPEN_ARM": {
+     "n": 2345,
+     "clean": 0.5164179104477612,
+     "contaminated": 0.564179104477612,
+     "delta": -0.047761194029850795,
+     "reported_in_METHOD_FINAL": 0.5642,
+     "first_order_effect_on_full_suite_pooled": -0.0026431302213621587,
+     "full_suite_pooled_reported": 0.575,
+     "full_suite_pooled_corrected_first_order": 0.5723568697786378,
+     "caveat": "first-order: only the open-arm cell is recomputed. The MCQ arm (n=40029, 94.5% of the pooled suite) does not use the trained verifier and is unaffected."
+    }
+   }
+  }
+ },
+ "prior_audit": "results/cascade_methods/artifacts/verifier_validity_2026-07-29.json",
+ "verdict": {
+  "headline_level": "L1_image_disjoint",
+  "why_L1_is_the_headline": "L1 is the standard clean-split definition: no eval ITEM and no eval IMAGE in training. A question TEMPLATE recurring with a different image is ordinary generalization, not leakage. L2 additionally deletes every training item sharing an eval question text, which on these templated datasets removes legitimate in-distribution coverage (PathVQA: 7306 of 9903 train items dropped, leaving a biased atypical-question subsample -> its candidate AUROC falls 0.868 -> 0.700). L2 therefore conflates de-contamination with distribution shift and UNDERSTATES the verifier; treat it as a conservative lower bound, not the estimate.",
+  "selection_stage_pooled_gain_over_greedy": {
+   "contaminated": {
+    "point": 0.1040511727078891,
+    "ci": [
+     0.08911513859275048,
+     0.11897654584221751
+    ]
+   },
+   "clean_L1": {
+    "point": 0.03582089552238804,
+    "ci": [
+     0.021321961620469065,
+     0.05031982942430702
+    ]
+   },
+   "clean_L2": {
+    "point": -0.011940298507462699,
+    "ci": [
+     -0.027718550106609785,
+     0.0034115138592750727
+    ]
+   },
+   "inflation_x_L1": 2.9047619047619055
+  },
+  "per_dataset_clean_L1_gain": {
+   "slake_open": {
+    "gain": 0.010852713178294615,
+    "ci": [
+     -0.01705426356589146,
+     0.03875968992248058
+    ],
+    "significant": false,
+    "inflation_x": 3.99999999999999
+   },
+   "vqa_rad_open": {
+    "gain": 0.014999999999999958,
+    "ci": [
+     -0.034999999999999976,
+     0.065
+    ],
+    "significant": false,
+    "inflation_x": 7.333333333333349
+   },
+   "pathvqa_open": {
+    "gain": 0.04933333333333334,
+    "ci": [
+     0.03200000000000003,
+     0.06666666666666671
+    ],
+    "significant": true,
+    "inflation_x": 2.6216216216216206
+   }
+  },
+  "what_contamination_actually_bought": "NOT ranking ability -- candidate AUROC only falls 0.943 -> 0.886 (L1). What collapses is ORACLE CONVERSION, the share of the greedy->oracle headroom the verifier actually captures: 0.589 (contaminated) -> 0.203 (L1) -> -0.068 (L2). Memorising the seen items is what turned a good ranker into a good selector.",
+  "efficiency_consequence_is_larger_than_the_accuracy_one": {
+   "sample_weighted_escalation_to_reach_32B_no_think_parity": {
+    "contaminated": 0.04,
+    "clean_L1": 0.269,
+    "clean_L2": 0.827
+   },
+   "note": "The published open arm claimed 3.97% escalation and -94.8% batch-1 latency. A clean verifier needs ~27% escalation (L1) for the same parity target, so the open arm's EFFICIENCY claim is damaged more than its accuracy claim."
+  },
+  "open_arm_accuracy": {
+   "pooled_open_arm_contaminated": 0.5642,
+   "pooled_open_arm_clean_L1": 0.5143,
+   "always_32B_no_think_pooled_open": 0.5168,
+   "beats_32B_no_think_contaminated": true,
+   "beats_32B_no_think_clean_L1": false,
+   "note": "tau is chosen to REACH the strong leg's accuracy at minimum escalation, so the clean arm lands at ~32B-no-think parity (0.5143 vs 0.5168) rather than beating it (+0.0473 contaminated). The separate claim of beating 32B-THINK survives but shrinks (+0.1943 -> +0.1445 vs the ESTIMATED 32B-think 0.3698)."
+  },
+  "pooled_headline_effect": {
+   "full_suite_reported": 0.575,
+   "full_suite_corrected_first_order_L1": 0.5722,
+   "delta": -0.0028,
+   "why_small": "the open arm is only 2345/42374 = 5.5% of the pooled suite and the MCQ arm (94.5%) does not use the trained verifier."
+  },
+  "does_the_accuracy_claim_survive": "YES at L1, at roughly ONE THIRD of its published magnitude: pooled selection gain +0.0358 [+0.0213,+0.0503] vs the published +0.1041 (2.9x inflation). But it survives ONLY on PathVQA (+0.0493 [+0.0320,+0.0667]); SLAKE (+0.0109) and VQA-RAD (+0.0150) both have CIs spanning zero, so the pooled significance rests entirely on PathVQA, which is 64% of the open sample. Under the strictest reading (L2) the gain is null (-0.0119 [-0.0277,+0.0034])."
+ }
+}
