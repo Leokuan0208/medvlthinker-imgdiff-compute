@@ -6,10 +6,53 @@
 > **estimated** 32B-reasoning open-text cells with **measured** ones (10:41), plus the headline CI computed
 > 2026-07-09.
 >
-> **Canonical values (Variant B = MMMU excluded, n = 42,224, measured, CI-certified):**
-> always-32B-with-reasoning baseline **0.5591**; compute-lean **0.5741, +0.0150 [+0.0107, +0.0192]** at 0.49x;
-> **accuracy-max 0.5836, +0.0245 [+0.0216, +0.0274]** at 0.93x; accuracy-max-fusion 0.5862, +0.0271 at 1.25x.
+> **Canonical values — MACRO, equal weight per reporting cell (Variant B = MMMU excluded, 8 cells, 1/8 each;
+> re-based 2026-07-30):** always-32B-with-reasoning baseline **0.5974**; always-32B-direct **0.6567**;
+> oracle-mode **0.6573**; always-7B **0.5971**. compute-lean **0.6600**, **+0.0626 [+0.0514, +0.0734]** vs
+> reasoning and **+0.0033 [−0.0054, +0.0121] n.s.** vs direct, at **1.196x** a single 32B forward;
+> **accuracy-max 0.6694, +0.0720 [+0.0614, +0.0824]** vs reasoning and **+0.0128 [+0.0056, +0.0200]** vs
+> direct, at **1.410x**; accuracy-max-fusion **0.6661, +0.0686 / +0.0094**, at **1.435x**.
+> Source: **`artifacts/macro_average_headline_2026-07-30.json`**.
+>
+> **Sample-weighted equivalents (the previous convention, kept for contrast — never mix the two):**
+> always-32B-with-reasoning **0.5591**; compute-lean **0.5741, +0.0150 [+0.0107, +0.0192]** at 0.492x;
+> **accuracy-max 0.5836, +0.0245 [+0.0216, +0.0274]** at 0.932x; accuracy-max-fusion 0.5862, +0.0271 at 1.250x.
 > Sources: `artifacts/f8_mode_vsthink_ci.json`, `artifacts/opentext_32b_think_full.json`.
+>
+> ### ⚠️⚠️ TWO SETTLED CORRECTIONS, 2026-07-30 — they change this document's central claim
+>
+> **1 — The COST claim REVERSES under equal weight, and "Pareto-dominates" is RETIRED.** This document's
+> one-paragraph summary says both settings "use *less* compute than a single 32B forward". That was a
+> **sample-weighted** statement, and sample-weighting gave PMC-VQA (**79.2%** of items) 79.2% of the average.
+> At equal weight per cell **no operating point is compute-cheaper than always-32B-direct**: **1.196x /
+> 1.410x / 1.435x** FLOP-eq (were 0.492x / 0.932x / 1.250x). Latency and energy versus always-32B-direct also
+> flip or shrink (compute-lean **−2.3%** parallel latency but **+94.3%** sequential and **+48.0%** energy).
+> **Compute-lean is a significant LOSS on the 5 multiple-choice cells: −0.0070 [−0.0126, −0.0017]** vs
+> always-32B-direct, **−0.0080 [−0.0137, −0.0024]** vs oracle-mode. Mechanism: escalation runs **8.45%**
+> (PMC-VQA) to **89.60%** (MedXpert), so multiple-choice escalation goes **16.22% → 44.24%** at equal weight,
+> and the three open cells cost the method **7.6–12.6 FLOP-eq** against the baseline's flat 4.57 while holding
+> **37.5%** of the macro weight.
+> **NUANCE:** macro-averaging *cost* answers a different question from sample-weighted cost. Cost is additive
+> per query, so on traffic resembling this suite the **~0.49x** saving is what you would actually pay; the
+> macro number tests whether the saving **generalises across task types** — and it does not. **Report accuracy
+> on macro and BOTH cost numbers, each labelled.** *The defensible joint claim: large latency and energy
+> savings against a reasoning baseline; compute savings that are real but concentrated on low-escalation
+> multiple-choice traffic rather than uniform.* Retrospective §4, §10.1 C26, §10.2 X21.
+>
+> **2 — §5's "thinking helps reasoning" half is an ANSWER-FORMAT effect** (matched re-run complete, 6/6 cells,
+> 9 sub-cells, n = 145/1,446/554): **0/9** explicit-reasoning-trigger effects are CI-significant, **3/9**
+> answer-format effects are. **Asking for the answer in `\boxed{}` is itself a reasoning trigger** —
+> MedVLThinker emits 431–580 tokens on 99–100% of items and InternVL3 193–289 on 94–95% with **no trigger
+> present**; Lingshu never does (3–4 tokens). Drop "a reasoning instruction improves accuracy on
+> reasoning-heavy benchmarks"; keep "getting a reasoning-tuned model to emit a trace helps substantially, via
+> the answer format". **Lingshu-32B must not be cited as reasoning evidence at all.** The cascade's
+> gated-reasoning tier keeps its full value — only the attribution changes. Source:
+> `artifacts/medeval_matched_direct_2026-07-29.json`; retrospective §5.1, §10.1 C27, §10.2 X22.
+>
+> **⏳ AND ONE THING LEFT OPEN — every open-text accuracy in this document is PROVISIONAL.** A
+> **clean-verifier (disjoint-split) retrain is in progress** (`artifacts/verifier_disjoint_split.json`) and
+> will determine whether the open-text accuracy claim is contaminated (the verifier was trained on ~70% of
+> its own evaluation items; retrospective §7 hole 4). Not pre-judged.
 >
 > **Also corrected since:** the "Baselines (**measured**)" label on 0.5632 was wrong (those open cells were
 > estimates); the MMMU keep-7B "+0.140 / +0.167" per-benchmark win is **retracted** (contaminated, excluded);
@@ -44,8 +87,10 @@ understand the result end-to-end. All figures come from real held-out artifacts 
 
 We built a single method — a **format-aware, regime-adaptive cascade** between Lingshu-7B and Lingshu-32B — that is
 **both faster and more accurate than "just use the big 32B model with thinking"** on the whole MedEvalKit medical-VQA
-suite (MCQ *and* open-text). It has a **Pareto knob** with two settings, and **both settings use *less* compute than a
-single 32B forward** while matching-or-beating its accuracy. Along the way we mapped, with six independent
+suite (MCQ *and* open-text). It has a **Pareto knob** with two settings, and ~~**both settings use *less* compute than a
+single 32B forward** while matching-or-beating its accuracy~~ **[STRUCK 2026-07-30 — that was a sample-weighted claim; at
+equal weight per cell both settings cost MORE than a single 32B forward (1.196x / 1.410x), and compute-lean loses
+significantly on the multiple-choice cells. See the banner above.]** Along the way we mapped, with six independent
 confirmations, exactly *where* a cheap→expensive medical cascade can and cannot beat the strong model — that honest
 "walls" characterization is as much a result as the method.
 
@@ -132,7 +177,9 @@ realistic test-time condition). It then runs one of two arms. A single Pareto `m
 ### 3.3 The Pareto knob
 - **compute-lean** = MCQ margin cascade + open-text Pandora-verifier. Fastest, cheapest.
 - **accuracy-max** = adds the PMC fusion. More accurate, slightly more compute.
-- Both are **FLOP-negative** vs a single 32B forward.
+- ~~Both are **FLOP-negative** vs a single 32B forward.~~ **[STRUCK 2026-07-30. FLOP-negativity was a
+  sample-weighted property (0.492× / 0.932×). At equal weight per reporting cell neither setting is
+  FLOP-negative: 1.196× / 1.410×. The knob is still a real accuracy/compute trade — it is just not free.]**
 
 ---
 
@@ -149,12 +196,25 @@ always-32B-**no-think** = 0.5732 @ 4.57 FLOP-eq / **665 ms**. (FLOP-eq = multipl
 | **accuracy-max v2** (F8+F10) | **+0.0212** | +0.0112 | **4.25 (0.93×)** | 729 ms |
 | accuracy-max v1 (F3 fusion) | +0.0238 | +0.0137 | 5.70 (1.25×) | 666 ms |
 
+> **⚠️ The table above is PRE-SEAM AND SAMPLE-WEIGHTED (estimated open-text think cells, MMMU kept).** For the
+> current values read the banner at the top of this file. The macro (equal-weight, 8-cell) versions of these
+> three rows are: compute-lean **+0.0626 [+0.0514, +0.0734]** vs think / **+0.0033 n.s.** vs no-think at
+> **1.196×**; accuracy-max v2 **+0.0720 [+0.0614, +0.0824]** / **+0.0128 [+0.0056, +0.0200]** at **1.410×**;
+> v1 fusion **+0.0686** / **+0.0094** at **1.435×**.
+
 **How to read this:**
-- Every row is **more accurate than always-32B-think** and **~14–25× faster** (0.5–0.7 s vs 10.5 s).
-- **compute-lean** and **accuracy-max v2 both use *less* total compute than a single 32B forward** (0.49× and 0.93×) —
-  i.e. strictly dominant on all three axes vs the think baseline.
-- **accuracy-max v1** is the max-accuracy point (+0.0238) but costs 1.25× FLOPs (the fusion runs both models on PMC);
-  **v2** trades a hair of accuracy (+0.0212) to become FLOP-negative. Both are available; pick by budget.
+- Every row is **more accurate than always-32B-think**, and on latency **~14–25× faster** as charged
+  (0.5–0.7 s vs 10.5 s) — **honestly re-costed and macro-weighted, −89% parallel latency and −87% energy**,
+  which is the version that survives.
+- ~~**compute-lean** and **accuracy-max v2 both use *less* total compute than a single 32B forward** (0.49× and
+  0.93×) — i.e. strictly dominant on all three axes vs the think baseline.~~ **[STRUCK 2026-07-30: the
+  compute-negativity was sample-weighted. At equal weight per cell the ratios are 1.196× / 1.410× / 1.435×, and
+  "strictly dominant" / "Pareto-dominates" is retired. The method points remain NON-DOMINATED, but because they
+  are more accurate, not because they are cheaper. Against the reasoning baseline they are also NOT
+  FLOP-cheaper: 1.196× / 1.410× as charged, 0.959× / 1.131× honestly re-costed.]**
+- **accuracy-max v1** is the max-accuracy point but costs the most FLOPs (the fusion runs both models on PMC);
+  **v2** trades a hair of accuracy for a cheaper point. Both are available; pick by budget — but note the
+  ordering, not the sign, is what is robust to the weighting.
 
 **Where the wins live (per-benchmark, vs always-32B-think):**
 - **MMMU +0.140** — from keeping the 7B (it beats the 32B there).
@@ -244,7 +304,10 @@ as paper-reference; OmniMed is a keep-cheap benchmark (7B ≈ 32B) so it changes
 ## 8. Bottom line — what you now have
 
 1. **A deployable method** that is faster *and* more accurate than always-Lingshu-32B-think on the full suite, with a
-   clean Pareto knob and both operating points **FLOP-negative** — fully reproducible from one script.
+   clean Pareto knob. ~~and both operating points **FLOP-negative**~~ **[STRUCK 2026-07-30 — FLOP-negativity holds
+   sample-weighted (0.492× / 0.932×) and fails at equal weight per cell (1.196× / 1.410×). Against the reasoning
+   baseline the surviving efficiency claim is latency and energy: −89% / −87%, honestly re-costed.]** Fully
+   reproducible from one script.
 2. **A precise, six-times-confirmed map of the limits**: match-cheaply on MCQ (bounded beat only on PMC), *beat* on
    open-text (verifier best-of-N) and on the MMMU/PMC owned slices — and *why* (the recoverability + selectability
    walls). This honest characterization is a genuine scientific contribution, not just a caveat.

@@ -6,8 +6,11 @@ answers. All numbers come from real checkpoints; **no fabricated values** (CLAUD
 
 > **➜ START HERE: [`docs/current/PROJECT_RETROSPECTIVE_2026-07-29.md`](docs/current/PROJECT_RETROSPECTIVE_2026-07-29.md)**
 > — the definitive account of the whole project (2026-06-17 → 2026-07-29): the arc and every pivot,
-> the method, the results with CIs, ~90 negative results, the 16 honest holes, and the corrections log.
+> the method, the results with CIs, ~90 negative results, the 17 honest holes, and the corrections log.
 > **Read it before quoting a number from any other file in this folder.**
+
+> **Two settled corrections propagated 2026-07-30** — the macro re-basing / cost reversal and the
+> answer-format re-attribution of Finding 1's reasoning half. See the two ⚠️ seam boxes below.
 
 > **Reorganized 2026-07-02.** Was a flat dump of ~108 mixed `.md`/`.json`/`.txt` files; now split
 > into `docs/` (writeups), `artifacts/` (raw outputs), and `claude_judge/` (judge verdicts).
@@ -32,13 +35,54 @@ later that day and the next** and invalidated their headline rows:
 2. the **MMMU contamination** audit → the decision to **exclude MMMU** ("Variant B", n = 42,224);
 3. the **estimated** 32B-reasoning open-text cells were replaced with **measured** ones, moving the
    always-32B-reasoning baseline from **0.5632 → 0.5594 (full suite) / 0.5591 (Variant B)**;
-4. and on 2026-07-09 the last rigor gap was closed with a CI (`f8_mode_vsthink_ci.json`).
+4. and on 2026-07-09 the last rigor gap was closed with a CI (`f8_mode_vsthink_ci.json`);
+5. and on **2026-07-30** the reporting metric itself changed — see the third seam immediately below.
 
-**Canonical today:** accuracy-max **+0.0245, 95% CI [+0.0216, +0.0274], n = 42,224, at 0.93× compute**
-(`artifacts/f8_mode_vsthink_ci.json`); compute-lean **+0.0150 [+0.0107, +0.0192]** at 0.49×.
+**Sample-weighted values (the old convention):** accuracy-max **+0.0245, 95% CI [+0.0216, +0.0274],
+n = 42,224, at 0.932× compute** (`artifacts/f8_mode_vsthink_ci.json`); compute-lean **+0.0150
+[+0.0107, +0.0192]** at 0.492×.
 Values of **+0.0212 / +0.0207 / +0.0238 / +0.0271 / +0.0275** are the *same method* under a different
 lever, pool, or estimate-vs-measured convention — decode table in retrospective §10.3.
 **Never write "Baselines (measured): 0.5632"** — that value's open cells were estimates.
+
+## ⚠️ The third seam (2026-07-30): the metric is MACRO now, and the COST claim REVERSES
+
+**Primary average = equal weight per reporting cell (8 cells, 1/8 each)**, not sample-weighted, because
+sample-weighting let PMC-VQA (**79.2%** of items) speak for the method. Reweighting: PMC **79.2% →
+12.5%**; open-text arm **5.6% of items → 37.5% of weight**; closed/MCQ **94.4% → 62.5%**. The
+5-benchmark macro (1/5 each) is a **secondary robustness check only**. Source (verbatim):
+**`artifacts/macro_average_headline_2026-07-30.json`** ← `src/cascade_methods/macro_average_headline.py`.
+
+**Canonical today (macro, 8 cells):** accuracy-max **0.6694**, **+0.0720 [+0.0614, +0.0824]** vs
+always-32B-with-reasoning and **+0.0128 [+0.0056, +0.0200]** vs always-32B-direct; compute-lean
+**0.6600**, **+0.0626 [+0.0514, +0.0734]** / **+0.0033 [−0.0054, +0.0121] n.s.**; fusion **0.6661**,
+**+0.0686** / **+0.0094 [+0.0013, +0.0176]**. Baselines macro: always-7B **0.5971**,
+always-32B-with-reasoning **0.5974**, always-32B-direct **0.6567**, oracle-mode **0.6573**.
+**The canonicity rule is now: macro over 8 cells, Variant B, measured, veto lever. +0.0245 is "the
+sample-weighted equivalent".**
+
+**⛔ "Pareto-dominates every fixed way of using the 32B" is RETIRED** (retrospective §10.1 C26). Under
+equal weight **no operating point is compute-cheaper than always-32B-direct**: compute-lean **1.196×**,
+accuracy-max **1.410×**, fusion **1.435×** FLOP-eq (were 0.492× / 0.932× / 1.250×). "Pareto-**optimal**"
+survives — the points are non-dominated because they are more *accurate*, not cheaper. And compute-lean
+is a **significant LOSS on the 5 multiple-choice cells: −0.0070 [−0.0126, −0.0017]** vs always-32B-direct
+(−0.0080 [−0.0137, −0.0024] vs oracle-mode). Mechanism: escalation runs **8.45%** (PMC) to **89.60%**
+(MedXpert), so MCQ escalation goes **16.22% → 44.24%** at equal weight.
+
+> **NUANCE, required wherever cost is claimed.** Macro-averaging **cost** answers a **different question**
+> from sample-weighted cost. Cost is additive per query, so on traffic resembling this suite the **~0.49×**
+> saving is what you would actually pay; the macro number tests whether the saving **generalises across
+> task types** — and it does not, it is concentrated on the low-escalation cells. **Report accuracy on
+> macro and BOTH cost numbers, each labelled.** The defensible joint claim: *large latency and energy
+> savings against a reasoning baseline; compute savings that are real but concentrated on low-escalation
+> multiple-choice traffic rather than uniform.* What survives cleanly: vs a 32B **actually made to reason**,
+> **+0.0720 accuracy at −89% latency / −87% energy** (honestly re-costed) — but **1.41× as charged /
+> 1.13× honest on FLOP-eq**, i.e. not cheaper on compute there either.
+
+**⏳ OPEN:** the **open-text accuracy claim is PROVISIONAL — a clean-verifier (disjoint-split) retrain is
+in progress** (`artifacts/verifier_disjoint_split.json`) and will determine whether it is contaminated
+(the verifier was trained on ~70% of its own evaluation items; retrospective §7 hole 4). The open arm
+holds 37.5% of the macro weight and is the load-bearing cell of every headline delta.
 
 ## ⚠️ The second seam: **two PMC-VQA splits** — always name the file
 
@@ -89,16 +133,28 @@ Open-ended / verifier phase: `OPENENDED_CASCADE.md`, `OPENENDED_SELECTION_LUCKFL
    faithful MedEvalKit harness). It detects multiple-choice vs open-ended **from the prompt text alone**
    and runs a different policy for each: an MCQ arm (margin gate → 32B in **direct** mode) and an
    open-text arm (7B best-of-N with adaptive N → **trained LoRA verifier** selects → escalate on low
-   verifier confidence). One knob, two settings, **both using less compute than a single 32B forward**.
+   verifier confidence). One knob, two settings. **⚠️ 2026-07-30: "both using less compute than a single
+   32B forward" was a SAMPLE-WEIGHTED claim and is retired** — at equal weight per cell the settings cost
+   **1.196× / 1.410×** a single 32B forward. What holds: both beat always-32B-**with-reasoning** on
+   accuracy at ~a tenth of its latency and energy; accuracy-max also beats always-32B-**direct** on
+   accuracy (+0.0128 [+0.0056, +0.0200]) at 1.41× its compute.
    Spec: `docs/current/METHOD_FINAL_2026-07.md`. Code: `src/cascade_methods/method_final.py`.
-   Paper: `paper/adaptive-cascade-medvqa_ieee_2026-07-08.pdf`.
+   Paper: `paper/adaptive-cascade-medvqa_ieee_2026-07-08.pdf` (**the `.tex` carries the corrections; the
+   PDF and `paper/figs_final/fig_pareto.pdf` do NOT and were deliberately not rebuilt**).
 2. **Three findings that generalize** — (a) reasoning **hurts perception** across 5 families /
    3 architectures — **17/20 perception cells strictly negative**, 14/20 with 95% CIs excluding zero,
    pooled **−0.0401 [−0.0456, −0.0347]** on 30,250 paired samples *(re-derived 2026-07-29 from
    prompt-matched arms; the previously published 15/20 was the outlier — `artifacts/finding1_corrected_2026-07-29.json`,
-   retrospective §5.1)*. On reasoning-heavy benchmarks it helps **some** families
-   (MedVLThinker-32B, MedGemma-27B, InternVL3-38B) and **not** others (Lingshu-32B, QoQ-Med-VL-32B) —
-   that half is **model-dependent, not universal**, and the **open-text** version is **provisional**;
+   retrospective §5.1)*. On reasoning-heavy benchmarks the apparent gain is an **ANSWER-FORMAT effect**
+   *(settled 2026-07-30, matched re-run complete 6/6 cells —
+   `artifacts/medeval_matched_direct_2026-07-29.json`, retrospective §10.1 C27)*: with the format matched,
+   the reasoning **instruction** is worth ~nothing (**0/9** sub-cells CI-significant) while the
+   **`\boxed{}`** contrast is significant in **3/9** — **asking for `\boxed{}` is itself a reasoning
+   trigger** (MedVLThinker emits 431–580 tokens, InternVL3 193–289, with no trigger present; Lingshu never
+   does). Keep the weaker form: *getting a reasoning-tuned model to emit a trace helps substantially, via
+   the answer format.* **Lingshu-32B must not be cited as reasoning evidence at all.** The cascade's
+   gated-reasoning tier keeps its full value; only the attribution changes. The **open-text** version of
+   the finding is still **provisional**;
    (b) **answer format** decides whether
    routing signals work at all (AUROC ~0.6 on 4-option MCQ vs ~0.87 on free text — the cause is option
    discreteness, not answer length); (c) **training, not size**, is the active ingredient in
@@ -115,15 +171,28 @@ Open-ended / verifier phase: `OPENENDED_CASCADE.md`, `OPENENDED_SELECTION_LUCKFL
    slow reasoning tier would fire ~0% of the time. What carried forward is the *structure* and the
    compute-configuration idea — not the gate, whose agreement rule turned out to be prior art
    (Agreement-Based Cascading, arXiv 2407.02348).
-5. **Read the weaknesses.** Retrospective §7 ranks 16 holes, 3 critical: the vs-reasoning baseline is a
-   no-reasoning run on ~90% of the pool charged at reasoning cost; 89% of the headline delta comes from
-   2 of 8 cells; and the open-text verifier scores items it was trained on (~31% inflation).
+5. **Read the weaknesses.** Retrospective §7 ranks 17 holes, 3 critical: the vs-reasoning baseline is a
+   no-reasoning run on ~90% of the pool charged at reasoning cost; the headline delta is concentrated in
+   PathVQA-open (leave-one-cell-out takes accuracy-max vs reasoning from +0.0720 to +0.0318 when it is
+   dropped — the old *"89% from 2 of 8 cells"* phrasing is **retired**, since at equal weight each cell
+   contributes exactly 1/8 of its own delta); and the open-text verifier scores items it was trained on
+   (~31% inflation — **retrain in flight, and it gates the open-text claim**). New **hole 17**: the
+   thresholds were tuned against a *pooled* objective but the report is now *macro*, and a macro-objective
+   refit has not been done.
 
 ## `artifacts/` (gitignored)
 
-Raw outputs written by the analysis scripts (~107 `.json` files). **The headline chain:**
-`f8_mode_vsthink_ci.json` (**the canonical headline CI**), `method_final.json` + `method_final_v2.json`,
-`method_final_mmmu_corrected.json`, `paper_baselines.json`, `opentext_32b_think_full.json`.
+Raw outputs written by the analysis scripts (~109 `.json` files). **The headline chain:**
+**`macro_average_headline_2026-07-30.json`** (**the canonical headline — macro levels, both cost
+weightings, every delta with CI and leave-one-cell-out, and the `honest_headline` block**),
+`f8_mode_vsthink_ci.json` (the sample-weighted headline CI), `honest_recosting_2026-07-29.json`,
+`method_final.json` + `method_final_v2.json`, `method_final_mmmu_corrected.json` (**stale: Variant A,
+sample-weighted, 32B-reasoning = 0.5628 *estimated* — and still the file `paper/make_ieee_figs.py` builds
+the Pareto figure from, so figure and table now disagree; retrospective §7 hole 14**),
+`paper_baselines.json`, `opentext_32b_think_full.json`.
+**Finding 1's reasoning half:** `medeval_matched_direct_2026-07-29.json` is **canonical** for the
+format-vs-trigger decomposition. **Open-text verifier contamination:** `verifier_disjoint_split.json`
+(the in-flight retrain's design; `needs_generation`).
 **Finding 1 (cross-family reasoning-vs-direct):** `finding1_corrected_2026-07-29.json` is **canonical**
 (← `src/cascade_methods/finding1_corrected.py`); `finding1_prompt_matching_audit.json` is the audit that
 triggered it. ⚠️ **`GENERALIZATION.md` / `generalization.json` are SUPERSEDED for Finding 1** (they carry the

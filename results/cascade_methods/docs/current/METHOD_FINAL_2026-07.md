@@ -6,10 +6,54 @@
 > **estimated** 32B-reasoning open-text cells with **measured** ones (10:41), plus the headline CI computed
 > 2026-07-09.
 >
-> **Canonical values (Variant B = MMMU excluded, n = 42,224, measured, CI-certified):**
-> always-32B-with-reasoning baseline **0.5591**; compute-lean **0.5741, +0.0150 [+0.0107, +0.0192]** at 0.49x;
-> **accuracy-max 0.5836, +0.0245 [+0.0216, +0.0274]** at 0.93x; accuracy-max-fusion 0.5862, +0.0271 at 1.25x.
+> **Canonical values — MACRO, equal weight per reporting cell (Variant B = MMMU excluded, 8 cells, 1/8 each;
+> re-based 2026-07-30):** baselines always-7B **0.5971**, always-32B-with-reasoning **0.5974**,
+> always-32B-direct **0.6567**, oracle-mode **0.6573**. compute-lean **0.6600**, **+0.0626 [+0.0514, +0.0734]**
+> vs reasoning / **+0.0033 [−0.0054, +0.0121] n.s.** vs direct, at **1.196x** a single 32B forward;
+> **accuracy-max 0.6694, +0.0720 [+0.0614, +0.0824] / +0.0128 [+0.0056, +0.0200]**, at **1.410x**;
+> accuracy-max-fusion **0.6661, +0.0686 / +0.0094 [+0.0013, +0.0176]**, at **1.435x**.
+> Source: **`artifacts/macro_average_headline_2026-07-30.json`**.
+>
+> **Sample-weighted equivalents (previous convention; never mix with a macro number):**
+> always-32B-with-reasoning baseline **0.5591**; compute-lean **0.5741, +0.0150 [+0.0107, +0.0192]** at 0.492x;
+> **accuracy-max 0.5836, +0.0245 [+0.0216, +0.0274]** at 0.932x; accuracy-max-fusion 0.5862, +0.0271 at 1.250x.
 > Sources: `artifacts/f8_mode_vsthink_ci.json`, `artifacts/opentext_32b_think_full.json`.
+>
+> ### ⚠️⚠️ TWO SETTLED CORRECTIONS, 2026-07-30
+>
+> **1 — "FLOP-NEGATIVE" IS RETIRED AS A SUITE-LEVEL CLAIM, and so is "Pareto-dominated".** This document's
+> central efficiency result — that **F8 makes accuracy-max FLOP-negative (1.25x → 0.93x)** and that "**both
+> Pareto modes are FLOP-negative (0.49x / 0.93x)**" — is a **sample-weighted** statement in which PMC-VQA held
+> **79.2%** of the weight. **At equal weight per reporting cell no operating point is FLOP-negative:**
+> compute-lean **1.196x**, accuracy-max **1.410x**, fusion **1.435x**. The **mechanism section is unaffected**
+> — F8 really does cut **−1.449 FLOP-eq (−25%)** off the fusion variant, and that ordering survives every
+> weighting (6.558 → 6.444 macro). What fails is the **sign**, i.e. the claim of being cheaper than one 32B
+> forward. Also: compute-lean is a **significant LOSS on the 5 multiple-choice cells, −0.0070
+> [−0.0126, −0.0017]** vs always-32B-direct (−0.0080 [−0.0137, −0.0024] vs oracle-mode).
+> Mechanism of the reversal: escalation runs **8.45%** (PMC) to **89.60%** (MedXpert) — MCQ escalation
+> **16.22% → 44.24%** at equal weight — and the three open cells cost the method **7.6–12.6 FLOP-eq** against
+> the baseline's flat 4.57 while holding **37.5%** of the macro weight.
+> **NUANCE:** macro *cost* answers a different question from sample-weighted cost. Cost is additive per query,
+> so on traffic resembling this suite the **~0.49x** saving is what you would actually pay; macro tests whether
+> the saving **generalises across task types** — and it does not. **Report accuracy on macro and BOTH cost
+> numbers, each labelled.** *Defensible joint claim: large latency and energy savings against a reasoning
+> baseline; compute savings that are real but concentrated on low-escalation multiple-choice traffic rather
+> than uniform.* Retrospective §4, §10.1 C26, §10.2 X21.
+>
+> **2 — §4.x's "always-32B-THINK is Pareto-dominated" and the reasoning-side gains are re-attributed.** The
+> matched-prompt re-run is complete (6/6 cells, 9 sub-cells, n = 145/1,446/554): **0/9** explicit-reasoning-
+> trigger effects are CI-significant, **3/9** answer-**format** effects are. **Asking for the answer in
+> `\boxed{}` is itself a reasoning trigger** (MedVLThinker 431–580 tokens on 99–100% of items, InternVL3
+> 193–289 on 94–95%, with **no trigger present**; Lingshu never, 3–4 tokens). Drop "a reasoning instruction
+> improves accuracy on reasoning-heavy benchmarks"; keep "getting a reasoning-tuned model to emit a trace helps
+> substantially, **via the answer format**". **Lingshu-32B must not be cited as reasoning evidence at all.**
+> **The gated-reasoning tier keeps its full value — only the attribution changes.** Source:
+> `artifacts/medeval_matched_direct_2026-07-29.json`; retrospective §5.1, §10.1 C27, §10.2 X22.
+>
+> **⏳ OPEN — every open-text accuracy in this document is PROVISIONAL.** A **clean-verifier (disjoint-split)
+> retrain is in progress** (`artifacts/verifier_disjoint_split.json`) and will determine whether the open-text
+> accuracy claim is contaminated (~70% of evaluation items were in the verifier's training data; retrospective
+> §7 hole 4). Not pre-judged.
 >
 > **Also corrected since:** the pooled baseline 0.5632 -> **0.5594 (full suite) / 0.5591 (Variant B)**; the
 > footnote "open-text 32B-think accuracy is **estimated**" is **obsolete** (measured 2026-07-08); there is no
@@ -46,7 +90,8 @@
 >   all recomputed live (see the ★ section below). This is the canonical reproduction; the four below are its levers.**
 > - **`method_final_v2.json` ← `method_final.py::run_v2()` — ★★ THE V2 pipeline: the same knob with two new levers
 >   folded in — F8 (certified weak-veto) on the accuracy-max PMC cell and F10 (team-objective L2D) on the shared
->   open arm. Makes accuracy-max FLOP-NEGATIVE and repairs the open-text losses (see the ★★ section below).**
+>   open arm. Makes accuracy-max FLOP-NEGATIVE *(sample-weighted only — see the 2026-07-30 banner; at equal weight
+>   per cell it is 1.410×)* and repairs the open-text losses (see the ★★ section below).**
 > - `beat32b_more.json` ← `beat32b_more.py` — the offline source of the F8 and F10 mechanics (held-out 5-fold).
 > - `integrated_method_vs_think.json` ← `integrated_method.py` — the compute-lean base router (fixed best-of-8).
 > - `beat32b_fusion.json` ← `beat32b_fusion.py` — the **accuracy-max** operating point (PMC fusion).
@@ -63,8 +108,13 @@
 
 ## 0. TL;DR — one paragraph
 
+> **⚠️ Read the 2026-07-30 banner at the top of this file first.** The "~16 % escalation", "~half its FLOPs" and
+> "FLOP-negative" phrases below are **sample-weighted**; at equal weight per reporting cell MCQ escalation is
+> **44.24 %** and neither operating point is FLOP-negative (**1.196× / 1.410×**). The mechanism is unchanged.
+
 Detect the answer **format from the prompt**. **MCQ / closed** → run the cheap **Lingshu-7B no-think** leg, gate
-on its **top1−top2 probability margin**, and **escalate the low-margin ~16 %** to **Lingshu-32B *no-think*** (think
+on its **top1−top2 probability margin**, and **escalate the low-margin ~16 %** *(sample-weighted; 44.24 % at equal
+weight per cell — the per-cell rates are 8.45 / 20.45 / 45.72 / 56.97 / 89.60 %)* to **Lingshu-32B *no-think*** (think
 never helps Lingshu on this suite); **keep 7B on MMMU** (Lingshu-7B 0.80 > 32B-think 0.66, an anomaly the router
 simply exploits); on the largest slice **PMC-VQA** an optional **slice-gated calibrated-confidence fusion** of the
 two legs *beats* always-32B (+0.0135, held-out). **Open-text** → run **7B best-of-8 + a trained outcome verifier**
@@ -76,7 +126,9 @@ and ~half its FLOPs** on the MCQ arm. **V2 (§★★, 2026-07)** folds in two he
 stronger*: **F8** (certified weak-veto) turns the accuracy-max arm **FLOP-negative** (5.70 → **4.25 FLOP-eq**, 1.25× →
 **0.93×** always-32B, retaining 70 % of the PMC beat) and **F10** (team-objective L2D on the shared open arm) **repairs
 the two residual open-text losses** (SLAKE-open −0.008→+0.002, VQA-RAD-open −0.015→+0.005) and lifts PathVQA-open to
-+0.086 — so **both** Pareto modes are now FLOP-negative (0.49× / 0.93×).
++0.086 — so ~~**both** Pareto modes are now FLOP-negative (0.49× / 0.93×)~~ **[STRUCK 2026-07-30: FLOP-negativity is
+sample-weighted only. At equal weight per cell the modes cost 1.196× / 1.410× / 1.435× a single 32B forward. F8's
+−1.449 FLOP-eq (−25 %) cut is real and survives every weighting; the *sign* of the ratio does not.]**
 
 ---
 
@@ -165,6 +217,15 @@ best-of-N batched, fusion legs concurrent).
 | | MCQ only | 40 029 | 0.5883 | +0.0139 | +0.0119 | 5.392 (1.18×) | 954 ms (−91 %) | 664 ms (−94 %) | +0.0276 |
 | | open only | 2 345 | 0.5625 | +0.1927 | +0.0456 | 10.871 (2.38×) | 2688 ms (−74 %) | 710 ms (−93 %) | +0.1689 |
 
+> **⚠️ Do NOT read the `macro d_think` column here as the 2026-07-30 canonical macro.** These are the *old*
+> macro values: **full suite (MMMU kept, 9 cells)** and with the open-text 32B-think cells **estimated**, not
+> measured. The canonical macro (Variant B, 8 cells, measured) is **compute-lean +0.0626 [+0.0514, +0.0734]**
+> and **accuracy-max +0.0720 [+0.0614, +0.0824]** (`artifacts/macro_average_headline_2026-07-30.json`). Note
+> also that this table's own `macro d_think` column already showed the pooled/macro divergence (+0.0117 vs
+> +0.0693) more than three weeks before the reporting convention was changed — nobody acted on it.
+> **The FLOP columns in this table are sample-weighted throughout.** Macro FLOP-eq: compute-lean **5.465
+> (1.196×)**, accuracy-max **6.444 (1.410×)**, fusion **6.558 (1.435×)**.
+
 Baselines pooled: **always-32B-THINK** 0.5632 @ 4.57 FLOP-eq / 10 521.6 ms; **always-32B-no-think** 0.5732 @
 4.57 FLOP-eq / 665 ms. Both modes are **faster than always-32B-no-think on parallel latency** and **≥ 90 %
 faster than always-32B-THINK** on both latency accountings.
@@ -207,7 +268,9 @@ them; the reconciliation is now computed **live** (`method_final.json:reconcilia
 >   **accuracy-max MCQ/PMC** cell. F8 runs the 7B on every item, then in each calibration-CERTIFIED
 >   (dataset × 7B-conf-bin) cell where the 7B's **Wilson-lower-bound precision ≥ the 32B accuracy** it **vetoes the
 >   32B** (keeps 7B → 7B-only → cheaper); elsewhere it takes the 32B. One-sided ⇒ **never-worse guardrail by
->   construction**. This flips accuracy-max from **FLOP-POSITIVE (1.25×)** to **FLOP-NEGATIVE (0.93×)**.
+>   construction**. This flips accuracy-max from **FLOP-POSITIVE (1.25×)** to **FLOP-NEGATIVE (0.93×)**
+>   *(sample-weighted; at equal weight per cell it moves 1.435× → 1.410×, i.e. a real cut but still FLOP-positive
+>   — 2026-07-30)*.
 > - **F10 — learning-to-complement (team-objective L2D rejector)** **replaces the open-text arm's
 >   parity-targeting τ escalation gate** (shared by **both** modes). A learned rejector over 7B-side open-text
 >   features (verifier-score max/range/mean/std, #unique preds, self-consistency, seqlogprob), tuned to the
@@ -215,7 +278,7 @@ them; the reconciliation is now computed **live** (`method_final.json:reconcilia
 >   sets the cheap draw count** (so the FLOP model is unchanged, only the escalation set + delivered accuracy
 >   come from F10). It **repairs the two residual open losses** and **lifts** the PathVQA-open win.
 
-### ★★.1 Headline — V2 vs V1 (full suite, n=42 374, sample-weighted)
+### ★★.1 Headline — V2 vs V1 (full suite, n=42 374, **sample-weighted — pre-seam**)
 
 | knob | vs 32B-**THINK** | vs 32B-**no-think** | FLOP-eq (×32B) | lat seq / par | FLOP-neg? |
 |---|---:|---:|---:|---:|:--:|
@@ -224,12 +287,27 @@ them; the reconciliation is now computed **live** (`method_final.json:reconcilia
 | accuracy-max **v1** (F3 fusion, Pandora-τ open) | +0.0238 | +0.0137 | 5.695 (**1.25×**) | 1050 / 666 ms | ❌ |
 | **accuracy-max v2** (F8 veto + F10 open) | **+0.0212** | **+0.0112** | **4.246** (**0.93×**) | 839 / 729 ms | ✅ |
 
-**Both modes are now FLOP-negative** (< always-32B's 4.57): compute-lean **0.49×** (unchanged — it always was),
-accuracy-max **newly 0.93×** (was 1.25×). The accuracy-max FLOP cut is **−1.449 FLOP-eq (−25 %)** for a **−0.0026**
-vs-think accuracy give-back (F8 captures **70 %** of F3's PMC beat; F10 gives some back on the open cells) — a
-strict Pareto move into the compute-negative half-plane while still **CI-certified above 32B on PMC**. Honest
-trade: accuracy-max parallel latency rises **666 → 729 ms** because F8 is a *sequential* cascade on PMC (7B →
-maybe 32B, no parallel-fusion overlap) — still **−93 %** vs 32B-think.
+> **⚠️ THE SAME ROWS UNDER THE NOW-PRIMARY MACRO WEIGHTING (8 cells, 1/8 each, Variant B, measured;
+> `artifacts/macro_average_headline_2026-07-30.json`).** Note the **FLOP-neg column becomes ❌ for every row.**
+>
+> | knob | vs 32B-**reasoning** | vs 32B-**direct** | FLOP-eq (×32B) | lat par / seq | FLOP-neg? |
+> |---|---:|---:|---:|---:|:--:|
+> | compute-lean | **+0.0626** [+0.0514, +0.0734] | +0.0033 [−0.0054, +0.0121] n.s. | 5.465 (**1.196×**) | 650 / 1,292 ms | ❌ |
+> | accuracy-max (F8 veto + F10 open) | **+0.0720** [+0.0614, +0.0824] | **+0.0128** [+0.0056, +0.0200] | 6.444 (**1.410×**) | 691 / 1,334 ms | ❌ |
+> | accuracy-max v1 (F3 fusion) | **+0.0686** [+0.0582, +0.0790] | **+0.0094** [+0.0013, +0.0176] | 6.558 (**1.435×**) | 665 / 1,350 ms | ❌ |
+>
+> And on the **multiple-choice half alone**, compute-lean vs 32B-direct is **−0.0070 [−0.0126, −0.0017] — a
+> significant LOSS** (vs oracle-mode −0.0080 [−0.0137, −0.0024]).
+
+~~**Both modes are now FLOP-negative** (< always-32B's 4.57)~~ **[STRUCK 2026-07-30 — sample-weighted only.]**
+Sample-weighted: compute-lean **0.492×** (unchanged — it always was), accuracy-max **newly 0.932×** (was 1.250×).
+**What survives every weighting is the F8 FLOP CUT, not the sign:** **−1.449 FLOP-eq (−25 %)** sample-weighted,
+and macro **6.558 → 6.444** — for a **−0.0026** vs-think accuracy give-back sample-weighted (F8 captures **70 %**
+of F3's PMC beat; F10 gives some back on the open cells), still **CI-certified above 32B on PMC**. But it is
+**not** "a strict Pareto move into the compute-negative half-plane" at equal weight, because at equal weight there
+is no compute-negative half-plane to move into. Honest trade: accuracy-max parallel latency rises **666 → 729 ms**
+sample-weighted because F8 is a *sequential* cascade on PMC (7B → maybe 32B, no parallel-fusion overlap) — still
+**−93 %** vs 32B-think as charged, **−89 %** honestly re-costed and macro-weighted.
 
 ### ★★.2 F8 on the accuracy-max PMC cell (vs the prior F3 fusion)
 
@@ -258,17 +336,22 @@ recoverability AUROC than the single gate — the gain is from the objective, no
 
 ### ★★.4 V2 confirmations (the two asks)
 
-1. **accuracy-max with F8 is now FLOP-NEGATIVE** — pooled full-suite FLOP-eq **4.246 < 4.57** (**0.93×**
-   always-32B), down from **5.695 (1.25×)** with F3, at the same/better beat structure (retains 70 % of the PMC
-   beat, still CI-certified above 32B; d-vs-think **+0.0212**). ✅
+1. **accuracy-max with F8 is FLOP-NEGATIVE *sample-weighted*** — pooled full-suite FLOP-eq **4.246 < 4.57**
+   (**0.932×** always-32B), down from **5.695 (1.250×)** with F3, at the same/better beat structure (retains 70 %
+   of the PMC beat, still CI-certified above 32B; d-vs-think **+0.0212**). ✅ **⚠️ NOT at equal weight per cell:
+   6.444 vs 4.57 = 1.410× (F3: 6.558 = 1.435×). The −25 % cut survives; the FLOP-negative sign does not.**
 2. **F10 raises the open-text cells in both modes** (the open arm is shared): all three open cells gain, the two
-   open losses are repaired. ✅
-3. **Both modes are FLOP-negative** — compute-lean **0.49×**, accuracy-max **0.93×**. ✅
+   open losses are repaired. ✅ *(PROVISIONAL — clean-verifier retrain in progress.)*
+3. ~~**Both modes are FLOP-negative** — compute-lean **0.49×**, accuracy-max **0.93×**.~~ ❌ **RETRACTED
+   2026-07-30 as a suite-level claim** — true sample-weighted, false at equal weight per cell (1.196× / 1.410×).
 
 ### ★★.5 Honest caveats specific to V2
 
 - **F8 captures MOST, not all, of F3's PMC beat** (+0.0135 → +0.0095 on the PMC cell). The accuracy-max vs-think
-  headline drops **+0.0238 → +0.0212**; the trade buys the FLOP-negative arm and a never-worse one-sided guarantee.
+  headline drops **+0.0238 → +0.0212** sample-weighted; the trade buys a cheaper arm and a never-worse one-sided
+  guarantee. **⚠️ 2026-07-30: PMC-VQA is 79.2 % of the sample-weighted pool but only 12.5 % of the macro weight,
+  so at equal weight the F8/F3 choice can no longer carry the headline — macro vs-reasoning is +0.0720 (F8) vs
+  +0.0686 (F3), i.e. F8 is now the *more* accurate of the two as well as the cheaper.**
 - **F10 open-arm cost is billed at Pandora's adaptive `meanN` (<8) draws while the *kept*-leg accuracy is scored on
   the best-of-8 verifier pick** — mildly optimistic vs a strict best-of-`meanN`. The escalation set and delivered
   accuracy come from the held-out F10 rejector; only the cheap-leg FLOP count is Pandora's.
@@ -293,11 +376,26 @@ cap320 real VQA-RAD images, per-GPU NVML energy, n=15 after 3 warmups):
 
 Crucially, on open-text perception THINK is also **less accurate** than no-think (measured, n=200 paired per set,
 modal scorer): SLAKE-open **0.700 vs 0.895 (−0.195)**, VQA-RAD-open **0.425 vs 0.545 (−0.120)**, PathVQA-open
-**0.035 vs 0.170 (−0.135)**; pooled n=600 **0.387 vs 0.537 (−0.150)**. So **always-32B-THINK is Pareto-dominated**:
-it is ~16× slower/costlier *and* less accurate than 32B-no-think on perception. Think helps **only on reasoning**
+**0.035 vs 0.170 (−0.135)**; pooled n=600 **0.387 vs 0.537 (−0.150)**. So **always-32B-THINK is dominated *by
+always-32B-no-think*** (a model-vs-model statement, which still holds and is **not** the retired suite-level
+"the method Pareto-dominates" claim — §10.1 C26): it is ~16× slower/costlier *and* less accurate than 32B-no-think
+on perception. Think appears to help **only on reasoning**
 (faithful MedEvalKit, `reframe_vs_bigthink.json`): MMMU-150 Lingshu +0.027 / MVT +0.100 / IV3 +0.120; MedXpert-2000
 Lingshu −0.003 / MVT +0.045 / IV3 +0.031. (Peer strong leg IV3-38B batch-1 for reference, `iv3_38b_latency.json`:
 no-think 1 409 ms / 598 J, think 6 220 ms / 3 276 J → 4.4× slower, 5.5× more energy.)
+
+> **⚠️ RE-ATTRIBUTED 2026-07-30 — those reasoning-side gains are ANSWER-FORMAT effects, not
+> reasoning-instruction effects.** Every one of the MMMU / MedXpert numbers in the paragraph above is a
+> **published-direct (bare letter) → reason (trigger + `\boxed{}`)** contrast. Decomposed against a
+> format-matched (`\boxed{}`-only, no trigger) direct arm — **published / format / trigger** — MVT MMMU
+> **+0.103 / +0.062 / +0.041 n.s.**, MVT MX-R **+0.046 / +0.046 SIG [+0.019, +0.072] / +0.001 n.s.**, IV3 MMMU
+> **+0.124 / +0.090 SIG / +0.035 n.s.**, Lingshu MMMU **+0.028 / −0.014 / +0.041 n.s.**, Lingshu MX-R
+> **−0.004 / −0.008 / +0.004 n.s.** **0/9 trigger effects are CI-significant; 3/9 format effects are.**
+> Mechanism: **asking for `\boxed{}` is itself a reasoning trigger** — MVT emits 431–580 tokens on 99–100 % of
+> items, IV3 193–289 on 94–95 %, with **no trigger**; Lingshu never (3–4 tokens). `parse_ok ≥ 0.9986` (min over the 9 sub-cells; 1.000 in 6 of them) in every
+> new arm. **The design consequence below is UNCHANGED** (the strong leg is 32B-no-think; the think tier is
+> reserved for the reasoning residual, and the full ladder is what a think tier delivers) — **only the
+> attribution changes.** Source: `artifacts/medeval_matched_direct_2026-07-29.json`; retrospective §5.1, C27.
 
 **Consequence for the method:** the strong leg is **32B *no-think*** everywhere (it dominates 32B-think on cost and
 on perception accuracy, and ties it on Lingshu reasoning), and the slow think tier is *reserved* for the reasoning
