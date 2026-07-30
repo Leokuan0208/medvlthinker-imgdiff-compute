@@ -437,7 +437,9 @@ as "the paper" and cite its §5.x numbering.** Both are in `archive/`; the IEEE 
   `eval_results` / `eval_results_32b`); they sit next to the canonical directories with no README.
 - `results/cascade_methods/` — the research writeups + outputs (reorganized 2026-07-02; see its `README.md` index):
   - `docs/current/` — canonical writeups + specs. **`PROJECT_RETROSPECTIVE_2026-07-29.md` is the entry
-    document**; then `METHOD_FINAL_2026-07`, `RESEARCH_RESULTS_2026-07`, `TECHNICAL_REPORT_2026-07`,
+    document**; **`PMCVQA_PROVENANCE_2026-07-30.md`** — how PMC-VQA is built, how thinly it is validated,
+    which splits exist and which of the project's two evaluation tracks used which (**read before quoting
+    any PMC-VQA number**); then `METHOD_FINAL_2026-07`, `RESEARCH_RESULTS_2026-07`, `TECHNICAL_REPORT_2026-07`,
     `OMNIMED_FALLBACK`, `VERIFIED_FACTS`, `OPENTEXT_*`, and the historical `METHOD_ACC` / `METHOD_MATH` /
     `METHOD` / `METHOD_deferral_router` / `METHODS_MASTER` / `MASTER_SUMMARY_2026-07`.
   - `docs/archive_mcq/` — superseded MCQ-era research-loop writeups (kept as the negative-result record).

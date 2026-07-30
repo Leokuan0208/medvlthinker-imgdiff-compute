@@ -29,6 +29,13 @@ def imgs_for(ds):
         jp = "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json" if ds=="kvasir_open" else "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json"
         for r in json.load(open(jp)):
             if os.path.exists(r["img_path"]): m[r["idx"]]=(r["question"], r["img_path"])
+    elif ds=="slake_open":
+        # was MISSING: slake_open fell through to the parquet branch and silently loaded PathVQA images.
+        # Loader mirrors run_openvqa.py's slake_open loader (and gen_slake_open_bestofN.py) exactly.
+        for x in json.load(open("/data/dan/dataset/slake/test.json")):
+            if x.get("answer_type")=="OPEN" and x.get("q_lang")=="en":
+                ip=os.path.join("/data/dan/dataset/slake/imgs", x["img_name"])
+                if os.path.exists(ip): m[x["qid"]]=(x["question"], ip)
     else:
         import pandas as pd
         base="/data/dan/dataset/vqa_rad/data" if ds=="vqa_rad_open" else "/data/dan/dataset/path_vqa/data"

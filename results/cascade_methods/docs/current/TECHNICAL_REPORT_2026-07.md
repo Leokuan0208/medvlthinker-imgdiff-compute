@@ -21,6 +21,16 @@
 > **The definitive account is [`PROJECT_RETROSPECTIVE_2026-07-29.md`](PROJECT_RETROSPECTIVE_2026-07-29.md)**
 > — §4 for the corrected results, §7 for this method's 16 known holes, §10.3 for the full decode of the
 > `+0.02xx` number family. **Read this file for *how it works*, not for *what it scores*.**
+>
+> ### ⚠️ Which PMC-VQA split (added 2026-07-30)
+>
+> Every PMC-VQA number in this file is the **MedEvalKit/Lingshu** track = **`test_2.csv`** (v2, **33,430**
+> items) — hard-coded in unmodified vendor code at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`, the split with
+> **zero published verification**, and **79%** of the Variant-B pool. The project's *other* track (the June
+> MedVLThinker internal harness) used a **different** file, **`test_clean.csv`** (v1, **2,000** items, the
+> authors' only human-verified split, **24.3%** of its 8,220 pool). The two overlap on **6 items**, so their
+> numbers are never interchangeable. Provenance:
+> [`PMCVQA_PROVENANCE_2026-07-30.md`](PMCVQA_PROVENANCE_2026-07-30.md).
 
 # Technical Report — The Final Method Loop (2026-07-04 → 07)
 
@@ -149,7 +159,7 @@ always-32B-**no-think** = 0.5732 @ 4.57 FLOP-eq / **665 ms**. (FLOP-eq = multipl
 **Where the wins live (per-benchmark, vs always-32B-think):**
 - **MMMU +0.140** — from keeping the 7B (it beats the 32B there).
 - **All open-text +0.10 to +0.21** — from the verifier best-of-N (the accuracy engine).
-- **PMC-VQA +0.0135** (CI [0.010, 0.017], n = 33,430) — the genuine, non-anomaly MCQ fusion win.
+- **PMC-VQA +0.0135** (CI [0.010, 0.017], n = 33,430, **`test_2.csv`**) — the genuine, non-anomaly MCQ fusion win.
 - **Perception MCQ within ±0.01** — matched accuracy at **15–25× the speed** (the efficiency engine).
 
 ---
@@ -161,7 +171,7 @@ always-32B-**no-think** = 0.5732 @ 4.57 FLOP-eq / **665 ms**. (FLOP-eq = multipl
 | **Margin gate (MCQ)** | escalate only low-confidence 7B answers | matches 32B at ~16% escalation |
 | **Verifier best-of-N (open-text)** | 7B samples N, verifier picks best | **0.563 > 32B-nt 0.517** (beats the strong model) |
 | **Pandora adaptive-N** | draw only as many samples as needed | draws 8→4.3, **−33% open FLOPs** at iso-acc |
-| **F3/F8 PMC fusion** | pick the more-calibrated model on PMC | **+0.0135 / +0.0095** (F8 at 0.88× FLOPs) |
+| **F3/F8 PMC fusion** | pick the more-calibrated model on PMC (`test_2.csv`, n = 33,430) | **+0.0135 / +0.0095** (F8 at 0.88× FLOPs) |
 | **F10 learning-to-complement** | better open-text escalate/keep rule | repairs SLAKE/VQA-RAD losses; **PathVQA +0.086** |
 | **G8 prefill prefetch** | overlap 32B prefill with the 7B pass | 461→405 ms, **zero accuracy cost** |
 | **MMMU keep-7B** | don't escalate where 7B wins | **+0.167** on MMMU |

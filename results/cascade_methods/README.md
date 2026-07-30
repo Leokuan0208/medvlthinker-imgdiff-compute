@@ -40,11 +40,21 @@ Values of **+0.0212 / +0.0207 / +0.0238 / +0.0271 / +0.0275** are the *same meth
 lever, pool, or estimate-vs-measured convention — decode table in retrospective §10.3.
 **Never write "Baselines (measured): 0.5632"** — that value's open cells were estimates.
 
+## ⚠️ The second seam: **two PMC-VQA splits** — always name the file
+
+The MedEvalKit/Lingshu docs report PMC-VQA on **`test_2.csv`** (v2, **33,430** items, **79%** of the
+Variant-B pool, zero published verification, hard-coded at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`).
+The June MedVLThinker/internal-harness docs report it on **`test_clean.csv`** (v1, **2,000** items, the
+authors' only human-verified split, **24.3%** of the 8,220 pool). **They intersect on 6 items** — never
+compare, average, or filter across them. Every PMC-VQA number must carry its file name and row count.
+Full provenance: **[`docs/current/PMCVQA_PROVENANCE_2026-07-30.md`](docs/current/PMCVQA_PROVENANCE_2026-07-30.md)**.
+
 ## `docs/current/` — the canonical writeups
 
 | File | What it is | status |
 |---|---|---|
 | **`PROJECT_RETROSPECTIVE_2026-07-29.md`** | **★ START HERE** — the definitive account of the whole project. | **current** |
+| **`PMCVQA_PROVENANCE_2026-07-30.md`** | **Read before quoting any PMC-VQA number** — how PMC-VQA is built (caption-only GPT-3.5 generation), how thinly it is validated, which splits exist, and which split each of this project's two evaluation tracks used. | **current** |
 | `METHOD_FINAL_2026-07.md` | **The method spec** — every lever, every ablation. What you would re-implement from. | mechanism current; **numbers pre-seam** |
 | `RESEARCH_RESULTS_2026-07.md` | The full results ledger (76 KB) — the experiment-by-experiment record. | mechanism current; **numbers pre-seam** |
 | `TECHNICAL_REPORT_2026-07.md` | The technical walkthrough (the bridge from the paper to the spec). | mechanism current; **numbers pre-seam** |

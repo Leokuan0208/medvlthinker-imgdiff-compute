@@ -1,0 +1,135 @@
+{
+ "design": "option_c_hybrid: in-domain OFFICIAL TRAIN splits (image-disjoint) + 2 out-of-domain pools",
+ "levels": {
+  "L1_image_disjoint": "no eval image, no eval item; question TEMPLATES may recur",
+  "L2_strict": "L1 and no eval question TEXT at all (subset of L1)"
+ },
+ "seed": 0,
+ "eval": {
+  "slake_open": {
+   "n_items": 645,
+   "n_images": 96,
+   "n_distinct_question_texts": 169
+  },
+  "vqa_rad_open": {
+   "n_items": 200,
+   "n_images": 120,
+   "n_distinct_question_texts": 194
+  },
+  "pathvqa_open": {
+   "n_items": 1500,
+   "n_images": 312,
+   "n_distinct_question_texts": 310
+  }
+ },
+ "eval_total_items": 2345,
+ "eval_total_images": 528,
+ "option_a_feasibility_rejected": {
+  "slake_open": {
+   "n_images": 96,
+   "n_train_images": 67,
+   "n_eval_images": 29,
+   "n_train_items": 459,
+   "n_surviving_eval_items": 186,
+   "pct_eval_lost": 71.2
+  },
+  "vqa_rad_open": {
+   "n_images": 120,
+   "n_train_images": 84,
+   "n_eval_images": 36,
+   "n_train_items": 146,
+   "n_surviving_eval_items": 54,
+   "pct_eval_lost": 73.0
+  },
+  "pathvqa_open": {
+   "n_images": 312,
+   "n_train_images": 218,
+   "n_eval_images": 94,
+   "n_train_items": 1079,
+   "n_surviving_eval_items": 421,
+   "pct_eval_lost": 71.9
+  }
+ },
+ "train": {
+  "slake_open_train": {
+   "pool_items": 2976,
+   "dropped_eval_image": 0,
+   "L1_image_disjoint_items": 2976,
+   "L1_images": 449,
+   "L2_strict_items": 353,
+   "L2_images": 197,
+   "dropped_eval_question_text": 2623
+  },
+  "vqa_rad_open_train": {
+   "pool_items": 853,
+   "dropped_eval_image": 311,
+   "L1_image_disjoint_items": 542,
+   "L1_images": 155,
+   "L2_strict_items": 490,
+   "L2_images": 151,
+   "dropped_eval_question_text": 52
+  },
+  "pathvqa_open_train": {
+   "pool_items": 9903,
+   "dropped_eval_image": 0,
+   "L1_image_disjoint_items": 9903,
+   "L1_images": 2577,
+   "L2_strict_items": 2597,
+   "L2_images": 1004,
+   "dropped_eval_question_text": 7306
+  },
+  "kvasir_open": {
+   "pool_items": 1200,
+   "dropped_eval_image": 0,
+   "L1_image_disjoint_items": 1200,
+   "L1_images": 1048,
+   "L2_strict_items": 1200,
+   "L2_images": 1048,
+   "dropped_eval_question_text": 0,
+   "already_generated": true
+  },
+  "radimagenet_open": {
+   "pool_items": 2000,
+   "dropped_eval_image": 0,
+   "L1_image_disjoint_items": 2000,
+   "L1_images": 1000,
+   "L2_strict_items": 1850,
+   "L2_images": 1000,
+   "dropped_eval_question_text": 150,
+   "already_generated": true
+  }
+ },
+ "train_total_L1_items": 16621,
+ "train_total_L2_items": 6490,
+ "train_total_L1_images": 5229,
+ "disjointness_assertion": {
+  "image_pixel_hash_intersection": 0,
+  "question_item_intersection": 0,
+  "question_id_intersection": 0,
+  "L2_question_text_intersection": 0,
+  "L1_question_text_shared_by_design": 184,
+  "raw_numeric_id_coincidences_different_split_files_not_same_item": {
+   "slake_open_train": 0,
+   "vqa_rad_open_train": 48,
+   "pathvqa_open_train": 751,
+   "kvasir_open": 0,
+   "radimagenet_open": 0
+  },
+  "n_train_images": 5229,
+  "n_eval_images": 528,
+  "n_train_question_items": 14094,
+  "n_eval_question_items": 1803,
+  "method": "images: md5 of decoded RGB pixels (WxH + raw bytes), catches re-encoded copies. questions: item identity = (dataset family, normalized question text, image pixel hash), because raw row ids are not comparable across different split files.",
+  "asserted_in_code": [
+   "assert not inter_img",
+   "assert not inter_item",
+   "assert not inter_qid",
+   "assert not (q_L2 & eval_qtext)"
+  ]
+ },
+ "needs_generation": [
+  "slake_open_train",
+  "vqa_rad_open_train",
+  "pathvqa_open_train"
+ ]
+}

@@ -72,7 +72,9 @@ All numbers are computed from measured model outputs; no figure is fabricated, a
 
 \textbf{Benchmarks.} We evaluate with MedEvalKit on five medical VQA benchmarks (Table~\ref{tab:bench}), split two ways. By \emph{regime}: \emph{perception} (PMC-VQA, SLAKE, VQA-RAD, PathVQA) versus \emph{reasoning} (MedXpertQA-MM). By \emph{format}: multiple-choice (MCQ, $n{=}39{,}879$) versus free-text open-ended (SLAKE/VQA-RAD/PathVQA open splits, $n{=}2{,}345$); three benchmarks carry both, giving eight evaluation cells. The pooled suite is $n{=}42{,}224$. Open-ended answers are graded by exact/normalized match with a neutral-LLM adjudication of near-misses.
 
-\textbf{Faithful reproduction.} We reproduce the published Lingshu accuracies within one point on every benchmark in the suite (7B: SLAKE $82.5$ vs.\ $83.1$; PMC-VQA $54.3$ vs.\ $56.3$; MedXpertQA $26.2$ vs.\ $26.7$), confirming the evaluation harness is faithful before any cascade claim is made.
+\textbf{PMC-VQA split (reproducibility).} PMC-VQA ships more than one test file, and they are not interchangeable, so we state ours explicitly: all PMC-VQA results in this paper are on \texttt{test\_2.csv}, the version-2 (``noncompound images'') test split of $33{,}430$ items, which is the file MedEvalKit loads and therefore the split the published Lingshu baselines we compare against were scored on. This is \emph{not} the authors' $2{,}000$-item human-verified split (\texttt{test\_clean.csv}, version~1); the two files intersect on only $6$ items, so results on one cannot be mapped onto the other. We use \texttt{test\_2.csv} for comparability with prior work and note that no verification pass or reference accuracy has been published for it.
+
+\textbf{Faithful reproduction.} We reproduce the published Lingshu accuracies within one point on every benchmark in the suite (7B: SLAKE $82.5$ vs.\ $83.1$; PMC-VQA $54.3$ vs.\ $56.3$, both on \texttt{test\_2.csv}; MedXpertQA $26.2$ vs.\ $26.7$), confirming the evaluation harness is faithful before any cascade claim is made.
 
 \textbf{Cost model.} A single forward pass costs $F = 2\,\Theta\,(P+G)$ multiply--accumulates (MACs), where $\Theta$ is the parameter count, $P$ the prompt tokens (including vision tokens), and $G$ the generated tokens. We report compute in \emph{FLOP-equivalents} normalized to one 7B forward; the measured 32B/7B ratio is $4.57$. Because MACs are precision-independent, low-bit quantization does not change this axis. For a cascade with per-tier cost $c_t$ and escalation probabilities $e_0$ (past tier~0) and $e_1$ (to the reasoning tier),
 \begin{equation}
@@ -88,14 +90,14 @@ Latency and energy use \eqref{eq:cost} with per-tier costs from real batch-1 mea
 
 \begin{table}[t]
 \centering
-\caption{The evaluation suite. Perception vs.\ reasoning regime; formats present; sample counts. Total: $39{,}879$ MCQ $+$ $2{,}345$ open $= 42{,}224$.}
+\caption{The evaluation suite. Perception vs.\ reasoning regime; formats present; sample counts. Total: $39{,}879$ MCQ $+$ $2{,}345$ open $= 42{,}224$. $^{\dagger}$PMC-VQA is the version-2 test split \texttt{test\_2.csv} ($33{,}430$ items), the file MedEvalKit loads---not the $2{,}000$-item human-verified \texttt{test\_clean.csv} (see \S\ref{sec:setup}).}
 \label{tab:bench}
 \footnotesize
 \begin{tabular}{@{}llrr@{}}
 \toprule
 Benchmark & Regime & \#MCQ & \#Open \\
 \midrule
-PMC-VQA           & perception & 33{,}430 & --- \\
+PMC-VQA$^{\dagger}$ & perception & 33{,}430 & --- \\
 PathVQA           & perception & 3{,}362 & 1{,}500 \\
 SLAKE             & perception & 836 & 645 \\
 VQA-RAD           & perception & 251 & 200 \\
@@ -277,14 +279,14 @@ The \emph{accuracy-max} point trades a little compute for accuracy: $0.5836$, wh
 
 \begin{table*}[t]
 \centering
-\caption{Per-benchmark policy and accuracy (compute-lean), against the three single-model baselines, with the paired-bootstrap 95\% CI of the method's delta over the always-32B-no-think reference (all cells real per-sample). ``policy'': cheap$\to$32B-nt margin cascade (MCQ) or best-of-$N$$+$verifier$\to$32B-nt (open). The cascade matches 32B-no-think within noise on the perception MCQ sets, loses a little only on near-chance MedXpertQA, and wins significantly on PathVQA-open. $n$ as in Table~\ref{tab:bench}.}
+\caption{Per-benchmark policy and accuracy (compute-lean), against the three single-model baselines, with the paired-bootstrap 95\% CI of the method's delta over the always-32B-no-think reference (all cells real per-sample). ``policy'': cheap$\to$32B-nt margin cascade (MCQ) or best-of-$N$$+$verifier$\to$32B-nt (open). The cascade matches 32B-no-think within noise on the perception MCQ sets, loses a little only on near-chance MedXpertQA, and wins significantly on PathVQA-open. $n$ as in Table~\ref{tab:bench}. $^{\dagger}$PMC-VQA is \texttt{test\_2.csv} (\S\ref{sec:setup}).}
 \label{tab:perbench}
 \footnotesize
 \begin{tabular}{@{}llcccccc@{}}
 \toprule
 Benchmark & policy & 7B & 32B-nt & 32B-th & \textbf{ours} & $\Delta$ vs 32B-nt & 95\% CI \\
 \midrule
-PMC-VQA        & cascade   & 0.543 & 0.552 & 0.549 & 0.551 & $-0.0010$ & \ci{-0.006}{+0.004} \\
+PMC-VQA$^{\dagger}$ & cascade   & 0.543 & 0.552 & 0.549 & 0.551 & $-0.0010$ & \ci{-0.006}{+0.004} \\
 SLAKE-cl       & cascade   & 0.825 & 0.859 & 0.864 & 0.852 & $-0.0072$ & \ci{-0.024}{+0.008} \\
 VQA-RAD-cl     & cascade   & 0.781 & 0.853 & 0.841 & 0.833 & $-0.0199$ & \ci{-0.040}{+0.000} \\
 PathVQA-cl     & cascade   & 0.841 & 0.889 & 0.889 & 0.888 & $-0.0009$ & \ci{-0.004}{+0.002} \\
@@ -366,7 +368,7 @@ PathVQA-open & 5.48 & 16.0 & 12.6 & $-21\%$ & 0.452 \\
 \end{tabular}
 \end{table}
 
-\textbf{Accuracy levers.} The confidence-advantage fusion improves PMC-VQA by $+0.0135$ over always-32B-no-think (95\% CI $[+0.010,+0.017]$, $n{=}33{,}430$)---a genuine broad-slice win on the largest benchmark, where the two models are comparably skilled with de-correlated errors. The certified veto captures $70\%$ of that gain ($+0.0095$, CI $[+0.0071,+0.0118]$) while flipping the accuracy-max variant from $1.25{\times}$ to $0.93{\times}$ compute (vetoed cells skip the 32B). The team-optimal open-text deferral raises PathVQA-open to $+0.086$ over always-32B-no-think (CI $[+0.064,+0.106]$) and repairs the two slices where the parity gate tied.
+\textbf{Accuracy levers.} The confidence-advantage fusion improves PMC-VQA by $+0.0135$ over always-32B-no-think (95\% CI $[+0.010,+0.017]$, $n{=}33{,}430$, \texttt{test\_2.csv})---a genuine broad-slice win on the largest benchmark, where the two models are comparably skilled with de-correlated errors. The certified veto captures $70\%$ of that gain ($+0.0095$, CI $[+0.0071,+0.0118]$) while flipping the accuracy-max variant from $1.25{\times}$ to $0.93{\times}$ compute (vetoed cells skip the 32B). The team-optimal open-text deferral raises PathVQA-open to $+0.086$ over always-32B-no-think (CI $[+0.064,+0.106]$) and repairs the two slices where the parity gate tied.
 
 \subsection{The fundamental limits}\label{sec:limits}
 

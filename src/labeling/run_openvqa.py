@@ -52,7 +52,11 @@ HIGH_PX, MIN_PX = 1280*28*28, 4*28*28
 CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 ap = argparse.ArgumentParser()
 ap.add_argument("--model_path", required=True); ap.add_argument("--tag", required=True)
-ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open", "pathvqa_open", "kvasir_open", "radimagenet_open"])
+ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open", "pathvqa_open", "kvasir_open", "radimagenet_open",
+                # *_train = the datasets' OFFICIAL TRAIN splits, same open-ended filter. Added for the
+                # disjoint verifier retrain (src/training_methods/build_disjoint_verifier_split.py): the
+                # verifier must be trained on items that share no question and no image with the eval sets.
+                "slake_open_train", "vqa_rad_open_train", "pathvqa_open_train"])
 ap.add_argument("--n_samples", type=int, default=1); ap.add_argument("--temp", type=float, default=0.0)
 ap.add_argument("--cap", choices=list(CAP_DIV), default="cap320"); ap.add_argument("--n", type=int, default=100000)
 ap.add_argument("--ckpt_dir", required=True); ap.add_argument("--tp", type=int, default=1)
@@ -86,8 +90,9 @@ def score(pred, gold):
 
 # ---- load open-ended items: (idx, question, gold, PIL image) ----
 items = []
-if A.dataset == "slake_open":
-    d = json.load(open("/data/dan/dataset/slake/test.json")); root = "/data/dan/dataset/slake/imgs"
+SPLIT = "train" if A.dataset.endswith("_train") else "test"   # *_open_train -> official train split
+if A.dataset in ("slake_open", "slake_open_train"):
+    d = json.load(open(f"/data/dan/dataset/slake/{SPLIT}.json")); root = "/data/dan/dataset/slake/imgs"
     seen = set()
     for x in d:
         if x.get("answer_type") != "OPEN" or x.get("q_lang") != "en": continue
@@ -106,8 +111,8 @@ elif A.dataset == "kvasir_open":
             items.append((r["idx"], r["question"], r["answer"], r["img_path"]))
 else:
     import pandas as pd
-    base = "/data/dan/dataset/vqa_rad/data" if A.dataset == "vqa_rad_open" else "/data/dan/dataset/path_vqa/data"
-    dfs = [pd.read_parquet(f) for f in sorted(glob.glob(os.path.join(base, "test-*.parquet")))]
+    base = "/data/dan/dataset/vqa_rad/data" if A.dataset.startswith("vqa_rad_open") else "/data/dan/dataset/path_vqa/data"
+    dfs = [pd.read_parquet(f) for f in sorted(glob.glob(os.path.join(base, f"{SPLIT}-*.parquet")))]
     df = pd.concat(dfs, ignore_index=True)
     for i, r in df.iterrows():
         # parquet schema: 'question','answer','image'(dict bytes) OR 'conversations'

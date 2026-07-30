@@ -18,6 +18,16 @@
 > **The definitive account is [`PROJECT_RETROSPECTIVE_2026-07-29.md`](PROJECT_RETROSPECTIVE_2026-07-29.md)**
 > — §4 for the corrected results, §7 for this method's 16 known holes, §10.3 for the full decode of the
 > `+0.02xx` number family. **Read this file for *how it works*, not for *what it scores*.**
+>
+> ### ⚠️ Which PMC-VQA split (added 2026-07-30)
+>
+> Every PMC-VQA number in this file is the **MedEvalKit/Lingshu** track = **`test_2.csv`** (v2, **33,430**
+> items) — hard-coded in unmodified vendor code at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`, the split with
+> **zero published verification**, and **79%** of the Variant-B pool. The project's *other* track (the June
+> MedVLThinker internal harness) used a **different** file, **`test_clean.csv`** (v1, **2,000** items, the
+> authors' only human-verified split, **24.3%** of its 8,220 pool). The two overlap on **6 items**, so their
+> numbers are never interchangeable. Provenance:
+> [`PMCVQA_PROVENANCE_2026-07-30.md`](PMCVQA_PROVENANCE_2026-07-30.md).
 
 # METHOD_FINAL — the integrated format-aware router (2026-07)
 
@@ -119,7 +129,7 @@ best-of-N batched, fusion legs concurrent).
 
 | benchmark | n | 7B | 32B-nt | 32B-thk | policy | **method** | **d_think** | d_nt | FLOPs | lat seq / par |
 |---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|
-| PMC-VQA | 33 430 | 0.5427 | 0.5518 | 0.5494 | margin-cascade | 0.5508 | +0.0014 | −0.0010 | 1.386 | 403 / 403 |
+| PMC-VQA *(`test_2.csv`)* | 33 430 | 0.5427 | 0.5518 | 0.5494 | margin-cascade | 0.5508 | +0.0014 | −0.0010 | 1.386 | 403 / 403 |
 | SLAKE-closed | 836 | 0.8254 | 0.8589 | 0.8636 | margin-cascade | 0.8516 | −0.0120 | −0.0072 | 1.935 | 483 / 483 |
 | VQA-RAD-closed | 251 | 0.7809 | 0.8526 | 0.8406 | margin-cascade | 0.8328 | −0.0079 | −0.0198 | 3.603 | 726 / 726 |
 | PathVQA-closed | 3 362 | 0.8409 | 0.8891 | 0.8891‡ | margin-cascade | 0.8882 | −0.0009 | −0.0009 | 3.089 | 651 / 651 |
@@ -133,7 +143,7 @@ best-of-N batched, fusion legs concurrent).
 
 | benchmark | n | policy (F1 certified) | **method** | **d_think** | d_nt | FLOPs | lat seq / par |
 |---|---:|---|---:|---:|---:|---:|---:|
-| PMC-VQA | 33 430 | **fusion (F3 conf-adv)** | **0.5653** | **+0.0159** | **+0.0135** | 5.570 | 1012 / 665 |
+| PMC-VQA *(`test_2.csv`)* | 33 430 | **fusion (F3 conf-adv)** | **0.5653** | **+0.0159** | **+0.0135** | 5.570 | 1012 / 665 |
 | SLAKE-closed | 836 | always-32B-nt | 0.8589 | −0.0047 | −0.0000 | 4.570 | 665 / 665 |
 | VQA-RAD-closed | 251 | always-32B-nt | 0.8526 | +0.0120 | −0.0000 | 4.570 | 665 / 665 |
 | PathVQA-closed | 3 362 | always-32B-nt | 0.8891 | −0.0000 | −0.0000 | 4.570 | 665 / 665 |
@@ -170,7 +180,7 @@ them; the reconciliation is now computed **live** (`method_final.json:reconcilia
 - **Only the MCQ arm differs** between the two knobs; the open (Pandora) arm is byte-identical. Of the MCQ
   cells the F1 guardrail deviates from always-32B on exactly **PMC** (→ fusion) and **MMMU** (keep-7B, but
   MMMU is keep-7B in compute-lean too, so it does **not** move the delta).
-- **PMC is the load-bearing cell.** Fusion lifts PMC acc **+0.0145** (0.5508→0.5653). Because PMC is
+- **PMC is the load-bearing cell.** Fusion lifts PMC acc **+0.0145** (0.5508→0.5653) on **`test_2.csv`**. Because PMC is
   **n=33 430 = 78.9 %** of the pooled 42 374 samples, that one cell adds **0.789 × 0.0145 = +0.01142** to the
   pooled sample-weighted accuracy. The four non-PMC closed cells snapping margin-cascade → always-32B add a
   further **≈ +0.0006**. Together: pooled d_think **+0.0117 → +0.0238**.
@@ -365,7 +375,7 @@ batch-1 measured costs). `d_think` = method − always-32B-think; `d_nt` = metho
 
 | benchmark | n | 7B | 32B-nt | 32B-think | **method** | **d_think** | d_nt | esc% | lat (ms) | FLOPs | lat saved vs think |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| PMC-VQA | 33 430 | 0.5427 | 0.5518 | 0.5494 | **0.5508** | **+0.0014** | −0.0010 | 8.5 % | 403.2 | 1.386 | 96.2 % |
+| PMC-VQA *(`test_2.csv`)* | 33 430 | 0.5427 | 0.5518 | 0.5494 | **0.5508** | **+0.0014** | −0.0010 | 8.5 % | 403.2 | 1.386 | 96.2 % |
 | SLAKE-closed | 836 | 0.8254 | 0.8589 | 0.8636 | 0.8516 | −0.0120 | −0.0072 | 20.5 % | 483.0 | 1.935 | 95.4 % |
 | VQA-RAD-closed | 251 | 0.7809 | 0.8526 | 0.8406 | 0.8328 | −0.0079 | −0.0198 | 57.0 % | 725.8 | 3.603 | 93.1 % |
 | PathVQA-closed | 3 362 | 0.8409 | 0.8891 | 0.8891‡ | 0.8882 | −0.0009 | −0.0009 | 45.7 % | 651.0 | 3.089 | 93.8 % |
@@ -485,7 +495,7 @@ fusing their *calibrated* per-sample confidences beats either alone. The router 
 **only because a held-out paired-bootstrap guardrail certifies it** (95 % lower-CI > 0); everywhere else the
 guardrail keeps always-32B (fusion *hurts* the small radiology/pathology sets where the 32B is clearly better).
 
-- **PMC fusion (F3 confidence-advantage, held-out):** acc **0.5653** vs 32B-nt 0.5518 → **d_nt +0.0135, 95 % CI
+- **PMC fusion (F3 confidence-advantage, held-out; `test_2.csv`, n = 33 430):** acc **0.5653** vs 32B-nt 0.5518 → **d_nt +0.0135, 95 % CI
   [0.0100, 0.0169]**, n=33 430; d_think +0.0159. Equivalent to a 2-detector **Chair-Varshney** fuser under equal
   option-count (reconciles: F2-cv3 +0.0134 CI [0.0109, 0.0159]). **Classic per-*slice*-reliability C-V collapses to
   exactly always-32B (d=0.0)** — the beat *requires per-sample confidence*, not slice reliability.

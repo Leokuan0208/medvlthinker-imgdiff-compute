@@ -27,7 +27,14 @@
 > - 🟡 **Half-day, full understanding** → Steps 0–9 in order. (Recommended.)
 > - 🔴 **Everything incl. code, negatives & proofs** → all steps, including Parts 4 and 5.
 
-> ## ⚠️ Two things to know before you read a single number
+> ## ⚠️ Three things to know before you read a single number
+> 0. **There are two different PMC-VQA splits in this project.** The MedEvalKit/Lingshu docs (the paper)
+>    use **`test_2.csv`** (v2, 33,430 items, 79% of that pool, no published verification); the June
+>    MedVLThinker/internal-harness docs use **`test_clean.csv`** (v1, 2,000 items, the authors' only
+>    human-verified split, 24.3% of that pool). They overlap on **6 items**, so a PMC number from one is
+>    never comparable to one from the other. Read
+>    `results/cascade_methods/docs/current/PMCVQA_PROVENANCE_2026-07-30.md` before quoting any PMC-VQA
+>    figure.
 > 1. **There is a numeric seam at 2026-07-08 ~08:00.** The four big July-8-morning consolidation docs
 >    (`TECHNICAL_REPORT`, `METHOD_FINAL`, `RESEARCH_RESULTS`, and the pre-2026-07-29 `PROJECT_OVERVIEW`)
 >    were written *hours before* three things that changed the headline: the oracle-mode baseline, the
@@ -148,7 +155,7 @@ files) which imports `harness.py` **zero** times.
 1. `src/cascade_methods/method_final.py` — **THE** single reproducible paper method.
 2. `src/cascade_methods/paper_baselines.py` — the baseline table and every paired bootstrap CI.
 3. `src/cascade_methods/integrated_method.py` — the format-aware cascade + the cost constants.
-4. `src/cascade_methods/beat32b_fusion.py` / `beat32b_more.py` — the PMC fusion, the certified veto, the
+4. `src/cascade_methods/beat32b_fusion.py` / `beat32b_more.py` — the PMC fusion (`test_2.csv`), the certified veto, the
    learning-to-defer rule.
 5. `src/cascade_methods/integrated_pandora.py` / `pandora_controller.py` — the adaptive-N controller.
 6. `src/cascade_methods/f8_mode_vsthink_ci.py` — **produces the paper's headline CI.**
@@ -178,6 +185,7 @@ Read the one that matches what you are digging into. **Note the folder split** i
 | If you want the full detail on… | read |
 |---|---|
 | **anything at all, first** | `docs/current/PROJECT_RETROSPECTIVE_2026-07-29.md` |
+| **how PMC-VQA is built, how thinly it is validated, which splits exist and which we used** | `docs/current/PMCVQA_PROVENANCE_2026-07-30.md` — **read before quoting any PMC-VQA number** |
 | the final method, fully specified | `docs/current/METHOD_FINAL_2026-07.md` |
 | the full results ledger (76 KB) | `docs/current/RESEARCH_RESULTS_2026-07.md` |
 | the technical walkthrough | `docs/current/TECHNICAL_REPORT_2026-07.md` |
@@ -209,7 +217,7 @@ If you internalize just this, you understand the project:
 
 1. **The goal was efficiency; the result is a characterization.** A format-aware adaptive cascade
    (Lingshu-7B → Lingshu-32B) **matches the strong model at roughly half the compute**, with a
-   significant accuracy gain on **two specific cells** — open-ended free text and PMC-VQA — and a
+   significant accuracy gain on **two specific cells** — open-ended free text and PMC-VQA (`test_2.csv`) — and a
    measured account of why the remaining cells are unwinnable. That last part is the stronger
    contribution, and unlike +0.0245 it survives an honest re-costing.
 2. **Every genuine positive came from changing *what* is being routed, never from improving the

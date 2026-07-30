@@ -30,6 +30,25 @@
 > **The definitive account is [`PROJECT_RETROSPECTIVE_2026-07-29.md`](PROJECT_RETROSPECTIVE_2026-07-29.md)**
 > — §4 for the corrected results, §7 for this method's 16 known holes, §10.3 for the full decode of the
 > `+0.02xx` number family. **Read this file for *how it works*, not for *what it scores*.**
+>
+> ### ⚠️ Which PMC-VQA split each number below came from (added 2026-07-30)
+>
+> The project used **two different PMC-VQA test files** and never recorded it. Both appear in this
+> document. The mapping, verified by matching each dump's questions/golds against the CSVs on disk
+> **[measured 2026-07-30]**:
+>
+> | number in this doc | file | version | verified by the authors? |
+> |---|---|---|---|
+> | anything at **n = 33,430** (the MedEvalKit/Lingshu faithful runs — §6, §7, §8) | **`test_2.csv`** | v2 | **no** |
+> | the **n = 2,000** UGV / MCQ-generative-verifier PMC cells (§2.1, `ckpts/mcq_gen_verify/`) | **`test_2.csv`** (a 2,000-row subsample) | v2 | **no** |
+> | the **`pmc_content`** pools at n = 500/600 (§2.2–§2.6, `ckpts/openvqa/diverse/`, `ckpts/pairwise_diverse/`) | **`test_2.csv`** | v2 | **no** |
+> | the **n ≈ 500 PMC "subsample"** used for logit fusion (§7.3, `ckpts/gate_lingshu{7b,32b}_mcq/`) | **`test_clean.csv`** | v1 | **yes** |
+> | the **cap320 vs full-res** resolution-cap cells (§8, PMC 0.543 → 0.542) | **`test_clean.csv`** | v1 | **yes** |
+> | the **ALL-6 / ALL-5 internal-harness pools** (§5; no PMC-specific figure is quoted, but PMC is 2,000 of the 8,220 items in them) | **`test_clean.csv`** | v1 | **yes** |
+>
+> `test_clean` ∩ `test_2` = **6 items**, so a number from one file must never be compared with, filtered
+> into, or substituted for a number from the other. Provenance:
+> [`PMCVQA_PROVENANCE_2026-07-30.md`](PMCVQA_PROVENANCE_2026-07-30.md).
 
 # Method-research results ledger — 2026-07 cycle
 
@@ -260,7 +279,8 @@ the practical edge is tiny.
 **What.** The unified generative-verifier (UGV, backlog B2 — the project's stated frontier) scores MCQ options
 as *generated answers* through one generative grounding verifier (the idea: unify MCQ + open-text + boxes under a
 single verifier, attacking the selection ceiling, §3 limit #2). The data-loader fix landed and the experiment ran
-on Lingshu-7B (+ MedVLThinker-7B) over PMC-VQA and MedXpert (n=2,000 each), self-consistency N=8. **Two scoring
+on Lingshu-7B (+ MedVLThinker-7B) over PMC-VQA and MedXpert (n=2,000 each; the PMC-VQA rows are a
+2,000-item subsample of **`test_2.csv`**, v2 — verified 2,000/2,000 by question text), self-consistency N=8. **Two scoring
 modes:** `content` (options hidden from the prompt → the model must *generate* the answer string) vs `letter`
 (standard A/B/C/D letter-logprob); `strict` = strict greedy parse. Source: `ugv_mcq_verdict.json` ←
 `ugv_mcq_verdict.py` (over `ckpts/mcq_gen_verify/` dumps).
@@ -279,12 +299,12 @@ modes:** `content` (options hidden from the prompt → the model must *generate*
    datasets and flips sign under the as-run (non-strict) parse (PMC letter as-run verifier_gain **−0.074**). Not a
    reliable lever.
 
-Selected numbers (Lingshu-7B, strict greedy parse, n=2,000/dataset):
+Selected numbers (Lingshu-7B, strict greedy parse, n=2,000/dataset; PMC-VQA = `test_2.csv` subsample):
 
 | dataset | mode | greedy | verifier-boN | oracle-boN | verifier gain | AUROC(score vs ok) |
 |---|---|---:|---:|---:|---:|---:|
-| PMC-VQA | content | 0.132 | 0.140 | 0.300 | +0.009 | 0.793 |
-| PMC-VQA | **letter** | **0.534** | **0.616** | 0.800 | **+0.082** | 0.540 |
+| PMC-VQA *(`test_2.csv`)* | content | 0.132 | 0.140 | 0.300 | +0.009 | 0.793 |
+| PMC-VQA *(`test_2.csv`)* | **letter** | **0.534** | **0.616** | 0.800 | **+0.082** | 0.540 |
 | MedXpert | content | 0.499 | 0.494 | 0.800 | −0.004 | 0.498 |
 | MedXpert | **letter** | **0.556** | 0.556 | 0.843 | −0.001 | 0.478 |
 
@@ -342,7 +362,7 @@ succeed** — the first structural wins that move the accuracy *ceiling* this cy
 scores real diverse candidates (a portfolio of 5 prompt personas {base, anatomy, modality, differential, concise}
 × a temperature ladder {0.7, 1.0, 1.3}, M=15 draws) against the iid@8 baseline on the **same**
 model/cap/verifier/scorer, with the diverse set restricted to the iid idx set. Pooled n=1,623 over 4 open sets
-(vqa_rad, slake, pathvqa, pmc-content). Source: `diverse_generation_gpu.json`.
+(vqa_rad, slake, pathvqa, pmc-content; the PMC slice is **`test_2.csv`**, v2). Source: `diverse_generation_gpu.json`.
 
 | metric (pooled) | iid@8 | diverse-DPP@8 (matched budget) | diverse-full@M=15 (extra budget) |
 |---|---:|---:|---:|
@@ -450,7 +470,7 @@ pairwise verifier) is wired into the controller.
 Five follow-on experiments, run to decide whether the open-text best-of-N verifier direction is the
 *deployable* method or merely a *characterized* one. Together they establish that the **selectability wall
 is fundamental** and that the deployable efficiency lever is the **router**, not best-of-N. All figures are
-copied from the cited artifacts; the 3 open sets (vqa_rad/slake/pathvqa) use exact-match/judge `oks`, PMC uses
+copied from the cited artifacts; the 3 open sets (vqa_rad/slake/pathvqa) use exact-match/judge `oks`, PMC (**`test_2.csv`**, v2) uses
 **loose option-letter `oks`** (interpret PMC with caution — see caveat at the end).
 
 **(1) Compounding FAILS — diverse-generation and pairwise-selection do not stack.** `combine_diverse_pairwise.py`
@@ -467,7 +487,7 @@ bootstrap.
 Each lever alone beats the pointwise-iid baseline: **diverse-lever B−A = +0.0303** (CI [+0.0088, +0.0518], sig),
 **pairwise-lever C−A = +0.0205** (CI [+0.0098, +0.0323], sig). **But they do NOT compound:** pairwise-over-diverse
 (D=0.5376) is **≤** pointwise-over-diverse (B=0.5494) — `D−B = −0.0117` (CI [−0.0283, +0.0049]) — and the both-levers
-gain over baseline `D−A = +0.0186` is **not significant** (CI [−0.0020, +0.0411]). On PMC (n=600) diverse lifts the
+gain over baseline `D−A = +0.0186` is **not significant** (CI [−0.0020, +0.0411]). On PMC (n=600; **`test_2.csv`**) diverse lifts the
 **oracle** +0.110 (0.505→0.615) but the selectors convert almost none of it: pointwise-div 0.305 vs pointwise-iid
 0.290 (converted 0.015), pairwise-div 0.295 (converted 0.005). **Read: diversity buys coverage, not selectability;
 the PMC oracle lift stays unconverted by either selector** (`compounds=false`). This resolves the §2.3 open
@@ -484,7 +504,7 @@ correct *new* answers diverse generation adds are themselves rare, so a rarity/a
 correct-rare from wrong-rare.**
 
 **(3) Verifier CAPACITY does not break the wall — 32B-zeroshot ties 7B-trained.** `verifier_32b_gpu.py` (GPU
-verdict dumps) + `verifier_32b_measure.py` → `verifier_32b_gpu.json`. Pooled n=600 (vqa_rad, slake, pmc_content),
+verdict dumps) + `verifier_32b_measure.py` → `verifier_32b_gpu.json`. Pooled n=600 (vqa_rad, slake, pmc_content — the PMC slice is **`test_2.csv`**, v2),
 selecting over the Lingshu-7B diverse pool; oracle_distinct = 0.672.
 
 | verifier | sel_acc | note |
@@ -691,7 +711,7 @@ and already **avoids the think-tax on perception**. What it lacks vs the *correc
 tier** — it never fires think, so it leaves the reasoning gains on the table (per-benchmark MMMU MVT +0.100 / IV3
 +0.120; MedXpert MVT +0.045 / IV3 +0.031). Restoring the full ACC 3-tier fires think on only the **5.45% reasoning
 residual** of the MCQ stream (2 150 of 39 422 items), so the **pooled** MCQ accuracy recovered is small (**~+0.002–0.003**,
-PMC's 33 430 items dominate) but the **per-benchmark MMMU/MedXpert parity-with-think is recovered**.
+PMC's 33 430 `test_2.csv` items dominate) but the **per-benchmark MMMU/MedXpert parity-with-think is recovered**.
 
 **Load-bearing "restore the middle tier" delta** (`METHOD_ACC.md` head-to-head, measured latency/energy, ALL-6):
 inserting the 32B-**no-think** middle tier turns an escalate-everything-to-think cascade into the ACC —
@@ -709,7 +729,7 @@ inserting the 32B-**no-think** middle tier turns an escalate-everything-to-think
 ### 5.4 Verifier / best-of-N / diverse-gen as cheap-tier boosters — value ≈ NIL for reducing think escalations
 
 Do they cut cheap-tier error enough to fire think less often? **No, not in this structure.** (i) **MCQ verifier
-degenerates** on single-letter answers (UGV content-mode collapses PMC 0.534→0.132; verifier gain +0.004) → cannot
+degenerates** on single-letter answers (UGV content-mode collapses PMC 0.534→0.132 on `test_2.csv`; verifier gain +0.004) → cannot
 boost the cheap MCQ tier → cannot reduce MCQ think-escalations (which are set by the genuine reasoning residual).
 (ii) The levers that *do* work are **open-text-only**, and the open-text arm is **2-tier no-think** — best-of-N
 *replaces* the think tier, so there is no think tier to cut. (iii) Every open-text lever is **Pareto-dominated on
@@ -758,7 +778,7 @@ no-think on perception, §5). Source: `integrated_method_vs_think.json:pooled`.
 **Read.** The router **matches-or-beats always-32B-THINK accuracy at −95.6% latency (460 ms vs 10,522 ms)**. The two
 accuracy engines are the **open-text arm** (bo8+verifier beats even 32B-no-think, which beats 32B-think by +0.12…+0.21
 because think over-thinks perception) and **MMMU keep-7B** (+0.140 vs think, the Lingshu-7B 0.80 anomaly). Perception
-MCQ ties 32B-nt(≈think). Per-benchmark Δ vs think: PMC **+0.0014**, SLAKE-cl −0.012, VQA-RAD-cl −0.008, PathVQA-cl
+MCQ ties 32B-nt(≈think). Per-benchmark Δ vs think (PMC = `test_2.csv`, n = 33,430): PMC **+0.0014**, SLAKE-cl −0.012, VQA-RAD-cl −0.008, PathVQA-cl
 −0.001, MedXpert −0.004, MMMU **+0.140**, SLAKE-o **+0.192**, VQA-RAD-o **+0.105**, PathVQA-o **+0.207**. **FLOPs are
 mixed-honest:** the MCQ arm *saves* FLOPs (1.74 pooled vs 4.57); the open-text best-of-8 arm *costs* FLOPs (16 cheap
 forwards) but buys the latency+accuracy win.
@@ -781,12 +801,15 @@ finding: **no cheap gate beats margin on MCQ**.
 
 ### 6.3 Push 1 — beat-32B FUSION on PMC (`beat32b_fusion.json`; backlog §F)
 
+*(Split: every PMC-VQA number in §6–§8 below is **`test_2.csv`**, v2, n = 33,430 — the MedEvalKit
+faithful pool — except where a line says otherwise.)*
+
 Slice-gated router × decision fusion: per benchmark route to the **held-out-guardrail-certified** winner among
 {always-32B-nt, keep-7B, calibrated **confidence-advantage** fusion}. Only **PMC-VQA** (fusion) and **MMMU** (keep-7B)
 are certified non-32B; radiology/pathology closed sets keep 32B (guardrail — fusion hurts there).
 
 - **PMC fusion (F3 conf-advantage ≡ 2-detector Chair-Varshney):** acc **0.5653** vs 32B-nt 0.5518 → **+0.0135, 95% CI
-  [0.0100, 0.0169]**, n=33,430 held-out. Classic per-*slice*-reliability C-V collapses to always-32B (d=0.0) — the beat
+  [0.0100, 0.0169]**, n=33,430 held-out (`test_2.csv`). Classic per-*slice*-reliability C-V collapses to always-32B (d=0.0) — the beat
   **requires per-sample confidence**. F5 double-reading: on the 33% disagreement set the **free** conf-advantage
   arbiter (0.412) beats both the 32B-nt (0.371) and the expensive 32B-think (0.387) arbiter → **think is a poor arbiter**.
 - **Pooled (full suite, n=42,374):** method **0.5869** vs 32B-nt 0.5732 (**+0.0138**) vs 32B-**think** 0.5631
@@ -865,7 +888,7 @@ replaces the open-text arm's parity-τ gate, shared by both modes). Held-out (5-
 → full-suite **5.695 FLOP = 1.246× always-32B (FLOP-POSITIVE)**. Swapping in **F8's certified veto** (7B on all + 32B
 only on the ~60% non-veto PMC cells = 3.74 FLOP/item) cuts full-suite FLOPs **5.695 → 4.246 (1.25× → 0.93×)**, flipping
 the arm **FLOP-negative**, while **retaining 70.4% of F3's PMC beat** over 32B (PMC Δ vs 32B-nt +0.0135 → +0.0095, still
-CI-certified above 32B) and cutting the PMC cell FLOPs 32.8%. **F10** lifts all three open cells (SLAKE_open +0.0109,
+CI-certified above 32B; `test_2.csv`, n = 33,430) and cutting the PMC cell FLOPs 32.8%. **F10** lifts all three open cells (SLAKE_open +0.0109,
 VQA_RAD_open +0.0100, PathVQA_open +0.0100 vs the prior parity-τ gate) and **repairs the SLAKE_open / VQA_RAD_open
 losses** (both now ≥ 32B-nt), because the parity-τ gate targeted iso-32B *by design*. **v2 vs v1 compute-lean** is a
 wash (+0.0005 acc, −0.006 FLOPs — it was already FLOP-negative at 0.49×); F8/F10's value is concentrated in the
@@ -905,11 +928,18 @@ Does full per-option-logprob fusion of Lingshu-7B + Lingshu-32B beat always-32B 
 OFFLINE on the only dumps carrying the full option vector — `ckpts/gate_lingshu{7b,32b}_mcq` (300–500/slice). Four
 combiners (F11_fixed / F11_reweighted log-opinion-pool / F6 contrastive-decoding / F3_confadv).
 
+> ⚠️ **Split mismatch, recorded 2026-07-30.** These dumps' PMC-VQA slice is **`test_clean.csv`** (v1,
+> the human-verified 2,000 — golds match `test_clean[idx]` 500/500 and `test_2[idx]` only 161/500), while
+> the +0.0135 it is being tested against was measured on **`test_2.csv`** (v2, n = 33,430). The two files
+> overlap on 6 items, so this is a **different item population**, not a subsample of the same one — read
+> the bullet below as "cannot certify on the clean split at n ≈ 500", never as a refutation of the
+> `test_2` result. See [`PMCVQA_PROVENANCE_2026-07-30.md`](PMCVQA_PROVENANCE_2026-07-30.md) §4.
+
 - **Every method certifies exactly ONE cell vs 32B, and it is MMMU** (F3 {MMMU}, F11_fixed {MMMU}, F11_rw {MMMU}, F6_cd
   **{} = 0 cells**) — a route-to-7B anomaly (acc7 0.853 ≫ acc32 0.624; F11_rw learns λ≈0.04 = all-7B), **not** a fusion
   win. On the 4 perception sets (broad4, n=1688) held-out fusion **collapses to λ≈1/α≈0** ("just use 32B"): F11_rw
   −0.0047 (n.s.), F6_cd exactly 0.0 (the 7B "amateur" is not uniformly worse → subtracting it is unsafe), F3 −0.0095.
-- On the **PMC subsample (n≈500)** neither F3 nor F11 can certify a +0.0135-size effect (CI ~±0.03); F11 vs F3 is within
+- On the **PMC subsample (n≈500; `test_clean.csv`, v1)** neither F3 nor F11 can certify a +0.0135-size effect (CI ~±0.03); F11 vs F3 is within
   noise. A power-matched full-posterior PMC test needs a **33k × 2-model GPU re-dump** (the MedEvalKit full dumps carry
   only top-1 conf/margin) → excluded by the SHORT-run guardrail. **Conclusion:** logit fusion does NOT extend the beat
   past PMC / past F3's cell coverage — a further independent confirmation of the fusion/recoverability wall.
@@ -917,7 +947,7 @@ combiners (F11_fixed / F11_reweighted log-opinion-pool / F6 contrastive-decoding
 ### 7.4 Robust slice-routing (`robust_slice_routing.json`, §H pass-4) — H4/H8/H2 negative; 6th wall confirmation, guardrail validated
 
 Three §H "remaining-headroom" ideas run OFFLINE to harden/extend the beat on the 6 Lingshu MCQ cells (n=40 029; baseline
-F1-certified non-32B cells = PMC fusion +0.0135 and MMMU keep-7B +0.167, n=150 anomaly).
+F1-certified non-32B cells = PMC fusion +0.0135 on `test_2.csv` and MMMU keep-7B +0.167, n=150 anomaly).
 
 - **H4 learned error-slice discovery (Domino/Spotlight) — NO genuinely-new slice.** Over 8 DISCOVER/CONFIRM splits (106
   candidate slices, BH-FDR5 + Bonferroni, "genuinely-new" = a slice **inside an always-32B dataset**, vs a
@@ -933,7 +963,7 @@ F1-certified non-32B cells = PMC fusion +0.0135 and MMMU keep-7B +0.167, n=150 a
   hand-family to **0.0** at a preserved pooled beat **+0.0117**. → credibility shrinkage does not beat the deployed
   guardrail; **H8's value is diagnostic** (confirms overfit + validates F1's CI-guardrail as the correct, sufficient fix).
 - **H2 kNN neighborhood-recovery gate — 0/5 datasets beat the scalar margin gate.** Low-budget accuracy area loses to
-  margin on all 5 (MedXpert 0.2684 vs 0.2746, PMC 0.5576 vs 0.5597, SLAKE 0.8577 vs 0.8598, VQA-RAD 0.8127 vs 0.8295,
+  margin on all 5 (MedXpert 0.2684 vs 0.2746, PMC 0.5576 vs 0.5597 [`test_2.csv`], SLAKE 0.8577 vs 0.8598, VQA-RAD 0.8127 vs 0.8295,
   PathVQA 0.8768 vs 0.8792); `knn_beats_margin = false` everywhere → the MCQ escalation signal is intrinsically weak
   (~0.6 AUROC, the recoverability wall).
 
@@ -944,7 +974,7 @@ thin-slice overfit is real and **F1's CI-lower-bound guardrail** (already deploy
 
 - **G7 semantic escalation cache — DEAD offline.** No image id/hash in the dumps → only question **text** is a key,
   conflating different images that share a templated question. Duplication ~0 on the escalation-heavy cells (MedXpert
-  0.0, PMC 0.0014, VQA-RAD 0.0637); where high it is templated (SLAKE 0.815, PathVQA 0.372) with *different* images →
+  0.0, PMC 0.0014 [`test_2.csv`], VQA-RAD 0.0637); where high it is templated (SLAKE 0.815, PathVQA 0.372) with *different* images →
   unsafe cross-image reuse. Safe image-keyed cache is unmeasurable here → future work.
 - **G2 early-exit — DATA-ABSENT for its productive mechanism.** Both legs emit **~3 generated tokens on every
   benchmark** (median 3, p90 3–7) → **prefill-bound**, generated-token halting saves ~0. The real lever (layer-depth
@@ -956,7 +986,8 @@ thin-slice overfit is real and **F1's CI-lower-bound guardrail** (already deploy
   and **deferred with a plan** (`imagetoken_prune_gpu.json`): the −26% FLOP projection stands (grounded by measured
   image-token fractions VQA-RAD 0.918 / SLAKE 0.844 / PathVQA 0.895 / PMC 0.852 / MMMU 0.644), but a correct impl is
   multi-hour (vLLM has no mid-network token-drop; Qwen2.5-VL 64-layer 3D M-RoPE needs position-id re-indexing) and the
-  measured resolution-cap analog shows image-token reduction is **FREE on PMC (−0.001) but COSTS on radiology (SLAKE
+  measured resolution-cap analog shows image-token reduction is **FREE on PMC (0.543 → 0.542, −0.001; `test_clean.csv`,
+  v1, n = 2,000) but COSTS on radiology (SLAKE
   −0.017, VQA-RAD −0.040)** → a **per-benchmark radiology guardrail is mandatory**; a wrong impl would fabricate a
   lesion-safety accuracy number (no-fabrication rule). G4 stacks with the §6.4-validated G8 (prefetch) + G5 (suppressor).
 

@@ -66,6 +66,13 @@ forward.** Reproduce it all with one command: `python3 src/cascade_methods/metho
 **The reporting pool is "Variant B": 5 benchmarks / 8 cells / n = 42,224, with MMMU excluded** (see §3a). All
 thresholds are 5-fold cross-fit; all CIs are 10,000-resample paired question-level bootstraps.
 
+> **Which PMC-VQA split.** Every PMC-VQA number in §3–§9 of this file is the MedEvalKit/Lingshu track = **`test_2.csv`
+> (v2, 33,430 items)** — hard-coded in vendor code at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`, and **79%** of this
+> pool. The project's *other* track (the June MedVLThinker cascade, §6) used a **different** file: **`test_clean.csv`
+> (v1, 2,000 items — the authors' only human-verified split)**, which is **24.3%** of its 8,220-item pool. The two
+> overlap on **6 items**, so their numbers are not interchangeable. Details:
+> [`results/cascade_methods/docs/current/PMCVQA_PROVENANCE_2026-07-30.md`](results/cascade_methods/docs/current/PMCVQA_PROVENANCE_2026-07-30.md).
+
 **Baselines.** always-32B-**think** = **0.5591** accuracy, 4.57 FLOP-eq, 10,521 ms, 2,002 J; always-32B-**no-think** =
 0.5729, 4.57 FLOP-eq, 665 ms, 127 J; always-7B = 0.5549, 1.00 FLOP-eq, 347 ms. (FLOP-eq = multiples of one 7B forward;
 "× a 32B call" divides by 4.57.) Sources: `artifacts/f8_mode_vsthink_ci.json`,
@@ -87,15 +94,16 @@ thresholds are 5-fold cross-fit; all CIs are 10,000-resample paired question-lev
 > Corrected here to the measured 0.5591.*
 
 **Where the win actually comes from — and it is concentrated.** 89% of the +0.0245 comes from **2 of the 8 cells**:
-PathVQA-open (+0.01255, 51%) and PMC-VQA (+0.00942, 38%). Against the *deployable* baseline (always-32B-no-think, not
+PathVQA-open (+0.01255, 51%) and PMC-VQA (+0.00942, 38%; `test_2.csv`, n = 33,430). Against the *deployable* baseline (always-32B-no-think, not
 the thinking one), **four cells contribute exactly 0.0000** — because there the method simply *is* always-32B-no-think.
 The honest one-line claim is therefore:
 
 > *"Matches the strong model at roughly half the compute, with a significant accuracy gain on two specific cells —
-> open-ended free text and PMC-VQA — plus a measured characterization of why the remaining cells are unwinnable."*
+> open-ended free text and PMC-VQA (`test_2.csv`) — plus a measured characterization of why the remaining cells are
+> unwinnable."*
 
 Per-benchmark: **PathVQA-open +0.076 → +0.086** (the trained verifier; the only CI-certified open beat), **PMC-VQA
-+0.0135** (fusion) or **+0.0095** (certified veto) versus 32B-no-think, and the perception MCQ cells at **matched
++0.0135** (fusion) or **+0.0095** (certified veto) versus 32B-no-think — both on **`test_2.csv`, n = 33,430** — and the perception MCQ cells at **matched
 accuracy** but a small fraction of the latency. SLAKE-open (+0.0016) and VQA-RAD-open (+0.0050) improve but their CIs
 **span zero** at n = 645 / 200 — do not quote them as wins.
 
@@ -144,7 +152,7 @@ So the method is **regime-adaptive**: never think on perception, reserve the slo
 residual — and it's scored against the slow always-think baseline, where a cheap method wins on both axes.
 
 > **The honest caveat on this framing** (retrospective §7 hole 1, and it is the project's biggest open weakness): the
-> dumps used as the *think* baseline for PMC-VQA, SLAKE-closed and VQA-RAD-closed average **3–4 generated tokens** and
+> dumps used as the *think* baseline for PMC-VQA (`test_2.csv`), SLAKE-closed and VQA-RAD-closed average **3–4 generated tokens** and
 > agree with the no-think run on 92–94% of predictions — they were produced by a harness flag that only appends *"put
 > the letter in \boxed{}"*, which is not a reasoning prompt. Genuine 32B reasoning was measured on only **10.3%** of the
 > pool, yet the 10,521 ms price is charged to all of it. Charging reasoning cost only where a real reasoning run exists
@@ -155,7 +163,8 @@ residual — and it's scored against the slow always-think baseline, where a che
 
 - **MCQ arm = the efficiency engine.** 7B answers; a **confidence-margin gate** (escalate iff `margin < τ`) sends only
   the low-confidence questions to the 32B in **no-think** mode. Pooled escalation is **16.2%**, but it varies enormously
-  per benchmark — PMC-VQA 8.5%, SLAKE-closed 20.5%, PathVQA-closed 45.7%, VQA-RAD-closed 57.0%, MedXpert 89.6%. On
+  per benchmark — PMC-VQA 8.5% (`test_2.csv`, n = 33,430), SLAKE-closed 20.5%, PathVQA-closed 45.7%, VQA-RAD-closed
+  57.0%, MedXpert 89.6%. On
   **PMC-VQA** the accuracy-max setting adds a lever: either *fuse* the two models on the ~33% of items where they
   disagree (v1) or apply a **certified veto** — keep the 7B answer inside confidence bins where a Wilson lower bound on
   its precision beats the 32B, and never run the 32B there (v2, cheaper). A **prefill-prefetch** trick (run the 32B's
@@ -232,7 +241,8 @@ never deployed at all, because Lingshu's reasoning gain is ~0 so the tier would 
 > three weeks of review. Full account: retrospective §5.1, §2.2, §10.1 C20–C25, §10.5.
 *Honest notes:* (a) the agreement rule ACC originally used is **not novel** — it is Agreement-Based Cascading
 (arXiv 2407.02348), retracted in the same document that proposed it; the contribution is the **structure** (the fast
-middle tier). (b) These are **internal-harness** numbers (evaluation context B, 6 benchmarks / 8,220 samples) and must
+middle tier). (b) These are **internal-harness** numbers (evaluation context B, 6 benchmarks / 8,220 samples, whose
+PMC-VQA cell is **`test_clean.csv`, n = 2,000 — 24.3% of the pool**, not the `test_2.csv` used in §3) and must
 **never** be mixed with the MedEvalKit figures in §3 — see retrospective §9.3. (c) On Lingshu the simple margin gate is
 what we deploy: gate choice turned out to be **model-specific** (margin AUROC 0.7254 vs agreement 0.6565, and
 resolution-stability is *inert* because the 7B is 98.95% stable between cap320 and full resolution).
@@ -275,7 +285,8 @@ bound the problem:
   hit it: hidden-state probes, kNN gates, self-verification, gradient-boosted gates, rich fused features, the published
   post-hoc deferral rule, cross-family and image-based routers, a full LoRA fine-tune, trained open-text gates,
   logit-level fusion, decision-level fusion, super-learner ensembling, learned slice discovery, credibility shrinkage,
-  and the open-ended cascade. Result: the **only** closed-MCQ slice we can certifiably beat the 32B on is **PMC-VQA**.
+  and the open-ended cascade. Result: the **only** closed-MCQ slice we can certifiably beat the 32B on is **PMC-VQA**
+  (on `test_2.csv`, n = 33,430).
   Automatic slice discovery, given the whole feature space, found **1.62 genuinely-new slices per split — *below* a
   permutation null of 5.61**, i.e. nothing.
 - **The selection wall.** On open-text, a correct answer is often among N samples but the verifier converts only

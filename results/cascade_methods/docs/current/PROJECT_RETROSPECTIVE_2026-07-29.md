@@ -130,8 +130,9 @@ signal can harvest. The project came to call this the **luck floor**.
 
 **P0.4 — Cross-model 7B→32B cascade.** The structural fix was to route *between two different
 models*. Models: `MedVLThinker-7B-RL_m23k` → `MedVLThinker-32B-RL_m23k`. Frozen confidence-margin
-gate at τ = 0.426, calibrated on a held-out PMC-VQA training sample; cheap leg served at a reduced
-image resolution (cap320). Deployed anchor, reproduced exactly on 2026-06-17:
+gate at τ = 0.426, calibrated on a held-out PMC-VQA training sample (v1 `train.csv`, n = 3,000);
+cheap leg served at a reduced image resolution (cap320). Deployed anchor, reproduced exactly on
+2026-06-17:
 **accuracy 0.5718, escalation 63.3%, prefill-inclusive compute 73.6% of always-32B**, over
 6 benchmarks / 8,220 samples (`progress/progress_June_17.md` §0).
 
@@ -173,10 +174,14 @@ Labelling the 32B in every mode revealed that **reasoning over-thinks perception
 |---|---|---|---|
 | SLAKE | 0.764 | 0.841 | **+0.077** |
 | VQA-RAD | 0.776 | 0.893 | **+0.117** |
-| PMC-VQA | 0.556 | 0.565 | +0.009 |
+| PMC-VQA *(`test_clean.csv`, n = 2,000)* | 0.556 | 0.565 | +0.009 |
 | PathVQA | 0.673 | 0.672 | −0.001 |
 | MMMU | 0.688 | 0.629 | −0.059 (reasoning needed) |
 | MedXpert-R / -U | 0.326 / 0.384 | 0.288 / 0.301 | reasoning needed |
+
+*(Internal-harness numbers: this whole era's PMC-VQA cell is the human-verified v1
+`test_clean.csv`, 2,000 items — **not** the 33,430-item `test_2.csv` of the later MedEvalKit
+tables. See §9.3.)*
 
 …at roughly **2 generated tokens versus ~477**. Swapping the escalation target from
 reasoning-mode to direct-mode dropped compute from **69.5% → 48.6% and simultaneously raised
@@ -451,7 +456,8 @@ vLLM 0.9.0.1, the Qwen2_5_VL wrapper, `datasets_path=hf`, `TORCHDYNAMO_DISABLE`)
 VQA-RAD also reproduce.
 
 - **Faithful two-tier MCQ cascade at iso-strong accuracy:** PMC-VQA **−69% compute / −33%
-  latency** (Lingshu, n=33k), SLAKE −56% / −22%; cross-family PMC −49%, VQA-RAD −41%. Win magnitude
+  latency** (Lingshu, n=33k — `test_2.csv`), SLAKE −56% / −22%; cross-family PMC −49%
+  (`test_2.csv`), VQA-RAD −41%. Win magnitude
   ≈ the (32B − 7B) accuracy gap. Gate-signal ordering: **margin > confidence > cumulative
   log-probability**.
 - **The confidence gate cannot be improved by substitution:** the state-of-the-art post-hoc
@@ -476,7 +482,7 @@ VQA-RAD also reproduce.
 
 **Efficiency generalizes across architectures** (InternVL3 is not Qwen-based). Compute savings at
 iso-strong accuracy: MMMU-Med Lingshu keep-cheap / MedVLThinker −14% / InternVL3 **−62%**;
-PMC-VQA Lingshu **−69%** / MVT −49% / IV3 −16%; VQA-RAD −17 / −41 / **−67%**;
+PMC-VQA (`test_2.csv`) Lingshu **−69%** / MVT −49% / IV3 −16%; VQA-RAD −17 / −41 / **−67%**;
 PathVQA −31 / **−68** / −20%.
 
 **Reasoning is warranted only where reasoning has headroom.** MMMU-Medical gains
@@ -628,7 +634,7 @@ Reasoning:direct latency ratios: MedVLThinker 49×, MedGemma 45×, QoQ 43×, Chi
    verifier confidence on open text.
 
 **Three pushes:** a confidence-advantage fusion on PMC-VQA (+0.0135 [0.0100, 0.0169], n=33,430
-held out — a broad-slice beat, but it runs both legs, +22% compute); a **parallel prefill
+held out — **`test_2.csv`** — a broad-slice beat, but it runs both legs, +22% compute); a **parallel prefill
 prefetch** giving −12.1% latency at zero accuracy change; and best-of-8+verifier on SLAKE-open
 (+0.0496) cutting escalation ~4× (53% → 13%).
 
@@ -804,8 +810,9 @@ gate loses to margin on multiple choice and to verifier confidence on open text
 - **Important:** τ is refit inside every fold. **No single global τ is stored anywhere.** Unlike
   the earlier MedVLThinker work — which froze one τ = 0.426 on a PMC-train sample and transferred
   it unchanged — this method has no materialized deployable threshold. See §7 hole 7.
-- **Held-out escalation rates** (`artifacts/method_final.json`): PMC-VQA 8.5%, SLAKE-closed 20.5%,
-  VQA-RAD-closed 57.0%, PathVQA-closed 45.7%, MedXpert 89.6%, MMMU 0%. Pooled 16.16%.
+- **Held-out escalation rates** (`artifacts/method_final.json`): PMC-VQA 8.5% (`test_2.csv`,
+  n = 33,430), SLAKE-closed 20.5%, VQA-RAD-closed 57.0%, PathVQA-closed 45.7%, MedXpert 89.6%,
+  MMMU 0%. Pooled 16.16%.
 
 ### accuracy-max: a guardrailed per-benchmark policy router
 
@@ -813,7 +820,8 @@ For each benchmark, pick the held-out **paired-bootstrap-certified** winner amon
 {always-32B-direct, keep-7B, fusion/veto}. The default is always-32B-direct; a deviation is
 admitted only if its 95% paired-bootstrap **lower** bound exceeds 0, with a cost-aware tiebreak
 (`src/cascade_methods/beat32b_fusion.py:f1_router_choice`, lines 246–258).
-**Certified non-32B cells: PMC-VQA and MMMU only.**
+**Certified non-32B cells: PMC-VQA and MMMU only.** *(Every PMC-VQA number in this section and in §4
+is the MedEvalKit track — v2 **`test_2.csv`**, n = 33,430. See §9.3.)*
 
 - **Version 1 lever — confidence-advantage fusion on PMC-VQA**
   (`beat32b_fusion.py:confadv_fuse`): run BOTH legs; on the ~33% of items where they disagree, take
@@ -955,7 +963,7 @@ Source: `artifacts/paper_baselines.json:paired_bootstrap_ci`.
 
 | cell | n | 7B | 32B-direct | 32B-reasoning | method | policy (escalation) | Δ vs oracle (CI) | compute | latency seq/par |
 |---|---|---|---|---|---|---|---|---|---|
-| PMC-VQA | 33,430 | 0.5427 | 0.5518 | 0.5494 | 0.5508 | margin cascade (8.5%) | −0.0010 [−0.0058, +0.0039] | 1.386 | 403/403 |
+| PMC-VQA *(`test_2.csv`, v2, unverified)* | 33,430 | 0.5427 | 0.5518 | 0.5494 | 0.5508 | margin cascade (8.5%) | −0.0010 [−0.0058, +0.0039] | 1.386 | 403/403 |
 | SLAKE-closed | 836 | 0.8254 | 0.8589 | 0.8636 | 0.8517 | cascade (20.5%) | −0.0120 [−0.0299, +0.0060] | 1.935 | 483/483 |
 | VQA-RAD-closed | 251 | 0.7809 | 0.8526 | 0.8406 | 0.8327 | cascade (57.0%) | −0.0199 [−0.0398, 0.0] | 3.604 | 726/726 |
 | PathVQA-closed | 3,362 | 0.8409 | 0.8891 | 0.8891 ‡ | 0.8882 | cascade (45.7%) | −0.0009 [−0.0042, +0.0024] | 3.089 | 651/651 |
@@ -967,7 +975,8 @@ Source: `artifacts/paper_baselines.json:paired_bootstrap_ci`.
 
 ‡ PathVQA-closed has **no 32B-reasoning dump**; the reasoning column is set equal to direct.
 
-**accuracy-max changes only:** PMC → fusion 0.5653 (Δ vs 32B-direct **+0.0135 [+0.0100, +0.0169]
+**accuracy-max changes only:** PMC (`test_2.csv`, n = 33,430) → fusion 0.5653 (Δ vs 32B-direct
+**+0.0135 [+0.0100, +0.0169]
 SIG**, compute 5.57) in version 1, or veto 0.5613 (Δ **+0.0095 [+0.0071, +0.0118] SIG**, compute
 3.741, −32.8% versus fusion) in version 2; the other closed cells snap to always-32B-direct. The
 learning-to-defer rule moves the open cells versus 32B-direct: SLAKE-open −0.0093 → **+0.0016**,
@@ -997,9 +1006,11 @@ contributes +0.0006 × 0.945 ≈ +0.0006. **Remove the open arm and compute-lean
 vs-reasoning win disappears** (multiple-choice-only Δ +0.0006, CI spans 0). This is the accuracy
 engine.
 
-**Load-bearing 2 — the PMC fusion/veto (accuracy-max only).** PMC is 78.9% of the pool. Fusion
-lifts it 0.5508 → 0.5653, contributing **+0.0114 pooled**; the four other closed cells snapping to
-always-32B add ≈ +0.0006. Remove it and accuracy-max collapses to compute-lean.
+**Load-bearing 2 — the PMC fusion/veto (accuracy-max only).** PMC (`test_2.csv`, n = 33,430) is
+78.9% of the pool. Fusion lifts it 0.5508 → 0.5653, contributing **+0.0114 pooled**; the four other
+closed cells snapping to always-32B add ≈ +0.0006. Remove it and accuracy-max collapses to
+compute-lean. *(The 78.9% weight is a property of the MedEvalKit `test_2` pool only; in the
+MedVLThinker-Eval pool the PMC cell — `test_clean.csv` — is 24.3%. §9.3.)*
 
 **Load-bearing 3 — the margin gate and the direct-mode strong leg (the compute story).** The
 multiple-choice arm's pooled compute is **1.739 versus 4.57** (0.38×) at 454 ms versus 10,522 ms.
@@ -1080,6 +1091,10 @@ nothing but the reasoning instruction. On reasoning-heavy benchmarks CoT helps s
 **The corrected cross-family table** (best-matched arms on disk; Δ = think − no-think; **bold** = 95%
 paired-bootstrap CI excludes zero):
 
+*(Internal-harness cells: the **PMC** column is the human-verified v1 **`test_clean.csv`**,
+n = 2,000 per cell — verified 2,000/2,000 against `test_clean.Answer_label`, **not** the
+MedEvalKit `test_2.csv`. See §9.3.)*
+
 | family | PMC | SLAKE | VQA-RAD | PathV | MMMU | MX-R | MX-U |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | MedVLThinker-32B | −0.0075 | **−0.1274** | **−0.0846** | +0.0012 | **+0.0882** | **+0.0491** | **+0.0884** |
@@ -1105,7 +1120,7 @@ matched: **7/8** strictly negative (InternVL2.5-8B pooled −0.0076 [−0.0208, 
 `ckpts/acc_gen/{internvl25_8b_think,phi35v_think}/`, 4 files / 6,050 rows each, perception only.
 
 **Two cells flipped sign** versus the published table: MedVLThinker PMC-VQA +0.0055 → **−0.0075** and
-Lingshu PMC-VQA +0.0115 → **−0.0425**.
+Lingshu PMC-VQA +0.0115 → **−0.0425** (both on `test_clean.csv`, n = 2,000).
 
 **The one real exception.** MedGemma-27B on PathVQA is a genuine, significant perception win for
 reasoning: **+0.0413 [+0.0220, +0.0607]**, p = 0.0000, on a **fully matched** pair. It survived the
@@ -1408,7 +1423,7 @@ Covered above as N1–N3 and N16, plus:
 | N75 | InternVL3 faithful evaluation | blocked by a harness wrapper bug; not pursued (confirmatory) |
 | N76 | Semantic escalation cache | **data-absent**: no image hash in any dump; duplication ≈0 exactly where escalation is heavy |
 | N77 | Generated-token early exit | **data-absent**: both legs emit ~3 generated tokens on every benchmark (prefill-bound); the real lever needs intermediate-layer logits nobody dumped |
-| N78 | 32B image-token pruning | **deferred with a plan**: projection −26% compute at p=0.50, but no vLLM mid-network token drop and 3D positional re-indexing needed; the measured resolution-cap analogue is free on PMC (−0.001) and **costs on radiology** (VQA-RAD −0.040) ⇒ a radiology guardrail is mandatory |
+| N78 | 32B image-token pruning | **deferred with a plan**: projection −26% compute at p=0.50, but no vLLM mid-network token drop and 3D positional re-indexing needed; the measured resolution-cap analogue is free on PMC (0.543 → 0.542, −0.001; `test_clean.csv`, n = 2,000) and **costs on radiology** (VQA-RAD −0.040) ⇒ a radiology guardrail is mandatory |
 | N79 | INT4 latency/accuracy | **projection only** — a CDN outage stalled 2 of 6 quantized shards; the quantized checkpoint on disk is the non-medical base model, not Lingshu |
 | N80 | Lossless speculative decoding | infeasible on vLLM 0.10 (draft-model speculative decoding rejected) |
 | N81 | Datasets not adopted | Quilt-VQA (gated), Medical-Diff-VQA / MIMIC-CXR-VQA / EHRXQA (PhysioNet-gated), OmniMedVQA-as-open (it is multiple choice), PubMedVision / MedTrinity (training corpora), ROCOv2 / pmc_oa (captioning) |
@@ -1459,7 +1474,8 @@ Ranked by severity. Every hole is stated as it is, not as it could be spun.
 
 **Hole 1 — The "always-32B-with-reasoning" baseline is a NO-reasoning run on ~90% of the pool,
 charged at reasoning cost.**
-The dump used as the reasoning baseline for PMC-VQA, SLAKE-closed and VQA-RAD-closed
+The dump used as the reasoning baseline for PMC-VQA (`test_2.csv`, n = 33,430), SLAKE-closed and
+VQA-RAD-closed
 (`MedEvalKit/eval_results_lingshu32b_think`) has mean generated tokens of **3.09 / 4.18 / 4.26**,
 and agrees with the plain direct-mode run on **92–94%** of predictions. It was produced by the
 harness's `--reasoning True` flag under the *old* prompt, which only appends "put the letter in
@@ -1485,8 +1501,9 @@ replacing the clause — a decision for the researcher, since `MedEvalKit/` is a
 **Hole 2 — 89% of the headline delta comes from 2 of 8 cells; against the deployable baseline,
 5 of 8 cells contribute exactly zero.**
 `[derived from f8_mode_vsthink_ci.json]` Contributions to +0.0245: PathVQA-open +0.01255 (51%),
-PMC-VQA +0.00942 (38%), SLAKE-open +0.00216 (9%), everything else ≤ +0.00028. Against
-always-32B-direct the per-cell deltas are +0.0095 (PMC), +0.0016 / +0.0050 / +0.0860 (open), and
+PMC-VQA +0.00942 (38%; `test_2.csv`, n = 33,430), SLAKE-open +0.00216 (9%), everything else
+≤ +0.00028. Against
+always-32B-direct the per-cell deltas are +0.0095 (PMC, `test_2.csv`), +0.0016 / +0.0050 / +0.0860 (open), and
 **exactly 0.0000 for SLAKE-closed, VQA-RAD-closed, PathVQA-closed and MedXpert** — because the
 method *is* always-32B-direct there. Pooled vs direct: +0.0106.
 Additionally, and reported nowhere: `method_final_mmmu_corrected.json` Variant B records a
@@ -1562,11 +1579,12 @@ accuracy; this is not a deployable single policy.**
 `heldout()` refits τ inside each cell with the target set to that cell's own 32B accuracy, and the
 policy router picks a *different policy* per benchmark. Deployment would therefore require knowing
 which benchmark a query came from **and** having labelled calibration data with strong-leg labels
-for it. Escalation ranges 8.5% (PMC) to 89.6% (MedXpert), so a single frozen threshold would behave
+for it. Escalation ranges 8.5% (PMC, `test_2.csv`) to 89.6% (MedXpert), so a single frozen threshold
+would behave
 very differently. **No τ is materialized in any artifact** — unlike the earlier MedVLThinker work,
 which froze one τ = 0.426 and transferred it. The policy choice is also made using CIs computed on
 the same held-out data that is then reported (6 cells × 3 policies = 18 tests, no multiplicity
-control), and only 2 cells deviate — one contaminated, one carrying 79% of the pool.
+control), and only 2 cells deviate — one contaminated, one carrying 79% of the MedEvalKit pool.
 *Fix:* add a "single frozen policy" row and a Holm-corrected policy-selection row, and report how
 much of the headline survives.
 
@@ -1593,20 +1611,38 @@ reference is n = 25, from a gitignored log.
 *Fix:* re-measure at n ≥ 100 stratified across all benchmarks' real prompts and images; report
 per-benchmark, and report median alongside mean.
 
-**Hole 10 — PMC-VQA carries 79% of the pool and the only significant multiple-choice beat, on an
-auto-generated split.**
-The multiple-choice half of the win is entirely the PMC cell (+0.0095 versus direct mode). It is
-evaluated on `test_2.csv` (33,430 items, hard-coded at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:41`),
-the automatically generated split, where every model plateaus at 0.52–0.56 — consistent with a
-substantial noisy-label floor. Both legs are trained on PMC-VQA's training split, so a rule that
-keeps the cheap answer where its confidence is high may be exploiting shared label-noise structure.
-PMC-VQA ships a human-verified `test_clean` split; **it is not on disk** at
-`/data/dan/dataset/medevalkit/PMC-VQA/` (which holds `test.csv`, 50,001 lines, and `test_2.csv`,
-34,824 lines) and has never been used anywhere in the repo.
+**Hole 10 — PMC-VQA carries 79% of the MedEvalKit pool and the only significant multiple-choice
+beat, on an auto-generated split.**
+The multiple-choice half of the win is entirely the PMC cell (+0.0095 versus direct mode, on
+**`test_2.csv`**). It is evaluated on `test_2.csv` (v2, 33,430 items, hard-coded at
+`MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`), the automatically generated split, where every model
+plateaus at 0.52–0.56 — consistent with a substantial noisy-label floor. Both legs are trained on
+PMC-VQA's training split (v1 `train.csv`), so a rule that keeps the cheap answer where its
+confidence is high may be exploiting shared label-noise structure.
+
+PMC-VQA also ships a human-verified `test_clean` split (v1, 2,000 items — the authors' only manually
+checked split). **Correction, 2026-07-30 (logged as X20): it *is* on disk, and it has been in use
+all along.** `/data/dan/dataset/medevalkit/PMC-VQA/test_clean.csv` (418,686 bytes, 2,000 data rows,
+mtime 2026-06-29 07:18) plus a byte-identical second copy at
+`/data/dan/dataset/pmc_vqa_train/test_clean.csv`; and the MedVLThinker-era cascade track evaluates
+exactly those 2,000 items — `MedVLThinker-Eval`'s `pmc_vqa` slice matches `test_clean.csv`
+**2,000/2,000** positionally on question, `answer_label` and answer text, and
+`ckpts/gate_7b_prune/cap320/ckpt_PMC-VQA_nothink_norag.jsonl`'s golds match
+`test_clean.Answer_label[idx]` **2,000/2,000**.
+*The withdrawn wording, kept for the record:* "PMC-VQA ships a human-verified `test_clean` split;
+**it is not on disk** at `/data/dan/dataset/medevalkit/PMC-VQA/` (which holds `test.csv`, 50,001
+lines, and `test_2.csv`, 34,824 lines) and has never been used anywhere in the repo." (Those two
+line counts were raw `wc -l`, which over-counts: the files hold 50,000 and 33,430 *data* rows.)
+Evidence: `docs/current/PMCVQA_PROVENANCE_2026-07-30.md` §3 and §3.1.
 *One thing that was checked and is clean:* the beat is not a fold artifact — +0.0095 with
-modulo-5 folds versus +0.0097 with figure-grouped folds, despite 26.4% of PMC rows sharing a figure.
-*Fix:* download `test_clean.csv`, re-run both legs on those ~2,000 items (~20 min GPU), re-cost the
-levers on CPU.
+modulo-5 folds versus +0.0097 with figure-grouped folds, despite 26.4% of `test_2` PMC rows sharing
+a figure.
+*Fix (revised 2026-07-30):* the clean-split re-run is **already satisfied for the
+cascade/MedVLThinker track** and is outstanding **only** for the MedEvalKit/Lingshu track, which
+would need a one-line vendor patch at `PMC_VQA.py:39` (~20 min GPU) — or can be approached with zero
+GPU from the clean-split dumps that already exist (`PMCVQA_PROVENANCE_2026-07-30.md` §4, Route B).
+Note also that `test_clean` ∩ `test_2` = **6 items**, so the existing 33,430-row dumps cannot be
+filtered down to the verified split; that line of inquiry is closed.
 
 **Hole 14 — Reproducibility: the entire July chain is outside git, a superseded constant is still
 live, and the paper's own figure and table disagree.**
@@ -1683,7 +1719,8 @@ Sequenced so that integrity work comes before new science, and so that the cheap
 Done during this retrospective's preparation, from live dumps:
 
 **M1 — A peer-difficulty signal is far better at recoverability than the deployed margin.** Using
-the response matrix across 6 aligned model configurations (44,694 items), recoverability AUROC
+the response matrix across 6 aligned model configurations (44,694 items; MedEvalKit track, so the
+PMC cell is **`test_2.csv`**, n = 33,430), recoverability AUROC
 (peer-difficulty / margin): PMC 0.649 / **0.407**, SLAKE 0.583 / **0.236**, VQA-RAD 0.789 /
 **0.472**, PathVQA 0.799 / **0.670**, MedXpert 0.774 / **0.450**. **The deployed margin is
 anti-predictive of recoverability on 4 of 5 sets.**
@@ -1691,9 +1728,10 @@ anti-predictive of recoverability on 4 of 5 sets.**
 **M2 — But that does not translate into a deployable win.** Net gain per escalated item is
 P(strong right) − P(cheap right); margin wins the *detection* term, offsetting its
 anti-correlation on the *recovery* term. At a fixed escalation budget of 20%, a cross-fit rule over
-[margin, peer, margin×peer] versus margin alone: PMC **+0.0001** (against oracle headroom +0.1077),
+[margin, peer, margin×peer] versus margin alone: PMC **+0.0001** (`test_2.csv`; against oracle
+headroom +0.1077),
 SLAKE +0.0072, VQA-RAD +0.0022, PathVQA +0.0144, MedXpert +0.0175. A signal costing **four extra
-model forwards** captures ~0% of net-gain headroom on the cell carrying 79% of the pool. This is
+model forwards** captures ~0% of net-gain headroom on the cell carrying 79% of the MedEvalKit pool. This is
 the strongest evidence yet that the ~0.6 recoverability wall is close to a genuine ceiling.
 
 **M3 — The coverage wall is 4.5× the selection wall** (see §5.5): 434 of 1,064 questions (40.8%)
@@ -1735,7 +1773,7 @@ generator work is promoted above verifier work.
    ≥15% on PathVQA-closed or VQA-RAD-closed with the guardrail intact. Explicitly **do not** set a
    criterion on PMC — M2 shows the headroom there is ~0. *Expected magnitude:* bounded above by
    M2's column, so +0.009 to +0.018 on the three cells that currently contribute exactly zero, and
-   ~0 on PMC. *(Closes hole 2 partially, hole 12 partially.)*
+   ~0 on PMC (`test_2.csv`). *(Closes hole 2 partially, hole 12 partially.)*
 4. **Single frozen policy row** *(closes hole 7)*. One τ calibrated once on a held-out calibration
    set and applied unchanged everywhere; one globally-chosen policy; the policy selection
    Holm-corrected over 18 tests. Report honestly how much survives.
@@ -1744,7 +1782,8 @@ generator work is promoted above verifier work.
    *recipe* (pick the gate per family), not a fixed gate.
 6. **Repair the veto's certificate** *(closes hole 11)*. Paired one-sided test, Holm-corrected;
    report the beat under the corrected rule.
-7. **Gauge R&R on the scorers** *(addresses holes 3 and 10)*. On a stratified PMC sample plus the
+7. **Gauge R&R on the scorers** *(addresses holes 3 and 10)*. On a stratified PMC sample
+   (`test_2.csv`, the split the +0.0135 was measured on) plus the
    three open sets, run every available scorer over the *same* outputs and decompose item / model /
    **scorer** variance. *Criterion:* scorer standard deviation < 1/3 of the claimed effect
    (< 0.0045 against +0.0135). Extend this to re-grading all three open sets with the validated
@@ -1808,8 +1847,17 @@ generator work is promoted above verifier work.
     prefill probe become worth heavy investment.
 16. **Batch-8 latency measurement (~30 min)** *(closes hole 8)*.
 17. **Reasoning-latency re-measurement at n ≥ 100, per benchmark** *(closes hole 9)*.
-18. **PMC-VQA clean-split check** *(closes hole 10)*: download the human-verified split, re-run both
-    legs (~20 min GPU), re-cost on CPU.
+18. **PMC-VQA clean-split check** *(closes hole 10)*. ~~Download the human-verified split~~ —
+    **revised 2026-07-30 (X20): no download is needed, `test_clean.csv` is already on disk in two
+    places and the whole MedVLThinker/internal-harness track already runs on it.** What is actually
+    outstanding: (a) offline, zero GPU — replicate the PMC fusion/veto comparison on the clean 2,000
+    from the existing `ckpts/gate_7b_prune/cap320/` and `ckpts/gate_32b_modes/nothink_fullres/`
+    dumps (both have `opt_logprobs` on all 2,000 rows), pre-registering that n = 2,000 is
+    *underpowered* against a +0.0135 effect (CI half-width ≈ 0.0141), so a null is the expected
+    result, not a refutation; (b) ~20 min GPU — bring the **MedEvalKit/Lingshu** track onto the clean
+    split via a one-line patch at `PMC_VQA.py:39`, reported as an extra column beside `test_2`, never
+    as a replacement (comparability with the published Lingshu baseline depends on `test_2`).
+    Details and the power table: `docs/current/PMCVQA_PROVENANCE_2026-07-30.md` §4.
 19. **Open-arm leakage repair** *(closes hole 4)*: leave-one-dataset-out retraining, or the
     zero-GPU fallback of reporting on the verifier's held-out 30%, plus folding in the two existing
     truly-held-out open datasets.
@@ -1881,8 +1929,8 @@ generator work is promoted above verifier work.
 Stop describing the result as a suite-wide accuracy advantage. The honest claim is:
 
 > *"Matches the strong model at roughly half the compute, with a significant accuracy gain on two
-> specific cells — open-ended free text and PMC-VQA — and a measured characterization of why the
-> remaining cells are unwinnable."*
+> specific cells — open-ended free text and PMC-VQA (`test_2.csv`) — and a measured
+> characterization of why the remaining cells are unwinnable."*
 
 The characterization (§5.5, M1–M3) is a stronger contribution than +0.0245 ever was, and unlike
 +0.0245 it survives the honest re-costing in item 1.
@@ -1938,9 +1986,24 @@ There are **three** separate evaluation contexts in this repo.
 
 | context | harness | pool | n |
 |---|---|---|---|
-| **A. Faithful MedEvalKit** (the paper's suite) | `MedEvalKit/eval.py`, vLLM, seed 42 | 7 benchmarks | PMC 33,430 · SLAKE 2,094 · VQA-RAD 451 · PathVQA 6,719 · MMMU 150 · MedXpert 2,000 · OmniMed 88,996 |
-| **B. Internal NGC harness** (the 5-family bake-off) | `src/labeling/*`, `ckpts/acc_gen/` | 6 benchmarks | 8,220 total |
+| **A. Faithful MedEvalKit** (the paper's suite) | `MedEvalKit/eval.py`, vLLM, seed 42 | 7 benchmarks | PMC 33,430 (`test_2.csv`) · SLAKE 2,094 · VQA-RAD 451 · PathVQA 6,719 · MMMU 150 · MedXpert 2,000 · OmniMed 88,996 |
+| **B. Internal NGC harness** (the 5-family bake-off) | `src/labeling/*`, `ckpts/acc_gen/` | 6 benchmarks | 8,220 total, of which PMC 2,000 (`test_clean.csv`) |
 | **C. Custom open-text pipeline** (LLM-judged) | `run_openvqa.py` + `run_judge.py` | 5 open sets | 645 · 200 · 1,500 · 1,200 · 2,000 |
+
+> ### ⚠ LANDMINE — the project has **two different PMC-VQA splits**, one per track. Never mix them.
+>
+> | track | PMC-VQA file | n | share of its own pool | verified by the authors? |
+> |---|---|---:|---:|---|
+> | **A. MedEvalKit / Lingshu** (the paper's suite) | **`test_2.csv`** (v2) | 33,430 | **79%** of Variant B (n = 42,224) | **no** — zero published verification, zero published accuracy |
+> | **B. Internal harness / MedVLThinker-Eval** (the June cascade) | **`test_clean.csv`** (v1) | 2,000 | **24.3%** of 8,220 | **yes** — the authors' only manually checked split |
+>
+> The split is *not* a setting we chose in track A: `test_2.csv` is hard-coded in unmodified vendor
+> code at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39`. **`test_clean` ∩ `test_2` = 6 items**, so the two
+> are effectively disjoint populations — a number from one cannot be filtered into, compared against,
+> or substituted for a number from the other, and the same models score several points apart on them.
+> Any PMC-VQA number in this repository must be quoted with its file name and row count. Full
+> provenance, including which dumps belong to which split:
+> **`docs/current/PMCVQA_PROVENANCE_2026-07-30.md`**.
 
 **The headline pool (n = 42,374) is a splice of A and C**: 40,029 multiple-choice cells from A plus
 2,345 open cells from C. It is not a single harness run. The method spec acknowledges A-versus-B
@@ -1977,7 +2040,11 @@ work as part of the arc. Use this order instead:
 5. `progress/progress_July_04.md` → `July_08.md` — how the final method was actually found.
 6. `progress/progress_June_17.md` → `June_25-26.md` — the compute-configuration and trained-verifier
    prehistory.
-7. `STRUCTURE.md` as the code index; `results/cascade_methods/docs/archive_mcq/` as deep-dive
+7. `results/cascade_methods/docs/current/PMCVQA_PROVENANCE_2026-07-30.md` — **read before quoting any
+   PMC-VQA number**: how PMC-VQA is constructed (caption-only GPT-3.5 generation), how thinly it is
+   validated (one undocumented 2,000-item human pass), which splits exist, and which of them each of
+   this project's two evaluation tracks actually used.
+8. `STRUCTURE.md` as the code index; `results/cascade_methods/docs/archive_mcq/` as deep-dive
    appendices; `results/cascade_methods/METHOD_IDEAS_BACKLOG.md` for the 68-idea backlog **(no
    per-idea status field — several entries in it have already been run and failed; cross-check
    §6 before proposing any of them)**.
@@ -2052,7 +2119,7 @@ record.
 | C17 | Lingshu's always-reasoning is cheaper than always-direct | **A cost-methodology bug** — an `a·gen + b` fit measured at 70–407 generated tokens was extrapolated to gen = 3, giving a −16 J intercept | the user flagging a physical impossibility |
 | C18 | A judged cross-modality result (0.84, "the 32B is worse") | **A racy partial-file read** — corrected to 0.749 after judging both legs fully | re-judging completely |
 | C19 | The stability method was labelled "Ours" | **Relabelled** — it is a trained *baseline*, not this project's method | prior-art check |
-| C20 | Finding 1's headline count, **15/20** perception cells strictly negative | **17/20** — and 19/20 within +0.02, 14/20 with 95% CIs excluding zero, pooled **−0.0401 [−0.0456, −0.0347]** on **30,250** paired samples. The published arms were **prompt-unmatched** (and resolution-unmatched for MedVLThinker); every better-matched pairing is *stronger*, so **15/20 was the outlier, not the ceiling**. Three independent correction policies all give 17/20. Two cells flip positive→negative: MedVLThinker PMC-VQA +0.0055 → **−0.0075**, Lingshu PMC-VQA +0.0115 → **−0.0425**. Fully-matched-only subset (nothing left to correct): 6/8 medical, 7/8 non-medical peers. | a prompt-matching audit of every Finding-1 cell (`artifacts/finding1_prompt_matching_audit.json` → `finding1_corrected_2026-07-29.json`) |
+| C20 | Finding 1's headline count, **15/20** perception cells strictly negative | **17/20** — and 19/20 within +0.02, 14/20 with 95% CIs excluding zero, pooled **−0.0401 [−0.0456, −0.0347]** on **30,250** paired samples. The published arms were **prompt-unmatched** (and resolution-unmatched for MedVLThinker); every better-matched pairing is *stronger*, so **15/20 was the outlier, not the ceiling**. Three independent correction policies all give 17/20. Two cells flip positive→negative: MedVLThinker PMC-VQA +0.0055 → **−0.0075**, Lingshu PMC-VQA +0.0115 → **−0.0425** (both `test_clean.csv`, n = 2,000). Fully-matched-only subset (nothing left to correct): 6/8 medical, 7/8 non-medical peers. | a prompt-matching audit of every Finding-1 cell (`artifacts/finding1_prompt_matching_audit.json` → `finding1_corrected_2026-07-29.json`) |
 | C21 | "Reasoning helps reasoning-heavy benchmarks" **across 5 families** | **Downgraded to model-dependent, not universal.** 12/15 cells point-positive but only **4/15** CI-significant and **1/15 significantly negative**. It rests on MedVLThinker-32B (3/3 significant, and *improved* by matching: MMMU +0.0647 → **+0.0882**) plus MedGemma-27B (3/3 positive, 1/3 significant, on a fully matched pair), corroborated on MedEvalKit by MedVLThinker-32B and InternVL3-38B. Chiron-o1-8B is positive 3/3 but reaches significance nowhere. | same audit |
 | C22 | **All 7 Lingshu-32B think-vs-no-think cells** (4 perception + 3 reasoning) | **WITHDRAWN, both directions.** The published "native think" prompt (`runners/run_native_think.sh:7`) is an answer-**format** string with no reasoning trigger — measured **3.0 vs 3.0–3.3** generated tokens, so no chain of thought ever occurred. Repaired with the genuinely-reasoning arm (150–259 tokens): perception **4/4 strictly negative, all CIs excluding zero, pooled −0.0866 [−0.0972, −0.0757]**; reasoning **nothing** (MMMU +0.0000, MX-R +0.0048, MX-U +0.0271, none significant). Consequence: **Lingshu-32B must not be cited as evidence that reasoning helps**, and its quoted **1.2× think:no-think latency ratio is not a reasoning ratio** — it is the ratio of two 3-token format prompts. | measuring generated tokens per arm |
 | C23 | **QoQ-Med-VL-32B's reasoning gain** (MMMU +0.071) | **WITHDRAWN as reasoning-side evidence** — +0.0706 → **+0.0118** (CI [−0.0588, +0.0824]) under a matched prompt and +0.0000 fully matched; MedXpert-Understanding is significantly **negative** (−0.0433, p = 0.022). | same audit |
@@ -2076,12 +2143,13 @@ record.
 | X11 | `ckpts/acc_gen/{internvl25_8b_think, phi35v_think}` described as empty stubs | each holds **4 files / 6,050 rows** (the four perception benchmarks, flat layout) | direct listing |
 | X12 | `harness.py` imported by 45 files | **39** (36 in `cascade_methods/`, 3 in `training_methods/`) | grep |
 | X13 | 40 runner scripts | **38** | listing |
-| X14 | PMC-VQA's human-verified `test_clean.csv` "exists on disk" | **it does not** — `/data/dan/dataset/medevalkit/PMC-VQA/` holds only `test.csv` and `test_2.csv`; the clean split is listed in the dataset README and would need downloading | listing |
-| X15 | MedVLThinker PMC-VQA think−direct **+0.0055** (a perception "win") | **−0.0075** [−0.0275, +0.0120] once the think arm is resolution-matched (cap320 vs cap320). Sign flip. | `finding1_corrected_2026-07-29.json` |
-| X16 | Lingshu PMC-VQA think−direct **+0.0115** (a perception "win") | **−0.0425 [−0.0625, −0.0220]**, p = 5.6e−5, with a genuinely-reasoning think arm. Sign flip, and now significant. | same |
+| X14 | PMC-VQA's human-verified `test_clean.csv` "exists on disk" | ~~**it does not** — `/data/dan/dataset/medevalkit/PMC-VQA/` holds only `test.csv` and `test_2.csv`; the clean split is listed in the dataset README and would need downloading~~ · **⚠ X14 IS ITSELF WITHDRAWN (2026-07-30) — see X20.** The claim it "corrected" was right: `test_clean.csv` *does* exist on disk. | listing — **wrong**, superseded by X20 |
+| X15 | MedVLThinker PMC-VQA think−direct **+0.0055** (a perception "win") | **−0.0075** [−0.0275, +0.0120] once the think arm is resolution-matched (cap320 vs cap320). Sign flip. *(Split: `test_clean.csv`, n = 2,000.)* | `finding1_corrected_2026-07-29.json` |
+| X16 | Lingshu PMC-VQA think−direct **+0.0115** (a perception "win") | **−0.0425 [−0.0625, −0.0220]**, p = 5.6e−5, with a genuinely-reasoning think arm. Sign flip, and now significant. *(Split: `test_clean.csv`, n = 2,000 — not the MedEvalKit `test_2` cell.)* | same |
 | X17 | MedGemma PathVQA reasoning win **+0.0399** (from a persona-flattered think arm) | **+0.0413 [+0.0220, +0.0607]**, p = 0.0000, on a **fully matched** pair. The win is real; only its provenance changed. | same |
 | X18 | Largest re-derivations, all Lingshu or MMMU: Lingshu PathVQA **−0.0170 → −0.1017**; Lingshu SLAKE −0.0096 → −0.0649; MedVLThinker SLAKE −0.0841 → −0.1274; MedGemma VQA-RAD −0.0184 → −0.0735; MedGemma MMMU −0.0118 → **+0.0353**; QoQ MMMU +0.0706 → **+0.0118**; QoQ SLAKE −0.0649 → −0.0144 | as shown | same |
 | X19 | MMMU reasoning gains **+0.027 / +0.100 / +0.120** (Lingshu / MedVLThinker / InternVL3-38B) quoted without uncertainty | the values reproduce, but **only two of three are significant**: Lingshu **+0.0267 [−0.0467, +0.1000]** (n.s., n = 150), MedVLThinker **+0.100 [+0.027, +0.173]**, InternVL3-38B **+0.120 [+0.047, +0.193]**. Never quote the Lingshu figure as a gain. | `finding1_corrected_2026-07-29.json` → `medevalkit_external_corroboration.paired_with_ci` |
+| **X20** *(added 2026-07-30 — a correction to **this** document)* | **this document asserted, on 2026-07-29, that PMC-VQA's human-verified `test_clean.csv` "is not on disk"** at `/data/dan/dataset/medevalkit/PMC-VQA/` and "has never been used anywhere in the repo" (§7 hole 10 and row X14 above) | **FALSIFIED 2026-07-30.** `test_clean.csv` is on disk in **two byte-identical copies** — `/data/dan/dataset/medevalkit/PMC-VQA/test_clean.csv` (418,686 bytes, **2,000** data rows, mtime 2026-06-29 07:18) and `/data/dan/dataset/pmc_vqa_train/test_clean.csv` (mtime 2026-06-08 15:55, md5 `6abfbcd088171c76a98911c5e7a8f5a0`) — and the **MedVLThinker-era cascade track has been evaluating exactly those 2,000 items all along**: `MedVLThinker-Eval`'s `pmc_vqa` slice matches `test_clean.csv` **2,000/2,000** on normalized question, `answer_label` and normalized answer text, and `ckpts/gate_7b_prune/cap320/ckpt_PMC-VQA_nothink_norag.jsonl` golds match `test_clean.Answer_label[idx]` **2,000/2,000** (every row also carries `opt_logprobs`). Consequence: hole 10's prescribed fix is already satisfied for the cascade track and is outstanding only for the MedEvalKit/Lingshu track. **Same statement, second error:** the `test_2.csv` hard-code is at `MedEvalKit/utils/PMC_VQA/PMC_VQA.py:`**`39`**, not `:41`. **Root cause:** the 2026-07-29 pass inferred the directory contents instead of listing them, and no document recorded that the two evaluation tracks use *different* PMC-VQA splits (see §9.3). | `docs/current/PMCVQA_PROVENANCE_2026-07-30.md` §3, §3.1 **[measured 2026-07-30]**; independently re-verified 2026-07-30 by `ls -l` on both paths, `csv.reader` row counts (2,000 / 33,430), a gold-match against the cap320 checkpoint, and `sed -n '39p' MedEvalKit/utils/PMC_VQA/PMC_VQA.py` |
 
 ## 10.3 The `+0.02xx` number family, fully decoded
 
@@ -2107,7 +2175,7 @@ Companion compute-lean family: +0.0117 → +0.0123 (estimates) → **+0.0150 [+0
 | document | what it gets wrong |
 |---|---|
 | `CLAUDE.md` (2026-07-02) | §0 and §1 present the MedVLThinker cascade (τ = 0.426, parity 0.572 at 74% compute) as the current headline and "ground truth". Zero occurrences of "Lingshu", "MedEvalKit", "method_final", "training_methods". §5's tree omits several directories. **The permanent abstention prohibition is absent from the file that carries the hard rules.** §6/§7/§8 (safe-cleanup procedure, landmines, environment) remain accurate and worth preserving. |
-| `README.md`, `RESULTS.md` (2026-07-02) | Lead with the June MedVLThinker result. `RESULTS.md` L57 says the 7B reasoning dumps are "only PMC + MedXpert at n~500"; they are the full 8,220 rows. `README.md` says the 3-family matrix "is in progress"; it finished 2026-07-03/05. |
+| `README.md`, `RESULTS.md` (2026-07-02) | Lead with the June MedVLThinker result. `RESULTS.md` L57 says the 7B reasoning dumps are "only PMC + MedXpert at n~500"; they are the full 8,220 rows (internal harness, so its PMC slice is `test_clean.csv`, n = 2,000). `README.md` says the 3-family matrix "is in progress"; it finished 2026-07-03/05. |
 | `READING_GUIDE.md` | Six of 17 steps point at a paper draft now in `paper/archive/` with obsolete section numbering; describes the removed abstention section as part of the arc; presents the trained verifier as the latest result; nothing from July 1–8 appears. |
 | `PROJECT_OVERVIEW.md` | Headline table is the pre-measurement estimate (+0.0123 / +0.0212); labels 0.5632 "(measured)"; names an archived file as "the paper" in three places; still banks the MMMU win. |
 | `TECHNICAL_REPORT_2026-07.md` | Same "(measured) 0.5632" mislabel; pre-measurement headline table; open-text reasoning figures are the n=200 subsample (0.387 pooled versus the measured 0.3028); still banks MMMU; lists a completed experiment as "running". |

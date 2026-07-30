@@ -1,0 +1,674 @@
+{
+  "_meta": {
+    "what": "Matched-prompt reasoning-vs-direct on MedEvalKit reasoning-heavy benchmarks (MMMU-Medical-val, MedXpertQA-MM) for the 3 families with *_reason dumps.",
+    "date": "2026-07-29",
+    "reasoning_prompt_tail": "First reason step by step about the question and each option, then put the final answer letter from the given choices in one \"\\boxed{}\".",
+    "direct_matched_prompt_tail": "Put the final answer letter from the given choices in one \"\\boxed{}\".",
+    "arms_differ_by": "exactly the leading reasoning clause ('First reason step by step about the question and each option, then ')",
+    "patch": "src/labeling/medeval_matched_prompt.py (env-gated MEDEVAL_MATCHED_PROMPT=1; monkeypatches utils.question_formats.get_multiple_choice_prompt and utils.MMMU.data_utils.construct_prompt; MedEvalKit left byte-identical to upstream)",
+    "runner": "runners/run_medeval_direct_matched.sh",
+    "direct_unmatched_note": "the PUBLISHED direct arm, upstream prompt \"Answer with the option's letter from the given choices directly.\" -- differs from the reasoning arm in 3 ways (trigger, 'directly', bare vs \\boxed)",
+    "settings_matched_to_reason_arm": {
+      "seed": 42,
+      "tensor_parallel_size": 2,
+      "use_vllm": true,
+      "max_new_tokens": 2048,
+      "max_image_num": 6,
+      "temperature": 0,
+      "top_p": 0.0001,
+      "repetition_penalty": 1,
+      "datasets_path": "hf",
+      "MAX_MODEL_LEN(IV3 only)": 16384,
+      "source": "runners/run_full_matrix_medeval.sh (the runner that produced *_reason)"
+    },
+    "residual_caveat": "Only the MULTIPLE-CHOICE prompt branch is matched. MMMU-Medical-val has 5/150 'open' items that keep upstream's open-question strings and remain format-unmatched; the MMMU-MCQonly cell (n=145) is fully matched.",
+    "stats": {
+      "paired_bootstrap_NBOOT": 10000,
+      "rng_seed": 12345,
+      "mcnemar": "two-sided exact on discordant pairs"
+    },
+    "known_minor_unmatched_axis": "EVAL_BATCH_SIZE=250 for the direct-matched run vs the default 2000 for the *_reason run (OOM safety on TP=2). Affects MedXpert only (MMMU batches at <=30 per subject regardless); greedy temperature-0 decoding, so at most rare batch-composition tie-breaks. Orders of magnitude smaller than the prompt confound being repaired.",
+    "no_gpu_this_script": true,
+    "no_fabricated_numbers": true
+  },
+  "dumps": {
+    "Lingshu-32B|reason": {
+      "dir": "eval_results_lingshu32b_reason",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "Lingshu-32B|direct_unmatched": {
+      "dir": "eval_results_lingshu32b_full",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "Lingshu-32B|direct_matched": {
+      "dir": "eval_results_lingshu32b_direct_matched",
+      "n_MMMU": 150,
+      "n_MedXpert": 0,
+      "MMMU_files": 5,
+      "MedXpert_files": 0
+    },
+    "MedVLThinker-32B|reason": {
+      "dir": "eval_results_mvt32b_reason",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "MedVLThinker-32B|direct_unmatched": {
+      "dir": "eval_results_mvt32b",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "MedVLThinker-32B|direct_matched": {
+      "dir": "eval_results_mvt32b_direct_matched",
+      "n_MMMU": 150,
+      "n_MedXpert": 0,
+      "MMMU_files": 5,
+      "MedXpert_files": 0
+    },
+    "InternVL3-38B|reason": {
+      "dir": "eval_results_iv3_38b_reason",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "InternVL3-38B|direct_unmatched": {
+      "dir": "eval_results_iv3_38b",
+      "n_MMMU": 150,
+      "n_MedXpert": 2000,
+      "MMMU_files": 5,
+      "MedXpert_files": 1
+    },
+    "InternVL3-38B|direct_matched": {
+      "dir": "eval_results_iv3_38b_direct_matched",
+      "n_MMMU": 150,
+      "n_MedXpert": 0,
+      "MMMU_files": 5,
+      "MedXpert_files": 0
+    }
+  },
+  "pairing": {
+    "Lingshu-32B|MMMU": {
+      "n_paired": 150,
+      "n_per_arm": {
+        "reason": 150,
+        "direct_matched": 150,
+        "direct_unmatched": 150
+      },
+      "arms_available": [
+        "reason",
+        "direct_matched",
+        "direct_unmatched"
+      ],
+      "ids_identical_across_arms": true
+    },
+    "MedVLThinker-32B|MMMU": {
+      "n_paired": 150,
+      "n_per_arm": {
+        "reason": 150,
+        "direct_matched": 150,
+        "direct_unmatched": 150
+      },
+      "arms_available": [
+        "reason",
+        "direct_matched",
+        "direct_unmatched"
+      ],
+      "ids_identical_across_arms": true
+    },
+    "InternVL3-38B|MMMU": {
+      "n_paired": 150,
+      "n_per_arm": {
+        "reason": 150,
+        "direct_matched": 150,
+        "direct_unmatched": 150
+      },
+      "arms_available": [
+        "reason",
+        "direct_matched",
+        "direct_unmatched"
+      ],
+      "ids_identical_across_arms": true
+    }
+  },
+  "cells": [
+    {
+      "family": "Lingshu-32B",
+      "benchmark": "MMMU",
+      "cell": "MMMU",
+      "n": 150,
+      "acc": {
+        "reason": 0.66,
+        "direct_matched": 0.62,
+        "direct_unmatched": 0.6333
+      },
+      "mean_gen_toks": {
+        "reason": 275.37,
+        "direct_matched": 4.38,
+        "direct_unmatched": 2.63
+      },
+      "median_gen_toks": {
+        "reason": 266.5,
+        "direct_matched": 3.0,
+        "direct_unmatched": 3.0
+      },
+      "reasoned_frac": {
+        "reason": 0.9667,
+        "direct_matched": 0.0,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.04,
+        "lo": -0.0333,
+        "hi": 0.1133,
+        "sig": false,
+        "n": 150
+      },
+      "mcnemar_matched": {
+        "reason_only": 19,
+        "direct_only": 13,
+        "p": 0.377086
+      },
+      "delta_unmatched": {
+        "delta": 0.0267,
+        "lo": -0.0467,
+        "hi": 0.1,
+        "sig": false,
+        "n": 150
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 18,
+        "direct_only": 14,
+        "p": 0.596615
+      },
+      "delta_shift_from_matching": 0.0133,
+      "format_effect_direct_matched_minus_unmatched": -0.0133,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": true,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "clean: reasoning arm reasoned, matched direct arm answered directly",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6333,
+          "mean_gen_toks": 2.63
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.62,
+          "mean_gen_toks": 4.38
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.66,
+          "mean_gen_toks": 275.37
+        }
+      },
+      "verdict": "no significant effect"
+    },
+    {
+      "family": "Lingshu-32B",
+      "benchmark": "MMMU",
+      "cell": "MMMU-MCQonly",
+      "n": 145,
+      "acc": {
+        "reason": 0.6828,
+        "direct_matched": 0.6414,
+        "direct_unmatched": 0.6552
+      },
+      "mean_gen_toks": {
+        "reason": 284.65,
+        "direct_matched": 4.43,
+        "direct_unmatched": 2.61
+      },
+      "median_gen_toks": {
+        "reason": 268.0,
+        "direct_matched": 3.0,
+        "direct_unmatched": 3.0
+      },
+      "reasoned_frac": {
+        "reason": 1.0,
+        "direct_matched": 0.0,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.0414,
+        "lo": -0.0345,
+        "hi": 0.1172,
+        "sig": false,
+        "n": 145
+      },
+      "mcnemar_matched": {
+        "reason_only": 19,
+        "direct_only": 13,
+        "p": 0.377086
+      },
+      "delta_unmatched": {
+        "delta": 0.0276,
+        "lo": -0.0483,
+        "hi": 0.1034,
+        "sig": false,
+        "n": 145
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 18,
+        "direct_only": 14,
+        "p": 0.596615
+      },
+      "delta_shift_from_matching": 0.0138,
+      "format_effect_direct_matched_minus_unmatched": -0.0138,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": true,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "clean: reasoning arm reasoned, matched direct arm answered directly",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6552,
+          "mean_gen_toks": 2.61
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.6414,
+          "mean_gen_toks": 4.43
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.6828,
+          "mean_gen_toks": 284.65
+        }
+      },
+      "verdict": "no significant effect"
+    },
+    {
+      "family": "MedVLThinker-32B",
+      "benchmark": "MMMU",
+      "cell": "MMMU",
+      "n": 150,
+      "acc": {
+        "reason": 0.7133,
+        "direct_matched": 0.6733,
+        "direct_unmatched": 0.6133
+      },
+      "mean_gen_toks": {
+        "reason": 561.21,
+        "direct_matched": 416.53,
+        "direct_unmatched": 2.04
+      },
+      "median_gen_toks": {
+        "reason": 551.0,
+        "direct_matched": 397.0,
+        "direct_unmatched": 2.0
+      },
+      "reasoned_frac": {
+        "reason": 0.9667,
+        "direct_matched": 0.9667,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.04,
+        "lo": -0.0133,
+        "hi": 0.0933,
+        "sig": false,
+        "n": 150
+      },
+      "mcnemar_matched": {
+        "reason_only": 12,
+        "direct_only": 6,
+        "p": 0.237885
+      },
+      "delta_unmatched": {
+        "delta": 0.1,
+        "lo": 0.0267,
+        "hi": 0.1733,
+        "sig": true,
+        "n": 150
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 24,
+        "direct_only": 9,
+        "p": 0.013531
+      },
+      "delta_shift_from_matching": -0.06,
+      "format_effect_direct_matched_minus_unmatched": 0.06,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": false,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "CONTAMINATED: the matched DIRECT arm reasoned on 96.7% of items -- the \\boxed{} instruction alone induces reasoning in this model. delta_matched therefore measures the MARGINAL value of the explicit reasoning trigger ON TOP of format-induced reasoning, NOT reasoning-vs-no-reasoning.",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6133,
+          "mean_gen_toks": 2.04
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.6733,
+          "mean_gen_toks": 416.53
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.7133,
+          "mean_gen_toks": 561.21
+        }
+      },
+      "verdict": "explicit-trigger MARGINAL effect: no significant effect (direct arm already reasoned; not a reasoning-vs-none test)"
+    },
+    {
+      "family": "MedVLThinker-32B",
+      "benchmark": "MMMU",
+      "cell": "MMMU-MCQonly",
+      "n": 145,
+      "acc": {
+        "reason": 0.7379,
+        "direct_matched": 0.6966,
+        "direct_unmatched": 0.6345
+      },
+      "mean_gen_toks": {
+        "reason": 580.34,
+        "direct_matched": 430.81,
+        "direct_unmatched": 2.03
+      },
+      "median_gen_toks": {
+        "reason": 558.0,
+        "direct_matched": 403.0,
+        "direct_unmatched": 2.0
+      },
+      "reasoned_frac": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.0414,
+        "lo": -0.0138,
+        "hi": 0.1034,
+        "sig": false,
+        "n": 145
+      },
+      "mcnemar_matched": {
+        "reason_only": 12,
+        "direct_only": 6,
+        "p": 0.237885
+      },
+      "delta_unmatched": {
+        "delta": 0.1034,
+        "lo": 0.0276,
+        "hi": 0.1793,
+        "sig": true,
+        "n": 145
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 24,
+        "direct_only": 9,
+        "p": 0.013531
+      },
+      "delta_shift_from_matching": -0.062,
+      "format_effect_direct_matched_minus_unmatched": 0.0621,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": false,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "CONTAMINATED: the matched DIRECT arm reasoned on 100.0% of items -- the \\boxed{} instruction alone induces reasoning in this model. delta_matched therefore measures the MARGINAL value of the explicit reasoning trigger ON TOP of format-induced reasoning, NOT reasoning-vs-no-reasoning.",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6345,
+          "mean_gen_toks": 2.03
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.6966,
+          "mean_gen_toks": 430.81
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.7379,
+          "mean_gen_toks": 580.34
+        }
+      },
+      "verdict": "explicit-trigger MARGINAL effect: no significant effect (direct arm already reasoned; not a reasoning-vs-none test)"
+    },
+    {
+      "family": "InternVL3-38B",
+      "benchmark": "MMMU",
+      "cell": "MMMU",
+      "n": 150,
+      "acc": {
+        "reason": 0.7333,
+        "direct_matched": 0.7,
+        "direct_unmatched": 0.6133
+      },
+      "mean_gen_toks": {
+        "reason": 367.89,
+        "direct_matched": 279.32,
+        "direct_unmatched": 2.02
+      },
+      "median_gen_toks": {
+        "reason": 349.0,
+        "direct_matched": 257.5,
+        "direct_unmatched": 2.0
+      },
+      "reasoned_frac": {
+        "reason": 0.98,
+        "direct_matched": 0.92,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.0333,
+        "lo": -0.0133,
+        "hi": 0.08,
+        "sig": false,
+        "n": 150
+      },
+      "mcnemar_matched": {
+        "reason_only": 10,
+        "direct_only": 5,
+        "p": 0.301758
+      },
+      "delta_unmatched": {
+        "delta": 0.12,
+        "lo": 0.0467,
+        "hi": 0.1933,
+        "sig": true,
+        "n": 150
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 26,
+        "direct_only": 8,
+        "p": 0.002935
+      },
+      "delta_shift_from_matching": -0.0867,
+      "format_effect_direct_matched_minus_unmatched": 0.0867,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": false,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "CONTAMINATED: the matched DIRECT arm reasoned on 92.0% of items -- the \\boxed{} instruction alone induces reasoning in this model. delta_matched therefore measures the MARGINAL value of the explicit reasoning trigger ON TOP of format-induced reasoning, NOT reasoning-vs-no-reasoning.",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6133,
+          "mean_gen_toks": 2.02
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.7,
+          "mean_gen_toks": 279.32
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.7333,
+          "mean_gen_toks": 367.89
+        }
+      },
+      "verdict": "explicit-trigger MARGINAL effect: no significant effect (direct arm already reasoned; not a reasoning-vs-none test)"
+    },
+    {
+      "family": "InternVL3-38B",
+      "benchmark": "MMMU",
+      "cell": "MMMU-MCQonly",
+      "n": 145,
+      "acc": {
+        "reason": 0.7586,
+        "direct_matched": 0.7241,
+        "direct_unmatched": 0.6345
+      },
+      "mean_gen_toks": {
+        "reason": 377.63,
+        "direct_matched": 288.86,
+        "direct_unmatched": 2.0
+      },
+      "median_gen_toks": {
+        "reason": 355.0,
+        "direct_matched": 260.0,
+        "direct_unmatched": 2.0
+      },
+      "reasoned_frac": {
+        "reason": 1.0,
+        "direct_matched": 0.9517,
+        "direct_unmatched": 0.0
+      },
+      "parse_ok": {
+        "reason": 1.0,
+        "direct_matched": 1.0,
+        "direct_unmatched": 1.0
+      },
+      "delta_matched": {
+        "delta": 0.0345,
+        "lo": -0.0207,
+        "hi": 0.0897,
+        "sig": false,
+        "n": 145
+      },
+      "mcnemar_matched": {
+        "reason_only": 10,
+        "direct_only": 5,
+        "p": 0.301758
+      },
+      "delta_unmatched": {
+        "delta": 0.1241,
+        "lo": 0.0483,
+        "hi": 0.2,
+        "sig": true,
+        "n": 145
+      },
+      "mcnemar_unmatched": {
+        "reason_only": 26,
+        "direct_only": 8,
+        "p": 0.002935
+      },
+      "delta_shift_from_matching": -0.0896,
+      "format_effect_direct_matched_minus_unmatched": 0.0897,
+      "reason_arm_reasoned": true,
+      "direct_matched_answered_directly": false,
+      "direct_unmatched_answered_directly": true,
+      "arm_validity": "CONTAMINATED: the matched DIRECT arm reasoned on 95.2% of items -- the \\boxed{} instruction alone induces reasoning in this model. delta_matched therefore measures the MARGINAL value of the explicit reasoning trigger ON TOP of format-induced reasoning, NOT reasoning-vs-no-reasoning.",
+      "reasoning_ladder": {
+        "rung1_truly_direct(bare letter)": {
+          "acc": 0.6345,
+          "mean_gen_toks": 2.0
+        },
+        "rung2_boxed_no_trigger": {
+          "acc": 0.7241,
+          "mean_gen_toks": 288.86
+        },
+        "rung3_trigger_plus_boxed": {
+          "acc": 0.7586,
+          "mean_gen_toks": 377.63
+        }
+      },
+      "verdict": "explicit-trigger MARGINAL effect: no significant effect (direct arm already reasoned; not a reasoning-vs-none test)"
+    }
+  ],
+  "missing": [
+    {
+      "family": "Lingshu-32B",
+      "arm": "direct_matched",
+      "benchmark": "MedXpert",
+      "dir": "eval_results_lingshu32b_direct_matched"
+    },
+    {
+      "family": "MedVLThinker-32B",
+      "arm": "direct_matched",
+      "benchmark": "MedXpert",
+      "dir": "eval_results_mvt32b_direct_matched"
+    },
+    {
+      "family": "InternVL3-38B",
+      "arm": "direct_matched",
+      "benchmark": "MedXpert",
+      "dir": "eval_results_iv3_38b_direct_matched"
+    }
+  ],
+  "verdict": {
+    "primary_cells": 3,
+    "sig_positive": 0,
+    "sig_negative": 0,
+    "point_positive": 3,
+    "per_family": {
+      "Lingshu-32B": {
+        "n_cells": 1,
+        "sig_positive": 0,
+        "sig_negative": 0,
+        "point_positive": 1,
+        "cells": {
+          "MMMU-MCQonly": 0.0414
+        },
+        "verdict": "no significant effect"
+      },
+      "MedVLThinker-32B": {
+        "n_cells": 1,
+        "sig_positive": 0,
+        "sig_negative": 0,
+        "point_positive": 1,
+        "cells": {
+          "MMMU-MCQonly": 0.0414
+        },
+        "verdict": "no significant effect"
+      },
+      "InternVL3-38B": {
+        "n_cells": 1,
+        "sig_positive": 0,
+        "sig_negative": 0,
+        "point_positive": 1,
+        "cells": {
+          "MMMU-MCQonly": 0.0345
+        },
+        "verdict": "no significant effect"
+      }
+    },
+    "mean_delta_shift_from_matching": -0.0459
+  },
+  "mmmu_open_item_audit": {
+    "why": "The 5/150 MMMU 'open' items keep upstream's (still format-unmatched) strings. If every arm scores them identically, the residual mismatch cannot affect any delta and MMMU == MMMU-MCQonly in the numerator.",
+    "per_family_arm_correct_out_of_5": {
+      "Lingshu-32B|reason": "0/5",
+      "Lingshu-32B|direct_unmatched": "0/5",
+      "Lingshu-32B|direct_matched": "0/5",
+      "MedVLThinker-32B|reason": "0/5",
+      "MedVLThinker-32B|direct_unmatched": "0/5",
+      "MedVLThinker-32B|direct_matched": "0/5",
+      "InternVL3-38B|reason": "0/5",
+      "InternVL3-38B|direct_unmatched": "0/5",
+      "InternVL3-38B|direct_matched": "0/5"
+    }
+  }
+}
