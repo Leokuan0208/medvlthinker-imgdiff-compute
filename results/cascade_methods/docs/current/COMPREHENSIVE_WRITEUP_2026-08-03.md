@@ -1,41 +1,21 @@
-> # ⚠️ SUPERSEDED — 2026-08-03
->
-> **This document is superseded by
-> [`COMPREHENSIVE_WRITEUP_2026-08-03.md`](COMPREHENSIVE_WRITEUP_2026-08-03.md).** It is retained
-> unedited as the historical record of the 2026-07-30 accounting; where the two disagree, the
-> 2026-08-03 document is correct.
->
-> **Three things below are now wrong:**
->
-> 1. **The FLOP-equivalence ratio `4.57` is REJECTED.** It was the name-plate 32.0 B / 7.0 B and is
->    approximately the *decode-only* ratio applied to a *prefill-dominated* workload. The derived
->    value is **R32 = 3.82 ± 0.15**, band [3.734, 3.859]. Every compute ratio in this document
->    inherits the wrong constant and moves **against** the method when corrected — the headline tie
->    against a single 32B forward costs **1.92×**, not 1.74×.
-> 2. **The best-of-N latency `522 ms` was never measured.** Measured batched best-of-8 is
->    **1,305.3 ms and 316.7 J** (n = 45) — the latency was **2.5× too low** and the modelled energy
->    **1.8× too high**. "N drops out of latency" is refuted. The open best-of-8 arm is 2.0–2.4×
->    *slower* than one 32B forward, not faster.
-> 3. **The surviving headline halves.** Against a **prompt-matched** reasoning baseline, and with all
->    three prior corrections combined for the first time, accuracy-max is
->    **+0.0325 [+0.0237, +0.0412]**, not +0.0601 — at **−67.7% batch-1 latency** (the "−87.7%" quoted
->    below was the *batched* axis) and **1.608×** FLOP-equivalents.
->
-> This document's own §11.2 register listed all three as UNVERIFIED. That register is what
-> commissioned the work that closed them.
-
----
-
 # Adaptive Test-Time Compute for Medical Vision–Language Models
 
 ## A comprehensive write-up of the project, its corrections, and what survives
 
 **Repository:** `medvlthinker-imgdiff-compute`
-**Period covered:** 2026-06-17 → 2026-07-30
-**Document written:** 2026-07-30
-**Status:** this document supersedes every earlier summary in the repository. Where an earlier
-document disagrees with this one, this one is correct and the earlier one is stale. A register of
-known-stale documents is given in §11.3.
+**Period covered:** 2026-06-17 → 2026-08-03
+**Document written:** 2026-08-03
+**Supersedes:** `COMPREHENSIVE_WRITEUP_2026-07-30.md` (retained on disk, banner-marked)
+**Status:** this document supersedes every earlier summary in the repository, including the
+2026-07-30 write-up it is derived from. Where an earlier document disagrees with this one, this one
+is correct and the earlier one is stale. A register of known-stale documents is given in §11.3.
+
+**What changed on 2026-08-03.** Three quantities that every cost claim in this project rested on were
+finally *grounded* — two of them had never been derived or measured at all, and the third had never
+been combined with the corrections that preceded it. The results are in §5.9, the derivations in
+§4.11, the reflection on how two undocumented constants survived six weeks in §4.12, and the
+corrections-log entries in §6.1.4, §6.1.5 and §6.8. **The surviving headline halves, from +0.0601 to
++0.0325 [+0.0237, +0.0412], and every compute ratio moves against the method.**
 
 ---
 
@@ -63,6 +43,32 @@ landed together and cost the project its headline:
    open-text arm work — had been trained on **67–73%** of the items it was then scored on. A retrain
    on strictly disjoint data cut its selection gain by **2.90×**.
 
+On 2026-08-03 a third pass grounded the *cost constants* themselves, and combined all the corrections
+for the first time. Three results, each closing an item that was previously flagged UNVERIFIED:
+
+3. **The 32B/7B compute ratio was wrong.** The repository charged **4.57**, a hard-coded literal
+   whose only stated derivation was the name-plate ratio 32.0 B / 7.0 B. Derived from exact
+   safetensors parameter counts (Lingshu-7B **8,292,166,656**; Lingshu-32B **33,452,718,336**) plus
+   the measured prompt geometry of the actual workload (326.68 prompt tokens, 280.48 of them image),
+   the whole-forward ratio is **R32 = 3.82 ± 0.15**, band **[3.734, 3.859]** across the three
+   operating points this project actually runs. 4.57 is ~16.5% too high and is approximately the
+   **decode-only** ratio (4.524) applied to a **prefill-dominated** workload — these arms emit 2–6
+   tokens. Accuracy is unchanged to four decimals; every cost ratio moves **against** the method
+   (accuracy-max against a reasoning 32B: 1.396× → **1.608×** FLOP-equivalents). §4.11.1, §5.9.1.
+4. **The best-of-N latency was never measured.** The **522 ms** figure was a modelled sum
+   (`GEN7 347.1 + VER7 175.5`) resting on the assumption that batching makes N drop out of latency.
+   Measured, on the same harness and hardware: batched best-of-8 costs **1,305.3 ms and 316.7 J** per
+   question (n = 45 over two replicates). The asserted latency was **2.5× too low**; the modelled
+   energy was **1.8× too high**. Batching does save energy; it does not make N free. The
+   batched-latency advantage over a reasoning 32B falls from −87.7% to **−81.2%**, and against a
+   *direct* 32B the open best-of-8 arm moves from **+16.7% to +45.2% slower**. §4.11.2, §5.9.2.
+5. **The three corrections were combined, and the surviving claim halves.** Macro re-weighting,
+   the de-contaminated verifier and a prompt-matched reasoning baseline had never been applied
+   together. Applied together, and priced with the grounded constants, the one surviving positive
+   claim goes **+0.0245 (published) → +0.0720 (macro) → +0.0601 (clean verifier) → +0.0325
+   (matched reasoning baseline) → +0.0325 (grounded R32, accuracy unchanged, cost 1.608×)**.
+   §5.9.3.
+
 **The single most important finding** — and the one untouched by both corrections — is that
 **chain-of-thought reasoning is a net accuracy loss on perception-style medical VQA**, and that the
 apparent gains on reasoning-heavy benchmarks are an **answer-format** effect rather than a reasoning
@@ -80,23 +86,28 @@ effect:
   Asking for the answer in `\boxed{}` is itself a reasoning trigger — with no trigger present,
   MedVLThinker-32B emits 431–580 tokens on 99–100% of items.
 
-**The current honest headline.** Averaged equally over the 8 reporting cells and with an
-uncontaminated verifier:
+**The current honest headline.** Averaged equally over the 8 reporting cells, with an uncontaminated
+verifier, against a prompt-matched reasoning baseline, and priced at the derived R32 = 3.816:
 
-> **The method ties a single 32B direct forward pass — accuracy-max is +0.0008 [−0.0022, +0.0037] —
-> while costing 1.74× its FLOP-equivalents, +16.7% batch-1 latency and +101.0% energy. The cheaper
-> setting is a significant loss (−0.0124 [−0.0188, −0.0060]) at 1.46× the compute.**
+> **The method ties a single 32B direct forward pass — accuracy-max is +0.0008 [−0.0022, +0.0036] —
+> while costing 1.92× its FLOP-equivalents, +149.6% batch-1 latency and +101.0% energy. The cheaper
+> setting is a significant loss (−0.0124 [−0.0189, −0.0061]) at 1.67× the compute.**
 
 What survives is the comparison against the way a practitioner would *naively* deploy a
 reasoning-capable medical VLM. Against **always-32B-with-reasoning**, accuracy-max is
-**+0.0601 [+0.0498, +0.0703]** at **−87.7% latency** and **−84.3% energy** (though at 1.40× the
-honestly re-costed FLOP-equivalents — the win is on wall-clock and joules, *not* on compute).
+**+0.0325 [+0.0237, +0.0412]** — still significant, but **45.9% smaller** than the +0.0601 the
+2026-07-30 write-up reported, because that figure was computed against a reasoning arm whose prompt
+also dropped the direct arm's persona and answer-style clause. The cost of that claim is
+**−67.7% batch-1 latency, −80.6% energy, and 1.608× the honestly re-costed FLOP-equivalents** — the
+win is on wall-clock and joules, *not* on compute. Under the strictest reading of the matched
+protocol it is +0.0313; across the R32 band the cost ratio spans 1.597–1.628×.
 
 **The practical recommendation that outranks the entire method:** turn reasoning off.
-Always-32B-direct scores **0.6567** macro against always-32B-with-reasoning's **0.5974** — a
-+0.0593 gap — at 665 ms versus 6,291 ms and 127 J versus 1,625 J. That is a prompt change requiring
-no second model, no gate and no verifier, and it is larger than every method delta in this project
-combined.
+Always-32B-direct scores **0.6567** macro against always-32B-with-reasoning's **0.6250** (matched
+arm B) — a **+0.0317** gap — at 665 ms versus 5,137 ms and 127 J versus 1,318 J. That is a prompt
+change requiring no second model, no gate and no verifier, and it is still larger than every method
+delta in this project combined. *(Against the unmatched reasoning arm the same gap reads +0.0593 at
+6,291 ms / 1,625 J; the matched arm is the honest comparator and is the weaker one.)*
 
 **What a reader should take away.** The cascade is not the contribution. The contributions are
 (a) the reasoning-versus-perception result and its re-attribution to answer format, (b) two
@@ -104,7 +115,18 @@ quantified limits that explain every negative result in the project — the diff
 *whether the strong model would fix this particular error*, and the difficulty of *selecting* the
 correct answer from a pool that contains it — with a measured budget showing that the missing-answer
 problem is **4.5× larger** than the selection problem, and (c) a set of methodological failure modes,
-each caught here only *after* it had already produced a published number.
+each caught here only *after* it had already produced a published number. The 2026-08-03 pass adds a
+sharp one to that list: **two plausible-looking constants with no derivation anywhere — 4.57 and
+522 ms — silently priced every efficiency claim the project ever made, and both were caught by
+asking where a number came from, not by any experiment** (§4.12, T12).
+
+![](figs/fig_correction_cascade.png){width=6.5in}
+
+*The surviving claim across five accounting corrections: accuracy-max-veto against
+always-32B-with-reasoning, 8-cell macro. Published +0.0245 → macro +0.0720 → clean verifier +0.0601 →
+matched reasoning baseline +0.0325 → grounded R32 +0.0325 (accuracy unchanged; cost 1.396× → 1.608×).
+Bars are 95% paired bootstrap intervals; the cost ratio is annotated above each bar. Source:
+`headline_three_way_2026-08-03.json : headline_progression`.*
 
 ---
 
@@ -132,6 +154,8 @@ each caught here only *after* it had already produced a published number.
 | 4.8 | The weighting change |
 | 4.9 | Statistical practice |
 | 4.10 | Verification gates, as a checklist |
+| 4.11 | **Where the cost constants come from — the 2026-08-03 derivations and measurements** |
+| 4.12 | **Where the two silent constants came from** |
 | 5 | Results |
 | 5.1 | Reasoning versus perception |
 | 5.2 | Reasoning on reasoning-heavy benchmarks |
@@ -141,6 +165,7 @@ each caught here only *after* it had already produced a published number.
 | 5.6 | The headline under each accounting |
 | 5.7 | Ancillary findings (MMMU contamination; the SLAKE path bug; the two PMC-VQA splits) |
 | 5.8 | Summary of claim status |
+| 5.9 | **The 2026-08-03 grounding pass and the final headline** |
 | 6 | Corrections and retractions |
 | 7 | Traps in this research area |
 | 8 | What survives adversarial checking |
@@ -214,9 +239,9 @@ questions it hands upward is the **escalation rate**; the confidence signal it t
 
 | system | latency | energy | FLOP-eq\* | provenance |
 |---|---:|---:|---:|---|
-| 7B, direct (no reasoning trace) | 347 ms | 45.8 J | 1.00 | `src/cascade_methods/paper_baselines.py:62` (`GEN7`) **[M, provenance is a code comment — see below]** |
-| 32B, direct | 665 ms | 127.0 J | 4.57 | `paper_baselines.py:64` (`GEN32N`); n = 25 at 5.6 generated tokens (`honest_recosting_2026-07-29.json : provenance.anchor_direct`) **[M]** |
-| 32B, **with reasoning**, open-text prompt | **10,521.6 ms** (median 12,896.2) | **2,001.9 J** | 4.57 (a deliberate lower bound) | `paper_baselines.py:65`; n = 15 at 98.3 generated tokens (`honest_recosting_2026-07-29.json : provenance.anchor_think`) **[M, weak — see §4.9]** |
+| 7B, direct (no reasoning trace) | 347 ms | 45.8 J | 1.00 | `src/cascade_methods/paper_baselines.py:62` (`GEN7`); latency independently reproduced at **350.0 ms (+0.8%)** on 2026-08-03 **[M]** |
+| 32B, direct | 665 ms | 127.0 J | **3.816** (was 4.57) | `paper_baselines.py:64` (`GEN32N`); n = 25 at 5.6 generated tokens (`honest_recosting_2026-07-29.json : provenance.anchor_direct`) **[M]**; ratio now **[D]**, §4.11.1 |
+| 32B, **with reasoning**, open-text prompt | **10,521.6 ms** (median 12,896.2) | **2,001.9 J** | 3.816 per forward (a deliberate lower bound) | `paper_baselines.py:65`; n = 15 at 98.3 generated tokens (`honest_recosting_2026-07-29.json : provenance.anchor_think`) **[M, weak — see §4.9]** |
 | 32B, direct, cap320 images | 333.15 ms | 61.2 J | — | independent NVML sweep, n = 60, median, 2 generated tokens (`honest_recosting_2026-07-29.json : provenance.latency_32b_jsonl_medians.nothink@cap320`) **[M]** |
 | 32B, **with reasoning**, full resolution | **22,983.25 ms** | **5,990.2 J** | — | same sweep, n = 60, median, 318 generated tokens **[M]** |
 | one verifier forward (7B LoRA scorer) | 175 ms | 25.3 J | 1.00 | `src/cascade_methods/integrated_method.py:53-54` / `paper_baselines.py:63` (`VER7`) **[M, provenance is a code comment]** |
@@ -225,16 +250,22 @@ questions it hands upward is the **escalation rate**; the confidence signal it t
 
 **Three provenance caveats that travel with this table.**
 
-1. The **4.57** ratio is a hard-coded literal. `honest_recosting_2026-07-29.json :
-   provenance.flop_ratio_derivation` reproduces it only as 32.0 B / 7.0 B = 4.571, and an older
-   project document implies 4.34. **No file in the repository derives it.** Every compute ratio in
-   this document inherits that undetermined denominator, a margin of roughly ±7% on the
-   compute-negative claims. **[U]**
+1. ~~The **4.57** ratio is a hard-coded literal…~~ **CLOSED 2026-08-03.** The 4.57 literal is
+   **rejected**. It was the name-plate ratio 32.0 B / 7.0 B applied to a quantity that is not
+   proportional to total parameters, and it is approximately the *decode-only* ratio (4.524) for a
+   workload that is prefill-dominated. The derived whole-forward ratio at this project's operating
+   points is **R32 = 3.82 ± 0.15**, band [3.734, 3.859]. Full derivation in §4.11.1; impact in §5.9.1;
+   correction entry §6.1.4. **[D]** *(A latent inconsistency was found in the same pass: the pipeline
+   carried `4.57` at eleven call sites and `4.571` at a twelfth, and an incompatible `4.34` still
+   survives in two older files — §11.4.)*
 2. The 7B constants (347 ms / 45.8 J) and the verifier forward (175 ms / 25.3 J) are labelled
-   "measured batch-1" in the code, but the raw NVML log backing them was not located in this pass —
-   the 32B direct constant cites `logs/latency_opentext.jsonl`, which is gitignored. Their
-   provenance is a code comment, not a file read. **[U on provenance; the values themselves are used
-   consistently throughout]**
+   "measured batch-1" in the code, but the raw NVML log backing them was not located in the
+   2026-07-30 pass. **Partially closed 2026-08-03:** an independent re-measurement on the same recipe
+   reproduces the 7B latency constant to **350.0 ms against 347.1 ms (+0.8%)** and the verifier
+   forward's *median* to 205.2 ms against 173.0 ms **[M]**. The **energy** constant did not
+   reproduce as cleanly — 57.0 J measured against 45.8 J charged (+24.5%) — and that discrepancy is
+   unexplained and is recorded rather than resolved (§11.2). **[M on latency; U on the energy
+   constant]**
 3. The reasoning constant is a **mean over n = 15** whose **median is 12,896.2 ms** — a 23%
    mean/median divergence indicating a heavy tail — measured on VQA-RAD cap320 open-text prompts at
    98.3 generated tokens and then transferred unchanged to every multiple-choice cell. The headline
@@ -532,8 +563,11 @@ The cost constants were thin in three places: the reasoning constant is **n = 15
 mean/median divergence and the smaller value used, measured on VQA-RAD open-text images and
 transferred to every multiple-choice cell; the best-of-8 latency of **522 ms** is **asserted, not
 measured**, and pairs with an 8×-billed energy figure that implies **~1,088 W** against ~132 W
-measured and a 400 W card TDP — an energy-consistent bound puts it at **≥1.42 s**; and the 4.57
-compute ratio is an underived literal. Finally, the method has **no materialised τ**: thresholds are
+measured and a card whose NVML-enforced limit is **300 W** (the "400 W TDP" quoted in earlier drafts
+was itself wrong); and the 4.57 compute ratio is an underived literal. **Both of these last two were
+closed on 2026-08-03, and both closed against the project: measured best-of-8 is 1,305.3 ms (2.5×
+the assertion) and the grounded compute ratio is 3.816 (16.5% below the literal, moving every
+ratio the wrong way).** See §4.11 and §5.9. Finally, the method has **no materialised τ**: thresholds are
 refit inside every cross-validation fold against *that cell's own* strong-leg accuracy, and the
 policy router picks a different policy per benchmark from intervals computed on the data it then
 reports (18 uncontrolled tests) — so "deployable single policy" was never demonstrated.
@@ -697,7 +731,11 @@ constant is fine. They were 3.0–3.3 on four of five multiple-choice cells.
   advantage.
 - Where reasoning *did* happen, the convention **understates** the baseline's compute:
   FLOP-equivalents were charged a flat 4.57 regardless of decode length, while the genuinely reasoning
-  cells actually cost **5.90–8.85** FLOP-eq.
+  cells actually cost **5.90–8.85** FLOP-eq. *(Those two numbers, and every FLOP-eq in §4.2 and §5.6,
+  are stated at the superseded R32 = 4.57. At the grounded R32 = 3.816 the honestly re-costed
+  reasoning baseline is **4.567** FLOP-eq macro rather than 5.697 — the correction shrinks the
+  baseline more than it shrinks the method, which is why it moves every ratio against the method.
+  §5.9.1.)*
 
 So the same convention that inflated the latency win *deflated* the compute cost.
 
@@ -1229,7 +1267,9 @@ accuracy with a sample-weighted cost.**
 SLAKE-open 15.81%, VQA-RAD-open 12.50%, PathVQA-open 35.67% — and the cheapest cell held 79.2% of the
 old average. Equal weighting raises the multiple-choice escalation rate **16.22% → 44.24%** (all 8
 cells: 16.89% → 35.65%). Meanwhile the open cells cost the method **7.6–12.6 FLOP-eq** against the
-baseline's flat 4.57, while PMC costs 1.386. That is the entire story.
+baseline's flat 4.57, while PMC costs 1.386. That is the entire story. *(Those FLOP-eq figures are at
+the superseded R32 = 4.57; the mechanism is unchanged at R32 = 3.816 — see §5.9.1 for the re-priced
+totals — because the reversal is driven by escalation heterogeneity, not by the ratio.)*
 
 **Controls on the new convention.** The strongest reviewer objection to the project's own primary
 metric is written into the artifact
@@ -1356,14 +1396,20 @@ distinction is tracked explicitly:
   **n = 15** whose **median is 12,896.2 ms** (a 23% divergence indicating a heavy tail), measured on one
   benchmark's images at 98.3 tokens and transferred to cells whose real traces are 320 tokens; the
   direct-mode reference is n = 25.
-- **Asserted, not measured** — the best-of-N parallel latency (347 + 175 = 522 ms) is an assertion
-  inconsistent with its own 8×-billed 568.8 J energy figure (implying ~1,088 W against ~132 W measured
-  at batch 1 and a 400 W card); **no batch-8 measurement exists in the repository**, so every open-arm
-  parallel-latency number in this document should be treated as unverified. The open arm's parallel
-  latency likewise assumes overlappable draws, which was never measured, so sequential latency is
-  reported alongside it everywhere.
-- **Under-derived** — the 32B/7B compute ratio **4.57** appears only as a hard-coded literal; an older
-  document implies 4.34, and no file derives it.
+- **Was asserted, now measured (2026-08-03)** — the best-of-N batched latency (`347 + 175 = 522 ms`)
+  was an assertion, inconsistent with its own 8×-billed 568.8 J energy figure (implying ~1,088 W
+  against ~132 W measured at batch 1 and a card whose enforced limit is 300 W, not the 400 W earlier
+  drafts quoted). **Measured: 1,305.3 ms and 316.7 J**, n = 45 — the latency was 2.5× too low and the
+  energy 1.8× too high (§4.11.2). The **adaptive-N** cells' batched axis remains **[D]**, from a
+  two-point linear model anchored on that measurement; batch-1 latency is unaffected throughout and
+  is now the primary reporting axis.
+- **Was under-derived, now derived (2026-08-03)** — the 32B/7B compute ratio **4.57** appeared only as
+  a hard-coded literal (with `4.571` at one site and an incompatible `4.34` at two others), and no
+  file derived it. **Derived: R32 = 3.816, band [3.734, 3.859]** from exact parameter counts and the
+  measured prompt geometry (§4.11.1). The literal is **rejected**.
+- **Still asserted** — that the derived ratio transfers to configurations where the two legs run at
+  *different* resolution caps. It does not, and the correction's direction is known (higher) but its
+  size has not been computed.
 
 ### Two judging caveats that bound everything free-text
 
@@ -1393,6 +1439,257 @@ because they are the transferable part of the methodology.
 | **Adversarial bound** | small residual channels argued away rather than bounded | credit every unparsed answer as correct |
 | **Control stratum** | an uninterpretable rate | 28% baseline defect rate against 53% on wins |
 | **Leave-one-cell-out** | a macro average leaning on one dataset | +0.0720 → +0.0318 without PathVQA-open |
+| **Ask where the constant came from** | a plausible literal that no file derives | 4.57 → rejected; 522 ms → 2.5× too low (§4.12) |
+
+## 4.11 Where the cost constants come from — the 2026-08-03 derivations and measurements
+
+Every efficiency claim in §5.6 and §8.1 is a ratio, and a ratio is only as good as its constants.
+This subsection states, for each constant the headline depends on, **how it was obtained** and
+**what provenance tag it therefore carries**. Two of them had no derivation at all until 2026-08-03;
+their story as a methodological failure is §4.12.
+
+### 4.11.1 The 32B/7B FLOP-equivalence ratio, R32 — DERIVED, not asserted
+
+**The problem.** `R32 = 4.57` was a literal at twelve call sites
+(`src/cascade_methods/lingshu_medeval_cascade.py:21` is the canonical one; the full list is in
+`flop_ratio_derivation_2026-08-03.json : problem.reused_in`). Its **only** stated derivation, in
+`honest_recosting.py:145`, was `32.0 / 7.0 = 4.571` — name-plate sizes, neither of which is either
+model's true parameter count. A *different and incompatible* constant, `4.34 = 33.0e9 / 7.6e9`,
+survives in `open_bestofN_adaptive.py:14` and `src/analysis/cascade/cascade_cost_prefill_flops.py:33`.
+So the project carried three mutually inconsistent values for one quantity.
+
+**Step 1 — count the parameters, do not quote the name plate [M].** Every safetensors shard header
+was read and parameters bucketed by role; no weights were loaded. The byte total was asserted equal
+to the index's own `total_size`, and all-BF16 was asserted, so parameters = bytes / 2.
+
+| model | total parameters | LM body | vision tower | vision merger | embed / lm_head (each) | shards |
+|---|---:|---:|---:|---:|---:|---:|
+| Lingshu-7B | **8,292,166,656** | 6,525,621,760 | 631,975,680 | 44,574,464 | 544,997,376 | 4 |
+| Lingshu-32B | **33,452,718,336** | 31,206,740,992 | 636,401,664 | 52,440,320 | 778,567,680 | 14 |
+
+Cross-checked two ways: an **analytic** LM-body count from `hidden_size / layers / heads / kv_heads /
+intermediate_size` alone reproduces both bodies **exactly** (so no tensor was mis-bucketed), and the
+index totals match the earlier independent 8.29 B audit. The MedVLThinker weights have
+**byte-identical** index totals, so the constant applies to both families used in this project **[M]**.
+
+Note what the counts already show: the naive **total-parameter** ratio is **4.034**, not 4.57. The
+name-plate ratio was wrong even on its own terms.
+
+**Step 2 — measure the workload's token geometry, do not assume it [M].** The 665 ms / 347 ms latency
+anchors were timed on 25 non-yes/no VQA-RAD test items at cap320. Those exact prompts were rebuilt
+with the Lingshu-7B processor on CPU and the image/text split counted: **326.68 prompt tokens
+(280.48 image, 46.2 text), 1,121.92 pre-merge patches, 5.6–5.64 generated tokens**. The
+reconstruction reproduces the recorded prefill length in `logs/latency_opentext.jsonl` to **326.68
+against 326.68** — it is the measured workload, not a proxy.
+
+**Step 3 — cost a whole forward, not a parameter count [D].** The model is
+`F = 2·P·N_vit + attn_vit + 2·M·N_merger + 2·T·N_lm_body + 2·L·T²·d + 2·(G−1)·N_lm_body +
+decode_attn + 2·G·N_lm_head`, with embedding lookup at 0 FLOPs, ViT attention bidirectional (4 of 32
+layers full, 28 windowed over 64 patches), and LM attention causal so its quadratic term is halved:
+
+| component | Lingshu-7B (GFLOP) | share | Lingshu-32B (GFLOP) | share |
+|---|---:|---:|---:|---:|
+| vision tower (dense + attention) | 1,454.12 | 24.9% | 1,464.05 | 6.6% |
+| vision merger | 25.00 | 0.4% | 29.42 | 0.1% |
+| LM prefill (dense + attention) | 4,285.00 | 73.5% | 20,459.18 | 91.9% |
+| LM decode (dense + attention) | 61.17 | 1.0% | 289.08 | 1.3% |
+| lm_head | 6.15 | 0.1% | 8.72 | 0.0% |
+| **TOTAL** | **5,831.45** | | **22,250.45** | |
+
+**R32 = 22,250.45 / 5,831.45 = 3.816.**
+
+**Why 4.57 was wrong, mechanically.** Three reasons, each independently sufficient: (i) the ~0.68 B
+vision tower is **shared and near-identical** between the two models — same depth 32, hidden 1280,
+16 heads, patch 14, 2×2 merge, differing by 1.8% in parameters — so it is 24.9% of the 7B's FLOPs but
+only 6.6% of the 32B's, which drags the ratio *down*; (ii) the 0.545 B / 0.779 B embedding table
+costs **0 FLOPs**; (iii) the lm_head is applied to O(G) ≈ 6 positions, not to the whole prompt.
+Coincidentally, 4.57 is close to the **pure-decode** ratio 4.524 — it is roughly the right constant
+for a decode-only workload and the wrong one for this prefill-dominated one.
+
+**Sensitivity, reported as a band rather than a point [D]:**
+
+| operating point / limit | ratio |
+|---|---:|
+| lm_body-only (T → ∞, long-text limit) | 4.782 |
+| **name-plate 32.0/7.0 (what the repo used)** | **4.571** |
+| pure-decode limit | 4.524 |
+| total-parameter ratio (naive basis) | 4.034 |
+| **cap320 MCQ operating point** | **3.859** |
+| **cap320 open-text anchor (primary)** | **3.816** |
+| no causal halving of LM attention | 3.814 |
+| prefill only (G = 1) | 3.808 |
+| **fullres MCQ operating point** | **3.734** |
+| image-dominated limit (marginal cost per image token) | 3.716 |
+
+**Recommended: R32 = 3.82 ± 0.15, band [3.734, 3.859]** — the spread across the three operating
+points this project actually runs. The band is carried through the headline as a sensitivity
+(§5.9.1), not collapsed to a point.
+
+**The independent physical cross-check, and why it is only a bound [M/D].** Latency and energy ratios
+are *not* FLOP ratios, but they bound the plausible range. Measured batch-1: Lingshu latency ratio
+**1.92**, energy ratio **2.77**; MedVLThinker energy ratio **3.81**. All are **below** the derived
+3.816 and far below the charged 4.57 — which is the physically expected ordering, because at batch 1
+the small model is more severely under-utilised (implied MFU 5.4% against 10.7% against an A100
+dense-bf16 peak of 312 TFLOP/s — **[U]** on the peak, which is a datasheet figure, not a measurement
+on this machine). A charged FLOP ratio *above* the energy ratio is therefore
+consistent; a charged ratio *above the derived one* is simply unsupported. The MedVLThinker energy
+ratio 3.81 lands almost exactly on the derived 3.82.
+
+**Falsifier declared in advance.** If the derived ratio had landed inside [4.4, 4.7], 4.57 was fine
+and only its provenance was missing. It landed at 3.816, outside every plausible reading.
+
+**Caveats carried with the constant.** The model counts multiply–accumulates ×2 and ignores
+softmax/norm/activation/RoPE elementwise work (<1% of a forward). The ratio is **workload-dependent
+by construction**: it rises toward 4.782 as text prompts or generations lengthen and falls toward
+3.716 as the image branch dominates. Both legs are assumed to run at the **same** resolution cap —
+where the repo runs the cheap leg at a lower cap than the strong leg, the effective ratio is *higher*
+and must be recomputed per configuration.
+
+### 4.11.2 The best-of-8 latency and energy — MEASURED, replacing a modelled sum
+
+**The problem.** The open arm's per-question cost carried **522 ms** and **568.8 J**. Neither came
+from a batch-8 run. The latency was `GEN7 347.1 + VER7 175.5 = 522.6`, i.e. the assumption that
+batching 8 draws makes **N drop out of latency entirely**. The energy was `8 × (45.8 + 25.28)`, i.e.
+the *opposite* assumption — zero parallel saving. The two were never reconciled, and together they
+imply **1,089 W** on a card whose NVML-enforced limit is **300 W** and which actually drew 132 W
+during the anchor measurement.
+
+**Design.** `src/cascade_methods/bestofn_measure_batch8.py`: Lingshu-7B with the deployed LoRA
+verifier adapter, **HF batch-1 request** at cap320 on **real VQA-RAD open items**, flash-attention-2,
+bf16, NVML integrated over the visible GPUs — deliberately **the same recipe** as
+`open_measure_latency_energy.py`, which produced the canonical constants. 3 warmup items, 20–25 kept
+per replicate, **two replicates** on separate launches.
+
+**Harness validation gate, run first.** A single greedy generation through the new harness measures
+**350.0 ms** against the canonical `GEN7` **347.1 ms — +0.8%**. The batch-8 numbers therefore sit on
+the same footing as the constants they replace. *(The verifier forward's **mean** is inflated by a few
+multi-hundred-millisecond outliers from LoRA adapter toggling and NVML sampling jitter; its **median**
+205.2 ms against the canonical 173.0 ms is the comparable statistic.)*
+
+**Measured, pooled over n = 45 (2 replicates, means 1,325.7 / 1,289.0 ms) [M]:**
+
+| stage | latency (mean) | p10–p90 (per replicate) | energy |
+|---|---:|---|---:|
+| 1 generation (greedy) | 350.0 ms | 246–503 / 240–471 ms | 57.02 J |
+| 8 generations, batched | 689.2 ms | 497–1,058 / 486–899 ms | 158.86 J |
+| 1 verifier forward | 275.4 ms (median 205.2) | 199–570 / 183–438 ms | 40.15 J |
+| 8 verifier forwards, batched | 616.1 ms | 417–669 / 442–780 ms | 157.84 J |
+| **best-of-8 round trip** | **1,305.3 ms** (median 1,290.7) | 911–1,762 / 946–1,657 ms | **316.7 J** |
+
+**What the measurement refutes.** Batch-8 is only **~4.1× faster than 8 sequential generations** and
+**~3.6×** for verification, not 8×. So the cost model applied **perfect** parallelism to latency and
+**zero** parallelism to energy; reality is in between and much closer to the energy side. Measured
+sequential 8 draws is 4,441.6 ms against a modelled 4,180.8 ms, so batching **is** the right serving
+choice if you are doing best-of-8 at all (3.4× faster) — what is not legitimate is the claim that N
+is free.
+
+**The two errors, in opposite directions [D]:**
+
+| quantity | asserted / modelled | measured | factor |
+|---|---:|---:|---|
+| batched best-of-8 latency | 522.0 ms (asserted) | **1,305.3 ms** | **2.5× understated** |
+| batched best-of-8 energy | 568.8 J (modelled 8×) | **316.7 J** | **1.8× overstated** |
+
+The measured pair implies **242.6 W**, comfortably inside the 300 W limit — the physical
+inconsistency §11.2 flagged is resolved, and *the latency figure was the wrong one*.
+
+**Scope — where the correction does and does not apply.** It applies to the **fixed best-of-8 open
+arm**. The macro pipeline's open cells run **adaptive-N**, whose draws are inherently sequential
+(draw → verify → draw), so their batch-1 latency (`lat_seq`) and their energy already use genuine
+batch-1 per-draw constants and are **unaffected**. What is invalidated is the `lat_par` / batched
+axis. For those adaptive cells the batched axis is repaired with a **two-point linear model**
+(N = 1 at the repo's 522.0 ms anchor, N = 8 at the measured 1,305.3 ms → **111.9 ms per extra
+draw**), applied at each cell's measured mean N (SLAKE-open 5.547, VQA-RAD-open 6.630,
+PathVQA-open 4.371). That model is **[D]**, not measured, and is labelled as such wherever used.
+
+**Consequence for the reporting axis.** Because `lat_seq` (batch-1) is unaffected by the refuted
+assumption, **§5.9 uses batch-1 latency as the headline latency axis** and reports the batched axis
+beside it, labelled. The published "−87.7% latency" was the *batched* axis; its batch-1 equivalent at
+the same column was **−73.6%**.
+
+### 4.11.3 The matched reasoning baseline on the multiple-choice half — handled explicitly, not reused
+
+The third correction folded in on 2026-08-03 is the **prompt-matched reasoning baseline** (§4.3.1,
+§5.3). It was measured only on the three open-text cells. The question this pass had to answer
+honestly was: *what should the matched reasoning baseline be on the five multiple-choice cells?*
+
+The answer is that it is the **same vector as the unmatched one, and no multiple-choice cell is
+re-run** — for two independent, separately verifiable reasons **[M]**:
+
+| cell | n | mean generated tokens, "reasoning" run | agreement with direct | verdict |
+|---|---:|---:|---:|---|
+| PMC-VQA | 33,430 | 3.09 | 0.920 | NOT-REASONED |
+| SLAKE-closed | 836 | 3.33 | 0.970 | NOT-REASONED |
+| VQA-RAD-closed | 251 | 3.01 | 0.972 | NOT-REASONED |
+| PathVQA-closed | 3,362 | — (no dump) | — | NO-DUMP (imputed = direct) |
+| MedXpertQA-MM | 2,000 | **320.33** | **0.229** | **REASONED** |
+
+1. On the three NOT-REASONED cells there is **no reasoning behaviour to prompt-match**. The arm
+   differs from direct only in **answer format** — which is precisely the confound the matched
+   protocol removes — so matching it would collapse those cells onto always-32B-direct. PathVQA-closed
+   has no reasoning dump at all.
+2. MedXpert is the one genuine reasoning cell, and there the matched-prompt study matched the
+   **direct** arm to the reasoning arm and left the reasoning arm untouched. The matched protocol
+   therefore changes the reasoning baseline by **exactly zero** there; the trigger effect it measured
+   is **+0.0035 [−0.0185, +0.0250], not significant**.
+
+**Genuine 32B reasoning exists on 4,345 of 42,224 items = 10.3% of the pool [M].** The reasoning
+framing is really only tested on MedXpert plus the three open cells.
+
+**The strictest reading is reported as a labelled sensitivity, not as the headline.** Setting
+`ok_reasoning := ok_direct` on the three NOT-REASONED multiple-choice cells is a *fourth* correction;
+it moves the reasoning baseline 0.6250 → 0.6262 and the headline **+0.0325 → +0.0313** (point
+estimate, no interval). A companion sensitivity — swapping the MedXpert *direct* baseline to its
+matched version (0.3065 → 0.3005) — moves `always-32B-direct` by −0.00075 macro and is **not** applied,
+because it changes the direct baseline rather than the reasoning baseline this correction is about.
+
+### 4.11.4 Arm choice, and the direction of its bias
+
+Two matched reasoning arms exist. **Arm B (`SYS_THINK_MATCHED2`) is primary**, because it keeps the
+reasoning **trigger sentences verbatim** and replaces only the answer-style clause — so the variable
+under test is unchanged from the published reasoning arm — whereas **arm A** re-orders the prompt so
+the persona precedes the trigger, perturbing the exact string these models require to emit a trace.
+The choice is not load-bearing: pooled open accuracy is 0.4192 (B) against 0.4235 (A), and **arm A is
+reported alongside arm B in every table** (it gives the same +0.0325 headline, interval
+[+0.0240, +0.0411]).
+
+**The bias direction is stated rather than assumed.** Arm B's trace fires on only **30.5–71.1%** of
+items, so it is a **mixture** of reasoning and direct answering and scores *higher* than a fully
+reasoning arm would. Using it as the baseline makes the baseline **stronger**, so the reported
++0.0325 is a **lower bound** on the margin against a 32B that always reasons.
+
+## 4.12 Where the two silent constants came from
+
+Both `4.57` and `522 ms` were **plausible-looking numbers with no derivation anywhere in the
+repository**, and both priced every efficiency claim the project ever made.
+
+- **4.57** entered as `32.0 / 7.0` — the model family's *marketing* sizes. It looks like a compute
+  ratio, it is dimensionally the right kind of thing, and it is within 20% of several defensible
+  values (the decode-only ratio 4.524, the lm_body ratio 4.782), which is exactly why nothing ever
+  flagged it. It then propagated to **twelve call sites**, drifted to `4.571` at one of them, and
+  coexisted with an incompatible `4.34` in two older files without any of the three ever being
+  reconciled.
+- **522 ms** entered as `347.1 + 175.5` — one generation plus one verifier forward, under the
+  unstated assumption that batching 8 draws makes N vanish from wall-clock. That assumption is not
+  absurd; it is how a GPU is *supposed* to behave. It was never written down as an assumption, so it
+  was never tested, and it sat next to an energy figure built on the *opposite* assumption without
+  either being questioned.
+
+**Neither was caught by an experiment.** No result looked wrong. What caught both was a single
+question asked of a number that had never been asked of it: *where does this come from, and what file
+derives it?* The 2026-07-30 write-up asked exactly that and could not answer it, which is why both
+appeared in §11.2 as UNVERIFIED — and that register entry, not any measurement, is what commissioned
+the 2026-08-03 pass. **A "documented but not traceable" register is not bookkeeping; it is a work
+queue.**
+
+**Both closed against the project.** The grounded ratio is 16.5% *below* the literal, so every
+compute ratio worsened; the measured latency is 2.5× *above* the assertion, so the batched-latency
+advantage shrank and the arm flipped from faster to substantially slower than a direct 32B call.
+That asymmetry is worth naming: **an unexamined constant tends to be the one that flatters you**, not
+because anyone chose it to, but because a constant that hurt would have been questioned sooner.
+
+The general lesson is T12 (§7).
+
 ---
 
 # 5. Results
@@ -1432,6 +1729,13 @@ perception Δ = **−0.0401 [−0.0456, −0.0347]** over **30,250** paired samp
 > **The band is one-sided.** `_meta.noise_band` reads *"'within noise' = delta ≤ +0.02"*. Written as
 > "±0.02" it would assert something four times stronger than the data supports: under P1 only
 > **5 of 20** cells have |delta| ≤ 0.02 (`n_abs_delta_le_band = 5`).
+
+![](figs/fig_finding1_crossfamily.png){width=6.5in}
+
+*Reasoning minus direct accuracy, 5 medical VLM families × 4 perception benchmarks, best-matched arms
+(policy P1). Points left of zero mean chain-of-thought lost; bars are 95% paired bootstrap intervals.
+17 of 20 cells are strictly negative and 14 have intervals excluding zero; the single positive
+exception is MedGemma-27B on PathVQA. Source: `finding1_corrected_2026-07-29.json`.*
 
 **Per-family pooled Δ (n = 6,050 each) [M]:** MedVLThinker **−0.0144** [−0.0261, −0.0030]; Lingshu
 **−0.0792** [−0.0902, −0.0681]; QoQ **−0.0524** [−0.0640, −0.0407]; Chiron **−0.0707** [−0.0840,
@@ -1531,6 +1835,13 @@ explicit reasoning instruction).
 | InternVL3-38B | MMMU-MCQonly | 145 | +0.1241 | **+0.0897 [+0.0207, +0.1586] SIG** | +0.0345 [−0.0138, +0.0897] n.s. |
 | InternVL3-38B | MedXpert-Reasoning | 1,446 | +0.0353 | +0.0221 [0.0000, +0.0436] | +0.0131 [−0.0090, +0.0353] n.s. |
 | InternVL3-38B | MedXpert-Understanding | 554 | +0.0199 | +0.0090 [−0.0271, +0.0451] | +0.0108 [−0.0217, +0.0451] n.s. |
+
+![](figs/fig_format_vs_trigger.png){width=6.5in}
+
+*Each published "reasoning gain" on the three reasoning-heavy sub-cells, decomposed into an
+answer-**format** component (bare letter → `\boxed{}`, no trigger) and an explicit reasoning-**trigger**
+component, with 95% intervals. 0 of 9 trigger effects reach significance; 3 of 9 format effects do.
+Source: `medeval_matched_direct_2026-07-29.json`.*
 
 **Result: 0/9 explicit-reasoning-trigger effects are CI-significant** (8/9 point-positive; mean delta
 shift from matching **−0.0276**). **3/9 answer-format effects are.** On the new `direct_matched` arm,
@@ -1732,6 +2043,13 @@ Decision-relevant disagreements are far more defective than the agreement contro
 not biased toward the wins**; the point difference actually favours the losses. Mis-keying is symmetric:
 BAD-GOLD 9% of wins against 10% of losses.
 
+![](figs/fig_pmc_defects.png){width=6.5in}
+
+*PMC-VQA `test_2.csv` label-defect rates by stratum, with Wilson 95% intervals: wins 53%, losses 60%,
+agree-and-correct control 28%. The control is what makes the win rate interpretable; the decisive
+contrast is wins against losses (−0.07, Fisher p = 0.487, not significant), which is why the
+arithmetic survives while the construct does not. Source: `pmc_label_noise_audit_2026-07-29.json`.*
+
 ### 5.4.3 Corrected deltas under each correction model
 
 PMC-VQA fusion cell, measured Δ against always-32B-direct = **+0.0135 [+0.0100, +0.0169]**,
@@ -1859,6 +2177,14 @@ while oracle conversion falls 0.589 → 0.203. Memorising the seen items is what
 into a good *selector*. (Greedy 0.4495, self-consistency 0.4469, oracle-at-8 0.6260, pooled
 n = 2,345 **[M]**.)
 
+![](figs/fig_verifier_contamination.png){width=6.5in}
+
+*The diagnostic that explains the contamination, as paired bars across the three verifiers
+(contaminated → clean L1 → clean L2): candidate-level **ranking AUROC** barely moves (0.943 → 0.886 →
+0.796) while **oracle conversion** — the share of the greedy→oracle-at-8 headroom actually captured —
+collapses (0.589 → 0.203 → −0.068). Report conversion, not AUROC, when claiming a selector works.
+Source: `verifier_disjoint_retrain_2026-07-30.json`.*
+
 ### 5.5.5 The escalation-rate consequence — larger than the accuracy consequence [M/Mo]
 
 Because τ is chosen to *reach* the strong leg's accuracy at minimum escalation, a weaker verifier is
@@ -1868,13 +2194,23 @@ paid for in escalation, not in accuracy:
 |---|---:|---:|---:|
 | sample-weighted escalation to hold 32B-direct parity | **4.0%** | **26.9%** | 82.7% |
 | open-arm best-of-8 parity escalation, macro | 0.0397 | **0.4868** | 0.8331 |
-| open-arm batch-1 latency | 548.4 ms | 700.9 ms (sample-wtd) / 845.7 ms (macro) | 1,072.1 ms |
-| open arm vs always-32B-**reasoning** | −94.8% | −93.3% / −92.0% | −89.8% |
-| open arm vs always-32B-**direct** | **−17.5%** | **+5.4% / +27.2%** | +61.2% |
+| open-arm round-trip latency, batched axis — *as asserted* | 548.4 ms | 700.9 ms (sample-wtd) / 845.7 ms (macro) | 1,072.1 ms |
+| open-arm round-trip latency, batched axis — **as measured 2026-08-03** | **1,331.7 ms** | **1,484.3 ms / 1,629.0 ms** | not re-measured |
+| open-arm energy — *as modelled* → **as measured** | 573.8 → **321.7 J** | 603.0 → **350.9 J** / 630.6 → **378.5 J** | not re-measured |
+| open arm vs always-32B-**reasoning** (asserted → measured) | −94.8% → **−87.3%** | −93.3% → **−85.9%** / −92.0% → **−84.5%** | −89.8% (stale) |
+| open arm vs always-32B-**direct** (asserted → measured) | **−17.5% → +100.3%** | **+5.4% → +123.2%** / **+27.2% → +145.0%** | +61.2% (stale) |
 
-The published "−94.8% batch-1 latency" barely moves, because the reasoning baseline is 10.5 s. **The
-figure that actually breaks is the one against a single 32B forward**: the arm goes from 17.5% faster
-than always-32B-direct to **5.4–27.2% slower**, at 3.77× its FLOP-eq.
+> **Rows 3–7 were corrected on 2026-08-03.** The `as asserted` row is the modelled 522 ms-family
+> figure; the `as measured` row is the direct batch-8 measurement of §4.11.2. The measured/asserted
+> percentages are **[D]** arithmetic on the measured round-trip latency against the same 10,521.6 ms
+> and 665.0 ms constants used in the original row.
+
+The published "−94.8% batch-1 latency" barely moves *in sign*, because the reasoning baseline is
+10.5 s — but it was never a batch-1 figure, and even on its own batched axis it is now −87.3%.
+**The figure that actually breaks is the one against a single 32B forward**: the arm goes from 17.5%
+faster than always-32B-direct to **2.0–2.4× slower**, at **≈4.5–4.7× its FLOP-eq** once R32 = 3.816
+is applied (**[D]**: arm FLOP-eq = 16 + e·R32, so 17.03 at e = 0.2691 and 17.86 at e = 0.4868,
+against a 3.816 baseline; the previously quoted 3.77–3.99× used R32 = 4.57 on both sides).
 
 Open-arm accuracy **[M]**: contaminated 0.5642, **clean L1 0.5143**, always-32B-direct 0.5168 → the
 open arm **beat** the 32B contaminated (+0.0473) and **does not** clean (−0.0025, i.e. parity).
@@ -1968,10 +2304,16 @@ now count as much as PMC-VQA.
 
 Cost constants are **measured** batch-1 quantities (decode 68.573 ms/tok and 18.261 J/tok from
 `latency_32b.jsonl`, n = 60 per configuration, medians; prefill 280.99 ms / 24.638 J; 665 ms /
-126.9 J measured direct anchor, carried in code as 127.0 J). The **FLOP-eq ratio 4.57** is an
-**underived literal** reproducing 32.0 B / 7.0 B = 4.571; no file in the repository derives it, and an
-older document implies 4.34 — every ratio below inherits that ~7% margin. The composition into a
-per-query cost is **[Mo]**, and **no figure here comes from executing the assembled cascade**.
+126.9 J measured direct anchor, carried in code as 127.0 J). The composition into a per-query cost is
+**[Mo]**, and **no figure here comes from executing the assembled cascade**.
+
+> **⚠️ Every FLOP-eq figure in §5.6.3 is stated at the superseded R32 = 4.57.** The whole of §5.6 is
+> preserved as the 2026-07-30 accounting so the correction chain stays legible. The grounded
+> constant is **R32 = 3.816** (§4.11.1), under which the same operating points cost **1.92× (veto),
+> 1.67× (compute-lean) and 1.88× (fusion)** a single 32B-direct call rather than 1.74× / 1.46× /
+> 1.70×. **The current cost table is §5.9.4.** Likewise, every `parallel latency` row below is the
+> batched axis that the 2026-08-03 best-of-8 measurement partly refutes (§4.11.2); prefer the
+> sequential (batch-1) rows, which are unaffected.
 
 **Absolute macro costs [Mo]:**
 
@@ -2003,6 +2345,12 @@ per-query cost is **[Mo]**, and **no figure here comes from executing the assemb
 **Against a 32B actually made to reason, honestly re-costed [D/Mo]:** accuracy-max-veto at C is
 **−87.7% parallel latency, −84.3% energy, 1.396× FLOP-eq** (1.74× as charged); compute-lean at C is
 **−89.0% / −85.9% / 1.171×**.
+
+> **All three of those numbers are superseded.** The −87.7% is the **batched** axis (its batch-1
+> equivalent at the same column is **−73.6%**, and the batched axis corrected for the measured
+> best-of-8 cost is **−84.7%**); the 1.396× is at R32 = 4.57; and the reasoning baseline is the
+> **prompt-unmatched** one. All three corrections applied: **+0.0325 at −67.7% batch-1 latency,
+> −80.6% energy and 1.608× FLOP-eq** (§5.9.3–§5.9.4).
 
 **Escalation rates [M]:**
 
@@ -2051,16 +2399,28 @@ and only by a **+0.0008 accuracy edge that is not statistically distinguishable 
 > sample-weighted and used the contaminated verifier. **It is superseded by this table**, not an
 > alternative reading of it.
 
+> **Checked against the 2026-08-03 accounting: every domination verdict in row block C is
+> unchanged [D].** The grounded R32 raises all three method points' cost ratios without changing any
+> accuracy, and the matched reasoning baseline lowers the *reasoning* comparator's accuracy without
+> touching cost — so compute-lean and fusion remain **strictly dominated by always-32B-direct**
+> (accuracy losses of −0.0124 and −0.0063 at 1.666× and 1.884× its FLOP-eq, and higher on every other
+> axis), and accuracy-max-veto remains the only non-dominated point, still by a **+0.0008** edge that
+> is not distinguishable from zero. Against the reasoning baseline, compute-lean is "neither" rather
+> than "dominates" at every accounting from column C onward, because it costs more FLOPs.
+
 ### 5.6.5 Verdict — the honest headline
 
-> **8-cell macro, clean verifier: accuracy-max is +0.0008 [−0.0022, +0.0037] against
-> always-32B-direct at 1.74× its compute — a tie bought with more compute, not a win.**
+> **8-cell macro, clean verifier: accuracy-max is +0.0008 [−0.0022, +0.0036] against
+> always-32B-direct at 1.92× its compute — a tie bought with more compute, not a win.**
+> *(The tie verdict is unchanged by the 2026-08-03 pass; only the price moved, 1.74× → 1.92×.)*
 
 **What survives [M/D]:**
 
 - Against a 32B **actually made to reason**, the accuracy margin *grows* under macro even after
-  de-contamination: **+0.0601 [+0.0498, +0.0703]** at −87.7% latency and −84.3% energy (but 1.396×
-  honestly re-costed FLOP-eq — *not* fewer FLOPs).
+  de-contamination: **+0.0601 [+0.0498, +0.0703]** at −87.7% batched latency and −84.3% energy (but
+  1.396× honestly re-costed FLOP-eq — *not* fewer FLOPs). **Superseded on 2026-08-03:** against a
+  *prompt-matched* reasoning arm and at the grounded R32, this becomes
+  **+0.0325 [+0.0237, +0.0412] at −67.7% batch-1 latency, −80.6% energy and 1.608× FLOP-eq** (§5.9).
 - "Reasoning mode is actively harmful on free-text medical VQA" is untouched by both corrections:
   PathVQA-open 0.1087 against 0.3760 direct; SLAKE-open 0.6791 against 0.8186; VQA-RAD-open 0.5450
   against 0.6000.
@@ -2197,13 +2557,231 @@ fusion/veto win are on the **unverified** `test_2.csv` (n = 33,430). These must 
 | PMC-VQA win is not an annotation artifact | **SURVIVES** | symmetric correction keeps +0.0094 [+0.0004, +0.0183] |
 | PMC-VQA win is an accuracy improvement | **RETRACTED (construct)** | 46% of wins are bad-gold or unanswerable; report as key-agreement |
 | Open-text verifier selection gain +0.1041 | **REDUCED ~3×** | clean L1 +0.0358 [+0.0213, +0.0503]; significant on PathVQA only; null at L2 |
-| Open arm at 3.97% escalation / −94.8% latency | **RETRACTED (efficiency)** | clean L1 needs 26.9–48.7% escalation; +5.4% to +27.2% slower than one 32B forward |
-| Method beats a single 32B forward pass | **RETRACTED** | accuracy-max +0.0008 [−0.0022, +0.0037] — a tie, at 1.74× the compute |
+| Open arm at 3.97% escalation / −94.8% latency | **RETRACTED (efficiency)** | clean L1 needs 26.9–48.7% escalation; **2.0–2.4× slower** than one 32B forward on the measured batched axis (§5.9.2) |
+| Method beats a single 32B forward pass | **RETRACTED** | accuracy-max +0.0008 [−0.0022, +0.0036] — a tie, at **1.92×** the compute |
 | Method Pareto-dominates every fixed way of using the 32B | **RETRACTED** | compute-lean and fusion strictly dominated; only accuracy-max-veto stays non-dominated, by a non-significant margin |
-| Method beats a 32B made to reason | **SURVIVES, and grows under macro** | +0.0601 [+0.0498, +0.0703] at −87.7% latency, −84.3% energy — but computed against a prompt-unmatched reasoning arm (see §8.1) |
+| Method beats a 32B made to reason | **SURVIVES, halved** | **+0.0325 [+0.0237, +0.0412]** against a *prompt-matched* reasoning arm at −67.7% batch-1 latency, −80.6% energy, 1.608× FLOP-eq. The published +0.0601 was against an unmatched arm; matching costs −0.0276 (45.9% of the claim). §5.9.3 |
+| The FLOP-eq ratio 4.57 | **REJECTED** | derived **R32 = 3.82 ± 0.15**, band [3.734, 3.859]; 4.57 was the name-plate 32.0/7.0 and is ≈ the decode-only ratio applied to a prefill-dominated workload. §4.11.1, §6.1.4 |
+| Best-of-8 costs 522 ms and 568.8 J | **REJECTED, both directions** | **measured 1,305.3 ms** (2.5× understated) and **316.7 J** (1.8× overstated), n = 45. "N drops out of latency" is refuted. §4.11.2, §6.1.5 |
 | The recoverability and selection limits | **SURVIVE** — the project's strongest contribution | see §8.5 |
 | MMMU keep-7B is a +0.140 win | **RETRACTED** | genuine model output, but +26 over the published 7B number → contamination; excluded |
 | SLAKE image-path bug invalidates the SLAKE verifier result | **REFUTED** | the buggy path was never executed; 0 published numbers affected |
+
+## 5.9 The 2026-08-03 grounding pass and the final headline
+
+**What was measured.** Three things that had never been grounded, applied to the same 8 reporting
+cells (Variant B, n = 42,224): the **FLOP-equivalence ratio** (derived, §4.11.1), the **best-of-8
+latency and energy** (measured, §4.11.2), and the **combination of all three prior corrections** —
+macro weighting × clean L1 verifier × prompt-matched reasoning baseline — which no artifact on disk
+had ever computed together. Sources: `flop_ratio_derivation_2026-08-03.json`,
+`bestofn_latency_energy_2026-08-03.json` (+ `_rep2`), `headline_three_way_2026-08-03.json`.
+Reproduce: `python3 src/cascade_methods/{flop_ratio_derivation,bestofn_measure_batch8,headline_three_way}.py`.
+
+**Three validation gates passed before anything new was reported [M]:**
+
+| gate | what it required | result |
+|---|---|---|
+| 1 | contaminated + unmatched at R32 = 4.57 reproduces `macro_average_headline_2026-07-30.json` | **1,224 fields, exact** |
+| 2 | clean L1 + unmatched at R32 = 4.57 reproduces `macro_headline_clean_verifier_2026-07-30.json` column C | accuracy levels **and every delta and interval bound**, exact |
+| 3 | the redirected matched-judge files reproduce `matched_prompt_reasoning_2026-07-29.json` per-dataset accuracies | exact |
+
+### 5.9.1 The FLOP ratio: 4.57 is REJECTED; R32 = 3.82 ± 0.15
+
+The derivation is §4.11.1. The result, stated as a verdict **[D]**:
+
+> **R32 = 3.816** at the primary (cap320 open-text) operating point; **3.82 ± 0.15** with a band of
+> **[3.734, 3.859]** across the three operating points this project actually runs. The repository's
+> **4.57 is rejected** — it is the name-plate ratio 32.0 B / 7.0 B (true counts: 8,292,166,656 and
+> 33,452,718,336, naive total ratio **4.034**), it is ~16.5% too high, and it is approximately the
+> **decode-only** ratio 4.524 applied to a workload that emits 2–6 tokens and is therefore
+> prefill-dominated.
+
+**Effect on accuracy: none.** The Pandora open-arm controller selects its λ by FLOPs, so R32 can in
+principle enter the *method's* accuracy. It was run at both values, and **every system's macro
+accuracy is identical to four decimal places** — so this is a pure cost correction **[M]**.
+
+**Effect on cost: it moves everything against the method [D].** The correction shrinks the method's
+FLOP-eq *and* the baseline's, but it shrinks the baseline more, because the baseline is a single 32B
+forward while the method is dominated by 7B forwards:
+
+| quantity (8-cell macro, clean L1, matched B) | at R32 = 4.57 | at **R32 = 3.816** |
+|---|---:|---:|
+| always-32B-direct, FLOP-eq | 4.57 | **3.816** |
+| always-32B-with-reasoning, FLOP-eq (honestly re-costed) | 5.697 | **4.567** |
+| accuracy-max-veto, FLOP-eq | 7.951 | **7.342** |
+| compute-lean, FLOP-eq | 6.674 | **6.358** |
+| accuracy-max-fusion, FLOP-eq | — | **7.188** |
+| **veto ÷ reasoning baseline** | 1.396× | **1.608×** |
+| **veto ÷ 32B-direct** | 1.74× | **1.924×** |
+| **compute-lean ÷ 32B-direct** | 1.46× | **1.666×** |
+| **fusion ÷ 32B-direct** | 1.699× | **1.884×** |
+
+**Band sensitivity on the headline [D]:** at R32 = 3.734 the headline claim costs **1.628×**; at
+R32 = 3.859, **1.597×**. The accuracy delta and its interval are unchanged at every point in the band.
+
+### 5.9.2 The best-of-8 cost: 522 ms was never measured; 1,305.3 ms is
+
+The measurement is §4.11.2. The verdict **[M]**:
+
+> Batched best-of-8 on Lingshu-7B at cap320 costs **1,305.3 ms and 316.7 J** per question
+> (n = 45 over two replicates; replicate means 1,325.7 / 1,289.0 ms; p10–p90 911–1,762 and
+> 946–1,657 ms). The asserted **522 ms was 2.5× too low**; the modelled **568.8 J was 1.8× too
+> high**. The harness reproduces the canonical single-generation constant to **+0.8%**, so this is a
+> like-for-like replacement.
+
+**The "N drops out of latency" assumption is refuted.** Measured batch-8 speedup over 8 sequential
+calls is **~4.1×** for generation and **~3.6×** for verification — not 8×. Under *any* serving
+assumption (sequential 4,441.6 ms or batched 1,305.3 ms) the open-text best-of-8 arm is **slower than
+simply calling the 32B once** (665 ms). And in a real multi-tenant server even the batched figure is
+optimistic, because the 8-wide slots displace other requests.
+
+![](figs/fig_latency_correction.png){width=6.5in}
+
+*The best-of-8 latency correction. Left: the asserted 522 ms (perfect batching) against the measured
+1,305.3 ms round trip, decomposed into batched generation (689.2 ms) and batched verification
+(616.1 ms), with sequential 8 draws (4,441.6 ms) and a single 32B-direct forward (665 ms) as
+reference lines. Right: the modelled 568.8 J against the measured 316.7 J — the two errors run in
+opposite directions, because the cost model applied perfect parallelism to latency and none to
+energy. Sources: `bestofn_latency_energy_2026-08-03.json`, `_rep2`.*
+
+**Where it lands in the headline [D].** The macro pipeline's open cells run **adaptive-N**, whose
+draws are sequential, so their batch-1 latency and energy are unaffected; only the *batched* axis
+moves, via the two-point linear model of §4.11.2 (111.9 ms per extra draw at measured mean
+N = 4.371–6.630):
+
+| batched-latency claim | repo assumption | **corrected** |
+|---|---:|---:|
+| accuracy-max-veto vs always-32B-with-reasoning (final, matched B) | −84.9% | **−81.2%** |
+| accuracy-max-veto vs always-32B-with-reasoning (published column C) | −87.7% | **−84.7%** |
+| accuracy-max-veto vs **always-32B-direct** | +16.7% | **+45.2%** |
+| accuracy-max-veto vs oracle-mode-32B | +20.2% | **+49.6%** |
+| compute-lean vs always-32B-direct | +3.9% | **+32.4%** |
+| fusion vs always-32B-direct | +6.1% | **+34.6%** |
+
+> **A naming correction that travels with this.** The published sentence *"+0.0601 at −87.7% latency
+> and −84.3% energy"* took −87.7% from the **batched** (`lat_par`) axis, not from batch-1. The
+> batch-1 figure for the identical cell is **−73.6%**. Batch-1 latency is unaffected by the refuted
+> assumption, so §5.9.4 reports batch-1 as the primary latency axis and labels the batched axis
+> wherever it appears.
+
+### 5.9.3 The three-way combination: the surviving claim halves
+
+**What was combined.** Correction 1 (macro weighting, §4.8), correction 2 (clean L1 verifier, §4.7)
+and correction 3 (prompt-matched reasoning baseline, §4.3.1) had each been applied *separately*. Here
+they are applied together, on the same 10,000-replicate paired bootstrap stream (seed 20260730), with
+the grounded cost constants added last **[M]**:
+
+| column | correction added | method acc | reasoning-baseline acc | **Δ** | 95% interval | Δ change | FLOP-eq × | batch-1 latency | energy |
+|---|---|---:|---:|---:|---|---:|---:|---:|---:|
+| 1 | *(published)* sample-weighted, contaminated, unmatched | 0.5836 | 0.5591 | **+0.0245** | [+0.0217, +0.0274] | — | 0.874× | −58.4% | −71.9% |
+| 2 | + **macro** (1/8 per cell) | 0.6694 | 0.5974 | **+0.0720** | [+0.0614, +0.0824] | **+0.0475** | 1.131× | −78.8% | −87.3% |
+| 3 | + **clean L1 verifier** | 0.6575 | 0.5974 | **+0.0601** | [+0.0498, +0.0703] | **−0.0119** | 1.396× | −73.6% | −84.3% |
+| 4 | + **matched reasoning baseline (arm B)** | 0.6575 | **0.6250** | **+0.0325** | [+0.0237, +0.0412] | **−0.0276** | 1.453× | −67.7% | −80.6% |
+| 4a | *(arm A instead of arm B)* | 0.6575 | 0.6250 | **+0.0325** | [+0.0240, +0.0411] | 0.0000 | 1.461× | −66.7% | −80.0% |
+| **5** | + **grounded R32 = 3.816** | 0.6575 | 0.6250 | **+0.0325** | **[+0.0237, +0.0412]** | 0.0000 | **1.608×** | **−67.7%** | **−80.6%** |
+
+**Verdict: the claim SURVIVES and remains significant, at 45.9% of its published size.** The
+shrinkage is entirely correction 3: matching the reasoning arm's prompt costs **−0.0276**, because
+the unmatched arm was being penalised by a free-text grading channel (persona and answer-style clause
+dropped) on top of whatever reasoning cost it. The R32 correction costs nothing in accuracy and
+0.155× in price.
+
+**Where the reasoning baseline moved, per cell [M].** Only the three open cells change; the five
+multiple-choice cells are unchanged for the reasons in §4.11.3:
+
+| open cell | n | unmatched | matched A | **matched B (primary)** | mean generated tokens (unmatched → B) |
+|---|---:|---:|---:|---:|---|
+| SLAKE-open | 645 | 0.6791 | 0.7194 | **0.7318** | 122.41 → 86.43 |
+| VQA-RAD-open | 200 | 0.5450 | 0.5550 | **0.5550** | 104.54 → 45.80 |
+| PathVQA-open | 1,500 | 0.1087 | 0.2787 | **0.2667** | 141.47 → 101.49 |
+
+**The other three verdicts are unchanged by the combination [M]:**
+
+| comparison (8-cell macro, final accounting) | Δ | 95% interval | verdict |
+|---|---:|---|---|
+| accuracy-max-veto vs **always-32B-direct** | +0.0008 | [−0.0022, +0.0036] | **TIE** |
+| accuracy-max-veto vs oracle-mode-32B | +0.0002 | [−0.0030, +0.0033] | TIE |
+| **compute-lean** vs always-32B-direct | **−0.0124** | [−0.0189, −0.0061] | **LOSS** |
+| **accuracy-max-fusion** vs always-32B-direct | **−0.0063** | [−0.0120, −0.0010] | **LOSS** |
+| compute-lean vs always-32B-with-reasoning | +0.0193 | [+0.0090, +0.0295] | WIN |
+| accuracy-max-fusion vs always-32B-with-reasoning | +0.0253 | [+0.0156, +0.0348] | WIN |
+| accuracy-max-veto vs reasoning, **multiple-choice only** | +0.0043 | [−0.0016, +0.0105] | TIE |
+| accuracy-max-veto vs reasoning, **open only** | +0.0794 | [+0.0582, +0.1003] | WIN |
+
+**Final accuracy levels, 8-cell macro [M]:** always-7B **0.5971**; always-32B-direct **0.6567**;
+always-32B-with-reasoning (matched B) **0.6250**; oracle mode-select 32B **0.6573**; compute-lean
+**0.6443**; accuracy-max-veto **0.6575**; accuracy-max-fusion **0.6503**.
+
+**Concentration, the honest companion to the interval [M].** Leave-one-cell-out on the final +0.0325:
+range **[+0.0203, +0.0378]**; the claim is **carried by PathVQA-open** (dropping it gives +0.0203) and
+**held back by SLAKE-closed** (+0.0378). Per dropped cell: PMC-VQA +0.0354, SLAKE-closed +0.0378,
+VQA-RAD-closed +0.0354, PathVQA-closed +0.0371, MedXpert +0.0368, SLAKE-open +0.0249, VQA-RAD-open
++0.0321, PathVQA-open +0.0203. **The load-bearing cell is unchanged from the 2026-07-30 accounting,
+and it is still the non-random prefix slice judged by an unvalidated judge (§3.2, §8.1).**
+
+**Strictest-reading sensitivity [D, point estimate, no interval].** Setting the reasoning arm equal to
+the direct arm on the three NOT-REASONED multiple-choice cells (§4.11.3) moves the reasoning baseline
+to 0.6262 and the headline to **+0.0313**; compute-lean +0.0193 → +0.0181; fusion +0.0253 → +0.0241.
+**The claim survives the strictest reading.**
+
+### 5.9.4 The current cost table
+
+This replaces §5.6.3 for all forward use. 8-cell macro, clean L1 verifier, matched arm B reasoning
+baseline, **R32 = 3.816**, reasoning baseline honestly re-costed per cell from its own measured
+generation length **[M constants / D composition / Mo per-query assembly]**:
+
+| system | FLOP-eq | batch-1 latency | batched latency (repo → corrected) | energy |
+|---|---:|---:|---:|---:|
+| always-7B | 1.000 | 347.0 ms | 347.0 ms | 45.8 J |
+| always-32B-direct | **3.816** | 665.0 ms | 665.0 ms | 127.0 J |
+| always-32B-with-reasoning (matched B, honestly re-costed) | **4.567** | 5,136.6 ms | 5,136.6 ms | 1,317.7 J |
+| oracle mode-select 32B (not deployable) | 3.816 | 645.5 ms | 645.5 ms | 121.8 J |
+| compute-lean | **6.358** | 1,574.8 ms | 690.8 → **880.3 ms** | 228.8 J |
+| **accuracy-max-veto** | **7.342** | **1,660.0 ms** | 775.9 → **965.4 ms** | **255.3 J** |
+| accuracy-max-fusion | 7.188 | 1,633.1 ms | 705.6 → **895.2 ms** | 250.2 J |
+
+**Ratios [D]:**
+
+| operating point | vs always-32B-**reasoning** | vs always-32B-**direct** |
+|---|---|---|
+| compute-lean — FLOP-eq | 1.392× | **1.666×** |
+| compute-lean — batch-1 latency | −69.3% | +136.8% |
+| compute-lean — energy | −82.6% | +80.2% |
+| **accuracy-max-veto — FLOP-eq** | **1.608×** | **1.924×** |
+| **accuracy-max-veto — batch-1 latency** | **−67.7%** | **+149.6%** |
+| accuracy-max-veto — batched latency (corrected) | **−81.2%** | **+45.2%** |
+| **accuracy-max-veto — energy** | **−80.6%** | **+101.0%** |
+| fusion — FLOP-eq | 1.574× | 1.884× |
+
+![](figs/fig_accuracy_cost.png){width=6.5in}
+
+*Accuracy against cost on the final accounting: 8-cell macro accuracy on the vertical axis, FLOP-eq at
+R32 = 3.816 on the horizontal, with batch-1 latency and energy as companion panels. Ghosted markers
+show each operating point at the superseded R32 = 4.57, so the correction's direction is visible.
+Only accuracy-max-veto remains non-dominated, and only by +0.0008 — an edge indistinguishable from
+zero. Source: `headline_three_way_2026-08-03.json : final_headline`.*
+
+**Escalation rates on the final accounting [M]:** PMC-VQA 8.45%, SLAKE-closed 20.45%, VQA-RAD-closed
+56.97%, PathVQA-closed 45.72%, MedXpert 89.60%, SLAKE-open **43.41%**, VQA-RAD-open **54.00%**,
+PathVQA-open **16.00%**; compute-lean over all 8 cells **41.83%** macro (16.81% sample-weighted).
+The accuracy-max-veto open arm escalates **61.93%** macro at a mean N of 5.547 / 6.630 / 4.371 draws.
+
+### 5.9.5 Verdict
+
+**The surviving claim survives, at half its size, and costs more than reported.**
+
+> **Against a 32B made to reason with a prompt-matched instruction, the accuracy-max cascade is
+> +0.0325 [+0.0237, +0.0412] on an 8-cell macro average, at −67.7% batch-1 latency, −80.6% energy —
+> and 1.608× the honestly re-costed FLOP-equivalents. It ties a single direct 32B call
+> (+0.0008 [−0.0022, +0.0036]) at 1.924× its compute. The cheaper setting is a significant loss.**
+
+Four caveats travel with it, and none of them is new — the 2026-08-03 pass changed the magnitude, not
+the shape, of what is wrong with this claim: the baseline arm is a **mixture** that fires a trace on
+only 30.5–71.1% of items (so +0.0325 is a **lower bound** against a fully reasoning 32B); genuine 32B
+reasoning exists on **10.3%** of the pool; the claim is **carried by PathVQA-open**; and the
+comparison is against a baseline no one should deploy, since turning reasoning off is worth +0.0317
+on its own (§10.1).
+
 ---
 
 # 6. Corrections and retractions
@@ -2222,6 +2800,11 @@ Two things set the standard for reading the rest:
 2. **The 2026-07-30 pass cost the project its headline.** Two corrections landed the same day and
    together took the central claim from *"beats a single 32B forward pass"* to *"ties it, at 1.74× its
    compute."* That is written down here in the same detail as the wins.
+3. **The 2026-08-03 pass halved what was left of it, and re-priced everything.** Two constants that
+   no file in the repository derived — the 4.57 compute ratio and the 522 ms best-of-N latency — were
+   grounded for the first time, and both closed *against* the project (§6.1.4, §6.1.5). Combining the
+   three prior corrections for the first time took the one surviving positive claim from **+0.0601 to
+   +0.0325** (§6.8). The tie against a single 32B forward now costs **1.92×**, not 1.74×.
 
 ## 6.1 Measurement hygiene
 
@@ -2294,6 +2877,102 @@ Three of the same kind, all caught before 2026-07-29 and all recorded:
 
 > **Lesson.** Implausibility is evidence. A negative energy, a 10×-too-small IoU, or three numbers for
 > one quantity are all falsifications available before any new experiment is run.
+
+### 6.1.4 The 32B/7B compute ratio 4.57 — REJECTED, replaced by a derived 3.816
+
+**Believed.** One 32B forward costs **4.57** 7B-forward-equivalents. This literal priced **every**
+compute claim in the project: the cascade's FLOP-eq, the "0.492× compute" headline, the 1.396× and
+1.74× ratios, the deployment break-even table, and the open arm's 3.77×.
+
+**Its only stated derivation** was `32.0 / 7.0 = 4.571` in `honest_recosting.py:145` — name-plate
+sizes. Two further defects were found in the same pass **[M]**: the literal is carried as `4.57` at
+eleven call sites and `4.571` at a twelfth (`honest_recosting.py`), and a *different, incompatible*
+constant `4.34 = 33.0e9 / 7.6e9` survives in `open_bestofN_adaptive.py:14` and
+`src/analysis/cascade/cascade_cost_prefill_flops.py:33`. Three values for one quantity, never
+reconciled.
+
+**Falsified by** an exact derivation from measured inputs (§4.11.1): safetensors parameter counts
+(**8,292,166,656** and **33,452,718,336** — so even the naive *total-parameter* ratio is **4.034**,
+not 4.57) plus the measured prompt geometry of the workload the anchors were timed on (326.68 tokens,
+280.48 of them image, 5.6 generated). A whole-forward FLOP model gives **5,831.45 GFLOP** against
+**22,250.45 GFLOP**.
+
+**Replaced by. R32 = 3.816** at the primary operating point; **3.82 ± 0.15**, band
+**[3.734, 3.859]** across the three operating points actually run.
+
+**Why the wrong value was plausible.** A VLM forward is *not* proportional to total parameters. The
+~0.68 B vision tower is **shared and near-identical** across the two models (1.8% apart), so it is
+24.9% of the 7B's FLOPs but only 6.6% of the 32B's; the 0.545 B / 0.779 B embedding table costs zero
+FLOPs; and the lm_head runs on ~6 positions, not the whole prompt. Together those pull the
+whole-forward ratio well below both the lm_body ratio (4.782) and the name plate (4.571). **4.57 is
+approximately the pure-decode ratio, 4.524** — it is roughly right for a decode-heavy workload and
+wrong for one that emits 2–6 tokens.
+
+**Downstream damage [D].** Accuracy is unchanged to four decimals (verified by running the pipeline at
+both values). Every cost ratio worsens: veto against a reasoning 32B **1.396× → 1.608×**; veto against
+a direct 32B **1.74× → 1.924×**; compute-lean against direct **1.46× → 1.666×**; fusion **1.699× →
+1.884×**; the open best-of-8 arm **3.77–3.99× → ≈4.5–4.7×**; and the deployment break-even for
+"cheaper on FLOPs" moves from ~78% escalation to **~74%** (§10.1).
+
+**An independent physical cross-check, recorded because it is only a bound.** Measured batch-1
+latency and energy ratios (Lingshu 1.92 and 2.77; MedVLThinker 3.81) all sit **below** the derived
+3.816 and far below 4.57. That ordering is expected — at batch 1 the small model is more badly
+under-utilised — so it cannot *confirm* 3.816, but it makes 4.57 unsupportable, and the MedVLThinker
+energy ratio 3.81 lands almost exactly on the derived value.
+
+> **Lesson.** A parameter-count ratio is not a FLOP ratio for a multimodal model, because the vision
+> tower is **shared** and the embedding table is **free**. Derive the constant from the architecture
+> *and the workload's actual token geometry*, report it as a **band over the operating points you
+> run**, and check whether the ratio you are using is secretly a *decode-only* ratio applied to a
+> prefill-dominated workload. And grep for the constant before trusting it: three inconsistent values
+> in one codebase is itself a finding.
+
+### 6.1.5 The best-of-N latency 522 ms — REJECTED; and the energy was wrong the other way
+
+**Believed.** Batched best-of-8 plus 8 verifier forwards costs **522 ms** and **568.8 J** per
+question, so the open arm was **17.5% faster** than a single 32B forward at 3.97% escalation.
+
+**Falsified by, step 1 — arithmetic, in the 2026-07-30 pass.** 568.8 J delivered in 0.522 s requires
+**1,089 W** on the single A100 80 GB PCIe those constants were measured on, whose NVML-enforced limit
+is **300 W** (not the 400 W earlier drafts quoted) and which actually drew **132 W** during the
+generation anchor. The two figures could not both be right; §11.2 recorded the contradiction and an
+energy-consistent lower bound of ≥1.42 s (≥1.90 s at the true 300 W limit).
+
+**Falsified by, step 2 — direct measurement, 2026-08-03.** `bestofn_measure_batch8.py`, same recipe
+and same hardware as the canonical constants, n = 45 over two replicates, harness validated at +0.8%
+against `GEN7`:
+
+| quantity | claimed | measured | verdict |
+|---|---:|---:|---|
+| batched best-of-8 latency | 522.0 ms (**asserted**; `GEN7 + VER7`, "N drops out") | **1,305.3 ms** | **2.5× understated** |
+| batched best-of-8 energy | 568.8 J (**modelled**; `8 × (GEN7 + VER7)`) | **316.7 J** | **1.8× overstated** |
+| implied power | 1,089 W (impossible) | **242.6 W** | consistent with a 300 W card |
+
+**The mechanism, and why the two errors point opposite ways.** The cost model applied **perfect**
+parallelism to latency (N drops out) and **zero** parallelism to energy (N multiplies). Reality is in
+between and much closer to the energy side: measured batch-8 is only **~4.1×** faster than 8
+sequential generations and **~3.6×** for verification. Batching genuinely saves *energy* — shared
+prefill and weight reads — and genuinely helps latency (3.4× against sequential), but it does not
+make N free.
+
+**Downstream damage [D].** The open best-of-8 arm's batched round trip goes 548.4 → **1,331.7 ms**
+(contaminated reference), 700.9 → **1,484.3 ms** (clean, sample-weighted) and 845.7 → **1,629.0 ms**
+(clean, macro). Against **always-32B-direct** the arm flips from *faster* to **2.0–2.4× slower**.
+On the headline comparison the batched-latency advantage over a reasoning 32B goes **−84.9% →
+−81.2%** (final accounting) and **−87.7% → −84.7%** (published column C), while the same arm against
+a direct 32B goes **+16.7% → +45.2%**. **Batch-1 latency and energy are unaffected**, because the
+macro pipeline's open cells run adaptive-N with sequential draws — which is why §5.9.4 reports
+batch-1 as the primary latency axis.
+
+**What was also learned about the published sentence.** The "−87.7% latency" in the 2026-07-30
+headline was never a batch-1 figure; it came from the batched axis. Its batch-1 equivalent at the
+identical cell is **−73.6%**.
+
+> **Lesson.** A cost model must apply the **same** parallelism assumption to every axis it prices. If
+> latency assumes N draws are free and energy assumes they are all paid, the model is internally
+> contradictory and one of the two is wrong — multiply them together and the implied power will tell
+> you which. And a 30-minute measurement retires an assumption that six weeks of analysis was built
+> on: measure the thing you are billing for.
 
 ## 6.2 Contamination and provenance
 
@@ -2695,6 +3374,7 @@ a regression**. **Published numbers affected: NONE.** The branch was added anywa
 | prior-art check | 2 | agreement gating is Agreement-Based Cascading (arXiv 2407.02348) |
 | a control experiment | 2 | recoverability, not detection, predicts cascade quality |
 | listing the disk instead of inferring it | 1 | §6.2.3 |
+| **asking where a constant came from, and finding no file that derives it** | **2** | **the 4.57 FLOP ratio (§6.1.4); the 522 ms best-of-N latency (§6.1.5)** |
 
 Two patterns stand out. **Corrections cluster where a comparison was assumed rather than constructed**
 — prompts, splits, weightings, training pools. And **the project's own instruments caught most of
@@ -2706,6 +3386,47 @@ really the best open-text gate is an **open inconsistency**: two runs of the sam
 0.3832 against 0.3923 in one and 0.3965 against 0.3901 (+0.0062 [+0.0040, +0.0086]) in the other —
 opposite in sign. No document reconciles them. This is not written up as a correction because it has
 not been resolved. **[U]**
+
+## 6.8 The three corrections had never been combined — and combining them halves the claim
+
+**Believed.** Against always-32B-with-reasoning, accuracy-max is
+**+0.0601 [+0.0498, +0.0703]** on an 8-cell macro average with a de-contaminated verifier
+(`macro_headline_clean_verifier_2026-07-30.json`, column C). The 2026-07-30 write-up flagged this
+itself, in §8.1 caveat 1 and in §11.2: *"The macro × clean-verifier × matched-reasoning combination
+has NOT been computed anywhere on disk. The +0.0601 should be read as an upper bound."*
+
+**Falsified by** computing it. `headline_three_way.py` applies all three corrections on one bootstrap
+stream, after reproducing the published artifacts exactly at three validation gates (1,224 fields;
+column C's every delta and interval bound; the matched-prompt per-dataset accuracies).
+
+**Replaced by. +0.0325 [+0.0237, +0.0412]** — still a WIN, still significant, and **45.9% smaller**.
+The full progression is §5.9.3. Per correction: macro **+0.0475**, clean verifier **−0.0119**, matched
+prompt **−0.0276**, grounded R32 **0.0000 on accuracy**.
+
+**What the shrinkage actually is.** It is not the method getting worse; it is the **baseline getting
+its persona and answer-style clause back**. The published reasoning arm dropped both, and on free text
+that is a live grading channel: the same 32B, told to reason *and* to answer in a short specific
+phrase, scores 0.7318 / 0.5550 / 0.2667 on the three open cells rather than 0.6791 / 0.5450 / 0.1087.
+PathVQA-open alone moves +0.158.
+
+**The multiple-choice half was handled explicitly, not reused** (§4.11.3): on three of the five
+multiple-choice cells the "reasoning" dump emits 3.0–3.3 tokens and agrees with the direct run
+92–97% of the time — there is no reasoning behaviour to prompt-match — PathVQA-closed has no reasoning
+dump at all, and MedXpert's reasoning arm was never re-run by the matched study, so the matched
+protocol changes it by exactly zero. **Genuine 32B reasoning exists on 4,345 of 42,224 items = 10.3%
+of the pool.** The strictest reading of the protocol (§4.11.3) gives +0.0313.
+
+**What did not change.** accuracy-max still **ties** always-32B-direct (+0.0008 [−0.0022, +0.0036]);
+compute-lean still **loses** (−0.0124 [−0.0189, −0.0061]); fusion still **loses**
+(−0.0063 [−0.0120, −0.0010]). Arm A gives the same +0.0325.
+
+> **Lesson.** Corrections do not commute with *reporting*. Each of these three was computed and
+> published separately, and each separate result was correct — but the surviving headline was quoted
+> from the artifact that had applied only two of them, for four days, while the project's own register
+> said in writing that the combination did not exist. **When a register entry says "these have never
+> been combined", that is a live overstatement, not a footnote.** Compute the joint correction before
+> quoting the partial one, and put the *combined* column in the artifact so nobody can quote an
+> intermediate.
 
 ---
 
@@ -2876,6 +3597,46 @@ loading a 38 B model.
 > Heartbeat from inside wait loops so waiting is distinguishable from hanging. Classify failures before
 > retrying — deterministic errors should **fail fast and escalate**. And propagate a per-cell
 > configuration from whichever arm first needed it.
+
+### T12. A plausible constant that no file derives will price everything you claim
+
+**The trap.** A cost model needs a handful of scalars. Each one enters once, looks reasonable, and is
+never questioned again — because nothing it produces looks wrong. Here two of them priced every
+efficiency claim the project made for six weeks:
+
+- **`R32 = 4.57`**, entered as the *name-plate* ratio 32.0 B / 7.0 B. It is dimensionally the right
+  kind of thing and within 20% of several defensible values, so nothing flagged it. Derived properly
+  it is **3.816** — 16.5% lower — because a multimodal forward is not proportional to total
+  parameters: the vision tower is **shared** between the two models and the embedding table is
+  **free**. 4.57 turned out to be approximately the **decode-only** ratio applied to a
+  **prefill-dominated** workload.
+- **`522 ms`**, entered as `one generation + one verifier forward`, i.e. the unstated assumption that
+  batching N draws makes N vanish from wall-clock. Measured, batch-8 is only ~4.1× faster than 8
+  sequential calls, so the true figure is **1,305.3 ms** — 2.5× higher. The same model priced *energy*
+  under the **opposite** assumption (N multiplies), which is the tell: multiply the two together and
+  the implied power was **1,089 W** on a **300 W** card.
+
+**Neither was caught by an experiment.** No result looked wrong; the numbers were simply never
+traceable. Both were caught by asking a question that costs nothing: *which file derives this?* The
+project's own UNVERIFIED register had recorded that neither could be answered — and that register
+entry, not any measurement, is what commissioned the work that closed them.
+
+**And both closed against the project.** The ratio moved every compute claim the wrong way; the
+latency flipped an arm from faster to 2.0–2.4× slower than the baseline it was being sold against.
+That asymmetry is not coincidence: **a constant that hurt you would have been questioned sooner.**
+
+**Diagnostics.** (a) `grep` every literal cost constant across the codebase and check the values agree
+— here the same quantity existed as `4.57`, `4.571` and `4.34` simultaneously. (b) For any FLOP ratio,
+derive it from parameter counts read out of the weights **plus the measured token geometry of the
+workload you actually run**, and report a **band over your operating points**, not a point. (c) For
+any parallelism assumption, apply it consistently to latency *and* energy and check the implied power
+against the card's enforced limit. (d) Measure the thing you are billing for: a 30-minute batch-8 run
+retired an assumption underneath six weeks of analysis.
+
+> **Rule.** Every constant in a cost model carries a provenance tag and a one-line derivation **in the
+> artifact that uses it**, or it does not ship. Treat a "documented but not traceable" register as a
+> **work queue**, not bookkeeping — and re-derive the constants *before* the claim they price is
+> quoted anywhere.
 ---
 
 # 8. What survives adversarial checking
@@ -2883,27 +3644,36 @@ loading a 38 B model.
 ## 8.1 The comparison against a reasoning-mode 32B
 
 Against **always-32B-with-reasoning** — the naive way a practitioner would deploy a reasoning-capable
-medical VLM — the method still wins clearly, and the margin *grows* under equal weighting even after
-de-contamination **[M accuracy / Mo cost]**:
+medical VLM — the method still wins, and it is the only positive claim left standing. **Values below
+are the 2026-08-03 final accounting: 8-cell macro, clean L1 verifier, prompt-matched reasoning arm B,
+R32 = 3.816** **[M accuracy / D–Mo cost]**:
 
-| operating point | Δ accuracy vs always-32B-reasoning (8-cell macro, clean verifier) | FLOP-eq (honestly re-costed) | batch-1 parallel latency | energy |
-|---|---|---|---|---|
-| compute-lean | **+0.0468 [+0.0353, +0.0583]** | 1.171× | **−89.0%** | **−85.9%** |
-| accuracy-max (certified veto + learned deferral) | **+0.0601 [+0.0498, +0.0703]** | 1.396× | **−87.7%** | **−84.3%** |
+| operating point | Δ accuracy vs always-32B-reasoning (matched) | FLOP-eq (honestly re-costed) | **batch-1** latency | batched latency (corrected) | energy |
+|---|---|---|---|---|---|
+| compute-lean | **+0.0193 [+0.0090, +0.0295]** | 1.392× | **−69.3%** | −82.9% | **−82.6%** |
+| accuracy-max (certified veto + learned deferral) | **+0.0325 [+0.0237, +0.0412]** | 1.608× | **−67.7%** | **−81.2%** | **−80.6%** |
+| accuracy-max with decision fusion | +0.0253 [+0.0156, +0.0348] | 1.574× | −68.2% | −82.6% | −81.0% |
+
+> **These replace the 2026-07-30 figures** (+0.0468 / +0.0601 at 1.171× / 1.396× and −89.0% / −87.7%
+> latency). Three things changed: the reasoning baseline is now prompt-matched (−0.0276 on the
+> headline), the compute ratio is grounded (1.396× → 1.608×), and the latency axis quoted is now
+> **batch-1** rather than the batched axis whose "N is free" assumption was refuted by measurement
+> (§4.11.2). The −87.7% figure was the batched axis; its batch-1 equivalent was −73.6%.
 
 The efficiency win is on **latency and energy, not FLOPs** — the method uses *more* multiply-accumulates
-than a reasoning 32B (1.17–1.40×) while taking roughly a tenth of the wall-clock and energy, because the
-reasoning baseline's cost is dominated by generating 100–320 tokens per query. **Never state this as a
-compute saving.**
+than a reasoning 32B (1.39–1.61×) while taking roughly a third of the wall-clock at batch 1 and a
+fifth of the energy, because the reasoning baseline's cost is dominated by generating 45–320 tokens
+per query. **Never state this as a compute saving.**
 
 **Three caveats must travel with this claim.**
 
-1. **The reasoning arm is prompt-unmatched.** With a matched reasoning prompt the same suite-level delta
-   falls from +0.0245 to **+0.0180** sample-weighted, and the open-only delta from +0.2699 to **+0.1535**
-   (§5.3.5). **The macro × clean-verifier × matched-reasoning combination has NOT been computed anywhere
-   on disk.** The +0.0601 above should be read as an **upper bound** on the deployable version of this
-   claim; the measured shifts are quoted rather than a macro number extrapolated. **[U on the combined
-   figure]**
+1. ~~The reasoning arm is prompt-unmatched…~~ **CLOSED 2026-08-03 — and it cost 45.9% of the claim.**
+   The macro × clean-verifier × matched-reasoning combination now exists
+   (`headline_three_way_2026-08-03.json`) and gives **+0.0325 [+0.0237, +0.0412]**, not +0.0601. The
+   residual caveat is smaller but real: arm B's `<think>` trace fires on only **30.5–71.1%** of items,
+   so the baseline is a **mixture** of reasoning and direct answering and scores *higher* than a fully
+   reasoning arm would — which makes **+0.0325 a lower bound** on the margin against a 32B that always
+   reasons. Arm A gives the same +0.0325 and is reported alongside.
 2. **The baseline barely reasons.** On ~90% of the pool the "always-32B-with-reasoning" arm generated
    3.0–3.3 tokens; PathVQA-closed has no reasoning dump at all and is imputed as reasoning = direct while
    still being charged the full reasoning cost. Genuine 32B reasoning exists on **4,345 of 42,224 items
@@ -2911,7 +3681,9 @@ compute saving.**
    to the surviving claim** (§5.6.3).
 3. **The load-bearing cell is PathVQA-open**, which is a non-random prefix slice of 1,500 of 3,357 items
    that over-samples a degenerate taxonomy family, is judged by an LLM whose cross-validation covered
-   only SLAKE and VQA-RAD, and whose leave-one-out removal drops the macro delta from +0.0720 to +0.0318.
+   only SLAKE and VQA-RAD, and whose leave-one-out removal drops the final macro delta from **+0.0325
+   to +0.0203** (leave-one-cell-out range **[+0.0203, +0.0378]**, held back by SLAKE-closed). The cell
+   carrying the claim is unchanged by any of the corrections.
 
 ## 8.2 Reasoning hurts perception
 
@@ -3007,10 +3779,13 @@ selector.
 | claim as published | what replaced it |
 |---|---|
 | **"The method Pareto-dominates every fixed way of using the 32B"** (paper title, second contribution, README) | **Retired.** Under 8-cell macro + clean verifier, honestly re-costed, compute-lean and accuracy-max-fusion are *strictly dominated* by always-32B-direct on all four cost axes; only accuracy-max-veto stays on the frontier, and only by a **+0.0008** accuracy edge not distinguishable from zero. "Pareto-**optimal**" survives; "Pareto-**dominates**" does not. |
-| **"The method beats a single 32B forward pass"** — +0.0107 [+0.0086, +0.0127] | **+0.0128 [+0.0056, +0.0200]** (macro only) → **+0.0008 [−0.0022, +0.0037] — a TIE** (macro + clean L1), at **1.74×** its FLOP-eq, +16.7% batch-1 latency and +101.0% energy. L2 lower bound: −0.0019 [−0.0055, +0.0014]. Decomposed: macro re-weighting alone *helped* (+0.0021); the clean verifier removed it (−0.0120). |
-| **"Compute-lean matches the strong model at ~half its compute"** — 0.492× | **−0.0124 [−0.0188, −0.0060] — a significant LOSS** on all 8 cells, and **−0.0070 [−0.0126, −0.0017]** on the 5 multiple-choice cells, at **1.46×** the compute, +136.8% sequential latency and +80.2% energy. The compute ratio went 0.492× → 1.196× (macro) → 1.46× (macro + clean). |
+| **"The method beats a single 32B forward pass"** — +0.0107 [+0.0086, +0.0127] | **+0.0128 [+0.0056, +0.0200]** (macro only) → **+0.0008 [−0.0022, +0.0036] — a TIE** (macro + clean L1), at **1.924×** its FLOP-eq (was quoted 1.74× at the rejected R32 = 4.57), +149.6% batch-1 latency and +101.0% energy. L2 lower bound: −0.0019 [−0.0055, +0.0014]. Decomposed: macro re-weighting alone *helped* (+0.0021); the clean verifier removed it (−0.0120). |
+| **"Compute-lean matches the strong model at ~half its compute"** — 0.492× | **−0.0124 [−0.0189, −0.0061] — a significant LOSS** on all 8 cells, and **−0.0070 [−0.0126, −0.0017]** on the 5 multiple-choice cells, at **1.666×** the compute, +136.8% batch-1 latency and +80.2% energy. The compute ratio went 0.492× → 1.196× (macro) → 1.46× (macro + clean) → **1.666×** (grounded R32). |
+| **"The 32B costs 4.57× the 7B per forward"** — the underived literal behind every compute ratio in the project | **Rejected.** Derived from exact parameter counts and the measured prompt geometry: **R32 = 3.82 ± 0.15**, band [3.734, 3.859]. 4.57 was the name-plate 32.0/7.0 and is approximately the **decode-only** ratio applied to a **prefill-dominated** workload. Accuracy unchanged to 4 dp; every cost ratio moves against the method. §4.11.1, §6.1.4. |
+| **"Best-of-8 costs 522 ms, so the open arm is 17.5% faster than one 32B call"** | **Rejected, both figures.** Measured: **1,305.3 ms** (2.5× understated) and **316.7 J** (the 568.8 J model was 1.8× overstated), n = 45, harness validated to +0.8%. "N drops out of latency" is refuted — batch-8 is only ~4.1× faster than 8 sequential calls. The arm is **2.0–2.4× slower** than one 32B forward under any serving assumption. §4.11.2, §6.1.5. |
+| **"Against a reasoning 32B: +0.0601 at −87.7% latency"** | **Halved, and re-axed.** Against a *prompt-matched* reasoning arm: **+0.0325 [+0.0237, +0.0412]** (still significant; −0.0276, i.e. 45.9%, of the claim was the baseline's dropped persona and answer-style clause). The −87.7% was the **batched** axis, whose assumption is refuted; the honest figures are **−67.7% batch-1 / −81.2% batched corrected**, at **1.608×** FLOP-eq. §5.9.3, §6.8. |
 | **Sample-weighted compute savings as a general claim** | The saving was real but **concentrated in the lowest-escalation cells**: escalation runs 8.45% to 89.60%, and PMC-VQA carried 79.2% of the sample-weighted average. At equal weight the multiple-choice escalation rate is **44.24%, not 16.22%**. Cost is additive per query, so the sample-weighted number is what you would pay on traffic resembling this suite — it is *not* evidence the saving generalises across task types, and it does not. **Report both, each labelled.** |
-| **The open-text arm's magnitude** — selection gain +0.1041; arm accuracy 0.5642, "beats always-32B-direct"; 3.97% escalation; −94.8% batch-1 latency | Selection gain **+0.0358 [+0.0213, +0.0503]** (2.90× inflation); arm accuracy **0.5143** against always-32B-direct's **0.5168** — parity, not a beat; escalation to hold the same parity target rises **3.97% → 26.9%** sample-weighted / **48.7%** macro; latency against a single 32B forward goes **−17.5% → +5.4% / +27.2%**. Macro + clean, the open cells give accuracy-max **−0.0010 [−0.0090, +0.0067]** (tie) and compute-lean **−0.0214 [−0.0360, −0.0074]** (loss). **The efficiency claim was damaged more than the accuracy claim.** |
+| **The open-text arm's magnitude** — selection gain +0.1041; arm accuracy 0.5642, "beats always-32B-direct"; 3.97% escalation; −94.8% batch-1 latency | Selection gain **+0.0358 [+0.0213, +0.0503]** (2.90× inflation); arm accuracy **0.5143** against always-32B-direct's **0.5168** — parity, not a beat; escalation to hold the same parity target rises **3.97% → 26.9%** sample-weighted / **48.7%** macro; and with the batch-8 cost **measured** rather than asserted, latency against a single 32B forward goes **−17.5% → +100.3% / +123.2% / +145.0%** (2.0–2.4× slower), at ≈4.5–4.7× its FLOP-eq. Macro + clean, the open cells give accuracy-max **−0.0010 [−0.0090, +0.0067]** (tie) and compute-lean **−0.0214 [−0.0360, −0.0074]** (loss). **The efficiency claim was damaged more than the accuracy claim — twice.** |
 | **"A reasoning instruction improves accuracy on reasoning-heavy benchmarks"** | **Dropped — it is an answer-FORMAT effect.** 0/9 matched trigger effects significant; 3/9 format effects significant. MMMU gains decompose as MedVLThinker +0.103 = +0.062 format / +0.041 trigger (n.s.) and InternVL3 +0.124 = **+0.090 format (significant)** / +0.035 trigger (n.s.). **Lingshu-32B must not be cited as reasoning evidence at all**, and its quoted 1.2× reasoning:direct cost ratio is the ratio of two 3-token format prompts. |
 | **MMMU +0.140 keep-7B win** | Excluded entirely after a contamination audit. Under macro this exclusion is consequential, not cosmetic: MMMU would carry 11.1% of the weight, and macro-9 against macro-8 would move accuracy-max against direct from +0.0128 to +0.0299. It must be defended on contamination grounds alone, with its size stated. |
 
@@ -3027,10 +3802,12 @@ batch-1 constants.
 ## 10.1 Deployment
 
 **First, and worth more than the cascade: turn reasoning off.** Always-32B-direct scores **0.6567**
-macro against always-32B-with-reasoning's **0.5974** — **[D] +0.0593** — at **665 ms against
-6,291.2 ms** honestly re-costed and **127 J against 1,625.2 J**. That is a prompt/mode change, requires
-no second model, no gate and no verifier, and it is larger than every method delta in this project
-combined. Anyone with these two models should do this before anything else.
+macro against always-32B-with-reasoning's **0.6250** on a **prompt-matched** reasoning arm —
+**[D] +0.0317** — at **665 ms against 5,136.6 ms** honestly re-costed and **127 J against 1,317.7 J**.
+That is a prompt/mode change, requires no second model, no gate and no verifier, and it is still
+larger than every method delta in this project combined. Anyone with these two models should do this
+before anything else. *(Against the prompt-**un**matched reasoning arm the gap reads +0.0593 at
+6,291.2 ms / 1,625.2 J; the matched comparison is the honest one and is the smaller of the two.)*
 
 The exception is a genuinely reasoning-heavy multiple-choice workload with a reasoning-*tuned* model,
 where getting the model to emit a trace does help (MedVLThinker-32B MMMU +0.103, MedXpert-Reasoning
@@ -3038,20 +3815,25 @@ where getting the model to emit a trace does help (MedVLThinker-32B MMMU +0.103,
 generated-token counts rather than trusting a "reason step by step" instruction.
 
 **Second, use the cascade only inside its regime.** The cost model is transparent:
-FLOP-eq = 1 + e × 4.57, sequential latency = 347 ms + e × 665 ms, energy = 45.8 J + e × 127 J, where *e*
-is escalation-at-parity. **[D]** break-evens against always-32B-direct:
+**FLOP-eq = 1 + e × 3.816**, batch-1 latency = 347 ms + e × 665 ms, energy = 45.8 J + e × 127 J, where
+*e* is escalation-at-parity. **[D]** break-evens against always-32B-direct:
 
 | escalation-at-parity *e* | verdict against a single 32B-direct call |
 |---|---|
-| **< ~48%** | cheaper on **every** axis — FLOPs, sequential latency, energy. Deploy the cascade. |
+| **< ~48%** | cheaper on **every** axis — FLOPs, batch-1 latency, energy. Deploy the cascade. |
 | ~48–64% | cheaper on FLOPs and energy, **slower** end to end. Deploy only if compute-billed. |
-| ~64–78% | cheaper on FLOPs only. Marginal; probably not worth the operational complexity. |
-| **> ~78%** | worse on everything. Do not deploy — call the 32B directly. |
+| ~64–**74%** | cheaper on FLOPs only. Marginal; probably not worth the operational complexity. |
+| **> ~74%** | worse on everything. Do not deploy — call the 32B directly. |
 
 > These three thresholds are **my arithmetic on the cited per-leg constants**, not a figure any artifact
 > states. The underlying linear cost model was verified to reproduce the published per-cell FLOP and
-> sequential-latency values for PMC-VQA, SLAKE-closed, VQA-RAD-closed and PathVQA-closed exactly; the
-> break-even percentages themselves are **[D]**, and inherit the 4.57 ratio's ~7% uncertainty.
+> batch-1-latency values for PMC-VQA, SLAKE-closed, VQA-RAD-closed and PathVQA-closed exactly; the
+> break-even percentages themselves are **[D]**.
+>
+> **Updated 2026-08-03.** The FLOPs break-even moves **78% → 74%** with the grounded R32 = 3.816
+> (1 + 3.816e < 3.816 ⟺ e < 0.738; it was e < 0.781 at 4.57). The latency (47.8%) and energy (63.9%)
+> break-evens are unchanged, because they do not involve the compute ratio. Across the R32 band
+> [3.734, 3.859] the FLOPs break-even spans **73.2–74.1%**, so the "~74%" is robust.
 
 Measured escalation in this suite **[M]**: PMC-VQA 8.45%, SLAKE-closed 20.45%, PathVQA-closed 45.72%,
 VQA-RAD-closed 56.97%, MedXpert-MM 89.60%. So the cascade is a clear win on the first two, marginal on
@@ -3060,10 +3842,13 @@ escalation-at-parity on a calibration fold and fall back to always-strong above 
 missing guardrail. There is currently no degeneracy check, and MedXpert is the failure case:
 **−0.0060 [−0.0120, −0.0005]** *below* the oracle-mode baseline at 5.095 compute units.
 
-**Third, do not deploy the open-text best-of-N arm against a fast strong model.** With an honest verifier
-it needs 26.9–48.7% escalation to reach parity, costs 2.8–3.8× a single 32B forward in FLOPs, and is
-slower in wall-clock. If free-text answers are the workload and a 32B is available, call the 32B in
-direct mode.
+**Third, do not deploy the open-text best-of-N arm against a fast strong model.** With an honest
+verifier it needs 26.9–48.7% escalation to reach parity, costs **≈4.5–4.7×** a single 32B forward in
+FLOP-equivalents at the grounded R32, and — now **measured** rather than assumed — takes
+**1,484–1,629 ms** against that forward's 665 ms, i.e. **2.0–2.4× slower**, even when its 8 draws are
+batched. Drawn sequentially it is 4,441.6 ms. If free-text answers are the workload and a 32B is
+available, call the 32B in direct mode. *(This is the recommendation that changed most on 2026-08-03:
+under the asserted 522 ms the arm looked 17.5% faster than a direct 32B call.)*
 
 **Fourth, two practical caveats.** The per-benchmark policy router requires knowing which benchmark a
 query came from *and* having labelled calibration data with strong-leg labels for it — no single frozen
@@ -3077,8 +3862,9 @@ Lingshu-32B; **the gate ranking is known to reverse across families**, so the tr
 
 > *On medical visual question answering, chain-of-thought reasoning is a net accuracy loss on
 > perception-style questions and a net cost disaster everywhere; a format-aware cascade over a 7B and a
-> 32B model recovers most of a reasoning-mode 32B's deficit at roughly a tenth of its latency and
-> energy — but it does not beat, and does not undercut, simply running the 32B once in direct mode.*
+> 32B model recovers part of a reasoning-mode 32B's deficit (+0.0325 [+0.0237, +0.0412]) at roughly a
+> third of its batch-1 latency and a fifth of its energy — but it costs 1.6× its multiply-accumulates,
+> and it does not beat, and does not undercut, simply running the 32B once in direct mode.*
 
 Supporting evidence, in order of strength:
 
@@ -3088,18 +3874,28 @@ Supporting evidence, in order of strength:
 2. **The apparent reasoning gain on reasoning-heavy benchmarks is an answer-format effect** — 0/9 trigger
    effects significant, 3/9 format effects significant, with generated-token audits showing the format
    alone induces 431–580 tokens.
-3. **Against a reasoning-mode 32B** — +0.0468 to +0.0601 macro accuracy at −87.7% to −89.0% latency and
-   −84.3% to −85.9% energy (1.17–1.40× FLOP-eq), stated as an upper bound pending the matched-reasoning
-   recomputation.
+3. **Against a reasoning-mode 32B, with the reasoning prompt matched** — **+0.0193 to +0.0325** macro
+   accuracy at **−67.7% to −69.3% batch-1 latency** and −80.6% to −82.6% energy, at **1.39–1.61×
+   FLOP-eq**. This is no longer an upper bound pending a recomputation: the combination was computed
+   on 2026-08-03 (§5.9.3). It remains a *lower* bound in one specific sense — the matched baseline is
+   a mixture that reasons on only 30.5–71.1% of items.
 4. **The two limits**, with 16 and 13 independent mechanisms respectively, plus the coverage budget.
 5. **A small, CI-certified multiple-choice gain** (+0.0019 [+0.0014, +0.0024]) reported alongside its own
    construct audit.
+6. **A derived, banded compute constant** — R32 = 3.82 ± 0.15 for a Qwen2.5-VL-7B/32B pair on
+   image+question prompts — with the mechanism (shared vision tower, free embeddings, prefill
+   dominance) that makes the name-plate ratio wrong by 16.5%. Small, but it is the kind of thing every
+   cascade paper asserts and none derives.
 
 **What the paper must not claim:**
 
 - That the method Pareto-dominates any fixed use of the 32B, or beats a single 32B forward pass — it ties
-  at 1.74× the cost.
-- That it matches the strong model at half the compute — it is a significant loss at 1.46×.
+  at **1.92×** the cost.
+- That it matches the strong model at half the compute — it is a significant loss at **1.67×**.
+- Any compute ratio computed at R32 = 4.57, or any best-of-N latency derived from the 522 ms
+  assertion. Both are retracted (§6.1.4, §6.1.5).
+- That the vs-reasoning margin is +0.06 — against a matched reasoning prompt it is **+0.0325**, and
+  the −87.7% latency figure that travelled with it was the batched axis, not batch-1.
 - Any accuracy from one weighting paired with a cost from another, or any suite average without stating
   that PMC-VQA holds 79.2% of the sample-weighted mass.
 - Any FLOP saving as the surviving efficiency claim. The surviving axes are latency and energy, against a
@@ -3113,10 +3909,11 @@ Supporting evidence, in order of strength:
 ## 10.3 What a reviewer should take from this
 
 The positive result is now modest and honestly bounded: against the way a practitioner would naively
-deploy a reasoning-capable medical VLM, a format-aware cascade delivers **+0.06 accuracy at roughly a
-tenth of the latency and energy**; against the way they *should* deploy it — one 32B forward in direct
-mode — the cascade **ties at 1.74× the cost**, and its cheaper setting loses. **A reviewer should not
-accept the cascade as the contribution.**
+deploy a reasoning-capable medical VLM — *and with that baseline's prompt properly matched* — a
+format-aware cascade delivers **+0.0325 accuracy at roughly a third of the batch-1 latency and a fifth
+of the energy, for 1.6× the multiply-accumulates**; against the way they *should* deploy it — one 32B
+forward in direct mode — the cascade **ties at 1.92× the cost**, and its cheaper setting loses.
+**A reviewer should not accept the cascade as the contribution.**
 
 **The negative and methodological results are the more valuable contribution.**
 
@@ -3148,17 +3945,38 @@ The methodological findings are, if anything, the most reusable output, because 
   decision-relevant wins were on items whose answer is not in the image.
 - **Simulation.** A confident simulated negative on pairwise verification was overturned the same day by
   one real forward pass (+0.036 [+0.016, +0.055]).
+- **Undocumented cost constants.** Two scalars that no file derived — a 4.57 compute ratio and a
+  522 ms best-of-N latency — priced every efficiency claim the project made for six weeks. Grounded,
+  they are 3.816 (16.5% lower) and 1,305.3 ms (2.5× higher), and both moved the results against the
+  method. *Neither was found by an experiment; both were found by asking which file derives them.*
 
 The most defensible thing in this record is the habit that produced §6 — publishing its own refutations,
-including the ones that cost it a headline. Twenty-seven claims were retracted or downgraded, and the two
-that mattered most were retracted *after* the paper was drafted around them. A reviewer should weigh that
-as evidence about the reliability of what remains.
+including the ones that cost it a headline. Twenty-nine claims were retracted or downgraded, and the
+three that mattered most were retracted *after* the paper was drafted around them. A reviewer should
+weigh that as evidence about the reliability of what remains — including the fact that the surviving
++0.06 was halved by the project's own follow-up rather than by a reviewer.
 
 ---
 
 # 11. Unverified, unrecorded, and stale — the full register
 
 Collected in one place so nothing in this document is read as better-supported than it is.
+
+> **This register shrank on 2026-08-03.** Three entries were closed by measurement or derivation and
+> have moved into the results and the corrections log: the **4.57 FLOP ratio** (§4.11.1, §5.9.1,
+> §6.1.4), the **522 ms best-of-N latency and its energy contradiction** (§4.11.2, §5.9.2, §6.1.5), and
+> the **macro × clean-verifier × matched-reasoning headline** (§5.9.3, §6.8). Their closures are
+> recorded in §11.0 with both the old value and the true one, and the entries they affected elsewhere
+> in this register have been updated in place.
+
+## 11.0 Closed since 2026-07-30 — old value against true value
+
+| register entry (2026-07-30) | old value, and its status then | **true value, and its status now** | where |
+|---|---|---|---|
+| The 32B/7B FLOP-eq ratio | **4.57** — a hard-coded literal at 12 sites, reproducing only 32.0 B / 7.0 B = 4.571; an older document implies 4.34; *"no file derives it"*; ~7% margin claimed | **R32 = 3.816**, band **[3.734, 3.859]** — **[D]** from exact safetensors parameter counts (8,292,166,656 / 33,452,718,336) plus measured prompt geometry (326.68 tokens, 280.48 image). The literal was **16.5% too high**, and the real margin was ~20%, not ~7%. Accuracy unchanged to 4 dp; all cost ratios worsen | §4.11.1, §6.1.4 |
+| The best-of-N batched latency | **522 ms** — *"asserted, not measured"*; `GEN7 347.1 + VER7 175.5` | **1,305.3 ms** — **[M]**, n = 45 over 2 replicates, harness validated at +0.8% against `GEN7`. **2.5× understated.** "N drops out of latency" is refuted: batch-8 is only ~4.1× faster than 8 sequential draws | §4.11.2, §6.1.5 |
+| The best-of-N energy / the power contradiction | **568.8 J** modelled as `8 × (GEN7 + VER7)`, implying **~1,088 W** against ~132 W measured — flagged as physically impossible, with an energy-consistent bound of ≥1.42 s | **RESOLVED, and the latency was the wrong figure.** Measured **316.7 J** — the *energy* model was **1.8× overstated** (it assumed zero parallel saving). Measured pair implies **242.6 W** on a card whose NVML-enforced limit is **300 W** — the "400 W TDP" in earlier drafts was also wrong, and the ≥1.42 s bound was computed from the overstated energy, which is why the true 1.305 s sits below it | §4.11.2, §6.1.5 |
+| The macro × clean-verifier × matched-reasoning headline | *"Not computed anywhere on disk. The +0.0601 vs-reasoning figure is an upper bound."* | **Computed: +0.0325 [+0.0237, +0.0412]** — **[M]**, still a significant WIN, **45.9% smaller** than +0.0601. Per correction: macro +0.0475, clean verifier −0.0119, matched prompt −0.0276, R32 0.0000 on accuracy. Strictest reading +0.0313 | §5.9.3, §6.8 |
 
 ## 11.1 Not recorded anywhere in the repository
 
@@ -3175,10 +3993,10 @@ Collected in one place so nothing in this document is read as better-supported t
 | item | status |
 |---|---|
 | The **−29σ** luck-floor result that killed single-model routing | Quoted from `CLAUDE.md` §2 and `docs/archive_mcq/FINDINGS.md:70`; the script's output artifact was **not located** in the artifacts directory. |
-| The 7B cost constants (347 ms / 45.8 J) and the verifier forward (175 ms / 25.3 J) | Labelled "measured batch-1" in code; the raw NVML log was not located (`logs/latency_opentext.jsonl` is gitignored). Provenance is a code comment. |
-| The **4.57** FLOP-eq ratio | A hard-coded literal reproducing 32.0 B / 7.0 B; **no file derives it**, and an older document implies 4.34. ~7% margin on every compute-negative claim. |
-| The best-of-N parallel latency **522 ms** (8 draws + 8 verifier forwards) | **Asserted, not measured**, and physically inconsistent with its own 568.8 J energy figure (implying ~1,088 W against ~132 W measured and a 400 W card TDP). No batch-8 measurement exists. Every open-arm parallel-latency number should be treated as unverified; an energy-consistent bound puts batched best-of-8 at ≥1.42 s. |
-| The open arm's parallel latency generally | Assumes overlappable draws, never measured. Sequential latency is reported alongside everywhere. |
+| The 7B **latency** constants (347 ms; verifier forward 175 ms) | **Largely closed 2026-08-03.** An independent re-measurement on the same recipe gives 350.0 ms (**+0.8%**) for the generation constant and a 205.2 ms median for the verifier forward against 173.0 ms. The original raw NVML log is still not located (`logs/latency_opentext.jsonl` is gitignored). |
+| The 7B **energy** constant (45.8 J) | **Newly flagged 2026-08-03, and unresolved.** The same validated harness measures **57.0 J** for one greedy generation (replicates 55.9 / 57.9 J) against the 45.8 J the cost model charges — **+24.5%**. The likely candidates are a different idle-power treatment (idle with model resident measured at 83.8–86.3 W) or a different integration window; neither was confirmed. If 57.0 J is right, every energy figure in this document understates the *method's* 7B legs more than the 32B baseline, i.e. the correction would run against the method again. **[U]** |
+| The open arm's batched (`lat_par`) latency for the **adaptive-N** cells | The fixed best-of-8 arm is now **measured** (§4.11.2). The adaptive-N cells' batched axis is repaired with a **two-point linear model** (522.0 ms at N = 1, measured 1,305.3 ms at N = 8, 111.9 ms per extra draw) applied at each cell's mean N — that is **[D]**, not measured, and the N = 1 anchor is still the repo constant. Batch-1 latency is unaffected and is the primary axis in §5.9.4. |
+| Whether batching 8 draws is the right *deployment* model at all | Measured, batching is 3.4× faster than 8 sequential draws, so it is the right choice **if** you are doing best-of-8. But it is only legitimate for a dedicated single-request server that can hold 8 concurrent sequences; in a multi-tenant server the 8-wide slots displace other requests and the batched figure is optimistic. Not quantified. **[U]** |
 | The counts "sixteen mechanisms" (recoverability) and "thirteen attempts" (selection) | The retrospective's own tallies; not independently re-counted here. |
 | The selection limit's two denominators ("74–82% of oracle-of-N" and "oracle conversion 0.589 → 0.203") | No document reconciles the two definitions. Both reported with sources. |
 | The box-verifier result (MS-CXR 0.230–0.232, 77–78% of the oracle gap) | Reported on an image-grouped split, which would make it image-disjoint — but it was **not** re-audited by the 2026-07-30 disjoint retrain. Contamination status not independently recorded. |
@@ -3186,17 +4004,22 @@ Collected in one place so nothing in this document is read as better-supported t
 | The 40.8% coverage figure | Denominator confirmed (`perq_sc8.json` holds exactly 1,064 entries) and corroborated by an independent oracle-of-8 measurement; the per-question file itself was not re-analysed. |
 | The LLM-judge protocol (`run_judge.py`) and the Claude-as-judge validation | Documented but **not re-run** in this pass. The cross-validation covers SLAKE and VQA-RAD only — **not PathVQA**, the load-bearing open cell. |
 | Whether verifier confidence is the best open-text gate | An **unresolved contradiction** between two runs of the same regime (0.3832 against 0.3923 in one; 0.3965 against 0.3901, +0.0062 [+0.0040, +0.0086], in the other — opposite in sign). Not restated as settled anywhere in this document. |
-| The macro × clean-verifier × matched-reasoning headline | **Not computed anywhere on disk.** The +0.0601 vs-reasoning figure is an upper bound. |
 | That `test_clean.csv` IS the PMC-VQA paper's manually verified split | An **inference** from the paper's wording, the file name and the exact row count; the CSV carries no verification column. |
 | An independent quantitative audit of PMC-VQA label error in the literature | **None exists** (searched; recorded as UNVERIFIED in the provenance document). The 53% / 60% / 28% defect rates have no external comparator. |
 | The closed-answer spaces of SLAKE-closed and VQA-RAD-closed | Classified from `METHODS_MASTER.md` §14, which does not enumerate them; not verified against raw data. |
 | `finding1_corrected.py` and `pmc_label_noise_audit.py` | Read only in part; the artifacts they emit were verified against their documented method, but neither script was re-executed. |
+| The derived **R32 = 3.816** where the two legs run at **different** resolution caps | The derivation assumes **both legs at the same cap**. Where the repo runs the cheap leg at cap320 and the strong leg at full resolution, the effective ratio is **higher** than 3.816 and must be recomputed per configuration; that recomputation has not been done. The band [3.734, 3.859] covers only the same-cap operating points. **[U for mixed-cap configurations]** |
+| The FLOP model's neglected terms | Softmax, layer-norm, activation and RoPE elementwise work are not counted (<1% of a transformer forward, a stated modelling choice, not a measurement); the lm_head is charged G times, which is right for HF `generate` but would favour the 32B slightly under a harness that computes logits over the whole prompt. |
+| The A100 peak (312 TFLOP/s dense bf16) and HBM bandwidth used in the MFU / decode-floor cross-checks | **Datasheet figures, not measured on this machine.** They appear only in the *cross-check* that bounds R32, never in a reported result. |
 
-## 11.3 Known-stale documents, as of 2026-07-30
+## 11.3 Known-stale documents, as of 2026-08-03
 
 | document | how it is stale |
 |---|---|
-| `CLAUDE.md` (written 12:02) and `PROJECT_OVERVIEW.md` (12:27) | Both predate the clean-verifier artifacts (16:03 / 16:25). They still describe the disjoint retrain as "in flight" and still quote the **contaminated** macro headline (+0.0128 against always-32B-direct). **This document reports the retrain's result as the current state; those two entry documents need updating.** |
+| **`COMPREHENSIVE_WRITEUP_2026-07-30.md`** | **Superseded by this document** (banner added on disk; the file is retained, not deleted). It quotes the vs-reasoning margin as **+0.0601 at −87.7% latency**, prices everything at **R32 = 4.57**, and carries the **522 ms** best-of-N latency. All three are corrected here. Its §11.2 correctly listed all three as UNVERIFIED — that register is what commissioned the work that closed them. |
+| **Any artifact or script carrying `4.57` / `4.571` / `4.34` as the compute ratio** | **Stale in twelve-plus places** (`lingshu_medeval_cascade.py:21`, `paper_baselines.py:64-66`, `integrated_method.py:56-57`, `beat32b_fusion.py:48-50`, `pandora_controller.py:51,53`, `end_to_end_consolidation.py:57,59`, `latency_reexamination.py:72`, `open_gate_efficiency.py:22`, `best_method_lingshu.py:44`, `lingshu_deferral_apgr.py:16`, `quantized_strong_leg.py:38`, `honest_recosting.py:144` as 4.571, plus `open_bestofN_adaptive.py:14` and `src/analysis/cascade/cascade_cost_prefill_flops.py:33` as 4.34). **None has been repointed**; `headline_three_way.py` takes R32 as a parameter and is the only consumer using 3.816. Any figure regenerated from those modules will republish a rejected constant. |
+| **Any artifact carrying `522` / `548.4` / `700.9` / `845.7` ms as a best-of-N latency, or `568.8` J** | Stale — the measured replacements are 1,305.3 ms / 316.7 J and the per-arm corrections in §5.9.2. `method_final.json`, `method_final_v2.json` and `integrated_pandora_opentext.json` all carry the superseded figures. |
+| `CLAUDE.md` (written 2026-07-30 12:02) and `PROJECT_OVERVIEW.md` (12:27) | Both predate the clean-verifier artifacts (16:03 / 16:25) **and the whole 2026-08-03 pass**. They still describe the disjoint retrain as "in flight", still quote the **contaminated** macro headline (+0.0128 against always-32B-direct), and inherit 4.57 / 522 ms. **This document is the current state; those two entry documents need updating.** |
 | `PROJECT_RETROSPECTIVE_2026-07-29.md` | Describes both the disjoint-verifier retrain and the open-text matched-prompt re-run as "in flight" in several places, although both artifacts now exist on disk. Its own §5.1 confirms the multiple-choice matched re-run landed; the open-text one is described as outstanding, but the artifact reports arms A and B complete with `arms_missing = {}`. **The artifacts are authoritative; the "in flight" language is stale.** |
 | The same retrospective's hole list and stale-document register | Its "5 of 8 zero cells" heading contradicts its own body (the measured counts are 4 of 8 accuracy-max, 0 of 8 compute-lean); its Pareto-figure complaint and "the PDF was deliberately NOT rebuilt" statement were resolved at 2026-07-30 12:44; the register itself does not list the clean-verifier propagation and is therefore one correction behind. |
 | `paper/build_professor_html_2026-07-27.py` (L118, L127) and `meetings/progress_report_professor_2026-07-27.html` (L216, L223) | Hard-code the superseded **15/20**. The rendered deck is a frozen dated deliverable; the builder must be fixed before the next deck. |
@@ -3205,6 +4028,11 @@ Collected in one place so nothing in this document is read as better-supported t
 
 ## 11.4 Known unmatched axes and infrastructure risk
 
+- **Three inconsistent values for one compute constant still live in the codebase.** `4.57` at eleven
+  call sites, `4.571` at a twelfth (`honest_recosting.py:144`), and an incompatible `4.34` in
+  `open_bestofN_adaptive.py:14` and `src/analysis/cascade/cascade_cost_prefill_flops.py:33`. The
+  derived value is **3.816**. **No module has been repointed** — only `headline_three_way.py` takes
+  R32 as a parameter. Anything regenerated from the others republishes a rejected constant (§11.3).
 - **MedEvalKit local edits.** Two uncommitted edits (`utils/question_formats.py:11`,
   `utils/MMMU/data_utils.py:158`, both 2026-07-02) **replaced** rather than appended the reasoning
   trigger. Whether to revert the dependency and re-run is an open decision.
@@ -3225,6 +4053,22 @@ Collected in one place so nothing in this document is read as better-supported t
 
 # 12. Open questions, ranked by value
 
+**Answered since 2026-07-30, and removed from the list below.** Two items on the previous ranking are
+closed, and one is closed *and* reprioritised what remains:
+
+- **(was #4, prerequisite half) The batch-8 latency and NVML energy measurement.** Done (§4.11.2).
+  It killed the "best-of-N is latency-alive" claim on this hardware: batched best-of-8 is
+  **1,305.3 ms** against a 665 ms 32B forward — **2.0× slower**, close to the ≥1.42 s the
+  energy-consistent bound predicted, and nowhere near the claimed 0.79×. The *conceptual* half of #4
+  survives and is re-ranked as #3 below, because "best-of-N pays when one strong call costs more than
+  N cheap calls" is now grounded on a measured N-cost rather than an assumed one.
+- **(was #9) Compute the macro × clean-verifier × matched-reasoning headline.** Done (§5.9.3).
+  **+0.0325 [+0.0237, +0.0412]**, i.e. 45.9% of the figure it replaced. It is no longer an upper bound.
+- **New, and not previously listed: the FLOP ratio.** Done (§4.11.1). **R32 = 3.82 ± 0.15.**
+
+**A new item enters at #2** as a direct consequence: the derived constant exists but **nothing has
+been repointed to it**.
+
 **1. Generator work, not verifier work — the coverage bound.** Of 1,064 held-out open-text questions,
 **434 (40.8%) have no correct answer anywhere in the 8-sample pool**, while the entire selection gap is
 97 questions (0.0912). Independently confirmed on the 2,345-item open set: pooled oracle-of-8 is 0.6260
@@ -3234,12 +4078,30 @@ greedy→best-of-8 gap from test time to train time at N = 1), with **oracle-of-
 stopping criterion**, since self-training narrows the output distribution. Generator ideas compete for
 +0.408; verifier ideas compete for at most +0.091.
 
-**2. The macro-objective refit.** The thresholds are tuned for a pooled objective and reported on a macro
-one; the multiple-choice loss (−0.0070) may be an artifact of that mis-specification. *Resolution:*
-CPU-only refit against an equal-weight iso-accuracy target over existing dumps. **Cheapest high-value
-item in the list.**
+**2. Repoint the codebase to the derived constants, and re-emit every downstream artifact.** The
+grounded `R32 = 3.816` and the measured best-of-8 cost exist only in `headline_three_way.py` and the
+2026-08-03 artifacts. Twelve-plus modules still carry `4.57` / `4.571`, two carry an incompatible
+`4.34`, and `method_final*.json` / `integrated_pandora_opentext.json` still carry the 522 ms family
+(§11.3, §11.4). Any figure or deck regenerated today republishes rejected constants. *Resolution:*
+make R32 a single named constant with its derivation cited inline, delete the 4.34 sites, re-emit the
+cost blocks, and re-run the Pareto figure. CPU-only, no new inference. **Cheapest high-value item in
+the list, and it is a correctness liability, not a nicety.**
 
-**3. The noise ceiling — a program-level stop/go instrument.** If the strong model's per-item correctness
+**3. The untested regime where best-of-N could still pay: an expensive or slow strong model.** Now
+grounded on a *measured* N-cost rather than an assumed one. Everything measured here compares against
+a strong leg that answers in 665 ms for 3.816 FLOP-eq — the regime least favourable to sampling — and
+the open arm is 2.0–2.4× slower than it. Against a strong leg that *is* slow (the reasoning 32B at
+10.5 s), the same arm is still far ahead on wall-clock. Best-of-N pays exactly when one strong call
+costs more than N cheap calls **on the axis you are billed on** — API pricing, a 70B-plus strong
+model, or a reasoning-mode strong leg. *Resolution:* the prerequisite measurement is now done, so this
+is offline re-costing against a slower or dearer strong leg, plus an honest statement that on a
+co-located 32B it does not pay.
+
+**4. The macro-objective refit.** The thresholds are tuned for a pooled objective and reported on a macro
+one; the multiple-choice loss (−0.0070) may be an artifact of that mis-specification. *Resolution:*
+CPU-only refit against an equal-weight iso-accuracy target over existing dumps.
+
+**5. The noise ceiling — a program-level stop/go instrument.** If the strong model's per-item correctness
 is Bernoulli with mid-range probabilities, the Bayes-optimal recoverability AUROC is low no matter what
 features you build. *Resolution:* estimate per-item probabilities from replicates under nuisance
 perturbations (option-order shifts *plus* temperature-ε sampling — greedy decoding is exactly
@@ -3247,38 +4109,31 @@ reproducible, so order alone is insufficient), with a split-half estimator. A ce
 abandon gate work entirely; near ~0.85 means the band gate and the prefill probe are worth heavy
 investment.
 
-**4. The untested regime where best-of-N could still pay: an expensive or slow strong model.** Everything
-measured here compares against a strong leg that answers in 665 ms for 4.57 FLOP-eq — the regime least
-favourable to sampling. Against a strong leg that *is* slow, the same open arm is **−92.6% parallel
-latency and −78.0% energy at 2.792× FLOP-eq**; against the fast one it is +16.3% parallel, +370.8%
-sequential. Best-of-N pays exactly when one strong call costs more than N cheap calls *on the axis you
-are billed on* — API pricing, a 70B-plus strong model, or a reasoning-mode strong leg. **This has never
-been tested**, and is grounded here only in measured cost ratios already on disk. *Resolution, and it is
-a prerequisite:* the batch-8 latency and NVML energy measurement that does not exist. The current
-parallel-latency figure implies ~1,088 W of GPU draw against ~132 W measured at batch 1 and a 400 W card
-TDP; an energy-consistent bound puts batched best-of-8 at ≥1.42 s, i.e. **~2.1× a 665 ms 32B forward
-rather than the claimed 0.79×**. A ~30-minute run either rescues or kills the "best-of-N is latency-alive"
-claim.
-
-**5. Cross-family validation of the assembled cascade.** Every method number is one model family, and the
+**6. Cross-family validation of the assembled cascade.** Every method number is one model family, and the
 gate ranking is known to reverse across families. The MedEvalKit and open-text judge dumps for
 MedVLThinker and InternVL3 are already on disk, so this is mostly offline re-costing.
 
-**6. A single frozen policy.** One τ calibrated once and applied unchanged, one globally chosen policy,
+**7. A single frozen policy.** One τ calibrated once and applied unchanged, one globally chosen policy,
 Holm-corrected over the 18 policy-selection tests. Report honestly how much survives.
 
-**7. PMC-VQA construct validity.** The clean, human-verified `test_clean.csv` (n = 2,000) is on disk and
+**8. PMC-VQA construct validity.** The clean, human-verified `test_clean.csv` (n = 2,000) is on disk and
 the internal track already runs on it; the MedEvalKit track needs a one-line vendor patch. Pre-register
 that n = 2,000 is **underpowered** against a +0.0135 effect (interval half-width ≈ 0.0141), so a null is
 the expected outcome, not a refutation.
 
-**8. Re-run the PathVQA-open prefix check.** PathVQA-open is a non-random prefix of 1,500 of 3,357 items
-that over-samples a degenerate taxonomy family (0.632 against 0.562), and it is the load-bearing cell of
-every vs-reasoning claim. The ten-minute check that this prefix is not topically biased has never been
-done.
+**9. Re-run the PathVQA-open prefix check.** PathVQA-open is a non-random prefix of 1,500 of 3,357 items
+that over-samples a degenerate taxonomy family (0.632 against 0.562), and it is **still** the
+load-bearing cell of every vs-reasoning claim — dropping it takes the final +0.0325 to +0.0203. The
+ten-minute check that this prefix is not topically biased has never been done. *(Reprioritised
+upward in importance if not in rank: the smaller the surviving claim, the more of it one unaudited
+cell carries.)*
 
-**9. Compute the macro × clean-verifier × matched-reasoning headline.** The three corrections have never
-been combined; the surviving +0.0601 is an upper bound until they are.
+**10. Reconcile the 7B energy constant.** The validated 2026-08-03 harness measures **57.0 J** for one
+greedy 7B generation against the **45.8 J** the cost model charges (+24.5%), with latency reproducing
+to +0.8%. Until it is explained — idle-power treatment, integration window, or a genuine drift — every
+energy ratio in this document carries an unquantified bias whose likely direction is *against* the
+method (the method runs more 7B forwards than the baselines do). *Resolution:* one instrumented run
+with the idle baseline logged explicitly. **Cheap.**
 
 **Blocked on infrastructure, kept separate from conceptual failures:** the OmniMedVQA 32B/38B strong leg
 (deterministic two-GPU NCCL hang; ~2 days of mitigations failed; single-GPU impossible at 64 GB weights
