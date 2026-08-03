@@ -1,0 +1,6054 @@
+{
+  "title": "THE THREE-WAY HEADLINE: 8-cell macro x clean L1 verifier x MATCHED reasoning baseline, priced with the 2026-08-03 grounded cost constants.",
+  "date": "2026-08-03",
+  "reproduce": "python3 src/cascade_methods/headline_three_way.py",
+  "no_gpu": true,
+  "no_fabricated_numbers": true,
+  "n_bootstrap": 10000,
+  "seed": 20260730,
+  "what_is_new": "The three corrections (macro re-weighting, de-contaminated verifier, matched reasoning prompt) had never been applied together. They are here, plus the grounded FLOP and best-of-8 constants.",
+  "arm_choice": {
+    "primary": "matched_B",
+    "justification": [
+      "matched_prompt_reasoning_2026-07-29.json sets decisive_arm = 'reason_matched_B'.",
+      "prompt_design.SYS_THINK_MATCHED2: the reasoning TRIGGER sentences are kept VERBATIM and only the answer-style clause is replaced by the direct arm's -- so the variable under test (the reasoning instruction) is unchanged from the published reasoning arm.",
+      "Arm A re-orders the prompt so the persona precedes the trigger, perturbing the exact trigger string these models require to emit a <think> trace.",
+      "Empirically the two arms agree closely (pooled open 0.4192 arm B vs 0.4235 arm A), so the choice is not load-bearing; arm A is reported alongside in every table."
+    ],
+    "prompts": {
+      "unmatched": "You will solve a problem/request. You should provide your thoughts within <think> </think> tags before providing the answer. After </think>, give only the short final answer.",
+      "matched_A": "You are an expert medical image analyst. You should provide your thoughts within <think> </think> tags before providing the answer. After </think>, answer the question with a short, specific phrase. Do not explain.",
+      "matched_B": "You will solve a problem/request. You should provide your thoughts within <think> </think> tags before providing the answer. You are an expert medical image analyst. After </think>, answer the question with a short, specific phrase. Do not explain."
+    },
+    "trace_fired_fraction_arm_B": {
+      "SLAKE_open": 0.6698,
+      "VQA_RAD_open": 0.305,
+      "PATH_VQA_open": 0.7107
+    },
+    "direction_of_the_bias": "Arm B's trace fires on only 30.5-71.1% of items, so it is a MIXTURE of reasoning and direct answering and scores HIGHER than a fully-reasoning arm would. Using it as the baseline therefore makes the baseline STRONGER and the reported margin a LOWER bound on 'method vs a 32B that always reasons'."
+  },
+  "validation": {
+    "gate1": "contaminated + unmatched at R32=4.57 reproduces macro_average_headline_2026-07-30.json (1224 fields, exact)",
+    "gate2": "clean_L1 + unmatched at R32=4.57 reproduces macro_headline_clean_verifier_2026-07-30.json column C (accuracy levels + every delta and CI bound, exact)",
+    "gate3": "redirected matched judge files reproduce matched_prompt_reasoning_2026-07-29.json per-dataset accuracies (exact)"
+  },
+  "cost_constants": {
+    "flop_ratio": {
+      "used": 3.816,
+      "replaced": 4.57,
+      "band": [
+        3.734,
+        3.859
+      ],
+      "status": "DERIVED",
+      "basis": "exact safetensors parameter counts (8,292,166,656 / 33,452,718,336) + measured prompt geometry (326.68 tokens, 280.48 image); the band spans the three operating points actually run (cap320 open-text 3.816, cap320 MCQ 3.859, fullres MCQ 3.734)",
+      "source": "results/cascade_methods/artifacts/flop_ratio_derivation_2026-08-03.json",
+      "why_4p57_rejected": "32.0/7.0 name-plate, ~16.5% too high; it is approximately the decode-only ratio (4.524) applied to a prefill-dominated workload",
+      "effect_on_accuracy_tested": "The Pandora open-arm controller selects lambda by FLOPs, so R32 can in principle enter the METHOD's accuracy. It was run at both values: every system's macro accuracy is IDENTICAL to 4 decimals, so the constant is a pure cost correction here (see four_column_progression col4 vs col5)."
+    },
+    "best_of_8": {
+      "latency_ms_measured": 1305.3,
+      "energy_j_measured": 316.7,
+      "status": "MEASURED",
+      "replaced": {
+        "latency_ms": 522.0,
+        "latency_status": "ASSERTED (GEN7+VER7, 'N drops out')",
+        "energy_j": 568.8,
+        "energy_status": "MODELLED (8 x (GEN7+VER7))"
+      },
+      "basis": "Lingshu-7B, HF batch-1, cap320, real vqa_rad images, NVML, n=45 over 2 replicates (replicate means 1325.7 / 1289.0 ms); harness validated (single greedy gen 350.0 ms vs canonical GEN7 347.1 ms, +0.8%)",
+      "where_it_applies": "the FIXED best-of-8 open arm only. The macro pipeline's open cells run Pandora ADAPTIVE-N, whose draws are inherently sequential (draw -> verify -> draw), so its batch-1 latency (lat_seq) and its energy already use genuine batch-1 per-draw constants and are NOT affected. What the measurement invalidates is the lat_par / lat_bat axis, which assumes N draws cost one draw's latency."
+    },
+    "latency_axis_choice": "lat_seq_ms is used as the batch-1 latency axis in the headline because it is unaffected by the refuted batching assumption. lat_par_ms is reported next to it, labelled."
+  },
+  "mcq_reasoning_baseline_analysis": {
+    "question": "What should the MATCHED reasoning baseline be on the 5 Variant-B multiple-choice cells?",
+    "answer": "It is the SAME vector as the unmatched one, and no MCQ cell is re-run here. Two independent reasons, both verifiable in `per_cell` below: (1) On PMC-VQA, SLAKE-closed and VQA-RAD-closed the dump used as 'always-32B-with-reasoning' (MedEvalKit/eval_results_lingshu32b_think) is NOT a reasoning run at all -- mean generated tokens 3.09-4.26, prediction agreement with the plain direct run 92-94%. There is no reasoning behaviour there to prompt-match; the arm differs from direct only in ANSWER FORMAT, which is precisely the confound the matched protocol removes, and removing it would collapse those cells onto always-32B-direct. PathVQA-closed has no reasoning dump at all and is already imputed reasoning = direct. (2) MedXpert is the one genuine reasoning cell (320.3 generated tokens). For it the matched-prompt study matched the DIRECT arm to the reasoning arm and left the reasoning arm untouched, so the matched protocol changes the reasoning baseline by exactly zero there; the trigger effect it measured is +0.0035 [-0.0185, +0.0250], not significant (0/9 cells significant across the 3 families x 3 cells it covered).",
+    "genuine_reasoning_cells_in_variant_b": [
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open",
+      "PATH_VQA_open"
+    ],
+    "share_of_pool_with_genuine_reasoning": {
+      "n_items": 4345,
+      "n_pool": 42224,
+      "frac": 0.1029
+    },
+    "per_cell": {
+      "PMC_VQA": {
+        "n": 33430,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "verdict": "NOT-REASONED",
+        "gen_tok_direct_mean": 3.0,
+        "gen_tok_reasoning_mean": 3.09,
+        "prediction_agreement_with_direct": 0.92,
+        "acc_reasoning": 0.5494,
+        "acc_direct": 0.5518
+      },
+      "SLAKE_closed": {
+        "n": 836,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "verdict": "NOT-REASONED",
+        "gen_tok_direct_mean": 3.24,
+        "gen_tok_reasoning_mean": 3.33,
+        "prediction_agreement_with_direct": 0.9701,
+        "acc_reasoning": 0.8636,
+        "acc_direct": 0.8589
+      },
+      "VQA_RAD_closed": {
+        "n": 251,
+        "reasoning_dump": "eval_results_lingshu32b_think",
+        "verdict": "NOT-REASONED",
+        "gen_tok_direct_mean": 3.01,
+        "gen_tok_reasoning_mean": 3.01,
+        "prediction_agreement_with_direct": 0.9721,
+        "acc_reasoning": 0.8406,
+        "acc_direct": 0.8526
+      },
+      "PATH_VQA_closed": {
+        "n": 3362,
+        "reasoning_dump": null,
+        "verdict": "NO-DUMP",
+        "gen_tok_direct_mean": 3.0,
+        "gen_tok_reasoning_mean": null,
+        "prediction_agreement_with_direct": null,
+        "acc_reasoning": null,
+        "acc_direct": null
+      },
+      "MedXpertQA-MM": {
+        "n": 2000,
+        "reasoning_dump": "eval_results_lingshu32b_reason",
+        "verdict": "REASONED",
+        "gen_tok_direct_mean": 3.0,
+        "gen_tok_reasoning_mean": 320.33,
+        "prediction_agreement_with_direct": 0.229,
+        "acc_reasoning": 0.304,
+        "acc_direct": 0.3065,
+        "matched_prompt_study": {
+          "source": "medeval_matched_direct_2026-07-29.json (Lingshu-32B, MedXpert-ALL, n=2000)",
+          "what_was_matched": "the DIRECT arm was re-run with the reasoning arm's prompt minus the trigger clause; the REASONING arm was not re-run and is byte-identical to the one used here",
+          "acc_reason": 0.304,
+          "acc_direct_matched": 0.3005,
+          "acc_direct_unmatched": 0.3065,
+          "trigger_effect_matched": {
+            "delta": 0.0035,
+            "lo": -0.0185,
+            "hi": 0.025,
+            "sig": false,
+            "n": 2000
+          },
+          "format_effect": {
+            "delta": -0.006,
+            "lo": -0.014,
+            "hi": 0.002,
+            "sig": false,
+            "n": 2000
+          },
+          "verdict": "no significant effect"
+        }
+      }
+    },
+    "sensitivity_medxpert_direct_matched": {
+      "what": "If the MedXpert DIRECT baseline is also swapped to its matched version (0.3065 -> 0.3005), always_32b_direct moves by -0.0060 on that one cell.",
+      "macro_effect_on_always_32b_direct": -0.00075,
+      "status": "DERIVED from the artifact's own cell accuracies; not applied to the headline, because it changes the DIRECT baseline, not the reasoning baseline this item is about."
+    },
+    "not_applied_and_why": "Setting okT := ok32 on the three NOT-REASONED multiple-choice cells (the strictest reading of the matched protocol) is a FOURTH correction and is reported as a labelled point-estimate sensitivity in `strictest_reading_sensitivity` of final_headline, not as the headline."
+  },
+  "reasoning_baseline_by_arm": {
+    "unmatched": {
+      "SLAKE_open": {
+        "n": 645,
+        "gen_tok_mean": 122.41,
+        "judged_acc": 0.6791
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "gen_tok_mean": 104.54,
+        "judged_acc": 0.545
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "gen_tok_mean": 141.47,
+        "judged_acc": 0.1087
+      }
+    },
+    "matched_A": {
+      "SLAKE_open": {
+        "n": 645,
+        "gen_tok_mean": 87.21,
+        "judged_acc": 0.7194
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "gen_tok_mean": 39.84,
+        "judged_acc": 0.555
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "gen_tok_mean": 89.83,
+        "judged_acc": 0.2787
+      }
+    },
+    "matched_B": {
+      "SLAKE_open": {
+        "n": 645,
+        "gen_tok_mean": 86.43,
+        "judged_acc": 0.7318
+      },
+      "VQA_RAD_open": {
+        "n": 200,
+        "gen_tok_mean": 45.8,
+        "judged_acc": 0.555
+      },
+      "PATH_VQA_open": {
+        "n": 1500,
+        "gen_tok_mean": 101.49,
+        "judged_acc": 0.2667
+      }
+    }
+  },
+  "matched_open_cell_accuracies": {
+    "SLAKE_open": {
+      "unmatched": {
+        "n": 645,
+        "acc": 0.6791
+      },
+      "matched_A": {
+        "n": 645,
+        "acc": 0.7194
+      },
+      "matched_B": {
+        "n": 645,
+        "acc": 0.7318
+      }
+    },
+    "VQA_RAD_open": {
+      "unmatched": {
+        "n": 200,
+        "acc": 0.545
+      },
+      "matched_A": {
+        "n": 200,
+        "acc": 0.555
+      },
+      "matched_B": {
+        "n": 200,
+        "acc": 0.555
+      }
+    },
+    "PATH_VQA_open": {
+      "unmatched": {
+        "n": 1500,
+        "acc": 0.1087
+      },
+      "matched_A": {
+        "n": 1500,
+        "acc": 0.2787
+      },
+      "matched_B": {
+        "n": 1500,
+        "acc": 0.2667
+      }
+    }
+  },
+  "headline_progression": [
+    {
+      "column": "col1_published_sample_weighted_contaminated_unmatched",
+      "description": "the published headline: pooled sample-weighted, contaminated verifier, unmatched reasoning",
+      "method_acc": 0.5836,
+      "reasoning_baseline_acc": 0.5591,
+      "delta": 0.0245,
+      "ci95": [
+        0.0217,
+        0.0274
+      ],
+      "verdict": "WIN",
+      "flops_x": 0.874,
+      "lat_seq_pct": -58.4,
+      "lat_par_pct": -63.8,
+      "energy_pct": -71.9
+    },
+    {
+      "column": "col2_macro",
+      "description": "+ correction 1: equal weight per reporting cell (8 cells, 1/8 each)",
+      "method_acc": 0.6694,
+      "reasoning_baseline_acc": 0.5974,
+      "delta": 0.072,
+      "ci95": [
+        0.0614,
+        0.0824
+      ],
+      "verdict": "WIN",
+      "flops_x": 1.131,
+      "lat_seq_pct": -78.8,
+      "lat_par_pct": -89.0,
+      "energy_pct": -87.3,
+      "delta_change_from_previous_column": 0.0475
+    },
+    {
+      "column": "col3_macro_plus_clean_L1",
+      "description": "+ correction 2: open-text verifier retrained on strictly disjoint data (L1)",
+      "method_acc": 0.6575,
+      "reasoning_baseline_acc": 0.5974,
+      "delta": 0.0601,
+      "ci95": [
+        0.0498,
+        0.0703
+      ],
+      "verdict": "WIN",
+      "flops_x": 1.396,
+      "lat_seq_pct": -73.6,
+      "lat_par_pct": -87.7,
+      "energy_pct": -84.3,
+      "delta_change_from_previous_column": -0.0119
+    },
+    {
+      "column": "col4_macro_plus_clean_plus_matched_B",
+      "description": "+ correction 3: reasoning baseline prompt-matched (arm B). ALL THREE, old cost constants.",
+      "method_acc": 0.6575,
+      "reasoning_baseline_acc": 0.625,
+      "delta": 0.0325,
+      "ci95": [
+        0.0237,
+        0.0412
+      ],
+      "verdict": "WIN",
+      "flops_x": 1.453,
+      "lat_seq_pct": -67.7,
+      "lat_par_pct": -84.9,
+      "energy_pct": -80.6,
+      "delta_change_from_previous_column": -0.0276
+    },
+    {
+      "column": "col4a_arm_A",
+      "description": "correction 3 with arm A instead of arm B (reported alongside)",
+      "method_acc": 0.6575,
+      "reasoning_baseline_acc": 0.625,
+      "delta": 0.0325,
+      "ci95": [
+        0.024,
+        0.0411
+      ],
+      "verdict": "WIN",
+      "flops_x": 1.461,
+      "lat_seq_pct": -66.7,
+      "lat_par_pct": -84.5,
+      "energy_pct": -80.0,
+      "delta_change_from_previous_column": 0.0
+    },
+    {
+      "column": "col5_all_three_plus_grounded_R32",
+      "description": "FINAL: all three corrections + the grounded FLOP constant R32=3.816 (this also moves accuracy slightly, because the Pandora open-arm controller optimises FLOPs)",
+      "method_acc": 0.6575,
+      "reasoning_baseline_acc": 0.625,
+      "delta": 0.0325,
+      "ci95": [
+        0.0237,
+        0.0412
+      ],
+      "verdict": "WIN",
+      "flops_x": 1.608,
+      "lat_seq_pct": -67.7,
+      "lat_par_pct": -84.9,
+      "energy_pct": -80.6,
+      "delta_change_from_previous_column": 0.0
+    }
+  ],
+  "four_column_progression": {
+    "col1_published_sample_weighted_contaminated_unmatched": {
+      "description": "the published headline: pooled sample-weighted, contaminated verifier, unmatched reasoning",
+      "R32": 4.57,
+      "verifier": "contaminated",
+      "reasoning_arm": "unmatched",
+      "weighting": "sample_weighted",
+      "accuracy": {
+        "always_7b": 0.5549,
+        "always_32b_direct": 0.5729,
+        "always_32b_reasoning": 0.5591,
+        "oracle_mode_32b": 0.573,
+        "method_compute_lean": 0.5741,
+        "method_accuracy_max_veto": 0.5836,
+        "method_accuracy_max_fusion": 0.5862
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.015,
+          "ci95": [
+            0.0108,
+            0.0192
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0245,
+          "ci95": [
+            0.0217,
+            0.0274
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0271,
+          "ci95": [
+            0.0237,
+            0.0304
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": 0.0011,
+          "ci95": [
+            -0.0028,
+            0.0051
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0107,
+          "ci95": [
+            0.0086,
+            0.0127
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0132,
+          "ci95": [
+            0.0104,
+            0.0161
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": 0.001,
+          "ci95": [
+            -0.0029,
+            0.005
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0106,
+          "ci95": [
+            0.0085,
+            0.0126
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0131,
+          "ci95": [
+            0.0103,
+            0.016
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.87,
+          "lat_par_ms": 2018.1,
+          "lat_seq_ms": 2018.1,
+          "energy_j": 487.2
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 661.9,
+          "lat_seq_ms": 661.9,
+          "energy_j": 126.2
+        },
+        "method_compute_lean": {
+          "flops": 2.248,
+          "lat_par_ms": 469.0,
+          "lat_seq_ms": 578.9,
+          "energy_j": 83.6
+        },
+        "method_accuracy_max_veto": {
+          "flops": 4.257,
+          "lat_par_ms": 730.6,
+          "lat_seq_ms": 840.5,
+          "energy_j": 136.7
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 5.712,
+          "lat_par_ms": 667.5,
+          "lat_seq_ms": 1052.1,
+          "energy_j": 177.1
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.57,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 860.2,
+          "lat_seq_ms": 860.2,
+          "energy_j": 164.1
+        },
+        "method_compute_lean": {
+          "flops": 2.248,
+          "lat_par_ms": 469.0,
+          "lat_seq_ms": 578.9,
+          "energy_j": 83.6
+        },
+        "method_accuracy_max_veto": {
+          "flops": 4.257,
+          "lat_par_ms": 730.6,
+          "lat_seq_ms": 840.5,
+          "energy_j": 136.7
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 5.712,
+          "lat_par_ms": 667.5,
+          "lat_seq_ms": 1052.1,
+          "energy_j": 177.1
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 0.462,
+            "lat_par_x": 0.232,
+            "lat_par_pct": -76.8,
+            "lat_seq_x": 0.287,
+            "lat_seq_pct": -71.3,
+            "energy_x": 0.172,
+            "energy_pct": -82.8
+          },
+          "always_32b_direct": {
+            "flops_x": 0.492,
+            "lat_par_x": 0.705,
+            "lat_par_pct": -29.5,
+            "lat_seq_x": 0.871,
+            "lat_seq_pct": -12.9,
+            "energy_x": 0.658,
+            "energy_pct": -34.2
+          },
+          "oracle_mode_32b": {
+            "flops_x": 0.492,
+            "lat_par_x": 0.709,
+            "lat_par_pct": -29.1,
+            "lat_seq_x": 0.875,
+            "lat_seq_pct": -12.5,
+            "energy_x": 0.662,
+            "energy_pct": -33.8
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 0.874,
+            "lat_par_x": 0.362,
+            "lat_par_pct": -63.8,
+            "lat_seq_x": 0.416,
+            "lat_seq_pct": -58.4,
+            "energy_x": 0.281,
+            "energy_pct": -71.9
+          },
+          "always_32b_direct": {
+            "flops_x": 0.932,
+            "lat_par_x": 1.099,
+            "lat_par_pct": 9.9,
+            "lat_seq_x": 1.264,
+            "lat_seq_pct": 26.4,
+            "energy_x": 1.076,
+            "energy_pct": 7.6
+          },
+          "oracle_mode_32b": {
+            "flops_x": 0.932,
+            "lat_par_x": 1.104,
+            "lat_par_pct": 10.4,
+            "lat_seq_x": 1.27,
+            "lat_seq_pct": 27.0,
+            "energy_x": 1.083,
+            "energy_pct": 8.3
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.173,
+            "lat_par_x": 0.331,
+            "lat_par_pct": -66.9,
+            "lat_seq_x": 0.521,
+            "lat_seq_pct": -47.9,
+            "energy_x": 0.364,
+            "energy_pct": -63.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.25,
+            "lat_par_x": 1.004,
+            "lat_par_pct": 0.4,
+            "lat_seq_x": 1.582,
+            "lat_seq_pct": 58.2,
+            "energy_x": 1.394,
+            "energy_pct": 39.4
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.25,
+            "lat_par_x": 1.008,
+            "lat_par_pct": 0.8,
+            "lat_seq_x": 1.59,
+            "lat_seq_pct": 59.0,
+            "energy_x": 1.403,
+            "energy_pct": 40.3
+          }
+        }
+      }
+    },
+    "col2_macro": {
+      "description": "+ correction 1: equal weight per reporting cell (8 cells, 1/8 each)",
+      "R32": 4.57,
+      "verifier": "contaminated",
+      "reasoning_arm": "unmatched",
+      "weighting": "macro_cells",
+      "accuracy": {
+        "always_7b": 0.5971,
+        "always_32b_direct": 0.6567,
+        "always_32b_reasoning": 0.5974,
+        "oracle_mode_32b": 0.6573,
+        "method_compute_lean": 0.66,
+        "method_accuracy_max_veto": 0.6694,
+        "method_accuracy_max_fusion": 0.6661
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.0626,
+          "ci95": [
+            0.0514,
+            0.0734
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.072,
+          "ci95": [
+            0.0614,
+            0.0824
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0686,
+          "ci95": [
+            0.0582,
+            0.079
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": 0.0033,
+          "ci95": [
+            -0.0054,
+            0.0121
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0128,
+          "ci95": [
+            0.0056,
+            0.02
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0094,
+          "ci95": [
+            0.0013,
+            0.0176
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": 0.0027,
+          "ci95": [
+            -0.0061,
+            0.0117
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0122,
+          "ci95": [
+            0.0049,
+            0.0195
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0088,
+          "ci95": [
+            0.0006,
+            0.0171
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 5.697,
+          "lat_par_ms": 6291.2,
+          "lat_seq_ms": 6291.2,
+          "energy_j": 1625.2
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 645.5,
+          "lat_seq_ms": 645.5,
+          "energy_j": 121.8
+        },
+        "method_compute_lean": {
+          "flops": 5.465,
+          "lat_par_ms": 649.7,
+          "lat_seq_ms": 1292.0,
+          "energy_j": 188.0
+        },
+        "method_accuracy_max_veto": {
+          "flops": 6.444,
+          "lat_par_ms": 691.4,
+          "lat_seq_ms": 1333.7,
+          "energy_j": 206.2
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 6.558,
+          "lat_par_ms": 664.6,
+          "lat_seq_ms": 1350.2,
+          "energy_j": 209.4
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.57,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 1897.1,
+          "lat_seq_ms": 1897.1,
+          "energy_j": 361.4
+        },
+        "method_compute_lean": {
+          "flops": 5.465,
+          "lat_par_ms": 649.7,
+          "lat_seq_ms": 1292.0,
+          "energy_j": 188.0
+        },
+        "method_accuracy_max_veto": {
+          "flops": 6.444,
+          "lat_par_ms": 691.4,
+          "lat_seq_ms": 1333.7,
+          "energy_j": 206.2
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 6.558,
+          "lat_par_ms": 664.6,
+          "lat_seq_ms": 1350.2,
+          "energy_j": 209.4
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 0.959,
+            "lat_par_x": 0.103,
+            "lat_par_pct": -89.7,
+            "lat_seq_x": 0.205,
+            "lat_seq_pct": -79.5,
+            "energy_x": 0.116,
+            "energy_pct": -88.4
+          },
+          "always_32b_direct": {
+            "flops_x": 1.196,
+            "lat_par_x": 0.977,
+            "lat_par_pct": -2.3,
+            "lat_seq_x": 1.943,
+            "lat_seq_pct": 94.3,
+            "energy_x": 1.48,
+            "energy_pct": 48.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.196,
+            "lat_par_x": 1.007,
+            "lat_par_pct": 0.7,
+            "lat_seq_x": 2.002,
+            "lat_seq_pct": 100.2,
+            "energy_x": 1.544,
+            "energy_pct": 54.4
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 1.131,
+            "lat_par_x": 0.11,
+            "lat_par_pct": -89.0,
+            "lat_seq_x": 0.212,
+            "lat_seq_pct": -78.8,
+            "energy_x": 0.127,
+            "energy_pct": -87.3
+          },
+          "always_32b_direct": {
+            "flops_x": 1.41,
+            "lat_par_x": 1.04,
+            "lat_par_pct": 4.0,
+            "lat_seq_x": 2.006,
+            "lat_seq_pct": 100.6,
+            "energy_x": 1.624,
+            "energy_pct": 62.4
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.41,
+            "lat_par_x": 1.071,
+            "lat_par_pct": 7.1,
+            "lat_seq_x": 2.066,
+            "lat_seq_pct": 106.6,
+            "energy_x": 1.693,
+            "energy_pct": 69.3
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.151,
+            "lat_par_x": 0.106,
+            "lat_par_pct": -89.4,
+            "lat_seq_x": 0.215,
+            "lat_seq_pct": -78.5,
+            "energy_x": 0.129,
+            "energy_pct": -87.1
+          },
+          "always_32b_direct": {
+            "flops_x": 1.435,
+            "lat_par_x": 0.999,
+            "lat_par_pct": -0.1,
+            "lat_seq_x": 2.03,
+            "lat_seq_pct": 103.0,
+            "energy_x": 1.649,
+            "energy_pct": 64.9
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.435,
+            "lat_par_x": 1.03,
+            "lat_par_pct": 3.0,
+            "lat_seq_x": 2.092,
+            "lat_seq_pct": 109.2,
+            "energy_x": 1.719,
+            "energy_pct": 71.9
+          }
+        }
+      }
+    },
+    "col3_macro_plus_clean_L1": {
+      "description": "+ correction 2: open-text verifier retrained on strictly disjoint data (L1)",
+      "R32": 4.57,
+      "verifier": "clean_L1",
+      "reasoning_arm": "unmatched",
+      "weighting": "macro_cells",
+      "accuracy": {
+        "always_7b": 0.5971,
+        "always_32b_direct": 0.6567,
+        "always_32b_reasoning": 0.5974,
+        "oracle_mode_32b": 0.6573,
+        "method_compute_lean": 0.6443,
+        "method_accuracy_max_veto": 0.6575,
+        "method_accuracy_max_fusion": 0.6503
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.0468,
+          "ci95": [
+            0.0353,
+            0.0583
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0601,
+          "ci95": [
+            0.0498,
+            0.0703
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0529,
+          "ci95": [
+            0.0417,
+            0.0639
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": -0.0124,
+          "ci95": [
+            -0.0188,
+            -0.006
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0008,
+          "ci95": [
+            -0.0022,
+            0.0037
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0063,
+          "ci95": [
+            -0.0118,
+            -0.0011
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": -0.013,
+          "ci95": [
+            -0.0194,
+            -0.0066
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0002,
+          "ci95": [
+            -0.0029,
+            0.0033
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0069,
+          "ci95": [
+            -0.0125,
+            -0.0015
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 5.697,
+          "lat_par_ms": 6291.2,
+          "lat_seq_ms": 6291.2,
+          "energy_j": 1625.2
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 645.5,
+          "lat_seq_ms": 645.5,
+          "energy_j": 121.8
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.57,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 1897.1,
+          "lat_seq_ms": 1897.1,
+          "energy_j": 361.4
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 1.171,
+            "lat_par_x": 0.11,
+            "lat_par_pct": -89.0,
+            "lat_seq_x": 0.25,
+            "lat_seq_pct": -75.0,
+            "energy_x": 0.141,
+            "energy_pct": -85.9
+          },
+          "always_32b_direct": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.039,
+            "lat_par_pct": 3.9,
+            "lat_seq_x": 2.368,
+            "lat_seq_pct": 136.8,
+            "energy_x": 1.802,
+            "energy_pct": 80.2
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.07,
+            "lat_par_pct": 7.0,
+            "lat_seq_x": 2.44,
+            "lat_seq_pct": 144.0,
+            "energy_x": 1.878,
+            "energy_pct": 87.8
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 1.396,
+            "lat_par_x": 0.123,
+            "lat_par_pct": -87.7,
+            "lat_seq_x": 0.264,
+            "lat_seq_pct": -73.6,
+            "energy_x": 0.157,
+            "energy_pct": -84.3
+          },
+          "always_32b_direct": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.167,
+            "lat_par_pct": 16.7,
+            "lat_seq_x": 2.496,
+            "lat_seq_pct": 149.6,
+            "energy_x": 2.01,
+            "energy_pct": 101.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.202,
+            "lat_par_pct": 20.2,
+            "lat_seq_x": 2.572,
+            "lat_seq_pct": 157.2,
+            "energy_x": 2.096,
+            "energy_pct": 109.6
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.363,
+            "lat_par_x": 0.112,
+            "lat_par_pct": -88.8,
+            "lat_seq_x": 0.26,
+            "lat_seq_pct": -74.0,
+            "energy_x": 0.154,
+            "energy_pct": -84.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.061,
+            "lat_par_pct": 6.1,
+            "lat_seq_x": 2.456,
+            "lat_seq_pct": 145.6,
+            "energy_x": 1.97,
+            "energy_pct": 97.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.093,
+            "lat_par_pct": 9.3,
+            "lat_seq_x": 2.53,
+            "lat_seq_pct": 153.0,
+            "energy_x": 2.054,
+            "energy_pct": 105.4
+          }
+        }
+      }
+    },
+    "col4_macro_plus_clean_plus_matched_B": {
+      "description": "+ correction 3: reasoning baseline prompt-matched (arm B). ALL THREE, old cost constants.",
+      "R32": 4.57,
+      "verifier": "clean_L1",
+      "reasoning_arm": "matched_B",
+      "weighting": "macro_cells",
+      "accuracy": {
+        "always_7b": 0.5971,
+        "always_32b_direct": 0.6567,
+        "always_32b_reasoning": 0.625,
+        "oracle_mode_32b": 0.6573,
+        "method_compute_lean": 0.6443,
+        "method_accuracy_max_veto": 0.6575,
+        "method_accuracy_max_fusion": 0.6503
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.0193,
+          "ci95": [
+            0.009,
+            0.0295
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0325,
+          "ci95": [
+            0.0237,
+            0.0412
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0253,
+          "ci95": [
+            0.0156,
+            0.0348
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": -0.0124,
+          "ci95": [
+            -0.0189,
+            -0.0061
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0008,
+          "ci95": [
+            -0.0022,
+            0.0036
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0063,
+          "ci95": [
+            -0.012,
+            -0.001
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": -0.013,
+          "ci95": [
+            -0.0196,
+            -0.0066
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0002,
+          "ci95": [
+            -0.003,
+            0.0033
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0069,
+          "ci95": [
+            -0.0126,
+            -0.0015
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 5.471,
+          "lat_par_ms": 5136.6,
+          "lat_seq_ms": 5136.6,
+          "energy_j": 1317.7
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 645.5,
+          "lat_seq_ms": 645.5,
+          "energy_j": 121.8
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.57,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 1897.1,
+          "lat_seq_ms": 1897.1,
+          "energy_j": 361.4
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 1.22,
+            "lat_par_x": 0.134,
+            "lat_par_pct": -86.6,
+            "lat_seq_x": 0.307,
+            "lat_seq_pct": -69.3,
+            "energy_x": 0.174,
+            "energy_pct": -82.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.039,
+            "lat_par_pct": 3.9,
+            "lat_seq_x": 2.368,
+            "lat_seq_pct": 136.8,
+            "energy_x": 1.802,
+            "energy_pct": 80.2
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.07,
+            "lat_par_pct": 7.0,
+            "lat_seq_x": 2.44,
+            "lat_seq_pct": 144.0,
+            "energy_x": 1.878,
+            "energy_pct": 87.8
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 1.453,
+            "lat_par_x": 0.151,
+            "lat_par_pct": -84.9,
+            "lat_seq_x": 0.323,
+            "lat_seq_pct": -67.7,
+            "energy_x": 0.194,
+            "energy_pct": -80.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.167,
+            "lat_par_pct": 16.7,
+            "lat_seq_x": 2.496,
+            "lat_seq_pct": 149.6,
+            "energy_x": 2.01,
+            "energy_pct": 101.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.202,
+            "lat_par_pct": 20.2,
+            "lat_seq_x": 2.572,
+            "lat_seq_pct": 157.2,
+            "energy_x": 2.096,
+            "energy_pct": 109.6
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.419,
+            "lat_par_x": 0.137,
+            "lat_par_pct": -86.3,
+            "lat_seq_x": 0.318,
+            "lat_seq_pct": -68.2,
+            "energy_x": 0.19,
+            "energy_pct": -81.0
+          },
+          "always_32b_direct": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.061,
+            "lat_par_pct": 6.1,
+            "lat_seq_x": 2.456,
+            "lat_seq_pct": 145.6,
+            "energy_x": 1.97,
+            "energy_pct": 97.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.093,
+            "lat_par_pct": 9.3,
+            "lat_seq_x": 2.53,
+            "lat_seq_pct": 153.0,
+            "energy_x": 2.054,
+            "energy_pct": 105.4
+          }
+        }
+      }
+    },
+    "col4a_arm_A": {
+      "description": "correction 3 with arm A instead of arm B (reported alongside)",
+      "R32": 4.57,
+      "verifier": "clean_L1",
+      "reasoning_arm": "matched_A",
+      "weighting": "macro_cells",
+      "accuracy": {
+        "always_7b": 0.5971,
+        "always_32b_direct": 0.6567,
+        "always_32b_reasoning": 0.625,
+        "oracle_mode_32b": 0.6573,
+        "method_compute_lean": 0.6443,
+        "method_accuracy_max_veto": 0.6575,
+        "method_accuracy_max_fusion": 0.6503
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.0193,
+          "ci95": [
+            0.0095,
+            0.0291
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0325,
+          "ci95": [
+            0.024,
+            0.0411
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0254,
+          "ci95": [
+            0.0161,
+            0.0345
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": -0.0124,
+          "ci95": [
+            -0.019,
+            -0.0062
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0008,
+          "ci95": [
+            -0.0022,
+            0.0037
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0063,
+          "ci95": [
+            -0.012,
+            -0.0011
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": -0.013,
+          "ci95": [
+            -0.0197,
+            -0.0067
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0002,
+          "ci95": [
+            -0.0029,
+            0.0032
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0069,
+          "ci95": [
+            -0.0125,
+            -0.0016
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 5.443,
+          "lat_par_ms": 4992.3,
+          "lat_seq_ms": 4992.3,
+          "energy_j": 1279.3
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 645.5,
+          "lat_seq_ms": 645.5,
+          "energy_j": 121.8
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 4.57,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.57,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 4.57,
+          "lat_par_ms": 1897.1,
+          "lat_seq_ms": 1897.1,
+          "energy_j": 361.4
+        },
+        "method_compute_lean": {
+          "flops": 6.674,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.951,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.766,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 1.226,
+            "lat_par_x": 0.138,
+            "lat_par_pct": -86.2,
+            "lat_seq_x": 0.315,
+            "lat_seq_pct": -68.5,
+            "energy_x": 0.179,
+            "energy_pct": -82.1
+          },
+          "always_32b_direct": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.039,
+            "lat_par_pct": 3.9,
+            "lat_seq_x": 2.368,
+            "lat_seq_pct": 136.8,
+            "energy_x": 1.802,
+            "energy_pct": 80.2
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.46,
+            "lat_par_x": 1.07,
+            "lat_par_pct": 7.0,
+            "lat_seq_x": 2.44,
+            "lat_seq_pct": 144.0,
+            "energy_x": 1.878,
+            "energy_pct": 87.8
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 1.461,
+            "lat_par_x": 0.155,
+            "lat_par_pct": -84.5,
+            "lat_seq_x": 0.333,
+            "lat_seq_pct": -66.7,
+            "energy_x": 0.2,
+            "energy_pct": -80.0
+          },
+          "always_32b_direct": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.167,
+            "lat_par_pct": 16.7,
+            "lat_seq_x": 2.496,
+            "lat_seq_pct": 149.6,
+            "energy_x": 2.01,
+            "energy_pct": 101.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.74,
+            "lat_par_x": 1.202,
+            "lat_par_pct": 20.2,
+            "lat_seq_x": 2.572,
+            "lat_seq_pct": 157.2,
+            "energy_x": 2.096,
+            "energy_pct": 109.6
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.427,
+            "lat_par_x": 0.141,
+            "lat_par_pct": -85.9,
+            "lat_seq_x": 0.327,
+            "lat_seq_pct": -67.3,
+            "energy_x": 0.196,
+            "energy_pct": -80.4
+          },
+          "always_32b_direct": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.061,
+            "lat_par_pct": 6.1,
+            "lat_seq_x": 2.456,
+            "lat_seq_pct": 145.6,
+            "energy_x": 1.97,
+            "energy_pct": 97.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.699,
+            "lat_par_x": 1.093,
+            "lat_par_pct": 9.3,
+            "lat_seq_x": 2.53,
+            "lat_seq_pct": 153.0,
+            "energy_x": 2.054,
+            "energy_pct": 105.4
+          }
+        }
+      }
+    },
+    "col5_all_three_plus_grounded_R32": {
+      "description": "FINAL: all three corrections + the grounded FLOP constant R32=3.816 (this also moves accuracy slightly, because the Pandora open-arm controller optimises FLOPs)",
+      "R32": 3.816,
+      "verifier": "clean_L1",
+      "reasoning_arm": "matched_B",
+      "weighting": "macro_cells",
+      "accuracy": {
+        "always_7b": 0.5971,
+        "always_32b_direct": 0.6567,
+        "always_32b_reasoning": 0.625,
+        "oracle_mode_32b": 0.6573,
+        "method_compute_lean": 0.6443,
+        "method_accuracy_max_veto": 0.6575,
+        "method_accuracy_max_fusion": 0.6503
+      },
+      "deltas_vs_reasoning": {
+        "method_compute_lean": {
+          "delta": 0.0193,
+          "ci95": [
+            0.009,
+            0.0295
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0325,
+          "ci95": [
+            0.0237,
+            0.0412
+          ],
+          "verdict": "WIN"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": 0.0253,
+          "ci95": [
+            0.0156,
+            0.0348
+          ],
+          "verdict": "WIN"
+        }
+      },
+      "deltas_vs_direct": {
+        "method_compute_lean": {
+          "delta": -0.0124,
+          "ci95": [
+            -0.0189,
+            -0.0061
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0008,
+          "ci95": [
+            -0.0022,
+            0.0036
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0063,
+          "ci95": [
+            -0.012,
+            -0.001
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "deltas_vs_oracle": {
+        "method_compute_lean": {
+          "delta": -0.013,
+          "ci95": [
+            -0.0196,
+            -0.0066
+          ],
+          "verdict": "LOSS"
+        },
+        "method_accuracy_max_veto": {
+          "delta": 0.0002,
+          "ci95": [
+            -0.003,
+            0.0033
+          ],
+          "verdict": "TIE"
+        },
+        "method_accuracy_max_fusion": {
+          "delta": -0.0069,
+          "ci95": [
+            -0.0126,
+            -0.0015
+          ],
+          "verdict": "LOSS"
+        }
+      },
+      "cost_honest_recost": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 3.816,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 4.567,
+          "lat_par_ms": 5136.6,
+          "lat_seq_ms": 5136.6,
+          "energy_j": 1317.7
+        },
+        "oracle_mode_32b": {
+          "flops": 3.816,
+          "lat_par_ms": 645.5,
+          "lat_seq_ms": 645.5,
+          "energy_j": 121.8
+        },
+        "method_compute_lean": {
+          "flops": 6.358,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.342,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.188,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "cost_as_charged": {
+        "always_7b": {
+          "flops": 1.0,
+          "lat_par_ms": 347.0,
+          "lat_seq_ms": 347.0,
+          "energy_j": 45.8
+        },
+        "always_32b_direct": {
+          "flops": 3.816,
+          "lat_par_ms": 665.0,
+          "lat_seq_ms": 665.0,
+          "energy_j": 127.0
+        },
+        "always_32b_reasoning": {
+          "flops": 3.816,
+          "lat_par_ms": 10521.6,
+          "lat_seq_ms": 10521.6,
+          "energy_j": 2001.9
+        },
+        "oracle_mode_32b": {
+          "flops": 3.816,
+          "lat_par_ms": 1897.1,
+          "lat_seq_ms": 1897.1,
+          "energy_j": 361.4
+        },
+        "method_compute_lean": {
+          "flops": 6.358,
+          "lat_par_ms": 690.8,
+          "lat_seq_ms": 1574.8,
+          "energy_j": 228.8
+        },
+        "method_accuracy_max_veto": {
+          "flops": 7.342,
+          "lat_par_ms": 775.9,
+          "lat_seq_ms": 1660.0,
+          "energy_j": 255.3
+        },
+        "method_accuracy_max_fusion": {
+          "flops": 7.188,
+          "lat_par_ms": 705.6,
+          "lat_seq_ms": 1633.1,
+          "energy_j": 250.2
+        }
+      },
+      "ratios_honest_recost": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "flops_x": 1.392,
+            "lat_par_x": 0.134,
+            "lat_par_pct": -86.6,
+            "lat_seq_x": 0.307,
+            "lat_seq_pct": -69.3,
+            "energy_x": 0.174,
+            "energy_pct": -82.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.666,
+            "lat_par_x": 1.039,
+            "lat_par_pct": 3.9,
+            "lat_seq_x": 2.368,
+            "lat_seq_pct": 136.8,
+            "energy_x": 1.802,
+            "energy_pct": 80.2
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.666,
+            "lat_par_x": 1.07,
+            "lat_par_pct": 7.0,
+            "lat_seq_x": 2.44,
+            "lat_seq_pct": 144.0,
+            "energy_x": 1.878,
+            "energy_pct": 87.8
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "flops_x": 1.608,
+            "lat_par_x": 0.151,
+            "lat_par_pct": -84.9,
+            "lat_seq_x": 0.323,
+            "lat_seq_pct": -67.7,
+            "energy_x": 0.194,
+            "energy_pct": -80.6
+          },
+          "always_32b_direct": {
+            "flops_x": 1.924,
+            "lat_par_x": 1.167,
+            "lat_par_pct": 16.7,
+            "lat_seq_x": 2.496,
+            "lat_seq_pct": 149.6,
+            "energy_x": 2.01,
+            "energy_pct": 101.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.924,
+            "lat_par_x": 1.202,
+            "lat_par_pct": 20.2,
+            "lat_seq_x": 2.572,
+            "lat_seq_pct": 157.2,
+            "energy_x": 2.096,
+            "energy_pct": 109.6
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "flops_x": 1.574,
+            "lat_par_x": 0.137,
+            "lat_par_pct": -86.3,
+            "lat_seq_x": 0.318,
+            "lat_seq_pct": -68.2,
+            "energy_x": 0.19,
+            "energy_pct": -81.0
+          },
+          "always_32b_direct": {
+            "flops_x": 1.884,
+            "lat_par_x": 1.061,
+            "lat_par_pct": 6.1,
+            "lat_seq_x": 2.456,
+            "lat_seq_pct": 145.6,
+            "energy_x": 1.97,
+            "energy_pct": 97.0
+          },
+          "oracle_mode_32b": {
+            "flops_x": 1.884,
+            "lat_par_x": 1.093,
+            "lat_par_pct": 9.3,
+            "lat_seq_x": 2.53,
+            "lat_seq_pct": 153.0,
+            "energy_x": 2.054,
+            "energy_pct": 105.4
+          }
+        }
+      }
+    }
+  },
+  "all_claims_four_columns": [
+    {
+      "claim": "method_compute_lean vs always_32b_reasoning",
+      "pool": "all 8 cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_reasoning",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.015,
+        "ci95": [
+          0.0108,
+          0.0192
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0626,
+        "ci95": [
+          0.0514,
+          0.0734
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0468,
+        "ci95": [
+          0.0353,
+          0.0583
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0193,
+        "ci95": [
+          0.009,
+          0.0295
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0193,
+        "ci95": [
+          0.0095,
+          0.0291
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0193,
+        "ci95": [
+          0.009,
+          0.0295
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.0043,
+      "effect_of_matched_reasoning_alone": -0.0275,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_compute_lean vs always_32b_reasoning",
+      "pool": "5 multiple-choice cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_reasoning",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0006,
+        "ci95": [
+          -0.0037,
+          0.0049
+        ],
+        "verdict": "TIE"
+      },
+      "col2_macro": {
+        "delta": -0.0046,
+        "ci95": [
+          -0.0126,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0046,
+        "ci95": [
+          -0.0126,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0046,
+        "ci95": [
+          -0.0126,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0046,
+        "ci95": [
+          -0.0126,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0046,
+        "ci95": [
+          -0.0126,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0052,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (TIE)"
+    },
+    {
+      "claim": "method_compute_lean vs always_32b_reasoning",
+      "pool": "3 open-text cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_reasoning",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.2597,
+        "ci95": [
+          0.2392,
+          0.2802
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1745,
+        "ci95": [
+          0.1485,
+          0.2003
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.1326,
+        "ci95": [
+          0.1049,
+          0.1601
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.059,
+        "ci95": [
+          0.0351,
+          0.0823
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0591,
+        "ci95": [
+          0.0368,
+          0.0813
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.059,
+        "ci95": [
+          0.0351,
+          0.0823
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.2007,
+      "effect_of_matched_reasoning_alone": -0.0736,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_compute_lean vs always_32b_direct",
+      "pool": "all 8 cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_direct",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0011,
+        "ci95": [
+          -0.0028,
+          0.0051
+        ],
+        "verdict": "TIE"
+      },
+      "col2_macro": {
+        "delta": 0.0033,
+        "ci95": [
+          -0.0054,
+          0.0121
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0124,
+        "ci95": [
+          -0.0188,
+          -0.006
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0124,
+        "ci95": [
+          -0.0189,
+          -0.0061
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0124,
+        "ci95": [
+          -0.019,
+          -0.0062
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0124,
+        "ci95": [
+          -0.0189,
+          -0.0061
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.0135,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "TIE -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs always_32b_direct",
+      "pool": "5 multiple-choice cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_direct",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": -0.0015,
+        "ci95": [
+          -0.0056,
+          0.0026
+        ],
+        "verdict": "TIE"
+      },
+      "col2_macro": {
+        "delta": -0.007,
+        "ci95": [
+          -0.0126,
+          -0.0017
+        ],
+        "verdict": "LOSS"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.007,
+        "ci95": [
+          -0.0126,
+          -0.0017
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.007,
+        "ci95": [
+          -0.0126,
+          -0.0017
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.007,
+        "ci95": [
+          -0.0126,
+          -0.0017
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.007,
+        "ci95": [
+          -0.0126,
+          -0.0017
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.0055,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "TIE -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs always_32b_direct",
+      "pool": "3 open-text cells",
+      "method": "method_compute_lean",
+      "baseline": "always_32b_direct",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0456,
+        "ci95": [
+          0.0303,
+          0.0614
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0206,
+        "ci95": [
+          -0.0009,
+          0.0423
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.036,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.067,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs oracle_mode_32b",
+      "pool": "all 8 cells",
+      "method": "method_compute_lean",
+      "baseline": "oracle_mode_32b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0029,
+          0.005
+        ],
+        "verdict": "TIE"
+      },
+      "col2_macro": {
+        "delta": 0.0027,
+        "ci95": [
+          -0.0061,
+          0.0117
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.013,
+        "ci95": [
+          -0.0194,
+          -0.0066
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.013,
+        "ci95": [
+          -0.0196,
+          -0.0066
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.013,
+        "ci95": [
+          -0.0197,
+          -0.0067
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.013,
+        "ci95": [
+          -0.0196,
+          -0.0066
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.014,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "TIE -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs oracle_mode_32b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_compute_lean",
+      "baseline": "oracle_mode_32b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": -0.0016,
+        "ci95": [
+          -0.0057,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "col2_macro": {
+        "delta": -0.008,
+        "ci95": [
+          -0.0137,
+          -0.0024
+        ],
+        "verdict": "LOSS"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.008,
+        "ci95": [
+          -0.0137,
+          -0.0024
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.008,
+        "ci95": [
+          -0.0137,
+          -0.0024
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.008,
+        "ci95": [
+          -0.0137,
+          -0.0024
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.008,
+        "ci95": [
+          -0.0137,
+          -0.0024
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.0064,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "TIE -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs oracle_mode_32b",
+      "pool": "3 open-text cells",
+      "method": "method_compute_lean",
+      "baseline": "oracle_mode_32b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0456,
+        "ci95": [
+          0.0303,
+          0.0614
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0206,
+        "ci95": [
+          -0.0009,
+          0.0423
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.036,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.067,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_compute_lean vs always_7b",
+      "pool": "all 8 cells",
+      "method": "method_compute_lean",
+      "baseline": "always_7b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0192,
+        "ci95": [
+          0.0168,
+          0.0215
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0629,
+        "ci95": [
+          0.0526,
+          0.0735
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0472,
+        "ci95": [
+          0.0361,
+          0.0583
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0472,
+        "ci95": [
+          0.036,
+          0.0584
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0472,
+        "ci95": [
+          0.036,
+          0.0586
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0472,
+        "ci95": [
+          0.036,
+          0.0584
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.028,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_compute_lean vs always_7b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_compute_lean",
+      "baseline": "always_7b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0136,
+        "ci95": [
+          0.0114,
+          0.0159
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0345,
+        "ci95": [
+          0.0242,
+          0.0449
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0345,
+        "ci95": [
+          0.0242,
+          0.0449
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0345,
+        "ci95": [
+          0.0242,
+          0.0449
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0345,
+        "ci95": [
+          0.0242,
+          0.0449
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0345,
+        "ci95": [
+          0.0242,
+          0.0449
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.0209,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_compute_lean vs always_7b",
+      "pool": "3 open-text cells",
+      "method": "method_compute_lean",
+      "baseline": "always_7b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.113,
+        "ci95": [
+          0.0972,
+          0.1288
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1103,
+        "ci95": [
+          0.089,
+          0.1322
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0447,
+          0.0927
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0437,
+          0.0924
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0441,
+          0.0927
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0437,
+          0.0924
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0447,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_reasoning",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_reasoning",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0245,
+        "ci95": [
+          0.0217,
+          0.0274
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.072,
+        "ci95": [
+          0.0614,
+          0.0824
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0601,
+        "ci95": [
+          0.0498,
+          0.0703
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0325,
+        "ci95": [
+          0.0237,
+          0.0412
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0325,
+        "ci95": [
+          0.024,
+          0.0411
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0325,
+        "ci95": [
+          0.0237,
+          0.0412
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.008,
+      "effect_of_matched_reasoning_alone": -0.0276,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_reasoning",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_reasoning",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0101,
+        "ci95": [
+          0.0073,
+          0.0129
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0043,
+        "ci95": [
+          -0.0016,
+          0.0105
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0043,
+        "ci95": [
+          -0.0016,
+          0.0105
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0043,
+        "ci95": [
+          -0.0016,
+          0.0105
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0043,
+        "ci95": [
+          -0.0016,
+          0.0105
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0043,
+        "ci95": [
+          -0.0016,
+          0.0105
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0058,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_reasoning",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_reasoning",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.2699,
+        "ci95": [
+          0.2495,
+          0.29
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1848,
+        "ci95": [
+          0.1583,
+          0.211
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.153,
+        "ci95": [
+          0.1281,
+          0.1783
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0794,
+        "ci95": [
+          0.0582,
+          0.1003
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0796,
+        "ci95": [
+          0.0596,
+          0.1001
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0794,
+        "ci95": [
+          0.0582,
+          0.1003
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.1905,
+      "effect_of_matched_reasoning_alone": -0.0736,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_direct",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_direct",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0107,
+        "ci95": [
+          0.0086,
+          0.0127
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0128,
+        "ci95": [
+          0.0056,
+          0.02
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0008,
+        "ci95": [
+          -0.0022,
+          0.0037
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0008,
+        "ci95": [
+          -0.0022,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0008,
+        "ci95": [
+          -0.0022,
+          0.0037
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0008,
+        "ci95": [
+          -0.0022,
+          0.0036
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0099,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_direct",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_direct",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.008,
+        "ci95": [
+          0.006,
+          0.0099
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0019,
+        "ci95": [
+          0.0014,
+          0.0024
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0061,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_32b_direct",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_32b_direct",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0559,
+        "ci95": [
+          0.0409,
+          0.0712
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0309,
+        "ci95": [
+          0.0116,
+          0.0502
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.001,
+        "ci95": [
+          -0.009,
+          0.0067
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.001,
+        "ci95": [
+          -0.0091,
+          0.0065
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": -0.001,
+        "ci95": [
+          -0.009,
+          0.0066
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.001,
+        "ci95": [
+          -0.0091,
+          0.0065
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0569,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs oracle_mode_32b",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "oracle_mode_32b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0106,
+        "ci95": [
+          0.0085,
+          0.0126
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0122,
+        "ci95": [
+          0.0049,
+          0.0195
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0002,
+        "ci95": [
+          -0.0029,
+          0.0033
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0002,
+        "ci95": [
+          -0.003,
+          0.0033
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0002,
+        "ci95": [
+          -0.0029,
+          0.0032
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0002,
+        "ci95": [
+          -0.003,
+          0.0033
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0104,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs oracle_mode_32b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "oracle_mode_32b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0079,
+        "ci95": [
+          0.0059,
+          0.0098
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.001,
+        "ci95": [
+          -0.0006,
+          0.0025
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0069,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs oracle_mode_32b",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "oracle_mode_32b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0559,
+        "ci95": [
+          0.0409,
+          0.0712
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0309,
+        "ci95": [
+          0.0116,
+          0.0502
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.001,
+        "ci95": [
+          -0.009,
+          0.0067
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.001,
+        "ci95": [
+          -0.0091,
+          0.0065
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": -0.001,
+        "ci95": [
+          -0.009,
+          0.0066
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.001,
+        "ci95": [
+          -0.0091,
+          0.0065
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0569,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_7b",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_7b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0287,
+        "ci95": [
+          0.0246,
+          0.0328
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0723,
+        "ci95": [
+          0.0614,
+          0.0833
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0604,
+        "ci95": [
+          0.0488,
+          0.072
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0604,
+        "ci95": [
+          0.0487,
+          0.0721
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0604,
+        "ci95": [
+          0.049,
+          0.0723
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0604,
+        "ci95": [
+          0.0487,
+          0.0721
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.0317,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_7b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_7b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0231,
+        "ci95": [
+          0.0189,
+          0.0274
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0434,
+        "ci95": [
+          0.032,
+          0.055
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0434,
+        "ci95": [
+          0.032,
+          0.055
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0434,
+        "ci95": [
+          0.032,
+          0.055
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0434,
+        "ci95": [
+          0.032,
+          0.055
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0434,
+        "ci95": [
+          0.032,
+          0.055
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.0203,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_veto vs always_7b",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_veto",
+      "baseline": "always_7b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.1232,
+        "ci95": [
+          0.1075,
+          0.1394
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1206,
+        "ci95": [
+          0.0992,
+          0.1423
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0888,
+        "ci95": [
+          0.0647,
+          0.113
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0888,
+        "ci95": [
+          0.0642,
+          0.1132
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0888,
+        "ci95": [
+          0.0647,
+          0.1133
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0888,
+        "ci95": [
+          0.0642,
+          0.1132
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0344,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_reasoning",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_reasoning",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0271,
+        "ci95": [
+          0.0237,
+          0.0304
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0686,
+        "ci95": [
+          0.0582,
+          0.079
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0529,
+        "ci95": [
+          0.0417,
+          0.0639
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0253,
+        "ci95": [
+          0.0156,
+          0.0348
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0254,
+        "ci95": [
+          0.0161,
+          0.0345
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0253,
+        "ci95": [
+          0.0156,
+          0.0348
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0018,
+      "effect_of_matched_reasoning_alone": -0.0276,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_reasoning",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_reasoning",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0134,
+        "ci95": [
+          0.0101,
+          0.0168
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0051,
+        "ci95": [
+          -0.0008,
+          0.0112
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0051,
+        "ci95": [
+          -0.0008,
+          0.0112
+        ],
+        "verdict": "TIE"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0051,
+        "ci95": [
+          -0.0008,
+          0.0112
+        ],
+        "verdict": "TIE"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0051,
+        "ci95": [
+          -0.0008,
+          0.0112
+        ],
+        "verdict": "TIE"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0051,
+        "ci95": [
+          -0.0008,
+          0.0112
+        ],
+        "verdict": "TIE"
+      },
+      "net_col1_to_col5": -0.0083,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> TIE"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_reasoning",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_reasoning",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.2597,
+        "ci95": [
+          0.2392,
+          0.2802
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1745,
+        "ci95": [
+          0.1485,
+          0.2003
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.1326,
+        "ci95": [
+          0.1049,
+          0.1601
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.059,
+        "ci95": [
+          0.0351,
+          0.0823
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0591,
+        "ci95": [
+          0.0368,
+          0.0813
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.059,
+        "ci95": [
+          0.0351,
+          0.0823
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.2007,
+      "effect_of_matched_reasoning_alone": -0.0736,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_direct",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_direct",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0132,
+        "ci95": [
+          0.0104,
+          0.0161
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0094,
+        "ci95": [
+          0.0013,
+          0.0176
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0063,
+        "ci95": [
+          -0.0118,
+          -0.0011
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0063,
+        "ci95": [
+          -0.012,
+          -0.001
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0063,
+        "ci95": [
+          -0.012,
+          -0.0011
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0063,
+        "ci95": [
+          -0.012,
+          -0.001
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.0195,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_direct",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_direct",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0113,
+        "ci95": [
+          0.0085,
+          0.0142
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0027,
+        "ci95": [
+          0.002,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0027,
+        "ci95": [
+          0.002,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0027,
+        "ci95": [
+          0.002,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0027,
+        "ci95": [
+          0.002,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0027,
+        "ci95": [
+          0.002,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0086,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_32b_direct",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_32b_direct",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0456,
+        "ci95": [
+          0.0303,
+          0.0614
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0206,
+        "ci95": [
+          -0.0009,
+          0.0423
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.036,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.067,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs oracle_mode_32b",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "oracle_mode_32b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0131,
+        "ci95": [
+          0.0103,
+          0.016
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0088,
+        "ci95": [
+          0.0006,
+          0.0171
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0069,
+        "ci95": [
+          -0.0125,
+          -0.0015
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0069,
+        "ci95": [
+          -0.0126,
+          -0.0015
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0069,
+        "ci95": [
+          -0.0125,
+          -0.0016
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0069,
+        "ci95": [
+          -0.0126,
+          -0.0015
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.02,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs oracle_mode_32b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "oracle_mode_32b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0112,
+        "ci95": [
+          0.0084,
+          0.0141
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0017,
+        "ci95": [
+          0.0001,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0017,
+        "ci95": [
+          0.0001,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0017,
+        "ci95": [
+          0.0001,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0017,
+        "ci95": [
+          0.0001,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0017,
+        "ci95": [
+          0.0001,
+          0.0034
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0095,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs oracle_mode_32b",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "oracle_mode_32b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0456,
+        "ci95": [
+          0.0303,
+          0.0614
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0206,
+        "ci95": [
+          -0.0009,
+          0.0423
+        ],
+        "verdict": "TIE"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.036,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "col4a_arm_A": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0074
+        ],
+        "verdict": "LOSS"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": -0.0214,
+        "ci95": [
+          -0.0363,
+          -0.0075
+        ],
+        "verdict": "LOSS"
+      },
+      "net_col1_to_col5": -0.067,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "WIN -> LOSS"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_7b",
+      "pool": "all 8 cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_7b",
+      "axis": "all8",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0312,
+        "ci95": [
+          0.0277,
+          0.0349
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.069,
+        "ci95": [
+          0.0582,
+          0.08
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0532,
+        "ci95": [
+          0.0417,
+          0.0649
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0532,
+        "ci95": [
+          0.0417,
+          0.0649
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0532,
+        "ci95": [
+          0.0417,
+          0.0652
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0532,
+        "ci95": [
+          0.0417,
+          0.0649
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.022,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_7b",
+      "pool": "5 multiple-choice cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_7b",
+      "axis": "mcq_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.0264,
+        "ci95": [
+          0.0228,
+          0.0301
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.0442,
+        "ci95": [
+          0.0328,
+          0.0558
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0442,
+        "ci95": [
+          0.0328,
+          0.0558
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0442,
+        "ci95": [
+          0.0328,
+          0.0558
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0442,
+        "ci95": [
+          0.0328,
+          0.0558
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0442,
+        "ci95": [
+          0.0328,
+          0.0558
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": 0.0178,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    },
+    {
+      "claim": "method_accuracy_max_fusion vs always_7b",
+      "pool": "3 open-text cells",
+      "method": "method_accuracy_max_fusion",
+      "baseline": "always_7b",
+      "axis": "open_only",
+      "col1_published_sample_weighted_contaminated_unmatched": {
+        "delta": 0.113,
+        "ci95": [
+          0.0972,
+          0.1288
+        ],
+        "verdict": "WIN"
+      },
+      "col2_macro": {
+        "delta": 0.1103,
+        "ci95": [
+          0.089,
+          0.1322
+        ],
+        "verdict": "WIN"
+      },
+      "col3_macro_plus_clean_L1": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0447,
+          0.0927
+        ],
+        "verdict": "WIN"
+      },
+      "col4_macro_plus_clean_plus_matched_B": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0437,
+          0.0924
+        ],
+        "verdict": "WIN"
+      },
+      "col4a_arm_A": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0441,
+          0.0927
+        ],
+        "verdict": "WIN"
+      },
+      "col5_all_three_plus_grounded_R32": {
+        "delta": 0.0683,
+        "ci95": [
+          0.0437,
+          0.0924
+        ],
+        "verdict": "WIN"
+      },
+      "net_col1_to_col5": -0.0447,
+      "effect_of_matched_reasoning_alone": 0.0,
+      "significance_change_col1_to_col5": "unchanged (WIN)"
+    }
+  ],
+  "final_headline": {
+    "definition": "8-cell macro average, open-text verifier trained on strictly disjoint data (L1), open-text reasoning baseline prompt-matched (arm B), FLOP-eq at the derived R32=3.816, reasoning baseline honestly re-costed per cell from its own measured generation length.",
+    "weighting": "macro_cells",
+    "verifier": "clean_L1",
+    "reasoning_arm": "matched_B",
+    "R32": 3.816,
+    "accuracy_levels": {
+      "always_7b": 0.5971,
+      "always_32b_direct": 0.6567,
+      "always_32b_reasoning": 0.625,
+      "oracle_mode_32b": 0.6573,
+      "method_compute_lean": 0.6443,
+      "method_accuracy_max_veto": 0.6575,
+      "method_accuracy_max_fusion": 0.6503
+    },
+    "comparison": {
+      "method_compute_lean": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0193,
+            "ci95": [
+              0.009,
+              0.0295
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.0046,
+            "ci95": [
+              -0.0126,
+              0.0036
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.059,
+            "ci95": [
+              0.0351,
+              0.0823
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 4.567,
+            "x": 1.392
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 5136.6,
+            "pct": -69.3
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 5136.6,
+            "pct": -86.6,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 1317.7,
+            "pct": -82.6
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": -0.0124,
+            "ci95": [
+              -0.0189,
+              -0.0061
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.007,
+            "ci95": [
+              -0.0126,
+              -0.0017
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0075
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 3.816,
+            "x": 1.666
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 665.0,
+            "pct": 136.8
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 665.0,
+            "pct": 3.9,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 127.0,
+            "pct": 80.2
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": -0.013,
+            "ci95": [
+              -0.0196,
+              -0.0066
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.008,
+            "ci95": [
+              -0.0137,
+              -0.0024
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0075
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 3.816,
+            "x": 1.666
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 645.5,
+            "pct": 144.0
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 645.5,
+            "pct": 7.0,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 121.8,
+            "pct": 87.8
+          }
+        }
+      },
+      "method_accuracy_max_veto": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0325,
+            "ci95": [
+              0.0237,
+              0.0412
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0043,
+            "ci95": [
+              -0.0016,
+              0.0105
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.0794,
+            "ci95": [
+              0.0582,
+              0.1003
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 4.567,
+            "x": 1.608
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 5136.6,
+            "pct": -67.7
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 5136.6,
+            "pct": -84.9,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 1317.7,
+            "pct": -80.6
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": 0.0008,
+            "ci95": [
+              -0.0022,
+              0.0036
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0019,
+            "ci95": [
+              0.0014,
+              0.0024
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.001,
+            "ci95": [
+              -0.0091,
+              0.0065
+            ],
+            "verdict": "TIE"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 3.816,
+            "x": 1.924
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 665.0,
+            "pct": 149.6
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 665.0,
+            "pct": 16.7,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 127.0,
+            "pct": 101.0
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": 0.0002,
+            "ci95": [
+              -0.003,
+              0.0033
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.001,
+            "ci95": [
+              -0.0006,
+              0.0025
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": -0.001,
+            "ci95": [
+              -0.0091,
+              0.0065
+            ],
+            "verdict": "TIE"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 3.816,
+            "x": 1.924
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 645.5,
+            "pct": 157.2
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 645.5,
+            "pct": 20.2,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 121.8,
+            "pct": 109.6
+          }
+        }
+      },
+      "method_accuracy_max_fusion": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0253,
+            "ci95": [
+              0.0156,
+              0.0348
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0051,
+            "ci95": [
+              -0.0008,
+              0.0112
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.059,
+            "ci95": [
+              0.0351,
+              0.0823
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 4.567,
+            "x": 1.574
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 5136.6,
+            "pct": -68.2
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 5136.6,
+            "pct": -86.3,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 1317.7,
+            "pct": -81.0
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": -0.0063,
+            "ci95": [
+              -0.012,
+              -0.001
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0027,
+            "ci95": [
+              0.002,
+              0.0034
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0075
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 3.816,
+            "x": 1.884
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 665.0,
+            "pct": 145.6
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 665.0,
+            "pct": 6.1,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 127.0,
+            "pct": 97.0
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": -0.0069,
+            "ci95": [
+              -0.0126,
+              -0.0015
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0017,
+            "ci95": [
+              0.0001,
+              0.0034
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0075
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 3.816,
+            "x": 1.884
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 645.5,
+            "pct": 153.0
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 645.5,
+            "pct": 9.3,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 121.8,
+            "pct": 105.4
+          }
+        }
+      }
+    },
+    "comparison_arm_A": {
+      "method_compute_lean": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0193,
+            "ci95": [
+              0.0095,
+              0.0291
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.0046,
+            "ci95": [
+              -0.0126,
+              0.0036
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.0591,
+            "ci95": [
+              0.0368,
+              0.0813
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 4.544,
+            "x": 1.399
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 4992.3,
+            "pct": -68.5
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 4992.3,
+            "pct": -86.2,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 1279.3,
+            "pct": -82.1
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": -0.0124,
+            "ci95": [
+              -0.019,
+              -0.0062
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.007,
+            "ci95": [
+              -0.0126,
+              -0.0017
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0074
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 3.816,
+            "x": 1.666
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 665.0,
+            "pct": 136.8
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 665.0,
+            "pct": 3.9,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 127.0,
+            "pct": 80.2
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": -0.013,
+            "ci95": [
+              -0.0197,
+              -0.0067
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": -0.008,
+            "ci95": [
+              -0.0137,
+              -0.0024
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0074
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 6.358,
+            "baseline": 3.816,
+            "x": 1.666
+          },
+          "latency_batch1_ms": {
+            "method": 1574.8,
+            "baseline": 645.5,
+            "pct": 144.0
+          },
+          "latency_batched_ms": {
+            "method": 690.8,
+            "baseline": 645.5,
+            "pct": 7.0,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 228.8,
+            "baseline": 121.8,
+            "pct": 87.8
+          }
+        }
+      },
+      "method_accuracy_max_veto": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0325,
+            "ci95": [
+              0.024,
+              0.0411
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0043,
+            "ci95": [
+              -0.0016,
+              0.0105
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.0796,
+            "ci95": [
+              0.0596,
+              0.1001
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 4.544,
+            "x": 1.616
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 4992.3,
+            "pct": -66.7
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 4992.3,
+            "pct": -84.5,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 1279.3,
+            "pct": -80.0
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": 0.0008,
+            "ci95": [
+              -0.0022,
+              0.0037
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0019,
+            "ci95": [
+              0.0014,
+              0.0024
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.001,
+            "ci95": [
+              -0.009,
+              0.0066
+            ],
+            "verdict": "TIE"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 3.816,
+            "x": 1.924
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 665.0,
+            "pct": 149.6
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 665.0,
+            "pct": 16.7,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 127.0,
+            "pct": 101.0
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": 0.0002,
+            "ci95": [
+              -0.0029,
+              0.0032
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.001,
+            "ci95": [
+              -0.0006,
+              0.0025
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": -0.001,
+            "ci95": [
+              -0.009,
+              0.0066
+            ],
+            "verdict": "TIE"
+          },
+          "flop_eq": {
+            "method": 7.342,
+            "baseline": 3.816,
+            "x": 1.924
+          },
+          "latency_batch1_ms": {
+            "method": 1660.0,
+            "baseline": 645.5,
+            "pct": 157.2
+          },
+          "latency_batched_ms": {
+            "method": 775.9,
+            "baseline": 645.5,
+            "pct": 20.2,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 255.3,
+            "baseline": 121.8,
+            "pct": 109.6
+          }
+        }
+      },
+      "method_accuracy_max_fusion": {
+        "always_32b_reasoning": {
+          "accuracy": {
+            "delta": 0.0254,
+            "ci95": [
+              0.0161,
+              0.0345
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0051,
+            "ci95": [
+              -0.0008,
+              0.0112
+            ],
+            "verdict": "TIE"
+          },
+          "accuracy_open_only": {
+            "delta": 0.0591,
+            "ci95": [
+              0.0368,
+              0.0813
+            ],
+            "verdict": "WIN"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 4.544,
+            "x": 1.582
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 4992.3,
+            "pct": -67.3
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 4992.3,
+            "pct": -85.9,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 1279.3,
+            "pct": -80.4
+          }
+        },
+        "always_32b_direct": {
+          "accuracy": {
+            "delta": -0.0063,
+            "ci95": [
+              -0.012,
+              -0.0011
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0027,
+            "ci95": [
+              0.002,
+              0.0034
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0074
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 3.816,
+            "x": 1.884
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 665.0,
+            "pct": 145.6
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 665.0,
+            "pct": 6.1,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 127.0,
+            "pct": 97.0
+          }
+        },
+        "oracle_mode_32b": {
+          "accuracy": {
+            "delta": -0.0069,
+            "ci95": [
+              -0.0125,
+              -0.0016
+            ],
+            "verdict": "LOSS"
+          },
+          "accuracy_mcq_only": {
+            "delta": 0.0017,
+            "ci95": [
+              0.0001,
+              0.0034
+            ],
+            "verdict": "WIN"
+          },
+          "accuracy_open_only": {
+            "delta": -0.0214,
+            "ci95": [
+              -0.0363,
+              -0.0074
+            ],
+            "verdict": "LOSS"
+          },
+          "flop_eq": {
+            "method": 7.188,
+            "baseline": 3.816,
+            "x": 1.884
+          },
+          "latency_batch1_ms": {
+            "method": 1633.1,
+            "baseline": 645.5,
+            "pct": 153.0
+          },
+          "latency_batched_ms": {
+            "method": 705.6,
+            "baseline": 645.5,
+            "pct": 9.3,
+            "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+          },
+          "energy_j": {
+            "method": 250.2,
+            "baseline": 121.8,
+            "pct": 105.4
+          }
+        }
+      }
+    },
+    "per_cell_accuracy": {
+      "PMC_VQA": {
+        "always_7b": 0.5426562967394556,
+        "always_32b_direct": 0.5517798384684415,
+        "always_32b_reasoning": 0.5494166915943763,
+        "oracle_mode_32b": 0.5517798384684415,
+        "method_compute_lean": 0.5507927011666168,
+        "method_accuracy_max_veto": 0.5613221657194137,
+        "method_accuracy_max_fusion": 0.5652707149267125
+      },
+      "SLAKE_closed": {
+        "always_7b": 0.8253588516746412,
+        "always_32b_direct": 0.8588516746411483,
+        "always_32b_reasoning": 0.8636363636363636,
+        "oracle_mode_32b": 0.8636363636363636,
+        "method_compute_lean": 0.8516746411483254,
+        "method_accuracy_max_veto": 0.8588516746411483,
+        "method_accuracy_max_fusion": 0.8588516746411483
+      },
+      "VQA_RAD_closed": {
+        "always_7b": 0.7808764940239044,
+        "always_32b_direct": 0.852589641434263,
+        "always_32b_reasoning": 0.8406374501992032,
+        "oracle_mode_32b": 0.852589641434263,
+        "method_compute_lean": 0.8326693227091634,
+        "method_accuracy_max_veto": 0.852589641434263,
+        "method_accuracy_max_fusion": 0.852589641434263
+      },
+      "PATH_VQA_closed": {
+        "always_7b": 0.8408685306365259,
+        "always_32b_direct": 0.8890541344437835,
+        "always_32b_reasoning": 0.8890541344437835,
+        "oracle_mode_32b": 0.8890541344437835,
+        "method_compute_lean": 0.8881618084473528,
+        "method_accuracy_max_veto": 0.8890541344437835,
+        "method_accuracy_max_fusion": 0.8890541344437835
+      },
+      "MedXpertQA-MM": {
+        "always_7b": 0.2615,
+        "always_32b_direct": 0.3065,
+        "always_32b_reasoning": 0.304,
+        "oracle_mode_32b": 0.3065,
+        "method_compute_lean": 0.3005,
+        "method_accuracy_max_veto": 0.3065,
+        "method_accuracy_max_fusion": 0.3065
+      },
+      "SLAKE_open": {
+        "always_7b": 0.7364341085271318,
+        "always_32b_direct": 0.8186046511627907,
+        "always_32b_reasoning": 0.7317829457364341,
+        "oracle_mode_32b": 0.8186046511627907,
+        "method_compute_lean": 0.8077519379844961,
+        "method_accuracy_max_veto": 0.8170542635658915,
+        "method_accuracy_max_fusion": 0.8077519379844961
+      },
+      "VQA_RAD_open": {
+        "always_7b": 0.465,
+        "always_32b_direct": 0.6,
+        "always_32b_reasoning": 0.555,
+        "oracle_mode_32b": 0.6,
+        "method_compute_lean": 0.54,
+        "method_accuracy_max_veto": 0.59,
+        "method_accuracy_max_fusion": 0.54
+      },
+      "PATH_VQA_open": {
+        "always_7b": 0.324,
+        "always_32b_direct": 0.376,
+        "always_32b_reasoning": 0.26666666666666666,
+        "oracle_mode_32b": 0.376,
+        "method_compute_lean": 0.38266666666666665,
+        "method_accuracy_max_veto": 0.38466666666666666,
+        "method_accuracy_max_fusion": 0.38266666666666665
+      }
+    },
+    "escalation": {
+      "per_cell": {
+        "PMC_VQA": 0.0845,
+        "SLAKE_closed": 0.2045,
+        "VQA_RAD_closed": 0.5697,
+        "PATH_VQA_closed": 0.4572,
+        "MedXpertQA-MM": 0.896,
+        "SLAKE_open": 0.4341,
+        "VQA_RAD_open": 0.54,
+        "PATH_VQA_open": 0.16
+      },
+      "compute_lean_mcq": {
+        "sample_weighted": 0.1622,
+        "macro_cells": 0.4424
+      },
+      "compute_lean_open": {
+        "sample_weighted": 0.2678,
+        "macro_cells": 0.378
+      },
+      "compute_lean_all8": {
+        "sample_weighted": 0.1681,
+        "macro_cells": 0.4183
+      },
+      "accuracy_max_veto_open": {
+        "per_cell": {
+          "SLAKE_open": 0.6295,
+          "VQA_RAD_open": 0.885,
+          "PATH_VQA_open": 0.3433
+        },
+        "sample_weighted": 0.4682,
+        "macro_cells": 0.6193
+      },
+      "open_meanN": {
+        "SLAKE_open": 5.547,
+        "VQA_RAD_open": 6.63,
+        "PATH_VQA_open": 4.371
+      }
+    },
+    "leave_one_cell_out_headline": {
+      "per_dropped_cell": {
+        "PMC_VQA": 0.0354,
+        "SLAKE_closed": 0.0378,
+        "VQA_RAD_closed": 0.0354,
+        "PATH_VQA_closed": 0.0371,
+        "MedXpertQA-MM": 0.0368,
+        "SLAKE_open": 0.0249,
+        "VQA_RAD_open": 0.0321,
+        "PATH_VQA_open": 0.0203
+      },
+      "range": [
+        0.0203,
+        0.0378
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed"
+    },
+    "strictest_reading_sensitivity": {
+      "status": "POINT ESTIMATE (no CI)",
+      "weighting": "macro_cells",
+      "cells_replaced": [
+        "PMC_VQA",
+        "SLAKE_closed",
+        "VQA_RAD_closed"
+      ],
+      "reasoning_baseline_acc_as_is": 0.625,
+      "reasoning_baseline_acc_strictest": 0.6262,
+      "shift": 0.0012,
+      "method_compute_lean": {
+        "delta_as_is": 0.0193,
+        "delta_strictest": 0.0181
+      },
+      "method_accuracy_max_veto": {
+        "delta_as_is": 0.0325,
+        "delta_strictest": 0.0313
+      },
+      "method_accuracy_max_fusion": {
+        "delta_as_is": 0.0253,
+        "delta_strictest": 0.0241
+      }
+    },
+    "sample_weighted_for_reference": {
+      "accuracy": {
+        "always_7b": 0.5549,
+        "always_32b_direct": 0.5729,
+        "always_32b_reasoning": 0.5656,
+        "oracle_mode_32b": 0.573,
+        "method_compute_lean": 0.5713,
+        "method_accuracy_max_veto": 0.5807,
+        "method_accuracy_max_fusion": 0.5834
+      },
+      "comparison": {
+        "method_compute_lean": {
+          "always_32b_reasoning": {
+            "accuracy": {
+              "delta": 0.0058,
+              "ci95": [
+                0.0015,
+                0.01
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0006,
+              "ci95": [
+                -0.0037,
+                0.0049
+              ],
+              "verdict": "TIE"
+            },
+            "accuracy_open_only": {
+              "delta": 0.0938,
+              "ci95": [
+                0.0755,
+                0.1122
+              ],
+              "verdict": "WIN"
+            },
+            "flop_eq": {
+              "method": 2.129,
+              "baseline": 4.04,
+              "x": 0.527
+            },
+            "latency_batch1_ms": {
+              "method": 581.2,
+              "baseline": 1864.0,
+              "pct": -68.8
+            },
+            "latency_batched_ms": {
+              "method": 468.5,
+              "baseline": 1864.0,
+              "pct": -74.9,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 83.9,
+              "baseline": 446.2,
+              "pct": -81.2
+            }
+          },
+          "always_32b_direct": {
+            "accuracy": {
+              "delta": -0.0016,
+              "ci95": [
+                -0.0056,
+                0.0024
+              ],
+              "verdict": "TIE"
+            },
+            "accuracy_mcq_only": {
+              "delta": -0.0015,
+              "ci95": [
+                -0.0056,
+                0.0026
+              ],
+              "verdict": "TIE"
+            },
+            "accuracy_open_only": {
+              "delta": -0.0038,
+              "ci95": [
+                -0.0183,
+                0.0102
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 2.129,
+              "baseline": 3.816,
+              "x": 0.558
+            },
+            "latency_batch1_ms": {
+              "method": 581.2,
+              "baseline": 665.0,
+              "pct": -12.6
+            },
+            "latency_batched_ms": {
+              "method": 468.5,
+              "baseline": 665.0,
+              "pct": -29.5,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 83.9,
+              "baseline": 127.0,
+              "pct": -33.9
+            }
+          },
+          "oracle_mode_32b": {
+            "accuracy": {
+              "delta": -0.0017,
+              "ci95": [
+                -0.0057,
+                0.0023
+              ],
+              "verdict": "TIE"
+            },
+            "accuracy_mcq_only": {
+              "delta": -0.0016,
+              "ci95": [
+                -0.0057,
+                0.0025
+              ],
+              "verdict": "TIE"
+            },
+            "accuracy_open_only": {
+              "delta": -0.0038,
+              "ci95": [
+                -0.0183,
+                0.0102
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 2.129,
+              "baseline": 3.816,
+              "x": 0.558
+            },
+            "latency_batch1_ms": {
+              "method": 581.2,
+              "baseline": 661.9,
+              "pct": -12.2
+            },
+            "latency_batched_ms": {
+              "method": 468.5,
+              "baseline": 661.9,
+              "pct": -29.2,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 83.9,
+              "baseline": 126.2,
+              "pct": -33.5
+            }
+          }
+        },
+        "method_accuracy_max_veto": {
+          "always_32b_reasoning": {
+            "accuracy": {
+              "delta": 0.0152,
+              "ci95": [
+                0.0124,
+                0.018
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0101,
+              "ci95": [
+                0.0073,
+                0.0129
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": 0.1019,
+              "ci95": [
+                0.084,
+                0.1203
+              ],
+              "verdict": "WIN"
+            },
+            "flop_eq": {
+              "method": 3.829,
+              "baseline": 4.04,
+              "x": 0.948
+            },
+            "latency_batch1_ms": {
+              "method": 851.1,
+              "baseline": 1864.0,
+              "pct": -54.3
+            },
+            "latency_batched_ms": {
+              "method": 738.4,
+              "baseline": 1864.0,
+              "pct": -60.4,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 138.6,
+              "baseline": 446.2,
+              "pct": -68.9
+            }
+          },
+          "always_32b_direct": {
+            "accuracy": {
+              "delta": 0.0078,
+              "ci95": [
+                0.0058,
+                0.0097
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.008,
+              "ci95": [
+                0.006,
+                0.0099
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": 0.0043,
+              "ci95": [
+                -0.0081,
+                0.0158
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 3.829,
+              "baseline": 3.816,
+              "x": 1.003
+            },
+            "latency_batch1_ms": {
+              "method": 851.1,
+              "baseline": 665.0,
+              "pct": 28.0
+            },
+            "latency_batched_ms": {
+              "method": 738.4,
+              "baseline": 665.0,
+              "pct": 11.0,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 138.6,
+              "baseline": 127.0,
+              "pct": 9.1
+            }
+          },
+          "oracle_mode_32b": {
+            "accuracy": {
+              "delta": 0.0077,
+              "ci95": [
+                0.0057,
+                0.0096
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0079,
+              "ci95": [
+                0.0059,
+                0.0098
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": 0.0043,
+              "ci95": [
+                -0.0081,
+                0.0158
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 3.829,
+              "baseline": 3.816,
+              "x": 1.003
+            },
+            "latency_batch1_ms": {
+              "method": 851.1,
+              "baseline": 661.9,
+              "pct": 28.6
+            },
+            "latency_batched_ms": {
+              "method": 738.4,
+              "baseline": 661.9,
+              "pct": 11.6,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 138.6,
+              "baseline": 126.2,
+              "pct": 9.8
+            }
+          }
+        },
+        "method_accuracy_max_fusion": {
+          "always_32b_reasoning": {
+            "accuracy": {
+              "delta": 0.0179,
+              "ci95": [
+                0.0146,
+                0.0212
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0134,
+              "ci95": [
+                0.0101,
+                0.0168
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": 0.0938,
+              "ci95": [
+                0.0755,
+                0.1122
+              ],
+              "verdict": "WIN"
+            },
+            "flop_eq": {
+              "method": 4.995,
+              "baseline": 4.04,
+              "x": 1.236
+            },
+            "latency_batch1_ms": {
+              "method": 1054.4,
+              "baseline": 1864.0,
+              "pct": -43.4
+            },
+            "latency_batched_ms": {
+              "method": 666.9,
+              "baseline": 1864.0,
+              "pct": -64.2,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 177.4,
+              "baseline": 446.2,
+              "pct": -60.2
+            }
+          },
+          "always_32b_direct": {
+            "accuracy": {
+              "delta": 0.0105,
+              "ci95": [
+                0.0077,
+                0.0133
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0113,
+              "ci95": [
+                0.0085,
+                0.0142
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": -0.0038,
+              "ci95": [
+                -0.0183,
+                0.0102
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 4.995,
+              "baseline": 3.816,
+              "x": 1.309
+            },
+            "latency_batch1_ms": {
+              "method": 1054.4,
+              "baseline": 665.0,
+              "pct": 58.6
+            },
+            "latency_batched_ms": {
+              "method": 666.9,
+              "baseline": 665.0,
+              "pct": 0.3,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 177.4,
+              "baseline": 127.0,
+              "pct": 39.7
+            }
+          },
+          "oracle_mode_32b": {
+            "accuracy": {
+              "delta": 0.0104,
+              "ci95": [
+                0.0076,
+                0.0132
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_mcq_only": {
+              "delta": 0.0112,
+              "ci95": [
+                0.0084,
+                0.0141
+              ],
+              "verdict": "WIN"
+            },
+            "accuracy_open_only": {
+              "delta": -0.0038,
+              "ci95": [
+                -0.0183,
+                0.0102
+              ],
+              "verdict": "TIE"
+            },
+            "flop_eq": {
+              "method": 4.995,
+              "baseline": 3.816,
+              "x": 1.309
+            },
+            "latency_batch1_ms": {
+              "method": 1054.4,
+              "baseline": 661.9,
+              "pct": 59.3
+            },
+            "latency_batched_ms": {
+              "method": 666.9,
+              "baseline": 661.9,
+              "pct": 0.8,
+              "caveat": "rests on the 'N drops out of latency' batching assumption that the 2026-08-03 best-of-8 measurement refutes; prefer latency_batch1_ms"
+            },
+            "energy_j": {
+              "method": 177.4,
+              "baseline": 126.2,
+              "pct": 40.6
+            }
+          }
+        }
+      }
+    }
+  },
+  "best_of_8_repricing": {
+    "sample_weighted": {
+      "clean_L1_matched_B": {
+        "escalation": 0.2691,
+        "lat_par_ms_old_assumed": 700.9,
+        "lat_par_ms_measured": 1484.3,
+        "energy_j_old_modelled": 603.0,
+        "energy_j_measured": 350.9,
+        "flops": 17.23,
+        "arm_accuracy": 0.5143
+      },
+      "clean_L1_unmatched": {
+        "escalation": 0.2691,
+        "lat_par_ms_old_assumed": 700.9,
+        "lat_par_ms_measured": 1484.3,
+        "energy_j_old_modelled": 603.0,
+        "energy_j_measured": 350.9,
+        "flops": 17.23,
+        "arm_accuracy": 0.5143
+      },
+      "contaminated_unmatched": {
+        "escalation": 0.0397,
+        "lat_par_ms_old_assumed": 548.4,
+        "lat_par_ms_measured": 1331.7,
+        "energy_j_old_modelled": 573.8,
+        "energy_j_measured": 321.7,
+        "flops": 16.181,
+        "arm_accuracy": 0.5642
+      }
+    },
+    "macro_cells": {
+      "clean_L1_matched_B": {
+        "escalation": 0.4868,
+        "lat_par_ms_old_assumed": 845.7,
+        "lat_par_ms_measured": 1629.0,
+        "energy_j_old_modelled": 630.6,
+        "energy_j_measured": 378.5,
+        "flops": 18.225,
+        "arm_accuracy": 0.5922
+      },
+      "clean_L1_unmatched": {
+        "escalation": 0.4868,
+        "lat_par_ms_old_assumed": 845.7,
+        "lat_par_ms_measured": 1629.0,
+        "energy_j_old_modelled": 630.6,
+        "energy_j_measured": 378.5,
+        "flops": 18.225,
+        "arm_accuracy": 0.5922
+      },
+      "contaminated_unmatched": {
+        "escalation": 0.0604,
+        "lat_par_ms_old_assumed": 562.2,
+        "lat_par_ms_measured": 1345.5,
+        "energy_j_old_modelled": 576.5,
+        "energy_j_measured": 324.4,
+        "flops": 16.276,
+        "arm_accuracy": 0.6179
+      }
+    }
+  },
+  "batched_latency_correction": {
+    "why": "The PUBLISHED sentence '+0.0601 at -87.7% latency and -84.3% energy' takes -87.7% from the lat_par (BATCHED) axis, not from batch-1 latency: macro_headline_clean_verifier_2026-07-30.json cost_side_by_side.honest_recost.lat_par_pct.method_accuracy_max_veto.always_32b_reasoning column C = -87.7 (the batch-1 / lat_seq figure for the same cell is -73.6%). That axis rests on the 'N drops out of latency' assumption the 2026-08-03 best-of-8 measurement refutes.",
+    "final_matched_B": {
+      "macro_cells": {
+        "always_7b": {
+          "lat_par_ms_repo": 347.0,
+          "lat_par_ms_corrected": 347.0
+        },
+        "always_32b_direct": {
+          "lat_par_ms_repo": 665.0,
+          "lat_par_ms_corrected": 665.0
+        },
+        "always_32b_reasoning": {
+          "lat_par_ms_repo": 5136.6,
+          "lat_par_ms_corrected": 5136.6
+        },
+        "oracle_mode_32b": {
+          "lat_par_ms_repo": 645.5,
+          "lat_par_ms_corrected": 645.5
+        },
+        "method_compute_lean": {
+          "lat_par_ms_repo": 690.8,
+          "lat_par_ms_corrected": 880.3
+        },
+        "method_accuracy_max_veto": {
+          "lat_par_ms_repo": 775.9,
+          "lat_par_ms_corrected": 965.4
+        },
+        "method_accuracy_max_fusion": {
+          "lat_par_ms_repo": 705.6,
+          "lat_par_ms_corrected": 895.2
+        },
+        "ratios": {
+          "method_compute_lean": {
+            "always_32b_reasoning": {
+              "pct_repo": -86.6,
+              "pct_corrected": -82.9
+            },
+            "always_32b_direct": {
+              "pct_repo": 3.9,
+              "pct_corrected": 32.4
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 7.0,
+              "pct_corrected": 36.4
+            }
+          },
+          "method_accuracy_max_veto": {
+            "always_32b_reasoning": {
+              "pct_repo": -84.9,
+              "pct_corrected": -81.2
+            },
+            "always_32b_direct": {
+              "pct_repo": 16.7,
+              "pct_corrected": 45.2
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 20.2,
+              "pct_corrected": 49.6
+            }
+          },
+          "method_accuracy_max_fusion": {
+            "always_32b_reasoning": {
+              "pct_repo": -86.3,
+              "pct_corrected": -82.6
+            },
+            "always_32b_direct": {
+              "pct_repo": 6.1,
+              "pct_corrected": 34.6
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 9.3,
+              "pct_corrected": 38.7
+            }
+          }
+        },
+        "model": {
+          "status": "DERIVED (two-point linear)",
+          "anchor_N1_ms": 522.0,
+          "anchor_N1_status": "repo constant (GEN7+VER7)",
+          "anchor_N8_ms": 1305.3,
+          "anchor_N8_status": "MEASURED 2026-08-03",
+          "slope_ms_per_extra_draw": 111.9,
+          "open_cell_meanN": {
+            "SLAKE_open": 5.547,
+            "VQA_RAD_open": 6.63,
+            "PATH_VQA_open": 4.371
+          }
+        }
+      },
+      "sample_weighted": {
+        "always_7b": {
+          "lat_par_ms_repo": 347.0,
+          "lat_par_ms_corrected": 347.0
+        },
+        "always_32b_direct": {
+          "lat_par_ms_repo": 665.0,
+          "lat_par_ms_corrected": 665.0
+        },
+        "always_32b_reasoning": {
+          "lat_par_ms_repo": 1864.0,
+          "lat_par_ms_corrected": 1864.0
+        },
+        "oracle_mode_32b": {
+          "lat_par_ms_repo": 661.9,
+          "lat_par_ms_corrected": 661.9
+        },
+        "method_compute_lean": {
+          "lat_par_ms_repo": 468.5,
+          "lat_par_ms_corrected": 492.6
+        },
+        "method_accuracy_max_veto": {
+          "lat_par_ms_repo": 738.4,
+          "lat_par_ms_corrected": 762.5
+        },
+        "method_accuracy_max_fusion": {
+          "lat_par_ms_repo": 666.9,
+          "lat_par_ms_corrected": 691.1
+        },
+        "ratios": {
+          "method_compute_lean": {
+            "always_32b_reasoning": {
+              "pct_repo": -74.9,
+              "pct_corrected": -73.6
+            },
+            "always_32b_direct": {
+              "pct_repo": -29.5,
+              "pct_corrected": -25.9
+            },
+            "oracle_mode_32b": {
+              "pct_repo": -29.2,
+              "pct_corrected": -25.6
+            }
+          },
+          "method_accuracy_max_veto": {
+            "always_32b_reasoning": {
+              "pct_repo": -60.4,
+              "pct_corrected": -59.1
+            },
+            "always_32b_direct": {
+              "pct_repo": 11.0,
+              "pct_corrected": 14.7
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 11.6,
+              "pct_corrected": 15.2
+            }
+          },
+          "method_accuracy_max_fusion": {
+            "always_32b_reasoning": {
+              "pct_repo": -64.2,
+              "pct_corrected": -62.9
+            },
+            "always_32b_direct": {
+              "pct_repo": 0.3,
+              "pct_corrected": 3.9
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 0.8,
+              "pct_corrected": 4.4
+            }
+          }
+        },
+        "model": {
+          "status": "DERIVED (two-point linear)",
+          "anchor_N1_ms": 522.0,
+          "anchor_N1_status": "repo constant (GEN7+VER7)",
+          "anchor_N8_ms": 1305.3,
+          "anchor_N8_status": "MEASURED 2026-08-03",
+          "slope_ms_per_extra_draw": 111.9,
+          "open_cell_meanN": {
+            "SLAKE_open": 5.547,
+            "VQA_RAD_open": 6.63,
+            "PATH_VQA_open": 4.371
+          }
+        }
+      }
+    },
+    "published_column_C": {
+      "macro_cells": {
+        "always_7b": {
+          "lat_par_ms_repo": 347.0,
+          "lat_par_ms_corrected": 347.0
+        },
+        "always_32b_direct": {
+          "lat_par_ms_repo": 665.0,
+          "lat_par_ms_corrected": 665.0
+        },
+        "always_32b_reasoning": {
+          "lat_par_ms_repo": 6291.2,
+          "lat_par_ms_corrected": 6291.2
+        },
+        "oracle_mode_32b": {
+          "lat_par_ms_repo": 645.5,
+          "lat_par_ms_corrected": 645.5
+        },
+        "method_compute_lean": {
+          "lat_par_ms_repo": 690.8,
+          "lat_par_ms_corrected": 880.3
+        },
+        "method_accuracy_max_veto": {
+          "lat_par_ms_repo": 775.9,
+          "lat_par_ms_corrected": 965.4
+        },
+        "method_accuracy_max_fusion": {
+          "lat_par_ms_repo": 705.6,
+          "lat_par_ms_corrected": 895.2
+        },
+        "ratios": {
+          "method_compute_lean": {
+            "always_32b_reasoning": {
+              "pct_repo": -89.0,
+              "pct_corrected": -86.0
+            },
+            "always_32b_direct": {
+              "pct_repo": 3.9,
+              "pct_corrected": 32.4
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 7.0,
+              "pct_corrected": 36.4
+            }
+          },
+          "method_accuracy_max_veto": {
+            "always_32b_reasoning": {
+              "pct_repo": -87.7,
+              "pct_corrected": -84.7
+            },
+            "always_32b_direct": {
+              "pct_repo": 16.7,
+              "pct_corrected": 45.2
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 20.2,
+              "pct_corrected": 49.6
+            }
+          },
+          "method_accuracy_max_fusion": {
+            "always_32b_reasoning": {
+              "pct_repo": -88.8,
+              "pct_corrected": -85.8
+            },
+            "always_32b_direct": {
+              "pct_repo": 6.1,
+              "pct_corrected": 34.6
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 9.3,
+              "pct_corrected": 38.7
+            }
+          }
+        },
+        "model": {
+          "status": "DERIVED (two-point linear)",
+          "anchor_N1_ms": 522.0,
+          "anchor_N1_status": "repo constant (GEN7+VER7)",
+          "anchor_N8_ms": 1305.3,
+          "anchor_N8_status": "MEASURED 2026-08-03",
+          "slope_ms_per_extra_draw": 111.9,
+          "open_cell_meanN": {
+            "SLAKE_open": 5.547,
+            "VQA_RAD_open": 6.63,
+            "PATH_VQA_open": 4.371
+          }
+        }
+      },
+      "sample_weighted": {
+        "always_7b": {
+          "lat_par_ms_repo": 347.0,
+          "lat_par_ms_corrected": 347.0
+        },
+        "always_32b_direct": {
+          "lat_par_ms_repo": 665.0,
+          "lat_par_ms_corrected": 665.0
+        },
+        "always_32b_reasoning": {
+          "lat_par_ms_repo": 2018.1,
+          "lat_par_ms_corrected": 2018.1
+        },
+        "oracle_mode_32b": {
+          "lat_par_ms_repo": 661.9,
+          "lat_par_ms_corrected": 661.9
+        },
+        "method_compute_lean": {
+          "lat_par_ms_repo": 468.5,
+          "lat_par_ms_corrected": 492.6
+        },
+        "method_accuracy_max_veto": {
+          "lat_par_ms_repo": 738.4,
+          "lat_par_ms_corrected": 762.5
+        },
+        "method_accuracy_max_fusion": {
+          "lat_par_ms_repo": 666.9,
+          "lat_par_ms_corrected": 691.1
+        },
+        "ratios": {
+          "method_compute_lean": {
+            "always_32b_reasoning": {
+              "pct_repo": -76.8,
+              "pct_corrected": -75.6
+            },
+            "always_32b_direct": {
+              "pct_repo": -29.5,
+              "pct_corrected": -25.9
+            },
+            "oracle_mode_32b": {
+              "pct_repo": -29.2,
+              "pct_corrected": -25.6
+            }
+          },
+          "method_accuracy_max_veto": {
+            "always_32b_reasoning": {
+              "pct_repo": -63.4,
+              "pct_corrected": -62.2
+            },
+            "always_32b_direct": {
+              "pct_repo": 11.0,
+              "pct_corrected": 14.7
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 11.6,
+              "pct_corrected": 15.2
+            }
+          },
+          "method_accuracy_max_fusion": {
+            "always_32b_reasoning": {
+              "pct_repo": -67.0,
+              "pct_corrected": -65.8
+            },
+            "always_32b_direct": {
+              "pct_repo": 0.3,
+              "pct_corrected": 3.9
+            },
+            "oracle_mode_32b": {
+              "pct_repo": 0.8,
+              "pct_corrected": 4.4
+            }
+          }
+        },
+        "model": {
+          "status": "DERIVED (two-point linear)",
+          "anchor_N1_ms": 522.0,
+          "anchor_N1_status": "repo constant (GEN7+VER7)",
+          "anchor_N8_ms": 1305.3,
+          "anchor_N8_status": "MEASURED 2026-08-03",
+          "slope_ms_per_extra_draw": 111.9,
+          "open_cell_meanN": {
+            "SLAKE_open": 5.547,
+            "VQA_RAD_open": 6.63,
+            "PATH_VQA_open": 4.371
+          }
+        }
+      }
+    }
+  },
+  "verdict": {
+    "claim_audited": "accuracy-max-veto vs always-32B-with-reasoning, 8-cell macro, all 8 cells",
+    "published_value_being_audited": {
+      "delta": 0.0601,
+      "ci95": [
+        0.0498,
+        0.0703
+      ],
+      "source": "macro_headline_clean_verifier_2026-07-30.json column C"
+    },
+    "reproduced_column_C": {
+      "delta": 0.0601,
+      "ci95": [
+        0.0498,
+        0.0703
+      ],
+      "verdict": "WIN"
+    },
+    "with_matched_reasoning_old_constants": {
+      "delta": 0.0325,
+      "ci95": [
+        0.0237,
+        0.0412
+      ],
+      "verdict": "WIN"
+    },
+    "final_all_three_plus_grounded_R32": {
+      "delta": 0.0325,
+      "ci95": [
+        0.0237,
+        0.0412
+      ],
+      "verdict": "WIN"
+    },
+    "survives": true,
+    "remains_significant": true,
+    "shrinkage_from_matching_absolute": -0.0276,
+    "shrinkage_from_matching_percent": 45.9,
+    "cost_of_the_final_claim": {
+      "flop_eq_x": 1.608,
+      "batch1_latency_pct": -67.7,
+      "batched_latency_pct_repo_assumption": -84.9,
+      "batched_latency_pct_corrected": -81.2,
+      "energy_pct": -80.6
+    },
+    "published_87p7_was_the_batched_axis": {
+      "published": -87.7,
+      "same_axis_recomputed_at_column_C": -87.7,
+      "same_axis_corrected_at_column_C": -84.7,
+      "batch1_equivalent_at_column_C": -73.6
+    },
+    "band_sensitivity": {
+      "R32_3.734": {
+        "headline_delta": {
+          "delta": 0.0325,
+          "ci95": [
+            0.0237,
+            0.0412
+          ],
+          "verdict": "WIN"
+        },
+        "flops_x": 1.628,
+        "lat_seq_pct": -67.7,
+        "energy_pct": -80.6
+      },
+      "R32_3.859": {
+        "headline_delta": {
+          "delta": 0.0325,
+          "ci95": [
+            0.0237,
+            0.0412
+          ],
+          "verdict": "WIN"
+        },
+        "flops_x": 1.597,
+        "lat_seq_pct": -67.7,
+        "energy_pct": -80.6
+      }
+    }
+  },
+  "caveats": [
+    "The CIs resample ITEMS WITHIN each cell (paired, common random numbers) and recompute the macro average per replicate. They capture within-dataset sampling noise ONLY, not dataset-selection noise; the leave-one-cell-out range is the honest companion.",
+    "Arm B is a MIXTURE of reasoning and direct answering (trace fires 30.5-71.1%); the margin against it is a LOWER bound on the margin against a 32B that always reasons.",
+    "No multiple-choice cell is re-run. 4 of the 5 Variant-B multiple-choice cells have no genuine reasoning baseline at all (see mcq_reasoning_baseline_analysis); the reasoning framing is really only tested on MedXpert + the three open cells.",
+    "The PathVQA judging correction (pathvqa_judge_audit.json) was hand-derived on the UNMATCHED reasoning answers and cannot be transferred to a different arm without re-labelling, so it is NOT stacked here.",
+    "as-charged cost keeps the flat 10,521.6 ms / 2,001.9 J reasoning constant, which was measured at 98.3 generated tokens on the UNMATCHED arm. It is wrong for the matched arm (86.4 / 45.8 / 101.5 tokens). Use the honest_recost convention, which prices each cell from its own measured generation length; it is what the headline uses."
+  ],
+  "runtime_s": 499.9
+}

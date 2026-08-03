@@ -1,0 +1,227 @@
+{
+ "title": "Derivation of the 32B/7B FLOP-equivalence constant (the repo's `R32 = 4.57`)",
+ "date": "2026-08-03",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "reproduce": "python3 src/cascade_methods/flop_ratio_derivation.py",
+ "problem": {
+  "literal": 4.57,
+  "canonical_definition": "src/cascade_methods/lingshu_medeval_cascade.py:21  (`R7=1.0; R32=4.57`)",
+  "reused_in": [
+   "src/cascade_methods/paper_baselines.py:64-66 (GEN32N/GEN32T/FUSE)",
+   "src/cascade_methods/integrated_method.py:56-57 (GEN32N/GEN32T dicts)",
+   "src/cascade_methods/beat32b_fusion.py:48-50 + POLICY_FLOP (FUSE = 1.0+4.57 = 5.57)",
+   "src/cascade_methods/pandora_controller.py:51,53 (GEN32, C_STRONG_F)",
+   "src/cascade_methods/end_to_end_consolidation.py:57,59",
+   "src/cascade_methods/latency_reexamination.py:72",
+   "src/cascade_methods/open_gate_efficiency.py:22",
+   "src/cascade_methods/best_method_lingshu.py:44",
+   "src/cascade_methods/lingshu_deferral_apgr.py:16",
+   "src/cascade_methods/quantized_strong_leg.py:38 (via cost_constants)",
+   "src/cascade_methods/honest_recosting.py:144 (as 4.571)",
+   "src/cascade_methods/beat32b_more.py:320 (comment)"
+  ],
+  "agreement": "All sites agree on the SAME value; there is one third-decimal split -- 4.57 everywhere except honest_recosting.py, which carries 4.571. A DIFFERENT, incompatible constant 4.34 (= 33.0e9/7.6e9) survives in src/cascade_methods/open_bestofN_adaptive.py:14 and in the older src/analysis/cascade/cascade_cost_prefill_flops.py:33 (N7=7.6e9, N32=33.0e9, NVIT=0.675e9 -- that older file at least states a model). The 4.57 sites are the canonical, currently-cited ones.",
+  "only_stated_derivation": "32.0B / 7.0B = 4.571 (honest_recosting.py:145) -- name-plate sizes, neither of which is either model's true parameter count."
+ },
+ "parameter_counts": {
+  "method": "safetensors headers of every shard, parameters bucketed by role; no weights loaded. Byte total asserted equal to the index `total_size`, all-BF16 asserted (so params = bytes/2). [MEASURED]",
+  "lingshu_7b": {
+   "total": 8292166656,
+   "index_total_size_bytes": 16584333312,
+   "by_role": {
+    "embed_tokens": 544997376,
+    "lm_body": 6525621760,
+    "vision_tower": 631975680,
+    "vision_merger": 44574464,
+    "lm_head": 544997376
+   },
+   "shards": 4
+  },
+  "lingshu_32b": {
+   "total": 33452718336,
+   "index_total_size_bytes": 66905436672,
+   "by_role": {
+    "embed_tokens": 778567680,
+    "lm_body": 31206740992,
+    "vision_tower": 636401664,
+    "vision_merger": 52440320,
+    "lm_head": 778567680
+   },
+   "shards": 14
+  },
+  "verification_of_earlier_audit": "CONFIRMED: Lingshu-7B index total_size = 16,584,333,312 B bf16 over 4 shards = 8,292,166,656 params = 8.292 B, matching the earlier 8.29 B audit. Lingshu-32B = 66,905,436,672 B over 14 shards = 33,452,718,336 params = 33.453 B.",
+  "independent_crosscheck_lm_body_from_config": {
+   "lingshu_7b": 6525621760,
+   "lingshu_32b": 31206740992,
+   "matches_safetensors": true,
+   "note": "analytic count from hidden_size/layers/heads/kv_heads/intermediate_size alone; exact match confirms no tensor was mis-bucketed."
+  },
+  "naive_total_param_ratio": 4.0343,
+  "lm_body_param_ratio": 4.7822,
+  "vision_towers": {
+   "lingshu_7b": 676550144,
+   "lingshu_32b": 688841984,
+   "note": "The two vision towers are the SAME architecture (depth 32, hidden 1280, 16 heads, patch 14, 2x2 merge) and differ by only 1.8% in parameters -- the 32B's is larger only because its merger projects to 5120 instead of 3584 and its ViT MLP is 3456 wide instead of 3420. The image branch is therefore a near-CONSTANT cost shared by both legs, which is exactly why the total-parameter ratio is the wrong basis for a whole-forward FLOP ratio."
+  },
+  "note_other_family": "/data/dan/weights/MedVLThinker-{7B,32B}-RL_m23k have byte-identical safetensors index total_size (16,584,333,312 / 66,905,436,672), i.e. the same Qwen2.5-VL-7B/32B skeletons -- the derived constant applies to both model families used in this project. [MEASURED]"
+ },
+ "token_geometry": {
+  "method": "The 665 ms / 347 ms anchors were timed by open_measure_latency_energy.py on 25 non-yes/no VQA-RAD test items at cap320. Those exact prompts were rebuilt with the Lingshu-7B processor (CPU) and the image/text token split counted. [MEASURED]",
+  "n": 25,
+  "prompt_tok_mean": 326.68,
+  "image_tok_mean": 280.48,
+  "text_tok_mean": 46.2,
+  "image_tok_min": 144,
+  "image_tok_max": 320,
+  "patches_mean": 1121.92,
+  "reproduces_recorded_prefill": {
+   "recorded": 326.68,
+   "reconstructed": 326.68,
+   "source": "logs/latency_opentext.jsonl",
+   "note": "exact match to 2 dp -- the reconstruction is the measured workload, not a proxy"
+  },
+  "generated_tokens": {
+   "lingshu_7b": 5.64,
+   "lingshu_32b": 5.6,
+   "source": "logs/latency_opentext.jsonl gen_tok_mean"
+  }
+ },
+ "flop_model": {
+  "statement": "F = 2*P*N_vit + attn_vit + 2*M*N_merger + 2*T*N_lm_body + 2*L*T^2*d + 2*(G-1)*N_lm_body + decode_attn + 2*G*N_lm_head, with P = 4*M pre-merge patches, M merged image tokens, T total prompt tokens, G generated tokens. Embedding lookup = 0 FLOPs. ViT attention is bidirectional; 4 of 32 ViT layers are full-attention and 28 are windowed over 64 patches (window 112px / patch 14px). LM attention is causal, so its quadratic term is halved.",
+  "operating_point": {
+   "T": 326.68,
+   "M": 280.48,
+   "P_patches": 1121.9,
+   "G_7b": 5.64,
+   "G_32b": 5.6
+  },
+  "lingshu_7b_gflops": {
+   "vision_tower_dense": 1418.05,
+   "vision_tower_attn": 36.07,
+   "vision_merger": 25.0,
+   "lm_prefill_dense": 4263.58,
+   "lm_prefill_attn": 21.42,
+   "lm_decode_dense": 60.56,
+   "lm_decode_attn": 0.61,
+   "lm_head": 6.15,
+   "TOTAL": 5831.45
+  },
+  "lingshu_32b_gflops": {
+   "vision_tower_dense": 1427.98,
+   "vision_tower_attn": 36.07,
+   "vision_merger": 29.42,
+   "lm_prefill_dense": 20389.24,
+   "lm_prefill_attn": 69.94,
+   "lm_decode_dense": 287.1,
+   "lm_decode_attn": 1.98,
+   "lm_head": 8.72,
+   "TOTAL": 22250.45
+  },
+  "component_shares_pct": {
+   "lingshu_7b": {
+    "vision_tower_dense": 24.32,
+    "vision_tower_attn": 0.62,
+    "vision_merger": 0.43,
+    "lm_prefill_dense": 73.11,
+    "lm_prefill_attn": 0.37,
+    "lm_decode_dense": 1.04,
+    "lm_decode_attn": 0.01,
+    "lm_head": 0.11
+   },
+   "lingshu_32b": {
+    "vision_tower_dense": 6.42,
+    "vision_tower_attn": 0.16,
+    "vision_merger": 0.13,
+    "lm_prefill_dense": 91.64,
+    "lm_prefill_attn": 0.31,
+    "lm_decode_dense": 1.29,
+    "lm_decode_attn": 0.01,
+    "lm_head": 0.04
+   }
+  },
+  "arithmetic": "7B: vision 1454 + merger 25 + LM-prefill 4285 + LM-decode 61 + head 6 = 5831 GFLOP.  32B: vision 1464 + merger 29 + LM-prefill 20459 + LM-decode 289 + head 9 = 22250 GFLOP.  Ratio = 22250 / 5831 = 3.816."
+ },
+ "derived_ratio": {
+  "R32_derived": 3.816,
+  "status": "DERIVED (from measured parameter counts + measured token geometry)",
+  "sensitivity": {
+   "at the anchor operating point (T=326.68, G=5.6/5.64)": 3.816,
+   "same G for both legs (G=5.6)": 3.816,
+   "no causal halving of the LM attention term": 3.814,
+   "prefill only (G=1)": 3.808,
+   "MCQ cap320 operating point (T=354.6/360.5, G=2.49/2.00)": 3.859,
+   "MCQ fullres operating point (T~642)": 3.734,
+   "image-dominated limit (all-image prompt, marginal cost per image token)": 3.716,
+   "pure-decode limit ((lm_body+lm_head) ratio)": 4.524,
+   "total-parameter ratio (the naive basis)": 4.034,
+   "lm_body-only ratio (T -> infinity limit)": 4.782,
+   "name-plate 32.0/7.0 (what the repo actually used)": 4.571
+  },
+  "recommended": {
+   "value": 3.82,
+   "uncertainty": "+/- 0.15 (the spread across the three real operating points the project actually runs: cap320 open 3.816, cap320 MCQ 3.859, fullres MCQ 3.734)",
+   "band": [
+    3.734,
+    3.859
+   ],
+   "rationale": "The workload is a single prefill-dominated forward on an image+question prompt with 2-6 generated tokens. Under that workload the shared, near-identical vision tower is 25.4% of the 7B's FLOPs but only 6.7% of the 32B's, which pulls the whole-forward ratio well below both the lm_body ratio (4.782) and the name-plate 4.571."
+  },
+  "why_4_57_was_wrong": "4.57 = 32.0/7.0 uses name-plate sizes for models whose true counts are 8.292 B and 33.453 B (naive total ratio 4.034), and it applies a parameter ratio to a quantity -- a whole VLM forward pass -- that is not proportional to total parameters, because (i) the ~0.68 B vision tower is shared and nearly identical in both models, (ii) the 0.545 B / 0.779 B embedding table costs 0 FLOPs, and (iii) the lm_head is applied to O(G)=~6 positions, not to the whole prompt. Coincidentally 4.57 is close to the pure-DECODE ratio 4.524 -- it is roughly the right constant for a decode-only workload and the wrong one for this prefill-dominated one."
+ },
+ "measurement_crosscheck": {
+  "source": "logs/latency_opentext.jsonl (n=25 per tag, batch-1, single A100-80GB, NVML energy)",
+  "lingshu": {
+   "lat_ms": [
+    347.10784912109375,
+    665.0390911102295
+   ],
+   "lat_ratio_mean": 1.916,
+   "lat_ratio_median": 1.994,
+   "energy_j": [
+    45.8,
+    126.89
+   ],
+   "energy_ratio": 2.77,
+   "mean_power_w": [
+    132.0,
+    190.8
+   ],
+   "power_ratio": 1.446
+  },
+  "medvlthinker": {
+   "lat_ratio": 2.576,
+   "energy_ratio": 3.808,
+   "mean_power_w": [
+    126.5,
+    187.1
+   ],
+   "note": "same prompts (prefill_tok_mean 326.68), same architectures"
+  },
+  "implied_mfu": {
+   "lingshu_7b": 5.38,
+   "lingshu_32b": 10.72,
+   "assumed_peak_tflops_bf16": 312,
+   "note": "A100-80GB dense bf16 peak, no sparsity. [ESTIMATED -- the peak is a datasheet figure, not measured on this machine]"
+  },
+  "decode_bandwidth_floor_ms_per_token": {
+   "lingshu_7b": 8.13,
+   "lingshu_32b": 32.81,
+   "assumed_hbm_bw_bytes_per_s": 2039000000000.0,
+   "implied_decode_ms": [
+    45.9,
+    183.8
+   ],
+   "note": "weights/bandwidth floor. [ESTIMATED -- HBM bandwidth is a datasheet figure.] It accounts for ~46 ms of the 7B's 347 ms and ~184 ms of the 32B's 665 ms, leaving prefill ~301 ms vs ~481 ms."
+  },
+  "verdict": "Latency and energy ratios are NOT FLOP ratios, but they bound the plausible range. Measured batch-1 latency ratio is 1.92 and energy ratio 2.77 (Lingshu) / 3.81 (MedVLThinker) -- BOTH BELOW the derived 3.82 and far below the charged 4.57. That ordering is the physically expected one: at batch 1 the small model is more severely under-utilised (implied MFU 5.4% vs 10.7%), so it burns more time and energy per FLOP. A charged FLOP ratio ABOVE the energy ratio is therefore consistent; a charged ratio ABOVE the derived one is simply unsupported. Nothing in the measurements supports 4.57 over 3.82, and the MedVLThinker energy ratio 3.81 lands almost exactly on the derived 3.82."
+ },
+ "caveats": [
+  "The FLOP model counts multiply-accumulates x2 and ignores softmax/norm/activation/RoPE elementwise work (<1% of a transformer forward). [stated modelling choice]",
+  "The LM causal-attention term is halved; the ViT's is not. Both are <0.5% of the total, and the no-halving variant moves the ratio by 0.002.",
+  "The lm_head is charged G times (HF `generate` computes logits for one position per step). If a harness computed logits over the whole prompt instead, the 32B would gain slightly.",
+  "The ratio is workload-dependent by construction. It rises toward the lm_body ratio 4.782 as TEXT prompts or generations get longer, and falls toward 3.716 as the IMAGE branch comes to dominate the prompt (the marginal cost of one more merged image token is 8*N_vit + 2*N_merger + 2*N_lm_body, and the shared vision term is a far larger share of the 7B's). The band [3.73, 3.86] covers every operating point this project actually ran.",
+  "Both legs are assumed to run at the same image resolution cap. Where the repo runs the cheap leg at a lower cap than the strong leg, the effective ratio is HIGHER than this and must be recomputed per configuration.",
+  "This does not touch the separate, already-documented problem that the reasoning baseline is charged a flat per-forward constant regardless of its ~400 generated tokens (honest_recosting.py handles that axis)."
+ ]
+}

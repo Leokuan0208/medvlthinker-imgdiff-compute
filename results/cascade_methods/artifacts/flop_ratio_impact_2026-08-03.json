@@ -1,0 +1,526 @@
+{
+ "title": "Impact of the corrected 32B/7B FLOP ratio on the project's headline compute claims",
+ "date": "2026-08-03",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "reproduce": "python3 src/cascade_methods/flop_ratio_impact.py",
+ "method": "macro_average_headline.run() re-executed unmodified with R32 monkeypatched into paper_baselines / integrated_method / beat32b_fusion / pandora_controller / method_final_mmmu_corrected / honest_recosting. Latency and energy constants are untouched, so only the FLOP axis moves. [DERIVED from measured per-sample outcomes]",
+ "constants": {
+  "old_literal": 4.57,
+  "new_derived": 3.816,
+  "band": [
+   3.734,
+   3.859
+  ],
+  "derivation": "results/cascade_methods/artifacts/flop_ratio_derivation_2026-08-03.json"
+ },
+ "reproduction_gate": {
+  "passed": true,
+  "note": "At R32=4.57 the patched pipeline reproduces every published FLOP figure exactly, so any difference below is attributable to the constant alone.",
+  "spot_check": {
+   "sample_weighted": {
+    "method_compute_lean": 2.248,
+    "method_accuracy_max_veto": 4.257,
+    "method_accuracy_max_fusion": 5.712
+   },
+   "macro_cells": {
+    "method_compute_lean": 5.465,
+    "method_accuracy_max_veto": 6.444,
+    "method_accuracy_max_fusion": 6.558
+   }
+  }
+ },
+ "linearity_gate": {
+  "max_abs_error_at_R32_4p0": 0.000889,
+  "passed": true,
+  "note": "cost is affine in R32; the third run at R32=4.0 confirms it to the artifact's own 3-decimal rounding."
+ },
+ "absolute_flops": {
+  "as_charged_R32_4p57": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "always_32b_reasoning": 4.57,
+    "oracle_mode_32b": 4.57,
+    "method_compute_lean": 2.248,
+    "method_accuracy_max_veto": 4.257,
+    "method_accuracy_max_fusion": 5.712
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "always_32b_reasoning": 4.57,
+    "oracle_mode_32b": 4.57,
+    "method_compute_lean": 5.465,
+    "method_accuracy_max_veto": 6.444,
+    "method_accuracy_max_fusion": 6.558
+   }
+  },
+  "corrected_R32_3p816": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.816,
+    "always_32b_reasoning": 3.816,
+    "oracle_mode_32b": 3.816,
+    "method_compute_lean": 2.121,
+    "method_accuracy_max_veto": 3.773,
+    "method_accuracy_max_fusion": 4.988
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.816,
+    "always_32b_reasoning": 3.816,
+    "oracle_mode_32b": 3.816,
+    "method_compute_lean": 5.196,
+    "method_accuracy_max_veto": 5.931,
+    "method_accuracy_max_fusion": 6.026
+   }
+  },
+  "band_low_R32_3p734": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.734,
+    "always_32b_reasoning": 3.734,
+    "oracle_mode_32b": 3.734,
+    "method_compute_lean": 2.107,
+    "method_accuracy_max_veto": 3.721,
+    "method_accuracy_max_fusion": 4.909
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.734,
+    "always_32b_reasoning": 3.734,
+    "oracle_mode_32b": 3.734,
+    "method_compute_lean": 5.167,
+    "method_accuracy_max_veto": 5.875,
+    "method_accuracy_max_fusion": 5.968
+   }
+  },
+  "band_high_R32_3p859": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.859,
+    "always_32b_reasoning": 3.859,
+    "oracle_mode_32b": 3.859,
+    "method_compute_lean": 2.128,
+    "method_accuracy_max_veto": 3.801,
+    "method_accuracy_max_fusion": 5.029
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.859,
+    "always_32b_reasoning": 3.859,
+    "oracle_mode_32b": 3.859,
+    "method_compute_lean": 5.212,
+    "method_accuracy_max_veto": 5.96,
+    "method_accuracy_max_fusion": 6.056
+   }
+  },
+  "honest_recost_R32_4p57": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "always_32b_reasoning": 4.869,
+    "oracle_mode_32b": 4.57,
+    "method_compute_lean": 2.248,
+    "method_accuracy_max_veto": 4.257,
+    "method_accuracy_max_fusion": 5.712
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "always_32b_reasoning": 5.695,
+    "oracle_mode_32b": 4.57,
+    "method_compute_lean": 5.465,
+    "method_accuracy_max_veto": 6.444,
+    "method_accuracy_max_fusion": 6.558
+   }
+  },
+  "honest_recost_R32_3p816": {
+   "sample_weighted": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.816,
+    "always_32b_reasoning": 4.065,
+    "oracle_mode_32b": 3.816,
+    "method_compute_lean": 2.121,
+    "method_accuracy_max_veto": 3.773,
+    "method_accuracy_max_fusion": 4.988
+   },
+   "macro_cells": {
+    "always_7b": 1.0,
+    "always_32b_direct": 3.816,
+    "always_32b_reasoning": 4.756,
+    "oracle_mode_32b": 3.816,
+    "method_compute_lean": 5.196,
+    "method_accuracy_max_veto": 5.931,
+    "method_accuracy_max_fusion": 6.026
+   }
+  }
+ },
+ "affine_decomposition": {
+  "explanation": "cost(R32) = A + B*R32; A is the cheap-leg cost in 7B-forward units (1.0 per MCQ cell, ~2*meanN for a Pandora open cell), B is the expected number of 32B forwards per query.",
+  "as_charged": {
+   "sample_weighted": {
+    "always_7b": {
+     "A_cheap_leg": 1.0,
+     "B_expected_32B_forwards": 0.0
+    },
+    "always_32b_direct": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "always_32b_reasoning": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "oracle_mode_32b": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "method_compute_lean": {
+     "A_cheap_leg": 1.4783,
+     "B_expected_32B_forwards": 0.1684
+    },
+    "method_accuracy_max_veto": {
+     "A_cheap_leg": 1.3235,
+     "B_expected_32B_forwards": 0.6419
+    },
+    "method_accuracy_max_fusion": {
+     "A_cheap_leg": 1.3238,
+     "B_expected_32B_forwards": 0.9602
+    }
+   },
+   "macro_cells": {
+    "always_7b": {
+     "A_cheap_leg": 1.0,
+     "B_expected_32B_forwards": 0.0
+    },
+    "always_32b_direct": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "always_32b_reasoning": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "oracle_mode_32b": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "method_compute_lean": {
+     "A_cheap_leg": 3.8346,
+     "B_expected_32B_forwards": 0.3568
+    },
+    "method_accuracy_max_veto": {
+     "A_cheap_leg": 3.3347,
+     "B_expected_32B_forwards": 0.6804
+    },
+    "method_accuracy_max_fusion": {
+     "A_cheap_leg": 3.3335,
+     "B_expected_32B_forwards": 0.7056
+    }
+   }
+  },
+  "honest_recost": {
+   "sample_weighted": {
+    "always_7b": {
+     "A_cheap_leg": 1.0,
+     "B_expected_32B_forwards": 0.0
+    },
+    "always_32b_direct": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "always_32b_reasoning": {
+     "A_cheap_leg": -0.0041,
+     "B_expected_32B_forwards": 1.0663
+    },
+    "oracle_mode_32b": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "method_compute_lean": {
+     "A_cheap_leg": 1.4783,
+     "B_expected_32B_forwards": 0.1684
+    },
+    "method_accuracy_max_veto": {
+     "A_cheap_leg": 1.3235,
+     "B_expected_32B_forwards": 0.6419
+    },
+    "method_accuracy_max_fusion": {
+     "A_cheap_leg": 1.3238,
+     "B_expected_32B_forwards": 0.9602
+    }
+   },
+   "macro_cells": {
+    "always_7b": {
+     "A_cheap_leg": 1.0,
+     "B_expected_32B_forwards": 0.0
+    },
+    "always_32b_direct": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "always_32b_reasoning": {
+     "A_cheap_leg": 0.0037,
+     "B_expected_32B_forwards": 1.2454
+    },
+    "oracle_mode_32b": {
+     "A_cheap_leg": 0.0,
+     "B_expected_32B_forwards": 1.0
+    },
+    "method_compute_lean": {
+     "A_cheap_leg": 3.8346,
+     "B_expected_32B_forwards": 0.3568
+    },
+    "method_accuracy_max_veto": {
+     "A_cheap_leg": 3.3347,
+     "B_expected_32B_forwards": 0.6804
+    },
+    "method_accuracy_max_fusion": {
+     "A_cheap_leg": 3.3335,
+     "B_expected_32B_forwards": 0.7056
+    }
+   }
+  }
+ },
+ "ratios_vs_always_32b_direct": {
+  "as_charged_R32_4p57": {
+   "sample_weighted": {
+    "always_7b": 0.219,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.492,
+    "method_accuracy_max_veto": 0.932,
+    "method_accuracy_max_fusion": 1.25
+   },
+   "macro_cells": {
+    "always_7b": 0.219,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.196,
+    "method_accuracy_max_veto": 1.41,
+    "method_accuracy_max_fusion": 1.435
+   }
+  },
+  "corrected_R32_3p816": {
+   "sample_weighted": {
+    "always_7b": 0.262,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.556,
+    "method_accuracy_max_veto": 0.989,
+    "method_accuracy_max_fusion": 1.307
+   },
+   "macro_cells": {
+    "always_7b": 0.262,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.362,
+    "method_accuracy_max_veto": 1.554,
+    "method_accuracy_max_fusion": 1.579
+   }
+  },
+  "band_low": {
+   "sample_weighted": {
+    "always_7b": 0.268,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.564,
+    "method_accuracy_max_veto": 0.997,
+    "method_accuracy_max_fusion": 1.315
+   },
+   "macro_cells": {
+    "always_7b": 0.268,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.384,
+    "method_accuracy_max_veto": 1.573,
+    "method_accuracy_max_fusion": 1.598
+   }
+  },
+  "band_high": {
+   "sample_weighted": {
+    "always_7b": 0.259,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.551,
+    "method_accuracy_max_veto": 0.985,
+    "method_accuracy_max_fusion": 1.303
+   },
+   "macro_cells": {
+    "always_7b": 0.259,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.0,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.351,
+    "method_accuracy_max_veto": 1.544,
+    "method_accuracy_max_fusion": 1.569
+   }
+  },
+  "honest_recost_R32_4p57": {
+   "sample_weighted": {
+    "always_7b": 0.219,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.065,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.492,
+    "method_accuracy_max_veto": 0.932,
+    "method_accuracy_max_fusion": 1.25
+   },
+   "macro_cells": {
+    "always_7b": 0.219,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.246,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.196,
+    "method_accuracy_max_veto": 1.41,
+    "method_accuracy_max_fusion": 1.435
+   }
+  },
+  "honest_recost_R32_3p816": {
+   "sample_weighted": {
+    "always_7b": 0.262,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.065,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 0.556,
+    "method_accuracy_max_veto": 0.989,
+    "method_accuracy_max_fusion": 1.307
+   },
+   "macro_cells": {
+    "always_7b": 0.262,
+    "always_32b_direct": 1.0,
+    "always_32b_reasoning": 1.246,
+    "oracle_mode_32b": 1.0,
+    "method_compute_lean": 1.362,
+    "method_accuracy_max_veto": 1.554,
+    "method_accuracy_max_fusion": 1.579
+   }
+  }
+ },
+ "headline_deltas": {
+  "sample_weighted": {
+   "method_compute_lean": {
+    "published_x": 0.492,
+    "corrected_x": 0.556,
+    "band_x": [
+     0.564,
+     0.551
+    ],
+    "change_pct": 13.01,
+    "crosses_1x": "no -- both below 1x"
+   },
+   "method_accuracy_max_veto": {
+    "published_x": 0.932,
+    "corrected_x": 0.989,
+    "band_x": [
+     0.997,
+     0.985
+    ],
+    "change_pct": 6.12,
+    "crosses_1x": "no -- both below 1x"
+   },
+   "method_accuracy_max_fusion": {
+    "published_x": 1.25,
+    "corrected_x": 1.307,
+    "band_x": [
+     1.315,
+     1.303
+    ],
+    "change_pct": 4.56,
+    "crosses_1x": "no -- both above 1x"
+   }
+  },
+  "macro_cells": {
+   "method_compute_lean": {
+    "published_x": 1.196,
+    "corrected_x": 1.362,
+    "band_x": [
+     1.384,
+     1.351
+    ],
+    "change_pct": 13.88,
+    "crosses_1x": "no -- both above 1x"
+   },
+   "method_accuracy_max_veto": {
+    "published_x": 1.41,
+    "corrected_x": 1.554,
+    "band_x": [
+     1.573,
+     1.544
+    ],
+    "change_pct": 10.21,
+    "crosses_1x": "no -- both above 1x"
+   },
+   "method_accuracy_max_fusion": {
+    "published_x": 1.435,
+    "corrected_x": 1.579,
+    "band_x": [
+     1.598,
+     1.569
+    ],
+    "change_pct": 10.03,
+    "crosses_1x": "no -- both above 1x"
+   }
+  }
+ },
+ "clean_L1": {
+  "source": "COMPREHENSIVE_WRITEUP_2026-07-30.md 5.6.3 -- absolute macro FLOP-eq 6.674 (compute-lean clean L1) and 7.951 (accuracy-max-veto clean L1), both [Mo].",
+  "compute_lean": {
+   "F_as_charged": 6.674,
+   "B_expected_32B_forwards": 0.4183,
+   "B_source": "the same document's clean-L1 escalation rate, all 8 cells [M]; for a pure cascade/Pandora policy B IS the escalation rate",
+   "published_x": 1.4604,
+   "corrected_x": 1.6663,
+   "band_x": [
+    1.6937,
+    1.6524
+   ],
+   "status": "DERIVED, exact given the two published inputs"
+  },
+  "accuracy_max_veto": {
+   "F_as_charged": 7.951,
+   "B_expected_32B_forwards": "not published for this column",
+   "point_estimate_x": 1.9492,
+   "point_estimate_assumption": "B held at the contaminated run's 0.6804. Clean L1 raises the open-arm escalation, so the true B is HIGHER and the true corrected ratio slightly LOWER than this point estimate.",
+   "rigorous_bounds_x": [
+    1.886,
+    2.0836
+   ],
+   "bounds_note": "B <= 1 (no policy calls the 32B more than once per query) gives the lower bound 1.8860x; B >= 0 gives the upper bound 2.0836x.",
+   "published_x": 1.7398,
+   "status": "DERIVED with a stated assumption -- the underlying per-sample vectors for the clean-L1 column are not on disk"
+  },
+  "verdict": "The clean-L1 column moves the same way and by more: compute-lean 1.460x -> 1.666x, accuracy-max-veto 1.740x -> ~1.95x (bounded 1.89-2.08). Both were already well above 1x."
+ },
+ "breakevens": {
+  "model": "cascade(e) = 1 + e*R32 FLOP-eq / 347 + e*665 ms / 45.8 + e*127 J, vs one 32B call",
+  "note": "Only the FLOP threshold depends on R32; the latency and energy thresholds are set by measured per-leg constants and do not move. [DERIVED]",
+  "flops_breakeven_e": {
+   "at_R32_4p57": 0.7812,
+   "at_R32_3p816": 0.7379,
+   "band": [
+    0.7322,
+    0.7409
+   ]
+  },
+  "latency_breakeven_e": 0.4782,
+  "energy_breakeven_e": 0.6394,
+  "table_correction": "The published table's last row, 'e > ~78% -> worse on everything', becomes 'e > ~74%'. The ~48% (all-axes) and ~64% (latency) rows are unchanged. Consequence for the measured suite: MedXpert at 89.60% escalation was already past the threshold under both constants; VQA-RAD-closed at 56.97% is still inside it. No cell changes verdict."
+ },
+ "verdict": "NO COMPUTE CLAIM CHANGES STATUS; every one gets modestly WORSE. Macro (8 cells, equal weight), as charged: compute-lean 1.196x -> 1.362x, accuracy-max-veto 1.410x -> 1.554x a single 32B forward. Both were already >1x, i.e. already NOT compute-negative, and remain so. Sample-weighted, compute-lean 0.492x -> 0.556x: still <1x, so the one surviving compute-negative statement (sample-weighted only) survives, with a thinner margin. The published '~7% margin of error' on the constant was an UNDERESTIMATE in magnitude (4.57 -> 3.816 is -16.5%) but correct in direction of harmlessness: the affected claims were already the wrong side of 1x.",
+ "caveats": [
+  "Only the FLOP axis is recomputed. Latency and energy are separately measured and unchanged.",
+  "The ratio of a method to always-32B-direct is NOT invariant to R32: the method's cheap leg is charged in 7B units, so lowering R32 makes the 32B baseline cheaper faster than it makes the method cheaper. Every method/baseline compute ratio therefore gets WORSE, not better.",
+  "The corrected constant does not change any accuracy number, any escalation rate, any latency and any energy figure -- only FLOP-eq.",
+  "Cells where a policy is 'always_32b_nt' have A=0, B=1 and their ratio is exactly 1.000x at any R32; the movement comes entirely from the cascade and Pandora cells."
+ ]
+}

@@ -1,0 +1,385 @@
+{
+  "tag": "lingshu7b",
+  "model": "lingshu-medical-mllm/Lingshu-7B",
+  "adapter": "ckpts/train/lora_verifier_pooled4",
+  "k": 8,
+  "harness": "HF batch-1 request, cap320 (max_pixels=1280*28*28//4), real vqa_rad open items, NVML integrated over visible GPUs, flash_attention_2, bf16; same recipe as src/cascade_methods/open_measure_latency_energy.py",
+  "gpus": 1,
+  "gpu_names": [
+    "NVIDIA A100 80GB PCIe"
+  ],
+  "gpu_power_limit_w": [
+    300.0
+  ],
+  "idle_w_model_resident": 83.8,
+  "n_kept": 20,
+  "warmup": 3,
+  "max_new": 32,
+  "temperature": 0.7,
+  "prefill_tok_mean": 322.7,
+  "gen_tok_mean": {
+    "gen1": 5.8,
+    "gen8": 6.0
+  },
+  "measured": {
+    "gen1": {
+      "n": 20,
+      "lat_ms_mean": 360.4,
+      "lat_ms_median": 373.0,
+      "lat_ms_sd": 98.3,
+      "lat_ms_p10": 246.1,
+      "lat_ms_p90": 503.4,
+      "lat_ms_min": 191.6,
+      "lat_ms_max": 527.5,
+      "energy_j_mean": 55.89,
+      "energy_j_median": 55.41,
+      "energy_j_sd": 13.03,
+      "mean_power_w": 155.1
+    },
+    "gen8": {
+      "n": 20,
+      "lat_ms_mean": 716.8,
+      "lat_ms_median": 687.2,
+      "lat_ms_sd": 209.4,
+      "lat_ms_p10": 496.7,
+      "lat_ms_p90": 1058.4,
+      "lat_ms_min": 396.9,
+      "lat_ms_max": 1213.5,
+      "energy_j_mean": 165.09,
+      "energy_j_median": 160.77,
+      "energy_j_sd": 33.46,
+      "mean_power_w": 230.3
+    },
+    "verify1": {
+      "n": 20,
+      "lat_ms_mean": 294.2,
+      "lat_ms_median": 210.6,
+      "lat_ms_sd": 210.1,
+      "lat_ms_p10": 198.7,
+      "lat_ms_p90": 569.7,
+      "lat_ms_min": 195.9,
+      "lat_ms_max": 901.7,
+      "energy_j_mean": 44.16,
+      "energy_j_median": 32.76,
+      "energy_j_sd": 29.39,
+      "mean_power_w": 150.1
+    },
+    "verify8": {
+      "n": 20,
+      "lat_ms_mean": 608.9,
+      "lat_ms_median": 603.0,
+      "lat_ms_sd": 184.6,
+      "lat_ms_p10": 416.6,
+      "lat_ms_p90": 668.6,
+      "lat_ms_min": 343.6,
+      "lat_ms_max": 1173.0,
+      "energy_j_mean": 157.63,
+      "energy_j_median": 161.38,
+      "energy_j_sd": 39.57,
+      "mean_power_w": 258.9
+    },
+    "bo8_total": {
+      "n": 20,
+      "lat_ms_mean": 1325.7,
+      "lat_ms_median": 1294.5,
+      "lat_ms_sd": 320.5,
+      "lat_ms_p10": 910.6,
+      "lat_ms_p90": 1761.9,
+      "lat_ms_min": 740.5,
+      "lat_ms_max": 1948.5,
+      "energy_j_mean": 322.72,
+      "energy_j_median": 328.31,
+      "energy_j_sd": 62.99,
+      "mean_power_w": 243.4
+    }
+  },
+  "date": "2026-08-03",
+  "reconciliation": {
+    "item": "COMPREHENSIVE_WRITEUP_2026-07-30.md section 11, item 2 \u2014 best-of-N latency/energy contradiction",
+    "date": "2026-08-03",
+    "status": "RESOLVED by direct measurement",
+    "canonical_constants": {
+      "GEN7_ms": 347.1,
+      "GEN7_J": 45.8,
+      "VER7_ms": 175.5,
+      "VER7_J": 25.28,
+      "GEN32_nothink_ms": 665.0,
+      "GEN32_nothink_J": 126.89,
+      "GEN32_think_ms": 10521.6,
+      "source": "logs/latency_opentext.jsonl via src/cascade_methods/open_measure_latency_energy.py, 2026-06-30, 1 visible GPU, n=25"
+    },
+    "contradiction": {
+      "claimed_latency_ms": 522.0,
+      "claimed_latency_construction": "GEN7 347.1 + VER7 175.5 = 522.6 ms (rounded to 522)",
+      "claimed_latency_status": "MODELLED / ASSERTED \u2014 no batch-8 wall-clock was ever measured",
+      "claimed_energy_j": 568.6,
+      "claimed_energy_construction": "8 x (GEN7_J 45.8 + VER7_J 25.28) = 568.6 J",
+      "claimed_energy_status": "MODELLED \u2014 assumes each of the 8 gens and 8 verifies costs its FULL batch-1 energy",
+      "implied_power_w": 1089.3,
+      "measured_power_during_gen7_w": 132.0,
+      "card_enforced_limit_w": 300.0,
+      "n_gpus_in_canonical_measurement": 1,
+      "verdict": "568.6 J delivered in 0.5220 s requires 1089 W on the ONE A100 80GB PCIe the constants were measured on, whose NVML-enforced limit is 300 W (3.6x the limit) and which actually drew 132 W during GEN7. Physically impossible; the two figures cannot both be right.",
+      "energy_consistent_lower_bounds_s": {
+        "at_400W_assumed_by_writeup": 1.422,
+        "at_300W_actual_card_limit": 1.895
+      }
+    },
+    "measurement": {
+      "script": "src/cascade_methods/bestofn_measure_batch8.py",
+      "replicates": [
+        {
+          "file": "results/cascade_methods/artifacts/bestofn_latency_energy_2026-08-03.json",
+          "n_kept": 20,
+          "gpu": [
+            "NVIDIA A100 80GB PCIe"
+          ],
+          "limit_w": [
+            300.0
+          ],
+          "idle_w_model_resident": 83.8,
+          "prefill_tok_mean": 322.7,
+          "gen_tok_mean": {
+            "gen1": 5.8,
+            "gen8": 6.0
+          }
+        },
+        {
+          "file": "results/cascade_methods/artifacts/bestofn_latency_energy_2026-08-03_rep2.json",
+          "n_kept": 25,
+          "gpu": [
+            "NVIDIA A100 80GB PCIe"
+          ],
+          "limit_w": [
+            300.0
+          ],
+          "idle_w_model_resident": 86.3,
+          "prefill_tok_mean": 326.7,
+          "gen_tok_mean": {
+            "gen1": 5.64,
+            "gen8": 5.88
+          }
+        }
+      ],
+      "pooled": {
+        "gen1": {
+          "n": 45,
+          "lat_ms_mean": 350.0,
+          "lat_ms_median": 363.3,
+          "lat_ms_sd_within_rep": [
+            98.3,
+            89.3
+          ],
+          "lat_ms_p10_p90": [
+            [
+              246.1,
+              503.4
+            ],
+            [
+              240.3,
+              471.4
+            ]
+          ],
+          "energy_j_mean": 57.02,
+          "per_replicate_lat_ms_mean": [
+            360.4,
+            341.7
+          ],
+          "per_replicate_energy_j_mean": [
+            55.89,
+            57.92
+          ]
+        },
+        "gen8": {
+          "n": 45,
+          "lat_ms_mean": 689.2,
+          "lat_ms_median": 668.1,
+          "lat_ms_sd_within_rep": [
+            209.4,
+            172.1
+          ],
+          "lat_ms_p10_p90": [
+            [
+              496.7,
+              1058.4
+            ],
+            [
+              485.6,
+              899.2
+            ]
+          ],
+          "energy_j_mean": 158.86,
+          "per_replicate_lat_ms_mean": [
+            716.8,
+            667.1
+          ],
+          "per_replicate_energy_j_mean": [
+            165.09,
+            153.88
+          ]
+        },
+        "verify1": {
+          "n": 45,
+          "lat_ms_mean": 275.4,
+          "lat_ms_median": 205.2,
+          "lat_ms_sd_within_rep": [
+            210.1,
+            163.9
+          ],
+          "lat_ms_p10_p90": [
+            [
+              198.7,
+              569.7
+            ],
+            [
+              182.6,
+              438.1
+            ]
+          ],
+          "energy_j_mean": 40.15,
+          "per_replicate_lat_ms_mean": [
+            294.2,
+            260.3
+          ],
+          "per_replicate_energy_j_mean": [
+            44.16,
+            36.94
+          ]
+        },
+        "verify8": {
+          "n": 45,
+          "lat_ms_mean": 616.1,
+          "lat_ms_median": 607.1,
+          "lat_ms_sd_within_rep": [
+            184.6,
+            174.6
+          ],
+          "lat_ms_p10_p90": [
+            [
+              416.6,
+              668.6
+            ],
+            [
+              441.8,
+              780.0
+            ]
+          ],
+          "energy_j_mean": 157.84,
+          "per_replicate_lat_ms_mean": [
+            608.9,
+            621.8
+          ],
+          "per_replicate_energy_j_mean": [
+            157.63,
+            158.01
+          ]
+        },
+        "bo8_total": {
+          "n": 45,
+          "lat_ms_mean": 1305.3,
+          "lat_ms_median": 1290.7,
+          "lat_ms_sd_within_rep": [
+            320.5,
+            267.6
+          ],
+          "lat_ms_p10_p90": [
+            [
+              910.6,
+              1761.9
+            ],
+            [
+              946.4,
+              1656.5
+            ]
+          ],
+          "energy_j_mean": 316.7,
+          "per_replicate_lat_ms_mean": [
+            1325.7,
+            1289.0
+          ],
+          "per_replicate_energy_j_mean": [
+            322.72,
+            311.89
+          ]
+        }
+      }
+    },
+    "resolution": {
+      "latency": {
+        "claimed_ms": 522.0,
+        "measured_ms": 1305.3,
+        "factor_wrong": 2.5,
+        "verdict": "WRONG \u2014 understated by ~2.5x. Batching 8 does NOT make N drop out."
+      },
+      "energy": {
+        "claimed_j": 568.6,
+        "measured_j": 316.7,
+        "factor_wrong": 0.56,
+        "verdict": "ALSO WRONG, in the other direction \u2014 overstated by ~1.8x. Batching does save energy (shared prefill/weight reads), just not latency."
+      },
+      "why": "The cost model applied PERFECT parallelism to latency (N drops out) and ZERO parallelism to energy (N multiplies). Reality is in between and much closer to the energy side: a batch-8 forward is far from free in wall-clock. Measured batch-8 speedup over 8 sequential calls is only ~4.1x for generation and ~3.6x for verification, not 8x.",
+      "harness_reproduces_canonical": {
+        "gen1_measured_ms": 350.0,
+        "gen1_canonical_ms": 347.1,
+        "gen1_pct_diff": 0.8,
+        "verify1_measured_ms_median": 205.2,
+        "verify1_canonical_ms_median": 173.0,
+        "note": "gen1 reproduces GEN7 to within a few percent, so the batch-8 numbers are on the same footing as the canonical constants. verify1's MEAN is inflated by a few multi-hundred-ms outliers (LoRA adapter toggling + NVML sampling jitter); its MEDIAN is the comparable statistic."
+      }
+    },
+    "corrected_arms": [
+      {
+        "label": "open-text best-of-8 + verifier gate (fixed-bo8 reference, esc=3.97%)",
+        "escalation_rate": 0.0397,
+        "source": "method_final.json /modes/compute_lean/compute_lean_fixed_bo8_reference/pooled/open_only/sample_weighted; also integrated_pandora_opentext.json method_latency_ms=548.3",
+        "claimed_latency_ms": 548.4,
+        "corrected_latency_ms": 1331.7,
+        "claimed_saved_vs_32b_think_pct": 94.8,
+        "corrected_saved_vs_32b_think_pct": 87.3,
+        "claimed_x_of_one_32b_forward": 0.82,
+        "corrected_x_of_one_32b_forward": 2.0,
+        "claimed_energy_j": 573.7,
+        "corrected_energy_j": 321.7,
+        "corrected_energy_x_of_one_32b_forward": 2.54,
+        "flips_from_faster_to_slower_than_32b": true
+      },
+      {
+        "label": "open-text best-of-8 + verifier gate (compute_lean / accuracy_max, esc=28.23%)",
+        "escalation_rate": 0.2823,
+        "source": "method_final.json /modes/{compute_lean,accuracy_max}/pooled/open_only/sample_weighted",
+        "claimed_latency_ms": 709.7,
+        "corrected_latency_ms": 1493.0,
+        "claimed_saved_vs_32b_think_pct": 93.3,
+        "corrected_saved_vs_32b_think_pct": 85.8,
+        "claimed_x_of_one_32b_forward": 1.07,
+        "corrected_x_of_one_32b_forward": 2.25,
+        "claimed_energy_j": 604.5,
+        "corrected_energy_j": 352.5,
+        "corrected_energy_x_of_one_32b_forward": 2.78,
+        "flips_from_faster_to_slower_than_32b": false
+      },
+      {
+        "label": "open-text best-of-8 + verifier gate (method_final_v2, esc=25.76%)",
+        "escalation_rate": 0.2576,
+        "source": "method_final_v2.json /modes_v2/{compute_lean,accuracy_max}/pooled/open_only/sample_weighted",
+        "claimed_latency_ms": 693.3,
+        "corrected_latency_ms": 1476.6,
+        "claimed_saved_vs_32b_think_pct": 93.4,
+        "corrected_saved_vs_32b_think_pct": 86.0,
+        "claimed_x_of_one_32b_forward": 1.04,
+        "corrected_x_of_one_32b_forward": 2.22,
+        "claimed_energy_j": 601.3,
+        "corrected_energy_j": 349.4,
+        "corrected_energy_x_of_one_32b_forward": 2.75,
+        "flips_from_faster_to_slower_than_32b": false
+      }
+    ],
+    "deployment_model": {
+      "question": "Is batching 8 draws even the right model of batch-1 serving?",
+      "sequential_8_draws_measured_ms": 4441.6,
+      "sequential_8_draws_claimed_ms": 4180.8,
+      "batched_8_measured_ms": 1305.3,
+      "answer": "Batching is a legitimate model ONLY for a dedicated single-request server that can hold 8 concurrent sequences; it converts idle 8-wide throughput into latency. It is measured here and IS ~3.4x faster than drawing sequentially, so batching is the right choice IF you are doing best-of-8 at all. What is NOT legitimate is the claim that batching makes N free: measured batch-8 costs 689 ms vs 350 ms for a single greedy draw (2.0x), and the whole best-of-8 round-trip is 1305 ms vs a 665 ms single 32B forward. Under ANY serving assumption (sequential 4442 ms or batched 1305 ms) the open-text best-of-8 arm is SLOWER than simply calling the 32B once. In a real multi-tenant server the batched figure is also optimistic, because the 8-wide slots are not free \u2014 they displace other requests."
+    }
+  }
+}
