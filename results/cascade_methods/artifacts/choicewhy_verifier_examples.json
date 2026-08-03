@@ -1,0 +1,295 @@
+{
+ "purpose": "composition-matched verifier training sets for the MCQ (choice)(why) format comparison",
+ "date": "2026-08-03",
+ "builder": "src/training_methods/build_choicewhy_verifier_examples.py",
+ "candidates": "ckpts/choicewhy_train/ckpt_<src>_<arm>_sc8.jsonl (Lingshu-7B, n=8, temp 0.7, seed 1234)",
+ "manifest": "data/choicewhy_mcq_split/train_items.jsonl",
+ "label_rule": "label = int(extracted option letter == gold option letter). This IS the repo's MCQ grader: MCQ scoring in this project is exact letter match (src/labeling/run_vlm_eval.py, the Phase-1 pilot, ckpts/gate_lingshu7b_mcq), and the same rule labels the training candidates and grades the evaluation candidates, so training and evaluation share one grader. The free-text LLM judge (src/labeling/run_judge.py) grades open-ended answers and is not the grader for any MCQ number in this repo; a concordance audit against it is reported separately.",
+ "extractor": "src/cascade_methods/choicewhy_common.py::extract (verbatim from the Phase-1 analyzer)",
+ "dedup": "one example per unique normalized candidate string per question",
+ "target_share_from_eval_mix": {
+  "slake_closed_train": 0.2796,
+  "vqa_rad_closed_train": 0.1828,
+  "pmc_vqa_train": 0.336,
+  "pathvqa_closed_train": 0.2016
+ },
+ "eval_mix_items": {
+  "SLAKE": 416,
+  "VQA-RAD": 272,
+  "PMC-VQA": 500,
+  "MedXpert-MM": 300
+ },
+ "medxpert_surrogate": "MedXpertQA-MM has no public train split; its share is assigned to pathvqa_closed_train and recorded here as a substitution, not a match.",
+ "available_examples_min_over_arms": {
+  "pathvqa_closed_train": 3680,
+  "pmc_vqa_train": 5747,
+  "slake_closed_train": 1969,
+  "vqa_rad_closed_train": 1383
+ },
+ "final_per_source_quota": {
+  "pathvqa_closed_train": 2630,
+  "pmc_vqa_train": 4382,
+  "slake_closed_train": 1969,
+  "vqa_rad_closed_train": 1383
+ },
+ "quota_shortfalls_vs_eval_proportional": {
+  "slake_closed_train": 928,
+  "vqa_rad_closed_train": 511
+ },
+ "quota_redistributed": {
+  "pathvqa_closed_train": 540,
+  "pmc_vqa_train": 899
+ },
+ "max_train_target": 10364,
+ "final_total_per_arm": 10364,
+ "composition_matched_across_arms": true,
+ "pos_rate_matched_variant": {
+  "why": "dedup by unique candidate STRING caps arm A at n_options examples per question while arm B2 gets ~6 phrasings, and correct options attract more distinct phrasings -- so the label base rate is higher in B2 for the SAME questions. A base-rate shift moves a verifier's operating point independently of its discrimination, so a variant with the reference arm's exact per-source positive/negative counts is emitted alongside.",
+  "reference_arm": "A_letter_only",
+  "sets": {
+   "B2_answer_first_forced_posmatched": {
+    "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced_posmatched.jsonl",
+    "n_examples": 10364,
+    "per_source_examples": {
+     "vqa_rad_closed_train": 1383,
+     "pathvqa_closed_train": 2630,
+     "pmc_vqa_train": 4382,
+     "slake_closed_train": 1969
+    },
+    "distinct_questions": 5770,
+    "distinct_images": 4173,
+    "pos_label_rate": 0.5783,
+    "pos_label_rate_per_source": {
+     "pathvqa_closed_train": 0.6517,
+     "pmc_vqa_train": 0.4092,
+     "slake_closed_train": 0.804,
+     "vqa_rad_closed_train": 0.6529
+    },
+    "mean_candidate_words": 17.42,
+    "draw_feasibility": {
+     "pathvqa_closed_train|pos": {
+      "wanted": 1714,
+      "available": 11143,
+      "taken": 1714
+     },
+     "pathvqa_closed_train|neg": {
+      "wanted": 916,
+      "available": 4371,
+      "taken": 916
+     },
+     "pmc_vqa_train|pos": {
+      "wanted": 1793,
+      "available": 8816,
+      "taken": 1793
+     },
+     "pmc_vqa_train|neg": {
+      "wanted": 2589,
+      "available": 8565,
+      "taken": 2589
+     },
+     "slake_closed_train|pos": {
+      "wanted": 1583,
+      "available": 8179,
+      "taken": 1583
+     },
+     "slake_closed_train|neg": {
+      "wanted": 386,
+      "available": 1427,
+      "taken": 386
+     },
+     "vqa_rad_closed_train|pos": {
+      "wanted": 903,
+      "available": 4510,
+      "taken": 903
+     },
+     "vqa_rad_closed_train|neg": {
+      "wanted": 480,
+      "available": 1673,
+      "taken": 480
+     }
+    },
+    "reference_arm": "A_letter_only"
+   }
+  }
+ },
+ "arms": {
+  "A_letter_only": {
+   "file": "data/choicewhy_mcq_split/verifier_examples_A_letter_only.jsonl",
+   "n_examples": 10364,
+   "per_source_examples": {
+    "pathvqa_closed_train": 2630,
+    "pmc_vqa_train": 4382,
+    "slake_closed_train": 1969,
+    "vqa_rad_closed_train": 1383
+   },
+   "distinct_questions": 7273,
+   "distinct_questions_per_source": {
+    "pathvqa_closed_train": 2014,
+    "pmc_vqa_train": 2638,
+    "slake_closed_train": 1681,
+    "vqa_rad_closed_train": 940
+   },
+   "distinct_images": 4709,
+   "pos_label_rate": 0.5783,
+   "pos_label_rate_per_source": {
+    "pathvqa_closed_train": 0.6517,
+    "pmc_vqa_train": 0.4092,
+    "slake_closed_train": 0.804,
+    "vqa_rad_closed_train": 0.6529
+   },
+   "mean_candidate_chars": 2.1,
+   "mean_candidate_words": 1.0,
+   "availability": {
+    "pathvqa_closed_train": {
+     "questions": 2500,
+     "examples_available": 3680,
+     "unique_candidates_per_question": 1.472,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.6541
+    },
+    "pmc_vqa_train": {
+     "questions": 3000,
+     "examples_available": 5747,
+     "unique_candidates_per_question": 1.916,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.4103
+    },
+    "slake_closed_train": {
+     "questions": 1681,
+     "examples_available": 1969,
+     "unique_candidates_per_question": 1.171,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.804
+    },
+    "vqa_rad_closed_train": {
+     "questions": 940,
+     "examples_available": 1383,
+     "unique_candidates_per_question": 1.471,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.6529
+    }
+   }
+  },
+  "B2_answer_first_forced": {
+   "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced.jsonl",
+   "n_examples": 10364,
+   "per_source_examples": {
+    "pathvqa_closed_train": 2630,
+    "pmc_vqa_train": 4382,
+    "slake_closed_train": 1969,
+    "vqa_rad_closed_train": 1383
+   },
+   "distinct_questions": 5823,
+   "distinct_questions_per_source": {
+    "pathvqa_closed_train": 1626,
+    "pmc_vqa_train": 2327,
+    "slake_closed_train": 1121,
+    "vqa_rad_closed_train": 749
+   },
+   "distinct_images": 4194,
+   "pos_label_rate": 0.6578,
+   "pos_label_rate_per_source": {
+    "pathvqa_closed_train": 0.7251,
+    "pmc_vqa_train": 0.5096,
+    "slake_closed_train": 0.8507,
+    "vqa_rad_closed_train": 0.7245
+   },
+   "mean_candidate_chars": 107.6,
+   "mean_candidate_words": 17.64,
+   "availability": {
+    "pathvqa_closed_train": {
+     "questions": 2500,
+     "examples_available": 15514,
+     "unique_candidates_per_question": 6.206,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.7183
+    },
+    "pmc_vqa_train": {
+     "questions": 3000,
+     "examples_available": 17381,
+     "unique_candidates_per_question": 5.794,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.5072
+    },
+    "slake_closed_train": {
+     "questions": 1681,
+     "examples_available": 9606,
+     "unique_candidates_per_question": 5.714,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.8514
+    },
+    "vqa_rad_closed_train": {
+     "questions": 940,
+     "examples_available": 6183,
+     "unique_candidates_per_question": 6.578,
+     "unparsable_samples_dropped": 0,
+     "pos_rate_available": 0.7294
+    }
+   }
+  },
+  "B2_answer_first_forced_posmatched": {
+   "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced_posmatched.jsonl",
+   "n_examples": 10364,
+   "per_source_examples": {
+    "vqa_rad_closed_train": 1383,
+    "pathvqa_closed_train": 2630,
+    "pmc_vqa_train": 4382,
+    "slake_closed_train": 1969
+   },
+   "distinct_questions": 5770,
+   "distinct_images": 4173,
+   "pos_label_rate": 0.5783,
+   "pos_label_rate_per_source": {
+    "pathvqa_closed_train": 0.6517,
+    "pmc_vqa_train": 0.4092,
+    "slake_closed_train": 0.804,
+    "vqa_rad_closed_train": 0.6529
+   },
+   "mean_candidate_words": 17.42,
+   "draw_feasibility": {
+    "pathvqa_closed_train|pos": {
+     "wanted": 1714,
+     "available": 11143,
+     "taken": 1714
+    },
+    "pathvqa_closed_train|neg": {
+     "wanted": 916,
+     "available": 4371,
+     "taken": 916
+    },
+    "pmc_vqa_train|pos": {
+     "wanted": 1793,
+     "available": 8816,
+     "taken": 1793
+    },
+    "pmc_vqa_train|neg": {
+     "wanted": 2589,
+     "available": 8565,
+     "taken": 2589
+    },
+    "slake_closed_train|pos": {
+     "wanted": 1583,
+     "available": 8179,
+     "taken": 1583
+    },
+    "slake_closed_train|neg": {
+     "wanted": 386,
+     "available": 1427,
+     "taken": 386
+    },
+    "vqa_rad_closed_train|pos": {
+     "wanted": 903,
+     "available": 4510,
+     "taken": 903
+    },
+    "vqa_rad_closed_train|neg": {
+     "wanted": 480,
+     "available": 1673,
+     "taken": 480
+    }
+   },
+   "reference_arm": "A_letter_only"
+  }
+ },
+ "seed": 0
+}

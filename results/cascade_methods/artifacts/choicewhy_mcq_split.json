@@ -1,0 +1,125 @@
+{
+ "purpose": "strictly disjoint MULTIPLE-CHOICE training pool for the (choice)(why) verifier (Phase 2)",
+ "date": "2026-08-03",
+ "builder": "src/training_methods/build_choicewhy_mcq_split.py",
+ "seed": 0,
+ "eval_disjointness_set": {
+  "what": "the FULL MedVLThinker-Eval suite (all 6 benchmarks, 8,220 items) -- strictly larger than the 1,488 pilot evaluation items, so no training image appears in ANY eval this repo reports",
+  "n_eval_items": 8220,
+  "n_eval_images": 5507,
+  "n_eval_distinct_question_texts": 6538,
+  "images_per_benchmark": {
+   "MMMU-medical": 176,
+   "MedXpertQA-MM": 2811,
+   "pathvqa_closed": 839,
+   "pmc_vqa": 1440,
+   "slake_closed": 96,
+   "vqa_rad_closed": 146
+  },
+  "pilot_eval_subset": {
+   "n_items": 1488,
+   "n_images": 1116,
+   "per_bench": {
+    "SLAKE": 416,
+    "VQA-RAD": 272,
+    "PMC-VQA": 500,
+    "MedXpert-Reasoning": 150,
+    "MedXpert-Understanding": 150
+   }
+  }
+ },
+ "train_sources": {
+  "slake_closed_train": {
+   "pool_items": 1681,
+   "scanned": 1681,
+   "dropped_eval_image": 0,
+   "dropped_unreadable_image": 0,
+   "dropped_eval_item": 0,
+   "kept_L1_questions": 1681,
+   "kept_L1_images": 445,
+   "kept_L2_strict_questions": 183,
+   "quota": null,
+   "gold_letter_dist": {
+    "B": 817,
+    "A": 864
+   }
+  },
+  "vqa_rad_closed_train": {
+   "pool_items": 940,
+   "scanned": 940,
+   "dropped_eval_image": 0,
+   "dropped_unreadable_image": 0,
+   "dropped_eval_item": 0,
+   "kept_L1_questions": 940,
+   "kept_L1_images": 280,
+   "kept_L2_strict_questions": 841,
+   "quota": null,
+   "gold_letter_dist": {
+    "B": 473,
+    "A": 467
+   }
+  },
+  "pmc_vqa_train": {
+   "pool_items": 176934,
+   "scanned": 3000,
+   "dropped_eval_image": 0,
+   "dropped_unreadable_image": 0,
+   "dropped_eval_item": 0,
+   "kept_L1_questions": 3000,
+   "kept_L1_images": 2971,
+   "kept_L2_strict_questions": 2866,
+   "quota": 3000,
+   "gold_letter_dist": {
+    "A": 737,
+    "C": 841,
+    "B": 940,
+    "D": 482
+   }
+  },
+  "pathvqa_closed_train": {
+   "pool_items": 9751,
+   "scanned": 2500,
+   "dropped_eval_image": 0,
+   "dropped_unreadable_image": 0,
+   "dropped_eval_item": 0,
+   "kept_L1_questions": 2500,
+   "kept_L1_images": 1577,
+   "kept_L2_strict_questions": 1311,
+   "quota": 2500,
+   "gold_letter_dist": {
+    "B": 1087,
+    "A": 1413
+   }
+  }
+ },
+ "train_total_questions": 8121,
+ "train_total_images": 5273,
+ "train_composition_questions": {
+  "slake_closed_train": 1681,
+  "vqa_rad_closed_train": 940,
+  "pmc_vqa_train": 3000,
+  "pathvqa_closed_train": 2500
+ },
+ "train_L2_strict_questions": 5201,
+ "medxpert_note": "MedXpertQA-MM has no public train split; its 20% share of the eval mix cannot be matched in-domain. Recorded as a shortfall; topped up from pathvqa_closed_train.",
+ "disjointness_assertion": {
+  "image_md5_rgb_intersection": 0,
+  "image_md5_rgb_sized_intersection": 0,
+  "item_triple_intersection": 0,
+  "pilot_eval_image_intersection": 0,
+  "L2_question_text_intersection": 0,
+  "L1_question_text_shared_by_design": 601,
+  "method": "images: md5 of DECODED RGB pixels (both raw-bytes and WxH-prefixed variants), which catches re-encoded/re-compressed copies; filenames are never used. items: (dataset family, normalized question text, image pixel hash).",
+  "asserted_in_code": [
+   "assert not inter_img",
+   "assert not inter_img_s",
+   "assert not inter_item",
+   "assert not inter_pilot",
+   "assert not (L2 qtext & eval_qtext)",
+   "assert pilot_img <= EVAL_IMG",
+   "assert staged PNG md5 == proven md5"
+  ]
+ },
+ "manifest": "data/choicewhy_mcq_split/train_items.jsonl",
+ "staged_images": "data/choicewhy_mcq_split/imgs"
+}

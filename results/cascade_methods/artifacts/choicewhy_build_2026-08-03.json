@@ -1,0 +1,1490 @@
+{
+ "program": "(choice)(why) for multiple choice -- PHASE 2: BUILD",
+ "date": "2026-08-03",
+ "phase1_gate": "results/cascade_methods/artifacts/choicewhy_pilot_2026-08-03.json (GO: arm B2_answer_first_forced preserves MCQ accuracy, +0.0087 [-0.0040,+0.0222] pooled)",
+ "what_was_built": [
+  "N=8 sampled candidates in both formats over the full 1,488-item Phase-1 evaluation set",
+  "a strictly disjoint MCQ training pool from the datasets' OFFICIAL TRAIN splits, with the disjointness proven in code on md5 of DECODED RGB pixels",
+  "N=8 sampled candidates in both formats over that training pool",
+  "composition-matched verifier training sets (same questions, same size, same per-source mix in both arms; FORMAT is the only variable)",
+  "a LoRA outcome verifier per arm, architecture and hyperparameters copied from ckpts/train/lora_verifier_disjoint"
+ ],
+ "code": {
+  "eval_side_generation": "src/labeling/run_choicewhy_pilot.py --arms A B2 --n_samples 8 --temp 0.7 --seed 1234 --suffix _sc8  (the Phase-1 generator, unmodified)",
+  "disjoint_split": "src/training_methods/build_choicewhy_mcq_split.py",
+  "train_side_generation": "src/labeling/run_choicewhy_trainpool.py",
+  "example_builder": "src/training_methods/build_choicewhy_verifier_examples.py",
+  "trainer": "src/training_methods/run_lora_verifier_choicewhy.py",
+  "shared_defs": "src/cascade_methods/choicewhy_common.py (arm prompts + letter extractor, verbatim from Phase 1)",
+  "eval_pool_inventory": "src/cascade_methods/choicewhy_eval_pool_inventory.py",
+  "justification_stats": "src/cascade_methods/choicewhy_justification_stats.py",
+  "grader_audit": "src/cascade_methods/choicewhy_judge_concordance.py"
+ },
+ "deviations_and_flags": {
+  "grader": "The brief asks that every candidate be judged with src/labeling/run_judge.py. That script is this project's FREE-TEXT grader; on multiple choice the project's grader is EXACT OPTION-LETTER MATCH, and it is what labels training candidates and grades evaluation candidates here -- so training and evaluation do share one grader. The substitution was MEASURED rather than assumed: 4,800 candidates were passed to the 32B judge (block 5). Judging the chosen option's TEXT agrees with exact letter match on 0.9967-1.0000 of candidates in every cell. Judging the candidate VERBATIM agrees less for arm B2 (0.9650 eval / 0.9817 train) because the appended rationale can talk the judge out of a correct letter -- an arm-specific bias that would have favoured arm A, and a reason not to substitute the free-text judge on this task.",
+  "medxpert_has_no_train_split": "MedXpertQA-MM (20.2% of the evaluation items) publishes no train split, so its share of the training mix is served by pathvqa_closed_train and recorded as a substitution.",
+  "eval_proportional_quota_not_fully_met": "SLAKE and VQA-RAD official train splits are exhausted (1,681 and 940 usable questions), so their eval-proportional example quotas fall short and the deficit is redistributed to PMC-VQA and PathVQA. Exact shortfalls and redistribution are in block 3.",
+  "label_base_rate_differs_by_arm": "Dedup by unique candidate STRING caps arm A at n_options examples per question while arm B2 gets ~6 phrasings, and the correct option attracts more phrasings -- so B2's positive rate is 0.6578 vs A's 0.5783 on the SAME questions. A third verifier was trained on a positive-rate-matched B2 set (identical size, per-source counts AND per-source pos/neg counts) so Phase 3 can separate discrimination from base rate.",
+  "L1_question_text_recurrence": "601 evaluation question TEXTS recur in the training pool with different images. Unavoidable for closed VQA, which draws from a small template set; no eval IMAGE and no eval ITEM is in training. Every manifest row carries an L2_strict flag marking the subset with no eval question text at all.",
+  "still_open_from_phase1": "Yellow flag (i) carried forward and re-measured under SAMPLING: 31.8% of evaluation candidates and 35.4% of training candidates still carry no gradeable justification (block 1b) -- better than the 41.9% Phase 1 measured under greedy decoding, but not zero."
+ },
+ "1_evaluation_candidate_pool_MEASURED": {
+  "purpose": "inventory of the N=8 evaluation candidate pool for the (choice)(why) verifier",
+  "date": "2026-08-03",
+  "source": "ckpts/choicewhy_pilot/ckpt_<bench>_<arm>_sc8.jsonl (Lingshu-7B, n=8, temperature 0.7, seed 1234, max_tokens 320)",
+  "arms": {
+   "A_letter_only": {
+    "SLAKE": {
+     "n_items": 416,
+     "n_candidates": 3328,
+     "candidate_pos_rate": 0.8341,
+     "mean_unique_candidate_strings": 1.2043,
+     "mean_distinct_letters": 1.2043,
+     "self_consistency_at8": 0.8341,
+     "oracle_at8": 0.9255,
+     "headroom": 0.0913,
+     "letter_disagreement": {
+      "n_items": 84,
+      "frac_of_items": 0.2019,
+      "self_consistency_at8": 0.5357,
+      "oracle_at8": 0.9881,
+      "headroom": 0.4524
+     }
+    },
+    "VQA-RAD": {
+     "n_items": 272,
+     "n_candidates": 2176,
+     "candidate_pos_rate": 0.7477,
+     "mean_unique_candidate_strings": 1.4154,
+     "mean_distinct_letters": 1.4154,
+     "self_consistency_at8": 0.761,
+     "oracle_at8": 0.9338,
+     "headroom": 0.1728,
+     "letter_disagreement": {
+      "n_items": 113,
+      "frac_of_items": 0.4154,
+      "self_consistency_at8": 0.5841,
+      "oracle_at8": 1.0,
+      "headroom": 0.4159
+     }
+    },
+    "PMC-VQA": {
+     "n_items": 500,
+     "n_candidates": 4000,
+     "candidate_pos_rate": 0.5533,
+     "mean_unique_candidate_strings": 1.942,
+     "mean_distinct_letters": 1.938,
+     "self_consistency_at8": 0.564,
+     "oracle_at8": 0.816,
+     "headroom": 0.252,
+     "letter_disagreement": {
+      "n_items": 309,
+      "frac_of_items": 0.618,
+      "self_consistency_at8": 0.4304,
+      "oracle_at8": 0.8382,
+      "headroom": 0.4078
+     }
+    },
+    "MedXpert-Reasoning": {
+     "n_items": 150,
+     "n_candidates": 1200,
+     "candidate_pos_rate": 0.24,
+     "mean_unique_candidate_strings": 2.3733,
+     "mean_distinct_letters": 2.3467,
+     "self_consistency_at8": 0.2267,
+     "oracle_at8": 0.5333,
+     "headroom": 0.3067,
+     "letter_disagreement": {
+      "n_items": 115,
+      "frac_of_items": 0.7667,
+      "self_consistency_at8": 0.1913,
+      "oracle_at8": 0.5913,
+      "headroom": 0.4
+     }
+    },
+    "MedXpert-Understanding": {
+     "n_items": 150,
+     "n_candidates": 1200,
+     "candidate_pos_rate": 0.2742,
+     "mean_unique_candidate_strings": 2.2333,
+     "mean_distinct_letters": 2.2067,
+     "self_consistency_at8": 0.2867,
+     "oracle_at8": 0.54,
+     "headroom": 0.2533,
+     "letter_disagreement": {
+      "n_items": 112,
+      "frac_of_items": 0.7467,
+      "self_consistency_at8": 0.2946,
+      "oracle_at8": 0.6339,
+      "headroom": 0.3393
+     }
+    },
+    "POOLED": {
+     "n_items": 1488,
+     "n_candidates": 11904,
+     "candidate_pos_rate": 0.6076,
+     "mean_unique_candidate_strings": 1.7124,
+     "mean_distinct_letters": 1.7056,
+     "self_consistency_at8": 0.6136,
+     "oracle_at8": 0.8118,
+     "headroom": 0.1983,
+     "letter_disagreement": {
+      "n_items": 733,
+      "frac_of_items": 0.4926,
+      "self_consistency_at8": 0.4079,
+      "oracle_at8": 0.8104,
+      "headroom": 0.4025
+     }
+    }
+   },
+   "B2_answer_first_forced": {
+    "SLAKE": {
+     "n_items": 416,
+     "n_candidates": 3328,
+     "candidate_pos_rate": 0.8224,
+     "mean_unique_candidate_strings": 5.8462,
+     "mean_distinct_letters": 1.2428,
+     "self_consistency_at8": 0.8269,
+     "oracle_at8": 0.9255,
+     "headroom": 0.0986,
+     "letter_disagreement": {
+      "n_items": 100,
+      "frac_of_items": 0.2404,
+      "self_consistency_at8": 0.58,
+      "oracle_at8": 0.99,
+      "headroom": 0.41
+     }
+    },
+    "VQA-RAD": {
+     "n_items": 272,
+     "n_candidates": 2176,
+     "candidate_pos_rate": 0.7454,
+     "mean_unique_candidate_strings": 6.6691,
+     "mean_distinct_letters": 1.4449,
+     "self_consistency_at8": 0.7537,
+     "oracle_at8": 0.9412,
+     "headroom": 0.1875,
+     "letter_disagreement": {
+      "n_items": 121,
+      "frac_of_items": 0.4449,
+      "self_consistency_at8": 0.5785,
+      "oracle_at8": 1.0,
+      "headroom": 0.4215
+     }
+    },
+    "PMC-VQA": {
+     "n_items": 500,
+     "n_candidates": 4000,
+     "candidate_pos_rate": 0.5327,
+     "mean_unique_candidate_strings": 5.934,
+     "mean_distinct_letters": 2.03,
+     "self_consistency_at8": 0.53,
+     "oracle_at8": 0.826,
+     "headroom": 0.296,
+     "letter_disagreement": {
+      "n_items": 322,
+      "frac_of_items": 0.644,
+      "self_consistency_at8": 0.4068,
+      "oracle_at8": 0.8665,
+      "headroom": 0.4596
+     }
+    },
+    "MedXpert-Reasoning": {
+     "n_items": 150,
+     "n_candidates": 1200,
+     "candidate_pos_rate": 0.2675,
+     "mean_unique_candidate_strings": 6.4733,
+     "mean_distinct_letters": 2.5933,
+     "self_consistency_at8": 0.2667,
+     "oracle_at8": 0.6,
+     "headroom": 0.3333,
+     "letter_disagreement": {
+      "n_items": 123,
+      "frac_of_items": 0.82,
+      "self_consistency_at8": 0.252,
+      "oracle_at8": 0.6585,
+      "headroom": 0.4065
+     }
+    },
+    "MedXpert-Understanding": {
+     "n_items": 150,
+     "n_candidates": 1200,
+     "candidate_pos_rate": 0.2742,
+     "mean_unique_candidate_strings": 6.9133,
+     "mean_distinct_letters": 2.5,
+     "self_consistency_at8": 0.2867,
+     "oracle_at8": 0.5933,
+     "headroom": 0.3067,
+     "letter_disagreement": {
+      "n_items": 121,
+      "frac_of_items": 0.8067,
+      "self_consistency_at8": 0.2727,
+      "oracle_at8": 0.6529,
+      "headroom": 0.3802
+     }
+    },
+    "POOLED": {
+     "n_items": 1488,
+     "n_candidates": 11904,
+     "candidate_pos_rate": 0.5998,
+     "mean_unique_candidate_strings": 6.1969,
+     "mean_distinct_letters": 1.8071,
+     "self_consistency_at8": 0.6028,
+     "oracle_at8": 0.8286,
+     "headroom": 0.2258,
+     "letter_disagreement": {
+      "n_items": 787,
+      "frac_of_items": 0.5289,
+      "self_consistency_at8": 0.4104,
+      "oracle_at8": 0.8374,
+      "headroom": 0.4269
+     }
+    }
+   }
+  }
+ },
+ "1b_justification_presence_MEASURED": {
+  "purpose": "fraction of SAMPLED candidates that carry text a verifier can grade",
+  "date": "2026-08-03",
+  "definition": "strip the answer token, remove the chosen option's own words, count the rest; <3 remaining words = no gradeable justification (Phase-1 supplement's rule)",
+  "eval": {
+   "A_letter_only": {
+    "SLAKE": {
+     "n_candidates": 3328,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 3
+    },
+    "VQA-RAD": {
+     "n_candidates": 2176,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 3
+    },
+    "PMC-VQA": {
+     "n_candidates": 4000,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 6
+    },
+    "MedXpert-Reasoning": {
+     "n_candidates": 1200,
+     "mean_residual_words": 0.01,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 14
+    },
+    "MedXpert-Understanding": {
+     "n_candidates": 1200,
+     "mean_residual_words": 0.01,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 10
+    },
+    "POOLED": {
+     "n_candidates": 11904,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 19
+    }
+   },
+   "B2_answer_first_forced": {
+    "SLAKE": {
+     "n_candidates": 3328,
+     "mean_residual_words": 10.54,
+     "frac_no_gradeable_justification": 0.3431,
+     "distinct_candidate_strings": 1794
+    },
+    "VQA-RAD": {
+     "n_candidates": 2176,
+     "mean_residual_words": 13.62,
+     "frac_no_gradeable_justification": 0.2302,
+     "distinct_candidate_strings": 1568
+    },
+    "PMC-VQA": {
+     "n_candidates": 4000,
+     "mean_residual_words": 9.61,
+     "frac_no_gradeable_justification": 0.3655,
+     "distinct_candidate_strings": 2884
+    },
+    "MedXpert-Reasoning": {
+     "n_candidates": 1200,
+     "mean_residual_words": 13.97,
+     "frac_no_gradeable_justification": 0.34,
+     "distinct_candidate_strings": 939
+    },
+    "MedXpert-Understanding": {
+     "n_candidates": 1200,
+     "mean_residual_words": 14.77,
+     "frac_no_gradeable_justification": 0.2267,
+     "distinct_candidate_strings": 1011
+    },
+    "POOLED": {
+     "n_candidates": 11904,
+     "mean_residual_words": 11.56,
+     "frac_no_gradeable_justification": 0.318,
+     "distinct_candidate_strings": 8172
+    }
+   }
+  },
+  "train": {
+   "A_letter_only": {
+    "pathvqa_closed_train": {
+     "n_candidates": 20000,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 2
+    },
+    "pmc_vqa_train": {
+     "n_candidates": 24000,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 8
+    },
+    "slake_closed_train": {
+     "n_candidates": 13448,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 2
+    },
+    "vqa_rad_closed_train": {
+     "n_candidates": 7520,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 2
+    },
+    "POOLED": {
+     "n_candidates": 64968,
+     "mean_residual_words": 0.0,
+     "frac_no_gradeable_justification": 1.0,
+     "distinct_candidate_strings": 8
+    }
+   },
+   "B2_answer_first_forced": {
+    "pathvqa_closed_train": {
+     "n_candidates": 20000,
+     "mean_residual_words": 13.32,
+     "frac_no_gradeable_justification": 0.3406,
+     "distinct_candidate_strings": 12576
+    },
+    "pmc_vqa_train": {
+     "n_candidates": 24000,
+     "mean_residual_words": 9.56,
+     "frac_no_gradeable_justification": 0.3918,
+     "distinct_candidate_strings": 16776
+    },
+    "slake_closed_train": {
+     "n_candidates": 13448,
+     "mean_residual_words": 10.79,
+     "frac_no_gradeable_justification": 0.3525,
+     "distinct_candidate_strings": 5413
+    },
+    "vqa_rad_closed_train": {
+     "n_candidates": 7520,
+     "mean_residual_words": 13.23,
+     "frac_no_gradeable_justification": 0.2703,
+     "distinct_candidate_strings": 4937
+    },
+    "POOLED": {
+     "n_candidates": 64968,
+     "mean_residual_words": 11.4,
+     "frac_no_gradeable_justification": 0.3539,
+     "distinct_candidate_strings": 39654
+    }
+   }
+  }
+ },
+ "2_disjoint_split_MEASURED": {
+  "purpose": "strictly disjoint MULTIPLE-CHOICE training pool for the (choice)(why) verifier (Phase 2)",
+  "date": "2026-08-03",
+  "builder": "src/training_methods/build_choicewhy_mcq_split.py",
+  "seed": 0,
+  "eval_disjointness_set": {
+   "what": "the FULL MedVLThinker-Eval suite (all 6 benchmarks, 8,220 items) -- strictly larger than the 1,488 pilot evaluation items, so no training image appears in ANY eval this repo reports",
+   "n_eval_items": 8220,
+   "n_eval_images": 5507,
+   "n_eval_distinct_question_texts": 6538,
+   "images_per_benchmark": {
+    "MMMU-medical": 176,
+    "MedXpertQA-MM": 2811,
+    "pathvqa_closed": 839,
+    "pmc_vqa": 1440,
+    "slake_closed": 96,
+    "vqa_rad_closed": 146
+   },
+   "pilot_eval_subset": {
+    "n_items": 1488,
+    "n_images": 1116,
+    "per_bench": {
+     "SLAKE": 416,
+     "VQA-RAD": 272,
+     "PMC-VQA": 500,
+     "MedXpert-Reasoning": 150,
+     "MedXpert-Understanding": 150
+    }
+   }
+  },
+  "train_sources": {
+   "slake_closed_train": {
+    "pool_items": 1681,
+    "scanned": 1681,
+    "dropped_eval_image": 0,
+    "dropped_unreadable_image": 0,
+    "dropped_eval_item": 0,
+    "kept_L1_questions": 1681,
+    "kept_L1_images": 445,
+    "kept_L2_strict_questions": 183,
+    "quota": null,
+    "gold_letter_dist": {
+     "B": 817,
+     "A": 864
+    }
+   },
+   "vqa_rad_closed_train": {
+    "pool_items": 940,
+    "scanned": 940,
+    "dropped_eval_image": 0,
+    "dropped_unreadable_image": 0,
+    "dropped_eval_item": 0,
+    "kept_L1_questions": 940,
+    "kept_L1_images": 280,
+    "kept_L2_strict_questions": 841,
+    "quota": null,
+    "gold_letter_dist": {
+     "B": 473,
+     "A": 467
+    }
+   },
+   "pmc_vqa_train": {
+    "pool_items": 176934,
+    "scanned": 3000,
+    "dropped_eval_image": 0,
+    "dropped_unreadable_image": 0,
+    "dropped_eval_item": 0,
+    "kept_L1_questions": 3000,
+    "kept_L1_images": 2971,
+    "kept_L2_strict_questions": 2866,
+    "quota": 3000,
+    "gold_letter_dist": {
+     "A": 737,
+     "C": 841,
+     "B": 940,
+     "D": 482
+    }
+   },
+   "pathvqa_closed_train": {
+    "pool_items": 9751,
+    "scanned": 2500,
+    "dropped_eval_image": 0,
+    "dropped_unreadable_image": 0,
+    "dropped_eval_item": 0,
+    "kept_L1_questions": 2500,
+    "kept_L1_images": 1577,
+    "kept_L2_strict_questions": 1311,
+    "quota": 2500,
+    "gold_letter_dist": {
+     "B": 1087,
+     "A": 1413
+    }
+   }
+  },
+  "train_total_questions": 8121,
+  "train_total_images": 5273,
+  "train_composition_questions": {
+   "slake_closed_train": 1681,
+   "vqa_rad_closed_train": 940,
+   "pmc_vqa_train": 3000,
+   "pathvqa_closed_train": 2500
+  },
+  "train_L2_strict_questions": 5201,
+  "medxpert_note": "MedXpertQA-MM has no public train split; its 20% share of the eval mix cannot be matched in-domain. Recorded as a shortfall; topped up from pathvqa_closed_train.",
+  "disjointness_assertion": {
+   "image_md5_rgb_intersection": 0,
+   "image_md5_rgb_sized_intersection": 0,
+   "item_triple_intersection": 0,
+   "pilot_eval_image_intersection": 0,
+   "L2_question_text_intersection": 0,
+   "L1_question_text_shared_by_design": 601,
+   "method": "images: md5 of DECODED RGB pixels (both raw-bytes and WxH-prefixed variants), which catches re-encoded/re-compressed copies; filenames are never used. items: (dataset family, normalized question text, image pixel hash).",
+   "asserted_in_code": [
+    "assert not inter_img",
+    "assert not inter_img_s",
+    "assert not inter_item",
+    "assert not inter_pilot",
+    "assert not (L2 qtext & eval_qtext)",
+    "assert pilot_img <= EVAL_IMG",
+    "assert staged PNG md5 == proven md5"
+   ]
+  },
+  "manifest": "data/choicewhy_mcq_split/train_items.jsonl",
+  "staged_images": "data/choicewhy_mcq_split/imgs"
+ },
+ "3_training_examples_MEASURED": {
+  "purpose": "composition-matched verifier training sets for the MCQ (choice)(why) format comparison",
+  "date": "2026-08-03",
+  "builder": "src/training_methods/build_choicewhy_verifier_examples.py",
+  "candidates": "ckpts/choicewhy_train/ckpt_<src>_<arm>_sc8.jsonl (Lingshu-7B, n=8, temp 0.7, seed 1234)",
+  "manifest": "data/choicewhy_mcq_split/train_items.jsonl",
+  "label_rule": "label = int(extracted option letter == gold option letter). This IS the repo's MCQ grader: MCQ scoring in this project is exact letter match (src/labeling/run_vlm_eval.py, the Phase-1 pilot, ckpts/gate_lingshu7b_mcq), and the same rule labels the training candidates and grades the evaluation candidates, so training and evaluation share one grader. The free-text LLM judge (src/labeling/run_judge.py) grades open-ended answers and is not the grader for any MCQ number in this repo; a concordance audit against it is reported separately.",
+  "extractor": "src/cascade_methods/choicewhy_common.py::extract (verbatim from the Phase-1 analyzer)",
+  "dedup": "one example per unique normalized candidate string per question",
+  "target_share_from_eval_mix": {
+   "slake_closed_train": 0.2796,
+   "vqa_rad_closed_train": 0.1828,
+   "pmc_vqa_train": 0.336,
+   "pathvqa_closed_train": 0.2016
+  },
+  "eval_mix_items": {
+   "SLAKE": 416,
+   "VQA-RAD": 272,
+   "PMC-VQA": 500,
+   "MedXpert-MM": 300
+  },
+  "medxpert_surrogate": "MedXpertQA-MM has no public train split; its share is assigned to pathvqa_closed_train and recorded here as a substitution, not a match.",
+  "available_examples_min_over_arms": {
+   "pathvqa_closed_train": 3680,
+   "pmc_vqa_train": 5747,
+   "slake_closed_train": 1969,
+   "vqa_rad_closed_train": 1383
+  },
+  "final_per_source_quota": {
+   "pathvqa_closed_train": 2630,
+   "pmc_vqa_train": 4382,
+   "slake_closed_train": 1969,
+   "vqa_rad_closed_train": 1383
+  },
+  "quota_shortfalls_vs_eval_proportional": {
+   "slake_closed_train": 928,
+   "vqa_rad_closed_train": 511
+  },
+  "quota_redistributed": {
+   "pathvqa_closed_train": 540,
+   "pmc_vqa_train": 899
+  },
+  "max_train_target": 10364,
+  "final_total_per_arm": 10364,
+  "composition_matched_across_arms": true,
+  "pos_rate_matched_variant": {
+   "why": "dedup by unique candidate STRING caps arm A at n_options examples per question while arm B2 gets ~6 phrasings, and correct options attract more distinct phrasings -- so the label base rate is higher in B2 for the SAME questions. A base-rate shift moves a verifier's operating point independently of its discrimination, so a variant with the reference arm's exact per-source positive/negative counts is emitted alongside.",
+   "reference_arm": "A_letter_only",
+   "sets": {
+    "B2_answer_first_forced_posmatched": {
+     "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced_posmatched.jsonl",
+     "n_examples": 10364,
+     "per_source_examples": {
+      "vqa_rad_closed_train": 1383,
+      "pathvqa_closed_train": 2630,
+      "pmc_vqa_train": 4382,
+      "slake_closed_train": 1969
+     },
+     "distinct_questions": 5770,
+     "distinct_images": 4173,
+     "pos_label_rate": 0.5783,
+     "pos_label_rate_per_source": {
+      "pathvqa_closed_train": 0.6517,
+      "pmc_vqa_train": 0.4092,
+      "slake_closed_train": 0.804,
+      "vqa_rad_closed_train": 0.6529
+     },
+     "mean_candidate_words": 17.42,
+     "draw_feasibility": {
+      "pathvqa_closed_train|pos": {
+       "wanted": 1714,
+       "available": 11143,
+       "taken": 1714
+      },
+      "pathvqa_closed_train|neg": {
+       "wanted": 916,
+       "available": 4371,
+       "taken": 916
+      },
+      "pmc_vqa_train|pos": {
+       "wanted": 1793,
+       "available": 8816,
+       "taken": 1793
+      },
+      "pmc_vqa_train|neg": {
+       "wanted": 2589,
+       "available": 8565,
+       "taken": 2589
+      },
+      "slake_closed_train|pos": {
+       "wanted": 1583,
+       "available": 8179,
+       "taken": 1583
+      },
+      "slake_closed_train|neg": {
+       "wanted": 386,
+       "available": 1427,
+       "taken": 386
+      },
+      "vqa_rad_closed_train|pos": {
+       "wanted": 903,
+       "available": 4510,
+       "taken": 903
+      },
+      "vqa_rad_closed_train|neg": {
+       "wanted": 480,
+       "available": 1673,
+       "taken": 480
+      }
+     },
+     "reference_arm": "A_letter_only"
+    }
+   }
+  },
+  "arms": {
+   "A_letter_only": {
+    "file": "data/choicewhy_mcq_split/verifier_examples_A_letter_only.jsonl",
+    "n_examples": 10364,
+    "per_source_examples": {
+     "pathvqa_closed_train": 2630,
+     "pmc_vqa_train": 4382,
+     "slake_closed_train": 1969,
+     "vqa_rad_closed_train": 1383
+    },
+    "distinct_questions": 7273,
+    "distinct_questions_per_source": {
+     "pathvqa_closed_train": 2014,
+     "pmc_vqa_train": 2638,
+     "slake_closed_train": 1681,
+     "vqa_rad_closed_train": 940
+    },
+    "distinct_images": 4709,
+    "pos_label_rate": 0.5783,
+    "pos_label_rate_per_source": {
+     "pathvqa_closed_train": 0.6517,
+     "pmc_vqa_train": 0.4092,
+     "slake_closed_train": 0.804,
+     "vqa_rad_closed_train": 0.6529
+    },
+    "mean_candidate_chars": 2.1,
+    "mean_candidate_words": 1.0,
+    "availability": {
+     "pathvqa_closed_train": {
+      "questions": 2500,
+      "examples_available": 3680,
+      "unique_candidates_per_question": 1.472,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.6541
+     },
+     "pmc_vqa_train": {
+      "questions": 3000,
+      "examples_available": 5747,
+      "unique_candidates_per_question": 1.916,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.4103
+     },
+     "slake_closed_train": {
+      "questions": 1681,
+      "examples_available": 1969,
+      "unique_candidates_per_question": 1.171,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.804
+     },
+     "vqa_rad_closed_train": {
+      "questions": 940,
+      "examples_available": 1383,
+      "unique_candidates_per_question": 1.471,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.6529
+     }
+    }
+   },
+   "B2_answer_first_forced": {
+    "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced.jsonl",
+    "n_examples": 10364,
+    "per_source_examples": {
+     "pathvqa_closed_train": 2630,
+     "pmc_vqa_train": 4382,
+     "slake_closed_train": 1969,
+     "vqa_rad_closed_train": 1383
+    },
+    "distinct_questions": 5823,
+    "distinct_questions_per_source": {
+     "pathvqa_closed_train": 1626,
+     "pmc_vqa_train": 2327,
+     "slake_closed_train": 1121,
+     "vqa_rad_closed_train": 749
+    },
+    "distinct_images": 4194,
+    "pos_label_rate": 0.6578,
+    "pos_label_rate_per_source": {
+     "pathvqa_closed_train": 0.7251,
+     "pmc_vqa_train": 0.5096,
+     "slake_closed_train": 0.8507,
+     "vqa_rad_closed_train": 0.7245
+    },
+    "mean_candidate_chars": 107.6,
+    "mean_candidate_words": 17.64,
+    "availability": {
+     "pathvqa_closed_train": {
+      "questions": 2500,
+      "examples_available": 15514,
+      "unique_candidates_per_question": 6.206,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.7183
+     },
+     "pmc_vqa_train": {
+      "questions": 3000,
+      "examples_available": 17381,
+      "unique_candidates_per_question": 5.794,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.5072
+     },
+     "slake_closed_train": {
+      "questions": 1681,
+      "examples_available": 9606,
+      "unique_candidates_per_question": 5.714,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.8514
+     },
+     "vqa_rad_closed_train": {
+      "questions": 940,
+      "examples_available": 6183,
+      "unique_candidates_per_question": 6.578,
+      "unparsable_samples_dropped": 0,
+      "pos_rate_available": 0.7294
+     }
+    }
+   },
+   "B2_answer_first_forced_posmatched": {
+    "file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced_posmatched.jsonl",
+    "n_examples": 10364,
+    "per_source_examples": {
+     "vqa_rad_closed_train": 1383,
+     "pathvqa_closed_train": 2630,
+     "pmc_vqa_train": 4382,
+     "slake_closed_train": 1969
+    },
+    "distinct_questions": 5770,
+    "distinct_images": 4173,
+    "pos_label_rate": 0.5783,
+    "pos_label_rate_per_source": {
+     "pathvqa_closed_train": 0.6517,
+     "pmc_vqa_train": 0.4092,
+     "slake_closed_train": 0.804,
+     "vqa_rad_closed_train": 0.6529
+    },
+    "mean_candidate_words": 17.42,
+    "draw_feasibility": {
+     "pathvqa_closed_train|pos": {
+      "wanted": 1714,
+      "available": 11143,
+      "taken": 1714
+     },
+     "pathvqa_closed_train|neg": {
+      "wanted": 916,
+      "available": 4371,
+      "taken": 916
+     },
+     "pmc_vqa_train|pos": {
+      "wanted": 1793,
+      "available": 8816,
+      "taken": 1793
+     },
+     "pmc_vqa_train|neg": {
+      "wanted": 2589,
+      "available": 8565,
+      "taken": 2589
+     },
+     "slake_closed_train|pos": {
+      "wanted": 1583,
+      "available": 8179,
+      "taken": 1583
+     },
+     "slake_closed_train|neg": {
+      "wanted": 386,
+      "available": 1427,
+      "taken": 386
+     },
+     "vqa_rad_closed_train|pos": {
+      "wanted": 903,
+      "available": 4510,
+      "taken": 903
+     },
+     "vqa_rad_closed_train|neg": {
+      "wanted": 480,
+      "available": 1673,
+      "taken": 480
+     }
+    },
+    "reference_arm": "A_letter_only"
+   }
+  },
+  "seed": 0
+ },
+ "4_training_configs_MEASURED": {
+  "A": {
+   "out_dir": "ckpts/train/lora_verifier_choicewhy_A",
+   "adapter_config": {
+    "alpha_pattern": {},
+    "auto_mapping": {
+     "base_model_class": "Qwen2_5_VLForConditionalGeneration",
+     "parent_library": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl"
+    },
+    "base_model_name_or_path": "lingshu-medical-mllm/Lingshu-7B",
+    "bias": "none",
+    "eva_config": null,
+    "exclude_modules": null,
+    "fan_in_fan_out": false,
+    "inference_mode": true,
+    "init_lora_weights": true,
+    "layer_replication": null,
+    "layers_pattern": null,
+    "layers_to_transform": null,
+    "loftq_config": {},
+    "lora_alpha": 32,
+    "lora_bias": false,
+    "lora_dropout": 0.05,
+    "megatron_config": null,
+    "megatron_core": "megatron.core",
+    "modules_to_save": null,
+    "peft_type": "LORA",
+    "r": 16,
+    "rank_pattern": {},
+    "revision": null,
+    "target_modules": [
+     "up_proj",
+     "gate_proj",
+     "k_proj",
+     "v_proj",
+     "q_proj",
+     "o_proj",
+     "down_proj"
+    ],
+    "task_type": null,
+    "use_dora": false,
+    "use_rslora": false
+   },
+   "program": "choicewhy Phase 2 -- MCQ (choice)(why) outcome verifier",
+   "arm": "A_letter_only",
+   "variant": "natural",
+   "examples_file": "data/choicewhy_mcq_split/verifier_examples_A_letter_only.jsonl",
+   "n_train_examples": 10364,
+   "n_train_questions": 7273,
+   "n_train_images": 4709,
+   "per_source_examples": {
+    "slake_closed_train": 1969,
+    "pmc_vqa_train": 4382,
+    "pathvqa_closed_train": 2630,
+    "vqa_rad_closed_train": 1383
+   },
+   "pos_rate": 0.5783,
+   "pos_rate_per_source": {
+    "pathvqa_closed_train": 0.6517,
+    "pmc_vqa_train": 0.4092,
+    "slake_closed_train": 0.804,
+    "vqa_rad_closed_train": 0.6529
+   },
+   "reference_config": "ckpts/train/lora_verifier_disjoint (adapter_config.json + train_config.json)",
+   "skipped_examples": 0,
+   "steps": 5182,
+   "epochs": 1,
+   "bs": 2,
+   "accum": 8,
+   "lr": 0.0001,
+   "lora_r": 16,
+   "lora_alpha": 32,
+   "lora_dropout": 0.05,
+   "target_modules": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+   ],
+   "base_model": "lingshu-medical-mllm/Lingshu-7B",
+   "cap_div": 1,
+   "max_pixels": 1003520,
+   "seed": 0,
+   "verifier_prompt": "src/cascade_methods/choicewhy_common.py::VERIF_SYS + verifier_body (question + option block + proposed answer); identical in every arm",
+   "train_minutes": 95.1,
+   "early_stopped": false
+  },
+  "B2": {
+   "out_dir": "ckpts/train/lora_verifier_choicewhy_B2",
+   "adapter_config": {
+    "alpha_pattern": {},
+    "auto_mapping": {
+     "base_model_class": "Qwen2_5_VLForConditionalGeneration",
+     "parent_library": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl"
+    },
+    "base_model_name_or_path": "lingshu-medical-mllm/Lingshu-7B",
+    "bias": "none",
+    "eva_config": null,
+    "exclude_modules": null,
+    "fan_in_fan_out": false,
+    "inference_mode": true,
+    "init_lora_weights": true,
+    "layer_replication": null,
+    "layers_pattern": null,
+    "layers_to_transform": null,
+    "loftq_config": {},
+    "lora_alpha": 32,
+    "lora_bias": false,
+    "lora_dropout": 0.05,
+    "megatron_config": null,
+    "megatron_core": "megatron.core",
+    "modules_to_save": null,
+    "peft_type": "LORA",
+    "r": 16,
+    "rank_pattern": {},
+    "revision": null,
+    "target_modules": [
+     "o_proj",
+     "q_proj",
+     "k_proj",
+     "v_proj",
+     "up_proj",
+     "gate_proj",
+     "down_proj"
+    ],
+    "task_type": null,
+    "use_dora": false,
+    "use_rslora": false
+   },
+   "program": "choicewhy Phase 2 -- MCQ (choice)(why) outcome verifier",
+   "arm": "B2_answer_first_forced",
+   "variant": "natural",
+   "examples_file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced.jsonl",
+   "n_train_examples": 10364,
+   "n_train_questions": 5823,
+   "n_train_images": 4194,
+   "per_source_examples": {
+    "slake_closed_train": 1969,
+    "pmc_vqa_train": 4382,
+    "pathvqa_closed_train": 2630,
+    "vqa_rad_closed_train": 1383
+   },
+   "pos_rate": 0.6578,
+   "pos_rate_per_source": {
+    "pathvqa_closed_train": 0.7251,
+    "pmc_vqa_train": 0.5096,
+    "slake_closed_train": 0.8507,
+    "vqa_rad_closed_train": 0.7245
+   },
+   "reference_config": "ckpts/train/lora_verifier_disjoint (adapter_config.json + train_config.json)",
+   "skipped_examples": 0,
+   "steps": 5182,
+   "epochs": 1,
+   "bs": 2,
+   "accum": 8,
+   "lr": 0.0001,
+   "lora_r": 16,
+   "lora_alpha": 32,
+   "lora_dropout": 0.05,
+   "target_modules": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+   ],
+   "base_model": "lingshu-medical-mllm/Lingshu-7B",
+   "cap_div": 1,
+   "max_pixels": 1003520,
+   "seed": 0,
+   "verifier_prompt": "src/cascade_methods/choicewhy_common.py::VERIF_SYS + verifier_body (question + option block + proposed answer); identical in every arm",
+   "train_minutes": 95.3,
+   "early_stopped": false
+  },
+  "B2_posmatched": {
+   "out_dir": "ckpts/train/lora_verifier_choicewhy_B2_posmatched",
+   "adapter_config": {
+    "alpha_pattern": {},
+    "auto_mapping": {
+     "base_model_class": "Qwen2_5_VLForConditionalGeneration",
+     "parent_library": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl"
+    },
+    "base_model_name_or_path": "lingshu-medical-mllm/Lingshu-7B",
+    "bias": "none",
+    "eva_config": null,
+    "exclude_modules": null,
+    "fan_in_fan_out": false,
+    "inference_mode": true,
+    "init_lora_weights": true,
+    "layer_replication": null,
+    "layers_pattern": null,
+    "layers_to_transform": null,
+    "loftq_config": {},
+    "lora_alpha": 32,
+    "lora_bias": false,
+    "lora_dropout": 0.05,
+    "megatron_config": null,
+    "megatron_core": "megatron.core",
+    "modules_to_save": null,
+    "peft_type": "LORA",
+    "r": 16,
+    "rank_pattern": {},
+    "revision": null,
+    "target_modules": [
+     "v_proj",
+     "k_proj",
+     "gate_proj",
+     "q_proj",
+     "o_proj",
+     "down_proj",
+     "up_proj"
+    ],
+    "task_type": null,
+    "use_dora": false,
+    "use_rslora": false
+   },
+   "program": "choicewhy Phase 2 -- MCQ (choice)(why) outcome verifier",
+   "arm": "B2_answer_first_forced",
+   "variant": "posmatched",
+   "examples_file": "data/choicewhy_mcq_split/verifier_examples_B2_answer_first_forced_posmatched.jsonl",
+   "n_train_examples": 10364,
+   "n_train_questions": 5770,
+   "n_train_images": 4173,
+   "per_source_examples": {
+    "vqa_rad_closed_train": 1383,
+    "pmc_vqa_train": 4382,
+    "pathvqa_closed_train": 2630,
+    "slake_closed_train": 1969
+   },
+   "pos_rate": 0.5783,
+   "pos_rate_per_source": {
+    "pathvqa_closed_train": 0.6517,
+    "pmc_vqa_train": 0.4092,
+    "slake_closed_train": 0.804,
+    "vqa_rad_closed_train": 0.6529
+   },
+   "reference_config": "ckpts/train/lora_verifier_disjoint (adapter_config.json + train_config.json)",
+   "skipped_examples": 0,
+   "steps": 5182,
+   "epochs": 1,
+   "bs": 2,
+   "accum": 8,
+   "lr": 0.0001,
+   "lora_r": 16,
+   "lora_alpha": 32,
+   "lora_dropout": 0.05,
+   "target_modules": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+   ],
+   "base_model": "lingshu-medical-mllm/Lingshu-7B",
+   "cap_div": 1,
+   "max_pixels": 1003520,
+   "seed": 0,
+   "verifier_prompt": "src/cascade_methods/choicewhy_common.py::VERIF_SYS + verifier_body (question + option block + proposed answer); identical in every arm",
+   "train_minutes": 91.5,
+   "early_stopped": false
+  }
+ },
+ "4b_hyperparameter_match_vs_reference": {
+  "reference": "ckpts/train/lora_verifier_disjoint",
+  "reference_adapter_config": {
+   "alpha_pattern": {},
+   "auto_mapping": {
+    "base_model_class": "Qwen2_5_VLForConditionalGeneration",
+    "parent_library": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl"
+   },
+   "base_model_name_or_path": "lingshu-medical-mllm/Lingshu-7B",
+   "bias": "none",
+   "eva_config": null,
+   "exclude_modules": null,
+   "fan_in_fan_out": false,
+   "inference_mode": true,
+   "init_lora_weights": true,
+   "layer_replication": null,
+   "layers_pattern": null,
+   "layers_to_transform": null,
+   "loftq_config": {},
+   "lora_alpha": 32,
+   "lora_bias": false,
+   "lora_dropout": 0.05,
+   "megatron_config": null,
+   "megatron_core": "megatron.core",
+   "modules_to_save": null,
+   "peft_type": "LORA",
+   "r": 16,
+   "rank_pattern": {},
+   "revision": null,
+   "target_modules": [
+    "k_proj",
+    "q_proj",
+    "up_proj",
+    "gate_proj",
+    "down_proj",
+    "v_proj",
+    "o_proj"
+   ],
+   "task_type": null,
+   "use_dora": false,
+   "use_rslora": false
+  },
+  "per_arm": {
+   "A": {
+    "lora_r": {
+     "reference": 16,
+     "this_run": 16,
+     "same": true
+    },
+    "lora_alpha": {
+     "reference": 32,
+     "this_run": 32,
+     "same": true
+    },
+    "lora_dropout": {
+     "reference": 0.05,
+     "this_run": 0.05,
+     "same": true
+    },
+    "target_modules": {
+     "reference": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "this_run": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "same": true
+    },
+    "lr": {
+     "reference": 0.0001,
+     "this_run": 0.0001,
+     "same": true
+    },
+    "bs": {
+     "reference": 2,
+     "this_run": 2,
+     "same": true
+    },
+    "accum": {
+     "reference": 8,
+     "this_run": 8,
+     "same": true
+    },
+    "epochs": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "base_model": {
+     "reference": "lingshu-medical-mllm/Lingshu-7B",
+     "this_run": "lingshu-medical-mllm/Lingshu-7B",
+     "same": true
+    },
+    "cap_div": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "max_pixels": {
+     "reference": 1003520,
+     "this_run": 1003520,
+     "same": true
+    },
+    "seed": {
+     "reference": 0,
+     "this_run": 0,
+     "same": true
+    }
+   },
+   "B2": {
+    "lora_r": {
+     "reference": 16,
+     "this_run": 16,
+     "same": true
+    },
+    "lora_alpha": {
+     "reference": 32,
+     "this_run": 32,
+     "same": true
+    },
+    "lora_dropout": {
+     "reference": 0.05,
+     "this_run": 0.05,
+     "same": true
+    },
+    "target_modules": {
+     "reference": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "this_run": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "same": true
+    },
+    "lr": {
+     "reference": 0.0001,
+     "this_run": 0.0001,
+     "same": true
+    },
+    "bs": {
+     "reference": 2,
+     "this_run": 2,
+     "same": true
+    },
+    "accum": {
+     "reference": 8,
+     "this_run": 8,
+     "same": true
+    },
+    "epochs": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "base_model": {
+     "reference": "lingshu-medical-mllm/Lingshu-7B",
+     "this_run": "lingshu-medical-mllm/Lingshu-7B",
+     "same": true
+    },
+    "cap_div": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "max_pixels": {
+     "reference": 1003520,
+     "this_run": 1003520,
+     "same": true
+    },
+    "seed": {
+     "reference": 0,
+     "this_run": 0,
+     "same": true
+    }
+   },
+   "B2_posmatched": {
+    "lora_r": {
+     "reference": 16,
+     "this_run": 16,
+     "same": true
+    },
+    "lora_alpha": {
+     "reference": 32,
+     "this_run": 32,
+     "same": true
+    },
+    "lora_dropout": {
+     "reference": 0.05,
+     "this_run": 0.05,
+     "same": true
+    },
+    "target_modules": {
+     "reference": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "this_run": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "same": true
+    },
+    "lr": {
+     "reference": 0.0001,
+     "this_run": 0.0001,
+     "same": true
+    },
+    "bs": {
+     "reference": 2,
+     "this_run": 2,
+     "same": true
+    },
+    "accum": {
+     "reference": 8,
+     "this_run": 8,
+     "same": true
+    },
+    "epochs": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "base_model": {
+     "reference": "lingshu-medical-mllm/Lingshu-7B",
+     "this_run": "lingshu-medical-mllm/Lingshu-7B",
+     "same": true
+    },
+    "cap_div": {
+     "reference": 1,
+     "this_run": 1,
+     "same": true
+    },
+    "max_pixels": {
+     "reference": 1003520,
+     "this_run": 1003520,
+     "same": true
+    },
+    "seed": {
+     "reference": 0,
+     "this_run": 0,
+     "same": true
+    }
+   }
+  }
+ },
+ "5_grader_audit_MEASURED": {
+  "purpose": "does substituting the free-text LLM judge for exact option-letter match change MCQ labels?",
+  "date": "2026-08-03",
+  "judge": "src/labeling/run_judge.py, MedVLThinker-32B-RL_m23k, JUDGE_SYS verbatim, temperature 0",
+  "readings": {
+   "optiontext": "model answer = the TEXT of the chosen option (isolates the grader)",
+   "full": "model answer = the candidate verbatim, justification included"
+  },
+  "cells": {
+   "eval_A_letter_only_full": {
+    "n": 600,
+    "agreement": 0.9967,
+    "exact_match_pos_rate": 0.5983,
+    "judge_pos_rate": 0.6017,
+    "judge_yes_exact_no": 2,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "MedXpert-Reasoning": 0.9859,
+     "MedXpert-Understanding": 0.9828,
+     "PMC-VQA": 1.0,
+     "SLAKE": 1.0,
+     "VQA-RAD": 1.0
+    }
+   },
+   "eval_A_letter_only_optiontext": {
+    "n": 600,
+    "agreement": 1.0,
+    "exact_match_pos_rate": 0.5983,
+    "judge_pos_rate": 0.5983,
+    "judge_yes_exact_no": 0,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "MedXpert-Reasoning": 1.0,
+     "MedXpert-Understanding": 1.0,
+     "PMC-VQA": 1.0,
+     "SLAKE": 1.0,
+     "VQA-RAD": 1.0
+    }
+   },
+   "eval_B2_answer_first_forced_full": {
+    "n": 600,
+    "agreement": 0.965,
+    "exact_match_pos_rate": 0.5767,
+    "judge_pos_rate": 0.555,
+    "judge_yes_exact_no": 4,
+    "judge_no_exact_yes": 17,
+    "per_bench_agreement": {
+     "MedXpert-Reasoning": 0.9437,
+     "MedXpert-Understanding": 0.9138,
+     "PMC-VQA": 0.9526,
+     "SLAKE": 0.9942,
+     "VQA-RAD": 0.9817
+    }
+   },
+   "eval_B2_answer_first_forced_optiontext": {
+    "n": 600,
+    "agreement": 0.9967,
+    "exact_match_pos_rate": 0.5767,
+    "judge_pos_rate": 0.58,
+    "judge_yes_exact_no": 2,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "MedXpert-Reasoning": 1.0,
+     "MedXpert-Understanding": 1.0,
+     "PMC-VQA": 0.9895,
+     "SLAKE": 1.0,
+     "VQA-RAD": 1.0
+    }
+   },
+   "train_A_letter_only_full": {
+    "n": 600,
+    "agreement": 0.9983,
+    "exact_match_pos_rate": 0.6833,
+    "judge_pos_rate": 0.685,
+    "judge_yes_exact_no": 1,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "pathvqa_closed_train": 1.0,
+     "pmc_vqa_train": 0.9955,
+     "slake_closed_train": 1.0,
+     "vqa_rad_closed_train": 1.0
+    }
+   },
+   "train_A_letter_only_optiontext": {
+    "n": 600,
+    "agreement": 0.9983,
+    "exact_match_pos_rate": 0.6833,
+    "judge_pos_rate": 0.685,
+    "judge_yes_exact_no": 1,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "pathvqa_closed_train": 1.0,
+     "pmc_vqa_train": 0.9955,
+     "slake_closed_train": 1.0,
+     "vqa_rad_closed_train": 1.0
+    }
+   },
+   "train_B2_answer_first_forced_full": {
+    "n": 600,
+    "agreement": 0.9817,
+    "exact_match_pos_rate": 0.67,
+    "judge_pos_rate": 0.6583,
+    "judge_yes_exact_no": 2,
+    "judge_no_exact_yes": 9,
+    "per_bench_agreement": {
+     "pathvqa_closed_train": 0.962,
+     "pmc_vqa_train": 0.9864,
+     "slake_closed_train": 0.9916,
+     "vqa_rad_closed_train": 1.0
+    }
+   },
+   "train_B2_answer_first_forced_optiontext": {
+    "n": 600,
+    "agreement": 0.9983,
+    "exact_match_pos_rate": 0.67,
+    "judge_pos_rate": 0.6717,
+    "judge_yes_exact_no": 1,
+    "judge_no_exact_yes": 0,
+    "per_bench_agreement": {
+     "pathvqa_closed_train": 1.0,
+     "pmc_vqa_train": 0.9955,
+     "slake_closed_train": 1.0,
+     "vqa_rad_closed_train": 1.0
+    }
+   }
+  }
+ }
+}
