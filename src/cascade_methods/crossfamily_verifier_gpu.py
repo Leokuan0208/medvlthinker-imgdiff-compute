@@ -77,6 +77,9 @@ def main():
     ap.add_argument("--chunk", type=int, default=256)
     ap.add_argument("--no_system", action="store_true",
                     help="family has no system role: prepend VERIFY_SYS to the user text instead")
+    ap.add_argument("--content_format", default="auto", choices=["auto", "string", "openai"],
+                    help="vLLM chat_template_content_format. InternVL-family templates concatenate "
+                         "content as a plain string and MUST use 'string'; Qwen-VL works with 'auto'.")
     A = ap.parse_args()
     if os.environ.get("CROSSFAM_GPU_OK") != "1":
         sys.exit("[REFUSED] set CROSSFAM_GPU_OK=1 to run the cross-family verifier GPU pass.")
@@ -135,8 +138,10 @@ def main():
         pn = max((math.exp(v.logprob) for t, v in lps.items() if t in NO), default=0.0)
         return (round(py / (py + pn), 6) if (py + pn) > 0 else None)
 
+    kw = {} if A.content_format == "auto" else {"chat_template_content_format": A.content_format}
     fh = open(outp, "a")
     B = A.chunk
+    n_scored = n_none = 0
     for c0 in range(0, len(todo), B):
         block = todo[c0:c0 + B]
         convs, span = [], []
@@ -149,22 +154,28 @@ def main():
                 convs.append(build(r["question"], raw, uri))
             span.append((r, [u[0] for u in uniq]))
         try:
-            outs = llm.chat(convs, sp, use_tqdm=False)
+            outs = llm.chat(convs, sp, use_tqdm=False, **kw)
         except Exception as e:
             print(f"   chunk failed ({str(e)[:160]}); one-by-one", flush=True)
             outs = []
             for cv in convs:
-                try: outs.append(llm.chat([cv], sp, use_tqdm=False)[0])
+                try: outs.append(llm.chat([cv], sp, use_tqdm=False, **kw)[0])
                 except Exception as e2:
                     print(f"     skip: {str(e2)[:90]}", flush=True); outs.append(None)
         pos = 0
         for (r, keys) in span:
             ps = outs[pos:pos + len(keys)]; pos += len(keys)
             scores = {k: (p_yes(o) if o is not None else None) for k, o in zip(keys, ps)}
+            n_scored += len(scores); n_none += sum(1 for v in scores.values() if v is None)
             fh.write(json.dumps({"idx": r["idx"], "n_distinct": len(keys),
                                  "pool_size": len(r["preds"]), "scores_by_answer": scores}) + "\n")
         fh.flush()
-        print(f"   [{min(c0 + B, len(todo))}/{len(todo)} questions]", flush=True)
+        print(f"   [{min(c0 + B, len(todo))}/{len(todo)} questions] null_scores={n_none}/{n_scored}", flush=True)
+        # fail loudly on a silently-broken chat template rather than writing a file of Nones
+        if n_none == n_scored and n_scored > 0:
+            fh.close()
+            sys.exit(f"[ABORT] {A.tag}/{A.dataset}: every score is null after the first chunk "
+                     f"(broken chat template / Yes-No ids?). Try --content_format string or --no_system.")
     fh.close()
     print(f"[{A.tag}] {A.dataset} DONE -> {outp}", flush=True)
 

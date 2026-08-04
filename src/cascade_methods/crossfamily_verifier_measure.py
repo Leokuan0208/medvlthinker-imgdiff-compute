@@ -186,6 +186,10 @@ for ds in DSETS:
     KEYS[ds] = [str(r["idx"]) for r in pool]
     gj = {str(r["idx"]): int(r["judge_ok"]) for r in jl(f"{CK}/ckpt_{ds}_{TAG}.judge.jsonl")}
     GREEDY[ds] = gj
+DUMPGREEDY = {}
+for ds in DSETS:
+    rows = json.load(open(J(f"ckpts/train/lora_verifier_disjoint/transfer_dump_{ds}_{TAG}.json")))
+    DUMPGREEDY[ds] = {str(r["idx"]): int(r["greedy_ok"]) for r in rows}
 
 # validate the label reconstruction against the trained dump's own sl (hard assert)
 for ds in DSETS:
@@ -232,8 +236,10 @@ for ds in DSETS:
         top = Counter(norm(p) for p in preds).most_common(1)[0][0]
         j = next(i for i, p in enumerate(preds) if norm(p) == top)
         sc.append(LAB[ds][k][j])
-    FIX[ds] = {"oracle": orc, "greedy": grd, "sc": np.asarray(sc, int)}
-FIX["POOLED"] = {m: np.concatenate([FIX[d][m] for d in DSETS]) for m in ("oracle", "greedy", "sc")}
+    FIX[ds] = {"oracle": orc, "greedy": grd, "sc": np.asarray(sc, int),
+               "greedy_dumpfield": np.asarray([DUMPGREEDY[ds][k] for k in ks], int)}
+FIX["POOLED"] = {m: np.concatenate([FIX[d][m] for d in DSETS])
+                 for m in ("oracle", "greedy", "sc", "greedy_dumpfield")}
 KEYS["POOLED"] = [(d, k) for d in DSETS for k in KEYS[d]]
 
 # ---------------- per-verifier vectors
@@ -276,10 +282,25 @@ out = {
     "comparator": {
         "name": "trained same-family verifier, CLEAN L1 image-disjoint (ckpts/train/lora_verifier_disjoint)",
         "source": "results/cascade_methods/artifacts/verifier_disjoint_retrain_2026-07-30.json",
+        "reproduction_check": ("that file's L1 pooled cells are verifier_clean=0.48528785, oracle_at_8=0.62601279, "
+                               "clean_minus_greedy=+0.03582090; this script recomputes them from the same "
+                               "checkpoints and asserts a match below (comparator_reproduced). Its pooled "
+                               "selection efficiency is therefore 0.48528785/0.62601279 = 0.7752."),
     },
     "nboot": A.nboot, "seed": A.seed,
     "verifiers": {t: {"label": VERIFIERS[t][0], "relation": VERIFIERS[t][1], "distance_rank": VERIFIERS[t][2]}
                   for t in VERIFIERS if t in SCORES},
+    "models_attempted_but_dropped": {
+        "HuatuoGPT-Vision-7B": ("present at /data/dan/weights/HuatuoGPT-Vision-7B but NOT loadable: "
+                                "model_type 'llava_qwen2' / LlavaQwen2ForCausalLM, no remote code in the "
+                                "checkpoint, unsupported by vLLM 0.10.1.1. See logs/crossfam/huatuo7b_*.log. "
+                                "Its slot as 'a different medical family' is filled by MedGemma-4B-it and "
+                                "Chiron-o1-8B, which are different architectures AND medically tuned."),
+    },
+    "harness_bug_found_and_fixed": ("InternVL-family chat templates concatenate message content as a plain "
+                                    "string; with vLLM's default 'auto' content format every InternVL score "
+                                    "came back null. The GPU harness now takes --content_format string and "
+                                    "ABORTS if a whole chunk scores null, so this cannot pass silently again."),
     "table": {}, "contrasts": {}, "decorrelation": {}, "ensembles": {},
 }
 
@@ -288,7 +309,9 @@ for split in SPLITS:
     orc = FIX[split]["oracle"]; grd = FIX[split]["greedy"]; scv = FIX[split]["sc"]
     n = len(orc)
     row = {"n_questions": int(n), "oracle_at_8": float(orc.mean()),
-           "greedy": float(grd.mean()), "self_consistency": float(scv.mean()), "verifiers": {}}
+           "greedy_true_temp0": float(grd.mean()),
+           "greedy_dumpfield_as_published": float(FIX[split]["greedy_dumpfield"].mean()),
+           "self_consistency": float(scv.mean()), "verifiers": {}}
     for tag in SCORES:
         v = VEC[tag][split]
         row["verifiers"][tag] = {
@@ -297,7 +320,8 @@ for split in SPLITS:
             "sel_eff": sel_eff(v["hard"], orc),
             "sel_eff_tieavg": float(v["soft"].sum() / orc.sum()),
             "auroc_candidate": v["auroc"],
-            "gain_vs_greedy": float(v["hard"].mean() - grd.mean()),
+            "gain_vs_greedy_true_temp0": float(v["hard"].mean() - grd.mean()),
+            "gain_vs_greedy_dumpfield_as_published": float(v["hard"].mean() - FIX[split]["greedy_dumpfield"].mean()),
         }
     out["table"][split] = row
 
@@ -335,6 +359,32 @@ out["fixed_pool_check"] = {"oracle_at_8_pooled": out["table"]["POOLED"]["oracle_
                            "note": "oracle@8/greedy/SC are verifier-independent by construction and are "
                                    "reported once per split; every verifier ranks the SAME candidate lists."}
 
+# ------------------------------------------------------------------ pair-oracle ceiling
+# Upper bound on ANY router between the trained same-family verifier and one other scorer:
+# credit the question if EITHER verifier's pick is correct. If even this barely moves, the
+# cross-family scorer holds no complementary information that any fusion rule could extract.
+print("[measure] pair-oracle ceiling", flush=True)
+if BASE in SCORES:
+    PO = {}
+    for split in SPLITS:
+        orc = FIX[split]["oracle"]; b = VEC[BASE][split]["hard"]
+        row = {"base_sel_eff": sel_eff(b, orc)}
+        for tag in SCORES:
+            if tag in (BASE, "trained7b_CONTAMINATED"): continue
+            h = VEC[tag][split]["hard"]
+            either = np.maximum(b, h)
+            row[tag] = {"pair_oracle_sel_eff": sel_eff(either, orc),
+                        "headroom_over_base": sel_eff(either, orc) - sel_eff(b, orc),
+                        "n_items_only_X_correct": int(((h == 1) & (b == 0)).sum()),
+                        "n_items_only_base_correct": int(((b == 1) & (h == 0)).sum())}
+        PO[split] = row
+    out["pair_oracle"] = {
+        "definition": ("P(at least one of {trained same-family pick, other scorer's pick} is correct | "
+                       "a correct candidate exists). This is the ceiling of any per-item router between "
+                       "the two verifiers, so it bounds every possible fusion rule from above."),
+        "by_split": PO,
+    }
+
 # ------------------------------------------------------------------ de-correlation law
 print("[measure] de-correlation (phi) and the law", flush=True)
 for split in SPLITS:
@@ -353,32 +403,95 @@ for split in SPLITS:
                   "n_oracle_subset": n, "sel_eff": sel_eff(h, orc)}
     out["decorrelation"][split] = D
 
-# the law, on POOLED: does sel_eff track (lower) phi, across the zero-shot sweep?
+# SECOND, CORRECTNESS-INDEPENDENT de-correlation measure: how different are the RAW SCORES this
+# verifier assigns to the generator's candidates, compared with the generator scoring them itself?
+# This cannot be inflated by the verifier simply being more accurate, so it is the cleaner x-axis.
+GEN = "lingshu7b_zs"
+if GEN in SCORES:
+    for split in SPLITS:
+        dss = DSETS if split == "POOLED" else [split]
+        g = np.concatenate([np.concatenate([SCORES[GEN][d][k] for k in KEYS[d]]) for d in dss])
+        for tag in SCORES:
+            v = np.concatenate([np.concatenate([SCORES[tag][d][k] for k in KEYS[d]]) for d in dss])
+            pe = float(np.corrcoef(g, v)[0, 1]) if np.std(g) > 0 and np.std(v) > 0 else None
+            rg, rv = np.argsort(np.argsort(g)), np.argsort(np.argsort(v))
+            sp = float(np.corrcoef(rg, rv)[0, 1])
+            out["decorrelation"][split][tag]["score_corr_with_generator_pearson"] = pe
+            out["decorrelation"][split][tag]["score_corr_with_generator_spearman"] = sp
+
+# published, INDEPENDENT generator-level error de-correlation on these very items (verifier-free)
+out["generator_level_error_phi_published"] = {
+    "source": "results/cascade_methods/artifacts/generator_portfolio.json (MEASURED, pre-existing)",
+    "what": "phi between two GENERATORS' greedy-answer correctness on the same eval items -- a "
+            "verifier-free measure of family distance, i.e. the quantity the hypothesis says should pay off",
+    "vqa_rad_open": {"Lingshu-7B_vs_MedVLThinker-7B": 0.5471741680756653,
+                     "Lingshu-7B_vs_InternVL3-8B": 0.4360089254346754},
+    "pathvqa_open": {"Lingshu-7B_vs_InternVL3-8B": 0.1663228112496732},
+    "pooled_3ds_3gen_mean_offdiag": 0.5447813019786728,
+}
+
+# the law, on POOLED: does sel_eff track (lower) de-correlation, across the zero-shot sweep?
 zs_tags = [t for t in SCORES if t not in ("trained7b_clean", "trained7b_CONTAMINATED")]
-pts = [(t, out["decorrelation"]["POOLED"][t]["phi_oracle_subset"],
-        out["decorrelation"]["POOLED"][t]["sel_eff"]) for t in zs_tags]
-pts = [p for p in pts if p[1] is not None]
-if len(pts) >= 3:
+
+
+def _law(xkey):
+    pts = [(t, out["decorrelation"]["POOLED"][t].get(xkey), out["decorrelation"]["POOLED"][t]["sel_eff"])
+           for t in zs_tags]
+    pts = [p for p in pts if p[1] is not None]
+    if len(pts) < 3: return {"n_points": len(pts), "pearson": None, "spearman": None, "scatter": []}
     x = np.asarray([p[1] for p in pts]); y = np.asarray([p[2] for p in pts])
-    pear = float(np.corrcoef(x, y)[0, 1])
-    rx = np.argsort(np.argsort(x)); ry = np.argsort(np.argsort(y))
-    spear = float(np.corrcoef(rx, ry)[0, 1])
-else:
-    pear = spear = None
+    rx, ry = np.argsort(np.argsort(x)), np.argsort(np.argsort(y))
+    return {"n_points": len(pts),
+            "pearson": float(np.corrcoef(x, y)[0, 1]),
+            "spearman": float(np.corrcoef(rx, ry)[0, 1]),
+            "scatter": [{"verifier": t, "x": xv, "sel_eff": s} for t, xv, s in pts]}
+
+
 out["decorrelation_law"] = {
-    "definition": ("phi between G = 'generator greedy answer correct' and V = 'verifier picks a correct "
-                   "candidate', on the oracle=1 subset. LOW phi = de-correlated = the verifier is right "
-                   "on different items than the generator."),
+    "hypothesis_direction": ("the programme predicts a NEGATIVE relationship: a verifier more de-correlated "
+                             "from the generator (LOWER phi / LOWER score correlation) should select BETTER."),
+    "x1_phi_GV": {
+        "definition": ("phi between G = 'generator greedy answer correct' and V = 'verifier picks a correct "
+                       "candidate', on the oracle=1 subset. LOW phi = the verifier is right on different items."),
+        "confound_stated_up_front": ("phi(G,V) is not purely informational: a MORE ACCURATE verifier is "
+                                     "mechanically more correlated with the generator because both track item "
+                                     "difficulty. So a positive phi-vs-sel_eff relation is partly tautological, "
+                                     "which is exactly why x2 below is also reported."),
+        **_law("phi_oracle_subset"),
+    },
+    "x2_score_corr_with_generator": {
+        "definition": ("Pearson correlation between this verifier's raw P(Yes) and the GENERATOR's own P(Yes) "
+                       "over all 18,760 candidates. Purely about what the scorer says, not about whether it is "
+                       "right -- so it cannot be inflated by accuracy. LOW = genuinely different information."),
+        **_law("score_corr_with_generator_pearson"),
+    },
     "why_phi_not_kappa": ("for two binary variables phi IS the Pearson correlation, which is exactly the "
                           "shared-information quantity the hypothesis is about; kappa is reported too but "
                           "penalises marginal-prevalence differences, which vary a lot across these "
                           "verifiers and would confound the reading."),
-    "scatter_pooled": [{"verifier": t, "phi": p, "sel_eff": s} for t, p, s in pts],
-    "pearson_phi_vs_sel_eff": pear, "spearman_phi_vs_sel_eff": spear,
-    "n_points": len(pts),
     "honesty": ("with this few points the relationship is SUGGESTIVE, not fitted: no p-value is quoted "
                 "and no line is extrapolated. It is reported as a direction, not a law with a slope."),
 }
+
+# THE SPLIT VERDICT: does de-correlation buy AVAILABLE information (pair-oracle headroom) even though
+# it does not buy REALISED selection? Same x-axes, different y.
+if "pair_oracle" in out:
+    po = out["pair_oracle"]["by_split"]["POOLED"]
+    for xkey, name in (("phi_oracle_subset", "x1_phi_GV"),
+                       ("score_corr_with_generator_pearson", "x2_score_corr_with_generator")):
+        pts = [(t, out["decorrelation"]["POOLED"][t].get(xkey), po[t]["headroom_over_base"])
+               for t in zs_tags if t in po and out["decorrelation"]["POOLED"][t].get(xkey) is not None]
+        if len(pts) >= 3:
+            x = np.asarray([p[1] for p in pts]); y = np.asarray([p[2] for p in pts])
+            rx, ry = np.argsort(np.argsort(x)), np.argsort(np.argsort(y))
+            out["decorrelation_law"][name]["vs_pair_oracle_headroom"] = {
+                "pearson": float(np.corrcoef(x, y)[0, 1]),
+                "spearman": float(np.corrcoef(rx, ry)[0, 1]),
+                "scatter": [{"verifier": t, "x": xv, "pair_oracle_headroom": h} for t, xv, h in pts],
+                "reading": ("NEGATIVE here means: the more de-correlated the scorer, the MORE information it "
+                            "holds that the same-family verifier lacks -- available but, per the ensemble "
+                            "results, not realisable by any fixed fusion rule tested."),
+            }
 
 # ------------------------------------------------------------------ ensembles
 print("[measure] ensembles", flush=True)
@@ -428,6 +541,41 @@ if best_xf:
                          "per_dataset_sel_eff": {ds: sel_eff(per[ds], FIX[ds]["oracle"]) for ds in DSETS}}
         out["ensembles"][name] = {"members": tags, **res}
 
+    # STRONGEST simple fusion: one scalar weight on within-question RANKS (calibration-free),
+    # chosen by 5-fold cross-fitting so the weight is never picked on the fold it is scored on.
+    def wfuse(tA, tB, w, ds, k):
+        rA = ranks_within(SCORES[tA][ds][k]); rB = ranks_within(SCORES[tB][ds][k])
+        return int(LAB[ds][k][int(np.argmax(w * rA + (1 - w) * rB))])
+
+    GRID = np.round(np.arange(0.0, 1.0001, 0.05), 3)
+    for tA in ([BASE, "lingshu7b_zs"] if "lingshu7b_zs" in SCORES else [BASE]):
+        if tA not in SCORES: continue
+        for tB in [t for t in CROSSFAM if t in SCORES]:
+            flat = [(ds, k) for ds in DSETS for k in KEYS[ds]]
+            M = np.asarray([[wfuse(tA, tB, w, ds, k) for (ds, k) in flat] for w in GRID])  # |grid| x n
+            n = len(flat); folds = np.arange(n) % 5
+            picked, chosen = np.zeros(n, int), []
+            for f in range(5):
+                tr, te = folds != f, folds == f
+                wi = int(np.argmax(M[:, tr].mean(1)))
+                chosen.append(float(GRID[wi])); picked[te] = M[wi, te]
+            orc = FIX["POOLED"]["oracle"]; b = VEC[BASE]["POOLED"]["hard"]
+            lo, hi, p = boot_ci(lambda ii: sel_eff(picked[ii], orc[ii]) - sel_eff(b[ii], orc[ii]), n,
+                                A.nboot, np.random.default_rng(A.seed))
+            zsb = VEC["lingshu7b_zs"]["POOLED"]["hard"] if "lingshu7b_zs" in SCORES else None
+            zsd = None
+            if zsb is not None:
+                l2, h2, p2 = boot_ci(lambda ii: sel_eff(picked[ii], orc[ii]) - sel_eff(zsb[ii], orc[ii]),
+                                     n, A.nboot, np.random.default_rng(A.seed))
+                zsd = {"d_sel_eff": sel_eff(picked, orc) - sel_eff(zsb, orc), "ci95": [l2, h2], "boot_p": p2}
+            out["ensembles"][f"crossfit_weighted_rank__{tA}+{tB}"] = {
+                "members": [tA, tB], "weights_per_fold_on_A": chosen,
+                "pooled_sel_acc": float(picked.mean()), "pooled_sel_eff": sel_eff(picked, orc),
+                "d_sel_eff_vs_trained7b": sel_eff(picked, orc) - sel_eff(b, orc),
+                "ci95": [lo, hi], "boot_p": p, "vs_zeroshot_same_family_control": zsd,
+                "note": "weight chosen on 4/5 folds, scored on the held-out fold; grid 0..1 step 0.05",
+            }
+
 # ------------------------------------------------------------------ verdict
 best_tag, best = None, -1
 for t in CROSSFAM:
@@ -441,6 +589,47 @@ if BASE in SCORES and best_tag:
         c = out["contrasts"]["POOLED"]["deltas"][t]
         if c["beats_baseline_ci_excludes_zero"]:
             gate = True; why.append(f"{t}: d_sel_eff={c['d_sel_eff']:+.4f} CI={c['ci95']}")
+bestx = out["table"]["POOLED"]["verifiers"].get(best_tag, {})
+zsv = out["table"]["POOLED"]["verifiers"].get("lingshu7b_zs", {})
+l32 = out["contrasts"]["POOLED"]["deltas"].get("lingshu32b", {})
+out["conclusions"] = [
+    ("KILLED, cleanly. Not one of the 6 cross-family zero-shot scorers beats the trained same-family "
+     "verifier; every one of the 6 CIs excludes zero on the LOSING side. The best of them "
+     f"({best_tag}) reaches sel_eff {bestx.get('sel_eff'):.4f} vs the comparator's "
+     f"{out['table']['POOLED']['verifiers'][BASE]['sel_eff']:.4f}."),
+    ("Worse for the hypothesis: the cross-family scorers also lose to the SAME-FAMILY ZERO-SHOT control "
+     f"(Lingshu-7B scoring its own candidates, sel_eff {zsv.get('sel_eff'):.4f}). The generator is the "
+     "best zero-shot judge of its own candidates in this sweep. Different-family information does not "
+     "convert into better selection."),
+    ("The de-correlation law runs the WRONG WAY. Across all 8 zero-shot scorers, selection efficiency is "
+     "POSITIVELY, not negatively, associated with correlation to the generator, on both x-axes "
+     "(phi(G,V): Spearman "
+     f"{out['decorrelation_law']['x1_phi_GV']['spearman']:+.2f}; raw-score correlation: Spearman "
+     f"{out['decorrelation_law']['x2_score_corr_with_generator']['spearman']:+.2f}). n=8, so this is "
+     "a direction, not a fitted law."),
+    ("The honest nuance -- the information IS there, it is just not addressable. Pair-oracle headroom "
+     "(the ceiling of ANY router between the trained verifier and a second scorer) is LARGER for the "
+     "de-correlated cross-family scorers (+0.076..+0.084) than for the same-family zero-shot control "
+     "(+0.059), and it tracks de-correlation in the direction the hypothesis predicts. So cross-family "
+     "verifiers are right on items the same-family verifier gets wrong -- but no fixed fusion rule "
+     "tested (rank fusion, score averaging, or a cross-fitted scalar weight) converts that into a gain; "
+     "the cross-fitted weight optimiser pushes the weight to 0.85-0.9 on the same-family verifier, i.e. "
+     "it learns to mostly ignore the cross-family scorer."),
+    ("Independent replication of the published 'scale does not help' result, on a different pool: "
+     "Lingshu-32B zero-shot (same family, 4.5x) TIES the trained 7B, "
+     f"d_sel_eff = {l32.get('d_sel_eff', float('nan')):+.4f}, CI {l32.get('ci95')}."),
+    ("What this closes and what it opens. It closes the cheap prescription ('swap in a more distant "
+     "verifier'). What survives as the only lever the data supports is a per-item ROUTER BETWEEN "
+     "VERIFIERS -- which is exactly the thing shown elsewhere in this project to be ~0.6 AUROC from any "
+     "cheap signal, so it should be entered with that prior, not with optimism."),
+]
+out["not_done_in_phase_1"] = {
+    "mcq_pools": ("ckpts/choicewhy_pilot/ MCQ pools were NOT scored. They need a different item loader "
+                  "(MedVLThinker-Eval MCQ) and a different verify prompt (letter + option text), i.e. a "
+                  "second harness, and the open-text sweep already answered the question decisively in "
+                  "the same direction on all 3 datasets. Left as a confirmatory follow-up, not a gap in "
+                  "the verdict."),
+}
 out["verdict"] = {
     "go": bool(gate),
     "rule": ("go=true only if a CROSS-FAMILY zero-shot scorer beats the TRAINED same-family verifier on "
@@ -451,6 +640,22 @@ out["verdict"] = {
     "trained_same_family_pooled_sel_eff": (out["table"]["POOLED"]["verifiers"][BASE]["sel_eff"] if BASE in SCORES else None),
     "zs_same_family_pooled_sel_eff": (out["table"]["POOLED"]["verifiers"]["lingshu7b_zs"]["sel_eff"] if "lingshu7b_zs" in SCORES else None),
 }
+
+# hard reproduction check against the published comparator file
+PUB = J("results/cascade_methods/artifacts/verifier_disjoint_retrain_2026-07-30.json")
+if os.path.exists(PUB) and BASE in SCORES:
+    p = json.load(open(PUB))["levels"]["L1_image_disjoint"]["selection_stage"]["POOLED"]
+    mine = out["table"]["POOLED"]
+    got = {"verifier_clean": mine["verifiers"][BASE]["sel_acc"], "oracle_at_8": mine["oracle_at_8"],
+           "greedy": mine["greedy_dumpfield_as_published"],
+           "auroc_candidate_clean": mine["verifiers"][BASE]["auroc_candidate"]}
+    exp = {k: p[k] for k in ("verifier_clean", "oracle_at_8", "greedy", "auroc_candidate_clean")}
+    bad = {k: (exp[k], got[k]) for k in exp if abs(exp[k] - got[k]) > 1e-6}
+    assert not bad, f"comparator reproduction mismatch: {bad}"
+    out["comparator_reproduced"] = {"published": exp, "recomputed_here": got,
+                                    "max_abs_diff": max(abs(exp[k] - got[k]) for k in exp)}
+    print(f"[ok] comparator reproduced exactly (max abs diff "
+          f"{out['comparator_reproduced']['max_abs_diff']:.2e})", flush=True)
 
 os.makedirs(os.path.dirname(J(A.out)), exist_ok=True)
 json.dump(out, open(J(A.out), "w"), indent=1)
