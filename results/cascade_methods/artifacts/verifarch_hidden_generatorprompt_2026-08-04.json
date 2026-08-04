@@ -1,0 +1,652 @@
+{
+ "what": "Discriminative heads over the GENERATOR'S OWN hidden states as a non-generative verifier for best-of-8 open-text selection.",
+ "date": "2026-08-04",
+ "nboot": 10000,
+ "seed": 0,
+ "null_test": {
+  "protocol": "harness pointed at the incumbent's own stored per-candidate scores (ckpts/train/lora_verifier_disjoint/transfer_dump_*.json); pick = argmax over the 8 slots of the stored (5-dp-rounded) scores, first-index tie-break.",
+  "measured": {
+   "n": 2345,
+   "oracle@8": 0.626013,
+   "selected_acc": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592
+  },
+  "published": {
+   "n": 2345,
+   "oracle@8": 0.626013,
+   "selected_acc": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.8856
+  },
+  "tolerance": {
+   "oracle@8": 0.0,
+   "selected_acc": 0.0,
+   "greedy": 0.0,
+   "sel_eff": 0.0,
+   "cand_auroc": 8e-06
+  },
+  "note": "the stored 'pick' field disagrees with argmax on 26/2345 items (exact score ties from 5-dp rounding); using stored pick gives sel_eff 0.774523. The +-0.0007 tie-break sensitivity is reported so it is not mistaken for an effect."
+ },
+ "controls": {
+  "greedy": 0.449467,
+  "random_pick": {
+   "acc": 0.423348,
+   "sel_eff": 0.67626
+  },
+  "self_consistency": {
+   "acc": 0.446908,
+   "sel_eff": 0.713896,
+   "contested_sel_eff": 0.541485
+  },
+  "oracle@8": 0.626013,
+  "incumbent_lora_verifier": {
+   "acc": 0.485288,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "contested": {
+    "n": 916,
+    "sel_eff": 0.639738,
+    "unanimous_n": 552
+   }
+  }
+ },
+ "arms": {
+  "generator": {
+   "cv_grid": [
+    {
+     "layer": 7,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7733029322847568,
+     "cv_sel_eff": 0.5986275287965026
+    },
+    {
+     "layer": 7,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7662882004450464,
+     "cv_sel_eff": 0.6025427434473338
+    },
+    {
+     "layer": 14,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8037085248506678,
+     "cv_sel_eff": 0.6298156862182688
+    },
+    {
+     "layer": 14,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8041405550903434,
+     "cv_sel_eff": 0.6336165686229341
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8228616512683162,
+     "cv_sel_eff": 0.6489092215992864
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8223306451502328,
+     "cv_sel_eff": 0.6642563058730959
+    },
+    {
+     "layer": 28,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8093378998006673,
+     "cv_sel_eff": 0.6495435734208191
+    },
+    {
+     "layer": 28,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8006979269257173,
+     "cv_sel_eff": 0.6473335869292485
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8223306451502328,
+     "cv_sel_eff": 0.6642563058730959
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.8055952786074385,
+     "cv_sel_eff": 0.6426732903597207
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.6973712987239923,
+     "cv_sel_eff": 0.6614504624447914
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.6748040782346054,
+     "cv_sel_eff": 0.6512801388341777
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.711890663449507,
+     "cv_sel_eff": 0.6662633291239584
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.6834630490420157,
+     "cv_sel_eff": 0.6596198763854099
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7124669899257328,
+     "cv_sel_eff": 0.6656191214730006
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 256,
+     "wd": 0.01,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7255968463655258,
+     "cv_sel_eff": 0.6784561093646115
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 256,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7140860133760212,
+     "cv_sel_eff": 0.6781046265236148
+    }
+   ],
+   "cv_protocol": "5-fold grouped CV inside the disjoint training pool; folds assigned by md5(decoded-RGB image hash) % 5 so folds are image-disjoint. Stage 1 selects layer x pooling with a linear pointwise head; stage 2 sweeps objective x set-relativity at that representation; stage 3 sweeps capacity (hidden) x weight decay at the stage-2 winner. Selection criterion is CV within-question selection efficiency. Eval is never used for any selection; the selected config is then refit on the full training pool.",
+   "cv_selected": {
+    "layer": 21,
+    "pooling": "span",
+    "objective": "bt",
+    "hidden": 256,
+    "wd": 0.01,
+    "setrel": 0,
+    "epochs": 30,
+    "cv_auroc": 0.7255968463655258,
+    "cv_sel_eff": 0.6784561093646115
+   },
+   "eval": {
+    "cv_selected": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.498081,
+     "sel_eff": 0.79564,
+     "cand_auroc": 0.677641,
+     "per_ds": {
+      "slake_open": 0.871252,
+      "vqa_rad_open": 0.761905,
+      "pathvqa_open": 0.745806
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.672489,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.020436,
+      "d_sel_eff_ci": [
+       -0.001362,
+       0.041553
+      ],
+      "d_acc": 0.012793,
+      "d_acc_ci": [
+       -0.000426,
+       0.026439
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.081744,
+      "d_sel_eff_ci": [
+       0.057902,
+       0.106267
+      ],
+      "d_acc": 0.051173,
+      "d_acc_ci": [
+       0.035394,
+       0.066525
+      ]
+     }
+    },
+    "objective_bce": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.502345,
+     "sel_eff": 0.802452,
+     "cand_auroc": 0.904078,
+     "per_ds": {
+      "slake_open": 0.888889,
+      "vqa_rad_open": 0.738095,
+      "pathvqa_open": 0.749677
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.683406,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.027248,
+      "d_sel_eff_ci": [
+       0.00545,
+       0.048365
+      ],
+      "d_acc": 0.017058,
+      "d_acc_ci": [
+       0.003412,
+       0.030704
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.088556,
+      "d_sel_eff_ci": [
+       0.064033,
+       0.112398
+      ],
+      "d_acc": 0.055437,
+      "d_acc_ci": [
+       0.039659,
+       0.070789
+      ]
+     }
+    },
+    "objective_listwise": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "listwise",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.495522,
+     "sel_eff": 0.791553,
+     "cand_auroc": 0.661332,
+     "per_ds": {
+      "slake_open": 0.883598,
+      "vqa_rad_open": 0.753968,
+      "pathvqa_open": 0.730323
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.665939,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.016349,
+      "d_sel_eff_ci": [
+       -0.006131,
+       0.038147
+      ],
+      "d_acc": 0.010235,
+      "d_acc_ci": [
+       -0.003412,
+       0.024307
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.077657,
+      "d_sel_eff_ci": [
+       0.053815,
+       0.101499
+      ],
+      "d_acc": 0.048614,
+      "d_acc_ci": [
+       0.032836,
+       0.063966
+      ]
+     }
+    },
+    "layer_7": {
+     "config": {
+      "layer": 7,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.476759,
+     "sel_eff": 0.76158,
+     "cand_auroc": 0.649884,
+     "per_ds": {
+      "slake_open": 0.844797,
+      "vqa_rad_open": 0.746032,
+      "pathvqa_open": 0.703226
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.617904,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": -0.013624,
+      "d_sel_eff_ci": [
+       -0.038147,
+       0.010899
+      ],
+      "d_acc": -0.008529,
+      "d_acc_ci": [
+       -0.024307,
+       0.006823
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.047684,
+      "d_sel_eff_ci": [
+       0.02248,
+       0.072888
+      ],
+      "d_acc": 0.029851,
+      "d_acc_ci": [
+       0.013646,
+       0.046055
+      ]
+     }
+    },
+    "layer_14": {
+     "config": {
+      "layer": 14,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.485288,
+     "sel_eff": 0.775204,
+     "cand_auroc": 0.666113,
+     "per_ds": {
+      "slake_open": 0.87478,
+      "vqa_rad_open": 0.706349,
+      "pathvqa_open": 0.713548
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.639738,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.0,
+      "d_sel_eff_ci": [
+       -0.02248,
+       0.02248
+      ],
+      "d_acc": 0.0,
+      "d_acc_ci": [
+       -0.014072,
+       0.014072
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.061308,
+      "d_sel_eff_ci": [
+       0.037466,
+       0.08515
+      ],
+      "d_acc": 0.03838,
+      "d_acc_ci": [
+       0.023454,
+       0.053731
+      ]
+     }
+    },
+    "layer_28": {
+     "config": {
+      "layer": 28,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.495522,
+     "sel_eff": 0.791553,
+     "cand_auroc": 0.810329,
+     "per_ds": {
+      "slake_open": 0.873016,
+      "vqa_rad_open": 0.777778,
+      "pathvqa_open": 0.734194
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.665939,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.016349,
+      "d_sel_eff_ci": [
+       -0.006131,
+       0.038828
+      ],
+      "d_acc": 0.010235,
+      "d_acc_ci": [
+       -0.003838,
+       0.023891
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.077657,
+      "d_sel_eff_ci": [
+       0.054496,
+       0.101499
+      ],
+      "d_acc": 0.048614,
+      "d_acc_ci": [
+       0.033678,
+       0.063113
+      ]
+     }
+    },
+    "per_benchmark_heads": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.502345,
+     "sel_eff": 0.802452,
+     "cand_auroc": 0.707486,
+     "per_ds": {
+      "slake_open": 0.881834,
+      "vqa_rad_open": 0.785714,
+      "pathvqa_open": 0.747097
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.683406,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.027248,
+      "d_sel_eff_ci": [
+       0.006131,
+       0.048365
+      ],
+      "d_acc": 0.017058,
+      "d_acc_ci": [
+       0.003838,
+       0.030277
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.088556,
+      "d_sel_eff_ci": [
+       0.063351,
+       0.113079
+      ],
+      "d_acc": 0.055437,
+      "d_acc_ci": [
+       0.039659,
+       0.070789
+      ]
+     },
+     "note": "one head per eval benchmark, trained only on that benchmark's own image-disjoint train pool (slake_open_train / vqa_rad_open_train / pathvqa_open_train). Same CV-selected architecture; the pooled figure is the concatenation."
+    }
+   },
+   "complementarity": {
+    "spearman_rho_head_vs_incumbent": 0.3671,
+    "same_pick_rate": 0.5923,
+    "rank_fusion": {
+     "acc": 0.499787,
+     "sel_eff": 0.798365,
+     "vs_incumbent": {
+      "d_sel_eff": 0.023161,
+      "d_sel_eff_ci": [
+       0.008856,
+       0.037466
+      ],
+      "d_acc": 0.014499,
+      "d_acc_ci": [
+       0.005544,
+       0.023454
+      ]
+     }
+    },
+    "pair_oracle_ceiling_sel_eff": 0.877384,
+    "note": "pair-oracle = an omniscient per-item router between the incumbent and the head. It is a DIAGNOSTIC UPPER BOUND on what any router over this pair could reach, not a deployable number. The project's standing law is that selection quality tracks AGREEMENT with the generator (+0.76), so rho is reported alongside it."
+   }
+  }
+ },
+ "disjointness": {
+  "generator": {
+   "train_images": 3457,
+   "eval_images": 528,
+   "pixel_md5_intersection": 0,
+   "train_rows": 31498,
+   "eval_rows": 8943,
+   "train_rows_failed": 0,
+   "eval_rows_failed": 0
+  }
+ }
+}

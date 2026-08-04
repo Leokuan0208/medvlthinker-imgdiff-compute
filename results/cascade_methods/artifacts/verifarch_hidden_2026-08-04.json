@@ -1,0 +1,2093 @@
+{
+ "what": "Discriminative heads over the GENERATOR'S OWN hidden states as a non-generative verifier for best-of-8 open-text selection.",
+ "date": "2026-08-04",
+ "nboot": 10000,
+ "seed": 0,
+ "null_test": {
+  "protocol": "harness pointed at the incumbent's own stored per-candidate scores (ckpts/train/lora_verifier_disjoint/transfer_dump_*.json); pick = argmax over the 8 slots of the stored (5-dp-rounded) scores, first-index tie-break.",
+  "measured": {
+   "n": 2345,
+   "oracle@8": 0.626013,
+   "selected_acc": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592
+  },
+  "published": {
+   "n": 2345,
+   "oracle@8": 0.626013,
+   "selected_acc": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.8856
+  },
+  "tolerance": {
+   "oracle@8": 0.0,
+   "selected_acc": 0.0,
+   "greedy": 0.0,
+   "sel_eff": 0.0,
+   "cand_auroc": 8e-06
+  },
+  "note": "the stored 'pick' field disagrees with argmax on 26/2345 items (exact score ties from 5-dp rounding); using stored pick gives sel_eff 0.774523. The +-0.0007 tie-break sensitivity is reported so it is not mistaken for an effect."
+ },
+ "controls": {
+  "greedy": 0.449467,
+  "random_pick": {
+   "acc": 0.423348,
+   "sel_eff": 0.67626
+  },
+  "self_consistency": {
+   "acc": 0.446908,
+   "sel_eff": 0.713896,
+   "contested_sel_eff": 0.541485
+  },
+  "oracle@8": 0.626013,
+  "incumbent_lora_verifier": {
+   "acc": 0.485288,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "contested": {
+    "n": 916,
+    "sel_eff": 0.639738,
+    "unanimous_n": 552
+   }
+  },
+  "base_zeroshot_pyes_grader": {
+   "acc": 0.441791,
+   "sel_eff": 0.705722,
+   "cand_auroc": 0.760768,
+   "per_ds": {
+    "slake_open": 0.811287,
+    "vqa_rad_open": 0.738095,
+    "pathvqa_open": 0.623226
+   },
+   "contested_sel_eff": 0.528384,
+   "note": "frozen Lingshu-7B, NO adapter, same grader prompt -- the generator scoring its own candidates; read off the SAME forward pass that produced the features, so it doubles as a pipeline check.",
+   "published_reference": {
+    "value": 0.7070844686648501,
+    "source": "results/cascade_methods/artifacts/crossfamily_verifier_sweep_2026-08-04.json -> table/POOLED/verifiers/lingshu7b_zs/sel_eff",
+    "why_not_identical": "the published control was served by vLLM at the cap320 image budget (<=250880 px); this one is HF transformers at the verifier's budget (1280*28*28 = 1003520 px). Agreement to ~0.001 is a cross-stack check, not an exact reproduction."
+   }
+  }
+ },
+ "arms": {
+  "grader": {
+   "indomain_diagnostic_CONTAMINATED": {
+    "protocol": "linear pointwise head fit INSIDE the eval set with 5-fold image-grouped CV. Shares images and question distribution with the test set -> OPTIMISTIC BOUND, not comparable to the clean incumbent and not deployable. Reported to separate 'is the signal there' from 'does it transfer'.",
+    "table": [
+     {
+      "layer": 7,
+      "pooling": "last",
+      "sel_eff": 0.73297,
+      "acc": 0.458849,
+      "cand_auroc": 0.869789,
+      "contested_sel_eff": 0.572052
+     },
+     {
+      "layer": 7,
+      "pooling": "span",
+      "sel_eff": 0.743869,
+      "acc": 0.465672,
+      "cand_auroc": 0.875785,
+      "contested_sel_eff": 0.58952
+     },
+     {
+      "layer": 14,
+      "pooling": "last",
+      "sel_eff": 0.752044,
+      "acc": 0.470789,
+      "cand_auroc": 0.879715,
+      "contested_sel_eff": 0.60262
+     },
+     {
+      "layer": 14,
+      "pooling": "span",
+      "sel_eff": 0.756812,
+      "acc": 0.473774,
+      "cand_auroc": 0.885188,
+      "contested_sel_eff": 0.610262
+     },
+     {
+      "layer": 21,
+      "pooling": "last",
+      "sel_eff": 0.76703,
+      "acc": 0.480171,
+      "cand_auroc": 0.893151,
+      "contested_sel_eff": 0.626638
+     },
+     {
+      "layer": 21,
+      "pooling": "span",
+      "sel_eff": 0.782698,
+      "acc": 0.489979,
+      "cand_auroc": 0.892586,
+      "contested_sel_eff": 0.651747
+     },
+     {
+      "layer": 28,
+      "pooling": "last",
+      "sel_eff": 0.779973,
+      "acc": 0.488273,
+      "cand_auroc": 0.891272,
+      "contested_sel_eff": 0.64738
+     },
+     {
+      "layer": 28,
+      "pooling": "span",
+      "sel_eff": 0.792234,
+      "acc": 0.495949,
+      "cand_auroc": 0.889863,
+      "contested_sel_eff": 0.667031
+     }
+    ]
+   },
+   "cv_grid": [
+    {
+     "layer": 7,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7585541365525285,
+     "cv_sel_eff": 0.5646169574344794
+    },
+    {
+     "layer": 7,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7491128888325684,
+     "cv_sel_eff": 0.5833862909867163
+    },
+    {
+     "layer": 14,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7998778421009323,
+     "cv_sel_eff": 0.6117011791860807
+    },
+    {
+     "layer": 14,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.789109609821419,
+     "cv_sel_eff": 0.6298590575374304
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8334681683707892,
+     "cv_sel_eff": 0.6688234215308219
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8165772422758852,
+     "cv_sel_eff": 0.6542605361895624
+    },
+    {
+     "layer": 28,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8282517311079515,
+     "cv_sel_eff": 0.6682061519721133
+    },
+    {
+     "layer": 28,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8039963688956456,
+     "cv_sel_eff": 0.6410259747647432
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8334681683707892,
+     "cv_sel_eff": 0.6688234215308219
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.8200611071546593,
+     "cv_sel_eff": 0.6357446649361799
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7440227757681578,
+     "cv_sel_eff": 0.6582770007198543
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.7182471207519315,
+     "cv_sel_eff": 0.6462125242412685
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7495188449761109,
+     "cv_sel_eff": 0.6641422492104453
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.7201567503633635,
+     "cv_sel_eff": 0.6457006184618945
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.8346868975380899,
+     "cv_sel_eff": 0.6687545757692896
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 256,
+     "wd": 0.01,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.8367404836358695,
+     "cv_sel_eff": 0.68976815559549
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 256,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.8358907981222503,
+     "cv_sel_eff": 0.6870851050752398
+    }
+   ],
+   "cv_protocol": "5-fold grouped CV inside the disjoint training pool; folds assigned by md5(decoded-RGB image hash) % 5 so folds are image-disjoint. Stage 1 selects layer x pooling with a linear pointwise head; stage 2 sweeps objective x set-relativity at that representation; stage 3 sweeps capacity (hidden) x weight decay at the stage-2 winner. Selection criterion is CV within-question selection efficiency. Eval is never used for any selection; the selected config is then refit on the full training pool.",
+   "cv_selected": {
+    "layer": 21,
+    "pooling": "last",
+    "objective": "bce",
+    "hidden": 256,
+    "wd": 0.01,
+    "setrel": 0,
+    "epochs": 30,
+    "cv_auroc": 0.8367404836358695,
+    "cv_sel_eff": 0.68976815559549
+   },
+   "eval": {
+    "cv_selected": {
+     "config": {
+      "layer": 21,
+      "pooling": "last",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.469936,
+     "sel_eff": 0.750681,
+     "cand_auroc": 0.871807,
+     "per_ds": {
+      "slake_open": 0.864198,
+      "vqa_rad_open": 0.785714,
+      "pathvqa_open": 0.661935
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.600437,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": -0.024523,
+      "d_sel_eff_ci": [
+       -0.047003,
+       -0.002044
+      ],
+      "d_acc": -0.015352,
+      "d_acc_ci": [
+       -0.029424,
+       -0.001279
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.044959,
+      "d_sel_eff_ci": [
+       0.019074,
+       0.070845
+      ],
+      "d_acc": 0.028145,
+      "d_acc_ci": [
+       0.012367,
+       0.043923
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.036785,
+      "d_sel_eff_ci": [
+       0.012262,
+       0.061308
+      ],
+      "d_acc": 0.023028,
+      "d_acc_ci": [
+       0.007676,
+       0.037953
+      ]
+     }
+    },
+    "objective_listwise": {
+     "config": {
+      "layer": 21,
+      "pooling": "last",
+      "objective": "listwise",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.494243,
+     "sel_eff": 0.78951,
+     "cand_auroc": 0.759705,
+     "per_ds": {
+      "slake_open": 0.878307,
+      "vqa_rad_open": 0.801587,
+      "pathvqa_open": 0.722581
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.662664,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.014305,
+      "d_sel_eff_ci": [
+       -0.007493,
+       0.035422
+      ],
+      "d_acc": 0.008955,
+      "d_acc_ci": [
+       -0.004691,
+       0.022601
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.083787,
+      "d_sel_eff_ci": [
+       0.060627,
+       0.106948
+      ],
+      "d_acc": 0.052452,
+      "d_acc_ci": [
+       0.03838,
+       0.066951
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.075613,
+      "d_sel_eff_ci": [
+       0.052452,
+       0.098774
+      ],
+      "d_acc": 0.047335,
+      "d_acc_ci": [
+       0.032409,
+       0.06226
+      ]
+     }
+    },
+    "objective_bt": {
+     "config": {
+      "layer": 21,
+      "pooling": "last",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.492111,
+     "sel_eff": 0.786104,
+     "cand_auroc": 0.787479,
+     "per_ds": {
+      "slake_open": 0.867725,
+      "vqa_rad_open": 0.769841,
+      "pathvqa_open": 0.729032
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.657205,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.010899,
+      "d_sel_eff_ci": [
+       -0.009537,
+       0.031335
+      ],
+      "d_acc": 0.006823,
+      "d_acc_ci": [
+       -0.00597,
+       0.020043
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.080381,
+      "d_sel_eff_ci": [
+       0.057221,
+       0.103542
+      ],
+      "d_acc": 0.05032,
+      "d_acc_ci": [
+       0.035821,
+       0.064819
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.072207,
+      "d_sel_eff_ci": [
+       0.049046,
+       0.095368
+      ],
+      "d_acc": 0.045203,
+      "d_acc_ci": [
+       0.030277,
+       0.060128
+      ]
+     }
+    },
+    "layer_7": {
+     "config": {
+      "layer": 7,
+      "pooling": "last",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.480171,
+     "sel_eff": 0.76703,
+     "cand_auroc": 0.85302,
+     "per_ds": {
+      "slake_open": 0.850088,
+      "vqa_rad_open": 0.690476,
+      "pathvqa_open": 0.71871
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.626638,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": -0.008174,
+      "d_sel_eff_ci": [
+       -0.031335,
+       0.014986
+      ],
+      "d_acc": -0.005117,
+      "d_acc_ci": [
+       -0.019616,
+       0.009808
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.061308,
+      "d_sel_eff_ci": [
+       0.036104,
+       0.086512
+      ],
+      "d_acc": 0.03838,
+      "d_acc_ci": [
+       0.023028,
+       0.053742
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.053134,
+      "d_sel_eff_ci": [
+       0.02861,
+       0.077657
+      ],
+      "d_acc": 0.033262,
+      "d_acc_ci": [
+       0.017484,
+       0.049041
+      ]
+     }
+    },
+    "layer_14": {
+     "config": {
+      "layer": 14,
+      "pooling": "last",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.488699,
+     "sel_eff": 0.780654,
+     "cand_auroc": 0.871795,
+     "per_ds": {
+      "slake_open": 0.830688,
+      "vqa_rad_open": 0.730159,
+      "pathvqa_open": 0.752258
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.648472,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.00545,
+      "d_sel_eff_ci": [
+       -0.015668,
+       0.027248
+      ],
+      "d_acc": 0.003412,
+      "d_acc_ci": [
+       -0.010235,
+       0.017058
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.074932,
+      "d_sel_eff_ci": [
+       0.050409,
+       0.100136
+      ],
+      "d_acc": 0.046908,
+      "d_acc_ci": [
+       0.031557,
+       0.06226
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.066757,
+      "d_sel_eff_ci": [
+       0.043597,
+       0.090599
+      ],
+      "d_acc": 0.041791,
+      "d_acc_ci": [
+       0.026866,
+       0.057143
+      ]
+     }
+    },
+    "layer_28": {
+     "config": {
+      "layer": 28,
+      "pooling": "last",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.463539,
+     "sel_eff": 0.740463,
+     "cand_auroc": 0.859872,
+     "per_ds": {
+      "slake_open": 0.862434,
+      "vqa_rad_open": 0.785714,
+      "pathvqa_open": 0.643871
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.584061,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": -0.034741,
+      "d_sel_eff_ci": [
+       -0.058583,
+       -0.01158
+      ],
+      "d_acc": -0.021748,
+      "d_acc_ci": [
+       -0.036247,
+       -0.006823
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.034741,
+      "d_sel_eff_ci": [
+       0.009537,
+       0.059264
+      ],
+      "d_acc": 0.021748,
+      "d_acc_ci": [
+       0.006386,
+       0.037527
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.026567,
+      "d_sel_eff_ci": [
+       0.002044,
+       0.050409
+      ],
+      "d_acc": 0.016631,
+      "d_acc_ci": [
+       0.001706,
+       0.031557
+      ]
+     }
+    },
+    "per_benchmark_heads": {
+     "config": {
+      "layer": 21,
+      "pooling": "last",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.485714,
+     "sel_eff": 0.775886,
+     "cand_auroc": 0.88555,
+     "per_ds": {
+      "slake_open": 0.883598,
+      "vqa_rad_open": 0.777778,
+      "pathvqa_open": 0.696774
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.64083,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.000681,
+      "d_sel_eff_ci": [
+       -0.021798,
+       0.023161
+      ],
+      "d_acc": 0.000426,
+      "d_acc_ci": [
+       -0.013646,
+       0.014925
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_base_zeroshot": {
+      "d_sel_eff": 0.070163,
+      "d_sel_eff_ci": [
+       0.04564,
+       0.094005
+      ],
+      "d_acc": 0.043923,
+      "d_acc_ci": [
+       0.028998,
+       0.059286
+      ]
+     },
+     "vs_self_consistency": {
+      "d_sel_eff": 0.061989,
+      "d_sel_eff_ci": [
+       0.037466,
+       0.085831
+      ],
+      "d_acc": 0.038806,
+      "d_acc_ci": [
+       0.023454,
+       0.054158
+      ]
+     },
+     "note": "one head per eval benchmark, trained only on that benchmark's own image-disjoint train pool (slake_open_train / vqa_rad_open_train / pathvqa_open_train). Same CV-selected architecture; the pooled figure is the concatenation."
+    }
+   },
+   "complementarity": {
+    "spearman_rho_head_vs_incumbent": 0.782,
+    "same_pick_rate": 0.5765,
+    "rank_fusion": {
+     "acc": 0.498507,
+     "sel_eff": 0.796322,
+     "vs_incumbent": {
+      "d_sel_eff": 0.021117,
+      "d_sel_eff_ci": [
+       0.006131,
+       0.036785
+      ],
+      "d_acc": 0.01322,
+      "d_acc_ci": [
+       0.003838,
+       0.023028
+      ]
+     }
+    },
+    "pair_oracle_ceiling_sel_eff": 0.858311,
+    "note": "pair-oracle = an omniscient per-item router between the incumbent and the head. It is a DIAGNOSTIC UPPER BOUND on what any router over this pair could reach, not a deployable number. The project's standing law is that selection quality tracks AGREEMENT with the generator (+0.76), so rho is reported alongside it."
+   }
+  }
+ },
+ "disjointness": {
+  "grader": {
+   "train_images": 3457,
+   "eval_images": 528,
+   "pixel_md5_intersection": 0,
+   "train_rows": 31498,
+   "eval_rows": 8943,
+   "train_rows_failed": 0,
+   "eval_rows_failed": 0
+  }
+ },
+ "code": {
+  "extract": "src/training_methods/extract_generator_hidden.py",
+  "fit": "src/training_methods/fit_hidden_head.py",
+  "fusion_controls": "src/training_methods/fuse_hidden_head_controls.py",
+  "cv_protocol_gap": "src/training_methods/cv_gap_listwise_capacity.py",
+  "finalize": "src/training_methods/finalize_hidden_head_artifact.py",
+  "feature_cache": "feats_hidden/ (gitignored, 2.2 GB): grader|generator x train|eval, h_last + h_span at layers 7/14/21/28 of frozen Lingshu-7B, fp16"
+ },
+ "design": {
+  "architecture": "a trained DISCRIMINATIVE HEAD (linear / 1-hidden-layer MLP) on the frozen generator's hidden states -- no generative verifier, no adapter, no opinion token. Score = head(h), not P('Yes').",
+  "generator_representation": "base Lingshu-7B (the ACTUAL generator of the pools), NO LoRA. Using the incumbent's adapter would have made the features a function of the incumbent and destroyed the contrast.",
+  "controlled_contrast": "identical base model, identical grader prompt (verbatim from run_lora_verifier_disjoint.py), identical image budget (1280*28*28), and the IDENTICAL seed-0 matched training draw (10364 examples, reproduced bit-for-bit: pos_rate 0.19924739482825163 equals the value recorded in ckpts/train/lora_verifier_disjoint/train_config.json). The ONLY variable is the readout: trained head on frozen features vs LoRA-tuned LM head.",
+  "training_rows": "31498 (all answers of the 6029 questions the matched draw touched, so listwise and Bradley-Terry objectives see complete within-question groups; the question SET is exactly the draw's).",
+  "eval_rows": "8943 distinct (item, normalised answer) pairs covering all 2345 eval items x 8 slots.",
+  "feats_full_L14_note": "the pre-existing feats_full/feat_*_L14.npz caches do NOT cover this experiment: they are PER-QUESTION (416 rows for SLAKE, keyed by the closed MCQ idx), not per-candidate, and come from MedVLThinker-7B, not the Lingshu-7B generator of these pools. A fresh GPU extraction was required and was run (0 failed rows out of 40441)."
+ },
+ "fusion_controls": {
+  "what": "robustness + falsification controls for the incumbent x hidden-head rank fusion",
+  "date": "2026-08-04",
+  "nboot": 10000,
+  "incumbent": {
+   "sel_eff": 0.775204,
+   "acc": 0.485288
+  },
+  "arms": [
+   {
+    "tag": "ALONE head_cv_selected(L21/last/bce/h256)",
+    "sel_eff": 0.750681,
+    "acc": 0.469936,
+    "contested_sel_eff": 0.600437,
+    "per_ds": {
+     "slake_open": 0.864198,
+     "vqa_rad_open": 0.785714,
+     "pathvqa_open": 0.661935
+    },
+    "d_sel_eff": -0.024523,
+    "d_sel_eff_ci": [
+     -0.047003,
+     -0.002044
+    ],
+    "d_acc": -0.015352,
+    "d_acc_ci": [
+     -0.029424,
+     -0.001279
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "ALONE head_listwise(post-hoc)",
+    "sel_eff": 0.78951,
+    "acc": 0.494243,
+    "contested_sel_eff": 0.662664,
+    "per_ds": {
+     "slake_open": 0.878307,
+     "vqa_rad_open": 0.801587,
+     "pathvqa_open": 0.722581
+    },
+    "d_sel_eff": 0.014305,
+    "d_sel_eff_ci": [
+     -0.007493,
+     0.035422
+    ],
+    "d_acc": 0.008955,
+    "d_acc_ci": [
+     -0.004691,
+     0.022601
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "ALONE head_per_benchmark",
+    "sel_eff": 0.775886,
+    "acc": 0.485714,
+    "contested_sel_eff": 0.64083,
+    "per_ds": {
+     "slake_open": 0.883598,
+     "vqa_rad_open": 0.777778,
+     "pathvqa_open": 0.696774
+    },
+    "d_sel_eff": 0.000681,
+    "d_sel_eff_ci": [
+     -0.021798,
+     0.023161
+    ],
+    "d_acc": 0.000426,
+    "d_acc_ci": [
+     -0.013646,
+     0.014925
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "ALONE base_zeroshot_pyes",
+    "sel_eff": 0.705722,
+    "acc": 0.441791,
+    "contested_sel_eff": 0.528384,
+    "per_ds": {
+     "slake_open": 0.811287,
+     "vqa_rad_open": 0.738095,
+     "pathvqa_open": 0.623226
+    },
+    "d_sel_eff": -0.069482,
+    "d_sel_eff_ci": [
+     -0.090599,
+     -0.048365
+    ],
+    "d_acc": -0.043497,
+    "d_acc_ci": [
+     -0.056727,
+     -0.030277
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+head_cv_selected",
+    "sel_eff": 0.799046,
+    "acc": 0.500213,
+    "contested_sel_eff": 0.677948,
+    "per_ds": {
+     "slake_open": 0.876543,
+     "vqa_rad_open": 0.801587,
+     "pathvqa_open": 0.741935
+    },
+    "d_sel_eff": 0.023842,
+    "d_sel_eff_ci": [
+     0.008174,
+     0.040191
+    ],
+    "d_acc": 0.014925,
+    "d_acc_ci": [
+     0.004691,
+     0.02516
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+head_listwise(post-hoc)",
+    "sel_eff": 0.80654,
+    "acc": 0.504904,
+    "contested_sel_eff": 0.689956,
+    "per_ds": {
+     "slake_open": 0.883598,
+     "vqa_rad_open": 0.793651,
+     "pathvqa_open": 0.752258
+    },
+    "d_sel_eff": 0.031335,
+    "d_sel_eff_ci": [
+     0.01703,
+     0.04564
+    ],
+    "d_acc": 0.019616,
+    "d_acc_ci": [
+     0.011087,
+     0.028571
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+head_per_benchmark",
+    "sel_eff": 0.803815,
+    "acc": 0.503198,
+    "contested_sel_eff": 0.68559,
+    "per_ds": {
+     "slake_open": 0.878307,
+     "vqa_rad_open": 0.809524,
+     "pathvqa_open": 0.748387
+    },
+    "d_sel_eff": 0.02861,
+    "d_sel_eff_ci": [
+     0.012943,
+     0.043597
+    ],
+    "d_acc": 0.01791,
+    "d_acc_ci": [
+     0.008102,
+     0.027719
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+C1 base_zeroshot_pyes [KEY CONTROL]",
+    "sel_eff": 0.75545,
+    "acc": 0.472921,
+    "contested_sel_eff": 0.608079,
+    "per_ds": {
+     "slake_open": 0.848325,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.687742
+    },
+    "d_sel_eff": -0.019755,
+    "d_sel_eff_ci": [
+     -0.035422,
+     -0.004768
+    ],
+    "d_acc": -0.012367,
+    "d_acc_ci": [
+     -0.021748,
+     -0.002985
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+C2 self_consistency_count",
+    "sel_eff": 0.75545,
+    "acc": 0.472921,
+    "contested_sel_eff": 0.608079,
+    "per_ds": {
+     "slake_open": 0.851852,
+     "vqa_rad_open": 0.746032,
+     "pathvqa_open": 0.686452
+    },
+    "d_sel_eff": -0.019755,
+    "d_sel_eff_ci": [
+     -0.036785,
+     -0.002725
+    ],
+    "d_acc": -0.012367,
+    "d_acc_ci": [
+     -0.023038,
+     -0.001279
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+C3 random [null]",
+    "sel_eff": 0.734332,
+    "acc": 0.459701,
+    "contested_sel_eff": 0.574236,
+    "per_ds": {
+     "slake_open": 0.830688,
+     "vqa_rad_open": 0.722222,
+     "pathvqa_open": 0.665806
+    },
+    "d_sel_eff": -0.040872,
+    "d_sel_eff_ci": [
+     -0.059946,
+     -0.021798
+    ],
+    "d_acc": -0.025586,
+    "d_acc_ci": [
+     -0.037953,
+     -0.013646
+    ],
+    "guardrail_clean": false
+   },
+   {
+    "tag": "FUSE_rankargsort incumbent+head_cv_selected",
+    "sel_eff": 0.796322,
+    "acc": 0.498507,
+    "contested_sel_eff": 0.673581,
+    "per_ds": {
+     "slake_open": 0.869489,
+     "vqa_rad_open": 0.809524,
+     "pathvqa_open": 0.740645
+    },
+    "d_sel_eff": 0.021117,
+    "d_sel_eff_ci": [
+     0.006131,
+     0.036785
+    ],
+    "d_acc": 0.01322,
+    "d_acc_ci": [
+     0.003838,
+     0.023028
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_zmean incumbent+head_cv_selected",
+    "sel_eff": 0.793597,
+    "acc": 0.496802,
+    "contested_sel_eff": 0.669214,
+    "per_ds": {
+     "slake_open": 0.865961,
+     "vqa_rad_open": 0.801587,
+     "pathvqa_open": 0.739355
+    },
+    "d_sel_eff": 0.018392,
+    "d_sel_eff_ci": [
+     0.003406,
+     0.03406
+    ],
+    "d_acc": 0.011514,
+    "d_acc_ci": [
+     0.002132,
+     0.020896
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "ALONE head_generator_prompt",
+    "sel_eff": 0.79564,
+    "acc": 0.498081,
+    "contested_sel_eff": 0.672489,
+    "per_ds": {
+     "slake_open": 0.871252,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.745806
+    },
+    "d_sel_eff": 0.020436,
+    "d_sel_eff_ci": [
+     -0.001362,
+     0.041553
+    ],
+    "d_acc": 0.012793,
+    "d_acc_ci": [
+     -0.000426,
+     0.026439
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+head_generator_prompt",
+    "sel_eff": 0.80654,
+    "acc": 0.504904,
+    "contested_sel_eff": 0.689956,
+    "per_ds": {
+     "slake_open": 0.883598,
+     "vqa_rad_open": 0.801587,
+     "pathvqa_open": 0.750968
+    },
+    "d_sel_eff": 0.031335,
+    "d_sel_eff_ci": [
+     0.016349,
+     0.046322
+    ],
+    "d_acc": 0.019616,
+    "d_acc_ci": [
+     0.009808,
+     0.029424
+    ],
+    "guardrail_clean": true
+   },
+   {
+    "tag": "FUSE_rankavg incumbent+head_grader+head_generator",
+    "sel_eff": 0.805177,
+    "acc": 0.504051,
+    "contested_sel_eff": 0.687773,
+    "per_ds": {
+     "slake_open": 0.876543,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.76
+    },
+    "d_sel_eff": 0.029973,
+    "d_sel_eff_ci": [
+     0.012943,
+     0.047003
+    ],
+    "d_acc": 0.018763,
+    "d_acc_ci": [
+     0.007676,
+     0.029851
+    ],
+    "guardrail_clean": true
+   }
+  ],
+  "generator_prompt_cv_selected_config": {
+   "layer": 21,
+   "pooling": "span",
+   "objective": "bt",
+   "hidden": 256,
+   "wd": 0.01,
+   "epochs": 30,
+   "setrel": 0
+  }
+ },
+ "cv_protocol_gap": {
+  "what": "missing CV cells (listwise/bt x hidden=256) at the stage-1 representation; same fold protocol as fit_hidden_head.py; CV-only, eval untouched",
+  "reference_cv_cells_from_main_run": {
+   "bce/h256/wd0.01": 0.68976815559549,
+   "bce/h0/wd0.01": 0.6688,
+   "listwise/h0/wd0.01": 0.6583,
+   "bt/h0/wd0.01": 0.6641
+  },
+  "new_cells": [
+   {
+    "layer": 21,
+    "pooling": "last",
+    "wd": 0.01,
+    "epochs": 30,
+    "setrel": 0,
+    "objective": "listwise",
+    "hidden": 256,
+    "cv_auroc": 0.7444788829738069,
+    "cv_sel_eff": 0.6677872185371211
+   },
+   {
+    "layer": 21,
+    "pooling": "last",
+    "wd": 0.01,
+    "epochs": 30,
+    "setrel": 0,
+    "objective": "bt",
+    "hidden": 256,
+    "cv_auroc": 0.7475724947757008,
+    "cv_sel_eff": 0.675620536042738
+   }
+  ]
+ },
+ "prompt_form_indomain_probe": {
+  "what": "CONTAMINATED in-domain probe (5-fold image-grouped CV INSIDE eval) comparing the GENERATOR-prompt representation (last answer token / answer span of Lingshu-7B's own answering prompt) against the GRADER-prompt representation. Optimistic upper bound; not deployable and not comparable to the clean incumbent.",
+  "table": [
+   {
+    "mode": "generator",
+    "layer": 7,
+    "pooling": "last",
+    "sel_eff": 0.748638,
+    "acc": 0.468657,
+    "cand_auroc": 0.87295,
+    "contested_sel_eff": 0.597162
+   },
+   {
+    "mode": "generator",
+    "layer": 7,
+    "pooling": "span",
+    "sel_eff": 0.740463,
+    "acc": 0.463539,
+    "cand_auroc": 0.873499,
+    "contested_sel_eff": 0.584061
+   },
+   {
+    "mode": "generator",
+    "layer": 14,
+    "pooling": "last",
+    "sel_eff": 0.76158,
+    "acc": 0.476759,
+    "cand_auroc": 0.889383,
+    "contested_sel_eff": 0.617904
+   },
+   {
+    "mode": "generator",
+    "layer": 14,
+    "pooling": "span",
+    "sel_eff": 0.769755,
+    "acc": 0.481876,
+    "cand_auroc": 0.890709,
+    "contested_sel_eff": 0.631004
+   },
+   {
+    "mode": "generator",
+    "layer": 21,
+    "pooling": "last",
+    "sel_eff": 0.780654,
+    "acc": 0.488699,
+    "cand_auroc": 0.900326,
+    "contested_sel_eff": 0.648472
+   },
+   {
+    "mode": "generator",
+    "layer": 21,
+    "pooling": "span",
+    "sel_eff": 0.79564,
+    "acc": 0.498081,
+    "cand_auroc": 0.90249,
+    "contested_sel_eff": 0.672489
+   },
+   {
+    "mode": "generator",
+    "layer": 28,
+    "pooling": "last",
+    "sel_eff": 0.777248,
+    "acc": 0.486567,
+    "cand_auroc": 0.893743,
+    "contested_sel_eff": 0.643013
+   },
+   {
+    "mode": "generator",
+    "layer": 28,
+    "pooling": "span",
+    "sel_eff": 0.78951,
+    "acc": 0.494243,
+    "cand_auroc": 0.899038,
+    "contested_sel_eff": 0.662664
+   },
+   {
+    "mode": "grader",
+    "layer": 7,
+    "pooling": "last",
+    "sel_eff": 0.73297,
+    "acc": 0.458849,
+    "cand_auroc": 0.869789,
+    "contested_sel_eff": 0.572052
+   },
+   {
+    "mode": "grader",
+    "layer": 7,
+    "pooling": "span",
+    "sel_eff": 0.743869,
+    "acc": 0.465672,
+    "cand_auroc": 0.875785,
+    "contested_sel_eff": 0.58952
+   },
+   {
+    "mode": "grader",
+    "layer": 14,
+    "pooling": "last",
+    "sel_eff": 0.752044,
+    "acc": 0.470789,
+    "cand_auroc": 0.879715,
+    "contested_sel_eff": 0.60262
+   },
+   {
+    "mode": "grader",
+    "layer": 14,
+    "pooling": "span",
+    "sel_eff": 0.756812,
+    "acc": 0.473774,
+    "cand_auroc": 0.885188,
+    "contested_sel_eff": 0.610262
+   },
+   {
+    "mode": "grader",
+    "layer": 21,
+    "pooling": "last",
+    "sel_eff": 0.76703,
+    "acc": 0.480171,
+    "cand_auroc": 0.893151,
+    "contested_sel_eff": 0.626638
+   },
+   {
+    "mode": "grader",
+    "layer": 21,
+    "pooling": "span",
+    "sel_eff": 0.782698,
+    "acc": 0.489979,
+    "cand_auroc": 0.892586,
+    "contested_sel_eff": 0.651747
+   },
+   {
+    "mode": "grader",
+    "layer": 28,
+    "pooling": "last",
+    "sel_eff": 0.779973,
+    "acc": 0.488273,
+    "cand_auroc": 0.891272,
+    "contested_sel_eff": 0.64738
+   },
+   {
+    "mode": "grader",
+    "layer": 28,
+    "pooling": "span",
+    "sel_eff": 0.792234,
+    "acc": 0.495949,
+    "cand_auroc": 0.889863,
+    "contested_sel_eff": 0.667031
+   }
+  ]
+ },
+ "generator_prompt_arm": {
+  "null_test": {
+   "protocol": "harness pointed at the incumbent's own stored per-candidate scores (ckpts/train/lora_verifier_disjoint/transfer_dump_*.json); pick = argmax over the 8 slots of the stored (5-dp-rounded) scores, first-index tie-break.",
+   "measured": {
+    "n": 2345,
+    "oracle@8": 0.626013,
+    "selected_acc": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.885592
+   },
+   "published": {
+    "n": 2345,
+    "oracle@8": 0.626013,
+    "selected_acc": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.8856
+   },
+   "tolerance": {
+    "oracle@8": 0.0,
+    "selected_acc": 0.0,
+    "greedy": 0.0,
+    "sel_eff": 0.0,
+    "cand_auroc": 8e-06
+   },
+   "note": "the stored 'pick' field disagrees with argmax on 26/2345 items (exact score ties from 5-dp rounding); using stored pick gives sel_eff 0.774523. The +-0.0007 tie-break sensitivity is reported so it is not mistaken for an effect."
+  },
+  "disjointness": {
+   "generator": {
+    "train_images": 3457,
+    "eval_images": 528,
+    "pixel_md5_intersection": 0,
+    "train_rows": 31498,
+    "eval_rows": 8943,
+    "train_rows_failed": 0,
+    "eval_rows_failed": 0
+   }
+  },
+  "arm": {
+   "cv_grid": [
+    {
+     "layer": 7,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7733029322847568,
+     "cv_sel_eff": 0.5986275287965026
+    },
+    {
+     "layer": 7,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.7662882004450464,
+     "cv_sel_eff": 0.6025427434473338
+    },
+    {
+     "layer": 14,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8037085248506678,
+     "cv_sel_eff": 0.6298156862182688
+    },
+    {
+     "layer": 14,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8041405550903434,
+     "cv_sel_eff": 0.6336165686229341
+    },
+    {
+     "layer": 21,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8228616512683162,
+     "cv_sel_eff": 0.6489092215992864
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8223306451502328,
+     "cv_sel_eff": 0.6642563058730959
+    },
+    {
+     "layer": 28,
+     "pooling": "last",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8093378998006673,
+     "cv_sel_eff": 0.6495435734208191
+    },
+    {
+     "layer": 28,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8006979269257173,
+     "cv_sel_eff": 0.6473335869292485
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.8223306451502328,
+     "cv_sel_eff": 0.6642563058730959
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bce",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.8055952786074385,
+     "cv_sel_eff": 0.6426732903597207
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.6973712987239923,
+     "cv_sel_eff": 0.6614504624447914
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "listwise",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.6748040782346054,
+     "cv_sel_eff": 0.6512801388341777
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 0,
+     "cv_auroc": 0.711890663449507,
+     "cv_sel_eff": 0.6662633291239584
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.01,
+     "epochs": 30,
+     "setrel": 1,
+     "cv_auroc": 0.6834630490420157,
+     "cv_sel_eff": 0.6596198763854099
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 0,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7124669899257328,
+     "cv_sel_eff": 0.6656191214730006
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 256,
+     "wd": 0.01,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7255968463655258,
+     "cv_sel_eff": 0.6784561093646115
+    },
+    {
+     "layer": 21,
+     "pooling": "span",
+     "objective": "bt",
+     "hidden": 256,
+     "wd": 0.1,
+     "setrel": 0,
+     "epochs": 30,
+     "cv_auroc": 0.7140860133760212,
+     "cv_sel_eff": 0.6781046265236148
+    }
+   ],
+   "cv_protocol": "5-fold grouped CV inside the disjoint training pool; folds assigned by md5(decoded-RGB image hash) % 5 so folds are image-disjoint. Stage 1 selects layer x pooling with a linear pointwise head; stage 2 sweeps objective x set-relativity at that representation; stage 3 sweeps capacity (hidden) x weight decay at the stage-2 winner. Selection criterion is CV within-question selection efficiency. Eval is never used for any selection; the selected config is then refit on the full training pool.",
+   "cv_selected": {
+    "layer": 21,
+    "pooling": "span",
+    "objective": "bt",
+    "hidden": 256,
+    "wd": 0.01,
+    "setrel": 0,
+    "epochs": 30,
+    "cv_auroc": 0.7255968463655258,
+    "cv_sel_eff": 0.6784561093646115
+   },
+   "eval": {
+    "cv_selected": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.498081,
+     "sel_eff": 0.79564,
+     "cand_auroc": 0.677641,
+     "per_ds": {
+      "slake_open": 0.871252,
+      "vqa_rad_open": 0.761905,
+      "pathvqa_open": 0.745806
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.672489,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.020436,
+      "d_sel_eff_ci": [
+       -0.001362,
+       0.041553
+      ],
+      "d_acc": 0.012793,
+      "d_acc_ci": [
+       -0.000426,
+       0.026439
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.081744,
+      "d_sel_eff_ci": [
+       0.057902,
+       0.106267
+      ],
+      "d_acc": 0.051173,
+      "d_acc_ci": [
+       0.035394,
+       0.066525
+      ]
+     }
+    },
+    "objective_bce": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bce",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.502345,
+     "sel_eff": 0.802452,
+     "cand_auroc": 0.904078,
+     "per_ds": {
+      "slake_open": 0.888889,
+      "vqa_rad_open": 0.738095,
+      "pathvqa_open": 0.749677
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.683406,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.027248,
+      "d_sel_eff_ci": [
+       0.00545,
+       0.048365
+      ],
+      "d_acc": 0.017058,
+      "d_acc_ci": [
+       0.003412,
+       0.030704
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.088556,
+      "d_sel_eff_ci": [
+       0.064033,
+       0.112398
+      ],
+      "d_acc": 0.055437,
+      "d_acc_ci": [
+       0.039659,
+       0.070789
+      ]
+     }
+    },
+    "objective_listwise": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "listwise",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.495522,
+     "sel_eff": 0.791553,
+     "cand_auroc": 0.661332,
+     "per_ds": {
+      "slake_open": 0.883598,
+      "vqa_rad_open": 0.753968,
+      "pathvqa_open": 0.730323
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.665939,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.016349,
+      "d_sel_eff_ci": [
+       -0.006131,
+       0.038147
+      ],
+      "d_acc": 0.010235,
+      "d_acc_ci": [
+       -0.003412,
+       0.024307
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.077657,
+      "d_sel_eff_ci": [
+       0.053815,
+       0.101499
+      ],
+      "d_acc": 0.048614,
+      "d_acc_ci": [
+       0.032836,
+       0.063966
+      ]
+     }
+    },
+    "layer_7": {
+     "config": {
+      "layer": 7,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.476759,
+     "sel_eff": 0.76158,
+     "cand_auroc": 0.649884,
+     "per_ds": {
+      "slake_open": 0.844797,
+      "vqa_rad_open": 0.746032,
+      "pathvqa_open": 0.703226
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.617904,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": -0.013624,
+      "d_sel_eff_ci": [
+       -0.038147,
+       0.010899
+      ],
+      "d_acc": -0.008529,
+      "d_acc_ci": [
+       -0.024307,
+       0.006823
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.047684,
+      "d_sel_eff_ci": [
+       0.02248,
+       0.072888
+      ],
+      "d_acc": 0.029851,
+      "d_acc_ci": [
+       0.013646,
+       0.046055
+      ]
+     }
+    },
+    "layer_14": {
+     "config": {
+      "layer": 14,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.485288,
+     "sel_eff": 0.775204,
+     "cand_auroc": 0.666113,
+     "per_ds": {
+      "slake_open": 0.87478,
+      "vqa_rad_open": 0.706349,
+      "pathvqa_open": 0.713548
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.639738,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.0,
+      "d_sel_eff_ci": [
+       -0.02248,
+       0.02248
+      ],
+      "d_acc": 0.0,
+      "d_acc_ci": [
+       -0.014072,
+       0.014072
+      ]
+     },
+     "guardrail_clean": false,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.061308,
+      "d_sel_eff_ci": [
+       0.037466,
+       0.08515
+      ],
+      "d_acc": 0.03838,
+      "d_acc_ci": [
+       0.023454,
+       0.053731
+      ]
+     }
+    },
+    "layer_28": {
+     "config": {
+      "layer": 28,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.495522,
+     "sel_eff": 0.791553,
+     "cand_auroc": 0.810329,
+     "per_ds": {
+      "slake_open": 0.873016,
+      "vqa_rad_open": 0.777778,
+      "pathvqa_open": 0.734194
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.665939,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.016349,
+      "d_sel_eff_ci": [
+       -0.006131,
+       0.038828
+      ],
+      "d_acc": 0.010235,
+      "d_acc_ci": [
+       -0.003838,
+       0.023891
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.077657,
+      "d_sel_eff_ci": [
+       0.054496,
+       0.101499
+      ],
+      "d_acc": 0.048614,
+      "d_acc_ci": [
+       0.033678,
+       0.063113
+      ]
+     }
+    },
+    "per_benchmark_heads": {
+     "config": {
+      "layer": 21,
+      "pooling": "span",
+      "objective": "bt",
+      "hidden": 256,
+      "wd": 0.01,
+      "epochs": 30,
+      "setrel": 0
+     },
+     "n": 2345,
+     "acc": 0.502345,
+     "sel_eff": 0.802452,
+     "cand_auroc": 0.707486,
+     "per_ds": {
+      "slake_open": 0.881834,
+      "vqa_rad_open": 0.785714,
+      "pathvqa_open": 0.747097
+     },
+     "contested": {
+      "n": 916,
+      "sel_eff": 0.683406,
+      "unanimous_n": 552
+     },
+     "vs_incumbent": {
+      "d_sel_eff": 0.027248,
+      "d_sel_eff_ci": [
+       0.006131,
+       0.048365
+      ],
+      "d_acc": 0.017058,
+      "d_acc_ci": [
+       0.003838,
+       0.030277
+      ]
+     },
+     "guardrail_clean": true,
+     "vs_self_consistency": {
+      "d_sel_eff": 0.088556,
+      "d_sel_eff_ci": [
+       0.063351,
+       0.113079
+      ],
+      "d_acc": 0.055437,
+      "d_acc_ci": [
+       0.039659,
+       0.070789
+      ]
+     },
+     "note": "one head per eval benchmark, trained only on that benchmark's own image-disjoint train pool (slake_open_train / vqa_rad_open_train / pathvqa_open_train). Same CV-selected architecture; the pooled figure is the concatenation."
+    }
+   },
+   "complementarity": {
+    "spearman_rho_head_vs_incumbent": 0.3671,
+    "same_pick_rate": 0.5923,
+    "rank_fusion": {
+     "acc": 0.499787,
+     "sel_eff": 0.798365,
+     "vs_incumbent": {
+      "d_sel_eff": 0.023161,
+      "d_sel_eff_ci": [
+       0.008856,
+       0.037466
+      ],
+      "d_acc": 0.014499,
+      "d_acc_ci": [
+       0.005544,
+       0.023454
+      ]
+     }
+    },
+    "pair_oracle_ceiling_sel_eff": 0.877384,
+    "note": "pair-oracle = an omniscient per-item router between the incumbent and the head. It is a DIAGNOSTIC UPPER BOUND on what any router over this pair could reach, not a deployable number. The project's standing law is that selection quality tracks AGREEMENT with the generator (+0.76), so rho is reported alongside it."
+   }
+  },
+  "full_artifact": "results/cascade_methods/artifacts/verifarch_hidden_generatorprompt_2026-08-04.json"
+ },
+ "verdict": {
+  "headline": "A discriminative head on the FROZEN generator's hidden states is a real, non-generative verifier: per-benchmark it MATCHES a full LoRA fine-tune (grader prompt, sel_eff 0.775886 vs 0.775204; candidate AUROC 0.885550 vs 0.885592) and on the generator's own answering prompt it EXCEEDS it (0.795640, +0.0204 [-0.0014,+0.0416], guardrail-clean). But NO single head clears the pre-registered +0.021 detection floor on its own. The one arm that does is the parameter-free rank fusion of the incumbent with the head.",
+  "pre_registered_primary": {
+   "definition": "the config chosen by grouped CV INSIDE the disjoint training pool, before eval was touched; this is the number that counts as the honest result of the arm.",
+   "grader_prompt": {
+    "sel_eff": 0.750681,
+    "d_vs_incumbent": -0.024523,
+    "ci": [
+     -0.047003,
+     -0.002044
+    ],
+    "verdict": "LOSES, CI excludes zero"
+   },
+   "generator_prompt": {
+    "sel_eff": 0.79564,
+    "d_vs_incumbent": 0.020436,
+    "ci": [
+     -0.001362,
+     0.041553
+    ],
+    "verdict": "near-miss, n.s. (CI includes zero by 0.0014), guardrail-clean"
+   }
+  },
+  "best_measured_configuration": {
+   "what": "rank-average of the incumbent LoRA verifier with the CV-selected generator-prompt head. No parameter is fitted at fusion time and both components are trained on strictly image-disjoint data, so this is deployable, not a diagnostic.",
+   "sel_eff": 0.80654,
+   "selected_acc": 0.504904,
+   "d_sel_eff": 0.031335,
+   "d_sel_eff_ci": [
+    0.016349,
+    0.046322
+   ],
+   "d_acc": 0.019616,
+   "d_acc_ci": [
+    0.009808,
+    0.029424
+   ],
+   "per_ds": {
+    "slake_open": 0.883598,
+    "vqa_rad_open": 0.801587,
+    "pathvqa_open": 0.750968
+   },
+   "guardrail_clean": true,
+   "contested_sel_eff": 0.689956,
+   "caveat": "this is ONE arm among ~20 reported; a nominal 95% CI is not multiplicity-corrected. What raises it above a multiplicity artifact is the CONTROL PATTERN below: three different heads all fuse positively and all three non-head second-scores fuse negatively."
+  },
+  "falsification_control_that_matters": {
+   "claim_tested": "the gain is just 'average the incumbent with a second score', not the head.",
+   "fuse_with_base_zeroshot_pyes": {
+    "sel_eff": 0.75545,
+    "d": -0.019755,
+    "ci": [
+     -0.035422,
+     -0.004768
+    ]
+   },
+   "fuse_with_self_consistency_count": {
+    "sel_eff": 0.75545,
+    "d": -0.019755,
+    "ci": [
+     -0.036785,
+     -0.002725
+    ]
+   },
+   "fuse_with_random": {
+    "sel_eff": 0.734332,
+    "d": -0.040872,
+    "ci": [
+     -0.059946,
+     -0.021798
+    ]
+   },
+   "reading": "all three non-head second-scores make the incumbent WORSE. Only the discriminative head helps. The active ingredient is the different COMPUTATION, not the extra score."
+  },
+  "mechanism_findings": [
+   {
+    "finding": "candidate-level AUROC is not a valid proxy for selection efficiency, and the dissociation is bidirectional and large.",
+    "evidence": "generator-prompt Bradley-Terry head: AUROC 0.677641 but sel_eff 0.795640; generator-prompt BCE head: AUROC 0.904078, sel_eff 0.802452. Grader-prompt listwise: AUROC 0.759705, sel_eff 0.789510; grader-prompt BCE: AUROC 0.871807, sel_eff 0.750681. Global ordering and within-question ordering are close to independent here.",
+    "why_it_matters": "this project has read AUROC as a verifier-quality signal, and retrospective N25 read '+0.030 AUROC, +0.000 selection' as evidence that ranking losses do nothing. The correct reading is that AUROC was the wrong instrument: selection is a within-question problem."
+   },
+   {
+    "finding": "model selection does not transfer from the disjoint training pool to eval.",
+    "evidence": "CV picked grader/bce/h256 (cv_sel_eff 0.689768) which scored 0.750681 on eval, while listwise (cv 0.658) scored 0.789510. Closing the staged-grid gap (cv_protocol_gap: listwise/h256 0.667800, bt/h256 0.675600) confirms CV would STILL have chosen pointwise, so this is a genuine CV->eval transfer failure, not a grid omission.",
+    "likely_cause": "the disjoint training pool is composition-matched to the incumbent's (heavily PathVQA + Kvasir + RadImageNet OOD) and its within-question group structure differs from the eval pools'. UNRESOLVED, and it caps what any head-selection protocol on this split can deliver."
+   },
+   {
+    "finding": "the generator's ANSWERING-prompt state is a better and far more decorrelated correctness signal than its GRADING-prompt state.",
+    "evidence": "spearman rho with the incumbent 0.3671 (generator prompt) vs 0.7820 (grader prompt); pair-oracle ceiling 0.877384 vs 0.858311; in-domain probe (contaminated, both prompts, identical protocol) L21/span 0.795640 vs 0.782698.",
+    "why_it_matters": "the project's decorrelation law says selection quality tracks AGREEMENT with the generator (+0.76). This is the first scorer that is BOTH strongly decorrelated (rho 0.37) AND at least as good as the incumbent -- because it is not another opinion, it is the generator's own state read by a different computation."
+   }
+  ],
+  "cost": {
+   "grader_prompt_head": "one EXTRA base-model forward pass per candidate (~1x the incumbent's cost), because the incumbent's pass runs the LoRA-adapted model and the head's runs the base model. Fusion therefore costs ~2x verifier prefill.",
+   "generator_prompt_head": "the features are the hidden states of (image, question, candidate) under the generator's OWN answering prompt -- exactly the states the model computes while DECODING that candidate. A deployment could cache them during best-of-8 generation at close to zero extra cost. NOT MEASURED HERE: this experiment ran a separate teacher-forced forward pass, so the free-at-generation claim is an inference from the architecture, not a measurement. It is the cheapest thing to verify next.",
+   "head_training": "CPU-seconds to CPU-minutes on a cached feature matrix; the one-off cost is the extraction (80882 forward passes, 0 failures, ~5 GPU-hours on 2xA100 under heavy contention)."
+  },
+  "what_would_falsify_or_extend": [
+   "read the head's features off the ADAPTED model's forward pass instead of the base model's: if the signal survives, the fusion becomes free (one pass yields both P(Yes) and h); if it collapses, the complementarity was caused by using an unadapted network, which is itself the explanation.",
+   "verify the 'free at generation time' claim by capturing hidden states during the actual sampling run rather than in a separate teacher-forced pass.",
+   "fix the CV->eval transfer failure with a selection split drawn to match the eval pools' question mix; until then, head architecture selection on this split is unreliable.",
+   "the fusion captures ~28% of the pair-oracle headroom (0.8065 of a 0.8774 ceiling from 0.7752). The remaining ~0.071 still needs a per-item router, which is the project's standing wall."
+  ],
+  "abstention_statement": "no arm in this experiment abstains, defers, or rejects. Every configuration always returns one of the 8 candidates."
+ }
+}

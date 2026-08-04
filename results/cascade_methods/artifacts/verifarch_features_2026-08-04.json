@@ -1,0 +1,1083 @@
+{
+ "what": "TIER-1 feature-based DISCRIMINATIVE selector for best-of-8 open-text medical VQA: gradient-boosted trees / small MLPs over engineered zero-inference per-candidate features, replacing the generative judge entirely. Reports which signals carry selection information.",
+ "date": "2026-08-04",
+ "generator": "Lingshu-7B (temp 0.7, n=8, cap320) -- pools UNCHANGED from the published open-text arm",
+ "judge": "src/labeling/run_judge.py (MedVLThinker-32B, judge_ok) -- the SAME judge as the headline",
+ "incumbent": "ckpts/train/lora_verifier_disjoint (trained same-family LoRA, clean L1 image-disjoint)",
+ "endpoint": "selection efficiency at N=8 = P(pick correct | correct present); paired bootstrap over items",
+ "nboot": 10000,
+ "seed": 0,
+ "code": "src/cascade_methods/verifarch_features.py",
+ "data": {
+  "n_eval_items": 2345,
+  "n_eval_candidates": 18760,
+  "n_train_items": 16621,
+  "n_train_candidates": 132968,
+  "train_sources": {
+   "slake_open_train": 2976,
+   "vqa_rad_open_train": 542,
+   "pathvqa_open_train": 9903,
+   "kvasir_open": 1200,
+   "radimagenet_open": 2000
+  }
+ },
+ "disjointness": {
+  "artifact": "results/cascade_methods/artifacts/verifarch_disjoint_assert.json",
+  "image_pixel_hash_intersection": 0,
+  "item_intersection": 0,
+  "method": "md5 of decoded RGB pixels (WxH + raw bytes); item identity = (dataset family, punctuation/whitespace-normalized question text, image pixel hash)"
+ },
+ "null_test": {
+  "published": {
+   "sel_eff": 0.7752,
+   "oracle_at_8": 0.6260127931769722,
+   "greedy": 0.4494669509594883,
+   "selected": 0.48528784648187634,
+   "auroc": 0.8855921901711237
+  },
+  "reproduced": {
+   "sel_eff": 0.7752043596730245,
+   "oracle_at_8": 0.6260127931769722,
+   "greedy": 0.4494669509594883,
+   "selected": 0.48528784648187634,
+   "auroc": 0.8855921901711237
+  },
+  "max_abs_deviation": 0.0,
+  "tolerance_achieved": "exact to 0.00e+00 on every cell"
+ },
+ "controls": {
+  "greedy_published_modal_raw": 0.4494669509594883,
+  "first_sample": 0.423454157782516,
+  "random_pick_expected": 0.6762602179836512,
+  "self_consistency": {
+   "sel_acc": 0.44690831556503197,
+   "oracle": 0.6260127931769722,
+   "sel_eff": 0.7138964577656676,
+   "n": 2345
+  },
+  "oracle_at_8": 0.6260127931769722,
+  "incumbent_trained_lora": {
+   "sel_acc": 0.48528784648187634,
+   "oracle": 0.6260127931769722,
+   "sel_eff": 0.7752043596730245,
+   "n": 2345
+  },
+  "generator_zero_shot_pyes": {
+   "sel_acc": 0.44264392324093815,
+   "oracle": 0.6260127931769722,
+   "sel_eff": 0.7070844686648501,
+   "n": 2345
+  }
+ },
+ "features": {
+  "n_features": 39,
+  "names": [
+   "dup_count",
+   "dup_frac",
+   "is_modal",
+   "dup_rank",
+   "first_pos",
+   "is_first_sample",
+   "n_distinct",
+   "self_consistency",
+   "pool_entropy",
+   "mean_sim_others",
+   "max_sim_other",
+   "mean_jaccard_others",
+   "soft_vote",
+   "n_others_containing",
+   "n_others_contained",
+   "n_chars",
+   "n_words",
+   "log_len_ratio",
+   "has_digit",
+   "n_commas",
+   "has_laterality",
+   "has_negation",
+   "q_answer_jaccard",
+   "q_n_tokens",
+   "q_answer_overlap",
+   "q_starts_what",
+   "q_starts_where",
+   "q_starts_which",
+   "q_starts_how",
+   "q_starts_why",
+   "q_starts_when",
+   "q_starts_who",
+   "q_starts_is",
+   "q_starts_are",
+   "q_starts_does",
+   "q_starts_do",
+   "train_str_logcount",
+   "train_str_poscorrect_rate",
+   "train_str_seen"
+  ],
+  "groups": {
+   "pool_duplicate_structure": [
+    "dup_count",
+    "dup_frac",
+    "is_modal",
+    "dup_rank",
+    "first_pos",
+    "is_first_sample",
+    "n_distinct",
+    "self_consistency",
+    "pool_entropy"
+   ],
+   "similarity_structure": [
+    "mean_sim_others",
+    "max_sim_other",
+    "mean_jaccard_others",
+    "soft_vote",
+    "n_others_containing",
+    "n_others_contained"
+   ],
+   "answer_shape": [
+    "n_chars",
+    "n_words",
+    "log_len_ratio",
+    "has_digit",
+    "n_commas",
+    "has_laterality",
+    "has_negation"
+   ],
+   "question_relation": [
+    "q_answer_jaccard",
+    "q_n_tokens",
+    "q_answer_overlap",
+    "q_starts_what",
+    "q_starts_where",
+    "q_starts_which",
+    "q_starts_how",
+    "q_starts_why",
+    "q_starts_when",
+    "q_starts_who",
+    "q_starts_is",
+    "q_starts_are",
+    "q_starts_does",
+    "q_starts_do"
+   ],
+   "train_answer_prior": [
+    "train_str_logcount",
+    "train_str_poscorrect_rate",
+    "train_str_seen"
+   ]
+  },
+  "inference_cost": "zero -- candidate strings + question text + train-derived priors only",
+  "train_prior_protocol": "leave-one-question-out within train; eval uses the full train prior"
+ },
+ "arm_A_deployable": {
+  "protocol": "fitted on the 5 L1 image-disjoint TRAIN pools, frozen, applied once to the 2345 eval items; no eval image or item in training (pixel-md5 asserted). NO incumbent score used.",
+  "results": {
+   "hgb_pointwise_bce": {
+    "sel_acc": 0.4430703624733475,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.7077656675749319,
+    "n": 2345,
+    "auroc": 0.7135067657972696,
+    "ci_sel_eff": [
+     0.6842105263157895,
+     0.7311555480679288
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": -0.06743869209809261,
+     "ci_sel_eff": [
+      -0.0910290904659136,
+      -0.04316056744028602
+     ],
+     "d_sel_acc": -0.042217484008528816,
+     "ci_sel_acc": [
+      -0.057142857142857106,
+      -0.026865671641791045
+     ]
+    },
+    "vs_self_consistency": {
+     "d_sel_eff": -0.006130790190735702,
+     "ci_sel_eff": [
+      -0.029126378035625004,
+      0.016042967336017656
+     ],
+     "d_sel_acc": -0.003837953091684443,
+     "ci_sel_acc": [
+      -0.017921108742004272,
+      0.010234541577825162
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7224806201550388,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8218694885361552,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": -0.02821869488536155,
+       "ci_sel_eff": [
+        -0.05996560846560846,
+        0.0034782608695651555
+       ],
+       "d_sel_acc": -0.024806201550387597,
+       "ci_sel_acc": [
+        -0.05271317829457367,
+        0.0031007751937983663
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.48,
+      "oracle": 0.63,
+      "sel_eff": 0.7619047619047619,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": 0.0,
+       "ci_sel_eff": [
+        -0.07258064516129037,
+        0.07258064516129026
+       ],
+       "d_sel_acc": 0.0,
+       "ci_sel_acc": [
+        -0.04500000000000004,
+        0.04500000000000004
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.318,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.6154838709677419,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": -0.10709677419354835,
+       "ci_sel_eff": [
+        -0.14377427717214175,
+        -0.06976744186046513
+       ],
+       "d_sel_acc": -0.055333333333333345,
+       "ci_sel_acc": [
+        -0.07466666666666666,
+        -0.035999999999999976
+       ]
+      }
+     }
+    }
+   },
+   "mlp_pointwise_bce": {
+    "sel_acc": 0.48230277185501064,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.7704359673024523,
+    "n": 2345,
+    "auroc": 0.8971448238684055,
+    "ci_sel_eff": [
+     0.7488395021294967,
+     0.7919836856516626
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": -0.004768392370572139,
+     "ci_sel_eff": [
+      -0.026578242939350148,
+      0.01738084400223658
+     ],
+     "d_sel_acc": -0.0029850746268657025,
+     "ci_sel_acc": [
+      -0.016631130063965882,
+      0.011087420042643903
+     ]
+    },
+    "vs_self_consistency": {
+     "d_sel_eff": 0.05653950953678477,
+     "ci_sel_eff": [
+      0.0389518697222253,
+      0.07432489002733478
+     ],
+     "d_sel_acc": 0.03539445628997867,
+     "ci_sel_acc": [
+      0.024307036247334768,
+      0.04648187633262263
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7751937984496124,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8818342151675485,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": 0.031746031746031744,
+       "ci_sel_eff": [
+        0.0017825311942959415,
+        0.06104403730157704
+       ],
+       "d_sel_acc": 0.027906976744186074,
+       "ci_sel_acc": [
+        0.0015503875968992942,
+        0.054263565891472854
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.48,
+      "oracle": 0.63,
+      "sel_eff": 0.7619047619047619,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": 0.0,
+       "ci_sel_eff": [
+        -0.08396946564885499,
+        0.08333333333333326
+       ],
+       "d_sel_acc": 0.0,
+       "ci_sel_acc": [
+        -0.05499999999999999,
+        0.05499999999999994
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.3566666666666667,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.6903225806451613,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": -0.032258064516129004,
+       "ci_sel_eff": [
+        -0.06493589213334439,
+        0.0
+       ],
+       "d_sel_acc": -0.016666666666666663,
+       "ci_sel_acc": [
+        -0.03333333333333338,
+        0.0
+       ]
+      }
+     }
+    }
+   },
+   "mlp_listwise_softmax": {
+    "sel_acc": 0.432409381663113,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.6907356948228883,
+    "n": 2345,
+    "auroc": 0.5113835161176619,
+    "ci_sel_eff": [
+     0.6675611508397027,
+     0.7140923600374426
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": -0.08446866485013615,
+     "ci_sel_eff": [
+      -0.11080144198751045,
+      -0.058663028649386106
+     ],
+     "d_sel_acc": -0.05287846481876335,
+     "ci_sel_acc": [
+      -0.06950959488272918,
+      -0.03667377398720684
+     ]
+    },
+    "vs_self_consistency": {
+     "d_sel_eff": -0.023160762942779245,
+     "ci_sel_eff": [
+      -0.04908028494089899,
+      0.003322314359934988
+     ],
+     "d_sel_acc": -0.014498933901918976,
+     "ci_sel_acc": [
+      -0.030703624733475487,
+      0.0021321961620469065
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7286821705426356,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8289241622574955,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": -0.021164021164021163,
+       "ci_sel_eff": [
+        -0.0549455420466059,
+        0.012216938820341947
+       ],
+       "d_sel_acc": -0.018604651162790753,
+       "ci_sel_acc": [
+        -0.04806201550387601,
+        0.010852713178294504
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.42,
+      "oracle": 0.63,
+      "sel_eff": 0.6666666666666666,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": -0.09523809523809523,
+       "ci_sel_eff": [
+        -0.17599999999999993,
+        -0.015748031496062964
+       ],
+       "d_sel_acc": -0.06,
+       "ci_sel_acc": [
+        -0.11000000000000004,
+        -0.010000000000000009
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.30666666666666664,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.5935483870967742,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": -0.12903225806451613,
+       "ci_sel_eff": [
+        -0.16919240111033998,
+        -0.08788253450844417
+       ],
+       "d_sel_acc": -0.06666666666666671,
+       "ci_sel_acc": [
+        -0.08799999999999997,
+        -0.04533333333333334
+       ]
+      }
+     }
+    }
+   },
+   "mlp_pairwise_bt": {
+    "sel_acc": 0.4669509594882729,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.7459128065395095,
+    "n": 2345,
+    "auroc": 0.31403645299748745,
+    "ci_sel_eff": [
+     0.7235487838656219,
+     0.7679946877704025
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": -0.029291553133514947,
+     "ci_sel_eff": [
+      -0.051842383090012684,
+      -0.006126408499425531
+     ],
+     "d_sel_acc": -0.01833688699360342,
+     "ci_sel_acc": [
+      -0.032409381663113024,
+      -0.003837953091684443
+     ]
+    },
+    "vs_self_consistency": {
+     "d_sel_eff": 0.03201634877384196,
+     "ci_sel_eff": [
+      0.011651417550862075,
+      0.05234169143383651
+     ],
+     "d_sel_acc": 0.020042643923240955,
+     "ci_sel_acc": [
+      0.0072494669509595155,
+      0.032835820895522394
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7410852713178294,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8430335097001763,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": -0.007054673721340388,
+       "ci_sel_eff": [
+        -0.0383275261324042,
+        0.02333931777378817
+       ],
+       "d_sel_acc": -0.006201550387596955,
+       "ci_sel_acc": [
+        -0.03410852713178292,
+        0.020155038759689936
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.465,
+      "oracle": 0.63,
+      "sel_eff": 0.7380952380952381,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": -0.023809523809523725,
+       "ci_sel_eff": [
+        -0.10483870967741937,
+        0.05691056910569103
+       ],
+       "d_sel_acc": -0.014999999999999958,
+       "ci_sel_acc": [
+        -0.065,
+        0.03500000000000003
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.34933333333333333,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.6761290322580645,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": -0.04645161290322575,
+       "ci_sel_eff": [
+        -0.0811170212765957,
+        -0.01152221959434668
+       ],
+       "d_sel_acc": -0.02400000000000002,
+       "ci_sel_acc": [
+        -0.04199999999999998,
+        -0.006000000000000005
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "feature_importance": {
+  "model": "mlp_pointwise_bce",
+  "base_sel_eff": 0.7704359673024523,
+  "protocol": "across-pool permutation of one feature column at a time (10 reps), scored by the loss in SELECTION EFFICIENCY, not AUROC; plus retrain-without-group and group-alone models",
+  "permutation": {
+   "soft_vote": {
+    "drop_sel_eff_mean": 0.0760899182561308,
+    "sd": 0.003062366048091145
+   },
+   "train_str_poscorrect_rate": {
+    "drop_sel_eff_mean": 0.04141689373297003,
+    "sd": 0.0043596730245231766
+   },
+   "dup_count": {
+    "drop_sel_eff_mean": 0.018119891008174405,
+    "sd": 0.002693967293363112
+   },
+   "train_str_logcount": {
+    "drop_sel_eff_mean": 0.017234332425068145,
+    "sd": 0.004788300210024519
+   },
+   "mean_jaccard_others": {
+    "drop_sel_eff_mean": 0.013692098092643056,
+    "sd": 0.0016532235830397128
+   },
+   "is_modal": {
+    "drop_sel_eff_mean": 0.013079019073569498,
+    "sd": 0.002016164657622458
+   },
+   "train_str_seen": {
+    "drop_sel_eff_mean": 0.010081743869209814,
+    "sd": 0.0025633362019382476
+   },
+   "first_pos": {
+    "drop_sel_eff_mean": 0.009196185286103553,
+    "sd": 0.002571469494302038
+   },
+   "dup_rank": {
+    "drop_sel_eff_mean": 0.007833787465940068,
+    "sd": 0.002642665496085947
+   },
+   "has_laterality": {
+    "drop_sel_eff_mean": 0.007220708446866497,
+    "sd": 0.001701634331988661
+   },
+   "mean_sim_others": {
+    "drop_sel_eff_mean": 0.007016348773841985,
+    "sd": 0.00384198600877482
+   },
+   "q_starts_how": {
+    "drop_sel_eff_mean": 0.00599455040871939,
+    "sd": 0.0029188399571700926
+   },
+   "n_chars": {
+    "drop_sel_eff_mean": 0.00592643051771119,
+    "sd": 0.0020219103650757136
+   },
+   "q_n_tokens": {
+    "drop_sel_eff_mean": 0.0057220708446866775,
+    "sd": 0.0017286890382083567
+   },
+   "self_consistency": {
+    "drop_sel_eff_mean": 0.005722070844686666,
+    "sd": 0.0021150101766021817
+   },
+   "dup_frac": {
+    "drop_sel_eff_mean": 0.0056539509536784995,
+    "sd": 0.0028586015338361312
+   },
+   "max_sim_other": {
+    "drop_sel_eff_mean": 0.005449591280653965,
+    "sd": 0.0021106176273609674
+   },
+   "n_commas": {
+    "drop_sel_eff_mean": 0.005177111716621274,
+    "sd": 0.001402674406129002
+   },
+   "n_others_contained": {
+    "drop_sel_eff_mean": 0.0047683923705722385,
+    "sd": 0.0014288948885151716
+   },
+   "n_distinct": {
+    "drop_sel_eff_mean": 0.0047002724795640605,
+    "sd": 0.002120488067612173
+   },
+   "n_words": {
+    "drop_sel_eff_mean": 0.004495912806539548,
+    "sd": 0.0025885558583106376
+   },
+   "pool_entropy": {
+    "drop_sel_eff_mean": 0.004495912806539537,
+    "sd": 0.0024598733086195817
+   },
+   "log_len_ratio": {
+    "drop_sel_eff_mean": 0.003474114441416931,
+    "sd": 0.002520435967302443
+   },
+   "q_answer_jaccard": {
+    "drop_sel_eff_mean": 0.0032697547683923967,
+    "sd": 0.001771117166212535
+   },
+   "q_answer_overlap": {
+    "drop_sel_eff_mean": 0.003065395095367873,
+    "sd": 0.0013014286903639564
+   },
+   "q_starts_what": {
+    "drop_sel_eff_mean": 0.002929155313351528,
+    "sd": 0.002176641050227577
+   },
+   "q_starts_where": {
+    "drop_sel_eff_mean": 0.002452316076294314,
+    "sd": 0.0023832228453046097
+   },
+   "q_starts_is": {
+    "drop_sel_eff_mean": 0.0021798365122616013,
+    "sd": 0.0006674358972161369
+   },
+   "has_digit": {
+    "drop_sel_eff_mean": 0.0017029972752043766,
+    "sd": 0.0013708863622273822
+   },
+   "q_starts_which": {
+    "drop_sel_eff_mean": 0.0016348773841962315,
+    "sd": 0.0019554087322080694
+   },
+   "is_first_sample": {
+    "drop_sel_eff_mean": 0.0010899182561308173,
+    "sd": 0.0025158290616647764
+   },
+   "n_others_containing": {
+    "drop_sel_eff_mean": 0.000885558583106305,
+    "sd": 0.0016134494935050303
+   },
+   "has_negation": {
+    "drop_sel_eff_mean": 0.00047683923705725827,
+    "sd": 0.0011418974532861103
+   },
+   "q_starts_why": {
+    "drop_sel_eff_mean": 0.00013623978201638965,
+    "sd": 0.0006674358972161211
+   },
+   "q_starts_are": {
+    "drop_sel_eff_mean": 0.00013623978201635634,
+    "sd": 0.000408719346049069
+   },
+   "q_starts_who": {
+    "drop_sel_eff_mean": 0.0,
+    "sd": 0.0
+   },
+   "q_starts_does": {
+    "drop_sel_eff_mean": 0.0,
+    "sd": 0.0
+   },
+   "q_starts_do": {
+    "drop_sel_eff_mean": 0.0,
+    "sd": 0.0
+   },
+   "q_starts_when": {
+    "drop_sel_eff_mean": -6.811989100816707e-05,
+    "sd": 0.0002043596730245012
+   }
+  },
+  "drop_one_group": {
+   "pool_duplicate_structure": {
+    "sel_eff_without_group": 0.7622615803814714,
+    "drop": 0.008174386920980936,
+    "n_features_removed": 9
+   },
+   "similarity_structure": {
+    "sel_eff_without_group": 0.7418256130790191,
+    "drop": 0.028610354223433276,
+    "n_features_removed": 6
+   },
+   "answer_shape": {
+    "sel_eff_without_group": 0.7568119891008175,
+    "drop": 0.013623978201634857,
+    "n_features_removed": 7
+   },
+   "question_relation": {
+    "sel_eff_without_group": 0.7649863760217984,
+    "drop": 0.00544959128065392,
+    "n_features_removed": 14
+   },
+   "train_answer_prior": {
+    "sel_eff_without_group": 0.7322888283378747,
+    "drop": 0.038147138964577665,
+    "n_features_removed": 3
+   }
+  },
+  "group_alone": {
+   "pool_duplicate_structure": {
+    "sel_eff_group_alone": 0.7118528610354223
+   },
+   "similarity_structure": {
+    "sel_eff_group_alone": 0.7186648501362398
+   },
+   "answer_shape": {
+    "sel_eff_group_alone": 0.6532697547683923
+   },
+   "question_relation": {
+    "sel_eff_group_alone": 0.6743869209809265
+   },
+   "train_answer_prior": {
+    "sel_eff_group_alone": 0.6607629427792916
+   }
+  }
+ },
+ "arm_B_crossfit_diagnostic": {
+  "protocol": "5-fold GroupKFold on the EVAL set, grouped by IMAGE PIXEL HASH (no fold shares an image). Necessary because the incumbent adapter was never run over the 16,621 disjoint train items. NOT A DEPLOYABLE NUMBER -- a cross-fitted diagnostic upper bound.",
+  "results": {
+   "features_only": {
+    "sel_acc": 0.4933901918976546,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.7881471389645777,
+    "n": 2345,
+    "auroc": 0.8980256901824603,
+    "ci_sel_eff": [
+     0.766922283052477,
+     0.8089358710372847
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": 0.012942779291553186,
+     "ci_sel_eff": [
+      -0.010225472694357817,
+      0.035326687331894875
+     ],
+     "d_sel_acc": 0.008102345415778256,
+     "ci_sel_acc": [
+      -0.00639658848614072,
+      0.02217484008528786
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7534883720930232,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8571428571428571,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": 0.007054673721340388,
+       "ci_sel_eff": [
+        -0.02522522522522519,
+        0.03949730700179532
+       ],
+       "d_sel_acc": 0.006201550387596844,
+       "ci_sel_acc": [
+        -0.02170542635658923,
+        0.03410852713178303
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.47,
+      "oracle": 0.63,
+      "sel_eff": 0.746031746031746,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": -0.015873015873015817,
+       "ci_sel_eff": [
+        -0.09917355371900827,
+        0.06611570247933884
+       ],
+       "d_sel_acc": -0.010000000000000009,
+       "ci_sel_acc": [
+        -0.06499999999999995,
+        0.040000000000000036
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.38466666666666666,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.7445161290322581,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": 0.021935483870967776,
+       "ci_sel_eff": [
+        -0.010484927916120549,
+        0.05461692192537056
+       ],
+       "d_sel_acc": 0.011333333333333306,
+       "ci_sel_acc": [
+        -0.005333333333333357,
+        0.028000000000000025
+       ]
+      }
+     }
+    }
+   },
+   "features_plus_incumbent": {
+    "sel_acc": 0.4989339019189765,
+    "oracle": 0.6260127931769722,
+    "sel_eff": 0.7970027247956403,
+    "n": 2345,
+    "auroc": 0.9092790509433362,
+    "ci_sel_eff": [
+     0.7761996492996406,
+     0.8181198910081744
+    ],
+    "vs_incumbent": {
+     "d_sel_eff": 0.021798365122615793,
+     "ci_sel_eff": [
+      0.004004808536215665,
+      0.04013742145359504
+     ],
+     "d_sel_acc": 0.01364605543710018,
+     "ci_sel_acc": [
+      0.0025586353944562767,
+      0.02515991471215351
+     ]
+    },
+    "per_dataset": {
+     "slake_open": {
+      "sel_acc": 0.7612403100775194,
+      "oracle": 0.8790697674418605,
+      "sel_eff": 0.8659611992945326,
+      "n": 645,
+      "vs_incumbent": {
+       "d_sel_eff": 0.015873015873015928,
+       "ci_sel_eff": [
+        -0.010889787163834404,
+        0.04295671211617331
+       ],
+       "d_sel_acc": 0.013953488372092981,
+       "ci_sel_acc": [
+        -0.009302325581395432,
+        0.037209302325581395
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "sel_acc": 0.49,
+      "oracle": 0.63,
+      "sel_eff": 0.7777777777777778,
+      "n": 200,
+      "vs_incumbent": {
+       "d_sel_eff": 0.015873015873015928,
+       "ci_sel_eff": [
+        -0.05555555555555558,
+        0.08620689655172409
+       ],
+       "d_sel_acc": 0.010000000000000009,
+       "ci_sel_acc": [
+        -0.03500000000000003,
+        0.05499999999999999
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "sel_acc": 0.3873333333333333,
+      "oracle": 0.5166666666666667,
+      "sel_eff": 0.7496774193548387,
+      "n": 1500,
+      "vs_incumbent": {
+       "d_sel_eff": 0.02709677419354839,
+       "ci_sel_eff": [
+        0.0025805620219487707,
+        0.051949740766385755
+       ],
+       "d_sel_acc": 0.013999999999999957,
+       "ci_sel_acc": [
+        0.001333333333333353,
+        0.026666666666666672
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "pair_oracle": {
+  "definition": "per item, credit if EITHER the incumbent or the feature model picks a correct candidate",
+  "sel_eff": 0.8671662125340599,
+  "headroom_over_incumbent": 0.09196185286103542,
+  "agreement_rate_on_pick": 0.5812366737739872,
+  "both_correct": 0.42473347547974416,
+  "feature_only_correct": 0.057569296375266525,
+  "incumbent_only_correct": 0.06055437100213219
+ },
+ "contested_stratum": {
+  "definition": "items with >=2 distinct normalized candidates",
+  "n": 1725,
+  "frac": 0.7356076759061834,
+  "incumbent": 0.6397379912663755,
+  "mlp_pointwise_bce": 0.6320960698689956,
+  "self_consistency": 0.5414847161572053,
+  "generator_zero_shot_pyes": 0.5305676855895196
+ },
+ "seed_stability": {
+  "artifact": "results/cascade_methods/artifacts/verifarch_features_seeds_2026-08-04.json",
+  "per_seed_sel_eff": [
+   0.7704359673024523,
+   0.7636239782016349,
+   0.7554495912806539,
+   0.7574931880108992,
+   0.7554495912806539,
+   0.7636239782016349,
+   0.7670299727520435,
+   0.7568119891008175,
+   0.7663487738419619,
+   0.7615803814713896
+  ],
+  "mean": 0.7617847411444142,
+  "sd": 0.005033963157177748,
+  "min": 0.7554495912806539,
+  "max": 0.7704359673024523,
+  "seed_ensemble": {
+   "sel_acc": 0.4780383795309168,
+   "oracle": 0.6260127931769722,
+   "sel_eff": 0.7636239782016349,
+   "n": 2345,
+   "auroc": 0.89676801639954,
+   "ci_sel_eff": [
+    0.7420238064334295,
+    0.7854672454821152
+   ],
+   "vs_incumbent": {
+    "d_sel_eff": -0.011580381471389622,
+    "ci_sel_eff": [
+     -0.0334470989761092,
+     0.010274148647506772
+    ],
+    "d_sel_acc": -0.0072494669509595155,
+    "ci_sel_acc": [
+     -0.020895522388059695,
+     0.00639658848614072
+    ]
+   },
+   "per_dataset": {
+    "slake_open": {
+     "sel_acc": 0.772093023255814,
+     "oracle": 0.8790697674418605,
+     "sel_eff": 0.8783068783068783,
+     "n": 645,
+     "vs_incumbent": {
+      "d_sel_eff": 0.02821869488536155,
+      "ci_sel_eff": [
+       -0.0017606410065330756,
+       0.05799648506151145
+      ],
+      "d_sel_acc": 0.024806201550387597,
+      "ci_sel_acc": [
+       -0.0015503875968991832,
+       0.051162790697674376
+      ]
+     }
+    },
+    "vqa_rad_open": {
+     "sel_acc": 0.47,
+     "oracle": 0.63,
+     "sel_eff": 0.746031746031746,
+     "n": 200,
+     "vs_incumbent": {
+      "d_sel_eff": -0.015873015873015817,
+      "ci_sel_eff": [
+       -0.09565217391304348,
+       0.06201550387596899
+      ],
+      "d_sel_acc": -0.010000000000000009,
+      "ci_sel_acc": [
+       -0.06,
+       0.03999999999999998
+      ]
+     }
+    },
+    "pathvqa_open": {
+     "sel_acc": 0.3526666666666667,
+     "oracle": 0.5166666666666667,
+     "sel_eff": 0.6825806451612904,
+     "n": 1500,
+     "vs_incumbent": {
+      "d_sel_eff": -0.039999999999999925,
+      "ci_sel_eff": [
+       -0.07295639979602242,
+       -0.007471515976578442
+      ],
+      "d_sel_acc": -0.020666666666666667,
+      "ci_sel_acc": [
+       -0.03799999999999998,
+       -0.004000000000000002
+      ]
+     }
+    }
+   }
+  },
+  "stratified_by_gold_answer_length": {
+   "short_le3w": {
+    "n_items": 2027,
+    "n_recoverable": 1371,
+    "incumbent_sel_eff": 0.7943107221006565,
+    "feature_ensemble_sel_eff": 0.7775346462436178,
+    "delta": -0.016776075857038664
+   },
+   "medium_4to8w": {
+    "n_items": 241,
+    "n_recoverable": 80,
+    "incumbent_sel_eff": 0.5125,
+    "feature_ensemble_sel_eff": 0.5625,
+    "delta": 0.050000000000000044
+   },
+   "long_gt8w": {
+    "n_items": 77,
+    "n_recoverable": 17,
+    "incumbent_sel_eff": 0.47058823529411764,
+    "feature_ensemble_sel_eff": 0.5882352941176471,
+    "delta": 0.11764705882352944
+   },
+   "gold_has_laterality_or_position": {
+    "n_items": 163,
+    "n_recoverable": 99,
+    "incumbent_sel_eff": 0.6060606060606061,
+    "feature_ensemble_sel_eff": 0.6666666666666666,
+    "delta": 0.06060606060606055
+   }
+  },
+  "read": "the ARM A table above is seed 0, which is the TOP of the 10-seed range. The honest ARM A point estimate is the 10-seed mean 0.7618 (sd 0.0050, range 0.7554-0.7704); the seed-averaged ensemble scores 0.7636, delta vs incumbent -0.0116 [-0.0334, 0.0103] -- still a statistical tie, but the point estimate sits BELOW the incumbent, not level with it."
+ },
+ "optimism_correction": {
+  "why": "ARM B is fitted on the eval set (cross-fitted by image), ARM A is frozen from disjoint train data. The SAME feature set measured both ways gives the size of the cross-fit optimism, and it must be subtracted before reading ARM B's fusion gain as a deployable number.",
+  "features_only_frozen_arm_A": 0.7704359673024523,
+  "features_only_crossfit_arm_B": 0.7881471389645777,
+  "crossfit_optimism": 0.017711171662125325,
+  "arm_B_fusion_gain_over_incumbent": 0.021798365122615793,
+  "fusion_gain_after_subtracting_crossfit_optimism": 0.004087193460490468,
+  "detection_floor_preregistered": 0.021,
+  "read": "the fusion's raw +0.0218 falls to ~+0.0041 once the measured cross-fit optimism is removed, i.e. below the pre-registered 2-sigma detection floor of +0.021. The fusion is therefore PLAUSIBLE but NOT ESTABLISHED as a deployable gain; settling it requires running the incumbent adapter over the 16,621 disjoint train items (one pointwise pass, ~132K forwards) so the fusion can be fitted off-eval and frozen."
+ },
+ "verdict": {
+  "headline": "A 39-feature discriminative selector that makes ZERO model calls reaches sel_eff 0.7618 (10-seed mean; seed-averaged ensemble 0.7636, delta vs the trained same-family LoRA verifier -0.0116 [-0.0334, 0.0103]) -- a STATISTICAL TIE with a trained 7B judge at no inference cost -- and beats it on candidate-level AUROC (0.8968 vs 0.8856). It does NOT beat it.",
+  "beat_incumbent_deployable": false,
+  "beat_incumbent_diagnostic_fusion": true,
+  "guardrail_arm_A": "NOT clean (seed-averaged ensemble): SLAKE +0.0282 [-0.0018,+0.0580], VQA-RAD -0.0159 [-0.0957,+0.0620], PathVQA -0.0400 [-0.0730,-0.0075] (significantly worse on PathVQA)",
+  "guardrail_arm_B_fusion": "clean: all three per-dataset deltas positive (+0.0159 / +0.0159 / +0.0271)",
+  "why_it_matters": "This is the first scorer in the programme that is simultaneously (a) as good as the incumbent and (b) substantially DE-CORRELATED from it: the two agree on only 58.1% of picks, each is uniquely right on ~6% of items, and their pair-oracle is 0.8672 (+0.0920 headroom). Every previous de-correlated source (six cross-family judges) was far WORSE than the incumbent, which is what produced the project's 'selection quality tracks agreement with the generator' law. A non-generative scorer breaks that law's confound: agreement is low AND quality is equal.",
+  "seed_caveat": "the ARM A table above is seed 0, which is the TOP of the 10-seed range. The honest ARM A point estimate is the 10-seed mean 0.7618 (sd 0.0050, range 0.7554-0.7704); the seed-averaged ensemble scores 0.7636, delta vs incumbent -0.0116 [-0.0334, 0.0103] -- still a statistical tie, but the point estimate sits BELOW the incumbent, not level with it.",
+  "objective_question_settled": "At the fixed configuration of ARM A, on IDENTICAL features: pointwise BCE 0.7704 > within-question Bradley-Terry 0.7459 > listwise softmax 0.6907. Combined with N25 (within-question BT on the LoRA: AUROC +0.030, selection +0.000), the objective is not the binding constraint on this problem -- the information is.",
+  "what_carries_the_signal": "Permutation on the selection endpoint: soft_vote (similarity-weighted within-pool agreement) +0.0761, the TRAIN-derived answer-string correctness prior +0.0414, raw duplicate count +0.0181. No single feature group reaches the incumbent alone (best group-alone 0.7187); the model is a consensus-plus-prior machine, not a grounder.",
+  "limits": [
+   "ARM A carries NO image information at all, so it cannot fix the documented failure mode (one-token visual contrasts such as left/right); it loses on PathVQA for exactly that reason.",
+   "The train-derived answer-string prior is legitimate (L1 image- and item-disjoint) but is an in-distribution answer prior, not grounding; on a set with an unfamiliar answer vocabulary it would contribute nothing.",
+   "ARM B is cross-fitted on eval and is a diagnostic upper bound, not a deployable number.",
+   "Seed spread is 0.0050 sd on sel_eff, so any single-seed comparison of two feature models below +0.015 is noise; the reported ARM A table is seed 0 and the seed-mean is 0.0086 lower.",
+   "The gold-answer-length strata are descriptive only -- n_recoverable is 80 (medium) and 17 (long), far too small for the paired bootstrap, and no CI is quoted for them."
+  ]
+ }
+}
