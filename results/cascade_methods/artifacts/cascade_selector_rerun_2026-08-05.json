@@ -1,0 +1,6334 @@
+{
+ "title": "Cascade re-run end-to-end with the frozen 8-seed open-text selector, re-reported under the project's canonical MACRO convention (Variant B, 8 cells, 1/8 each).",
+ "reproduce": "python3 src/cascade_methods/cascade_selector_rerun.py --source all --combine",
+ "date": "2026-08-05",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "n_bootstrap": 10000,
+ "seed": 20260805,
+ "arms": {
+  "pooled4": {
+   "dir": "ckpts/train/lora_verifier_pooled4",
+   "label": "incumbent LoRA verifier, CONTAMINATED (the published headline)"
+  },
+  "disjoint": {
+   "dir": "ckpts/train/lora_verifier_disjoint",
+   "label": "incumbent LoRA verifier, CLEAN disjoint-trained"
+  },
+  "ens8_rank": {
+   "dir": "ckpts/train/selector_ens8_rank",
+   "label": "rank_avg(clean incumbent, 8-seed head ens) -- recommendation, raw rank scale"
+  },
+  "ens8_scaled": {
+   "dir": "ckpts/train/selector_ens8_scaled",
+   "label": "same ordering, magnitudes quantile-matched to the clean incumbent"
+  }
+ },
+ "what_changed_between_arms": {
+  "cells_whose_per_sample_vectors_differ": [
+   "PATH_VQA_open",
+   "SLAKE_open",
+   "VQA_RAD_open"
+  ],
+  "note": "only the 3 open-text cells may differ; every multiple-choice cell must be byte-identical because only the open arm's per-candidate score source moved.",
+  "n_identical_vectors": 47,
+  "n_differing_vectors": 9
+ },
+ "per_arm": {
+  "pooled4": {
+   "source": "pooled4",
+   "dir": "ckpts/train/lora_verifier_pooled4",
+   "label": "incumbent LoRA verifier, CONTAMINATED (the published headline)",
+   "macro_acc": {
+    "always_7b": 0.5971,
+    "always_32b_direct": 0.6567,
+    "always_32b_reasoning": 0.5974,
+    "oracle_mode_32b": 0.6573,
+    "method_compute_lean": 0.66,
+    "method_accuracy_max_veto": 0.6694,
+    "method_accuracy_max_fusion": 0.6661
+   },
+   "sw_acc": {
+    "always_7b": 0.5549,
+    "always_32b_direct": 0.5729,
+    "always_32b_reasoning": 0.5591,
+    "oracle_mode_32b": 0.573,
+    "method_compute_lean": 0.5741,
+    "method_accuracy_max_veto": 0.5836,
+    "method_accuracy_max_fusion": 0.5862
+   },
+   "open_only": {
+    "n": 2345,
+    "n_cells": 3,
+    "sample_weighted": {
+     "always_7b": 0.4495,
+     "always_32b_direct": 0.5168,
+     "always_32b_reasoning": 0.3028,
+     "oracle_mode_32b": 0.5168,
+     "method_compute_lean": 0.5625,
+     "method_accuracy_max_veto": 0.5727,
+     "method_accuracy_max_fusion": 0.5625
+    },
+    "macro_cells": {
+     "always_7b": 0.5085,
+     "always_32b_direct": 0.5982,
+     "always_32b_reasoning": 0.4442,
+     "oracle_mode_32b": 0.5982,
+     "method_compute_lean": 0.6188,
+     "method_accuracy_max_veto": 0.6291,
+     "method_accuracy_max_fusion": 0.6188
+    }
+   },
+   "mcq_only": {
+    "n": 39879,
+    "n_cells": 5,
+    "sample_weighted": {
+     "always_7b": 0.5611,
+     "always_32b_direct": 0.5762,
+     "always_32b_reasoning": 0.5742,
+     "oracle_mode_32b": 0.5763,
+     "method_compute_lean": 0.5748,
+     "method_accuracy_max_veto": 0.5842,
+     "method_accuracy_max_fusion": 0.5876
+    },
+    "macro_cells": {
+     "always_7b": 0.6503,
+     "always_32b_direct": 0.6918,
+     "always_32b_reasoning": 0.6893,
+     "oracle_mode_32b": 0.6927,
+     "method_compute_lean": 0.6848,
+     "method_accuracy_max_veto": 0.6937,
+     "method_accuracy_max_fusion": 0.6945
+    }
+   },
+   "per_cell_acc": {
+    "PMC_VQA": {
+     "always_7b": 0.5427,
+     "always_32b_direct": 0.5518,
+     "always_32b_reasoning": 0.5494,
+     "oracle_mode_32b": 0.5518,
+     "method_compute_lean": 0.5508,
+     "method_accuracy_max_veto": 0.5613,
+     "method_accuracy_max_fusion": 0.5653
+    },
+    "SLAKE_closed": {
+     "always_7b": 0.8254,
+     "always_32b_direct": 0.8589,
+     "always_32b_reasoning": 0.8636,
+     "oracle_mode_32b": 0.8636,
+     "method_compute_lean": 0.8517,
+     "method_accuracy_max_veto": 0.8589,
+     "method_accuracy_max_fusion": 0.8589
+    },
+    "VQA_RAD_closed": {
+     "always_7b": 0.7809,
+     "always_32b_direct": 0.8526,
+     "always_32b_reasoning": 0.8406,
+     "oracle_mode_32b": 0.8526,
+     "method_compute_lean": 0.8327,
+     "method_accuracy_max_veto": 0.8526,
+     "method_accuracy_max_fusion": 0.8526
+    },
+    "PATH_VQA_closed": {
+     "always_7b": 0.8409,
+     "always_32b_direct": 0.8891,
+     "always_32b_reasoning": 0.8891,
+     "oracle_mode_32b": 0.8891,
+     "method_compute_lean": 0.8882,
+     "method_accuracy_max_veto": 0.8891,
+     "method_accuracy_max_fusion": 0.8891
+    },
+    "MedXpertQA-MM": {
+     "always_7b": 0.2615,
+     "always_32b_direct": 0.3065,
+     "always_32b_reasoning": 0.304,
+     "oracle_mode_32b": 0.3065,
+     "method_compute_lean": 0.3005,
+     "method_accuracy_max_veto": 0.3065,
+     "method_accuracy_max_fusion": 0.3065
+    },
+    "SLAKE_open": {
+     "always_7b": 0.7364,
+     "always_32b_direct": 0.8186,
+     "always_32b_reasoning": 0.6791,
+     "oracle_mode_32b": 0.8186,
+     "method_compute_lean": 0.8093,
+     "method_accuracy_max_veto": 0.8202,
+     "method_accuracy_max_fusion": 0.8093
+    },
+    "VQA_RAD_open": {
+     "always_7b": 0.465,
+     "always_32b_direct": 0.6,
+     "always_32b_reasoning": 0.545,
+     "oracle_mode_32b": 0.6,
+     "method_compute_lean": 0.595,
+     "method_accuracy_max_veto": 0.605,
+     "method_accuracy_max_fusion": 0.595
+    },
+    "PATH_VQA_open": {
+     "always_7b": 0.324,
+     "always_32b_direct": 0.376,
+     "always_32b_reasoning": 0.1087,
+     "oracle_mode_32b": 0.376,
+     "method_compute_lean": 0.452,
+     "method_accuracy_max_veto": 0.462,
+     "method_accuracy_max_fusion": 0.452
+    }
+   },
+   "deltas": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0626,
+      "lo": 0.0514,
+      "hi": 0.0734,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0033,
+      "lo": -0.0054,
+      "hi": 0.0121,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0027,
+      "lo": -0.0061,
+      "hi": 0.0117,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.072,
+      "lo": 0.0614,
+      "hi": 0.0824,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0128,
+      "lo": 0.0056,
+      "hi": 0.02,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0122,
+      "lo": 0.0049,
+      "hi": 0.0195,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0686,
+      "lo": 0.0582,
+      "hi": 0.079,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0094,
+      "lo": 0.0013,
+      "hi": 0.0176,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0088,
+      "lo": 0.0006,
+      "hi": 0.0171,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     }
+    }
+   },
+   "deltas_open": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.1745,
+      "lo": 0.1485,
+      "hi": 0.2003,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": 0.0206,
+      "lo": -0.0009,
+      "hi": 0.0423,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0206,
+      "lo": -0.0009,
+      "hi": 0.0423,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.1848,
+      "lo": 0.1583,
+      "hi": 0.211,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": 0.0309,
+      "lo": 0.0116,
+      "hi": 0.0502,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0309,
+      "lo": 0.0116,
+      "hi": 0.0502,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.1745,
+      "lo": 0.1485,
+      "hi": 0.2003,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": 0.0206,
+      "lo": -0.0009,
+      "hi": 0.0423,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0206,
+      "lo": -0.0009,
+      "hi": 0.0423,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    }
+   },
+   "deltas_mcq": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": -0.0046,
+      "lo": -0.0126,
+      "hi": 0.0036,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": -0.007,
+      "lo": -0.0126,
+      "hi": -0.0017,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": -0.008,
+      "lo": -0.0137,
+      "hi": -0.0024,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0043,
+      "lo": -0.0016,
+      "hi": 0.0105,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0019,
+      "lo": 0.0014,
+      "hi": 0.0024,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.001,
+      "lo": -0.0006,
+      "hi": 0.0025,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0051,
+      "lo": -0.0008,
+      "hi": 0.0112,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0027,
+      "lo": 0.002,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0017,
+      "lo": 0.0001,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     }
+    }
+   },
+   "deltas_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.015,
+      "lo": 0.0108,
+      "hi": 0.0192,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0011,
+      "lo": -0.0028,
+      "hi": 0.0051,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.001,
+      "lo": -0.0029,
+      "hi": 0.005,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0245,
+      "lo": 0.0217,
+      "hi": 0.0274,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0107,
+      "lo": 0.0086,
+      "hi": 0.0127,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0106,
+      "lo": 0.0085,
+      "hi": 0.0126,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0271,
+      "lo": 0.0237,
+      "hi": 0.0304,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0132,
+      "lo": 0.0104,
+      "hi": 0.0161,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0131,
+      "lo": 0.0103,
+      "hi": 0.016,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    }
+   },
+   "loo": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0713,
+       "SLAKE_closed": 0.0732,
+       "VQA_RAD_closed": 0.0727,
+       "PATH_VQA_closed": 0.0716,
+       "MedXpertQA-MM": 0.072,
+       "SLAKE_open": 0.0529,
+       "VQA_RAD_open": 0.0644,
+       "PATH_VQA_open": 0.0225
+      },
+      "range": [
+       0.0225,
+       0.0732
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.004,
+       "SLAKE_closed": 0.0048,
+       "VQA_RAD_closed": 0.0067,
+       "PATH_VQA_closed": 0.0039,
+       "MedXpertQA-MM": 0.0047,
+       "SLAKE_open": 0.0051,
+       "VQA_RAD_open": 0.0045,
+       "PATH_VQA_open": -0.007
+      },
+      "range": [
+       -0.007,
+       0.0067
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0033,
+       "SLAKE_closed": 0.0048,
+       "VQA_RAD_closed": 0.006,
+       "PATH_VQA_closed": 0.0033,
+       "MedXpertQA-MM": 0.004,
+       "SLAKE_open": 0.0045,
+       "VQA_RAD_open": 0.0038,
+       "PATH_VQA_open": -0.0077
+      },
+      "range": [
+       -0.0077,
+       0.006
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0806,
+       "SLAKE_closed": 0.083,
+       "VQA_RAD_closed": 0.0806,
+       "PATH_VQA_closed": 0.0823,
+       "MedXpertQA-MM": 0.0819,
+       "SLAKE_open": 0.0621,
+       "VQA_RAD_open": 0.0737,
+       "PATH_VQA_open": 0.0318
+      },
+      "range": [
+       0.0318,
+       0.083
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0132,
+       "SLAKE_closed": 0.0146,
+       "VQA_RAD_closed": 0.0146,
+       "PATH_VQA_closed": 0.0146,
+       "MedXpertQA-MM": 0.0146,
+       "SLAKE_open": 0.0144,
+       "VQA_RAD_open": 0.0139,
+       "PATH_VQA_open": 0.0023
+      },
+      "range": [
+       0.0023,
+       0.0146
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0125,
+       "SLAKE_closed": 0.0146,
+       "VQA_RAD_closed": 0.0139,
+       "PATH_VQA_closed": 0.0139,
+       "MedXpertQA-MM": 0.0139,
+       "SLAKE_open": 0.0137,
+       "VQA_RAD_open": 0.0132,
+       "PATH_VQA_open": 0.0016
+      },
+      "range": [
+       0.0016,
+       0.0146
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0762,
+       "SLAKE_closed": 0.0791,
+       "VQA_RAD_closed": 0.0767,
+       "PATH_VQA_closed": 0.0784,
+       "MedXpertQA-MM": 0.0781,
+       "SLAKE_open": 0.0598,
+       "VQA_RAD_open": 0.0713,
+       "PATH_VQA_open": 0.0294
+      },
+      "range": [
+       0.0294,
+       0.0791
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0088,
+       "SLAKE_closed": 0.0107,
+       "VQA_RAD_closed": 0.0107,
+       "PATH_VQA_closed": 0.0107,
+       "MedXpertQA-MM": 0.0107,
+       "SLAKE_open": 0.0121,
+       "VQA_RAD_open": 0.0115,
+       "PATH_VQA_open": -0.0001
+      },
+      "range": [
+       -0.0001,
+       0.0121
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0081,
+       "SLAKE_closed": 0.0107,
+       "VQA_RAD_closed": 0.0101,
+       "PATH_VQA_closed": 0.0101,
+       "MedXpertQA-MM": 0.0101,
+       "SLAKE_open": 0.0114,
+       "VQA_RAD_open": 0.0108,
+       "PATH_VQA_open": -0.0008
+      },
+      "range": [
+       -0.0008,
+       0.0114
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    }
+   },
+   "cost_macro": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 1897.1,
+     "lat_seq_ms": 1897.1,
+     "energy_j": 361.4
+    },
+    "method_compute_lean": {
+     "flops": 5.465,
+     "lat_par_ms": 649.7,
+     "lat_seq_ms": 1292.0,
+     "energy_j": 188.0
+    },
+    "method_accuracy_max_veto": {
+     "flops": 6.444,
+     "lat_par_ms": 691.4,
+     "lat_seq_ms": 1333.7,
+     "energy_j": 206.2
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 6.558,
+     "lat_par_ms": 664.6,
+     "lat_seq_ms": 1350.2,
+     "energy_j": 209.4
+    }
+   },
+   "cost_macro_honest": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 5.697,
+     "lat_par_ms": 6291.2,
+     "lat_seq_ms": 6291.2,
+     "energy_j": 1625.2
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 645.5,
+     "lat_seq_ms": 645.5,
+     "energy_j": 121.8
+    },
+    "method_compute_lean": {
+     "flops": 5.465,
+     "lat_par_ms": 649.7,
+     "lat_seq_ms": 1292.0,
+     "energy_j": 188.0
+    },
+    "method_accuracy_max_veto": {
+     "flops": 6.444,
+     "lat_par_ms": 691.4,
+     "lat_seq_ms": 1333.7,
+     "energy_j": 206.2
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 6.558,
+     "lat_par_ms": 664.6,
+     "lat_seq_ms": 1350.2,
+     "energy_j": 209.4
+    }
+   },
+   "cost_sw": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 860.2,
+     "lat_seq_ms": 860.2,
+     "energy_j": 164.1
+    },
+    "method_compute_lean": {
+     "flops": 2.248,
+     "lat_par_ms": 469.0,
+     "lat_seq_ms": 578.9,
+     "energy_j": 83.6
+    },
+    "method_accuracy_max_veto": {
+     "flops": 4.257,
+     "lat_par_ms": 730.6,
+     "lat_seq_ms": 840.5,
+     "energy_j": 136.7
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 5.712,
+     "lat_par_ms": 667.5,
+     "lat_seq_ms": 1052.1,
+     "energy_j": 177.1
+    }
+   },
+   "ratios_macro": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.196,
+      "lat_par_x": 0.062,
+      "lat_par_pct": -93.8,
+      "lat_seq_x": 0.123,
+      "lat_seq_pct": -87.7,
+      "energy_x": 0.094,
+      "energy_pct": -90.6
+     },
+     "always_32b_direct": {
+      "flops_x": 1.196,
+      "lat_par_x": 0.977,
+      "lat_par_pct": -2.3,
+      "lat_seq_x": 1.943,
+      "lat_seq_pct": 94.3,
+      "energy_x": 1.48,
+      "energy_pct": 48.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.196,
+      "lat_par_x": 0.342,
+      "lat_par_pct": -65.8,
+      "lat_seq_x": 0.681,
+      "lat_seq_pct": -31.9,
+      "energy_x": 0.52,
+      "energy_pct": -48.0
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.41,
+      "lat_par_x": 0.066,
+      "lat_par_pct": -93.4,
+      "lat_seq_x": 0.127,
+      "lat_seq_pct": -87.3,
+      "energy_x": 0.103,
+      "energy_pct": -89.7
+     },
+     "always_32b_direct": {
+      "flops_x": 1.41,
+      "lat_par_x": 1.04,
+      "lat_par_pct": 4.0,
+      "lat_seq_x": 2.006,
+      "lat_seq_pct": 100.6,
+      "energy_x": 1.624,
+      "energy_pct": 62.4
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.41,
+      "lat_par_x": 0.364,
+      "lat_par_pct": -63.6,
+      "lat_seq_x": 0.703,
+      "lat_seq_pct": -29.7,
+      "energy_x": 0.571,
+      "energy_pct": -42.9
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.435,
+      "lat_par_x": 0.063,
+      "lat_par_pct": -93.7,
+      "lat_seq_x": 0.128,
+      "lat_seq_pct": -87.2,
+      "energy_x": 0.105,
+      "energy_pct": -89.5
+     },
+     "always_32b_direct": {
+      "flops_x": 1.435,
+      "lat_par_x": 0.999,
+      "lat_par_pct": -0.1,
+      "lat_seq_x": 2.03,
+      "lat_seq_pct": 103.0,
+      "energy_x": 1.649,
+      "energy_pct": 64.9
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.435,
+      "lat_par_x": 0.35,
+      "lat_par_pct": -65.0,
+      "lat_seq_x": 0.712,
+      "lat_seq_pct": -28.8,
+      "energy_x": 0.579,
+      "energy_pct": -42.1
+     }
+    }
+   },
+   "ratios_macro_honest": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.959,
+      "lat_par_x": 0.103,
+      "lat_par_pct": -89.7,
+      "lat_seq_x": 0.205,
+      "lat_seq_pct": -79.5,
+      "energy_x": 0.116,
+      "energy_pct": -88.4
+     },
+     "always_32b_direct": {
+      "flops_x": 1.196,
+      "lat_par_x": 0.977,
+      "lat_par_pct": -2.3,
+      "lat_seq_x": 1.943,
+      "lat_seq_pct": 94.3,
+      "energy_x": 1.48,
+      "energy_pct": 48.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.196,
+      "lat_par_x": 1.007,
+      "lat_par_pct": 0.7,
+      "lat_seq_x": 2.002,
+      "lat_seq_pct": 100.2,
+      "energy_x": 1.544,
+      "energy_pct": 54.4
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.131,
+      "lat_par_x": 0.11,
+      "lat_par_pct": -89.0,
+      "lat_seq_x": 0.212,
+      "lat_seq_pct": -78.8,
+      "energy_x": 0.127,
+      "energy_pct": -87.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.41,
+      "lat_par_x": 1.04,
+      "lat_par_pct": 4.0,
+      "lat_seq_x": 2.006,
+      "lat_seq_pct": 100.6,
+      "energy_x": 1.624,
+      "energy_pct": 62.4
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.41,
+      "lat_par_x": 1.071,
+      "lat_par_pct": 7.1,
+      "lat_seq_x": 2.066,
+      "lat_seq_pct": 106.6,
+      "energy_x": 1.693,
+      "energy_pct": 69.3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.151,
+      "lat_par_x": 0.106,
+      "lat_par_pct": -89.4,
+      "lat_seq_x": 0.215,
+      "lat_seq_pct": -78.5,
+      "energy_x": 0.129,
+      "energy_pct": -87.1
+     },
+     "always_32b_direct": {
+      "flops_x": 1.435,
+      "lat_par_x": 0.999,
+      "lat_par_pct": -0.1,
+      "lat_seq_x": 2.03,
+      "lat_seq_pct": 103.0,
+      "energy_x": 1.649,
+      "energy_pct": 64.9
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.435,
+      "lat_par_x": 1.03,
+      "lat_par_pct": 3.0,
+      "lat_seq_x": 2.092,
+      "lat_seq_pct": 109.2,
+      "energy_x": 1.719,
+      "energy_pct": 71.9
+     }
+    }
+   },
+   "ratios_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.492,
+      "lat_par_x": 0.045,
+      "lat_par_pct": -95.5,
+      "lat_seq_x": 0.055,
+      "lat_seq_pct": -94.5,
+      "energy_x": 0.042,
+      "energy_pct": -95.8
+     },
+     "always_32b_direct": {
+      "flops_x": 0.492,
+      "lat_par_x": 0.705,
+      "lat_par_pct": -29.5,
+      "lat_seq_x": 0.871,
+      "lat_seq_pct": -12.9,
+      "energy_x": 0.658,
+      "energy_pct": -34.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.492,
+      "lat_par_x": 0.545,
+      "lat_par_pct": -45.5,
+      "lat_seq_x": 0.673,
+      "lat_seq_pct": -32.7,
+      "energy_x": 0.509,
+      "energy_pct": -49.1
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.932,
+      "lat_par_x": 0.069,
+      "lat_par_pct": -93.1,
+      "lat_seq_x": 0.08,
+      "lat_seq_pct": -92.0,
+      "energy_x": 0.068,
+      "energy_pct": -93.2
+     },
+     "always_32b_direct": {
+      "flops_x": 0.932,
+      "lat_par_x": 1.099,
+      "lat_par_pct": 9.9,
+      "lat_seq_x": 1.264,
+      "lat_seq_pct": 26.4,
+      "energy_x": 1.076,
+      "energy_pct": 7.6
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.932,
+      "lat_par_x": 0.849,
+      "lat_par_pct": -15.1,
+      "lat_seq_x": 0.977,
+      "lat_seq_pct": -2.3,
+      "energy_x": 0.833,
+      "energy_pct": -16.7
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.25,
+      "lat_par_x": 0.063,
+      "lat_par_pct": -93.7,
+      "lat_seq_x": 0.1,
+      "lat_seq_pct": -90.0,
+      "energy_x": 0.088,
+      "energy_pct": -91.2
+     },
+     "always_32b_direct": {
+      "flops_x": 1.25,
+      "lat_par_x": 1.004,
+      "lat_par_pct": 0.4,
+      "lat_seq_x": 1.582,
+      "lat_seq_pct": 58.2,
+      "energy_x": 1.394,
+      "energy_pct": 39.4
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.25,
+      "lat_par_x": 0.776,
+      "lat_par_pct": -22.4,
+      "lat_seq_x": 1.223,
+      "lat_seq_pct": 22.3,
+      "energy_x": 1.079,
+      "energy_pct": 7.9
+     }
+    }
+   },
+   "escalation": {
+    "per_cell": {
+     "PMC_VQA": 0.0845,
+     "SLAKE_closed": 0.2045,
+     "VQA_RAD_closed": 0.5697,
+     "PATH_VQA_closed": 0.4572,
+     "MedXpertQA-MM": 0.896,
+     "SLAKE_open": 0.1581,
+     "VQA_RAD_open": 0.125,
+     "PATH_VQA_open": 0.3567
+    },
+    "compute_lean_mcq": {
+     "sample_weighted": 0.1622,
+     "macro_cells": 0.4424
+    },
+    "compute_lean_all8": {
+     "sample_weighted": 0.1689,
+     "macro_cells": 0.3565
+    },
+    "note": "The escalation rate is what drives '0.49x compute' and '469 ms'. It is wildly heterogeneous across cells, and PMC-VQA -- the cell with by far the lowest escalation -- carries 79.2% of the sample-weighted average. Equal-weighting the cells raises the multiple-choice escalation rate from the pooled value to the macro value below, which is the mechanism behind the cost reversal in cost.joint_claim."
+   },
+   "open_cell_detail": {
+    "SLAKE_open": {
+     "n": 645,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.1581,
+     "meanN": 3.449612403100775,
+     "am2_esc": 0.2062,
+     "cost_cl": {
+      "flops": 7.622,
+      "lat_par_ms": 627.163,
+      "lat_seq_ms": 1905.86,
+      "energy_j": 265.351
+     },
+     "cost_am2": {
+      "flops": 7.842,
+      "lat_par_ms": 659.124,
+      "lat_seq_ms": 1937.822,
+      "energy_j": 271.455
+     }
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.125,
+     "meanN": 3.91,
+     "am2_esc": 0.37,
+     "cost_cl": {
+      "flops": 8.391,
+      "lat_par_ms": 605.125,
+      "lat_seq_ms": 2124.145,
+      "energy_j": 293.876
+     },
+     "cost_am2": {
+      "flops": 9.511,
+      "lat_par_ms": 768.05,
+      "lat_seq_ms": 2287.07,
+      "energy_j": 324.991
+     }
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.3567,
+     "meanN": 5.484,
+     "am2_esc": 0.2647,
+     "cost_cl": {
+      "flops": 12.598,
+      "lat_par_ms": 759.183,
+      "lat_seq_ms": 3099.831,
+      "energy_j": 435.209
+     },
+     "cost_am2": {
+      "flops": 12.178,
+      "lat_par_ms": 698.003,
+      "lat_seq_ms": 3038.651,
+      "energy_j": 423.525
+     }
+    }
+   },
+   "honest_headline_sentence": "Under equal weight per benchmark cell (8 cells, 1/8 each), the accuracy-max setting beats always-32B-direct on accuracy by +0.0128 [+0.0056, +0.0200] -- but it now costs 1.41x that baseline's compute, not less, and the compute-lean setting neither matches it on the multiple-choice half (-0.0070 [-0.0126, -0.0017], a SIGNIFICANT LOSS) nor stays cheap (1.20x compute, up from 0.49x sample-weighted); the one baseline the method still clearly beats at equal weight is a 32B actually made to reason (+0.0720 [+0.0614, +0.0824] accuracy, -89% latency, -87% energy -- though not fewer FLOP-eq: 1.41x as charged, 1.13x honestly re-costed)."
+  },
+  "disjoint": {
+   "source": "disjoint",
+   "dir": "ckpts/train/lora_verifier_disjoint",
+   "label": "incumbent LoRA verifier, CLEAN disjoint-trained",
+   "macro_acc": {
+    "always_7b": 0.5971,
+    "always_32b_direct": 0.6567,
+    "always_32b_reasoning": 0.5974,
+    "oracle_mode_32b": 0.6573,
+    "method_compute_lean": 0.6443,
+    "method_accuracy_max_veto": 0.6575,
+    "method_accuracy_max_fusion": 0.6503
+   },
+   "sw_acc": {
+    "always_7b": 0.5549,
+    "always_32b_direct": 0.5729,
+    "always_32b_reasoning": 0.5591,
+    "oracle_mode_32b": 0.573,
+    "method_compute_lean": 0.5713,
+    "method_accuracy_max_veto": 0.5807,
+    "method_accuracy_max_fusion": 0.5834
+   },
+   "open_only": {
+    "n": 2345,
+    "n_cells": 3,
+    "sample_weighted": {
+     "always_7b": 0.4495,
+     "always_32b_direct": 0.5168,
+     "always_32b_reasoning": 0.3028,
+     "oracle_mode_32b": 0.5168,
+     "method_compute_lean": 0.513,
+     "method_accuracy_max_veto": 0.5211,
+     "method_accuracy_max_fusion": 0.513
+    },
+    "macro_cells": {
+     "always_7b": 0.5085,
+     "always_32b_direct": 0.5982,
+     "always_32b_reasoning": 0.4442,
+     "oracle_mode_32b": 0.5982,
+     "method_compute_lean": 0.5768,
+     "method_accuracy_max_veto": 0.5972,
+     "method_accuracy_max_fusion": 0.5768
+    }
+   },
+   "mcq_only": {
+    "n": 39879,
+    "n_cells": 5,
+    "sample_weighted": {
+     "always_7b": 0.5611,
+     "always_32b_direct": 0.5762,
+     "always_32b_reasoning": 0.5742,
+     "oracle_mode_32b": 0.5763,
+     "method_compute_lean": 0.5748,
+     "method_accuracy_max_veto": 0.5842,
+     "method_accuracy_max_fusion": 0.5876
+    },
+    "macro_cells": {
+     "always_7b": 0.6503,
+     "always_32b_direct": 0.6918,
+     "always_32b_reasoning": 0.6893,
+     "oracle_mode_32b": 0.6927,
+     "method_compute_lean": 0.6848,
+     "method_accuracy_max_veto": 0.6937,
+     "method_accuracy_max_fusion": 0.6945
+    }
+   },
+   "per_cell_acc": {
+    "PMC_VQA": {
+     "always_7b": 0.5427,
+     "always_32b_direct": 0.5518,
+     "always_32b_reasoning": 0.5494,
+     "oracle_mode_32b": 0.5518,
+     "method_compute_lean": 0.5508,
+     "method_accuracy_max_veto": 0.5613,
+     "method_accuracy_max_fusion": 0.5653
+    },
+    "SLAKE_closed": {
+     "always_7b": 0.8254,
+     "always_32b_direct": 0.8589,
+     "always_32b_reasoning": 0.8636,
+     "oracle_mode_32b": 0.8636,
+     "method_compute_lean": 0.8517,
+     "method_accuracy_max_veto": 0.8589,
+     "method_accuracy_max_fusion": 0.8589
+    },
+    "VQA_RAD_closed": {
+     "always_7b": 0.7809,
+     "always_32b_direct": 0.8526,
+     "always_32b_reasoning": 0.8406,
+     "oracle_mode_32b": 0.8526,
+     "method_compute_lean": 0.8327,
+     "method_accuracy_max_veto": 0.8526,
+     "method_accuracy_max_fusion": 0.8526
+    },
+    "PATH_VQA_closed": {
+     "always_7b": 0.8409,
+     "always_32b_direct": 0.8891,
+     "always_32b_reasoning": 0.8891,
+     "oracle_mode_32b": 0.8891,
+     "method_compute_lean": 0.8882,
+     "method_accuracy_max_veto": 0.8891,
+     "method_accuracy_max_fusion": 0.8891
+    },
+    "MedXpertQA-MM": {
+     "always_7b": 0.2615,
+     "always_32b_direct": 0.3065,
+     "always_32b_reasoning": 0.304,
+     "oracle_mode_32b": 0.3065,
+     "method_compute_lean": 0.3005,
+     "method_accuracy_max_veto": 0.3065,
+     "method_accuracy_max_fusion": 0.3065
+    },
+    "SLAKE_open": {
+     "always_7b": 0.7364,
+     "always_32b_direct": 0.8186,
+     "always_32b_reasoning": 0.6791,
+     "oracle_mode_32b": 0.8186,
+     "method_compute_lean": 0.8078,
+     "method_accuracy_max_veto": 0.8171,
+     "method_accuracy_max_fusion": 0.8078
+    },
+    "VQA_RAD_open": {
+     "always_7b": 0.465,
+     "always_32b_direct": 0.6,
+     "always_32b_reasoning": 0.545,
+     "oracle_mode_32b": 0.6,
+     "method_compute_lean": 0.54,
+     "method_accuracy_max_veto": 0.59,
+     "method_accuracy_max_fusion": 0.54
+    },
+    "PATH_VQA_open": {
+     "always_7b": 0.324,
+     "always_32b_direct": 0.376,
+     "always_32b_reasoning": 0.1087,
+     "oracle_mode_32b": 0.376,
+     "method_compute_lean": 0.3827,
+     "method_accuracy_max_veto": 0.3847,
+     "method_accuracy_max_fusion": 0.3827
+    }
+   },
+   "deltas": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0468,
+      "lo": 0.0353,
+      "hi": 0.0583,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.0124,
+      "lo": -0.0188,
+      "hi": -0.006,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.013,
+      "lo": -0.0194,
+      "hi": -0.0066,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0601,
+      "lo": 0.0498,
+      "hi": 0.0703,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0008,
+      "lo": -0.0022,
+      "hi": 0.0037,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0002,
+      "lo": -0.0029,
+      "hi": 0.0033,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0529,
+      "lo": 0.0417,
+      "hi": 0.0639,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.0063,
+      "lo": -0.0118,
+      "hi": -0.0011,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0069,
+      "lo": -0.0125,
+      "hi": -0.0015,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     }
+    }
+   },
+   "deltas_open": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.1326,
+      "lo": 0.1049,
+      "hi": 0.1601,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0214,
+      "lo": -0.036,
+      "hi": -0.0074,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0214,
+      "lo": -0.036,
+      "hi": -0.0074,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.153,
+      "lo": 0.1281,
+      "hi": 0.1783,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.001,
+      "lo": -0.009,
+      "hi": 0.0067,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.001,
+      "lo": -0.009,
+      "hi": 0.0067,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.1326,
+      "lo": 0.1049,
+      "hi": 0.1601,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0214,
+      "lo": -0.036,
+      "hi": -0.0074,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0214,
+      "lo": -0.036,
+      "hi": -0.0074,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 3
+     }
+    }
+   },
+   "deltas_mcq": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": -0.0046,
+      "lo": -0.0126,
+      "hi": 0.0036,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": -0.007,
+      "lo": -0.0126,
+      "hi": -0.0017,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": -0.008,
+      "lo": -0.0137,
+      "hi": -0.0024,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0043,
+      "lo": -0.0016,
+      "hi": 0.0105,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0019,
+      "lo": 0.0014,
+      "hi": 0.0024,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.001,
+      "lo": -0.0006,
+      "hi": 0.0025,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0051,
+      "lo": -0.0008,
+      "hi": 0.0112,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0027,
+      "lo": 0.002,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0017,
+      "lo": 0.0001,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     }
+    }
+   },
+   "deltas_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0122,
+      "lo": 0.0081,
+      "hi": 0.0165,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": -0.0016,
+      "lo": -0.0055,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0017,
+      "lo": -0.0056,
+      "hi": 0.0023,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0216,
+      "lo": 0.0189,
+      "hi": 0.0245,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0078,
+      "lo": 0.0059,
+      "hi": 0.0097,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0077,
+      "lo": 0.0058,
+      "hi": 0.0096,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0243,
+      "lo": 0.021,
+      "hi": 0.0277,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0105,
+      "lo": 0.0077,
+      "hi": 0.0133,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0104,
+      "lo": 0.0076,
+      "hi": 0.0132,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    }
+   },
+   "loo": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0533,
+       "SLAKE_closed": 0.0552,
+       "VQA_RAD_closed": 0.0547,
+       "PATH_VQA_closed": 0.0537,
+       "MedXpertQA-MM": 0.054,
+       "SLAKE_open": 0.0352,
+       "VQA_RAD_open": 0.0542,
+       "PATH_VQA_open": 0.0144
+      },
+      "range": [
+       0.0144,
+       0.0552
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.014,
+       "SLAKE_closed": -0.0131,
+       "VQA_RAD_closed": -0.0113,
+       "PATH_VQA_closed": -0.014,
+       "MedXpertQA-MM": -0.0133,
+       "SLAKE_open": -0.0126,
+       "VQA_RAD_open": -0.0056,
+       "PATH_VQA_open": -0.0151
+      },
+      "range": [
+       -0.0151,
+       -0.0056
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0147,
+       "SLAKE_closed": -0.0131,
+       "VQA_RAD_closed": -0.012,
+       "PATH_VQA_closed": -0.0147,
+       "MedXpertQA-MM": -0.014,
+       "SLAKE_open": -0.0133,
+       "VQA_RAD_open": -0.0063,
+       "PATH_VQA_open": -0.0158
+      },
+      "range": [
+       -0.0158,
+       -0.0063
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.067,
+       "SLAKE_closed": 0.0693,
+       "VQA_RAD_closed": 0.0669,
+       "PATH_VQA_closed": 0.0687,
+       "MedXpertQA-MM": 0.0683,
+       "SLAKE_open": 0.0489,
+       "VQA_RAD_open": 0.0622,
+       "PATH_VQA_open": 0.0292
+      },
+      "range": [
+       0.0292,
+       0.0693
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0004,
+       "SLAKE_closed": 0.001,
+       "VQA_RAD_closed": 0.001,
+       "PATH_VQA_closed": 0.001,
+       "MedXpertQA-MM": 0.001,
+       "SLAKE_open": 0.0012,
+       "VQA_RAD_open": 0.0024,
+       "PATH_VQA_open": -0.0003
+      },
+      "range": [
+       -0.0004,
+       0.0024
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0011,
+       "SLAKE_closed": 0.001,
+       "VQA_RAD_closed": 0.0003,
+       "PATH_VQA_closed": 0.0003,
+       "MedXpertQA-MM": 0.0003,
+       "SLAKE_open": 0.0005,
+       "VQA_RAD_open": 0.0017,
+       "PATH_VQA_open": -0.001
+      },
+      "range": [
+       -0.0011,
+       0.0017
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0582,
+       "SLAKE_closed": 0.0611,
+       "VQA_RAD_closed": 0.0588,
+       "PATH_VQA_closed": 0.0605,
+       "MedXpertQA-MM": 0.0601,
+       "SLAKE_open": 0.0421,
+       "VQA_RAD_open": 0.0612,
+       "PATH_VQA_open": 0.0213
+      },
+      "range": [
+       0.0213,
+       0.0612
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0092,
+       "SLAKE_closed": -0.0072,
+       "VQA_RAD_closed": -0.0072,
+       "PATH_VQA_closed": -0.0072,
+       "MedXpertQA-MM": -0.0072,
+       "SLAKE_open": -0.0057,
+       "VQA_RAD_open": 0.0013,
+       "PATH_VQA_open": -0.0082
+      },
+      "range": [
+       -0.0092,
+       0.0013
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0099,
+       "SLAKE_closed": -0.0072,
+       "VQA_RAD_closed": -0.0079,
+       "PATH_VQA_closed": -0.0079,
+       "MedXpertQA-MM": -0.0079,
+       "SLAKE_open": -0.0064,
+       "VQA_RAD_open": 0.0006,
+       "PATH_VQA_open": -0.0089
+      },
+      "range": [
+       -0.0099,
+       0.0006
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    }
+   },
+   "cost_macro": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 1897.1,
+     "lat_seq_ms": 1897.1,
+     "energy_j": 361.4
+    },
+    "method_compute_lean": {
+     "flops": 6.674,
+     "lat_par_ms": 690.8,
+     "lat_seq_ms": 1574.8,
+     "energy_j": 228.8
+    },
+    "method_accuracy_max_veto": {
+     "flops": 7.951,
+     "lat_par_ms": 775.9,
+     "lat_seq_ms": 1660.0,
+     "energy_j": 255.3
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 7.766,
+     "lat_par_ms": 705.6,
+     "lat_seq_ms": 1633.1,
+     "energy_j": 250.2
+    }
+   },
+   "cost_macro_honest": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 5.697,
+     "lat_par_ms": 6291.2,
+     "lat_seq_ms": 6291.2,
+     "energy_j": 1625.2
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 645.5,
+     "lat_seq_ms": 645.5,
+     "energy_j": 121.8
+    },
+    "method_compute_lean": {
+     "flops": 6.674,
+     "lat_par_ms": 690.8,
+     "lat_seq_ms": 1574.8,
+     "energy_j": 228.8
+    },
+    "method_accuracy_max_veto": {
+     "flops": 7.951,
+     "lat_par_ms": 775.9,
+     "lat_seq_ms": 1660.0,
+     "energy_j": 255.3
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 7.766,
+     "lat_par_ms": 705.6,
+     "lat_seq_ms": 1633.1,
+     "energy_j": 250.2
+    }
+   },
+   "cost_sw": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 860.2,
+     "lat_seq_ms": 860.2,
+     "energy_j": 164.1
+    },
+    "method_compute_lean": {
+     "flops": 2.255,
+     "lat_par_ms": 468.5,
+     "lat_seq_ms": 581.2,
+     "energy_j": 83.9
+    },
+    "method_accuracy_max_veto": {
+     "flops": 4.322,
+     "lat_par_ms": 738.4,
+     "lat_seq_ms": 851.1,
+     "energy_j": 138.6
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 5.719,
+     "lat_par_ms": 666.9,
+     "lat_seq_ms": 1054.4,
+     "energy_j": 177.4
+    }
+   },
+   "ratios_macro": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.46,
+      "lat_par_x": 0.066,
+      "lat_par_pct": -93.4,
+      "lat_seq_x": 0.15,
+      "lat_seq_pct": -85.0,
+      "energy_x": 0.114,
+      "energy_pct": -88.6
+     },
+     "always_32b_direct": {
+      "flops_x": 1.46,
+      "lat_par_x": 1.039,
+      "lat_par_pct": 3.9,
+      "lat_seq_x": 2.368,
+      "lat_seq_pct": 136.8,
+      "energy_x": 1.802,
+      "energy_pct": 80.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.46,
+      "lat_par_x": 0.364,
+      "lat_par_pct": -63.6,
+      "lat_seq_x": 0.83,
+      "lat_seq_pct": -17.0,
+      "energy_x": 0.633,
+      "energy_pct": -36.7
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.74,
+      "lat_par_x": 0.074,
+      "lat_par_pct": -92.6,
+      "lat_seq_x": 0.158,
+      "lat_seq_pct": -84.2,
+      "energy_x": 0.128,
+      "energy_pct": -87.2
+     },
+     "always_32b_direct": {
+      "flops_x": 1.74,
+      "lat_par_x": 1.167,
+      "lat_par_pct": 16.7,
+      "lat_seq_x": 2.496,
+      "lat_seq_pct": 149.6,
+      "energy_x": 2.01,
+      "energy_pct": 101.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.74,
+      "lat_par_x": 0.409,
+      "lat_par_pct": -59.1,
+      "lat_seq_x": 0.875,
+      "lat_seq_pct": -12.5,
+      "energy_x": 0.706,
+      "energy_pct": -29.4
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.699,
+      "lat_par_x": 0.067,
+      "lat_par_pct": -93.3,
+      "lat_seq_x": 0.155,
+      "lat_seq_pct": -84.5,
+      "energy_x": 0.125,
+      "energy_pct": -87.5
+     },
+     "always_32b_direct": {
+      "flops_x": 1.699,
+      "lat_par_x": 1.061,
+      "lat_par_pct": 6.1,
+      "lat_seq_x": 2.456,
+      "lat_seq_pct": 145.6,
+      "energy_x": 1.97,
+      "energy_pct": 97.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.699,
+      "lat_par_x": 0.372,
+      "lat_par_pct": -62.8,
+      "lat_seq_x": 0.861,
+      "lat_seq_pct": -13.9,
+      "energy_x": 0.692,
+      "energy_pct": -30.8
+     }
+    }
+   },
+   "ratios_macro_honest": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.171,
+      "lat_par_x": 0.11,
+      "lat_par_pct": -89.0,
+      "lat_seq_x": 0.25,
+      "lat_seq_pct": -75.0,
+      "energy_x": 0.141,
+      "energy_pct": -85.9
+     },
+     "always_32b_direct": {
+      "flops_x": 1.46,
+      "lat_par_x": 1.039,
+      "lat_par_pct": 3.9,
+      "lat_seq_x": 2.368,
+      "lat_seq_pct": 136.8,
+      "energy_x": 1.802,
+      "energy_pct": 80.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.46,
+      "lat_par_x": 1.07,
+      "lat_par_pct": 7.0,
+      "lat_seq_x": 2.44,
+      "lat_seq_pct": 144.0,
+      "energy_x": 1.878,
+      "energy_pct": 87.8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.396,
+      "lat_par_x": 0.123,
+      "lat_par_pct": -87.7,
+      "lat_seq_x": 0.264,
+      "lat_seq_pct": -73.6,
+      "energy_x": 0.157,
+      "energy_pct": -84.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.74,
+      "lat_par_x": 1.167,
+      "lat_par_pct": 16.7,
+      "lat_seq_x": 2.496,
+      "lat_seq_pct": 149.6,
+      "energy_x": 2.01,
+      "energy_pct": 101.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.74,
+      "lat_par_x": 1.202,
+      "lat_par_pct": 20.2,
+      "lat_seq_x": 2.572,
+      "lat_seq_pct": 157.2,
+      "energy_x": 2.096,
+      "energy_pct": 109.6
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.363,
+      "lat_par_x": 0.112,
+      "lat_par_pct": -88.8,
+      "lat_seq_x": 0.26,
+      "lat_seq_pct": -74.0,
+      "energy_x": 0.154,
+      "energy_pct": -84.6
+     },
+     "always_32b_direct": {
+      "flops_x": 1.699,
+      "lat_par_x": 1.061,
+      "lat_par_pct": 6.1,
+      "lat_seq_x": 2.456,
+      "lat_seq_pct": 145.6,
+      "energy_x": 1.97,
+      "energy_pct": 97.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.699,
+      "lat_par_x": 1.093,
+      "lat_par_pct": 9.3,
+      "lat_seq_x": 2.53,
+      "lat_seq_pct": 153.0,
+      "energy_x": 2.054,
+      "energy_pct": 105.4
+     }
+    }
+   },
+   "ratios_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.493,
+      "lat_par_x": 0.045,
+      "lat_par_pct": -95.5,
+      "lat_seq_x": 0.055,
+      "lat_seq_pct": -94.5,
+      "energy_x": 0.042,
+      "energy_pct": -95.8
+     },
+     "always_32b_direct": {
+      "flops_x": 0.493,
+      "lat_par_x": 0.705,
+      "lat_par_pct": -29.5,
+      "lat_seq_x": 0.874,
+      "lat_seq_pct": -12.6,
+      "energy_x": 0.661,
+      "energy_pct": -33.9
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.493,
+      "lat_par_x": 0.545,
+      "lat_par_pct": -45.5,
+      "lat_seq_x": 0.676,
+      "lat_seq_pct": -32.4,
+      "energy_x": 0.511,
+      "energy_pct": -48.9
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.946,
+      "lat_par_x": 0.07,
+      "lat_par_pct": -93.0,
+      "lat_seq_x": 0.081,
+      "lat_seq_pct": -91.9,
+      "energy_x": 0.069,
+      "energy_pct": -93.1
+     },
+     "always_32b_direct": {
+      "flops_x": 0.946,
+      "lat_par_x": 1.11,
+      "lat_par_pct": 11.0,
+      "lat_seq_x": 1.28,
+      "lat_seq_pct": 28.0,
+      "energy_x": 1.091,
+      "energy_pct": 9.1
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.946,
+      "lat_par_x": 0.858,
+      "lat_par_pct": -14.2,
+      "lat_seq_x": 0.989,
+      "lat_seq_pct": -1.1,
+      "energy_x": 0.845,
+      "energy_pct": -15.5
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.251,
+      "lat_par_x": 0.063,
+      "lat_par_pct": -93.7,
+      "lat_seq_x": 0.1,
+      "lat_seq_pct": -90.0,
+      "energy_x": 0.089,
+      "energy_pct": -91.1
+     },
+     "always_32b_direct": {
+      "flops_x": 1.251,
+      "lat_par_x": 1.003,
+      "lat_par_pct": 0.3,
+      "lat_seq_x": 1.586,
+      "lat_seq_pct": 58.6,
+      "energy_x": 1.397,
+      "energy_pct": 39.7
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.251,
+      "lat_par_x": 0.775,
+      "lat_par_pct": -22.5,
+      "lat_seq_x": 1.226,
+      "lat_seq_pct": 22.6,
+      "energy_x": 1.081,
+      "energy_pct": 8.1
+     }
+    }
+   },
+   "escalation": {
+    "per_cell": {
+     "PMC_VQA": 0.0845,
+     "SLAKE_closed": 0.2045,
+     "VQA_RAD_closed": 0.5697,
+     "PATH_VQA_closed": 0.4572,
+     "MedXpertQA-MM": 0.896,
+     "SLAKE_open": 0.4341,
+     "VQA_RAD_open": 0.54,
+     "PATH_VQA_open": 0.16
+    },
+    "compute_lean_mcq": {
+     "sample_weighted": 0.1622,
+     "macro_cells": 0.4424
+    },
+    "compute_lean_all8": {
+     "sample_weighted": 0.1681,
+     "macro_cells": 0.4183
+    },
+    "note": "The escalation rate is what drives '0.49x compute' and '469 ms'. It is wildly heterogeneous across cells, and PMC-VQA -- the cell with by far the lowest escalation -- carries 79.2% of the sample-weighted average. Equal-weighting the cells raises the multiple-choice escalation rate from the pooled value to the macro value below, which is the mechanism behind the cost reversal in cost.joint_claim."
+   },
+   "open_cell_detail": {
+    "SLAKE_open": {
+     "n": 645,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.4341,
+     "meanN": 5.547286821705426,
+     "am2_esc": 0.6295,
+     "cost_cl": {
+      "flops": 13.078,
+      "lat_par_ms": 810.682,
+      "lat_seq_ms": 3184.366,
+      "energy_j": 449.544
+     },
+     "cost_am2": {
+      "flops": 13.971,
+      "lat_par_ms": 940.589,
+      "lat_seq_ms": 3314.273,
+      "energy_j": 474.353
+     }
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.54,
+     "meanN": 6.63,
+     "am2_esc": 0.885,
+     "cost_cl": {
+      "flops": 15.728,
+      "lat_par_ms": 881.1,
+      "lat_seq_ms": 3819.96,
+      "energy_j": 539.973
+     },
+     "cost_am2": {
+      "flops": 17.304,
+      "lat_par_ms": 1110.525,
+      "lat_seq_ms": 4049.385,
+      "energy_j": 583.788
+     }
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.16,
+     "meanN": 4.371333333333333,
+     "am2_esc": 0.3433,
+     "cost_cl": {
+      "flops": 9.474,
+      "lat_par_ms": 628.4,
+      "lat_seq_ms": 2388.236,
+      "energy_j": 331.122
+     },
+     "cost_am2": {
+      "flops": 10.312,
+      "lat_par_ms": 750.317,
+      "lat_seq_ms": 2510.153,
+      "energy_j": 354.405
+     }
+    }
+   },
+   "honest_headline_sentence": "Under equal weight per benchmark cell (8 cells, 1/8 each), the accuracy-max setting beats always-32B-direct on accuracy by +0.0008 [-0.0022, +0.0037] -- but it now costs 1.74x that baseline's compute, not less, and the compute-lean setting neither matches it on the multiple-choice half (-0.0070 [-0.0126, -0.0017], a SIGNIFICANT LOSS) nor stays cheap (1.46x compute, up from 0.49x sample-weighted); the one baseline the method still clearly beats at equal weight is a 32B actually made to reason (+0.0601 [+0.0498, +0.0703] accuracy, -88% latency, -84% energy -- though not fewer FLOP-eq: 1.74x as charged, 1.40x honestly re-costed)."
+  },
+  "ens8_rank": {
+   "source": "ens8_rank",
+   "dir": "ckpts/train/selector_ens8_rank",
+   "label": "rank_avg(clean incumbent, 8-seed head ens) -- recommendation, raw rank scale",
+   "macro_acc": {
+    "always_7b": 0.5971,
+    "always_32b_direct": 0.6567,
+    "always_32b_reasoning": 0.5974,
+    "oracle_mode_32b": 0.6573,
+    "method_compute_lean": 0.6497,
+    "method_accuracy_max_veto": 0.6571,
+    "method_accuracy_max_fusion": 0.6558
+   },
+   "sw_acc": {
+    "always_7b": 0.5549,
+    "always_32b_direct": 0.5729,
+    "always_32b_reasoning": 0.5591,
+    "oracle_mode_32b": 0.573,
+    "method_compute_lean": 0.5708,
+    "method_accuracy_max_veto": 0.5808,
+    "method_accuracy_max_fusion": 0.5829
+   },
+   "open_only": {
+    "n": 2345,
+    "n_cells": 3,
+    "sample_weighted": {
+     "always_7b": 0.4495,
+     "always_32b_direct": 0.5168,
+     "always_32b_reasoning": 0.3028,
+     "oracle_mode_32b": 0.5168,
+     "method_compute_lean": 0.5036,
+     "method_accuracy_max_veto": 0.522,
+     "method_accuracy_max_fusion": 0.5036
+    },
+    "macro_cells": {
+     "always_7b": 0.5085,
+     "always_32b_direct": 0.5982,
+     "always_32b_reasoning": 0.4442,
+     "oracle_mode_32b": 0.5982,
+     "method_compute_lean": 0.5913,
+     "method_accuracy_max_veto": 0.5962,
+     "method_accuracy_max_fusion": 0.5913
+    }
+   },
+   "mcq_only": {
+    "n": 39879,
+    "n_cells": 5,
+    "sample_weighted": {
+     "always_7b": 0.5611,
+     "always_32b_direct": 0.5762,
+     "always_32b_reasoning": 0.5742,
+     "oracle_mode_32b": 0.5763,
+     "method_compute_lean": 0.5748,
+     "method_accuracy_max_veto": 0.5842,
+     "method_accuracy_max_fusion": 0.5876
+    },
+    "macro_cells": {
+     "always_7b": 0.6503,
+     "always_32b_direct": 0.6918,
+     "always_32b_reasoning": 0.6893,
+     "oracle_mode_32b": 0.6927,
+     "method_compute_lean": 0.6848,
+     "method_accuracy_max_veto": 0.6937,
+     "method_accuracy_max_fusion": 0.6945
+    }
+   },
+   "per_cell_acc": {
+    "PMC_VQA": {
+     "always_7b": 0.5427,
+     "always_32b_direct": 0.5518,
+     "always_32b_reasoning": 0.5494,
+     "oracle_mode_32b": 0.5518,
+     "method_compute_lean": 0.5508,
+     "method_accuracy_max_veto": 0.5613,
+     "method_accuracy_max_fusion": 0.5653
+    },
+    "SLAKE_closed": {
+     "always_7b": 0.8254,
+     "always_32b_direct": 0.8589,
+     "always_32b_reasoning": 0.8636,
+     "oracle_mode_32b": 0.8636,
+     "method_compute_lean": 0.8517,
+     "method_accuracy_max_veto": 0.8589,
+     "method_accuracy_max_fusion": 0.8589
+    },
+    "VQA_RAD_closed": {
+     "always_7b": 0.7809,
+     "always_32b_direct": 0.8526,
+     "always_32b_reasoning": 0.8406,
+     "oracle_mode_32b": 0.8526,
+     "method_compute_lean": 0.8327,
+     "method_accuracy_max_veto": 0.8526,
+     "method_accuracy_max_fusion": 0.8526
+    },
+    "PATH_VQA_closed": {
+     "always_7b": 0.8409,
+     "always_32b_direct": 0.8891,
+     "always_32b_reasoning": 0.8891,
+     "oracle_mode_32b": 0.8891,
+     "method_compute_lean": 0.8882,
+     "method_accuracy_max_veto": 0.8891,
+     "method_accuracy_max_fusion": 0.8891
+    },
+    "MedXpertQA-MM": {
+     "always_7b": 0.2615,
+     "always_32b_direct": 0.3065,
+     "always_32b_reasoning": 0.304,
+     "oracle_mode_32b": 0.3065,
+     "method_compute_lean": 0.3005,
+     "method_accuracy_max_veto": 0.3065,
+     "method_accuracy_max_fusion": 0.3065
+    },
+    "SLAKE_open": {
+     "always_7b": 0.7364,
+     "always_32b_direct": 0.8186,
+     "always_32b_reasoning": 0.6791,
+     "oracle_mode_32b": 0.8186,
+     "method_compute_lean": 0.8186,
+     "method_accuracy_max_veto": 0.8093,
+     "method_accuracy_max_fusion": 0.8186
+    },
+    "VQA_RAD_open": {
+     "always_7b": 0.465,
+     "always_32b_direct": 0.6,
+     "always_32b_reasoning": 0.545,
+     "oracle_mode_32b": 0.6,
+     "method_compute_lean": 0.6,
+     "method_accuracy_max_veto": 0.59,
+     "method_accuracy_max_fusion": 0.6
+    },
+    "PATH_VQA_open": {
+     "always_7b": 0.324,
+     "always_32b_direct": 0.376,
+     "always_32b_reasoning": 0.1087,
+     "oracle_mode_32b": 0.376,
+     "method_compute_lean": 0.3553,
+     "method_accuracy_max_veto": 0.3893,
+     "method_accuracy_max_fusion": 0.3553
+    }
+   },
+   "deltas": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0523,
+      "lo": 0.0418,
+      "hi": 0.063,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.007,
+      "lo": -0.0114,
+      "hi": -0.0026,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0076,
+      "lo": -0.0121,
+      "hi": -0.0031,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0597,
+      "lo": 0.0496,
+      "hi": 0.0697,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0004,
+      "lo": -0.003,
+      "hi": 0.0036,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0002,
+      "lo": -0.0037,
+      "hi": 0.0032,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0583,
+      "lo": 0.0485,
+      "hi": 0.0684,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.0009,
+      "lo": -0.0037,
+      "hi": 0.0019,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0015,
+      "lo": -0.0045,
+      "hi": 0.0015,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    }
+   },
+   "deltas_open": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.1471,
+      "lo": 0.1227,
+      "hi": 0.1722,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0069,
+      "lo": -0.0144,
+      "hi": 0.0007,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0069,
+      "lo": -0.0144,
+      "hi": 0.0007,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.152,
+      "lo": 0.1275,
+      "hi": 0.1771,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.002,
+      "lo": -0.0111,
+      "hi": 0.0063,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.002,
+      "lo": -0.0111,
+      "hi": 0.0063,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.1471,
+      "lo": 0.1227,
+      "hi": 0.1722,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0069,
+      "lo": -0.0144,
+      "hi": 0.0007,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0069,
+      "lo": -0.0144,
+      "hi": 0.0007,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    }
+   },
+   "deltas_mcq": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": -0.0046,
+      "lo": -0.0126,
+      "hi": 0.0036,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": -0.007,
+      "lo": -0.0126,
+      "hi": -0.0017,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": -0.008,
+      "lo": -0.0137,
+      "hi": -0.0024,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0043,
+      "lo": -0.0016,
+      "hi": 0.0105,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0019,
+      "lo": 0.0014,
+      "hi": 0.0024,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.001,
+      "lo": -0.0006,
+      "hi": 0.0025,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0051,
+      "lo": -0.0008,
+      "hi": 0.0112,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0027,
+      "lo": 0.002,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0017,
+      "lo": 0.0001,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     }
+    }
+   },
+   "deltas_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0117,
+      "lo": 0.0075,
+      "hi": 0.0159,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": -0.0021,
+      "lo": -0.006,
+      "hi": 0.0019,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0022,
+      "lo": -0.0062,
+      "hi": 0.0018,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0217,
+      "lo": 0.0189,
+      "hi": 0.0246,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0078,
+      "lo": 0.0058,
+      "hi": 0.0098,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0077,
+      "lo": 0.0057,
+      "hi": 0.0097,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0238,
+      "lo": 0.0205,
+      "hi": 0.0271,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0099,
+      "lo": 0.0071,
+      "hi": 0.0128,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0099,
+      "lo": 0.007,
+      "hi": 0.0127,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    }
+   },
+   "loo": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0596,
+       "SLAKE_closed": 0.0615,
+       "VQA_RAD_closed": 0.0609,
+       "PATH_VQA_closed": 0.0599,
+       "MedXpertQA-MM": 0.0603,
+       "SLAKE_open": 0.0398,
+       "VQA_RAD_open": 0.0519,
+       "PATH_VQA_open": 0.0245
+      },
+      "range": [
+       0.0245,
+       0.0615
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0078,
+       "SLAKE_closed": -0.0069,
+       "VQA_RAD_closed": -0.0051,
+       "PATH_VQA_closed": -0.0078,
+       "MedXpertQA-MM": -0.0071,
+       "SLAKE_open": -0.0079,
+       "VQA_RAD_open": -0.0079,
+       "PATH_VQA_open": -0.005
+      },
+      "range": [
+       -0.0079,
+       -0.005
+      ],
+      "cell_carrying_the_claim": "SLAKE_open",
+      "cell_holding_the_claim_back": "PATH_VQA_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0085,
+       "SLAKE_closed": -0.0069,
+       "VQA_RAD_closed": -0.0058,
+       "PATH_VQA_closed": -0.0085,
+       "MedXpertQA-MM": -0.0078,
+       "SLAKE_open": -0.0086,
+       "VQA_RAD_open": -0.0086,
+       "PATH_VQA_open": -0.0057
+      },
+      "range": [
+       -0.0086,
+       -0.0057
+      ],
+      "cell_carrying_the_claim": "SLAKE_open",
+      "cell_holding_the_claim_back": "PATH_VQA_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0665,
+       "SLAKE_closed": 0.0689,
+       "VQA_RAD_closed": 0.0665,
+       "PATH_VQA_closed": 0.0682,
+       "MedXpertQA-MM": 0.0679,
+       "SLAKE_open": 0.0496,
+       "VQA_RAD_open": 0.0618,
+       "PATH_VQA_open": 0.0281
+      },
+      "range": [
+       0.0281,
+       0.0689
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0009,
+       "SLAKE_closed": 0.0005,
+       "VQA_RAD_closed": 0.0005,
+       "PATH_VQA_closed": 0.0005,
+       "MedXpertQA-MM": 0.0005,
+       "SLAKE_open": 0.0018,
+       "VQA_RAD_open": 0.0019,
+       "PATH_VQA_open": -0.0014
+      },
+      "range": [
+       -0.0014,
+       0.0019
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0015,
+       "SLAKE_closed": 0.0005,
+       "VQA_RAD_closed": -0.0002,
+       "PATH_VQA_closed": -0.0002,
+       "MedXpertQA-MM": -0.0002,
+       "SLAKE_open": 0.0012,
+       "VQA_RAD_open": 0.0013,
+       "PATH_VQA_open": -0.0021
+      },
+      "range": [
+       -0.0021,
+       0.0013
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0644,
+       "SLAKE_closed": 0.0674,
+       "VQA_RAD_closed": 0.065,
+       "PATH_VQA_closed": 0.0667,
+       "MedXpertQA-MM": 0.0663,
+       "SLAKE_open": 0.0467,
+       "VQA_RAD_open": 0.0588,
+       "PATH_VQA_open": 0.0314
+      },
+      "range": [
+       0.0314,
+       0.0674
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.003,
+       "SLAKE_closed": -0.001,
+       "VQA_RAD_closed": -0.001,
+       "PATH_VQA_closed": -0.001,
+       "MedXpertQA-MM": -0.001,
+       "SLAKE_open": -0.001,
+       "VQA_RAD_open": -0.001,
+       "PATH_VQA_open": 0.0019
+      },
+      "range": [
+       -0.003,
+       0.0019
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "PATH_VQA_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0036,
+       "SLAKE_closed": -0.001,
+       "VQA_RAD_closed": -0.0017,
+       "PATH_VQA_closed": -0.0017,
+       "MedXpertQA-MM": -0.0017,
+       "SLAKE_open": -0.0017,
+       "VQA_RAD_open": -0.0017,
+       "PATH_VQA_open": 0.0012
+      },
+      "range": [
+       -0.0036,
+       0.0012
+      ],
+      "cell_carrying_the_claim": "PMC_VQA",
+      "cell_holding_the_claim_back": "PATH_VQA_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    }
+   },
+   "cost_macro": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 1897.1,
+     "lat_seq_ms": 1897.1,
+     "energy_j": 361.4
+    },
+    "method_compute_lean": {
+     "flops": 3.41,
+     "lat_par_ms": 632.2,
+     "lat_seq_ms": 665.9,
+     "energy_j": 109.0
+    },
+    "method_accuracy_max_veto": {
+     "flops": 4.05,
+     "lat_par_ms": 624.7,
+     "lat_seq_ms": 658.3,
+     "energy_j": 117.8
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 4.503,
+     "lat_par_ms": 647.1,
+     "lat_seq_ms": 724.2,
+     "energy_j": 130.3
+    }
+   },
+   "cost_macro_honest": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 5.697,
+     "lat_par_ms": 6291.2,
+     "lat_seq_ms": 6291.2,
+     "energy_j": 1625.2
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 645.5,
+     "lat_seq_ms": 645.5,
+     "energy_j": 121.8
+    },
+    "method_compute_lean": {
+     "flops": 3.41,
+     "lat_par_ms": 632.2,
+     "lat_seq_ms": 665.9,
+     "energy_j": 109.0
+    },
+    "method_accuracy_max_veto": {
+     "flops": 4.05,
+     "lat_par_ms": 624.7,
+     "lat_seq_ms": 658.3,
+     "energy_j": 117.8
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 4.503,
+     "lat_par_ms": 647.1,
+     "lat_seq_ms": 724.2,
+     "energy_j": 130.3
+    }
+   },
+   "cost_sw": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 860.2,
+     "lat_seq_ms": 860.2,
+     "energy_j": 164.1
+    },
+    "method_compute_lean": {
+     "flops": 1.844,
+     "lat_par_ms": 461.5,
+     "lat_seq_ms": 471.0,
+     "energy_j": 69.1
+    },
+    "method_accuracy_max_veto": {
+     "flops": 3.849,
+     "lat_par_ms": 722.4,
+     "lat_seq_ms": 732.0,
+     "energy_j": 122.0
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 5.307,
+     "lat_par_ms": 659.9,
+     "lat_seq_ms": 944.2,
+     "energy_j": 162.6
+    }
+   },
+   "ratios_macro": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.746,
+      "lat_par_x": 0.06,
+      "lat_par_pct": -94.0,
+      "lat_seq_x": 0.063,
+      "lat_seq_pct": -93.7,
+      "energy_x": 0.054,
+      "energy_pct": -94.6
+     },
+     "always_32b_direct": {
+      "flops_x": 0.746,
+      "lat_par_x": 0.951,
+      "lat_par_pct": -4.9,
+      "lat_seq_x": 1.001,
+      "lat_seq_pct": 0.1,
+      "energy_x": 0.858,
+      "energy_pct": -14.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.746,
+      "lat_par_x": 0.333,
+      "lat_par_pct": -66.7,
+      "lat_seq_x": 0.351,
+      "lat_seq_pct": -64.9,
+      "energy_x": 0.302,
+      "energy_pct": -69.8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.886,
+      "lat_par_x": 0.059,
+      "lat_par_pct": -94.1,
+      "lat_seq_x": 0.063,
+      "lat_seq_pct": -93.7,
+      "energy_x": 0.059,
+      "energy_pct": -94.1
+     },
+     "always_32b_direct": {
+      "flops_x": 0.886,
+      "lat_par_x": 0.939,
+      "lat_par_pct": -6.1,
+      "lat_seq_x": 0.99,
+      "lat_seq_pct": -1.0,
+      "energy_x": 0.928,
+      "energy_pct": -7.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.886,
+      "lat_par_x": 0.329,
+      "lat_par_pct": -67.1,
+      "lat_seq_x": 0.347,
+      "lat_seq_pct": -65.3,
+      "energy_x": 0.326,
+      "energy_pct": -67.4
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 0.985,
+      "lat_par_x": 0.062,
+      "lat_par_pct": -93.8,
+      "lat_seq_x": 0.069,
+      "lat_seq_pct": -93.1,
+      "energy_x": 0.065,
+      "energy_pct": -93.5
+     },
+     "always_32b_direct": {
+      "flops_x": 0.985,
+      "lat_par_x": 0.973,
+      "lat_par_pct": -2.7,
+      "lat_seq_x": 1.089,
+      "lat_seq_pct": 8.9,
+      "energy_x": 1.026,
+      "energy_pct": 2.6
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.985,
+      "lat_par_x": 0.341,
+      "lat_par_pct": -65.9,
+      "lat_seq_x": 0.382,
+      "lat_seq_pct": -61.8,
+      "energy_x": 0.361,
+      "energy_pct": -63.9
+     }
+    }
+   },
+   "ratios_macro_honest": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.599,
+      "lat_par_x": 0.1,
+      "lat_par_pct": -90.0,
+      "lat_seq_x": 0.106,
+      "lat_seq_pct": -89.4,
+      "energy_x": 0.067,
+      "energy_pct": -93.3
+     },
+     "always_32b_direct": {
+      "flops_x": 0.746,
+      "lat_par_x": 0.951,
+      "lat_par_pct": -4.9,
+      "lat_seq_x": 1.001,
+      "lat_seq_pct": 0.1,
+      "energy_x": 0.858,
+      "energy_pct": -14.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.746,
+      "lat_par_x": 0.979,
+      "lat_par_pct": -2.1,
+      "lat_seq_x": 1.032,
+      "lat_seq_pct": 3.2,
+      "energy_x": 0.895,
+      "energy_pct": -10.5
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.711,
+      "lat_par_x": 0.099,
+      "lat_par_pct": -90.1,
+      "lat_seq_x": 0.105,
+      "lat_seq_pct": -89.5,
+      "energy_x": 0.072,
+      "energy_pct": -92.8
+     },
+     "always_32b_direct": {
+      "flops_x": 0.886,
+      "lat_par_x": 0.939,
+      "lat_par_pct": -6.1,
+      "lat_seq_x": 0.99,
+      "lat_seq_pct": -1.0,
+      "energy_x": 0.928,
+      "energy_pct": -7.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.886,
+      "lat_par_x": 0.968,
+      "lat_par_pct": -3.2,
+      "lat_seq_x": 1.02,
+      "lat_seq_pct": 2.0,
+      "energy_x": 0.967,
+      "energy_pct": -3.3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 0.79,
+      "lat_par_x": 0.103,
+      "lat_par_pct": -89.7,
+      "lat_seq_x": 0.115,
+      "lat_seq_pct": -88.5,
+      "energy_x": 0.08,
+      "energy_pct": -92.0
+     },
+     "always_32b_direct": {
+      "flops_x": 0.985,
+      "lat_par_x": 0.973,
+      "lat_par_pct": -2.7,
+      "lat_seq_x": 1.089,
+      "lat_seq_pct": 8.9,
+      "energy_x": 1.026,
+      "energy_pct": 2.6
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.985,
+      "lat_par_x": 1.002,
+      "lat_par_pct": 0.2,
+      "lat_seq_x": 1.122,
+      "lat_seq_pct": 12.2,
+      "energy_x": 1.07,
+      "energy_pct": 7.0
+     }
+    }
+   },
+   "ratios_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.404,
+      "lat_par_x": 0.044,
+      "lat_par_pct": -95.6,
+      "lat_seq_x": 0.045,
+      "lat_seq_pct": -95.5,
+      "energy_x": 0.035,
+      "energy_pct": -96.5
+     },
+     "always_32b_direct": {
+      "flops_x": 0.404,
+      "lat_par_x": 0.694,
+      "lat_par_pct": -30.6,
+      "lat_seq_x": 0.708,
+      "lat_seq_pct": -29.2,
+      "energy_x": 0.544,
+      "energy_pct": -45.6
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.404,
+      "lat_par_x": 0.537,
+      "lat_par_pct": -46.3,
+      "lat_seq_x": 0.548,
+      "lat_seq_pct": -45.2,
+      "energy_x": 0.421,
+      "energy_pct": -57.9
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.842,
+      "lat_par_x": 0.069,
+      "lat_par_pct": -93.1,
+      "lat_seq_x": 0.07,
+      "lat_seq_pct": -93.0,
+      "energy_x": 0.061,
+      "energy_pct": -93.9
+     },
+     "always_32b_direct": {
+      "flops_x": 0.842,
+      "lat_par_x": 1.086,
+      "lat_par_pct": 8.6,
+      "lat_seq_x": 1.101,
+      "lat_seq_pct": 10.1,
+      "energy_x": 0.961,
+      "energy_pct": -3.9
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.842,
+      "lat_par_x": 0.84,
+      "lat_par_pct": -16.0,
+      "lat_seq_x": 0.851,
+      "lat_seq_pct": -14.9,
+      "energy_x": 0.743,
+      "energy_pct": -25.7
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.161,
+      "lat_par_x": 0.063,
+      "lat_par_pct": -93.7,
+      "lat_seq_x": 0.09,
+      "lat_seq_pct": -91.0,
+      "energy_x": 0.081,
+      "energy_pct": -91.9
+     },
+     "always_32b_direct": {
+      "flops_x": 1.161,
+      "lat_par_x": 0.992,
+      "lat_par_pct": -0.8,
+      "lat_seq_x": 1.42,
+      "lat_seq_pct": 42.0,
+      "energy_x": 1.28,
+      "energy_pct": 28.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.161,
+      "lat_par_x": 0.767,
+      "lat_par_pct": -23.3,
+      "lat_seq_x": 1.098,
+      "lat_seq_pct": 9.8,
+      "energy_x": 0.991,
+      "energy_pct": -0.9
+     }
+    }
+   },
+   "escalation": {
+    "per_cell": {
+     "PMC_VQA": 0.0845,
+     "SLAKE_closed": 0.2045,
+     "VQA_RAD_closed": 0.5697,
+     "PATH_VQA_closed": 0.4572,
+     "MedXpertQA-MM": 0.896,
+     "SLAKE_open": 1.0,
+     "VQA_RAD_open": 1.0,
+     "PATH_VQA_open": 0.0
+    },
+    "compute_lean_mcq": {
+     "sample_weighted": 0.1622,
+     "macro_cells": 0.4424
+    },
+    "compute_lean_all8": {
+     "sample_weighted": 0.1732,
+     "macro_cells": 0.5265
+    },
+    "note": "The escalation rate is what drives '0.49x compute' and '469 ms'. It is wildly heterogeneous across cells, and PMC-VQA -- the cell with by far the lowest escalation -- carries 79.2% of the sample-weighted average. Equal-weighting the cells raises the multiple-choice escalation rate from the pooled value to the macro value below, which is the mechanism behind the cost reversal in cost.joint_claim."
+   },
+   "open_cell_detail": {
+    "SLAKE_open": {
+     "n": 645,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 1.0,
+     "meanN": 0.0,
+     "am2_esc": 0.5566,
+     "cost_cl": {
+      "flops": 4.57,
+      "lat_par_ms": 665.0,
+      "lat_seq_ms": 665.0,
+      "energy_j": 127.0
+     },
+     "cost_am2": {
+      "flops": 2.544,
+      "lat_par_ms": 370.132,
+      "lat_seq_ms": 370.132,
+      "energy_j": 70.687
+     }
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 1.0,
+     "meanN": 0.0,
+     "am2_esc": 0.915,
+     "cost_cl": {
+      "flops": 4.57,
+      "lat_par_ms": 665.0,
+      "lat_seq_ms": 665.0,
+      "energy_j": 127.0
+     },
+     "cost_am2": {
+      "flops": 4.182,
+      "lat_par_ms": 608.475,
+      "lat_seq_ms": 608.475,
+      "energy_j": 116.205
+     }
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.0,
+     "meanN": 1.516,
+     "am2_esc": 0.1367,
+     "cost_cl": {
+      "flops": 3.032,
+      "lat_par_ms": 522.0,
+      "lat_seq_ms": 791.352,
+      "energy_j": 107.788
+     },
+     "cost_am2": {
+      "flops": 3.657,
+      "lat_par_ms": 612.883,
+      "lat_seq_ms": 882.235,
+      "energy_j": 125.144
+     }
+    }
+   },
+   "honest_headline_sentence": "Under equal weight per benchmark cell (8 cells, 1/8 each), the accuracy-max setting beats always-32B-direct on accuracy by +0.0004 [-0.0030, +0.0036] -- but it now costs 0.89x that baseline's compute, not less, and the compute-lean setting neither matches it on the multiple-choice half (-0.0070 [-0.0126, -0.0017], a SIGNIFICANT LOSS) nor stays cheap (0.75x compute, up from 0.40x sample-weighted); the one baseline the method still clearly beats at equal weight is a 32B actually made to reason (+0.0597 [+0.0496, +0.0697] accuracy, -90% latency, -93% energy -- though not fewer FLOP-eq: 0.89x as charged, 0.71x honestly re-costed)."
+  },
+  "ens8_scaled": {
+   "source": "ens8_scaled",
+   "dir": "ckpts/train/selector_ens8_scaled",
+   "label": "same ordering, magnitudes quantile-matched to the clean incumbent",
+   "macro_acc": {
+    "always_7b": 0.5971,
+    "always_32b_direct": 0.6567,
+    "always_32b_reasoning": 0.5974,
+    "oracle_mode_32b": 0.6573,
+    "method_compute_lean": 0.6476,
+    "method_accuracy_max_veto": 0.659,
+    "method_accuracy_max_fusion": 0.6537
+   },
+   "sw_acc": {
+    "always_7b": 0.5549,
+    "always_32b_direct": 0.5729,
+    "always_32b_reasoning": 0.5591,
+    "oracle_mode_32b": 0.573,
+    "method_compute_lean": 0.5718,
+    "method_accuracy_max_veto": 0.5812,
+    "method_accuracy_max_fusion": 0.5838
+   },
+   "open_only": {
+    "n": 2345,
+    "n_cells": 3,
+    "sample_weighted": {
+     "always_7b": 0.4495,
+     "always_32b_direct": 0.5168,
+     "always_32b_reasoning": 0.3028,
+     "oracle_mode_32b": 0.5168,
+     "method_compute_lean": 0.5207,
+     "method_accuracy_max_veto": 0.5296,
+     "method_accuracy_max_fusion": 0.5207
+    },
+    "macro_cells": {
+     "always_7b": 0.5085,
+     "always_32b_direct": 0.5982,
+     "always_32b_reasoning": 0.4442,
+     "oracle_mode_32b": 0.5982,
+     "method_compute_lean": 0.5857,
+     "method_accuracy_max_veto": 0.6011,
+     "method_accuracy_max_fusion": 0.5857
+    }
+   },
+   "mcq_only": {
+    "n": 39879,
+    "n_cells": 5,
+    "sample_weighted": {
+     "always_7b": 0.5611,
+     "always_32b_direct": 0.5762,
+     "always_32b_reasoning": 0.5742,
+     "oracle_mode_32b": 0.5763,
+     "method_compute_lean": 0.5748,
+     "method_accuracy_max_veto": 0.5842,
+     "method_accuracy_max_fusion": 0.5876
+    },
+    "macro_cells": {
+     "always_7b": 0.6503,
+     "always_32b_direct": 0.6918,
+     "always_32b_reasoning": 0.6893,
+     "oracle_mode_32b": 0.6927,
+     "method_compute_lean": 0.6848,
+     "method_accuracy_max_veto": 0.6937,
+     "method_accuracy_max_fusion": 0.6945
+    }
+   },
+   "per_cell_acc": {
+    "PMC_VQA": {
+     "always_7b": 0.5427,
+     "always_32b_direct": 0.5518,
+     "always_32b_reasoning": 0.5494,
+     "oracle_mode_32b": 0.5518,
+     "method_compute_lean": 0.5508,
+     "method_accuracy_max_veto": 0.5613,
+     "method_accuracy_max_fusion": 0.5653
+    },
+    "SLAKE_closed": {
+     "always_7b": 0.8254,
+     "always_32b_direct": 0.8589,
+     "always_32b_reasoning": 0.8636,
+     "oracle_mode_32b": 0.8636,
+     "method_compute_lean": 0.8517,
+     "method_accuracy_max_veto": 0.8589,
+     "method_accuracy_max_fusion": 0.8589
+    },
+    "VQA_RAD_closed": {
+     "always_7b": 0.7809,
+     "always_32b_direct": 0.8526,
+     "always_32b_reasoning": 0.8406,
+     "oracle_mode_32b": 0.8526,
+     "method_compute_lean": 0.8327,
+     "method_accuracy_max_veto": 0.8526,
+     "method_accuracy_max_fusion": 0.8526
+    },
+    "PATH_VQA_closed": {
+     "always_7b": 0.8409,
+     "always_32b_direct": 0.8891,
+     "always_32b_reasoning": 0.8891,
+     "oracle_mode_32b": 0.8891,
+     "method_compute_lean": 0.8882,
+     "method_accuracy_max_veto": 0.8891,
+     "method_accuracy_max_fusion": 0.8891
+    },
+    "MedXpertQA-MM": {
+     "always_7b": 0.2615,
+     "always_32b_direct": 0.3065,
+     "always_32b_reasoning": 0.304,
+     "oracle_mode_32b": 0.3065,
+     "method_compute_lean": 0.3005,
+     "method_accuracy_max_veto": 0.3065,
+     "method_accuracy_max_fusion": 0.3065
+    },
+    "SLAKE_open": {
+     "always_7b": 0.7364,
+     "always_32b_direct": 0.8186,
+     "always_32b_reasoning": 0.6791,
+     "oracle_mode_32b": 0.8186,
+     "method_compute_lean": 0.8109,
+     "method_accuracy_max_veto": 0.814,
+     "method_accuracy_max_fusion": 0.8109
+    },
+    "VQA_RAD_open": {
+     "always_7b": 0.465,
+     "always_32b_direct": 0.6,
+     "always_32b_reasoning": 0.545,
+     "oracle_mode_32b": 0.6,
+     "method_compute_lean": 0.555,
+     "method_accuracy_max_veto": 0.59,
+     "method_accuracy_max_fusion": 0.555
+    },
+    "PATH_VQA_open": {
+     "always_7b": 0.324,
+     "always_32b_direct": 0.376,
+     "always_32b_reasoning": 0.1087,
+     "oracle_mode_32b": 0.376,
+     "method_compute_lean": 0.3913,
+     "method_accuracy_max_veto": 0.3993,
+     "method_accuracy_max_fusion": 0.3913
+    }
+   },
+   "deltas": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0502,
+      "lo": 0.0393,
+      "hi": 0.0613,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.009,
+      "lo": -0.0152,
+      "hi": -0.0031,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0096,
+      "lo": -0.0159,
+      "hi": -0.0036,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0615,
+      "lo": 0.0516,
+      "hi": 0.0715,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": 0.0023,
+      "lo": -0.001,
+      "hi": 0.0054,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0017,
+      "lo": -0.0017,
+      "hi": 0.0049,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0562,
+      "lo": 0.0458,
+      "hi": 0.0668,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 8
+     },
+     "always_32b_direct": {
+      "delta": -0.003,
+      "lo": -0.0081,
+      "hi": 0.0019,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0036,
+      "lo": -0.0087,
+      "hi": 0.0013,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 8
+     }
+    }
+   },
+   "deltas_open": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.1415,
+      "lo": 0.1152,
+      "hi": 0.1685,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0125,
+      "lo": -0.026,
+      "hi": 0.0006,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0125,
+      "lo": -0.026,
+      "hi": 0.0006,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.1569,
+      "lo": 0.1323,
+      "hi": 0.1819,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": 0.0029,
+      "lo": -0.0058,
+      "hi": 0.0111,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0029,
+      "lo": -0.0058,
+      "hi": 0.0111,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.1415,
+      "lo": 0.1152,
+      "hi": 0.1685,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 3
+     },
+     "always_32b_direct": {
+      "delta": -0.0125,
+      "lo": -0.026,
+      "hi": 0.0006,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0125,
+      "lo": -0.026,
+      "hi": 0.0006,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 3
+     }
+    }
+   },
+   "deltas_mcq": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": -0.0046,
+      "lo": -0.0126,
+      "hi": 0.0036,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": -0.007,
+      "lo": -0.0126,
+      "hi": -0.0017,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": -0.008,
+      "lo": -0.0137,
+      "hi": -0.0024,
+      "sig": true,
+      "verdict": "LOSS",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0043,
+      "lo": -0.0016,
+      "hi": 0.0105,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0019,
+      "lo": 0.0014,
+      "hi": 0.0024,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.001,
+      "lo": -0.0006,
+      "hi": 0.0025,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0051,
+      "lo": -0.0008,
+      "hi": 0.0112,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 5
+     },
+     "always_32b_direct": {
+      "delta": 0.0027,
+      "lo": 0.002,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0017,
+      "lo": 0.0001,
+      "hi": 0.0034,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 5
+     }
+    }
+   },
+   "deltas_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "delta": 0.0127,
+      "lo": 0.0085,
+      "hi": 0.0169,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": -0.0012,
+      "lo": -0.0051,
+      "hi": 0.0028,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": -0.0013,
+      "lo": -0.0052,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "delta": 0.0221,
+      "lo": 0.0193,
+      "hi": 0.025,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0083,
+      "lo": 0.0064,
+      "hi": 0.0102,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0082,
+      "lo": 0.0063,
+      "hi": 0.0101,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "delta": 0.0247,
+      "lo": 0.0215,
+      "hi": 0.0281,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "always_32b_direct": {
+      "delta": 0.0109,
+      "lo": 0.0081,
+      "hi": 0.0137,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     },
+     "oracle_mode_32b": {
+      "delta": 0.0108,
+      "lo": 0.008,
+      "hi": 0.0136,
+      "sig": true,
+      "verdict": "WIN",
+      "n_units": 42224
+     }
+    }
+   },
+   "loo": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0572,
+       "SLAKE_closed": 0.0591,
+       "VQA_RAD_closed": 0.0585,
+       "PATH_VQA_closed": 0.0575,
+       "MedXpertQA-MM": 0.0579,
+       "SLAKE_open": 0.0385,
+       "VQA_RAD_open": 0.0559,
+       "PATH_VQA_open": 0.017
+      },
+      "range": [
+       0.017,
+       0.0591
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0102,
+       "SLAKE_closed": -0.0093,
+       "VQA_RAD_closed": -0.0075,
+       "PATH_VQA_closed": -0.0102,
+       "MedXpertQA-MM": -0.0095,
+       "SLAKE_open": -0.0092,
+       "VQA_RAD_open": -0.0039,
+       "PATH_VQA_open": -0.0125
+      },
+      "range": [
+       -0.0125,
+       -0.0039
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0109,
+       "SLAKE_closed": -0.0093,
+       "VQA_RAD_closed": -0.0082,
+       "PATH_VQA_closed": -0.0109,
+       "MedXpertQA-MM": -0.0102,
+       "SLAKE_open": -0.0099,
+       "VQA_RAD_open": -0.0046,
+       "PATH_VQA_open": -0.0132
+      },
+      "range": [
+       -0.0132,
+       -0.0046
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0686,
+       "SLAKE_closed": 0.071,
+       "VQA_RAD_closed": 0.0686,
+       "PATH_VQA_closed": 0.0703,
+       "MedXpertQA-MM": 0.0699,
+       "SLAKE_open": 0.051,
+       "VQA_RAD_open": 0.0639,
+       "PATH_VQA_open": 0.0288
+      },
+      "range": [
+       0.0288,
+       0.071
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0012,
+       "SLAKE_closed": 0.0026,
+       "VQA_RAD_closed": 0.0026,
+       "PATH_VQA_closed": 0.0026,
+       "MedXpertQA-MM": 0.0026,
+       "SLAKE_open": 0.0033,
+       "VQA_RAD_open": 0.004,
+       "PATH_VQA_open": -0.0007
+      },
+      "range": [
+       -0.0007,
+       0.004
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0006,
+       "SLAKE_closed": 0.0026,
+       "VQA_RAD_closed": 0.0019,
+       "PATH_VQA_closed": 0.0019,
+       "MedXpertQA-MM": 0.0019,
+       "SLAKE_open": 0.0026,
+       "VQA_RAD_open": 0.0033,
+       "PATH_VQA_open": -0.0014
+      },
+      "range": [
+       -0.0014,
+       0.0033
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.062,
+       "SLAKE_closed": 0.065,
+       "VQA_RAD_closed": 0.0626,
+       "PATH_VQA_closed": 0.0643,
+       "MedXpertQA-MM": 0.0639,
+       "SLAKE_open": 0.0455,
+       "VQA_RAD_open": 0.0629,
+       "PATH_VQA_open": 0.0239
+      },
+      "range": [
+       0.0239,
+       0.065
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "SLAKE_closed",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "always_32b_direct": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0053,
+       "SLAKE_closed": -0.0034,
+       "VQA_RAD_closed": -0.0034,
+       "PATH_VQA_closed": -0.0034,
+       "MedXpertQA-MM": -0.0034,
+       "SLAKE_open": -0.0023,
+       "VQA_RAD_open": 0.003,
+       "PATH_VQA_open": -0.0056
+      },
+      "range": [
+       -0.0056,
+       0.003
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     },
+     "oracle_mode_32b": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.006,
+       "SLAKE_closed": -0.0034,
+       "VQA_RAD_closed": -0.0041,
+       "PATH_VQA_closed": -0.0041,
+       "MedXpertQA-MM": -0.0041,
+       "SLAKE_open": -0.003,
+       "VQA_RAD_open": 0.0023,
+       "PATH_VQA_open": -0.0063
+      },
+      "range": [
+       -0.0063,
+       0.0023
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open",
+      "cell_holding_the_claim_back": "VQA_RAD_open",
+      "note": "macro delta recomputed with each cell removed in turn (point estimates only); shows how much the equal-weight number leans on any single dataset. cell_carrying_the_claim is the one whose removal LOWERS the macro delta the most (the load-bearing dataset); cell_holding_the_claim_back is the one whose removal raises it the most."
+     }
+    }
+   },
+   "cost_macro": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 1897.1,
+     "lat_seq_ms": 1897.1,
+     "energy_j": 361.4
+    },
+    "method_compute_lean": {
+     "flops": 6.836,
+     "lat_par_ms": 703.3,
+     "lat_seq_ms": 1607.3,
+     "energy_j": 233.9
+    },
+    "method_accuracy_max_veto": {
+     "flops": 7.945,
+     "lat_par_ms": 763.8,
+     "lat_seq_ms": 1667.9,
+     "energy_j": 255.7
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 7.929,
+     "lat_par_ms": 718.1,
+     "lat_seq_ms": 1665.5,
+     "energy_j": 255.3
+    }
+   },
+   "cost_macro_honest": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 5.697,
+     "lat_par_ms": 6291.2,
+     "lat_seq_ms": 6291.2,
+     "energy_j": 1625.2
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 645.5,
+     "lat_seq_ms": 645.5,
+     "energy_j": 121.8
+    },
+    "method_compute_lean": {
+     "flops": 6.836,
+     "lat_par_ms": 703.3,
+     "lat_seq_ms": 1607.3,
+     "energy_j": 233.9
+    },
+    "method_accuracy_max_veto": {
+     "flops": 7.945,
+     "lat_par_ms": 763.8,
+     "lat_seq_ms": 1667.9,
+     "energy_j": 255.7
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 7.929,
+     "lat_par_ms": 718.1,
+     "lat_seq_ms": 1665.5,
+     "energy_j": 255.3
+    }
+   },
+   "cost_sw": {
+    "always_7b": {
+     "flops": 1.0,
+     "lat_par_ms": 347.0,
+     "lat_seq_ms": 347.0,
+     "energy_j": 45.8
+    },
+    "always_32b_direct": {
+     "flops": 4.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 665.0,
+     "energy_j": 127.0
+    },
+    "always_32b_reasoning": {
+     "flops": 4.57,
+     "lat_par_ms": 10521.6,
+     "lat_seq_ms": 10521.6,
+     "energy_j": 2001.9
+    },
+    "oracle_mode_32b": {
+     "flops": 4.57,
+     "lat_par_ms": 860.2,
+     "lat_seq_ms": 860.2,
+     "energy_j": 164.1
+    },
+    "method_compute_lean": {
+     "flops": 2.27,
+     "lat_par_ms": 470.8,
+     "lat_seq_ms": 583.3,
+     "energy_j": 84.3
+    },
+    "method_accuracy_max_veto": {
+     "flops": 4.312,
+     "lat_par_ms": 737.2,
+     "lat_seq_ms": 849.6,
+     "energy_j": 138.3
+    },
+    "method_accuracy_max_fusion": {
+     "flops": 5.734,
+     "lat_par_ms": 669.2,
+     "lat_seq_ms": 1056.4,
+     "energy_j": 177.8
+    }
+   },
+   "ratios_macro": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.496,
+      "lat_par_x": 0.067,
+      "lat_par_pct": -93.3,
+      "lat_seq_x": 0.153,
+      "lat_seq_pct": -84.7,
+      "energy_x": 0.117,
+      "energy_pct": -88.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.496,
+      "lat_par_x": 1.058,
+      "lat_par_pct": 5.8,
+      "lat_seq_x": 2.417,
+      "lat_seq_pct": 141.7,
+      "energy_x": 1.842,
+      "energy_pct": 84.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.496,
+      "lat_par_x": 0.371,
+      "lat_par_pct": -62.9,
+      "lat_seq_x": 0.847,
+      "lat_seq_pct": -15.3,
+      "energy_x": 0.647,
+      "energy_pct": -35.3
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.739,
+      "lat_par_x": 0.073,
+      "lat_par_pct": -92.7,
+      "lat_seq_x": 0.159,
+      "lat_seq_pct": -84.1,
+      "energy_x": 0.128,
+      "energy_pct": -87.2
+     },
+     "always_32b_direct": {
+      "flops_x": 1.739,
+      "lat_par_x": 1.149,
+      "lat_par_pct": 14.9,
+      "lat_seq_x": 2.508,
+      "lat_seq_pct": 150.8,
+      "energy_x": 2.013,
+      "energy_pct": 101.3
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.739,
+      "lat_par_x": 0.403,
+      "lat_par_pct": -59.7,
+      "lat_seq_x": 0.879,
+      "lat_seq_pct": -12.1,
+      "energy_x": 0.708,
+      "energy_pct": -29.2
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.735,
+      "lat_par_x": 0.068,
+      "lat_par_pct": -93.2,
+      "lat_seq_x": 0.158,
+      "lat_seq_pct": -84.2,
+      "energy_x": 0.128,
+      "energy_pct": -87.2
+     },
+     "always_32b_direct": {
+      "flops_x": 1.735,
+      "lat_par_x": 1.08,
+      "lat_par_pct": 8.0,
+      "lat_seq_x": 2.505,
+      "lat_seq_pct": 150.5,
+      "energy_x": 2.01,
+      "energy_pct": 101.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.735,
+      "lat_par_x": 0.379,
+      "lat_par_pct": -62.1,
+      "lat_seq_x": 0.878,
+      "lat_seq_pct": -12.2,
+      "energy_x": 0.706,
+      "energy_pct": -29.4
+     }
+    }
+   },
+   "ratios_macro_honest": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.2,
+      "lat_par_x": 0.112,
+      "lat_par_pct": -88.8,
+      "lat_seq_x": 0.255,
+      "lat_seq_pct": -74.5,
+      "energy_x": 0.144,
+      "energy_pct": -85.6
+     },
+     "always_32b_direct": {
+      "flops_x": 1.496,
+      "lat_par_x": 1.058,
+      "lat_par_pct": 5.8,
+      "lat_seq_x": 2.417,
+      "lat_seq_pct": 141.7,
+      "energy_x": 1.842,
+      "energy_pct": 84.2
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.496,
+      "lat_par_x": 1.09,
+      "lat_par_pct": 9.0,
+      "lat_seq_x": 2.49,
+      "lat_seq_pct": 149.0,
+      "energy_x": 1.92,
+      "energy_pct": 92.0
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.395,
+      "lat_par_x": 0.121,
+      "lat_par_pct": -87.9,
+      "lat_seq_x": 0.265,
+      "lat_seq_pct": -73.5,
+      "energy_x": 0.157,
+      "energy_pct": -84.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.739,
+      "lat_par_x": 1.149,
+      "lat_par_pct": 14.9,
+      "lat_seq_x": 2.508,
+      "lat_seq_pct": 150.8,
+      "energy_x": 2.013,
+      "energy_pct": 101.3
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.739,
+      "lat_par_x": 1.183,
+      "lat_par_pct": 18.3,
+      "lat_seq_x": 2.584,
+      "lat_seq_pct": 158.4,
+      "energy_x": 2.099,
+      "energy_pct": 109.9
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.392,
+      "lat_par_x": 0.114,
+      "lat_par_pct": -88.6,
+      "lat_seq_x": 0.265,
+      "lat_seq_pct": -73.5,
+      "energy_x": 0.157,
+      "energy_pct": -84.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.735,
+      "lat_par_x": 1.08,
+      "lat_par_pct": 8.0,
+      "lat_seq_x": 2.505,
+      "lat_seq_pct": 150.5,
+      "energy_x": 2.01,
+      "energy_pct": 101.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.735,
+      "lat_par_x": 1.112,
+      "lat_par_pct": 11.2,
+      "lat_seq_x": 2.58,
+      "lat_seq_pct": 158.0,
+      "energy_x": 2.096,
+      "energy_pct": 109.6
+     }
+    }
+   },
+   "ratios_sw": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 0.497,
+      "lat_par_x": 0.045,
+      "lat_par_pct": -95.5,
+      "lat_seq_x": 0.055,
+      "lat_seq_pct": -94.5,
+      "energy_x": 0.042,
+      "energy_pct": -95.8
+     },
+     "always_32b_direct": {
+      "flops_x": 0.497,
+      "lat_par_x": 0.708,
+      "lat_par_pct": -29.2,
+      "lat_seq_x": 0.877,
+      "lat_seq_pct": -12.3,
+      "energy_x": 0.664,
+      "energy_pct": -33.6
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.497,
+      "lat_par_x": 0.547,
+      "lat_par_pct": -45.3,
+      "lat_seq_x": 0.678,
+      "lat_seq_pct": -32.2,
+      "energy_x": 0.514,
+      "energy_pct": -48.6
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 0.944,
+      "lat_par_x": 0.07,
+      "lat_par_pct": -93.0,
+      "lat_seq_x": 0.081,
+      "lat_seq_pct": -91.9,
+      "energy_x": 0.069,
+      "energy_pct": -93.1
+     },
+     "always_32b_direct": {
+      "flops_x": 0.944,
+      "lat_par_x": 1.109,
+      "lat_par_pct": 10.9,
+      "lat_seq_x": 1.278,
+      "lat_seq_pct": 27.8,
+      "energy_x": 1.089,
+      "energy_pct": 8.9
+     },
+     "oracle_mode_32b": {
+      "flops_x": 0.944,
+      "lat_par_x": 0.857,
+      "lat_par_pct": -14.3,
+      "lat_seq_x": 0.988,
+      "lat_seq_pct": -1.2,
+      "energy_x": 0.843,
+      "energy_pct": -15.7
+     }
+    },
+    "method_accuracy_max_fusion": {
+     "always_32b_reasoning": {
+      "flops_x": 1.255,
+      "lat_par_x": 0.064,
+      "lat_par_pct": -93.6,
+      "lat_seq_x": 0.1,
+      "lat_seq_pct": -90.0,
+      "energy_x": 0.089,
+      "energy_pct": -91.1
+     },
+     "always_32b_direct": {
+      "flops_x": 1.255,
+      "lat_par_x": 1.006,
+      "lat_par_pct": 0.6,
+      "lat_seq_x": 1.589,
+      "lat_seq_pct": 58.9,
+      "energy_x": 1.4,
+      "energy_pct": 40.0
+     },
+     "oracle_mode_32b": {
+      "flops_x": 1.255,
+      "lat_par_x": 0.778,
+      "lat_par_pct": -22.2,
+      "lat_seq_x": 1.228,
+      "lat_seq_pct": 22.8,
+      "energy_x": 1.083,
+      "energy_pct": 8.3
+     }
+    }
+   },
+   "escalation": {
+    "per_cell": {
+     "PMC_VQA": 0.0845,
+     "SLAKE_closed": 0.2045,
+     "VQA_RAD_closed": 0.5697,
+     "PATH_VQA_closed": 0.4572,
+     "MedXpertQA-MM": 0.896,
+     "SLAKE_open": 0.414,
+     "VQA_RAD_open": 0.615,
+     "PATH_VQA_open": 0.2553
+    },
+    "compute_lean_mcq": {
+     "sample_weighted": 0.1622,
+     "macro_cells": 0.4424
+    },
+    "compute_lean_all8": {
+     "sample_weighted": 0.1715,
+     "macro_cells": 0.437
+    },
+    "note": "The escalation rate is what drives '0.49x compute' and '469 ms'. It is wildly heterogeneous across cells, and PMC-VQA -- the cell with by far the lowest escalation -- carries 79.2% of the sample-weighted average. Equal-weighting the cells raises the multiple-choice escalation rate from the pooled value to the macro value below, which is the mechanism behind the cost reversal in cost.joint_claim."
+   },
+   "open_cell_detail": {
+    "SLAKE_open": {
+     "n": 645,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.414,
+     "meanN": 5.026356589147287,
+     "am2_esc": 0.4806,
+     "cost_cl": {
+      "flops": 11.944,
+      "lat_par_ms": 797.279,
+      "lat_seq_ms": 2899.037,
+      "energy_j": 409.946
+     },
+     "cost_am2": {
+      "flops": 12.249,
+      "lat_par_ms": 841.612,
+      "lat_seq_ms": 2943.371,
+      "energy_j": 418.413
+     }
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.615,
+     "meanN": 7.34,
+     "am2_esc": 0.875,
+     "cost_cl": {
+      "flops": 17.491,
+      "lat_par_ms": 930.975,
+      "lat_seq_ms": 4240.455,
+      "energy_j": 599.979
+     },
+     "cost_am2": {
+      "flops": 18.679,
+      "lat_par_ms": 1103.875,
+      "lat_seq_ms": 4413.355,
+      "energy_j": 632.999
+     }
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "policy_cl": "pandora-N+verifier->32B-nt",
+     "policy_am2": "pandora-N + F10-L2D->32B-nt",
+     "esc": 0.2553,
+     "meanN": 4.488666666666667,
+     "am2_esc": 0.3567,
+     "cost_cl": {
+      "flops": 10.144,
+      "lat_par_ms": 691.797,
+      "lat_seq_ms": 2512.881,
+      "energy_j": 351.572
+     },
+     "cost_am2": {
+      "flops": 10.607,
+      "lat_par_ms": 759.183,
+      "lat_seq_ms": 2580.267,
+      "energy_j": 364.441
+     }
+    }
+   },
+   "honest_headline_sentence": "Under equal weight per benchmark cell (8 cells, 1/8 each), the accuracy-max setting beats always-32B-direct on accuracy by +0.0023 [-0.0010, +0.0054] -- but it now costs 1.74x that baseline's compute, not less, and the compute-lean setting neither matches it on the multiple-choice half (-0.0070 [-0.0126, -0.0017], a SIGNIFICANT LOSS) nor stays cheap (1.50x compute, up from 0.50x sample-weighted); the one baseline the method still clearly beats at equal weight is a 32B actually made to reason (+0.0615 [+0.0516, +0.0715] accuracy, -88% latency, -84% energy -- though not fewer FLOP-eq: 1.74x as charged, 1.40x honestly re-costed)."
+  }
+ },
+ "method_vs_baseline_macro": {
+  "pooled4": {
+   "method_compute_lean": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0626,
+      "ci95": [
+       0.0515,
+       0.0733
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1745,
+      "ci95": [
+       0.1484,
+       0.2002
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0046,
+      "ci95": [
+       -0.0127,
+       0.0035
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0033,
+      "ci95": [
+       -0.0055,
+       0.0122
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": 0.0206,
+      "ci95": [
+       -0.0013,
+       0.0427
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.007,
+      "ci95": [
+       -0.0126,
+       -0.0017
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": 0.0027,
+      "ci95": [
+       -0.0063,
+       0.0117
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": 0.0206,
+      "ci95": [
+       -0.0013,
+       0.0427
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0079,
+      "ci95": [
+       -0.0138,
+       -0.0024
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "method_accuracy_max_veto": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.072,
+      "ci95": [
+       0.0617,
+       0.0825
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1848,
+      "ci95": [
+       0.1593,
+       0.2108
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0043,
+      "ci95": [
+       -0.0017,
+       0.0105
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0128,
+      "ci95": [
+       0.0056,
+       0.02
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.0309,
+      "ci95": [
+       0.0117,
+       0.05
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0019,
+      "ci95": [
+       0.0014,
+       0.0024
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": 0.0122,
+      "ci95": [
+       0.0049,
+       0.0194
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.0309,
+      "ci95": [
+       0.0117,
+       0.05
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.001,
+      "ci95": [
+       -0.0006,
+       0.0025
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0686,
+      "ci95": [
+       0.0579,
+       0.0789
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1745,
+      "ci95": [
+       0.1484,
+       0.2002
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0051,
+      "ci95": [
+       -0.0009,
+       0.0114
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0094,
+      "ci95": [
+       0.0012,
+       0.0177
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.0206,
+      "ci95": [
+       -0.0013,
+       0.0427
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0027,
+      "ci95": [
+       0.002,
+       0.0034
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": 0.0088,
+      "ci95": [
+       0.0006,
+       0.0172
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.0206,
+      "ci95": [
+       -0.0013,
+       0.0427
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0018,
+      "ci95": [
+       0.0001,
+       0.0033
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    }
+   }
+  },
+  "disjoint": {
+   "method_compute_lean": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0469,
+      "ci95": [
+       0.0355,
+       0.0579
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1326,
+      "ci95": [
+       0.106,
+       0.1587
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0046,
+      "ci95": [
+       -0.0127,
+       0.0035
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.0124,
+      "ci95": [
+       -0.0191,
+       -0.0062
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0214,
+      "ci95": [
+       -0.0365,
+       -0.0075
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "mcq_only_macro": {
+      "delta": -0.007,
+      "ci95": [
+       -0.0126,
+       -0.0017
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.013,
+      "ci95": [
+       -0.0197,
+       -0.0066
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0214,
+      "ci95": [
+       -0.0365,
+       -0.0075
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0079,
+      "ci95": [
+       -0.0138,
+       -0.0024
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "method_accuracy_max_veto": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0601,
+      "ci95": [
+       0.0499,
+       0.07
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.153,
+      "ci95": [
+       0.1282,
+       0.1773
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0043,
+      "ci95": [
+       -0.0017,
+       0.0105
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0008,
+      "ci95": [
+       -0.0022,
+       0.0037
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0009,
+      "ci95": [
+       -0.009,
+       0.0066
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0019,
+      "ci95": [
+       0.0014,
+       0.0024
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": 0.0003,
+      "ci95": [
+       -0.003,
+       0.0033
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0009,
+      "ci95": [
+       -0.009,
+       0.0066
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.001,
+      "ci95": [
+       -0.0006,
+       0.0025
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0529,
+      "ci95": [
+       0.042,
+       0.0635
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1326,
+      "ci95": [
+       0.106,
+       0.1587
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0051,
+      "ci95": [
+       -0.0009,
+       0.0114
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.0063,
+      "ci95": [
+       -0.012,
+       -0.0011
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0214,
+      "ci95": [
+       -0.0365,
+       -0.0075
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0027,
+      "ci95": [
+       0.002,
+       0.0034
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0069,
+      "ci95": [
+       -0.0126,
+       -0.0016
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0214,
+      "ci95": [
+       -0.0365,
+       -0.0075
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0018,
+      "ci95": [
+       0.0001,
+       0.0033
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    }
+   }
+  },
+  "ens8_rank": {
+   "method_compute_lean": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0523,
+      "ci95": [
+       0.0416,
+       0.0628
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.147,
+      "ci95": [
+       0.1225,
+       0.1713
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0046,
+      "ci95": [
+       -0.0127,
+       0.0035
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.007,
+      "ci95": [
+       -0.0115,
+       -0.0027
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0069,
+      "ci95": [
+       -0.0144,
+       0.0004
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.007,
+      "ci95": [
+       -0.0126,
+       -0.0017
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0076,
+      "ci95": [
+       -0.0122,
+       -0.0032
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0069,
+      "ci95": [
+       -0.0144,
+       0.0004
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0079,
+      "ci95": [
+       -0.0138,
+       -0.0024
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "method_accuracy_max_veto": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0597,
+      "ci95": [
+       0.0495,
+       0.0696
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1519,
+      "ci95": [
+       0.1272,
+       0.1764
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0043,
+      "ci95": [
+       -0.0017,
+       0.0105
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0004,
+      "ci95": [
+       -0.003,
+       0.0037
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.002,
+      "ci95": [
+       -0.0109,
+       0.0067
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0019,
+      "ci95": [
+       0.0014,
+       0.0024
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0001,
+      "ci95": [
+       -0.0036,
+       0.0032
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.002,
+      "ci95": [
+       -0.0109,
+       0.0067
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.001,
+      "ci95": [
+       -0.0006,
+       0.0025
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0583,
+      "ci95": [
+       0.0482,
+       0.0683
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.147,
+      "ci95": [
+       0.1225,
+       0.1713
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0051,
+      "ci95": [
+       -0.0009,
+       0.0114
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.0009,
+      "ci95": [
+       -0.0038,
+       0.0019
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0069,
+      "ci95": [
+       -0.0144,
+       0.0004
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0027,
+      "ci95": [
+       0.002,
+       0.0034
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0015,
+      "ci95": [
+       -0.0045,
+       0.0014
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0069,
+      "ci95": [
+       -0.0144,
+       0.0004
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0018,
+      "ci95": [
+       0.0001,
+       0.0033
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    }
+   }
+  },
+  "ens8_scaled": {
+   "method_compute_lean": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0502,
+      "ci95": [
+       0.0389,
+       0.061
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1415,
+      "ci95": [
+       0.115,
+       0.1668
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0046,
+      "ci95": [
+       -0.0127,
+       0.0035
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.0091,
+      "ci95": [
+       -0.0153,
+       -0.0031
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0125,
+      "ci95": [
+       -0.0262,
+       0.0001
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.007,
+      "ci95": [
+       -0.0126,
+       -0.0017
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0096,
+      "ci95": [
+       -0.0159,
+       -0.0036
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0125,
+      "ci95": [
+       -0.0262,
+       0.0001
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": -0.0079,
+      "ci95": [
+       -0.0138,
+       -0.0024
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "method_accuracy_max_veto": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0615,
+      "ci95": [
+       0.0514,
+       0.0715
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1568,
+      "ci95": [
+       0.132,
+       0.181
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0043,
+      "ci95": [
+       -0.0017,
+       0.0105
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": 0.0023,
+      "ci95": [
+       -0.001,
+       0.0054
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": 0.0029,
+      "ci95": [
+       -0.0057,
+       0.0111
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0019,
+      "ci95": [
+       0.0014,
+       0.0024
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": 0.0017,
+      "ci95": [
+       -0.0017,
+       0.0049
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": 0.0029,
+      "ci95": [
+       -0.0057,
+       0.0111
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.001,
+      "ci95": [
+       -0.0006,
+       0.0025
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "always_32b_reasoning": {
+     "all8_macro": {
+      "delta": 0.0563,
+      "ci95": [
+       0.0455,
+       0.0666
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.1415,
+      "ci95": [
+       0.115,
+       0.1668
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0051,
+      "ci95": [
+       -0.0009,
+       0.0114
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "always_32b_direct": {
+     "all8_macro": {
+      "delta": -0.003,
+      "ci95": [
+       -0.0081,
+       0.0018
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0125,
+      "ci95": [
+       -0.0262,
+       0.0001
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0027,
+      "ci95": [
+       0.002,
+       0.0034
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "oracle_mode_32b": {
+     "all8_macro": {
+      "delta": -0.0036,
+      "ci95": [
+       -0.0088,
+       0.0013
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": -0.0125,
+      "ci95": [
+       -0.0262,
+       0.0001
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "mcq_only_macro": {
+      "delta": 0.0018,
+      "ci95": [
+       0.0001,
+       0.0033
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    }
+   }
+  }
+ },
+ "arm_vs_arm_macro": {
+  "disjoint - pooled4": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": -0.0157,
+     "ci95": [
+      -0.0239,
+      -0.0077
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0419,
+     "ci95": [
+      -0.0637,
+      -0.0206
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": -0.0119,
+     "ci95": [
+      -0.0188,
+      -0.0052
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0318,
+     "ci95": [
+      -0.0502,
+      -0.0138
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": -0.0157,
+     "ci95": [
+      -0.0239,
+      -0.0077
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0419,
+     "ci95": [
+      -0.0637,
+      -0.0206
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   }
+  },
+  "ens8_rank - pooled4": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": -0.0103,
+     "ci95": [
+      -0.0185,
+      -0.0021
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0275,
+     "ci95": [
+      -0.0493,
+      -0.0055
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": -0.0123,
+     "ci95": [
+      -0.0192,
+      -0.0055
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0329,
+     "ci95": [
+      -0.0513,
+      -0.0146
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": -0.0103,
+     "ci95": [
+      -0.0185,
+      -0.0021
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.0275,
+     "ci95": [
+      -0.0493,
+      -0.0055
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   }
+  },
+  "ens8_scaled - pooled4": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": -0.0124,
+     "ci95": [
+      -0.0204,
+      -0.0045
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.033,
+     "ci95": [
+      -0.0545,
+      -0.0121
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": -0.0105,
+     "ci95": [
+      -0.0173,
+      -0.0037
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.028,
+     "ci95": [
+      -0.0462,
+      -0.0098
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": -0.0124,
+     "ci95": [
+      -0.0204,
+      -0.0045
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "open_only_macro": {
+     "delta": -0.033,
+     "ci95": [
+      -0.0545,
+      -0.0121
+     ],
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   }
+  },
+  "ens8_rank - disjoint": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": 0.0054,
+     "ci95": [
+      0.0006,
+      0.0108
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "open_only_macro": {
+     "delta": 0.0145,
+     "ci95": [
+      0.0015,
+      0.0287
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": -0.0004,
+     "ci95": [
+      -0.0031,
+      0.0023
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "open_only_macro": {
+     "delta": -0.0011,
+     "ci95": [
+      -0.0082,
+      0.0061
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": 0.0054,
+     "ci95": [
+      0.0006,
+      0.0108
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "open_only_macro": {
+     "delta": 0.0145,
+     "ci95": [
+      0.0015,
+      0.0287
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    }
+   }
+  },
+  "ens8_scaled - disjoint": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": 0.0033,
+     "ci95": [
+      0.0003,
+      0.0067
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "open_only_macro": {
+     "delta": 0.0089,
+     "ci95": [
+      0.0007,
+      0.0179
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": 0.0014,
+     "ci95": [
+      -0.0003,
+      0.0032
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "open_only_macro": {
+     "delta": 0.0038,
+     "ci95": [
+      -0.0007,
+      0.0085
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": 0.0033,
+     "ci95": [
+      0.0003,
+      0.0067
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "open_only_macro": {
+     "delta": 0.0089,
+     "ci95": [
+      0.0007,
+      0.0179
+     ],
+     "sig": true,
+     "verdict": "WIN"
+    }
+   }
+  },
+  "ens8_scaled - ens8_rank": {
+   "method_compute_lean": {
+    "all8_macro": {
+     "delta": -0.0021,
+     "ci95": [
+      -0.007,
+      0.0024
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "open_only_macro": {
+     "delta": -0.0056,
+     "ci95": [
+      -0.0187,
+      0.0064
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "method_accuracy_max_veto": {
+    "all8_macro": {
+     "delta": 0.0018,
+     "ci95": [
+      -0.0007,
+      0.0045
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "open_only_macro": {
+     "delta": 0.0049,
+     "ci95": [
+      -0.0019,
+      0.0119
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "all8_macro": {
+     "delta": -0.0021,
+     "ci95": [
+      -0.007,
+      0.0024
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "open_only_macro": {
+     "delta": -0.0056,
+     "ci95": [
+      -0.0187,
+      0.0064
+     ],
+     "sig": false,
+     "verdict": "TIE"
+    }
+   }
+  }
+ },
+ "headline": {
+  "canonical_convention": "MACRO, equal weight per reporting cell, Variant B (MMMU excluded, 8 cells, 1/8 each), n=42,224",
+  "anchors": {
+   "pooled4_arm_reproduces": "results/cascade_methods/artifacts/macro_average_headline_2026-07-30.json (5,529 leaf fields compared, 0 differ)",
+   "disjoint_arm_reproduces": "results/cascade_methods/artifacts/macro_headline_clean_verifier_2026-07-30.json arm clean_L1 (88 fields compared, max abs deviation 0.0)"
+  },
+  "which_verifier_the_published_headline_used": "CONTAMINATED. macro_average_headline_2026-07-30.json's three open-text cells were computed from ckpts/train/lora_verifier_pooled4 -- the verifier trained on ~70% of the items it scores (retrospective hole 4). Confirmed two ways: integrated_method.OPEN_VERIFIER_DIR / integrated_pandora.ADAPTER / beat32b_more.OPEN_VERIFIER_DIR all defaulted to it, and the pooled4 arm here reproduces that artifact exactly. This re-run is therefore BOTH a selector update AND a decontamination, and the decontamination is the larger of the two by a factor of ~7.",
+  "new_macro_headline": {
+   "arm": "ens8_scaled",
+   "what": "clean disjoint verifier + the frozen 8-seed generator-frame head, rank-fused, with the fused ordering's magnitudes quantile-matched to the incumbent's own pool scores so the escalation gate keeps a usable scale",
+   "accuracy": {
+    "always_7b": 0.5971,
+    "always_32b_reasoning": 0.5974,
+    "always_32b_direct": 0.6567,
+    "oracle_mode_32b": 0.6573,
+    "method_compute_lean": 0.6476,
+    "method_accuracy_max_veto": 0.659,
+    "method_accuracy_max_fusion": 0.6537
+   },
+   "accuracy_max_vs_reasoning": {
+    "delta": 0.0615,
+    "ci95": [
+     0.0514,
+     0.0715
+    ],
+    "sig": true,
+    "verdict": "WIN"
+   },
+   "accuracy_max_vs_direct": {
+    "delta": 0.0023,
+    "ci95": [
+     -0.001,
+     0.0054
+    ],
+    "sig": false,
+    "verdict": "TIE"
+   },
+   "compute_lean_vs_reasoning": {
+    "delta": 0.0502,
+    "ci95": [
+     0.0389,
+     0.061
+    ],
+    "sig": true,
+    "verdict": "WIN"
+   },
+   "compute_lean_vs_direct": {
+    "delta": -0.0091,
+    "ci95": [
+     -0.0153,
+     -0.0031
+    ],
+    "sig": true,
+    "verdict": "LOSS"
+   },
+   "cost_MACRO_as_charged": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.496,
+      "lat_par_x": 0.067,
+      "lat_par_pct": -93.3,
+      "lat_seq_x": 0.153,
+      "lat_seq_pct": -84.7,
+      "energy_x": 0.117,
+      "energy_pct": -88.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.496,
+      "lat_par_x": 1.058,
+      "lat_par_pct": 5.8,
+      "lat_seq_x": 2.417,
+      "lat_seq_pct": 141.7,
+      "energy_x": 1.842,
+      "energy_pct": 84.2
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.739,
+      "lat_par_x": 0.073,
+      "lat_par_pct": -92.7,
+      "lat_seq_x": 0.159,
+      "lat_seq_pct": -84.1,
+      "energy_x": 0.128,
+      "energy_pct": -87.2
+     },
+     "always_32b_direct": {
+      "flops_x": 1.739,
+      "lat_par_x": 1.149,
+      "lat_par_pct": 14.9,
+      "lat_seq_x": 2.508,
+      "lat_seq_pct": 150.8,
+      "energy_x": 2.013,
+      "energy_pct": 101.3
+     }
+    }
+   },
+   "cost_MACRO_honest": {
+    "method_compute_lean": {
+     "always_32b_reasoning": {
+      "flops_x": 1.2,
+      "lat_par_x": 0.112,
+      "lat_par_pct": -88.8,
+      "lat_seq_x": 0.255,
+      "lat_seq_pct": -74.5,
+      "energy_x": 0.144,
+      "energy_pct": -85.6
+     },
+     "always_32b_direct": {
+      "flops_x": 1.496,
+      "lat_par_x": 1.058,
+      "lat_par_pct": 5.8,
+      "lat_seq_x": 2.417,
+      "lat_seq_pct": 141.7,
+      "energy_x": 1.842,
+      "energy_pct": 84.2
+     }
+    },
+    "method_accuracy_max_veto": {
+     "always_32b_reasoning": {
+      "flops_x": 1.395,
+      "lat_par_x": 0.121,
+      "lat_par_pct": -87.9,
+      "lat_seq_x": 0.265,
+      "lat_seq_pct": -73.5,
+      "energy_x": 0.157,
+      "energy_pct": -84.3
+     },
+     "always_32b_direct": {
+      "flops_x": 1.739,
+      "lat_par_x": 1.149,
+      "lat_par_pct": 14.9,
+      "lat_seq_x": 2.508,
+      "lat_seq_pct": 150.8,
+      "energy_x": 2.013,
+      "energy_pct": 101.3
+     }
+    }
+   },
+   "cost_label": "MACRO-weighted cost. Never pair it with a sample-weighted accuracy, and never pair the macro accuracy above with a sample-weighted cost."
+  },
+  "change_from_the_current_canonical": {
+   "accuracy_max_veto": {
+    "acc": [
+     0.6694,
+     0.659
+    ],
+    "vs_reasoning": [
+     {
+      "delta": 0.072,
+      "ci95": [
+       0.0617,
+       0.0825
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     {
+      "delta": 0.0615,
+      "ci95": [
+       0.0514,
+       0.0715
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    ],
+    "vs_direct": [
+     {
+      "delta": 0.0128,
+      "ci95": [
+       0.0056,
+       0.02
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     {
+      "delta": 0.0023,
+      "ci95": [
+       -0.001,
+       0.0054
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    ],
+    "compute_x_direct_macro_as_charged": [
+     1.41,
+     1.739
+    ]
+   },
+   "compute_lean": {
+    "acc": [
+     0.66,
+     0.6476
+    ],
+    "vs_reasoning": [
+     {
+      "delta": 0.0626,
+      "ci95": [
+       0.0515,
+       0.0733
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     {
+      "delta": 0.0502,
+      "ci95": [
+       0.0389,
+       0.061
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    ],
+    "vs_direct": [
+     {
+      "delta": 0.0033,
+      "ci95": [
+       -0.0055,
+       0.0122
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     {
+      "delta": -0.0091,
+      "ci95": [
+       -0.0153,
+       -0.0031
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    ],
+    "compute_x_direct_macro_as_charged": [
+     1.196,
+     1.496
+    ]
+   }
+  },
+  "attribution": {
+   "note": "the total move splits into DECONTAMINATION (pooled4 -> clean incumbent) and SELECTION (clean incumbent -> frozen 8-seed selector). Both are paired bootstraps on the same replicate stream.",
+   "decontamination": {
+    "method_compute_lean": {
+     "all8_macro": {
+      "delta": -0.0157,
+      "ci95": [
+       -0.0239,
+       -0.0077
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0419,
+      "ci95": [
+       -0.0637,
+       -0.0206
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "method_accuracy_max_veto": {
+     "all8_macro": {
+      "delta": -0.0119,
+      "ci95": [
+       -0.0188,
+       -0.0052
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "open_only_macro": {
+      "delta": -0.0318,
+      "ci95": [
+       -0.0502,
+       -0.0138
+      ],
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "selection": {
+    "method_compute_lean": {
+     "all8_macro": {
+      "delta": 0.0033,
+      "ci95": [
+       0.0003,
+       0.0067
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "open_only_macro": {
+      "delta": 0.0089,
+      "ci95": [
+       0.0007,
+       0.0179
+      ],
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "method_accuracy_max_veto": {
+     "all8_macro": {
+      "delta": 0.0014,
+      "ci95": [
+       -0.0003,
+       0.0032
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "open_only_macro": {
+      "delta": 0.0038,
+      "ci95": [
+       -0.0007,
+       0.0085
+      ],
+      "sig": false,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "verdict": "Decontamination is ~7x the size of the selection change on accuracy-max-veto and moves the verdict; the selection change does not."
+  },
+  "the_selector_gain_stated_plainly": "On the macro headline the frozen 8-seed selector is worth +0.0014 [-0.0003, +0.0032] to the accuracy-max setting and +0.0033 [+0.0003, +0.0067] to compute-lean, over the SAME cascade run on the clean incumbent. The accuracy-max number -- the canonical operating point -- is NOT significant. On the open-text cells alone it is +0.0038 [-0.0007, +0.0085], also not significant. This is the expected magnitude: the selection endpoint moved +0.035422 sel_eff / +0.022175 selected accuracy on the 2,345-item pool, but the cascade escalates a large fraction of exactly the questions where selection is hard, so most of the selection gain is spent on questions the 32B was going to answer anyway; and the open cells are 3 of 8 macro cells. Essentially nothing -- report it as such.",
+  "rank_scale_is_not_a_confidence": {
+   "finding": "The recommended selector's score is a WITHIN-POOL rank. Fed to the cascade verbatim (arm ens8_rank) it destroys the escalation gate: max(scores) takes 15 distinct values over 2,345 questions against the clean incumbent's 68, and the Weitzman controller collapses to a degenerate corner on every open cell -- SLAKE-open and VQA-RAD-open escalate 100% with meanN 0.0 (it never draws a cheap sample, i.e. compute-lean degenerates to always-32B there), PathVQA-open escalates 0.00%.",
+   "do_not_quote": "The ens8_rank arm's 0.746x compute is an artifact of that collapse (it stopped doing best-of-N), NOT a compute win. Do not quote it.",
+   "resolution": "arm ens8_scaled keeps the fused ORDERING (identical pick on all 2,345 items, verified) and quantile-matches the magnitudes onto the incumbent's own pool scores, so every cross-question gate feature is unchanged. That is the deployable form and it is what the new headline above reports.",
+   "this_is_a_design_decision_made_here": "Yes -- it is NOT part of the 2026-08-05 round's recommendation, which specified the rank fusion only. Both arms are reported; the rank arm is the untuned re-run, the scaled arm is the refit."
+  },
+  "what_did_not_change": [
+   "All five multiple-choice cells: byte-identical per-sample vectors across all four arms (only the open arm's score source moved).",
+   "Every baseline: always-7B 0.5971, always-32B-reasoning 0.5974, always-32B-direct 0.6567, oracle-mode-32B 0.6573 (macro), in every arm.",
+   "The method's mechanics, the cost constants, the 5-fold cross-fitting, the macro weighting and the bootstrap protocol."
+  ],
+  "does_this_change_the_papers_claims": "YES, but because of the decontamination, not the selector. Under the canonical macro convention on a CLEAN verifier, 'accuracy-max beats always-32B-direct by +0.0128 [+0.0056, +0.0200]' becomes +0.0023 [-0.0010, +0.0054] -- a TIE. The vs-reasoning claim survives at +0.0615 [+0.0514, +0.0715] (from +0.0720), still significant, still with the large latency/energy advantage, and still NOT a FLOP-eq saving (1.739x as charged, 1.395x honestly re-costed). compute-lean vs always-32B-direct on all 8 cells goes from a TIE (+0.0033) to a SIGNIFICANT LOSS (-0.0091 [-0.0153, -0.0031]). The paper's remaining defensible claim is against a 32B actually made to reason, on latency and energy.",
+  "caveats": [
+   "MACRO CIs cover WITHIN-dataset sampling noise only, not dataset-selection noise (macro_average_headline.py statistics_note). Leave-one-cell-out ranges are in per_arm[*].loo; PathVQA-open remains the load-bearing cell of the vs-reasoning claim in every arm.",
+   "The clean verifier's L1 level (no eval image, no eval item; question templates may recur) is the headline; the L2 lower bound is in macro_headline_clean_verifier_2026-07-30.json and is not re-run here.",
+   "Hole 17 is untouched: the escalation thresholds are cross-fit against a POOLED objective while the report is MACRO. A macro-objective refit has still not been done.",
+   "The vs-reasoning baseline still carries hole 1 (a no-reasoning run on ~90% of the pool charged at reasoning cost); the honest re-costed column is reported beside it."
+  ]
+ }
+}

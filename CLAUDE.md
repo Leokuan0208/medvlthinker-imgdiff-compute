@@ -129,17 +129,60 @@ always-32B-with-reasoning 0.5591 (measured); always-32B-direct 0.5729; always-7B
 0.5741 at **0.492×** / 469 ms, **+0.0150 [+0.0107, +0.0192]**; accuracy-max 0.5836 at **0.932×** /
 731 ms, **+0.0245 [+0.0216, +0.0274]**; fusion 0.5862 at 1.250× / 668 ms, +0.0271 [+0.0237, +0.0305].
 
+**⛔ SUPERSEDED 2026-08-05 — the rule below still describes the *weighting*, but its VALUE is contaminated.
+The clean vs-reasoning figure is +0.0601 [+0.0499, +0.0700] (deployed selector) / +0.0615 [+0.0514, +0.0715]
+(frozen 8-seed selector), and the vs-direct claim is a TIE. See the RESOLVED box immediately below.**
+
 **The canonicity rule is now: macro over 8 cells, Variant B, measured, veto lever ⇒ +0.0720
 [+0.0614, +0.0824] vs the reasoning baseline.** **+0.0245 is "the sample-weighted equivalent"**, no
 longer canonical. Older values circulate for the *same* operating point (+0.0212 / +0.0207 / +0.0238 /
 +0.0275) — they differ by lever, pool, estimated-vs-measured open cells, **and now weighting (a fourth
 axis)**. **Before quoting any headline value, read the decode table in retrospective §10.3.**
 
-> **⏳ OPEN — the open-text accuracy claim is PROVISIONAL.** A **disjoint-verifier retrain is in flight**
-> (design: `artifacts/verifier_disjoint_split.json`) and will determine whether it is contaminated — the
-> verifier was trained on ~70% of its own evaluation items (retrospective §7 hole 4). The open arm holds
-> **37.5% of the macro weight** and is the load-bearing cell of every vs-reasoning and vs-direct claim, so
-> mark every open-text accuracy **PROVISIONAL — clean-verifier retrain in progress**. Do not pre-judge it.
+> # ⛔⛔ RESOLVED AGAINST US, 2026-08-05 — HOLE 4 IS CLOSED AND THE TABLE ABOVE IS CONTAMINATED
+>
+> **The disjoint-verifier retrain is DONE. It is no longer "in flight," and every open-text number in the
+> table above was produced with the CONTAMINATED `lora_verifier_pooled4`** (confirmed in code — all three
+> loaders defaulted to it — and by the contaminated arm reproducing
+> `macro_average_headline_2026-07-30.json` exactly: 5,529 leaf fields, 0 differ).
+> Source (verbatim): **`artifacts/cascade_selector_rerun_2026-08-05.json`**
+> (`src/cascade_methods/cascade_selector_rerun.py`); the decontamination-only arm independently reproduces
+> the earlier `artifacts/macro_headline_clean_verifier_2026-07-30.json` with max deviation 0.0.
+>
+> **The vs-32B-direct claim does not survive decontamination.** Macro, Variant B, 8 cells, nboot=10,000;
+> baselines unchanged (7B 0.5971 · 32B-reasoning 0.5974 · 32B-direct 0.6567 · oracle-mode 0.6573):
+>
+> | arm | acc-max | vs reasoning | vs direct | compute-lean | vs direct |
+> |---|---:|---|---|---:|---|
+> | pooled4 (**contaminated**, the table above) | 0.6694 | +0.0720 WIN | **+0.0128 [+0.0056,+0.0200] WIN** | 0.6600 | +0.0033 TIE |
+> | **disjoint** (clean verifier, deployed selector) | **0.6575** | **+0.0601 [+0.0499,+0.0700] WIN** | **+0.0008 [−0.0022,+0.0037] TIE** | 0.6443 | **−0.0124 LOSS** |
+> | ens8_scaled (clean + frozen 8-seed selector) | 0.6590 | +0.0615 [+0.0514,+0.0715] WIN | +0.0023 [−0.0010,+0.0054] TIE | 0.6476 | **−0.0091 [−0.0153,−0.0031] LOSS** |
+>
+> **⇒ "accuracy-max beats always-32B-direct" is RETIRED. It is a TIE.** And **compute-lean vs direct goes
+> from TIE to a SIGNIFICANT LOSS.** What survives is the **vs-reasoning** claim: **+0.0615 [+0.0514,
+> +0.0715]**, with **−87.9% parallel latency and −84.3% energy** — and still **not** a FLOP-eq saving
+> (macro acc-max **1.739×** direct as-charged, 1.395× honestly re-costed).
+>
+> **Attribution, on one shared bootstrap stream — decontamination is ~7× the selector and it is what
+> flips the verdict.** Decontamination (pooled4 → clean) **−0.0119 [−0.0188, −0.0052]** macro, significant.
+> Selection (clean → frozen 8-seed selector) **+0.0014 [−0.0003, +0.0032]**, **NOT significant**.
+> Open-cell escalation moved 15.81/12.50/35.67% → **41.40/61.50/25.53%**: the open arm got expensive from
+> *decontamination*, not from the selector.
+>
+> **⚠️ `ens8_scaled` carries one design decision that is NOT part of the measured recommendation.** The
+> frozen selector's score is a *within-pool rank*, and `max(scores)` **is** the escalation gate — fed
+> verbatim it takes 15 distinct values over 2,345 questions (vs the incumbent's 68) and the Weitzman
+> controller collapses (SLAKE-open and VQA-RAD-open escalate 100% at meanN 0.0; PathVQA-open 0%). Its
+> 0.746× compute is that collapse, **not a win — never quote it.** `ens8_scaled` quantile-matches the
+> magnitudes onto the incumbent's scale (identical pick on all 2,345 items) so every gate feature is
+> unchanged. **Pick `disjoint` as the conservative canonical** unless the scale-matching is separately
+> justified.
+>
+> **Which selector is deployed is now nearly irrelevant to the headline** — see
+> `docs/current/COMPARATIVE_VERIFIER_2026-08-05.md`: ~20 approaches converge on sel_eff 0.80–0.81, the
+> seed spread (~0.021) exceeds every architectural effect, and **37.4% of questions have no correct answer
+> anywhere in the 8-sample pool**. The coverage wall is ~4.5× the selection wall. Generator work outranks
+> verifier work.
 
 ### The three findings that generalize (retrospective §5)
 

@@ -1,0 +1,73 @@
+{
+ "what": "selector score vectors exported into the cascade's transfer-dump schema",
+ "date": "2026-08-05",
+ "source_incumbent": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/lora_verifier_disjoint",
+ "outputs": {
+  "rank": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/selector_ens8_rank",
+  "scaled": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/selector_ens8_scaled"
+ },
+ "selector_endpoint_check": {
+  "sel_eff": 0.8106267029972752,
+  "acc": 0.5074626865671642,
+  "published": 0.810627,
+  "abs_dev": 2.970027247473084e-07
+ },
+ "per_dataset": {
+  "slake_open": {
+   "n": 645,
+   "acc_incumbent": 0.7472868217054264,
+   "acc_rank": 0.7782945736434108,
+   "acc_scaled": 0.7782945736434108,
+   "n_pick_differs_from_incumbent": 76,
+   "n_scalematch_pick_differs_from_rank_pick": 0,
+   "n_of_those_that_change_the_OUTCOME": 0
+  },
+  "vqa_rad_open": {
+   "n": 200,
+   "acc_incumbent": 0.48,
+   "acc_rank": 0.51,
+   "acc_scaled": 0.51,
+   "n_pick_differs_from_incumbent": 57,
+   "n_scalematch_pick_differs_from_rank_pick": 0,
+   "n_of_those_that_change_the_OUTCOME": 0
+  },
+  "pathvqa_open": {
+   "n": 1500,
+   "acc_incumbent": 0.37333333333333335,
+   "acc_rank": 0.39066666666666666,
+   "acc_scaled": 0.39066666666666666,
+   "n_pick_differs_from_incumbent": 394,
+   "n_scalematch_pick_differs_from_rank_pick": 0,
+   "n_of_those_that_change_the_OUTCOME": 0
+  }
+ },
+ "escalation_gate_scale_diagnostic": {
+  "values": {
+   "incumbent_disjoint": {
+    "mean": 0.5471179317697228,
+    "sd": 0.302018611511733,
+    "n_distinct_values": 68,
+    "pct_at_the_modal_value": 0.023454157782515993,
+    "p05": 0.1192,
+    "p95": 0.98594
+   },
+   "ens8_rank": {
+    "mean": 1.4216265610721899,
+    "sd": 0.3696289258196994,
+    "n_distinct_values": 15,
+    "pct_at_the_modal_value": 0.0,
+    "p05": 1.0,
+    "p95": 2.0
+   },
+   "ens8_scaled": {
+    "mean": 0.5471179387697228,
+    "sd": 0.302018611511733,
+    "n_distinct_values": 68,
+    "pct_at_the_modal_value": 0.023454157782515993,
+    "p05": 0.119200007,
+    "p95": 0.9859400070000001
+   }
+  },
+  "why_it_matters": "the cascade's open-text escalation gate is max(scores) (and, for the F10 rejector, max/mean/std/range of scores). A rank_avg fusion is a WITHIN-POOL quantity, so its max is nearly a constant and carries almost no cross-question confidence -- which is why the rank export is reported as the UNTUNED re-run and the scale-matched export as the refit."
+ }
+}

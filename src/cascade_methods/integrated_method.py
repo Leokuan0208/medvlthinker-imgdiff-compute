@@ -152,10 +152,16 @@ def mcq_medxpert():
 
 
 # ============================ OPEN-TEXT loaders ===================================================
+#: Which per-candidate scorer the open-text arm reads.  DEFAULT = the published cascade's source.
+#: Set this (and integrated_pandora.ADAPTER / beat32b_more.OPEN_VERIFIER_DIR) before calling
+#: build_cells() to re-run the open arm with a different selector -- see
+#: src/cascade_methods/cascade_selector_rerun.py.  Nothing else in the arm changes.
+OPEN_VERIFIER_DIR = "ckpts/train/lora_verifier_pooled4"
+
 def open_bestof8(ds):
     """VQA_RAD/PATH_VQA open: cheap = 7B best-of-8 + verifier PICK; gate = verifier conf (max score);
     strong = 32B-nt (judged)."""
-    dp = f"{ROOT}/ckpts/train/lora_verifier_pooled4/transfer_dump_{ds}_lingshu7b.json"
+    dp = f"{ROOT}/{OPEN_VERIFIER_DIR}/transfer_dump_{ds}_lingshu7b.json"
     sj = load_judge_jsonl(f"{ROOT}/ckpts/openvqa/strong_lingshu/ckpt_{ds}_lingshu32b.judge.jsonl")
     if not os.path.exists(dp) or not sj: return None
     ok_cheap, ok32, gate, greedy = [], [], [], []

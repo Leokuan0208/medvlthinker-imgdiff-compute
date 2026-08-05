@@ -217,11 +217,14 @@ def f11_bma(d, mode="additive"):
 
 
 # ============================ F10: learning-to-complement on OPEN-TEXT ============================
+#: see integrated_method.OPEN_VERIFIER_DIR -- DEFAULT = the published cascade's source.
+OPEN_VERIFIER_DIR = "ckpts/train/lora_verifier_pooled4"
+
 def open_features(ds):
     """Build per-item OPEN-TEXT features + labels for the 7B-best-of-8-vs-32B team.
     7B answer = verifier's argmax candidate (sl[pick]); 32B = judge_ok.  Features are 7B-side only
     (no 32B pred text is dumped => no cross-model-agreement feature)."""
-    dp = f"{ROOT}/ckpts/train/lora_verifier_pooled4/transfer_dump_{ds}_lingshu7b.json"
+    dp = f"{ROOT}/{OPEN_VERIFIER_DIR}/transfer_dump_{ds}_lingshu7b.json"
     sj = B.load_judge_jsonl(f"{ROOT}/ckpts/openvqa/strong_lingshu/ckpt_{ds}_lingshu32b.judge.jsonl")
     if not os.path.exists(dp) or not sj: return None
     seq = {}
