@@ -1,0 +1,1171 @@
+{
+ "what": "A PAIRWISE CONTRAST HEAD g(h_i,h_j) over cached generator-frame hidden states: head-to-head comparison of best-of-8 candidates at zero extra forward passes, because the per-candidate vectors are the ones the deployed pointwise head already computes.",
+ "date": "2026-08-05",
+ "nboot": 10000,
+ "device": "cuda:0",
+ "null_test": {
+  "protocol": "this harness pointed at the incumbent's own stored per-candidate scores in ckpts/train/lora_verifier_disjoint/transfer_dump_*.json; pick = argmax over the 8 slots, first-index tie-break.",
+  "measured": {
+   "n": 2345.0,
+   "n_recoverable": 1468.0,
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "published": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "abs_deviation": {
+   "oracle@8": 2.07e-07,
+   "selected": 1.54e-07,
+   "greedy": 4.9e-08,
+   "sel_eff": 3.6e-07,
+   "cand_auroc": 1.9e-07,
+   "per_ds.slake_open": 1.83e-07,
+   "per_ds.vqa_rad_open": 2.38e-07,
+   "per_ds.pathvqa_open": 3.55e-07,
+   "n": 0.0,
+   "n_recoverable": 0.0
+  },
+  "max_abs_deviation": 3.6e-07,
+  "pass": true
+ },
+ "disjointness": {
+  "mode": "generator",
+  "method": "md5 of decoded RGB pixels, recorded per row at extraction; meta files read directly in this module, not via the shared loader",
+  "train": {
+   "rows": 31498,
+   "images": 3457,
+   "questions": 6029,
+   "failed": 0
+  },
+  "eval": {
+   "rows": 8943,
+   "images": 528,
+   "questions": 2345,
+   "failed": 0
+  },
+  "image_pixel_md5_intersection": 0,
+  "verdict": "DISJOINT"
+ },
+ "controls": {
+  "greedy_acc": 0.449467,
+  "oracle@8": 0.626013,
+  "random_pick": {
+   "acc": 0.423348,
+   "sel_eff": 0.67626
+  },
+  "self_consistency": {
+   "sel_eff": 0.713896,
+   "acc": 0.446908,
+   "per_ds": {
+    "slake_open": 0.837743,
+    "vqa_rad_open": 0.730159,
+    "pathvqa_open": 0.620645
+   },
+   "contested_sel_eff": 0.541485,
+   "contested_n": 916
+  },
+  "incumbent_lora_verifier_THE_BAR": {
+   "sel_eff": 0.775204,
+   "acc": 0.485288,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "contested_sel_eff": 0.639738,
+   "contested_n": 916,
+   "cand_auroc": 0.885592
+  },
+  "strata": {
+   "n_items": 2345,
+   "n_recoverable": 1468,
+   "n_contested_recoverable": 916,
+   "n_unanimous_recoverable": 552,
+   "note": "the unanimous stratum is scored 1.0 by every selector by construction"
+  }
+ },
+ "pointwise_head_bar": {
+  "config": {
+   "layer": 21,
+   "pooling": "span",
+   "objective": "bt",
+   "hidden": 256,
+   "wd": 0.01,
+   "epochs": 30
+  },
+  "n_seeds": 12,
+  "seed_spread_sel_eff": {
+   "mean": 0.795413,
+   "sd": 0.005059,
+   "min": 0.788147,
+   "max": 0.803815
+  },
+  "seed0_vs_published": {
+   "measured_gpu": 0.796322,
+   "published_cpu": 0.79564
+  },
+  "numerics_note": "GPU kernels; see module docstring -- CPU/GPU and CPU thread count all shift the SGD trajectory. Measured CPU sensitivity: same seed-0 config gives 0.795640 (published thread count) vs 0.800409 at 8 threads.",
+  "per_seed_sel_eff": [
+   0.796322,
+   0.803815,
+   0.803815,
+   0.788828,
+   0.79564,
+   0.797003,
+   0.788147,
+   0.792916,
+   0.798365,
+   0.792234,
+   0.796322,
+   0.791553
+  ],
+  "seed_ensemble_zmean": {
+   "sel_eff": 0.803134,
+   "acc": 0.502772,
+   "per_ds": {
+    "slake_open": 0.87478,
+    "vqa_rad_open": 0.738095,
+    "pathvqa_open": 0.76129
+   },
+   "contested_sel_eff": 0.684498,
+   "contested_n": 916,
+   "cand_auroc": 0.717293,
+   "vs_incumbent": {
+    "d_sel_eff": 0.027929,
+    "ci": [
+     0.006812,
+     0.049046
+    ],
+    "d_acc": 0.017484,
+    "acc_ci": [
+     0.004264,
+     0.03113
+    ],
+    "n_stratum": 1468
+   },
+   "guardrail_clean": false
+  },
+  "note": "the published 0.795640 is a single seed-0 fit of this same config; the seed spread below is what a single seed hides."
+ },
+ "preregistration": {
+  "source": "data/verifarch/pairhead_cv.json",
+  "config": {
+   "layers": [
+    14,
+    21
+   ],
+   "pooling": "span",
+   "inp": "full",
+   "antisym": "arch",
+   "hidden": 256,
+   "wd": 0.01,
+   "epochs": 60,
+   "lr": 0.001,
+   "bs": 256
+  },
+  "aggregation": "logit_sum",
+  "cv_sel_eff_train_only": 0.683803,
+  "cv_protocol": "5 folds by md5(decoded-RGB image md5) % 5; a pair never straddles a fold; criterion = within-question selection efficiency on the held-out fold, averaged over 3 training seeds. Stage A picks the representation, B the pair encoding x antisymmetry, C capacity/reg/epochs, D the aggregation rule. A supplementary pass (pairhead_cv2.py) then re-scored the top-4 configurations under ALL aggregation rules and pre-registered the joint argmax, because stages A-C had ranked configurations under a single aggregation rule. Still train-only.",
+  "train_pairs": {
+   "rows": 31498,
+   "questions": 6029,
+   "pairs": 12501,
+   "pairs_per_fold": [
+    2471,
+    2598,
+    2557,
+    2350,
+    2525
+   ],
+   "questions_with_both_labels": 2391
+  }
+ },
+ "pair_head_seeds": {
+  "n_seeds": 12,
+  "aggregation": "logit_sum",
+  "per_seed_sel_eff": [
+   0.790872,
+   0.800409,
+   0.803815,
+   0.805177,
+   0.788147,
+   0.791553,
+   0.805177,
+   0.791553,
+   0.78406,
+   0.783379,
+   0.792234,
+   0.792916
+  ],
+  "mean": 0.794108,
+  "sd": 0.00774,
+  "min": 0.783379,
+  "max": 0.805177,
+  "per_seed_contested": [
+   0.664847,
+   0.680131,
+   0.68559,
+   0.687773,
+   0.66048,
+   0.665939,
+   0.687773,
+   0.665939,
+   0.65393,
+   0.652838,
+   0.667031,
+   0.668122
+  ]
+ },
+ "HEADLINE_pair_head_seed_ensemble": {
+  "sel_eff": 0.805177,
+  "acc": 0.504051,
+  "per_ds": {
+   "slake_open": 0.876543,
+   "vqa_rad_open": 0.746032,
+   "pathvqa_open": 0.762581
+  },
+  "contested_sel_eff": 0.687773,
+  "contested_n": 916,
+  "aggregation": "logit_sum",
+  "n_seeds": 12,
+  "cand_auroc": 0.555175,
+  "vs_incumbent_0p775204": {
+   "d_sel_eff": 0.029973,
+   "ci": [
+    0.007493,
+    0.052452
+   ],
+   "d_acc": 0.018763,
+   "acc_ci": [
+    0.004691,
+    0.032836
+   ],
+   "n_stratum": 1468
+  },
+  "vs_pointwise_head_ensemble": {
+   "d_sel_eff": 0.002044,
+   "ci": [
+    -0.012943,
+    0.017711
+   ],
+   "d_acc": 0.001279,
+   "acc_ci": [
+    -0.008102,
+    0.010661
+   ],
+   "n_stratum": 1468
+  },
+  "vs_self_consistency": {
+   "d_sel_eff": 0.091281,
+   "ci": [
+    0.066076,
+    0.116485
+   ],
+   "d_acc": 0.057143,
+   "acc_ci": [
+    0.040938,
+    0.073348
+   ],
+   "n_stratum": 1468
+  },
+  "contested_vs_incumbent": {
+   "d_sel_eff": 0.048035,
+   "ci": [
+    0.012009,
+    0.084061
+   ],
+   "d_acc": 0.018763,
+   "acc_ci": [
+    0.004691,
+    0.032836
+   ],
+   "n_stratum": 916
+  },
+  "contested_vs_pointwise_head_ensemble": {
+   "d_sel_eff": 0.003275,
+   "ci": [
+    -0.02077,
+    0.027293
+   ],
+   "d_acc": 0.001279,
+   "acc_ci": [
+    -0.008102,
+    0.010672
+   ],
+   "n_stratum": 916
+  },
+  "guardrail_clean_vs_incumbent": false,
+  "guardrail_clean_vs_pointwise": true,
+  "ensemble_rule": "per-seed pair logits divided by their global sd (the arch-antisymmetric logit vector has mean exactly 0), averaged over seeds, then aggregated."
+ },
+ "aggregation_table": {
+  "copeland_borda": {
+   "sel_eff": 0.807902,
+   "acc": 0.505757,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.767742
+   },
+   "contested_sel_eff": 0.69214,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.032698,
+    "ci": [
+     0.010899,
+     0.055177
+    ],
+    "d_acc": 0.020469,
+    "acc_ci": [
+     0.006823,
+     0.034542
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": false,
+   "comparisons_per_question": 8.508316
+  },
+  "copeland": {
+   "sel_eff": 0.807902,
+   "acc": 0.505757,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.767742
+   },
+   "contested_sel_eff": 0.69214,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.032698,
+    "ci": [
+     0.010218,
+     0.055177
+    ],
+    "d_acc": 0.020469,
+    "acc_ci": [
+     0.006823,
+     0.034542
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": false,
+   "comparisons_per_question": 8.508316
+  },
+  "borda": {
+   "sel_eff": 0.807221,
+   "acc": 0.50533,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.766452
+   },
+   "contested_sel_eff": 0.691048,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.032016,
+    "ci": [
+     0.009537,
+     0.054496
+    ],
+    "d_acc": 0.020043,
+    "acc_ci": [
+     0.00597,
+     0.034115
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": false,
+   "comparisons_per_question": 8.508316
+  },
+  "logit_sum": {
+   "sel_eff": 0.805177,
+   "acc": 0.504051,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.762581
+   },
+   "contested_sel_eff": 0.687773,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.029973,
+    "ci": [
+     0.007493,
+     0.052452
+    ],
+    "d_acc": 0.018763,
+    "acc_ci": [
+     0.004691,
+     0.032836
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": true,
+   "comparisons_per_question": 8.508316
+  },
+  "bt_mle": {
+   "sel_eff": 0.807221,
+   "acc": 0.50533,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.766452
+   },
+   "contested_sel_eff": 0.691048,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.032016,
+    "ci": [
+     0.009537,
+     0.054496
+    ],
+    "d_acc": 0.020043,
+    "acc_ci": [
+     0.00597,
+     0.034115
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": false,
+   "comparisons_per_question": 8.508316
+  },
+  "knockout": {
+   "sel_eff": 0.808583,
+   "acc": 0.506183,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.769032
+   },
+   "contested_sel_eff": 0.693231,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.033379,
+    "ci": [
+     0.010899,
+     0.055858
+    ],
+    "d_acc": 0.020896,
+    "acc_ci": [
+     0.007249,
+     0.035394
+    ],
+    "n_stratum": 1468
+   },
+   "preregistered": false,
+   "comparisons_per_question": 2.813646
+  }
+ },
+ "additive_decomposition": {
+  "definition": "G[i,j] = (theta_i - theta_j) + Resid, theta_i = mean_j G[i,j]; the first term is exactly a pointwise scorer, the second is everything a pointwise head cannot express.",
+  "variance_share_additive": 0.979307,
+  "variance_share_residual": 0.020693,
+  "additive_part_alone": {
+   "sel_eff": 0.805177,
+   "acc": 0.504051,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.762581
+   },
+   "contested_sel_eff": 0.687773,
+   "contested_n": 916,
+   "vs_incumbent": {
+    "d_sel_eff": 0.029973,
+    "ci": [
+     0.007493,
+     0.052452
+    ],
+    "d_acc": 0.018763,
+    "acc_ci": [
+     0.004691,
+     0.032836
+    ],
+    "n_stratum": 1468
+   },
+   "note": "identical to the 'logit_sum' aggregation up to a positive per-question scale factor k"
+  },
+  "residual_part_alone": {
+   "sel_eff": 0.679837,
+   "acc": 0.425586,
+   "per_ds": {
+    "slake_open": 0.830688,
+    "vqa_rad_open": 0.666667,
+    "pathvqa_open": 0.571613
+   },
+   "contested_sel_eff": 0.4869,
+   "contested_n": 916,
+   "note": "sign-sum of the non-additive residual; a random-pick level number here means the comparison carries no selection signal beyond a pointwise ranking",
+   "random_pick_sel_eff": 0.67626
+  }
+ },
+ "indomain_diagnostic_CONTAMINATED": {
+  "sel_eff": 0.799728,
+  "acc": 0.50064,
+  "per_ds": {
+   "slake_open": 0.855379,
+   "vqa_rad_open": 0.68254,
+   "pathvqa_open": 0.778065
+  },
+  "contested_sel_eff": 0.679039,
+  "contested_n": 916,
+  "protocol": "the SAME pre-registered pair head fit INSIDE the eval set with 5-fold image-grouped CV (folds from genframe_data.eval_folds), single seed. Shares images and question distribution with the test set: OPTIMISTIC BOUND, not comparable to the clean arms and NOT deployable.",
+  "n_eval_pairs": 3355,
+  "variance_share_additive": 0.976327,
+  "why": "separates 'the comparative structure does not transfer from the disjoint pool' from 'the comparative structure is not in these features at all'."
+ },
+ "variant_table_DIAGNOSTIC": {
+  "concat/arch/h256": {
+   "sel_eff": 0.797003,
+   "acc": 0.498934,
+   "per_ds": {
+    "slake_open": 0.876543,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.745806
+   },
+   "contested_sel_eff": 0.674672,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.0,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.006131,
+    "ci": [
+     -0.020436,
+     0.008174
+    ],
+    "d_acc": -0.003838,
+    "acc_ci": [
+     -0.012793,
+     0.005117
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "concat/augment/h256": {
+   "sel_eff": 0.794278,
+   "acc": 0.497228,
+   "per_ds": {
+    "slake_open": 0.880071,
+    "vqa_rad_open": 0.746032,
+    "pathvqa_open": 0.739355
+   },
+   "contested_sel_eff": 0.670306,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.101585,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.008856,
+    "ci": [
+     -0.02248,
+     0.00545
+    ],
+    "d_acc": -0.005544,
+    "acc_ci": [
+     -0.014072,
+     0.002985
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "diff/arch/h256": {
+   "sel_eff": 0.773842,
+   "acc": 0.484435,
+   "per_ds": {
+    "slake_open": 0.865961,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.708387
+   },
+   "contested_sel_eff": 0.637555,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.0,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.029292,
+    "ci": [
+     -0.044959,
+     -0.013624
+    ],
+    "d_acc": -0.018337,
+    "acc_ci": [
+     -0.028571,
+     -0.008102
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "diff/arch/h0": {
+   "sel_eff": 0.77248,
+   "acc": 0.483582,
+   "per_ds": {
+    "slake_open": 0.858907,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.712258
+   },
+   "contested_sel_eff": 0.635371,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.0,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.030654,
+    "ci": [
+     -0.047003,
+     -0.014305
+    ],
+    "d_acc": -0.01919,
+    "acc_ci": [
+     -0.029851,
+     -0.008955
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "diff/augment/h256": {
+   "sel_eff": 0.771117,
+   "acc": 0.482729,
+   "per_ds": {
+    "slake_open": 0.865961,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.704516
+   },
+   "contested_sel_eff": 0.633188,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.010694,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.032016,
+    "ci": [
+     -0.047684,
+     -0.016349
+    ],
+    "d_acc": -0.020043,
+    "acc_ci": [
+     -0.030704,
+     -0.009808
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "full/arch/h256": {
+   "sel_eff": 0.798365,
+   "acc": 0.499787,
+   "per_ds": {
+    "slake_open": 0.87478,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.749677
+   },
+   "contested_sel_eff": 0.676856,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": true,
+   "antisymmetry_violation_mean_abs": 0.0,
+   "vs_pointwise_ens": {
+    "d_sel_eff": -0.004768,
+    "ci": [
+     -0.019074,
+     0.010218
+    ],
+    "d_acc": -0.002985,
+    "acc_ci": [
+     -0.012367,
+     0.006397
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "full/augment/h256": {
+   "sel_eff": 0.804496,
+   "acc": 0.503625,
+   "per_ds": {
+    "slake_open": 0.87478,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.76129
+   },
+   "contested_sel_eff": 0.686681,
+   "contested_n": 916,
+   "n_seeds": 3,
+   "preregistered": false,
+   "antisymmetry_violation_mean_abs": 0.127613,
+   "vs_pointwise_ens": {
+    "d_sel_eff": 0.001362,
+    "ci": [
+     -0.013624,
+     0.01703
+    ],
+    "d_acc": 0.000853,
+    "acc_ci": [
+     -0.008529,
+     0.010235
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "_note": "3 seeds each, seed-ensembled, at the pre-registered layer/pooling/capacity and aggregation. DIAGNOSTIC: only the pre-registered cell is a headline. 'diff/arch/h0' is the DEGENERACY CONTROL -- linear in h_i-h_j is algebraically a pointwise scorer w.h_i - w.h_j, so it must behave like one. 'antisymmetry_violation' = mean |g(i,j)+g(j,i)|/2, exactly 0 for antisym='arch' by construction and a direct measure of POSITION BIAS for antisym='augment'."
+ },
+ "fusions": {
+  "FUSE_pair+incumbent": {
+   "sel_eff": 0.811989,
+   "acc": 0.508316,
+   "per_ds": {
+    "slake_open": 0.885362,
+    "vqa_rad_open": 0.793651,
+    "pathvqa_open": 0.76129
+   },
+   "contested_sel_eff": 0.69869,
+   "contested_n": 916,
+   "ranker": "rank_avg",
+   "vs_incumbent": {
+    "d_sel_eff": 0.036785,
+    "ci": [
+     0.02248,
+     0.05109
+    ],
+    "d_acc": 0.023028,
+    "acc_ci": [
+     0.014072,
+     0.031983
+    ],
+    "n_stratum": 1468
+   },
+   "vs_pointwise_ens": {
+    "d_sel_eff": 0.008856,
+    "ci": [
+     -0.009537,
+     0.027248
+    ],
+    "d_acc": 0.005544,
+    "acc_ci": [
+     -0.006397,
+     0.017484
+    ],
+    "n_stratum": 1468
+   },
+   "contested_vs_incumbent": {
+    "d_sel_eff": 0.058952,
+    "ci": [
+     0.036026,
+     0.082969
+    ],
+    "d_acc": 0.023028,
+    "acc_ci": [
+     0.013646,
+     0.031983
+    ],
+    "n_stratum": 916
+   },
+   "guardrail_clean_vs_incumbent": true,
+   "vs_seed_ensembled_pointwise_plus_incumbent": {
+    "d_sel_eff": 0.001362,
+    "ci": [
+     -0.009537,
+     0.01158
+    ],
+    "d_acc": 0.000853,
+    "acc_ci": [
+     -0.00597,
+     0.007249
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "FUSE_pair+pointwise": {
+   "sel_eff": 0.813351,
+   "acc": 0.509168,
+   "per_ds": {
+    "slake_open": 0.888889,
+    "vqa_rad_open": 0.753968,
+    "pathvqa_open": 0.767742
+   },
+   "contested_sel_eff": 0.700873,
+   "contested_n": 916,
+   "ranker": "rank_avg",
+   "vs_incumbent": {
+    "d_sel_eff": 0.038147,
+    "ci": [
+     0.01703,
+     0.059264
+    ],
+    "d_acc": 0.023881,
+    "acc_ci": [
+     0.010661,
+     0.0371
+    ],
+    "n_stratum": 1468
+   },
+   "vs_pointwise_ens": {
+    "d_sel_eff": 0.010218,
+    "ci": [
+     0.000681,
+     0.019755
+    ],
+    "d_acc": 0.006397,
+    "acc_ci": [
+     0.000426,
+     0.012367
+    ],
+    "n_stratum": 1468
+   },
+   "contested_vs_incumbent": {
+    "d_sel_eff": 0.061135,
+    "ci": [
+     0.027293,
+     0.094978
+    ],
+    "d_acc": 0.023881,
+    "acc_ci": [
+     0.010661,
+     0.0371
+    ],
+    "n_stratum": 916
+   },
+   "guardrail_clean_vs_incumbent": false,
+   "vs_seed_ensembled_pointwise_plus_incumbent": {
+    "d_sel_eff": 0.002725,
+    "ci": [
+     -0.013624,
+     0.019074
+    ],
+    "d_acc": 0.001706,
+    "acc_ci": [
+     -0.008529,
+     0.01194
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "FUSE_pair+pointwise+incumbent": {
+   "sel_eff": 0.811989,
+   "acc": 0.508316,
+   "per_ds": {
+    "slake_open": 0.878307,
+    "vqa_rad_open": 0.769841,
+    "pathvqa_open": 0.770323
+   },
+   "contested_sel_eff": 0.69869,
+   "contested_n": 916,
+   "ranker": "rank_avg",
+   "vs_incumbent": {
+    "d_sel_eff": 0.036785,
+    "ci": [
+     0.017711,
+     0.055858
+    ],
+    "d_acc": 0.023028,
+    "acc_ci": [
+     0.011087,
+     0.034968
+    ],
+    "n_stratum": 1468
+   },
+   "vs_pointwise_ens": {
+    "d_sel_eff": 0.008856,
+    "ci": [
+     -0.002725,
+     0.020436
+    ],
+    "d_acc": 0.005544,
+    "acc_ci": [
+     -0.001706,
+     0.012793
+    ],
+    "n_stratum": 1468
+   },
+   "contested_vs_incumbent": {
+    "d_sel_eff": 0.058952,
+    "ci": [
+     0.028384,
+     0.08952
+    ],
+    "d_acc": 0.023028,
+    "acc_ci": [
+     0.011087,
+     0.035394
+    ],
+    "n_stratum": 916
+   },
+   "guardrail_clean_vs_incumbent": true,
+   "vs_seed_ensembled_pointwise_plus_incumbent": {
+    "d_sel_eff": 0.001362,
+    "ci": [
+     -0.013624,
+     0.015668
+    ],
+    "d_acc": 0.000853,
+    "acc_ci": [
+     -0.008102,
+     0.010235
+    ],
+    "n_stratum": 1468
+   }
+  },
+  "REF_FUSE_pointwise+incumbent": {
+   "sel_eff": 0.810627,
+   "acc": 0.507463,
+   "per_ds": {
+    "slake_open": 0.878307,
+    "vqa_rad_open": 0.793651,
+    "pathvqa_open": 0.763871
+   },
+   "contested_sel_eff": 0.696507,
+   "contested_n": 916,
+   "ranker": "rank_avg",
+   "vs_incumbent": {
+    "d_sel_eff": 0.035422,
+    "ci": [
+     0.021117,
+     0.049728
+    ],
+    "d_acc": 0.022175,
+    "acc_ci": [
+     0.012793,
+     0.031557
+    ],
+    "n_stratum": 1468
+   },
+   "vs_pointwise_ens": {
+    "d_sel_eff": 0.007493,
+    "ci": [
+     -0.008856,
+     0.024523
+    ],
+    "d_acc": 0.004691,
+    "acc_ci": [
+     -0.00597,
+     0.015352
+    ],
+    "n_stratum": 1468
+   },
+   "contested_vs_incumbent": {
+    "d_sel_eff": 0.056769,
+    "ci": [
+     0.033843,
+     0.079694
+    ],
+    "d_acc": 0.022175,
+    "acc_ci": [
+     0.01322,
+     0.03113
+    ],
+    "n_stratum": 916
+   },
+   "guardrail_clean_vs_incumbent": true
+  },
+  "_deployed_fusion_single_seed_distribution": {
+   "per_seed_sel_eff": [
+    0.807221,
+    0.807902,
+    0.805177,
+    0.811308,
+    0.814033,
+    0.808583,
+    0.811308,
+    0.802452,
+    0.807902,
+    0.809264,
+    0.811308,
+    0.80109
+   ],
+   "mean": 0.808129,
+   "sd": 0.003791,
+   "min": 0.80109,
+   "max": 0.814033,
+   "published_deployed_fusion": 0.80654,
+   "note": "rank_avg fusion of ONE pointwise seed with the incumbent, the published deployed recipe, repeated over 12 seeds. Compare with REF_FUSE_pointwise+incumbent, which fuses the 12-seed ENSEMBLE instead."
+  }
+ },
+ "diagnostics": {
+  "antisymmetry_residual_mean_abs": 0.0,
+  "spearman_pair_vs_pointwise": 0.540974,
+  "spearman_pair_vs_incumbent": 0.293312,
+  "same_pick_rate_pair_vs_pointwise": 0.822175,
+  "same_pick_rate_pair_vs_incumbent": 0.591898,
+  "pair_oracle_ceiling_vs_pointwise": 0.848093,
+  "pair_oracle_ceiling_vs_incumbent": 0.88624
+ },
+ "cost": {
+  "extra_forward_passes_per_question_beyond_the_8_generations": 0,
+  "explanation": "the per-candidate generator-frame vector is produced by the SAME forward pass the deployed pointwise head already needs (1 per DISTINCT candidate, mean 3.81 of 8 after dedup by normalized answer). The pairwise head adds only MLP evaluations over those cached vectors.",
+  "mlp_evaluations_per_question_round_robin": 8.508316,
+  "mlp_evaluations_per_question_round_robin_max": 28,
+  "mlp_evaluations_per_question_knockout": 2.813646,
+  "ordered_forward_evals_per_comparison": 2,
+  "head_parameters": 7340545,
+  "features_shared_with_deployed_pointwise_head": true,
+  "contrast_with_the_shelved_pairwise_win": "the 2026-07 measured pairwise win (artifacts/pairwise_verifier_gpu.json) needed 28 REAL A-vs-B forward passes per question and was shelved for that reason; this head needs none.",
+  "minutes_total": 4.2
+ },
+ "VERDICT": {
+  "one_line": "NEGATIVE, cleanly diagnosed: a pairwise contrast head over cached generator-frame vectors matches but does not beat the pointwise head on the same features (d = 0.002044 [-0.012943, 0.017711], n.s.), because the comparison it learns is 97.9% additive -- a pointwise scorer in a pairwise costume.",
+  "headline_preregistered": {
+   "sel_eff": 0.805177,
+   "n_seeds": 12,
+   "aggregation": "logit_sum",
+   "config": {
+    "layers": [
+     14,
+     21
+    ],
+    "pooling": "span",
+    "inp": "full",
+    "antisym": "arch",
+    "hidden": 256,
+    "wd": 0.01,
+    "epochs": 60,
+    "lr": 0.001,
+    "bs": 256
+   },
+   "selected_by": "train-split image-grouped CV only (data/verifarch/pairhead_cv.json)"
+  },
+  "answers": {
+   "beats_the_incumbent_0.775204": {
+    "verdict": true,
+    "d": 0.029973,
+    "ci": [
+     0.007493,
+     0.052452
+    ],
+    "caveat": "but the pointwise head on the SAME features already does this (d = 0.027929 [0.006812, 0.049046]), so none of the gain is attributable to the pairwise machinery"
+   },
+   "beats_the_pointwise_head_on_identical_features": {
+    "verdict": false,
+    "d": 0.002044,
+    "ci": [
+     -0.012943,
+     0.017711
+    ],
+    "matched_seed_budget_note": "at a MATCHED single-seed budget the pairwise head is marginally WORSE: mean over 12 seeds 0.794108 (sd 0.00774) vs the pointwise head's 0.795413 (sd 0.005059). The headline only exceeds the PUBLISHED single-seed 0.795640 because it is a 12-seed ensemble; that is a seed-budget effect, not a pairwise effect."
+   },
+   "beats_the_deployed_fusion_0.806540": {
+    "verdict": false,
+    "pair_head_alone": 0.805177,
+    "note": "the deployed fusion is itself seed-noisy: repeating its own recipe (one pointwise seed + incumbent, rank_avg) over 12 seeds gives 0.80109-0.814033 (mean 0.808129), which brackets the published 0.806540."
+   },
+   "guardrail_clean": {
+    "verdict": false,
+    "per_ds": {
+     "slake_open": 0.876543,
+     "vqa_rad_open": 0.746032,
+     "pathvqa_open": 0.762581
+    },
+    "incumbent_per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.722581
+    },
+    "note": "vqa_rad_open is the loss. The pointwise-head ensemble is guardrail-dirty on the same set, and so was the 2026-07 real-forward-pass pairwise win, which lost on pathvqa_open (0.6538 -> 0.6154, artifacts/pairwise_verifier_gpu.json)."
+   }
+  },
+  "why_it_failed": {
+   "1_the_learned_comparison_is_additive": {
+    "additive_variance_share": 0.979307,
+    "residual_variance_share": 0.020693,
+    "residual_only_sel_eff": 0.679837,
+    "random_pick_sel_eff": 0.67626,
+    "statement": "any antisymmetric G decomposes uniquely into (theta_i - theta_j) + Resid. 97.9% of the learned matrix is the additive term, which IS a pointwise scorer; ranking by the residual alone gives 0.679837, essentially the random-pick floor (0.67626). There is no comparative signal left over once the pointwise part is removed."
+   },
+   "2_train_side_CV_agreed_before_eval_was_touched": {
+    "preregistered_aggregation": "logit_sum",
+    "statement": "the aggregation rule chosen by train-only CV was logit_sum -- which is exactly the additive projection sum_j G[i,j] = k*theta_i. The pre-registration selected the pointwise reading of the pairwise head without ever seeing eval.",
+    "cv_sel_eff_pair_head_train_only": 0.683803,
+    "cv_sel_eff_published_pointwise_head": 0.6784561093646115,
+    "cv_source_pointwise": "artifacts/verifarch_hidden_generatorprompt_2026-08-04.json -> arms/generator/cv_selected/cv_sel_eff"
+   },
+   "3_it_is_not_a_transfer_failure": {
+    "indomain_contaminated_sel_eff": 0.799728,
+    "indomain_contaminated_additive_share": 0.976327,
+    "clean_sel_eff": 0.805177,
+    "statement": "fitting the same head INSIDE eval with image-grouped folds -- an optimistic, contaminated bound that shares images and question distribution with the test set -- gives 0.799728, no better than the clean transfer arm, and stays 97.6% additive. The non-additive structure is not there to be learned; it is not being lost in transfer."
+   },
+   "4_the_difference_feature_loses": {
+    "diff_arch_h256": 0.773842,
+    "diff_arch_h0_degeneracy_control": 0.77248,
+    "full_arch_h256": 0.798365,
+    "vs_pointwise_diff": {
+     "d_sel_eff": -0.029292,
+     "ci": [
+      -0.044959,
+      -0.013624
+     ],
+     "d_acc": -0.018337,
+     "acc_ci": [
+      -0.028571,
+      -0.008102
+     ],
+     "n_stratum": 1468
+    },
+    "statement": "h_i - h_j, the minimal encoding of 'how do these two differ', is the WORST encoding tested and loses significantly to the pointwise head. Its linear degeneracy control (algebraically w.h_i - w.h_j, i.e. exactly pointwise) scores the same, so the nonlinearity over the difference buys nothing."
+   },
+   "5_position_bias_is_real_but_was_not_the_binding_limit": {
+    "antisymmetry_violation_arch": 0.0,
+    "antisymmetry_violation_full_augment": 0.127613,
+    "antisymmetry_violation_concat_augment": 0.101585,
+    "statement": "order-augmented training leaves a real order preference (mean |g(i,j)+g(j,i)|/2 up to 0.127613), which the architectural parameterisation removes exactly (0.0). But the augmented variants score no worse on the endpoint, so position bias was NOT what capped this family -- additivity was."
+   }
+  },
+  "what_is_nonetheless_worth_keeping": {
+   "seed_ensembling_the_existing_pointwise_head_is_free": {
+    "single_seed_mean": 0.795413,
+    "single_seed_sd": 0.005059,
+    "single_seed_range": [
+     0.788147,
+     0.803815
+    ],
+    "twelve_seed_ensemble": 0.803134,
+    "vs_incumbent": {
+     "d_sel_eff": 0.027929,
+     "ci": [
+      0.006812,
+      0.049046
+     ],
+     "d_acc": 0.017484,
+     "acc_ci": [
+      0.004264,
+      0.03113
+     ],
+     "n_stratum": 1468
+    },
+    "cost": "12 tiny MLP evaluations over the SAME cached vector; zero extra forward passes",
+    "caveat": "guardrail-dirty on vqa_rad_open, and its fusion with the incumbent (0.810627) is inside the single-seed deployed fusion's own seed range, so this is a variance-reduction result, not a new mechanism."
+   },
+   "knockout_is_as_good_as_round_robin_and_3x_cheaper": {
+    "knockout_sel_eff": 0.808583,
+    "round_robin_logit_sum_sel_eff": 0.805177,
+    "comparisons_per_question_knockout": 2.813646,
+    "comparisons_per_question_round_robin": 8.508316,
+    "note": "DIAGNOSTIC -- knockout was not the pre-registered aggregation, and the spread across aggregation rules (0.805177-0.808583) is inside the seed sd (0.00774). Reported so the cost story is on record, not as a win."
+   }
+  },
+  "reading_the_numbers": {
+   "cand_auroc_of_the_pair_head_is_not_comparable": {
+    "value": 0.555175,
+    "why": "logit_sum scores are Borda-style within-question sums; they are only comparable INSIDE a question, so a pooled candidate-level AUROC across 18760 slots is meaningless for this selector. The incumbent's 0.885592 and the pointwise head's 0.717293 are pointwise scores and are comparable to each other."
+   },
+   "sel_eff_quantum": "1/1468 = 0.000681 -- differences below this are not differences.",
+   "aggregation_differences_are_inside_seed_noise": "aggregation rules span 0.805177-0.808583; the seed sd of a single fit is 0.00774."
+  }
+ }
+}

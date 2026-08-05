@@ -1,0 +1,295 @@
+{
+ "what": "Cache audit + shared loader + null test + shared baseline table for the generator-frame best-of-8 selection round. Establishes the single metric definition used by all agents.",
+ "date": "2026-08-05",
+ "code": "src/training_methods/genframe_data.py",
+ "nboot": 10000,
+ "seed": 0,
+ "cache_audit": {
+  "featdir": "feats_hidden/",
+  "files": 8,
+  "bytes": 4656324608,
+  "row_identity": "(ds, idx, normalized_answer) -- candidates are DEDUPLICATED by normalized answer",
+  "shard_rule": "global sort by (ds, str(idx), na), then rows[shard::nshard]; interleaving shard0/shard1 reconstructs the global order EXACTLY (verified for both splits, both modes)",
+  "eval": {
+   "rows": 8943,
+   "questions": 2345,
+   "slots": 18760,
+   "distinct_images": 528,
+   "n_failed": 0,
+   "slots_with_no_feature_row": 0,
+   "feature_rows_matching_no_slot": 0,
+   "label_agreement_cache_y_vs_dump_sl": "18760/18760",
+   "sum_distinct_answers_over_items": 8943,
+   "coverage": "COMPLETE -- every one of the 18760 candidate slots of the 2345 items resolves"
+  },
+  "train": {
+   "rows": 31498,
+   "questions": 6029,
+   "distinct_images": 3457,
+   "n_failed": 0,
+   "rows_by_ds": {
+    "pathvqa_open_train": 22390,
+    "kvasir_open": 5562,
+    "slake_open_train": 2207,
+    "vqa_rad_open_train": 1339
+   },
+   "radimagenet_open": "ABSENT -- the matched quota 894+4973+522+3975 == 10364 == max_train, so the deficit branch never drew radimagenet",
+   "in_draw_rows": 10364,
+   "in_draw_pos_rate": 0.19924739482825163,
+   "in_draw_pos_rate_matches_lora_train_config": true,
+   "note": "31498 = 15749 PER SHARD x 2, not 15749 total"
+  },
+  "modes": {
+   "generator_and_grader_row_order_identical": true,
+   "yesno_populated": {
+    "grader": true,
+    "generator": false
+   },
+   "yesno_generator_note": "all-NaN by construction; there is no Yes/No readout in the generator frame"
+  },
+  "disjointness": {
+   "mode": "generator",
+   "train_rows": 31498,
+   "eval_rows": 8943,
+   "train_images": 3457,
+   "eval_images": 528,
+   "image_pixel_md5_intersection": 0,
+   "train_questions": 6029,
+   "eval_questions": 2345,
+   "item_key_intersection_note": "311 (ds,idx) pairs collide numerically across the train/test parquet index spaces; the binding assertion is the image pixel-md5 intersection == 0",
+   "train_rows_failed": 0,
+   "eval_rows_failed": 0,
+   "method": "md5 of decoded RGB pixels recorded at extraction time"
+  },
+  "hash_conventions": "extract_generator_hidden.img_md5 = md5(raw RGB bytes); verifarch_*.pixhash = md5('WxH|' + raw RGB bytes). Different strings, but both induce the IDENTICAL 528-block eval image partition (verified)."
+ },
+ "null_test": {
+  "measured": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.6260127931769722,
+   "selected": 0.48528784648187634,
+   "greedy": 0.4494669509594883,
+   "sel_eff": 0.7752043596730245,
+   "cand_auroc": 0.8855921901711237,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "published": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "abs_deviation": {
+   "oracle@8": 2.068230278151617e-07,
+   "selected": 1.5351812365782536e-07,
+   "greedy": 4.9040511707065804e-08,
+   "sel_eff": 3.5967302447481586e-07,
+   "cand_auroc": 1.9017112362629263e-07,
+   "per_ds.slake_open": 1.8342151675287965e-07,
+   "per_ds.vqa_rad_open": 2.3809523819195988e-07,
+   "per_ds.pathvqa_open": 3.548387097485062e-07,
+   "n": 0,
+   "n_recoverable": 0
+  },
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "pass": true,
+  "tolerance": 1e-06,
+  "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+ },
+ "row_order_sensitivity": {
+  "what": "identical config (L21/span/bt/h256/wd1e-2/30ep) and identical seed 0, fit on the same rows in two orders",
+  "concat_shard0_then_shard1_sel_eff": 0.79564,
+  "global_sorted_sel_eff": 0.799728,
+  "delta": 0.004088,
+  "guardrail_flag_flips": true,
+  "consequence": "row order is part of the config. genframe_data defaults to order='concat' so the published bar reproduces bit-exact. A single seed-0 fit is noise-dominated at this scale."
+ },
+ "tie_break_and_ranking_conventions": {
+  "pick_rule": "np.argmax over the 8 slot scores, FIRST-INDEX tie-break",
+  "stored_pick_field": "disagrees with argmax on 26/2345 items (5-dp score ties) -> sel_eff 0.774523; the +-0.0007 is tie-break sensitivity, not an effect",
+  "rank_fusion": "rank_avg (average ranks for ties) is canonical -> 0.806540; rank_argsort -> 0.798365. The +0.008 gap is a convention, not a result. Always name the ranker."
+ },
+ "strata": {
+  "n_items": 2345,
+  "n_recoverable": 1468,
+  "contested_all_items": 1725,
+  "unanimous_all_items": 620,
+  "contested_and_recoverable": 916,
+  "unanimous_and_recoverable": 552,
+  "unanimous_sel_eff_by_construction": 1.0,
+  "definition": "contested = pool has >= 2 DISTINCT normalized candidate strings; the reported contested endpoint is contested AND recoverable, n=916 (denominator for everyone)"
+ },
+ "baseline_table": [
+  {
+   "tag": "random-pick (closed form)",
+   "sel_eff": 0.67626,
+   "selected_acc": 0.423348
+  },
+  {
+   "tag": "self-consistency (plurality of 8)",
+   "sel_eff": 0.713896,
+   "selected_acc": 0.446908,
+   "per_ds_sel_eff": {
+    "slake_open": 0.837743,
+    "vqa_rad_open": 0.730159,
+    "pathvqa_open": 0.620645
+   },
+   "contested_sel_eff": 0.541485,
+   "d_sel_eff": -0.061308,
+   "d_sel_eff_ci": [
+    -0.083787,
+    -0.038828
+   ],
+   "d_contested": -0.098253,
+   "d_contested_ci": [
+    -0.134279,
+    -0.062227
+   ],
+   "guardrail_clean": false
+  },
+  {
+   "tag": "incumbent LoRA verifier -- THE BAR",
+   "sel_eff": 0.775204,
+   "selected_acc": 0.485288,
+   "per_ds_sel_eff": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "contested_sel_eff": 0.639738,
+   "cand_auroc": 0.885592
+  },
+  {
+   "tag": "generator-frame head L21/span/bt/h256 seed0",
+   "sel_eff": 0.79564,
+   "selected_acc": 0.498081,
+   "per_ds_sel_eff": {
+    "slake_open": 0.871252,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.745806
+   },
+   "contested_sel_eff": 0.672489,
+   "cand_auroc": 0.677641,
+   "d_sel_eff": 0.020436,
+   "d_sel_eff_ci": [
+    -0.001362,
+    0.041553
+   ],
+   "d_contested": 0.032751,
+   "d_contested_ci": [
+    -0.003275,
+    0.068777
+   ],
+   "guardrail_clean": true
+  },
+  {
+   "tag": "FUSE rank_avg incumbent+head (canonical)",
+   "sel_eff": 0.80654,
+   "selected_acc": 0.504904,
+   "per_ds_sel_eff": {
+    "slake_open": 0.883598,
+    "vqa_rad_open": 0.801587,
+    "pathvqa_open": 0.750968
+   },
+   "contested_sel_eff": 0.689956,
+   "d_sel_eff": 0.031335,
+   "d_sel_eff_ci": [
+    0.016349,
+    0.046322
+   ],
+   "d_contested": 0.050218,
+   "d_contested_ci": [
+    0.025109,
+    0.075328
+   ],
+   "guardrail_clean": true
+  },
+  {
+   "tag": "FUSE rank_argsort incumbent+head",
+   "sel_eff": 0.798365,
+   "selected_acc": 0.499787,
+   "per_ds_sel_eff": {
+    "slake_open": 0.873016,
+    "vqa_rad_open": 0.793651,
+    "pathvqa_open": 0.744516
+   },
+   "contested_sel_eff": 0.676856,
+   "d_sel_eff": 0.023161,
+   "d_sel_eff_ci": [
+    0.008856,
+    0.037466
+   ],
+   "d_contested": 0.037118,
+   "d_contested_ci": [
+    0.0131,
+    0.060044
+   ],
+   "guardrail_clean": true
+  },
+  {
+   "tag": "oracle@8",
+   "sel_eff": 1.0,
+   "selected_acc": 0.626013
+  },
+  {
+   "tag": "greedy (no selection)",
+   "selected_acc": 0.449467
+  }
+ ],
+ "published_reference": {
+  "incumbent": {
+   "sel_eff": 0.775204,
+   "per_ds": [
+    0.850088,
+    0.761905,
+    0.722581
+   ],
+   "contested": 0.639738
+  },
+  "head": {
+   "sel_eff": 0.79564,
+   "d": 0.020436,
+   "ci": [
+    -0.001362,
+    0.041553
+   ],
+   "contested": 0.672489
+  },
+  "fusion": {
+   "sel_eff": 0.80654,
+   "d": 0.031335,
+   "ci": [
+    0.016349,
+    0.046322
+   ],
+   "contested": 0.689956
+  }
+ },
+ "reproduction_deviation": {
+  "incumbent_sel_eff": 3.6e-07,
+  "head_sel_eff": 3.27e-07,
+  "fusion_sel_eff": 4.9e-07,
+  "head_d_sel_eff": 3.3e-08,
+  "fusion_d_sel_eff": 1.5e-07
+ },
+ "sources": {
+  "incumbent": "ckpts/train/lora_verifier_disjoint/transfer_dump_{slake,vqa_rad,pathvqa}_open_lingshu7b.json",
+  "head_published": "results/cascade_methods/artifacts/verifarch_hidden_generatorprompt_2026-08-04.json -> arms/generator/eval/cv_selected",
+  "fusion_published": "results/cascade_methods/artifacts/verifarch_hidden_fusion_controls_2026-08-04.json -> arms[tag='FUSE_rankavg incumbent+head_generator_prompt']",
+  "features": "feats_hidden/{generator,grader}_{train,eval}_s{0,1}of2.npz",
+  "fold_hashes": "data/verifarch/eval_imghash.json"
+ }
+}

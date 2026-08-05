@@ -1,0 +1,1308 @@
+{
+ "what": "ONE deployable selector for open-text best-of-8, assembled from the components that survived verification, and measured against the CURRENTLY DEPLOYED fusion (0.806540) rather than only against the incumbent verifier (0.775204).",
+ "date": "2026-08-05",
+ "endpoint": {
+  "definition": "selection efficiency at N=8 = P(pick correct | pool contains a correct answer), on 2345 open-text eval questions (slake_open 645 / vqa_rad_open 200 / pathvqa_open 1500), 1468 recoverable.",
+  "greedy_accuracy": 0.4494669509594883,
+  "oracle_at_8_accuracy": 0.6260127931769722,
+  "incumbent_sel_eff": 0.775204,
+  "deployed_fusion_sel_eff": 0.80654,
+  "quantum": 0.0006811989100817438,
+  "quantum_note": "sel_eff moves in steps of 1/1468 = 0.000681; differences smaller than that are not differences."
+ },
+ "verification": {
+  "metric_null_test": {
+   "pass": true,
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7225806451612903
+    }
+   }
+  },
+  "trainer_null_test": {
+   "what": "the published head and the published deployed fusion refit end-to-end in THIS agent's code on CPU at seed 0",
+   "head_measured": 0.7956403269754768,
+   "head_published": 0.79564,
+   "head_abs_dev": 3.269754768053801e-07,
+   "fusion_measured": 0.8065395095367848,
+   "fusion_published": 0.80654,
+   "fusion_abs_dev": 4.904632152635813e-07,
+   "pass": true,
+   "gotcha_found": "the published recipe STANDARDIZES features with the train mu/sd (fit_hidden_head.py:507). Omitting that step gives 0.788147 at the same seed -- an 0.0075 error, larger than most effects in this round. A first attempt here reproduced 0.788147 and was rejected by this very test before anything was built on it.",
+   "timing_note": "a CPU fit takes ~15 s on an idle box; the 825 s reported on 2026-08-04 was contention from four concurrent agents. CPU is therefore affordable, and every arm in this round is fit on CPU with the published trainer -- so the GPU/TF32 arithmetic gap that worried the earlier rounds does not enter here at all."
+  },
+  "disjointness_reproved_here": {
+   "generator": {
+    "train_rows": 31498,
+    "eval_rows": 8943,
+    "train_images": 3457,
+    "eval_images": 528,
+    "image_pixel_md5_intersection": 0,
+    "train_rows_failed": 0,
+    "eval_rows_failed": 0
+   },
+   "grader": {
+    "train_rows": 31498,
+    "eval_rows": 8943,
+    "train_images": 3457,
+    "eval_images": 528,
+    "image_pixel_md5_intersection": 0,
+    "train_rows_failed": 0,
+    "eval_rows_failed": 0
+   }
+  },
+  "sibling_spot_checks": {
+   "cheapcontrast_preregistered": {
+    "claimed_sel_eff": 0.810627,
+    "rederived_sel_eff": 0.8106267029972752,
+    "abs_dev": 2.970027247473084e-07,
+    "per_ds": {
+     "slake_open": 0.8712522045855379,
+     "vqa_rad_open": 0.8253968253968254,
+     "pathvqa_open": 0.7638709677419355
+    },
+    "guardrail_clean": true,
+    "fused_with_incumbent": 0.8092643051771117,
+    "n_seeds": 10,
+    "per_seed": [
+     0.7956403269754768,
+     0.7874659400544959,
+     0.8010899182561307,
+     0.7942779291553134,
+     0.80858310626703,
+     0.7949591280653951,
+     0.8051771117166212,
+     0.7888283378746594,
+     0.803133514986376,
+     0.8051771117166212
+    ],
+    "reproduces": true
+   },
+   "cheapcontrast_H_only_comparator": {
+    "claimed_sel_eff": 0.805858,
+    "rederived_sel_eff": 0.805858310626703,
+    "abs_dev": 3.1062670302617335e-07,
+    "per_ds": {
+     "slake_open": 0.8747795414462081,
+     "vqa_rad_open": 0.746031746031746,
+     "pathvqa_open": 0.7651612903225806
+    },
+    "guardrail_clean": false,
+    "fused_with_incumbent": 0.8106267029972752,
+    "n_seeds": 10,
+    "per_seed": [
+     0.797683923705722,
+     0.7888283378746594,
+     0.7915531335149864,
+     0.7874659400544959,
+     0.7929155313351499,
+     0.8044959128065395,
+     0.7963215258855586,
+     0.7908719346049047,
+     0.7895095367847411,
+     0.7867847411444142
+    ],
+    "reproduces": true
+   },
+   "pairhead_12seed_pointwise_ensemble": {
+    "claimed_sel_eff": 0.803134,
+    "claimed_fused": 0.810627,
+    "rederived_rank_ensemble": 0.8051771117166212,
+    "rederived_fused": 0.8099455040871935,
+    "rederived_score_ensemble": 0.803133514986376,
+    "rederived_z_ensemble": 0.803133514986376,
+    "abs_dev_rank_convention": 0.002043111716621193,
+    "note": "the claimed value is not reproduced by the mean-rank convention; the discrepancy is 3 quanta of 1/1468 and is an ENSEMBLING-CONVENTION difference, not a metric disagreement -- see which convention matches.",
+    "reproduces_under_some_convention": true
+   }
+  },
+  "real_pairwise_recheck": {
+   "n_items_covered": 1345,
+   "incumbent_on_covered": {
+    "tag": "incumbent (same items)",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8084210526315789,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7392996108949417
+    },
+    "d_vs_incumbent_same_items": 0.0,
+    "ci": [
+     0.0,
+     0.0
+    ]
+   },
+   "borda": {
+    "tag": "real-pairwise borda",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8010526315789473,
+    "per_ds": {
+     "slake_open": 0.8483245149911817,
+     "vqa_rad_open": 0.7698412698412699,
+     "pathvqa_open": 0.7120622568093385
+    },
+    "d_vs_incumbent_same_items": -0.00736842105263158,
+    "ci": [
+     -0.02210526315789474,
+     0.00736842105263158
+    ]
+   },
+   "fusion_incumbent_plus_borda": {
+    "tag": "rank_avg(incumbent, borda)",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8094736842105263,
+    "per_ds": {
+     "slake_open": 0.8536155202821869,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7354085603112841
+    },
+    "d_vs_incumbent_same_items": 0.001052631578947416,
+    "ci": [
+     -0.010526315789473606,
+     0.011578947368421133
+    ]
+   },
+   "copeland": {
+    "tag": "real-pairwise copeland",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.7968421052631579,
+    "per_ds": {
+     "slake_open": 0.8430335097001763,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7120622568093385
+    },
+    "d_vs_incumbent_same_items": -0.011578947368421022,
+    "ci": [
+     -0.026315789473684292,
+     0.0031578947368421373
+    ]
+   },
+   "fusion_incumbent_plus_copeland": {
+    "tag": "rank_avg(incumbent, copeland)",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8073684210526316,
+    "per_ds": {
+     "slake_open": 0.8518518518518519,
+     "vqa_rad_open": 0.753968253968254,
+     "pathvqa_open": 0.7354085603112841
+    },
+    "d_vs_incumbent_same_items": -0.001052631578947305,
+    "ci": [
+     -0.012631578947368327,
+     0.0094736842105263
+    ]
+   },
+   "knockout": {
+    "tag": "real-pairwise knockout",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8,
+    "per_ds": {
+     "slake_open": 0.8430335097001763,
+     "vqa_rad_open": 0.7698412698412699,
+     "pathvqa_open": 0.7198443579766537
+    },
+    "d_vs_incumbent_same_items": -0.008421052631578885,
+    "ci": [
+     -0.02421052631578946,
+     0.00736842105263158
+    ]
+   },
+   "fusion_incumbent_plus_knockout": {
+    "tag": "rank_avg(incumbent, knockout)",
+    "n_items": 1345,
+    "n_recoverable": 950,
+    "sel_eff": 0.8,
+    "per_ds": {
+     "slake_open": 0.8483245149911817,
+     "vqa_rad_open": 0.753968253968254,
+     "pathvqa_open": 0.7159533073929961
+    },
+    "d_vs_incumbent_same_items": -0.008421052631578885,
+    "ci": [
+     -0.023157894736842155,
+     0.0063157894736841635
+    ]
+   }
+  }
+ },
+ "preregistration": {
+  "protocol": "within-question selection efficiency on the held-out fold, over contested (>=2 distinct candidates) recoverable TRAIN questions",
+  "head_config_frozen_from": "verifarch_hidden_generatorprompt_2026-08-04.json -> arms.generator.cv_selected (train-only CV)",
+  "head_config": {
+   "layer": 21,
+   "pooling": "span",
+   "objective": "bt",
+   "hidden": 256,
+   "wd": 0.01,
+   "epochs": 30,
+   "lr": 0.001,
+   "bs": 256
+  },
+  "Q1_Q2_readout_grid": {
+   "grid": {
+    "rank|k=1": {
+     "cv_sel_eff_mean": 0.5905740276035132,
+     "cv_sel_eff_blocks": [
+      0.5855290673358428,
+      0.589293182768716,
+      0.5951484734420744,
+      0.5846925972396487,
+      0.5938937682977834,
+      0.5959849435382685,
+      0.5863655374320368,
+      0.5938937682977834,
+      0.5930572982015893,
+      0.5800920117105813,
+      0.6026767043078209,
+      0.5918025930572982,
+      0.59012965286491,
+      0.589293182768716,
+      0.5863655374320368,
+      0.5909661229611042
+     ],
+     "n_blocks": 16
+    },
+    "rank|k=2": {
+     "cv_sel_eff_mean": 0.5906001672940193,
+     "cv_sel_eff_blocks": [
+      0.588456712672522,
+      0.5905478879130072,
+      0.5922208281053952,
+      0.588874947720619,
+      0.5905478879130072,
+      0.5993308239230447,
+      0.59012965286491,
+      0.5846925972396487
+     ],
+     "n_blocks": 8
+    },
+    "rank|k=4": {
+     "cv_sel_eff_mean": 0.5968214136344625,
+     "cv_sel_eff_blocks": [
+      0.5959849435382685,
+      0.5964031785863655,
+      0.5943120033458804,
+      0.6005855290673359
+     ],
+     "n_blocks": 4
+    },
+    "rank|k=8": {
+     "cv_sel_eff_mean": 0.6026767043078209,
+     "cv_sel_eff_blocks": [
+      0.6005855290673359,
+      0.6047678795483061
+     ],
+     "n_blocks": 2
+    },
+    "rank|k=16": {
+     "cv_sel_eff_mean": 0.6010037641154329,
+     "cv_sel_eff_blocks": [
+      0.6010037641154329
+     ],
+     "n_blocks": 1
+    },
+    "score|k=1": {
+     "cv_sel_eff_mean": 0.5905740276035132,
+     "cv_sel_eff_blocks": [
+      0.5855290673358428,
+      0.589293182768716,
+      0.5951484734420744,
+      0.5846925972396487,
+      0.5938937682977834,
+      0.5959849435382685,
+      0.5863655374320368,
+      0.5938937682977834,
+      0.5930572982015893,
+      0.5800920117105813,
+      0.6026767043078209,
+      0.5918025930572982,
+      0.59012965286491,
+      0.589293182768716,
+      0.5863655374320368,
+      0.5909661229611042
+     ],
+     "n_blocks": 16
+    },
+    "score|k=2": {
+     "cv_sel_eff_mean": 0.5934755332496864,
+     "cv_sel_eff_blocks": [
+      0.5905478879130072,
+      0.5913843580092012,
+      0.5989125888749477,
+      0.5909661229611042,
+      0.588874947720619,
+      0.6001672940192389,
+      0.5918025930572982,
+      0.5951484734420744
+     ],
+     "n_blocks": 8
+    },
+    "score|k=4": {
+     "cv_sel_eff_mean": 0.5975533249686324,
+     "cv_sel_eff_blocks": [
+      0.5918025930572982,
+      0.5968214136344626,
+      0.5980761187787537,
+      0.6035131744040151
+     ],
+     "n_blocks": 4
+    },
+    "score|k=8": {
+     "cv_sel_eff_mean": 0.6010037641154329,
+     "cv_sel_eff_blocks": [
+      0.5968214136344626,
+      0.6051861145964031
+     ],
+     "n_blocks": 2
+    },
+    "score|k=16": {
+     "cv_sel_eff_mean": 0.6018402342116269,
+     "cv_sel_eff_blocks": [
+      0.6018402342116269
+     ],
+     "n_blocks": 1
+    },
+    "z|k=1": {
+     "cv_sel_eff_mean": 0.5905740276035132,
+     "cv_sel_eff_blocks": [
+      0.5855290673358428,
+      0.589293182768716,
+      0.5951484734420744,
+      0.5846925972396487,
+      0.5938937682977834,
+      0.5959849435382685,
+      0.5863655374320368,
+      0.5938937682977834,
+      0.5930572982015893,
+      0.5800920117105813,
+      0.6026767043078209,
+      0.5918025930572982,
+      0.59012965286491,
+      0.589293182768716,
+      0.5863655374320368,
+      0.5909661229611042
+     ],
+     "n_blocks": 16
+    },
+    "z|k=2": {
+     "cv_sel_eff_mean": 0.5935278126306985,
+     "cv_sel_eff_blocks": [
+      0.5909661229611042,
+      0.5909661229611042,
+      0.5989125888749477,
+      0.5913843580092012,
+      0.588456712672522,
+      0.6005855290673359,
+      0.5913843580092012,
+      0.5955667084901715
+     ],
+     "n_blocks": 8
+    },
+    "z|k=4": {
+     "cv_sel_eff_mean": 0.5975533249686324,
+     "cv_sel_eff_blocks": [
+      0.5922208281053952,
+      0.5964031785863655,
+      0.5980761187787537,
+      0.6035131744040151
+     ],
+     "n_blocks": 4
+    },
+    "z|k=8": {
+     "cv_sel_eff_mean": 0.6005855290673359,
+     "cv_sel_eff_blocks": [
+      0.5959849435382685,
+      0.6051861145964031
+     ],
+     "n_blocks": 2
+    },
+    "z|k=16": {
+     "cv_sel_eff_mean": 0.6018402342116269,
+     "cv_sel_eff_blocks": [
+      0.6018402342116269
+     ],
+     "n_blocks": 1
+    }
+   },
+   "selected": "rank|k=8",
+   "selected_cv_sel_eff": 0.6026767043078209,
+   "single_seed_reference": 0.5905740276035132
+  },
+  "Q3_combiner_form": {
+   "generator_head_alone": 0.6005855290673359,
+   "grader_head_alone": 0.6110414052697616,
+   "rank_avg_parameter_free": 0.6189878711836052,
+   "weighted_rank_blend_fold_fit": {
+    "cv_sel_eff": 0.6189878711836052,
+    "weights_per_fold": [
+     0.45,
+     0.6,
+     0.45,
+     0.6,
+     0.45
+    ]
+   },
+   "learned_logistic_combiner_fold_fit": {
+    "cv_sel_eff": 0.6265161020493517,
+    "coefs_per_fold": [
+     [
+      1.447167992591858,
+      1.8837859630584717,
+      0.0124772684648633
+     ],
+     [
+      1.3113791942596436,
+      1.7695282697677612,
+      0.18740905821323395
+     ],
+     [
+      1.3948098421096802,
+      1.8994958400726318,
+      0.018648551777005196
+     ],
+     [
+      1.403309941291809,
+      1.7691704034805298,
+      0.14577077329158783
+     ],
+     [
+      1.368849515914917,
+      1.9520312547683716,
+      0.006175196263939142
+     ]
+    ]
+   },
+   "selected_form": "learned_logistic_combiner",
+   "margin_over_parameter_free": 0.007528230865746499,
+   "note": "members here are generator-head + grader-head, because the incumbent LoRA verifier has no scores on the train split. Only the FORM is pre-registered; a fitted weight cannot transfer to a different pair of members."
+  },
+  "Q4_self_consistency_member": {
+   "head_ens_alone": 0.6005855290673359,
+   "self_consistency_alone": 0.4851526557925554,
+   "head_ens + self_consistency (rank_avg)": 0.5654537850271852
+  },
+  "Q4_decision": "exclude",
+  "Q5_grader_frame_member": {
+   "head_ens_alone": 0.6005855290673359,
+   "grader_head_alone": 0.6110414052697616,
+   "head_ens + grader_head (rank_avg)": 0.6189878711836052,
+   "cost_note": "a grader-frame member needs +1 VLM forward pass per DISTINCT candidate (mean 3.81/question); it is NOT free like Q4."
+  },
+  "Q5_decision": "worth measuring as a paid variant",
+  "DECISION": {
+   "ensembling_convention": "rank",
+   "n_seeds": 8,
+   "combiner": "learned_logistic_combiner",
+   "headline_definition": "rank_avg( incumbent , 8-seed rank ensemble of the frozen generator-frame head )"
+  },
+  "eval_visibility": "none. The eval labels were read only after this file was written."
+ },
+ "headline": {
+  "definition": "rank_avg( incumbent , 8-seed rank ensemble of the frozen generator-frame head )",
+  "sel_eff": 0.8106267029972752,
+  "selected_accuracy": 0.5074626865671642,
+  "per_ds": {
+   "slake_open": 0.8853615520282186,
+   "vqa_rad_open": 0.8095238095238095,
+   "pathvqa_open": 0.7561290322580645
+  },
+  "guardrail_clean": true,
+  "contested_sel_eff": 0.6965065502183406,
+  "contested_n": 916,
+  "short_answer_sel_eff": 0.8287172011661808,
+  "short_answer_n": 1372,
+  "long_answer_sel_eff": 0.5520833333333334,
+  "long_answer_n": 96,
+  "vs_incumbent_0.775204": {
+   "d_sel_eff": 0.03542234332425076,
+   "ci": [
+    0.02043596730245234,
+    0.05040871934604907
+   ],
+   "d_acc": 0.02217484008528786,
+   "d_acc_ci": [
+    0.012793176972281495,
+    0.03155650319829428
+   ],
+   "d_contested": 0.05676855895196509,
+   "ci_contested": [
+    0.03275109170305679,
+    0.08078602620087327
+   ],
+   "d_short": 0.034256559766763894,
+   "ci_short": [
+    0.019679300291545188,
+    0.04956268221574345
+   ],
+   "d_long": 0.05208333333333337,
+   "ci_long": [
+    -0.020833333333333315,
+    0.125
+   ]
+  },
+  "vs_deployed_fusion_0.806540": {
+   "d_sel_eff": 0.004087193460490468,
+   "ci": [
+    -0.004087193460490468,
+    0.012261580381471404
+   ],
+   "d_acc": 0.0025586353944563323,
+   "d_acc_ci": [
+    -0.0025586353944562767,
+    0.007675906183368886
+   ],
+   "d_contested": 0.0065502183406113135,
+   "ci_contested": [
+    -0.0065502183406113135,
+    0.01965065502183405
+   ],
+   "d_short": 0.0036443148688046767,
+   "ci_short": [
+    -0.0036443148688046767,
+    0.010932944606413919
+   ],
+   "d_long": 0.01041666666666674,
+   "ci_long": [
+    -0.05208333333333337,
+    0.08333333333333326
+   ]
+  },
+  "guardrail_vs_deployed_fusion": {
+   "clean": true,
+   "per_ds_delta": {
+    "slake_open": 0.0017636684303350414,
+    "vqa_rad_open": 0.007936507936507908,
+    "pathvqa_open": 0.005161290322580614
+   }
+  },
+  "what_the_gain_actually_is": {
+   "deployed_recipe_is_a_lottery": {
+    "definition": "rank_avg(incumbent, ONE-seed head) -- the published 0.806540 -- re-run at 16 seeds",
+    "mean": 0.808199931880109,
+    "sd": 0.003364587082819585,
+    "range": [
+     0.8024523160762943,
+     0.8140326975476839
+    ],
+    "published_0.806540_is_at_percentile": 0.375
+   },
+   "expected_value_gain_from_ensembling": {
+    "fused_mean_at_k1": 0.808199931880109,
+    "fused_mean_at_k8": 0.8092643051771118,
+    "fused_mean_at_k16": 0.8099455040871935,
+    "reading": "seed-ensembling is worth ~+0.010 to the head ALONE (0.793767 -> 0.799728) but only ~+0.001 to +0.002 AFTER fusion with the incumbent (0.808200 -> 0.809264), because the fusion was already averaging away part of the head's seed noise. Most of the headline's +0.004087 over the published cell is that the published cell drew a below-median seed."
+   },
+   "what_is_unambiguously_bought": "determinism. A single-seed deployment lands anywhere in [0.802452, 0.814033]; the pre-registered 8-seed ensemble is a fixed artifact at 0.810627, guardrail-clean against BOTH the incumbent and the deployed fusion, at zero extra forward passes."
+  }
+ },
+ "comparators_on_the_same_items": {
+  "incumbent": {
+   "sel_eff": 0.7752043596730245,
+   "acc": 0.48528784648187634,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   },
+   "contested_sel_eff": 0.6397379912663755,
+   "short_sel_eff": 0.7944606413994169,
+   "long_sel_eff": 0.5
+  },
+  "deployed_fusion_seed0": {
+   "sel_eff": 0.8065395095367848,
+   "acc": 0.5049040511727079,
+   "per_ds": {
+    "slake_open": 0.8835978835978836,
+    "vqa_rad_open": 0.8015873015873016,
+    "pathvqa_open": 0.7509677419354839
+   },
+   "contested_sel_eff": 0.6899563318777293,
+   "short_sel_eff": 0.8250728862973761,
+   "long_sel_eff": 0.5416666666666666,
+   "guardrail_clean": true
+  },
+  "head_ensemble_alone": {
+   "tag": "HEAD_ens (8-seed rank)",
+   "sel_eff": 0.8010899182561307,
+   "acc": 0.5014925373134328,
+   "per_ds": {
+    "slake_open": 0.8765432098765432,
+    "vqa_rad_open": 0.7301587301587301,
+    "pathvqa_open": 0.7574193548387097
+   },
+   "guardrail_clean": false,
+   "contested_sel_eff": 0.6812227074235808,
+   "contested_n": 916,
+   "d_sel_eff": 0.02588555858310626,
+   "d_sel_eff_ci": [
+    0.004087193460490468,
+    0.04768392370572205
+   ],
+   "d_acc": 0.016204690831556456,
+   "d_acc_ci": [
+    0.0025586353944563323,
+    0.029850746268656747
+   ],
+   "d_contested": 0.04148471615720528,
+   "d_contested_ci": [
+    0.0065502183406114245,
+    0.07641921397379914
+   ],
+   "short_answer_le3w_sel_eff": 0.8199708454810496,
+   "short_answer_le3w_n": 1372,
+   "short_answer_le3w_d": 0.025510204081632737,
+   "short_answer_le3w_d_ci": [
+    0.0036443148688046767,
+    0.047394314868804445
+   ],
+   "long_answer_gt3w_sel_eff": 0.53125,
+   "long_answer_gt3w_n": 96,
+   "long_answer_gt3w_d": 0.03125,
+   "long_answer_gt3w_d_ci": [
+    -0.07291666666666669,
+    0.13567708333332962
+   ]
+  },
+  "head_ensemble_alone_vs_deployed": {
+   "tag": "HEAD_ens alone vs deployed fusion",
+   "d_sel_eff": -0.005449591280654031,
+   "d_sel_eff_ci": [
+    -0.022479564032697574,
+    0.011580381471389622
+   ],
+   "d_acc": -0.0034115138592750727,
+   "d_acc_ci": [
+    -0.014498933901918976,
+    0.00767590618336883
+   ],
+   "d_contested": -0.008733624454148492,
+   "d_contested_ci": [
+    -0.037117903930130924,
+    0.018558951965065518
+   ],
+   "d_short_answer_le3w": -0.005102040816326481,
+   "d_short_answer_le3w_ci": [
+    -0.022594752186588907,
+    0.012390670553935834
+   ],
+   "d_long_answer_gt3w": -0.01041666666666663,
+   "d_long_answer_gt3w_ci": [
+    -0.10416666666666669,
+    0.08333333333333337
+   ]
+  }
+ },
+ "seed_spread": {
+  "head_single_seed": {
+   "per_seed": [
+    0.7956403269754768,
+    0.7881471389645777,
+    0.8004087193460491,
+    0.7888283378746594,
+    0.7908719346049047,
+    0.7956403269754768,
+    0.7983651226158038,
+    0.7922343324250681,
+    0.7826975476839237,
+    0.797683923705722,
+    0.7983651226158038,
+    0.803133514986376,
+    0.7881471389645777,
+    0.7922343324250681,
+    0.7935967302452316,
+    0.7942779291553134
+   ],
+   "mean": 0.793767029972752,
+   "sd": 0.005291180834573574,
+   "range": [
+    0.7826975476839237,
+    0.803133514986376
+   ]
+  },
+  "deployed_recipe_single_seed": {
+   "definition": "rank_avg(incumbent, ONE-seed head) -- i.e. the published 0.806540 recipe, re-run at every seed",
+   "per_seed": [
+    0.8065395095367848,
+    0.8113079019073569,
+    0.8106267029972752,
+    0.8024523160762943,
+    0.8092643051771117,
+    0.8065395095367848,
+    0.803133514986376,
+    0.8133514986376021,
+    0.8072207084468664,
+    0.8051771117166212,
+    0.8092643051771117,
+    0.8140326975476839,
+    0.8072207084468664,
+    0.8092643051771117,
+    0.8051771117166212,
+    0.8106267029972752
+   ],
+   "mean": 0.808199931880109,
+   "sd": 0.003364587082819585,
+   "range": [
+    0.8024523160762943,
+    0.8140326975476839
+   ],
+   "published_0.806540_percentile": 0.375
+  }
+ },
+ "ensemble_size_curve_disjoint_blocks": {
+  "k=1": {
+   "head_ens": [
+    0.7956403269754768,
+    0.7881471389645777,
+    0.8004087193460491,
+    0.7888283378746594,
+    0.7908719346049047,
+    0.7956403269754768,
+    0.7983651226158038,
+    0.7922343324250681,
+    0.7826975476839237,
+    0.797683923705722,
+    0.7983651226158038,
+    0.803133514986376,
+    0.7881471389645777,
+    0.7922343324250681,
+    0.7935967302452316,
+    0.7942779291553134
+   ],
+   "head_ens_mean": 0.793767029972752,
+   "fused": [
+    0.8065395095367848,
+    0.8113079019073569,
+    0.8106267029972752,
+    0.8024523160762943,
+    0.8092643051771117,
+    0.8065395095367848,
+    0.803133514986376,
+    0.8133514986376021,
+    0.8072207084468664,
+    0.8051771117166212,
+    0.8092643051771117,
+    0.8140326975476839,
+    0.8072207084468664,
+    0.8092643051771117,
+    0.8051771117166212,
+    0.8106267029972752
+   ],
+   "fused_mean": 0.808199931880109,
+   "n_disjoint_blocks": 16
+  },
+  "k=2": {
+   "head_ens": [
+    0.8017711171662125,
+    0.8051771117166212,
+    0.7997275204359673,
+    0.8113079019073569,
+    0.7983651226158038,
+    0.8106267029972752,
+    0.8024523160762943,
+    0.803133514986376
+   ],
+   "head_ens_mean": 0.8040701634877384,
+   "fused": [
+    0.8113079019073569,
+    0.8072207084468664,
+    0.8065395095367848,
+    0.8126702997275205,
+    0.8079019073569482,
+    0.80858310626703,
+    0.8038147138964578,
+    0.8065395095367848
+   ],
+   "fused_mean": 0.8080722070844687,
+   "n_disjoint_blocks": 8
+  },
+  "k=4": {
+   "head_ens": [
+    0.8072207084468664,
+    0.8024523160762943,
+    0.8017711171662125,
+    0.8004087193460491
+   ],
+   "head_ens_mean": 0.8029632152588556,
+   "fused": [
+    0.80858310626703,
+    0.8099455040871935,
+    0.8106267029972752,
+    0.80858310626703
+   ],
+   "fused_mean": 0.8094346049046321,
+   "n_disjoint_blocks": 4
+  },
+  "k=8": {
+   "head_ens": [
+    0.8010899182561307,
+    0.7983651226158038
+   ],
+   "head_ens_mean": 0.7997275204359673,
+   "fused": [
+    0.8106267029972752,
+    0.8079019073569482
+   ],
+   "fused_mean": 0.8092643051771118,
+   "n_disjoint_blocks": 2
+  },
+  "k=16": {
+   "head_ens": [
+    0.8024523160762943
+   ],
+   "head_ens_mean": 0.8024523160762943,
+   "fused": [
+    0.8099455040871935
+   ],
+   "fused_mean": 0.8099455040871935,
+   "n_disjoint_blocks": 1
+  }
+ },
+ "diagnostics": {
+  "eval_visible_weight_sweep": {
+   "note": "DIAGNOSTIC ONLY -- w is chosen with eval visibility. w=0.5 is the parameter-free headline.",
+   "sel_eff_by_w": {
+    "0.0": 0.7752043596730245,
+    "0.1": 0.7772479564032697,
+    "0.2": 0.7772479564032697,
+    "0.3": 0.7799727520435967,
+    "0.4": 0.7895095367847411,
+    "0.5": 0.8106267029972752,
+    "0.6": 0.80858310626703,
+    "0.7": 0.8051771117166212,
+    "0.8": 0.8017711171662125,
+    "0.9": 0.7997275204359673,
+    "1.0": 0.8010899182561307
+   },
+   "best_w": 0.5,
+   "best_sel_eff": 0.8106267029972752,
+   "headline_w0.5": 0.8106267029972752
+  },
+  "learned_combiner_crossfitted_on_eval": {
+   "tag": "learned combiner (cross-fitted ON EVAL -- diagnostic)",
+   "sel_eff": 0.7997275204359673,
+   "acc": 0.500639658848614,
+   "per_ds": {
+    "slake_open": 0.8677248677248677,
+    "vqa_rad_open": 0.746031746031746,
+    "pathvqa_open": 0.7587096774193548
+   },
+   "guardrail_clean": false,
+   "contested_sel_eff": 0.6790393013100436,
+   "contested_n": 916,
+   "d_sel_eff": 0.02452316076294281,
+   "d_sel_eff_ci": [
+    0.007493188010899154,
+    0.04223433242506802
+   ],
+   "d_acc": 0.015351812366737716,
+   "d_acc_ci": [
+    0.004690831556503183,
+    0.026012793176972304
+   ],
+   "d_contested": 0.0393013100436681,
+   "d_contested_ci": [
+    0.01091703056768556,
+    0.06768558951965065
+   ],
+   "short_answer_le3w_sel_eff": 0.8177842565597667,
+   "short_answer_le3w_n": 1372,
+   "short_answer_le3w_d": 0.023323615160349864,
+   "short_answer_le3w_d_ci": [
+    0.005830903790087438,
+    0.04154518950437314
+   ],
+   "long_answer_gt3w_sel_eff": 0.5416666666666666,
+   "long_answer_gt3w_n": 96,
+   "long_answer_gt3w_d": 0.04166666666666663,
+   "long_answer_gt3w_d_ci": [
+    -0.05208333333333326,
+    0.13541666666666663
+   ],
+   "vs_headline": {
+    "tag": "learned combiner vs HEADLINE",
+    "d_sel_eff": -0.010899182561307952,
+    "d_sel_eff_ci": [
+     -0.02452316076294281,
+     0.0034059945504086864
+    ],
+    "d_acc": -0.006823027718550145,
+    "d_acc_ci": [
+     -0.015778251599147086,
+     0.0017057569296375918
+    ],
+    "d_contested": -0.017467248908296984,
+    "d_contested_ci": [
+     -0.04039301310043664,
+     0.004366812227074246
+    ],
+    "d_short_answer_le3w": -0.01093294460641403,
+    "d_short_answer_le3w_ci": [
+     -0.02478134110787178,
+     0.002915451895043719
+    ],
+    "d_long_answer_gt3w": -0.01041666666666674,
+    "d_long_answer_gt3w_ci": [
+     -0.09375,
+     0.07291666666666669
+    ]
+   },
+   "status": "CONTAMINATED DIAGNOSTIC: fitted on eval with image-disjoint folds. It shares the eval question distribution and cannot be a headline. Reported because if even an eval-fitted combiner does not beat the parameter-free fusion, no deployable learned combiner will."
+  },
+  "add_self_consistency_as_third_member": {
+   "tag": "3-way rank_avg + self-consistency",
+   "sel_eff": 0.7956403269754768,
+   "acc": 0.4980810234541578,
+   "per_ds": {
+    "slake_open": 0.8694885361552028,
+    "vqa_rad_open": 0.7936507936507936,
+    "pathvqa_open": 0.7419354838709677
+   },
+   "guardrail_clean": true,
+   "contested_sel_eff": 0.6724890829694323,
+   "contested_n": 916,
+   "d_sel_eff": 0.02043596730245234,
+   "d_sel_eff_ci": [
+    0.00544959128065392,
+    0.03542234332425065
+   ],
+   "d_acc": 0.01279317697228144,
+   "d_acc_ci": [
+    0.0038379530916844416,
+    0.022174840085287806
+   ],
+   "d_contested": 0.03275109170305679,
+   "d_contested_ci": [
+    0.008733624454148492,
+    0.05676855895196509
+   ],
+   "short_answer_le3w_sel_eff": 0.8119533527696793,
+   "short_answer_le3w_n": 1372,
+   "short_answer_le3w_d": 0.017492711370262426,
+   "short_answer_le3w_d_ci": [
+    0.002915451895043719,
+    0.03279883381924198
+   ],
+   "long_answer_gt3w_sel_eff": 0.5625,
+   "long_answer_gt3w_n": 96,
+   "long_answer_gt3w_d": 0.0625,
+   "long_answer_gt3w_d_ci": [
+    -0.02083333333333326,
+    0.14583333333333331
+   ]
+  },
+  "add_real_pairwise_as_fourth_member_on_covered_items": {
+   "n_items_covered": 1345,
+   "n_recoverable_covered": 950,
+   "headline_on_covered": 0.8463157894736842,
+   "headline_plus_pairwise_on_covered": 0.8221052631578948,
+   "d": -0.02421052631578946,
+   "ci": [
+    -0.040000000000000036,
+    -0.008421052631578996
+   ],
+   "note": "real A-vs-B forward passes cost ~13 extra full VLM passes per question; this is what buying them adds on top of the headline, on the items they cover."
+  }
+ },
+ "cost": {
+  "unit": "full Lingshu-7B forward passes per QUESTION, over and above the 8 sampled generations",
+  "candidate_dedup": {
+   "mean_distinct_normalized_answers": 3.8136460554371,
+   "mean_distinct_surface_strings": 3.8230277185501067,
+   "distinct_answer_histogram": {
+    "1": 620,
+    "2": 342,
+    "3": 284,
+    "4": 209,
+    "5": 198,
+    "6": 173,
+    "7": 229,
+    "8": 290
+   }
+  },
+  "incumbent_verifier": {
+   "passes": 3.8230277185501067,
+   "evidence": "the stored scores are constant within every distinct SURFACE string (0 of 8965 such groups carry two different scores), so it scores each distinct surface answer once"
+  },
+  "generator_frame_head": {
+   "passes": 3.8136460554371,
+   "note": "one teacher-forced pass per distinct normalized answer to read h_span at layer 21"
+  },
+  "deployed_fusion_total": 7.636673773987207,
+  "HEADLINE_total": 7.636673773987207,
+  "HEADLINE_marginal_cost_over_deployed": {
+   "forward_passes": 0.0,
+   "what_changes": "the same cached 3584-d vector is scored by k tiny MLPs instead of 1. One head is 918,529 params ~ 1.8 MFLOP/candidate; k heads over 3.81 candidates is ~10^8 FLOP/question against ~10^12 for one 7B VLM pass -- i.e. below measurement noise.",
+   "storage": "k x 3.5 MB of head weights"
+  },
+  "rejected_alternatives": {
+   "real_A_vs_B_round_robin": "13.07 extra full VLM passes/question (6.54 unordered distinct pairs x 2 orders for position debias) -- and it does not help (see verification.real_pairwise_recheck)",
+   "grader_frame_second_head": "+3.81 passes/question"
+  }
+ },
+ "headroom": {
+  "greedy_accuracy": 0.4494669509594883,
+  "oracle_at_8_accuracy": 0.6260127931769722,
+  "gap_available": 0.17654584221748393,
+  "incumbent_accuracy": 0.48528784648187634,
+  "deployed_fusion_accuracy": 0.5049040511727079,
+  "headline_accuracy": 0.5074626865671642,
+  "fraction_of_greedy_to_oracle_accuracy_gap_closed": {
+   "incumbent": 0.20289855072463767,
+   "deployed_fusion": 0.3140096618357487,
+   "headline": 0.3285024154589373,
+   "note": "this is NOT sel_eff. sel_eff conditions on recoverable pools and is the published endpoint; this ratio additionally pays for the fact that the greedy answer is better than a random pool slot."
+  },
+  "selection_wall_remaining_sel_eff": 0.18937329700272476,
+  "coverage_wall": {
+   "unrecoverable_fraction": 0.3739872068230278,
+   "note": "37.4% of questions have NO correct answer anywhere in the 8-sample pool. Closing the remaining selection gap entirely (sel_eff 1.0) would reach 0.626013; the coverage wall is 4.5x the selection wall and is a GENERATOR problem, not a verifier problem."
+  }
+ },
+ "open_text_arm_translation": {
+  "selected_accuracy": {
+   "incumbent": 0.48528784648187634,
+   "deployed_fusion": 0.5049040511727079,
+   "headline": 0.5074626865671642,
+   "greedy": 0.4494669509594883
+  },
+  "d_accuracy_vs_incumbent": {
+   "d": 0.02217484008528786,
+   "ci": [
+    0.012793176972281495,
+    0.03155650319829428
+   ]
+  },
+  "d_accuracy_vs_deployed_fusion": {
+   "d": 0.0025586353944563323,
+   "ci": [
+    -0.0025586353944562767,
+    0.007675906183368886
+   ]
+  },
+  "what_this_is_NOT": [
+   "It is NOT the open-text arm's end-to-end accuracy. In the deployed cascade the open arm escalates to the 32B when verifier confidence is low (CLAUDE.md reports 15.81% SLAKE-open / 12.50% VQA-RAD-open / 35.67% PathVQA-open), and escalation is DRIVEN BY the selector's own confidence -- change the selector and the escalation set changes. Only a re-run of the cascade can give the arm's accuracy.",
+   "It is NOT the macro headline. The macro number weights 8 cells at 1/8 each and is produced by src/cascade_methods/macro_average_headline.py from artifacts/macro_average_headline_2026-07-30.json. Translating requires RE-RUNNING that script -- this round does not do it and no macro number is quoted here.",
+   "The pools are not the same either: this selection pool is 2345 items (645/200/1500), which is not the MedEvalKit open-cell pool the macro headline uses."
+  ],
+  "what_can_be_said": "on THIS pool, and on the selection endpoint alone, the accuracy of the answer the open arm would return before any escalation moves from 0.485288 (incumbent) / 0.504904 (deployed fusion) to 0.507463."
+ },
+ "what_did_not_earn_its_place": {
+  "principle": "a component is in the deployable stack only if it improves the endpoint OVER the components already there, at a cost worth paying.",
+  "real_A_vs_B_pairwise_forward_passes": {
+   "independently_rechecked_here": true,
+   "result": {
+    "n_items_covered": 1345,
+    "incumbent_on_covered": {
+     "tag": "incumbent (same items)",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8084210526315789,
+     "per_ds": {
+      "slake_open": 0.8500881834215167,
+      "vqa_rad_open": 0.7619047619047619,
+      "pathvqa_open": 0.7392996108949417
+     },
+     "d_vs_incumbent_same_items": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ]
+    },
+    "borda": {
+     "tag": "real-pairwise borda",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8010526315789473,
+     "per_ds": {
+      "slake_open": 0.8483245149911817,
+      "vqa_rad_open": 0.7698412698412699,
+      "pathvqa_open": 0.7120622568093385
+     },
+     "d_vs_incumbent_same_items": -0.00736842105263158,
+     "ci": [
+      -0.02210526315789474,
+      0.00736842105263158
+     ]
+    },
+    "fusion_incumbent_plus_borda": {
+     "tag": "rank_avg(incumbent, borda)",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8094736842105263,
+     "per_ds": {
+      "slake_open": 0.8536155202821869,
+      "vqa_rad_open": 0.7619047619047619,
+      "pathvqa_open": 0.7354085603112841
+     },
+     "d_vs_incumbent_same_items": 0.001052631578947416,
+     "ci": [
+      -0.010526315789473606,
+      0.011578947368421133
+     ]
+    },
+    "copeland": {
+     "tag": "real-pairwise copeland",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.7968421052631579,
+     "per_ds": {
+      "slake_open": 0.8430335097001763,
+      "vqa_rad_open": 0.7619047619047619,
+      "pathvqa_open": 0.7120622568093385
+     },
+     "d_vs_incumbent_same_items": -0.011578947368421022,
+     "ci": [
+      -0.026315789473684292,
+      0.0031578947368421373
+     ]
+    },
+    "fusion_incumbent_plus_copeland": {
+     "tag": "rank_avg(incumbent, copeland)",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8073684210526316,
+     "per_ds": {
+      "slake_open": 0.8518518518518519,
+      "vqa_rad_open": 0.753968253968254,
+      "pathvqa_open": 0.7354085603112841
+     },
+     "d_vs_incumbent_same_items": -0.001052631578947305,
+     "ci": [
+      -0.012631578947368327,
+      0.0094736842105263
+     ]
+    },
+    "knockout": {
+     "tag": "real-pairwise knockout",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8,
+     "per_ds": {
+      "slake_open": 0.8430335097001763,
+      "vqa_rad_open": 0.7698412698412699,
+      "pathvqa_open": 0.7198443579766537
+     },
+     "d_vs_incumbent_same_items": -0.008421052631578885,
+     "ci": [
+      -0.02421052631578946,
+      0.00736842105263158
+     ]
+    },
+    "fusion_incumbent_plus_knockout": {
+     "tag": "rank_avg(incumbent, knockout)",
+     "n_items": 1345,
+     "n_recoverable": 950,
+     "sel_eff": 0.8,
+     "per_ds": {
+      "slake_open": 0.8483245149911817,
+      "vqa_rad_open": 0.753968253968254,
+      "pathvqa_open": 0.7159533073929961
+     },
+     "d_vs_incumbent_same_items": -0.008421052631578885,
+     "ci": [
+      -0.023157894736842155,
+      0.0063157894736841635
+     ]
+    }
+   },
+   "verdict": "EXCLUDED. Re-aggregated by this agent from the stored teacher matrix: on the 1345 items it covers, Borda/Copeland/knockout all sit BELOW the incumbent on those same items, and fusing it in moves nothing. It costs 13.07 extra full VLM passes/question."
+  },
+  "pairwise_contrast_head_over_cached_vectors": {
+   "independently_rechecked_here": false,
+   "verdict": "EXCLUDED on the sibling's own evidence, which is internally consistent: it ties the pointwise head on identical features (+0.002044 [-0.012943, +0.017711]) and 97.93% of its learned comparison matrix is an additive (i.e. pointwise) term."
+  },
+  "set_aware_listwise_architectures": {
+   "independently_rechecked_here": false,
+   "verdict": "EXCLUDED: point estimate NEGATIVE vs the pointwise head on identical features, and train CV ranked every set-aware form below pointwise BEFORE eval was touched."
+  },
+  "pool_relative_contrast_FEATURES": {
+   "independently_rechecked_here": true,
+   "verdict": "EXCLUDED from the headline: reproduced here bit-exact (0.810627, dev 3.0e-07) and it is a genuine guardrail repair on vqa_rad_open, but it does not separate from the same head on raw features (+0.004768 [-0.010218, +0.020436]) and it needs an extra cross-fitted stage. Kept as the named fallback if the vqa_rad_open guardrail becomes binding.",
+   "rederived_here": {
+    "claimed_sel_eff": 0.810627,
+    "rederived_sel_eff": 0.8106267029972752,
+    "abs_dev": 2.970027247473084e-07,
+    "per_ds": {
+     "slake_open": 0.8712522045855379,
+     "vqa_rad_open": 0.8253968253968254,
+     "pathvqa_open": 0.7638709677419355
+    },
+    "guardrail_clean": true,
+    "fused_with_incumbent": 0.8092643051771117,
+    "n_seeds": 10,
+    "per_seed": [
+     0.7956403269754768,
+     0.7874659400544959,
+     0.8010899182561307,
+     0.7942779291553134,
+     0.80858310626703,
+     0.7949591280653951,
+     0.8051771117166212,
+     0.7888283378746594,
+     0.803133514986376,
+     0.8051771117166212
+    ],
+    "reproduces": true
+   }
+  },
+  "self_consistency_and_grader_frame_members": {
+   "decided_on_train_CV_only": true,
+   "Q4_self_consistency": "exclude",
+   "Q5_grader_frame": "worth measuring as a paid variant"
+  }
+ },
+ "deployment_recipe": {
+  "inputs": "the 8 sampled open-text answers already produced by the open arm",
+  "steps": [
+   "1. deduplicate the 8 answers by normalized string (mean 3.81 distinct).",
+   "2. incumbent LoRA verifier (ckpts/train/lora_verifier_disjoint) scores each distinct SURFACE answer -- unchanged, this is already deployed.",
+   "3. frozen base Lingshu-7B, NO adapter, generator prompt with the candidate as the assistant turn: read h_span at layer 21 for each distinct normalized answer (src/training_methods/extract_generator_hidden.py) -- unchanged, already deployed.",
+   "4. score that 3584-d vector with the k pre-registered head replicas and average their within-pool ranks -- THIS IS THE ONLY CHANGE, and it adds no forward pass.",
+   "5. rank_avg-fuse the incumbent's ranks with the ensemble's ranks; pick argmax (first-index tie-break)."
+  ],
+  "artifacts_needed": [
+   "ckpts/train/lora_verifier_disjoint (existing)",
+   "k head checkpoints (~3.5 MB each) fit by src/training_methods/integrate_eval.py",
+   "the train mu/sd standardization vector"
+  ],
+  "reproduce": [
+   "python3 src/training_methods/integrate_verify.py",
+   "python3 src/training_methods/integrate_cpuref.py",
+   "python3 src/training_methods/integrate_prereg.py --device cpu",
+   "python3 src/training_methods/integrate_prereg2.py",
+   "python3 src/training_methods/integrate_eval.py --seeds 16",
+   "python3 src/training_methods/integrate_finalize.py"
+  ]
+ },
+ "verdict": {
+  "one_sentence": "The deployable answer is the fusion that is already deployed, with one free change: replace the single-seed generator-frame head with a pre-registered 8-seed rank ensemble of the same head. That gives sel_eff 0.810627 (selected accuracy 0.507463), guardrail-clean against both the incumbent and the deployed fusion, at ZERO extra forward passes -- but the gain over the deployed fusion is +0.004087 [-0.004087, 0.012262], which is NOT significant, and it should be sold as variance elimination, not as a new mechanism.",
+  "beats_incumbent": true,
+  "beats_deployed_fusion": false,
+  "no_comparative_component_survived": "All four comparative directions were excluded, two of them re-tested here against this stack: real A-vs-B forward passes ADDED AS A MEMBER make the headline significantly WORSE on the items they cover (0.846316 -> 0.822105, d = -0.024211 [-0.040000, -0.008421]) while costing 13.07 extra VLM passes per question; and pool-relative contrast features reproduce exactly but do not separate from the same head on raw features.",
+  "the_learned_combiner_question_is_settled_negatively": "Train CV preferred a learned logistic combiner over parameter-free rank averaging (0.626516 vs 0.618988) when the two members were the generator- and grader-frame heads. On eval, with the actual members (incumbent + head ensemble), a combiner cross-fitted ON EVAL with image-disjoint folds -- i.e. given an advantage no deployable version could have -- scores 0.799728, BELOW the parameter-free fusion (-0.010899 [-0.024523, 0.003406]) and guardrail-dirty. And the eval-visible weight sweep peaks at exactly w = 0.5, the parameter-free point. There is nothing for a combiner to learn here.",
+  "weight_sweep_peak_w": 0.5,
+  "honest_limits": [
+   "The headline instance (seeds 0-7) is 0.810627; the OTHER disjoint 8-seed block of the same recipe gives 0.807902. The deployable quantity therefore carries a block-to-block spread of about 0.003, and the +0.004087 over the published cell is of that size. Nothing here separates from the deployed fusion statistically.",
+   "sel_eff moves in quanta of 1/1468 = 0.000681; the expected-value gain from ensembling after fusion (~+0.0017) is 2-3 quanta.",
+   "This is a SELECTION endpoint on a 2345-item pool. It is not the open arm's end-to-end accuracy and it is not the macro headline; neither was computed here.",
+   "The verifier-contamination caveat that gates the open-text arm is unchanged: this round uses the CLEAN disjoint-trained incumbent throughout, but the open-text accuracy claim in the paper still carries its own PROVISIONAL status."
+  ]
+ }
+}
