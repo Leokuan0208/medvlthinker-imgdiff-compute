@@ -252,11 +252,18 @@ axis)**. **Before quoting any headline value, read the decode table in retrospec
 >   **0.634 @ 2 tok → 0.697 @ 431 → 0.738 @ 580**).
 > - **STANDING RULE:** any future think-vs-direct pair must be **format-matched AND token-audited**. A
 >   "direct" arm that emits hundreds of tokens is not a direct arm.
-> - **`MedEvalKit/` has two local uncommitted edits** (`utils/question_formats.py:11`,
->   `utils/MMMU/data_utils.py:158`, mtime 2026-07-02) that added a reasoning trigger but **deleted** the
->   answer-format clause the direct arm still carries. Pre-edit `eval_results_*_think` dumps are invalid
->   as reasoning evidence; post-edit `*_reason` dumps reason but are format-unmatched.
->   **`MedEvalKit/` is a protected dependency — do not modify it**; the revert/repair is Leo's call.
+> - **`MedEvalKit/` had two local edits — ✅ REVERTED 2026-07-29 23:36:53, verified clean 2026-08-10.**
+>   `utils/question_formats.py` and `utils/MMMU/data_utils.py` added a reasoning trigger but **deleted**
+>   the answer-format clause the direct arm still carries. Both worktree blobs are now **identical to
+>   MedEvalKit's own HEAD** (`git diff` empty; blobs `045615ba…` / `143c024c…`), so the harness is back to
+>   upstream and the matched-prompt re-run was produced against it.
+>   **The dump-validity consequence stands and is permanent:** dumps written *before* the revert-era edits
+>   (`eval_results_*_think`) are invalid as reasoning evidence, and the `*_reason` dumps made *while* the
+>   edits were live reason but are **format-unmatched**. Judge any dump by its own date and its mean
+>   generated tokens, never by the current state of these two files.
+>   **`MedEvalKit/` is a protected dependency — do not modify it.** (Its worktree still shows unrelated
+>   pre-existing churn — a modified `benchmarks.py` and deleted `datas/` fixtures — which is *not* ours
+>   and must be left alone.)
 > - **Lesson to apply going forward:** prompts are **not** persisted in the checkpoint rows (they live
 >   only in `runners/*.sh` shell variables and module constants). **Persist the prompt in every new
 >   checkpoint, and assert mean generated tokens on every think arm.**
@@ -316,9 +323,24 @@ axis)**. **Before quoting any headline value, read the decode table in retrospec
   weight every cell contributes exactly 1/8 of its own delta, so concentration is now reported as a
   **leave-one-cell-out range**. PathVQA-open is the load-bearing cell of every vs-reasoning/vs-direct
   claim: dropping it takes accuracy-max vs reasoning from +0.0720 to +0.0318.)*
-- **Preservation risk:** the last commit is `8cdefef` (2026-07-02). The entire Lingshu/July chain — the
-  IEEE paper, the July diaries, `paper/figs_final/`, the July-27 deck, and every headline script under
-  `src/cascade_methods/` — is **untracked**. Committing is the top-priority task (§8.1 item 2).
+- **Preservation risk — ✅ COMMITTED, ⚠️ NOT PUSHED, ⛔ AND THE EXPENSIVE INPUTS ARE IN NEITHER.**
+  *(Was: "last commit `8cdefef` (2026-07-02), the whole Lingshu/July chain is untracked." That is fixed —
+  the chain is committed. Re-verified 2026-08-10 after a reboot.)*
+  - **Committed:** HEAD is `f3d0f82` (2026-08-05). `git fsck --full --strict` clean; all **734** tracked
+    files re-hashed byte-identical to the index; working tree clean.
+  - **⚠️ NOT PUSHED: `main` is 63 commits ahead of `origin/main` (`9829b71`)** — 554 files, +493,349 lines,
+    i.e. the entire Lingshu/July/August chain, on **one disk**. `git push` is the top-priority chore.
+  - **⛔ A push does NOT protect the inputs.** `results/` has **269 tracked files** (the artifacts and docs
+    — the *numbers* travel), but **`ckpts/`, `feats_hidden/` and `logs/` have zero tracked files** and are
+    gitignored. The reproduction chain is therefore **unbacked**: `feats_hidden/` (4.4 GB, regenerable only
+    by an ~88-min dual-A100 pass, and only while the Lingshu-7B snapshot hash survives in
+    `/data/dan/hf_cache/hub`), `ckpts/train/genframe_head_ens8/` (29.4 MB frozen selector) and
+    `ckpts/train/lora_verifier_disjoint/` (190 MB adapter + the three transfer dumps that define the
+    n=2,345 pool and the incumbent bar). Copy these to `/data` or external storage — a push will not.
+  - **⚠️ `src/training_methods/freeze_selector.py` REWRITES `ckpts/train/genframe_head_ens8/`.** Never
+    re-run it casually: a refit is a fresh seed draw, and `recipe.json` records that the CPU trainer's
+    batch permutation is thread-count sensitive (seed-0 sel_eff **0.795640** at the pinned thread count vs
+    **0.800409** at 8 threads). **The frozen `.pt` files are the artifact of record, not the recipe.**
 - The earlier MedVLThinker work (margin gate τ=0.426, the 3-tier ACC cascade) is **historical**, not the
   live method — see §1 below.
 
