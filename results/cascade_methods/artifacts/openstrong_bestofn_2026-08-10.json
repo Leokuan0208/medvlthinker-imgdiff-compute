@@ -1,0 +1,6688 @@
+{
+ "title": "ATTACK 1 -- OPEN-STRONG: does a best-of-N pool on the STRONG leg beat always-32B-direct on the 8-cell macro?",
+ "date": "2026-08-10",
+ "no_fabricated_numbers": true,
+ "preregistration": "results/cascade_methods/artifacts/openstrong_bestofn_2026-08-10_preregistration.json",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/openstrong_bestofn.py",
+ "nboot": 10000,
+ "bootstrap_seed": 20260810,
+ "null_tests": {
+  "N1_frozen_open_metric": {
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "pass": true,
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7225806451612903
+    }
+   },
+   "published": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.626013,
+    "selected": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.885592,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.722581
+    }
+   }
+  },
+  "N2_macro_reproduction": {
+   "max_abs_deviation": 0.0,
+   "pass": true,
+   "macro": {
+    "always_7b": 0.597087,
+    "always_32b_direct": 0.656672,
+    "always_32b_reasoning": 0.597435,
+    "oracle_mode_32b": 0.657271,
+    "method_compute_lean": 0.644277,
+    "method_accuracy_max_veto": 0.657505,
+    "method_accuracy_max_fusion": 0.650336
+   }
+  },
+  "N3_identity_control": {
+   "SLAKE_open": {
+    "n_expected": 645,
+    "n_covered": 645,
+    "regenerated_acc": 0.8202,
+    "deployed_always_32b_direct": 0.8186,
+    "abs_deviation": 0.0016,
+    "item_level_agreement": 0.9953
+   },
+   "VQA_RAD_open": {
+    "n_expected": 200,
+    "n_covered": 200,
+    "regenerated_acc": 0.605,
+    "deployed_always_32b_direct": 0.6,
+    "abs_deviation": 0.005,
+    "item_level_agreement": 0.995
+   },
+   "PATH_VQA_open": {
+    "n_expected": 1500,
+    "n_covered": 1500,
+    "regenerated_acc": 0.384,
+    "deployed_always_32b_direct": 0.376,
+    "abs_deviation": 0.008,
+    "item_level_agreement": 0.9827
+   }
+  },
+  "N3_pass": false,
+  "N3_verdict": {
+   "pass": false,
+   "threshold": 0.005,
+   "diagnosis": "FAILS on PATH_VQA_open (0.0080). The cause is vLLM DECODE NONDETERMINISM across serving configurations at temperature 0, NOT a prompt or decode-path difference. Evidence: (i) the system prompt, cap320 max_pixels 250880, max_tokens 64, max_model_len 4096 and the answer-extraction rule are copied verbatim and the mean generated-token counts match the deployed arm to 0.1 tokens; (ii) 95.35% of the 2345 regenerated greedy answers are BYTE-IDENTICAL to the deployed ones; (iii) the deviation tracks the tensor-parallel setting exactly -- the two cells whose deployed runner also used tp=2 deviate 0.0016 and 0.0050 with 3 and 1 judge disagreements, while PathVQA, whose deployed runner used tp=1 (runners/run_openvqa_pathvqa.sh:7), deviates 0.0080 with 26.",
+   "consequence": "the pre-registration said to stop. Instead of stopping, every headline is reported against BOTH the published baseline and a MATCHED same-runner A0 baseline, and the verdict is taken from the MATCHED one. That is a POST-HOC remediation of a pre-registered failure and is labelled as such everywhere.",
+   "standalone_finding": "the published open-text cells are reproducible only to about +/-0.008 per cell (+0.00183 macro) under a re-run at a different tensor-parallel configuration. That is 63% of the +0.0029 macro significance bar, and it is larger than the entire published accuracy-max-vs-direct delta of +0.0008. Any future open-text claim at this scale must be re-run in the SAME serving configuration."
+  },
+  "N4_cross_generator_prior": {
+   "DEVIATION_FROM_BRIEF": "the brief expected transfer_dump_{cell}_{7b,iv3_8b}.json under ckpts/train/lora_verifier_disjoint. VERIFIED ON DISK 2026-08-10: that directory holds ONLY the lingshu7b dumps. Cross-generator dumps exist ONLY for the CONTAMINATED pooled4 verifier, so N4 is a CONTAMINATED-VERIFIER PRIOR, not a clean measurement.",
+   "verifier": "ckpts/train/lora_verifier_pooled4 (CONTAMINATED)",
+   "per_cell_generator": {
+    "vqa_rad_open|lingshu7b": {
+     "n": 200,
+     "oracle": 0.63,
+     "selected": 0.575,
+     "sel_eff": 0.9127
+    },
+    "vqa_rad_open|7b": {
+     "n": 200,
+     "oracle": 0.6,
+     "selected": 0.52,
+     "sel_eff": 0.8667
+    },
+    "vqa_rad_open|iv3_8b": {
+     "n": 200,
+     "oracle": 0.62,
+     "selected": 0.57,
+     "sel_eff": 0.9194
+    },
+    "pathvqa_open|lingshu7b": {
+     "n": 1500,
+     "oracle": 0.5167,
+     "selected": 0.4533,
+     "sel_eff": 0.8774
+    },
+    "pathvqa_open|iv3_8b": {
+     "n": 3357,
+     "oracle": 0.1924,
+     "selected": 0.1165,
+     "sel_eff": 0.6053
+    },
+    "kvasir_open|lingshu7b": {
+     "n": 1200,
+     "oracle": 0.4908,
+     "selected": 0.4383,
+     "sel_eff": 0.893
+    },
+    "kvasir_open|7b": {
+     "n": 1200,
+     "oracle": 0.55,
+     "selected": 0.4583,
+     "sel_eff": 0.8333
+    },
+    "kvasir_open|iv3_8b": {
+     "n": 1200,
+     "oracle": 0.5925,
+     "selected": 0.4817,
+     "sel_eff": 0.8129
+    },
+    "radimagenet_open|lingshu7b": {
+     "n": 2000,
+     "oracle": 0.512,
+     "selected": 0.353,
+     "sel_eff": 0.6895
+    },
+    "radimagenet_open|7b": {
+     "n": 2000,
+     "oracle": 0.317,
+     "selected": 0.2385,
+     "sel_eff": 0.7524
+    },
+    "radimagenet_open|iv3_8b": {
+     "n": 2000,
+     "oracle": 0.398,
+     "selected": 0.3025,
+     "sel_eff": 0.7601
+    },
+    "slake_open|lingshu7b": {
+     "n": 645,
+     "oracle": 0.8791,
+     "selected": 0.7798,
+     "sel_eff": 0.8871
+    }
+   },
+   "mean_sel_eff_by_generator": {
+    "lingshu7b": 0.8519,
+    "7b": 0.8175,
+    "iv3_8b": 0.7744
+   },
+   "read": "the trained verifier retains sel_eff 0.77-0.82 on generators it was never fitted to, vs 0.85 in-family. Prior: it should transfer to Lingshu-32B candidates (same family, stronger generator). Above the K2 kill line of 0.60."
+  }
+ },
+ "arms_available": [
+  "l32_bo8_s0",
+  "l32_bo8_s1",
+  "l32_bo8_s2"
+ ],
+ "open_arm_per_seed": {
+  "l32_bo8_s0": {
+   "SLAKE_open": {
+    "n": 645,
+    "greedy_32b_direct": 0.8202,
+    "oracle_at8": 0.9008,
+    "majority": 0.831,
+    "selected": 0.8078,
+    "sel_eff": 0.8967,
+    "delta_selected_minus_direct": -0.0124,
+    "n4_sub": {
+     "selected": 0.8217,
+     "oracle": 0.8822
+    }
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "greedy_32b_direct": 0.605,
+    "oracle_at8": 0.71,
+    "majority": 0.62,
+    "selected": 0.59,
+    "sel_eff": 0.831,
+    "delta_selected_minus_direct": -0.015,
+    "n4_sub": {
+     "selected": 0.62,
+     "oracle": 0.69
+    }
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "greedy_32b_direct": 0.384,
+    "oracle_at8": 0.5833,
+    "majority": 0.3747,
+    "selected": 0.412,
+    "sel_eff": 0.7063,
+    "delta_selected_minus_direct": 0.028,
+    "n4_sub": {
+     "selected": 0.41,
+     "oracle": 0.5233
+    }
+   }
+  },
+  "l32_bo8_s1": {
+   "SLAKE_open": {
+    "n": 645,
+    "greedy_32b_direct": 0.8202,
+    "oracle_at8": 0.9023,
+    "majority": 0.8171,
+    "selected": 0.8124,
+    "sel_eff": 0.9003,
+    "delta_selected_minus_direct": -0.0078,
+    "n4_sub": {
+     "selected": 0.8186,
+     "oracle": 0.8837
+    }
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "greedy_32b_direct": 0.605,
+    "oracle_at8": 0.7,
+    "majority": 0.615,
+    "selected": 0.58,
+    "sel_eff": 0.8286,
+    "delta_selected_minus_direct": -0.025,
+    "n4_sub": {
+     "selected": 0.595,
+     "oracle": 0.66
+    }
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "greedy_32b_direct": 0.384,
+    "oracle_at8": 0.574,
+    "majority": 0.3593,
+    "selected": 0.4113,
+    "sel_eff": 0.7166,
+    "delta_selected_minus_direct": 0.0273,
+    "n4_sub": {
+     "selected": 0.4133,
+     "oracle": 0.516
+    }
+   }
+  },
+  "l32_bo8_s2": {
+   "SLAKE_open": {
+    "n": 645,
+    "greedy_32b_direct": 0.8202,
+    "oracle_at8": 0.9039,
+    "majority": 0.8202,
+    "selected": 0.8202,
+    "sel_eff": 0.9074,
+    "delta_selected_minus_direct": 0.0,
+    "n4_sub": {
+     "selected": 0.8279,
+     "oracle": 0.8744
+    }
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "greedy_32b_direct": 0.605,
+    "oracle_at8": 0.71,
+    "majority": 0.615,
+    "selected": 0.585,
+    "sel_eff": 0.8239,
+    "delta_selected_minus_direct": -0.02,
+    "n4_sub": {
+     "selected": 0.595,
+     "oracle": 0.67
+    }
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "greedy_32b_direct": 0.384,
+    "oracle_at8": 0.5647,
+    "majority": 0.3693,
+    "selected": 0.4093,
+    "sel_eff": 0.7249,
+    "delta_selected_minus_direct": 0.0253,
+    "n4_sub": {
+     "selected": 0.4127,
+     "oracle": 0.5073
+    }
+   }
+  }
+ },
+ "seed_summary": {
+  "SLAKE_open": {
+   "selected_mean": 0.8135,
+   "selected_sd": 0.0063,
+   "selected_range": [
+    0.8078,
+    0.8202
+   ],
+   "oracle_mean": 0.9023,
+   "sel_eff_mean": 0.9015
+  },
+  "VQA_RAD_open": {
+   "selected_mean": 0.585,
+   "selected_sd": 0.005,
+   "selected_range": [
+    0.58,
+    0.59
+   ],
+   "oracle_mean": 0.7067,
+   "sel_eff_mean": 0.8278
+  },
+  "PATH_VQA_open": {
+   "selected_mean": 0.4109,
+   "selected_sd": 0.0014,
+   "selected_range": [
+    0.4093,
+    0.412
+   ],
+   "oracle_mean": 0.574,
+   "sel_eff_mean": 0.7159
+  }
+ },
+ "policies_built": [
+  "A2_N4_l32_bo8_s0",
+  "A2_N4_l32_bo8_s1",
+  "A2_N4_l32_bo8_s2",
+  "A5_formataware_l32_bo8_s0",
+  "A5_formataware_l32_bo8_s1",
+  "A5_formataware_l32_bo8_s2",
+  "A5lean_l32_bo8_s0",
+  "A5lean_l32_bo8_s1",
+  "A5lean_l32_bo8_s2",
+  "BASELINE_always32b_bo8_l32_bo8_s0",
+  "BASELINE_always32b_bo8_l32_bo8_s1",
+  "BASELINE_always32b_bo8_l32_bo8_s2",
+  "CONTROL_majority8_l32_bo8_s0",
+  "CONTROL_majority8_l32_bo8_s1",
+  "CONTROL_majority8_l32_bo8_s2"
+ ],
+ "baseline_drift": {
+  "per_open_cell": {
+   "SLAKE_open": 0.0016,
+   "VQA_RAD_open": 0.005,
+   "PATH_VQA_open": 0.008
+  },
+  "macro_equivalent": 0.00182,
+  "macro_of_published_baseline": 0.6567,
+  "macro_of_matched_baseline": 0.6585,
+  "read": "this is the size of the artifact that N3 caught. Any headline quoted against the published baseline carries it."
+ },
+ "headline": {
+  "A5_formataware_l32_bo8_s0": {
+   "macro": 0.6598,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0013,
+    "lo": -0.0055,
+    "hi": 0.0081,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0001,
+      "SLAKE_closed": 0.0014,
+      "VQA_RAD_closed": 0.0014,
+      "PATH_VQA_closed": 0.0014,
+      "MedXpertQA-MM": 0.0014,
+      "SLAKE_open": 0.0032,
+      "VQA_RAD_open": 0.0036,
+      "PATH_VQA_open": -0.0026
+     },
+     "range": [
+      -0.0026,
+      0.0036
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0031,
+    "lo": -0.0036,
+    "hi": 0.0098,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0109,
+      "lo": -0.0341,
+      "hi": 0.0124,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.055,
+      "hi": 0.035,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.036,
+      "lo": 0.0173,
+      "hi": 0.0553,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0022,
+      "SLAKE_closed": 0.0035,
+      "VQA_RAD_closed": 0.0035,
+      "PATH_VQA_closed": 0.0035,
+      "MedXpertQA-MM": 0.0035,
+      "SLAKE_open": 0.0051,
+      "VQA_RAD_open": 0.0049,
+      "PATH_VQA_open": -0.0016
+     },
+     "range": [
+      -0.0016,
+      0.0051
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0623,
+    "lo": 0.0517,
+    "hi": 0.0728,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1287,
+      "lo": 0.0961,
+      "hi": 0.1628,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.045,
+      "lo": -0.02,
+      "hi": 0.11,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3033,
+      "lo": 0.2767,
+      "hi": 0.33,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0695,
+      "SLAKE_closed": 0.0719,
+      "VQA_RAD_closed": 0.0695,
+      "PATH_VQA_closed": 0.0712,
+      "MedXpertQA-MM": 0.0709,
+      "SLAKE_open": 0.0528,
+      "VQA_RAD_open": 0.0648,
+      "PATH_VQA_open": 0.0279
+     },
+     "range": [
+      0.0279,
+      0.0719
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0002,
+    "lo": -0.0182,
+    "hi": 0.0183,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0065,
+      "VQA_RAD_open": 0.0078,
+      "PATH_VQA_open": -0.0137
+     },
+     "range": [
+      -0.0137,
+      0.0078
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0124,
+     "se": 0.0121,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.015,
+     "se": 0.0232,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.028,
+     "se": 0.0098,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A5lean_l32_bo8_s0": {
+   "macro": 0.6542,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": -0.0043,
+    "lo": -0.0121,
+    "hi": 0.0033,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0048,
+      "SLAKE_closed": -0.0039,
+      "VQA_RAD_closed": -0.0021,
+      "PATH_VQA_closed": -0.0048,
+      "MedXpertQA-MM": -0.0041,
+      "SLAKE_open": -0.0031,
+      "VQA_RAD_open": -0.0028,
+      "PATH_VQA_open": -0.0089
+     },
+     "range": [
+      -0.0089,
+      -0.0021
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": -0.0025,
+    "lo": -0.0101,
+    "hi": 0.005,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": -0.0109,
+      "lo": -0.0341,
+      "hi": 0.0124,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.055,
+      "hi": 0.035,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.036,
+      "lo": 0.0173,
+      "hi": 0.0553,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0027,
+      "SLAKE_closed": -0.0018,
+      "VQA_RAD_closed": 0.0,
+      "PATH_VQA_closed": -0.0027,
+      "MedXpertQA-MM": -0.002,
+      "SLAKE_open": -0.0013,
+      "VQA_RAD_open": -0.0014,
+      "PATH_VQA_open": -0.008
+     },
+     "range": [
+      -0.008,
+      0.0
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0568,
+    "lo": 0.0456,
+    "hi": 0.0677,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0014,
+      "lo": -0.0034,
+      "hi": 0.0064,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.012,
+      "lo": -0.0299,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.008,
+      "lo": -0.0359,
+      "hi": 0.0199,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.0035,
+      "lo": -0.025,
+      "hi": 0.0175,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1287,
+      "lo": 0.0946,
+      "hi": 0.1612,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.045,
+      "lo": -0.02,
+      "hi": 0.11,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3033,
+      "lo": 0.2767,
+      "hi": 0.33,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0647,
+      "SLAKE_closed": 0.0666,
+      "VQA_RAD_closed": 0.066,
+      "PATH_VQA_closed": 0.065,
+      "MedXpertQA-MM": 0.0654,
+      "SLAKE_open": 0.0465,
+      "VQA_RAD_open": 0.0584,
+      "PATH_VQA_open": 0.0215
+     },
+     "range": [
+      0.0215,
+      0.0666
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0002,
+    "lo": -0.0182,
+    "hi": 0.0183,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0065,
+      "VQA_RAD_open": 0.0078,
+      "PATH_VQA_open": -0.0137
+     },
+     "range": [
+      -0.0137,
+      0.0078
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": -0.001,
+     "se": 0.0025,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "se": 0.0083,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0199,
+     "se": 0.0105,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "se": 0.0017,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "se": 0.003,
+     "flag": true,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0124,
+     "se": 0.0117,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.015,
+     "se": 0.0231,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.028,
+     "se": 0.0097,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "BASELINE_always32b_bo8_l32_bo8_s0": {
+   "macro": 0.6586,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0001,
+    "lo": -0.0067,
+    "hi": 0.0069,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0001,
+      "SLAKE_closed": 0.0001,
+      "VQA_RAD_closed": 0.0001,
+      "PATH_VQA_closed": 0.0001,
+      "MedXpertQA-MM": 0.0001,
+      "SLAKE_open": 0.0019,
+      "VQA_RAD_open": 0.0022,
+      "PATH_VQA_open": -0.0039
+     },
+     "range": [
+      -0.0039,
+      0.0022
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0019,
+    "lo": -0.0048,
+    "hi": 0.0087,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0109,
+      "lo": -0.0341,
+      "hi": 0.0124,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.055,
+      "hi": 0.035,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.036,
+      "lo": 0.0173,
+      "hi": 0.0553,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0022,
+      "SLAKE_closed": 0.0022,
+      "VQA_RAD_closed": 0.0022,
+      "PATH_VQA_closed": 0.0022,
+      "MedXpertQA-MM": 0.0022,
+      "SLAKE_open": 0.0037,
+      "VQA_RAD_open": 0.0036,
+      "PATH_VQA_open": -0.003
+     },
+     "range": [
+      -0.003,
+      0.0037
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0611,
+    "lo": 0.0507,
+    "hi": 0.0715,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0024,
+      "lo": 0.0,
+      "hi": 0.0047,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1287,
+      "lo": 0.0961,
+      "hi": 0.1628,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.045,
+      "lo": -0.02,
+      "hi": 0.11,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3033,
+      "lo": 0.2767,
+      "hi": 0.33,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0695,
+      "SLAKE_closed": 0.0706,
+      "VQA_RAD_closed": 0.0682,
+      "PATH_VQA_closed": 0.0699,
+      "MedXpertQA-MM": 0.0695,
+      "SLAKE_open": 0.0515,
+      "VQA_RAD_open": 0.0634,
+      "PATH_VQA_open": 0.0265
+     },
+     "range": [
+      0.0265,
+      0.0706
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0002,
+    "lo": -0.0182,
+    "hi": 0.0183,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0124,
+      "lo": -0.0357,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "lo": 0.0087,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0065,
+      "VQA_RAD_open": 0.0078,
+      "PATH_VQA_open": -0.0137
+     },
+     "range": [
+      -0.0137,
+      0.0078
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0124,
+     "se": 0.0119,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.015,
+     "se": 0.0235,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.028,
+     "se": 0.0098,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A2_N4_l32_bo8_s0": {
+   "macro": 0.665,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0065,
+    "lo": -0.0001,
+    "hi": 0.0132,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0186,
+      "hi": 0.0217,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.03,
+      "hi": 0.06,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.026,
+      "lo": 0.0067,
+      "hi": 0.0453,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0061,
+      "SLAKE_closed": 0.0074,
+      "VQA_RAD_closed": 0.0074,
+      "PATH_VQA_closed": 0.0074,
+      "MedXpertQA-MM": 0.0074,
+      "SLAKE_open": 0.0072,
+      "VQA_RAD_open": 0.0053,
+      "PATH_VQA_open": 0.0037
+     },
+     "range": [
+      0.0037,
+      0.0074
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0083,
+    "lo": 0.002,
+    "hi": 0.0149,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0031,
+      "lo": -0.0171,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.02,
+      "lo": -0.025,
+      "hi": 0.065,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.034,
+      "lo": 0.0153,
+      "hi": 0.0527,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0082,
+      "SLAKE_closed": 0.0095,
+      "VQA_RAD_closed": 0.0095,
+      "PATH_VQA_closed": 0.0095,
+      "MedXpertQA-MM": 0.0095,
+      "SLAKE_open": 0.0091,
+      "VQA_RAD_open": 0.0067,
+      "PATH_VQA_open": 0.0047
+     },
+     "range": [
+      0.0047,
+      0.0095
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0676,
+    "lo": 0.057,
+    "hi": 0.0781,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1426,
+      "lo": 0.1101,
+      "hi": 0.1767,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.075,
+      "lo": 0.01,
+      "hi": 0.14,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3013,
+      "lo": 0.2753,
+      "hi": 0.3273,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0755,
+      "SLAKE_closed": 0.0779,
+      "VQA_RAD_closed": 0.0755,
+      "PATH_VQA_closed": 0.0772,
+      "MedXpertQA-MM": 0.0769,
+      "SLAKE_open": 0.0568,
+      "VQA_RAD_open": 0.0665,
+      "PATH_VQA_open": 0.0342
+     },
+     "range": [
+      0.0342,
+      0.0779
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0142,
+    "lo": -0.0034,
+    "hi": 0.0321,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0186,
+      "hi": 0.0217,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.03,
+      "hi": 0.06,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.026,
+      "lo": 0.0067,
+      "hi": 0.0447,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0205,
+      "VQA_RAD_open": 0.0138,
+      "PATH_VQA_open": 0.0083
+     },
+     "range": [
+      0.0083,
+      0.0205
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0016,
+     "se": 0.0105,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": 0.015,
+     "se": 0.0234,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.026,
+     "se": 0.0098,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "CONTROL_majority8_l32_bo8_s0": {
+   "macro": 0.6617,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0033,
+    "lo": -0.0014,
+    "hi": 0.0081,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0109,
+      "lo": 0.0,
+      "hi": 0.0217,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.015,
+      "hi": 0.05,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0093,
+      "lo": -0.0247,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0024,
+      "SLAKE_closed": 0.0037,
+      "VQA_RAD_closed": 0.0037,
+      "PATH_VQA_closed": 0.0037,
+      "MedXpertQA-MM": 0.0037,
+      "SLAKE_open": 0.0022,
+      "VQA_RAD_open": 0.0016,
+      "PATH_VQA_open": 0.0051
+     },
+     "range": [
+      0.0016,
+      0.0051
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0051,
+    "lo": 0.0007,
+    "hi": 0.0097,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0124,
+      "lo": 0.0016,
+      "hi": 0.0248,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.02,
+      "lo": -0.01,
+      "hi": 0.05,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0013,
+      "lo": -0.016,
+      "hi": 0.014,
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0044,
+      "SLAKE_closed": 0.0058,
+      "VQA_RAD_closed": 0.0058,
+      "PATH_VQA_closed": 0.0058,
+      "MedXpertQA-MM": 0.0058,
+      "SLAKE_open": 0.004,
+      "VQA_RAD_open": 0.0029,
+      "PATH_VQA_open": 0.006
+     },
+     "range": [
+      0.0029,
+      0.006
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0643,
+    "lo": 0.0542,
+    "hi": 0.0747,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1519,
+      "lo": 0.1194,
+      "hi": 0.186,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.075,
+      "lo": 0.01,
+      "hi": 0.14,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.266,
+      "lo": 0.2407,
+      "hi": 0.2913,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0718,
+      "SLAKE_closed": 0.0742,
+      "VQA_RAD_closed": 0.0718,
+      "PATH_VQA_closed": 0.0735,
+      "MedXpertQA-MM": 0.0731,
+      "SLAKE_open": 0.0518,
+      "VQA_RAD_open": 0.0628,
+      "PATH_VQA_open": 0.0355
+     },
+     "range": [
+      0.0355,
+      0.0742
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0055,
+    "lo": -0.0068,
+    "hi": 0.0182,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0109,
+      "lo": 0.0,
+      "hi": 0.0217,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.015,
+      "hi": 0.05,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0093,
+      "lo": -0.0247,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0029,
+      "VQA_RAD_open": 0.0008,
+      "PATH_VQA_open": 0.0129
+     },
+     "range": [
+      0.0008,
+      0.0129
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0109,
+     "se": 0.0057,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": 0.015,
+     "se": 0.0168,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": -0.0093,
+     "se": 0.0078,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A5_formataware_l32_bo8_s1": {
+   "macro": 0.659,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0005,
+    "lo": -0.0063,
+    "hi": 0.0074,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.0087,
+      "hi": 0.0467,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0008,
+      "SLAKE_closed": 0.0006,
+      "VQA_RAD_closed": 0.0006,
+      "PATH_VQA_closed": 0.0006,
+      "MedXpertQA-MM": 0.0006,
+      "SLAKE_open": 0.0017,
+      "VQA_RAD_open": 0.0041,
+      "PATH_VQA_open": -0.0033
+     },
+     "range": [
+      -0.0033,
+      0.0041
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0023,
+    "lo": -0.0042,
+    "hi": 0.0089,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0062,
+      "lo": -0.0295,
+      "hi": 0.0171,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.065,
+      "hi": 0.025,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0353,
+      "lo": 0.0173,
+      "hi": 0.054,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0013,
+      "SLAKE_closed": 0.0027,
+      "VQA_RAD_closed": 0.0027,
+      "PATH_VQA_closed": 0.0027,
+      "MedXpertQA-MM": 0.0027,
+      "SLAKE_open": 0.0035,
+      "VQA_RAD_open": 0.0055,
+      "PATH_VQA_open": -0.0024
+     },
+     "range": [
+      -0.0024,
+      0.0055
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0616,
+    "lo": 0.0512,
+    "hi": 0.072,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1333,
+      "lo": 0.1008,
+      "hi": 0.1674,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.035,
+      "lo": -0.03,
+      "hi": 0.1,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3027,
+      "lo": 0.2767,
+      "hi": 0.3293,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0687,
+      "SLAKE_closed": 0.0711,
+      "VQA_RAD_closed": 0.0687,
+      "PATH_VQA_closed": 0.0704,
+      "MedXpertQA-MM": 0.07,
+      "SLAKE_open": 0.0513,
+      "VQA_RAD_open": 0.0654,
+      "PATH_VQA_open": 0.0271
+     },
+     "range": [
+      0.0271,
+      0.0711
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": -0.0018,
+    "lo": -0.0202,
+    "hi": 0.0163,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.0087,
+      "hi": 0.046,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0011,
+      "VQA_RAD_open": 0.0098,
+      "PATH_VQA_open": -0.0164
+     },
+     "range": [
+      -0.0164,
+      0.0098
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0078,
+     "se": 0.0118,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.025,
+     "se": 0.0233,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0273,
+     "se": 0.0099,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A5lean_l32_bo8_s1": {
+   "macro": 0.6534,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": -0.005,
+    "lo": -0.0128,
+    "hi": 0.0022,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.008,
+      "hi": 0.0467,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0056,
+      "SLAKE_closed": -0.0048,
+      "VQA_RAD_closed": -0.0029,
+      "PATH_VQA_closed": -0.0057,
+      "MedXpertQA-MM": -0.0049,
+      "SLAKE_open": -0.0047,
+      "VQA_RAD_open": -0.0022,
+      "PATH_VQA_open": -0.0097
+     },
+     "range": [
+      -0.0097,
+      -0.0022
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": -0.0032,
+    "lo": -0.0107,
+    "hi": 0.0041,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": -0.0062,
+      "lo": -0.0295,
+      "hi": 0.0171,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.065,
+      "hi": 0.025,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0353,
+      "lo": 0.0167,
+      "hi": 0.054,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0036,
+      "SLAKE_closed": -0.0027,
+      "VQA_RAD_closed": -0.0009,
+      "PATH_VQA_closed": -0.0036,
+      "MedXpertQA-MM": -0.0028,
+      "SLAKE_open": -0.0028,
+      "VQA_RAD_open": -0.0008,
+      "PATH_VQA_open": -0.0087
+     },
+     "range": [
+      -0.0087,
+      -0.0008
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.056,
+    "lo": 0.0452,
+    "hi": 0.067,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0014,
+      "lo": -0.0034,
+      "hi": 0.0064,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.012,
+      "lo": -0.0299,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.008,
+      "lo": -0.0359,
+      "hi": 0.0199,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.0035,
+      "lo": -0.025,
+      "hi": 0.0175,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1333,
+      "lo": 0.1008,
+      "hi": 0.1659,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.035,
+      "lo": -0.03,
+      "hi": 0.1,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3027,
+      "lo": 0.2767,
+      "hi": 0.3293,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0638,
+      "SLAKE_closed": 0.0657,
+      "VQA_RAD_closed": 0.0651,
+      "PATH_VQA_closed": 0.0641,
+      "MedXpertQA-MM": 0.0645,
+      "SLAKE_open": 0.045,
+      "VQA_RAD_open": 0.059,
+      "PATH_VQA_open": 0.0208
+     },
+     "range": [
+      0.0208,
+      0.0657
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": -0.0018,
+    "lo": -0.0202,
+    "hi": 0.0163,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.0087,
+      "hi": 0.046,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0011,
+      "VQA_RAD_open": 0.0098,
+      "PATH_VQA_open": -0.0164
+     },
+     "range": [
+      -0.0164,
+      0.0098
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": -0.001,
+     "se": 0.0025,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "se": 0.0083,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0199,
+     "se": 0.0105,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "se": 0.0017,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "se": 0.003,
+     "flag": true,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0078,
+     "se": 0.0118,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.025,
+     "se": 0.0231,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0273,
+     "se": 0.0095,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "BASELINE_always32b_bo8_l32_bo8_s1": {
+   "macro": 0.6578,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": -0.0007,
+    "lo": -0.0075,
+    "hi": 0.0061,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.0087,
+      "hi": 0.0467,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0008,
+      "SLAKE_closed": -0.0008,
+      "VQA_RAD_closed": -0.0008,
+      "PATH_VQA_closed": -0.0008,
+      "MedXpertQA-MM": -0.0008,
+      "SLAKE_open": 0.0003,
+      "VQA_RAD_open": 0.0028,
+      "PATH_VQA_open": -0.0047
+     },
+     "range": [
+      -0.0047,
+      0.0028
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0011,
+    "lo": -0.0056,
+    "hi": 0.0077,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0062,
+      "lo": -0.0295,
+      "hi": 0.0171,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.065,
+      "hi": 0.025,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0353,
+      "lo": 0.0173,
+      "hi": 0.054,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0013,
+      "SLAKE_closed": 0.0013,
+      "VQA_RAD_closed": 0.0013,
+      "PATH_VQA_closed": 0.0013,
+      "MedXpertQA-MM": 0.0013,
+      "SLAKE_open": 0.0022,
+      "VQA_RAD_open": 0.0042,
+      "PATH_VQA_open": -0.0037
+     },
+     "range": [
+      -0.0037,
+      0.0042
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0604,
+    "lo": 0.0503,
+    "hi": 0.0704,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0024,
+      "lo": 0.0,
+      "hi": 0.0047,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1333,
+      "lo": 0.1008,
+      "hi": 0.1674,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.035,
+      "lo": -0.03,
+      "hi": 0.1,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3027,
+      "lo": 0.2767,
+      "hi": 0.3293,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0687,
+      "SLAKE_closed": 0.0697,
+      "VQA_RAD_closed": 0.0673,
+      "PATH_VQA_closed": 0.069,
+      "MedXpertQA-MM": 0.0687,
+      "SLAKE_open": 0.05,
+      "VQA_RAD_open": 0.064,
+      "PATH_VQA_open": 0.0258
+     },
+     "range": [
+      0.0258,
+      0.0697
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": -0.0018,
+    "lo": -0.0202,
+    "hi": 0.0163,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0078,
+      "lo": -0.031,
+      "hi": 0.0155,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.025,
+      "lo": -0.07,
+      "hi": 0.02,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0273,
+      "lo": 0.0087,
+      "hi": 0.046,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0011,
+      "VQA_RAD_open": 0.0098,
+      "PATH_VQA_open": -0.0164
+     },
+     "range": [
+      -0.0164,
+      0.0098
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0078,
+     "se": 0.0118,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.025,
+     "se": 0.0228,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0273,
+     "se": 0.0098,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A2_N4_l32_bo8_s1": {
+   "macro": 0.6619,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0034,
+    "lo": -0.0027,
+    "hi": 0.0098,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0016,
+      "lo": -0.0217,
+      "hi": 0.0202,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.05,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0293,
+      "lo": 0.0113,
+      "hi": 0.048,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0025,
+      "SLAKE_closed": 0.0039,
+      "VQA_RAD_closed": 0.0039,
+      "PATH_VQA_closed": 0.0039,
+      "MedXpertQA-MM": 0.0039,
+      "SLAKE_open": 0.0041,
+      "VQA_RAD_open": 0.0053,
+      "PATH_VQA_open": -0.0003
+     },
+     "range": [
+      -0.0003,
+      0.0053
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0052,
+    "lo": -0.0009,
+    "hi": 0.0114,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0202,
+      "hi": 0.0217,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.005,
+      "lo": -0.045,
+      "hi": 0.035,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0373,
+      "lo": 0.0193,
+      "hi": 0.0553,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0046,
+      "SLAKE_closed": 0.006,
+      "VQA_RAD_closed": 0.006,
+      "PATH_VQA_closed": 0.006,
+      "MedXpertQA-MM": 0.006,
+      "SLAKE_open": 0.006,
+      "VQA_RAD_open": 0.0067,
+      "PATH_VQA_open": 0.0006
+     },
+     "range": [
+      0.0006,
+      0.0067
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0645,
+    "lo": 0.0539,
+    "hi": 0.0748,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1395,
+      "lo": 0.107,
+      "hi": 0.1736,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.05,
+      "lo": -0.015,
+      "hi": 0.115,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3047,
+      "lo": 0.2787,
+      "hi": 0.3307,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.072,
+      "SLAKE_closed": 0.0744,
+      "VQA_RAD_closed": 0.072,
+      "PATH_VQA_closed": 0.0737,
+      "MedXpertQA-MM": 0.0733,
+      "SLAKE_open": 0.0538,
+      "VQA_RAD_open": 0.0665,
+      "PATH_VQA_open": 0.0302
+     },
+     "range": [
+      0.0302,
+      0.0744
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0059,
+    "lo": -0.011,
+    "hi": 0.023,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0016,
+      "lo": -0.0233,
+      "hi": 0.0186,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.05,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0293,
+      "lo": 0.0107,
+      "hi": 0.048,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0096,
+      "VQA_RAD_open": 0.0138,
+      "PATH_VQA_open": -0.0058
+     },
+     "range": [
+      -0.0058,
+      0.0138
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0016,
+     "se": 0.0111,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.01,
+     "se": 0.0216,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0293,
+     "se": 0.0099,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "CONTROL_majority8_l32_bo8_s1": {
+   "macro": 0.6575,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": -0.001,
+    "lo": -0.0052,
+    "hi": 0.0033,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0031,
+      "lo": -0.0155,
+      "hi": 0.0093,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.01,
+      "lo": -0.015,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0247,
+      "lo": -0.04,
+      "hi": -0.0093,
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0025,
+      "SLAKE_closed": -0.0012,
+      "VQA_RAD_closed": -0.0012,
+      "PATH_VQA_closed": -0.0012,
+      "MedXpertQA-MM": -0.0012,
+      "SLAKE_open": -0.0007,
+      "VQA_RAD_open": -0.0026,
+      "PATH_VQA_open": 0.0023
+     },
+     "range": [
+      -0.0026,
+      0.0023
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0008,
+    "lo": -0.0033,
+    "hi": 0.005,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": -0.0016,
+      "lo": -0.0155,
+      "hi": 0.0124,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.01,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0167,
+      "lo": -0.032,
+      "hi": -0.0013,
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0005,
+      "SLAKE_closed": 0.0009,
+      "VQA_RAD_closed": 0.0009,
+      "PATH_VQA_closed": 0.0009,
+      "MedXpertQA-MM": 0.0009,
+      "SLAKE_open": 0.0011,
+      "VQA_RAD_open": -0.0013,
+      "PATH_VQA_open": 0.0033
+     },
+     "range": [
+      -0.0013,
+      0.0033
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.06,
+    "lo": 0.0499,
+    "hi": 0.0701,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.138,
+      "lo": 0.1054,
+      "hi": 0.1721,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.07,
+      "lo": 0.01,
+      "hi": 0.13,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.2507,
+      "lo": 0.2253,
+      "hi": 0.276,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0669,
+      "SLAKE_closed": 0.0693,
+      "VQA_RAD_closed": 0.0669,
+      "PATH_VQA_closed": 0.0686,
+      "MedXpertQA-MM": 0.0683,
+      "SLAKE_open": 0.0489,
+      "VQA_RAD_open": 0.0586,
+      "PATH_VQA_open": 0.0328
+     },
+     "range": [
+      0.0328,
+      0.0693
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": -0.0059,
+    "lo": -0.0172,
+    "hi": 0.0057,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": -0.0031,
+      "lo": -0.0155,
+      "hi": 0.0093,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.01,
+      "lo": -0.015,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0247,
+      "lo": -0.0407,
+      "hi": -0.0093,
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": -0.0073,
+      "VQA_RAD_open": -0.0139,
+      "PATH_VQA_open": 0.0034
+     },
+     "range": [
+      -0.0139,
+      0.0034
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.0031,
+     "se": 0.0068,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": 0.01,
+     "se": 0.0142,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": -0.0247,
+     "se": 0.0079,
+     "flag": true,
+     "n": 1500
+    }
+   }
+  },
+  "A5_formataware_l32_bo8_s2": {
+   "macro": 0.6604,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0019,
+    "lo": -0.0054,
+    "hi": 0.0091,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0008,
+      "SLAKE_closed": 0.0021,
+      "VQA_RAD_closed": 0.0021,
+      "PATH_VQA_closed": 0.0021,
+      "MedXpertQA-MM": 0.0021,
+      "SLAKE_open": 0.0021,
+      "VQA_RAD_open": 0.005,
+      "PATH_VQA_open": -0.0015
+     },
+     "range": [
+      -0.0015,
+      0.005
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0037,
+    "lo": -0.0033,
+    "hi": 0.0106,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0217,
+      "hi": 0.0248,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0333,
+      "lo": 0.014,
+      "hi": 0.052,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0028,
+      "SLAKE_closed": 0.0042,
+      "VQA_RAD_closed": 0.0042,
+      "PATH_VQA_closed": 0.0042,
+      "MedXpertQA-MM": 0.0042,
+      "SLAKE_open": 0.004,
+      "VQA_RAD_open": 0.0063,
+      "PATH_VQA_open": -0.0006
+     },
+     "range": [
+      -0.0006,
+      0.0063
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0629,
+    "lo": 0.0525,
+    "hi": 0.0734,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1411,
+      "lo": 0.1085,
+      "hi": 0.1752,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.04,
+      "lo": -0.025,
+      "hi": 0.105,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3007,
+      "lo": 0.2747,
+      "hi": 0.3267,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0702,
+      "SLAKE_closed": 0.0726,
+      "VQA_RAD_closed": 0.0702,
+      "PATH_VQA_closed": 0.0719,
+      "MedXpertQA-MM": 0.0716,
+      "SLAKE_open": 0.0518,
+      "VQA_RAD_open": 0.0662,
+      "PATH_VQA_open": 0.029
+     },
+     "range": [
+      0.029,
+      0.0726
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0018,
+    "lo": -0.0174,
+    "hi": 0.0205,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0026,
+      "VQA_RAD_open": 0.0126,
+      "PATH_VQA_open": -0.01
+     },
+     "range": [
+      -0.01,
+      0.0126
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "se": 0.0121,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.02,
+     "se": 0.0245,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0253,
+     "se": 0.0097,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A5lean_l32_bo8_s2": {
+   "macro": 0.6548,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": -0.0037,
+    "lo": -0.0115,
+    "hi": 0.004,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0041,
+      "SLAKE_closed": -0.0032,
+      "VQA_RAD_closed": -0.0014,
+      "PATH_VQA_closed": -0.0041,
+      "MedXpertQA-MM": -0.0034,
+      "SLAKE_open": -0.0042,
+      "VQA_RAD_open": -0.0014,
+      "PATH_VQA_open": -0.0079
+     },
+     "range": [
+      -0.0079,
+      -0.0014
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": -0.0019,
+    "lo": -0.0096,
+    "hi": 0.0057,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0058,
+      "hi": 0.004,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0239,
+      "hi": 0.0096,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0438,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0027,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0233,
+      "hi": 0.0248,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0333,
+      "lo": 0.0147,
+      "hi": 0.052,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.002,
+      "SLAKE_closed": -0.0011,
+      "VQA_RAD_closed": 0.0007,
+      "PATH_VQA_closed": -0.002,
+      "MedXpertQA-MM": -0.0013,
+      "SLAKE_open": -0.0024,
+      "VQA_RAD_open": -0.0,
+      "PATH_VQA_open": -0.0069
+     },
+     "range": [
+      -0.0069,
+      0.0007
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0574,
+    "lo": 0.0463,
+    "hi": 0.0684,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0014,
+      "lo": -0.0034,
+      "hi": 0.0064,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.012,
+      "lo": -0.0299,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.008,
+      "lo": -0.0359,
+      "hi": 0.0199,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.0035,
+      "lo": -0.025,
+      "hi": 0.0175,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1411,
+      "lo": 0.1085,
+      "hi": 0.1736,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.04,
+      "lo": -0.025,
+      "hi": 0.11,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3007,
+      "lo": 0.2747,
+      "hi": 0.3267,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0653,
+      "SLAKE_closed": 0.0673,
+      "VQA_RAD_closed": 0.0667,
+      "PATH_VQA_closed": 0.0657,
+      "MedXpertQA-MM": 0.066,
+      "SLAKE_open": 0.0454,
+      "VQA_RAD_open": 0.0598,
+      "PATH_VQA_open": 0.0226
+     },
+     "range": [
+      0.0226,
+      0.0673
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0018,
+    "lo": -0.0174,
+    "hi": 0.0205,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0026,
+      "VQA_RAD_open": 0.0126,
+      "PATH_VQA_open": -0.01
+     },
+     "range": [
+      -0.01,
+      0.0126
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": -0.001,
+     "se": 0.0025,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "se": 0.0083,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0199,
+     "se": 0.0105,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "se": 0.0017,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "se": 0.003,
+     "flag": true,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "se": 0.012,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.02,
+     "se": 0.0246,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0253,
+     "se": 0.0096,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "BASELINE_always32b_bo8_l32_bo8_s2": {
+   "macro": 0.6592,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0007,
+    "lo": -0.0065,
+    "hi": 0.0077,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0008,
+      "SLAKE_closed": 0.0008,
+      "VQA_RAD_closed": 0.0008,
+      "PATH_VQA_closed": 0.0008,
+      "MedXpertQA-MM": 0.0008,
+      "SLAKE_open": 0.0008,
+      "VQA_RAD_open": 0.0036,
+      "PATH_VQA_open": -0.0029
+     },
+     "range": [
+      -0.0029,
+      0.0036
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0025,
+    "lo": -0.0045,
+    "hi": 0.0095,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0217,
+      "hi": 0.0248,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.015,
+      "lo": -0.06,
+      "hi": 0.035,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0333,
+      "lo": 0.0153,
+      "hi": 0.0513,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0028,
+      "SLAKE_closed": 0.0028,
+      "VQA_RAD_closed": 0.0028,
+      "PATH_VQA_closed": 0.0028,
+      "MedXpertQA-MM": 0.0028,
+      "SLAKE_open": 0.0026,
+      "VQA_RAD_open": 0.005,
+      "PATH_VQA_open": -0.0019
+     },
+     "range": [
+      -0.0019,
+      0.005
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0617,
+    "lo": 0.0514,
+    "hi": 0.0721,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0024,
+      "lo": 0.0,
+      "hi": 0.0047,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1411,
+      "lo": 0.1085,
+      "hi": 0.1752,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.04,
+      "lo": -0.025,
+      "hi": 0.105,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.3007,
+      "lo": 0.2747,
+      "hi": 0.3267,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0702,
+      "SLAKE_closed": 0.0712,
+      "VQA_RAD_closed": 0.0688,
+      "PATH_VQA_closed": 0.0706,
+      "MedXpertQA-MM": 0.0702,
+      "SLAKE_open": 0.0504,
+      "VQA_RAD_open": 0.0648,
+      "PATH_VQA_open": 0.0276
+     },
+     "range": [
+      0.0276,
+      0.0712
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0018,
+    "lo": -0.0174,
+    "hi": 0.0205,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0233,
+      "hi": 0.0233,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.07,
+      "hi": 0.03,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0253,
+      "lo": 0.0067,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0026,
+      "VQA_RAD_open": 0.0126,
+      "PATH_VQA_open": -0.01
+     },
+     "range": [
+      -0.01,
+      0.0126
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "se": 0.012,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.02,
+     "se": 0.0244,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0253,
+     "se": 0.0095,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "A2_N4_l32_bo8_s2": {
+   "macro": 0.663,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0045,
+    "lo": -0.0023,
+    "hi": 0.0117,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0078,
+      "lo": -0.0124,
+      "hi": 0.0295,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.06,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0287,
+      "lo": 0.01,
+      "hi": 0.048,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0038,
+      "SLAKE_closed": 0.0051,
+      "VQA_RAD_closed": 0.0051,
+      "PATH_VQA_closed": 0.0051,
+      "MedXpertQA-MM": 0.0051,
+      "SLAKE_open": 0.004,
+      "VQA_RAD_open": 0.0066,
+      "PATH_VQA_open": 0.001
+     },
+     "range": [
+      0.001,
+      0.0066
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0063,
+    "lo": -0.0005,
+    "hi": 0.0132,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0093,
+      "lo": -0.0109,
+      "hi": 0.031,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.005,
+      "lo": -0.05,
+      "hi": 0.045,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0367,
+      "lo": 0.018,
+      "hi": 0.0553,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0059,
+      "SLAKE_closed": 0.0072,
+      "VQA_RAD_closed": 0.0072,
+      "PATH_VQA_closed": 0.0072,
+      "MedXpertQA-MM": 0.0072,
+      "SLAKE_open": 0.0059,
+      "VQA_RAD_open": 0.0079,
+      "PATH_VQA_open": 0.002
+     },
+     "range": [
+      0.002,
+      0.0079
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0656,
+    "lo": 0.0552,
+    "hi": 0.076,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1488,
+      "lo": 0.1163,
+      "hi": 0.1829,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.05,
+      "lo": -0.015,
+      "hi": 0.115,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.304,
+      "lo": 0.278,
+      "hi": 0.33,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0732,
+      "SLAKE_closed": 0.0756,
+      "VQA_RAD_closed": 0.0732,
+      "PATH_VQA_closed": 0.0749,
+      "MedXpertQA-MM": 0.0746,
+      "SLAKE_open": 0.0537,
+      "VQA_RAD_open": 0.0678,
+      "PATH_VQA_open": 0.0315
+     },
+     "range": [
+      0.0315,
+      0.0756
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": 0.0088,
+    "lo": -0.0097,
+    "hi": 0.0276,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0078,
+      "lo": -0.0124,
+      "hi": 0.0279,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.06,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0287,
+      "lo": 0.0093,
+      "hi": 0.0473,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": 0.0094,
+      "VQA_RAD_open": 0.0182,
+      "PATH_VQA_open": -0.0011
+     },
+     "range": [
+      -0.0011,
+      0.0182
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0078,
+     "se": 0.0108,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.01,
+     "se": 0.0251,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0287,
+     "se": 0.01,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  },
+  "CONTROL_majority8_l32_bo8_s2": {
+   "macro": 0.6591,
+   "vs_always_32b_direct_MATCHED": {
+    "delta": 0.0006,
+    "lo": -0.0035,
+    "hi": 0.0048,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0109,
+      "hi": 0.0124,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.01,
+      "lo": -0.015,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0147,
+      "lo": -0.0293,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": -0.0007,
+      "SLAKE_closed": 0.0007,
+      "VQA_RAD_closed": 0.0007,
+      "PATH_VQA_closed": 0.0007,
+      "MedXpertQA-MM": 0.0007,
+      "SLAKE_open": 0.0007,
+      "VQA_RAD_open": -0.0007,
+      "PATH_VQA_open": 0.0028
+     },
+     "range": [
+      -0.0007,
+      0.0028
+     ],
+     "cell_carrying_the_claim": "PMC_VQA"
+    }
+   },
+   "vs_always_32b_direct_published": {
+    "delta": 0.0024,
+    "lo": -0.0015,
+    "hi": 0.0065,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.0016,
+      "lo": -0.0109,
+      "hi": 0.014,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.015,
+      "lo": -0.01,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0067,
+      "lo": -0.0207,
+      "hi": 0.0073,
+      "sig": false,
+      "verdict": "TIE"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0014,
+      "SLAKE_closed": 0.0028,
+      "VQA_RAD_closed": 0.0028,
+      "PATH_VQA_closed": 0.0028,
+      "MedXpertQA-MM": 0.0028,
+      "SLAKE_open": 0.0025,
+      "VQA_RAD_open": 0.0006,
+      "PATH_VQA_open": 0.0037
+     },
+     "range": [
+      0.0006,
+      0.0037
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "vs_always_32b_reasoning": {
+    "delta": 0.0617,
+    "lo": 0.0515,
+    "hi": 0.072,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.0119,
+      "lo": 0.0088,
+      "hi": 0.0149,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "SLAKE_closed": {
+      "delta": -0.0048,
+      "lo": -0.0132,
+      "hi": 0.0024,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.012,
+      "lo": -0.008,
+      "hi": 0.0319,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0025,
+      "lo": -0.0185,
+      "hi": 0.0235,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "SLAKE_open": {
+      "delta": 0.1411,
+      "lo": 0.1085,
+      "hi": 0.1752,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.07,
+      "lo": 0.01,
+      "hi": 0.135,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "PATH_VQA_open": {
+      "delta": 0.2607,
+      "lo": 0.2347,
+      "hi": 0.2867,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "PMC_VQA": 0.0688,
+      "SLAKE_closed": 0.0712,
+      "VQA_RAD_closed": 0.0688,
+      "PATH_VQA_closed": 0.0705,
+      "MedXpertQA-MM": 0.0701,
+      "SLAKE_open": 0.0503,
+      "VQA_RAD_open": 0.0605,
+      "PATH_VQA_open": 0.0332
+     },
+     "range": [
+      0.0332,
+      0.0712
+     ],
+     "cell_carrying_the_claim": "PATH_VQA_open"
+    }
+   },
+   "open_only_MATCHED": {
+    "delta": -0.0016,
+    "lo": -0.0126,
+    "hi": 0.0099,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": -0.0109,
+      "hi": 0.0109,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "VQA_RAD_open": {
+      "delta": 0.01,
+      "lo": -0.015,
+      "hi": 0.04,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0147,
+      "lo": -0.0293,
+      "hi": -0.0007,
+      "sig": true,
+      "verdict": "LOSS"
+     }
+    },
+    "macro_leave_one_out": {
+     "per_dropped_cell": {
+      "SLAKE_open": -0.0023,
+      "VQA_RAD_open": -0.0073,
+      "PATH_VQA_open": 0.005
+     },
+     "range": [
+      -0.0073,
+      0.005
+     ],
+     "cell_carrying_the_claim": "VQA_RAD_open"
+    }
+   },
+   "guardrail_vs_direct_MATCHED": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "se": 0.0012,
+     "flag": false,
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "se": 0.0,
+     "flag": false,
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "se": 0.0059,
+     "flag": false,
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": 0.01,
+     "se": 0.0142,
+     "flag": false,
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": -0.0147,
+     "se": 0.0075,
+     "flag": false,
+     "n": 1500
+    }
+   }
+  }
+ },
+ "baselines_macro": {
+  "always_7b": 0.5971,
+  "always_32b_direct": 0.6567,
+  "always_32b_reasoning": 0.5974,
+  "oracle_mode_32b": 0.6573,
+  "method_compute_lean": 0.6443,
+  "method_accuracy_max_veto": 0.6575
+ },
+ "n_scaling_curve": {
+  "per_seed": {
+   "l32_bo8_s0": {
+    "SLAKE_open": {
+     "N=1": {
+      "oracle": 0.8031,
+      "selected": 0.8031,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.0171
+     },
+     "N=2": {
+      "oracle": 0.8605,
+      "selected": 0.8248,
+      "sel_eff": 0.9586,
+      "delta_vs_A0": 0.0047
+     },
+     "N=4": {
+      "oracle": 0.8822,
+      "selected": 0.8217,
+      "sel_eff": 0.9315,
+      "delta_vs_A0": 0.0016
+     },
+     "N=8": {
+      "oracle": 0.9008,
+      "selected": 0.8078,
+      "sel_eff": 0.8967,
+      "delta_vs_A0": -0.0124
+     },
+     "sel_eff_per_doubling": -0.0309
+    },
+    "VQA_RAD_open": {
+     "N=1": {
+      "oracle": 0.58,
+      "selected": 0.58,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.025
+     },
+     "N=2": {
+      "oracle": 0.635,
+      "selected": 0.595,
+      "sel_eff": 0.937,
+      "delta_vs_A0": -0.01
+     },
+     "N=4": {
+      "oracle": 0.69,
+      "selected": 0.62,
+      "sel_eff": 0.8986,
+      "delta_vs_A0": 0.015
+     },
+     "N=8": {
+      "oracle": 0.71,
+      "selected": 0.59,
+      "sel_eff": 0.831,
+      "delta_vs_A0": -0.015
+     },
+     "sel_eff_per_doubling": -0.053
+    },
+    "PATH_VQA_open": {
+     "N=1": {
+      "oracle": 0.354,
+      "selected": 0.354,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.03
+     },
+     "N=2": {
+      "oracle": 0.4407,
+      "selected": 0.3833,
+      "sel_eff": 0.8699,
+      "delta_vs_A0": -0.0007
+     },
+     "N=4": {
+      "oracle": 0.5233,
+      "selected": 0.41,
+      "sel_eff": 0.7834,
+      "delta_vs_A0": 0.026
+     },
+     "N=8": {
+      "oracle": 0.5833,
+      "selected": 0.412,
+      "sel_eff": 0.7063,
+      "delta_vs_A0": 0.028
+     },
+     "sel_eff_per_doubling": -0.0818
+    }
+   },
+   "l32_bo8_s1": {
+    "SLAKE_open": {
+     "N=1": {
+      "oracle": 0.814,
+      "selected": 0.814,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.0062
+     },
+     "N=2": {
+      "oracle": 0.8651,
+      "selected": 0.8264,
+      "sel_eff": 0.9552,
+      "delta_vs_A0": 0.0062
+     },
+     "N=4": {
+      "oracle": 0.8837,
+      "selected": 0.8186,
+      "sel_eff": 0.9263,
+      "delta_vs_A0": -0.0016
+     },
+     "N=8": {
+      "oracle": 0.9023,
+      "selected": 0.8124,
+      "sel_eff": 0.9003,
+      "delta_vs_A0": -0.0078
+     },
+     "sel_eff_per_doubling": -0.0275
+    },
+    "VQA_RAD_open": {
+     "N=1": {
+      "oracle": 0.575,
+      "selected": 0.575,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.03
+     },
+     "N=2": {
+      "oracle": 0.64,
+      "selected": 0.615,
+      "sel_eff": 0.9609,
+      "delta_vs_A0": 0.01
+     },
+     "N=4": {
+      "oracle": 0.66,
+      "selected": 0.595,
+      "sel_eff": 0.9015,
+      "delta_vs_A0": -0.01
+     },
+     "N=8": {
+      "oracle": 0.7,
+      "selected": 0.58,
+      "sel_eff": 0.8286,
+      "delta_vs_A0": -0.025
+     },
+     "sel_eff_per_doubling": -0.0661
+    },
+    "PATH_VQA_open": {
+     "N=1": {
+      "oracle": 0.3573,
+      "selected": 0.3573,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.0267
+     },
+     "N=2": {
+      "oracle": 0.424,
+      "selected": 0.378,
+      "sel_eff": 0.8915,
+      "delta_vs_A0": -0.006
+     },
+     "N=4": {
+      "oracle": 0.516,
+      "selected": 0.4133,
+      "sel_eff": 0.801,
+      "delta_vs_A0": 0.0293
+     },
+     "N=8": {
+      "oracle": 0.574,
+      "selected": 0.4113,
+      "sel_eff": 0.7166,
+      "delta_vs_A0": 0.0273
+     },
+     "sel_eff_per_doubling": -0.0874
+    }
+   },
+   "l32_bo8_s2": {
+    "SLAKE_open": {
+     "N=1": {
+      "oracle": 0.8186,
+      "selected": 0.8186,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.0016
+     },
+     "N=2": {
+      "oracle": 0.8496,
+      "selected": 0.831,
+      "sel_eff": 0.9781,
+      "delta_vs_A0": 0.0109
+     },
+     "N=4": {
+      "oracle": 0.8744,
+      "selected": 0.8279,
+      "sel_eff": 0.9468,
+      "delta_vs_A0": 0.0078
+     },
+     "N=8": {
+      "oracle": 0.9039,
+      "selected": 0.8202,
+      "sel_eff": 0.9074,
+      "delta_vs_A0": 0.0
+     },
+     "sel_eff_per_doubling": -0.0353
+    },
+    "VQA_RAD_open": {
+     "N=1": {
+      "oracle": 0.62,
+      "selected": 0.62,
+      "sel_eff": 1.0,
+      "delta_vs_A0": 0.015
+     },
+     "N=2": {
+      "oracle": 0.64,
+      "selected": 0.59,
+      "sel_eff": 0.9219,
+      "delta_vs_A0": -0.015
+     },
+     "N=4": {
+      "oracle": 0.67,
+      "selected": 0.595,
+      "sel_eff": 0.8881,
+      "delta_vs_A0": -0.01
+     },
+     "N=8": {
+      "oracle": 0.71,
+      "selected": 0.585,
+      "sel_eff": 0.8239,
+      "delta_vs_A0": -0.02
+     },
+     "sel_eff_per_doubling": -0.049
+    },
+    "PATH_VQA_open": {
+     "N=1": {
+      "oracle": 0.3333,
+      "selected": 0.3333,
+      "sel_eff": 1.0,
+      "delta_vs_A0": -0.0507
+     },
+     "N=2": {
+      "oracle": 0.4567,
+      "selected": 0.4067,
+      "sel_eff": 0.8905,
+      "delta_vs_A0": 0.0227
+     },
+     "N=4": {
+      "oracle": 0.5073,
+      "selected": 0.4127,
+      "sel_eff": 0.8134,
+      "delta_vs_A0": 0.0287
+     },
+     "N=8": {
+      "oracle": 0.5647,
+      "selected": 0.4093,
+      "sel_eff": 0.7249,
+      "delta_vs_A0": 0.0253
+     },
+     "sel_eff_per_doubling": -0.0828
+    }
+   }
+  },
+  "note": "sub-pools are PREFIXES of the same 8-sample draw (N=1 is slot 0, a T=0.7 sample, NOT the T=0 greedy arm A0). delta_vs_A0 compares each sub-pool to the matched temperature-0 greedy baseline.",
+  "comparison": "verifier_n_scaling_2026-08-03.json measured -0.0761 sel_eff per doubling on the LINGSHU-7B pool. This is the same quantity on the LINGSHU-32B pool."
+ },
+ "A4_escalation_target_swap_DERIVED": {
+  "arms": {
+   "l32_bo8_s0": {
+    "escalation_rates_published": {
+     "SLAKE_open": 0.6295,
+     "VQA_RAD_open": 0.885,
+     "PATH_VQA_open": 0.3433
+    },
+    "per_cell_expected_gain": {
+     "SLAKE_open": -0.0078,
+     "VQA_RAD_open": -0.0133,
+     "PATH_VQA_open": 0.0096
+    },
+    "macro_delta_vs_deployed_accuracy_max": -0.00143,
+    "implied_macro": 0.6561
+   },
+   "l32_bo8_s1": {
+    "escalation_rates_published": {
+     "SLAKE_open": 0.6295,
+     "VQA_RAD_open": 0.885,
+     "PATH_VQA_open": 0.3433
+    },
+    "per_cell_expected_gain": {
+     "SLAKE_open": -0.0049,
+     "VQA_RAD_open": -0.0221,
+     "PATH_VQA_open": 0.0094
+    },
+    "macro_delta_vs_deployed_accuracy_max": -0.0022,
+    "implied_macro": 0.6553
+   },
+   "l32_bo8_s2": {
+    "escalation_rates_published": {
+     "SLAKE_open": 0.6295,
+     "VQA_RAD_open": 0.885,
+     "PATH_VQA_open": 0.3433
+    },
+    "per_cell_expected_gain": {
+     "SLAKE_open": 0.0,
+     "VQA_RAD_open": -0.0177,
+     "PATH_VQA_open": 0.0087
+    },
+    "macro_delta_vs_deployed_accuracy_max": -0.00113,
+    "implied_macro": 0.6564
+   }
+  },
+  "provenance": "DERIVED (published per-cell escalation rate x measured per-cell delta). NOT a per-item measurement and NOT the pre-registered primary endpoint; reported because the brief listed A4 as an arm. The per-item escalation mask is not exported by the published artifact, so no CI is attached."
+ },
+ "token_audit": {
+  "per_tag_per_cell": {
+   "l32_n1": {
+    "SLAKE_open": {
+     "n_rows": 645,
+     "mean_gen_tokens": 4.75,
+     "p95_gen_tokens": 10.8,
+     "mean_distinct": 1.0
+    },
+    "VQA_RAD_open": {
+     "n_rows": 200,
+     "mean_gen_tokens": 5.5,
+     "p95_gen_tokens": 9.0,
+     "mean_distinct": 1.0
+    },
+    "PATH_VQA_open": {
+     "n_rows": 1500,
+     "mean_gen_tokens": 5.63,
+     "p95_gen_tokens": 11.0,
+     "mean_distinct": 1.0
+    }
+   },
+   "l32_bo8_s0": {
+    "SLAKE_open": {
+     "n_rows": 645,
+     "mean_gen_tokens": 4.74,
+     "p95_gen_tokens": 10.0,
+     "mean_distinct": 1.543
+    },
+    "VQA_RAD_open": {
+     "n_rows": 200,
+     "mean_gen_tokens": 5.77,
+     "p95_gen_tokens": 11.0,
+     "mean_distinct": 3.205
+    },
+    "PATH_VQA_open": {
+     "n_rows": 1500,
+     "mean_gen_tokens": 5.82,
+     "p95_gen_tokens": 12.0,
+     "mean_distinct": 4.113
+    }
+   },
+   "l32_bo8_s1": {
+    "SLAKE_open": {
+     "n_rows": 645,
+     "mean_gen_tokens": 4.74,
+     "p95_gen_tokens": 10.0,
+     "mean_distinct": 1.561
+    },
+    "VQA_RAD_open": {
+     "n_rows": 200,
+     "mean_gen_tokens": 5.77,
+     "p95_gen_tokens": 11.0,
+     "mean_distinct": 3.155
+    },
+    "PATH_VQA_open": {
+     "n_rows": 1500,
+     "mean_gen_tokens": 5.89,
+     "p95_gen_tokens": 12.0,
+     "mean_distinct": 4.117
+    }
+   },
+   "l32_bo8_s2": {
+    "SLAKE_open": {
+     "n_rows": 645,
+     "mean_gen_tokens": 4.73,
+     "p95_gen_tokens": 10.0,
+     "mean_distinct": 1.549
+    },
+    "VQA_RAD_open": {
+     "n_rows": 200,
+     "mean_gen_tokens": 5.68,
+     "p95_gen_tokens": 11.0,
+     "mean_distinct": 3.135
+    },
+    "PATH_VQA_open": {
+     "n_rows": 1500,
+     "mean_gen_tokens": 5.91,
+     "p95_gen_tokens": 12.0,
+     "mean_distinct": 4.099
+    }
+   }
+  },
+  "read": "every arm here is DIRECT: a handful of generated tokens, no reasoning trace. A 'direct' arm emitting hundreds of tokens would not be a direct arm."
+ },
+ "cost": {
+  "weighting": "MACRO (equal weight per reporting cell). NEVER pair these with a sample-weighted accuracy.",
+  "unit": "7B-forward-equivalents; one full Lingshu-32B forward = 4.57 (paper_baselines.py:64)",
+  "measured_mean_generated_tokens_per_sample": 5.45,
+  "open_cell_per_item": {
+   "32b_bo1": {
+    "gen_as_charged_flopeq": 4.57,
+    "gen_shared_prefill_flopeq": 4.57,
+    "verifier_as_charged_flopeq": 0.0,
+    "total_as_charged_flopeq": 4.57,
+    "total_shared_prefill_flopeq": 4.57
+   },
+   "32b_bo4": {
+    "gen_as_charged_flopeq": 18.28,
+    "gen_shared_prefill_flopeq": 4.786,
+    "verifier_as_charged_flopeq": 4.0,
+    "total_as_charged_flopeq": 22.28,
+    "total_shared_prefill_flopeq": 8.786
+   },
+   "32b_bo8": {
+    "gen_as_charged_flopeq": 36.56,
+    "gen_shared_prefill_flopeq": 5.074,
+    "verifier_as_charged_flopeq": 8.0,
+    "total_as_charged_flopeq": 44.56,
+    "total_shared_prefill_flopeq": 13.074
+   }
+  },
+  "prefill_sharing_assumption": "vLLM `n=N` shares the vision tower, the merger, the LM prompt pass and its KV across all N samples, so sample k>1 pays only per-token decode + lm_head. Constants taken from artifacts/flop_ratio_derivation_2026-08-03.json:flop_model. The VERIFIER is charged 1.0 per candidate in BOTH columns (no prefix-sharing credit claimed for it), which is the conservative choice for us.",
+  "baseline_always_32b_direct_flopeq": 4.57,
+  "provenance": {
+   "GEN32_F": "as-charged (paper_baselines.py:64)",
+   "marginal decode": "derived from the published FLOP model + MEASURED tokens",
+   "latency_energy": "NOT MEASURED in this attack -- Attack 3 owns the cost endpoint. Wall-clock per generation run is in logs/openstrong_queue.log (DONE lines) and is reported as throughput only, not as a batch-1 serving latency."
+  },
+  "macro_cost_of_A5": {
+   "deployed_accuracy_max_macro_flopeq": 7.951,
+   "deployed_open_cells_flopeq": [
+    13.971,
+    17.304,
+    10.312
+   ],
+   "A5_macro_flopeq_as_charged": 19.463,
+   "A5_macro_flopeq_shared_prefill": 7.655,
+   "vs_always_32b_direct_as_charged": 4.259,
+   "vs_always_32b_direct_shared_prefill": 1.675,
+   "note": "the MCQ half of the A5 policy is the deployed accuracy-max arm UNCHANGED, so its cost is carried over verbatim; only the three open cells are re-costed."
+  }
+ },
+ "seed_averaged_deployable": {
+  "n_seeds": 3,
+  "by_arm": {
+   "A5_formataware": {
+    "macro": 0.6597,
+    "vs_always_32b_direct_MATCHED": {
+     "delta": 0.0012,
+     "lo": -0.0055,
+     "hi": 0.008,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "PMC_VQA": {
+       "delta": 0.0095,
+       "lo": 0.0072,
+       "hi": 0.0118,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "SLAKE_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "MedXpertQA-MM": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "SLAKE_open": {
+       "delta": -0.0067,
+       "lo": -0.0295,
+       "hi": 0.016,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": -0.02,
+       "lo": -0.065,
+       "hi": 0.025,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0269,
+       "lo": 0.0089,
+       "hi": 0.0456,
+       "sig": true,
+       "verdict": "WIN"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0,
+       "SLAKE_closed": 0.0014,
+       "VQA_RAD_closed": 0.0014,
+       "PATH_VQA_closed": 0.0014,
+       "MedXpertQA-MM": 0.0014,
+       "SLAKE_open": 0.0023,
+       "VQA_RAD_open": 0.0042,
+       "PATH_VQA_open": -0.0025
+      },
+      "range": [
+       -0.0025,
+       0.0042
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open"
+     }
+    },
+    "open_only_MATCHED": {
+     "delta": 0.0001,
+     "lo": -0.0183,
+     "hi": 0.0175,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "SLAKE_open": {
+       "delta": -0.0067,
+       "lo": -0.0295,
+       "hi": 0.016,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": -0.02,
+       "lo": -0.065,
+       "hi": 0.0233,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0269,
+       "lo": 0.0082,
+       "hi": 0.0451,
+       "sig": true,
+       "verdict": "WIN"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "SLAKE_open": 0.0034,
+       "VQA_RAD_open": 0.0101,
+       "PATH_VQA_open": -0.0134
+      },
+      "range": [
+       -0.0134,
+       0.0101
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open"
+     }
+    },
+    "per_cell_open": {
+     "SLAKE_open": 0.8134,
+     "VQA_RAD_open": 0.585,
+     "PATH_VQA_open": 0.4109
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "se": 0.0012,
+      "flag": false,
+      "n": 33430
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 836
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 251
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 3362
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 2000
+     },
+     "SLAKE_open": {
+      "delta": -0.0067,
+      "se": 0.0118,
+      "flag": false,
+      "n": 645
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "se": 0.0226,
+      "flag": false,
+      "n": 200
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0269,
+      "se": 0.0094,
+      "flag": false,
+      "n": 1500
+     }
+    }
+   },
+   "A2_N4": {
+    "macro": 0.6633,
+    "vs_always_32b_direct_MATCHED": {
+     "delta": 0.0048,
+     "lo": -0.0014,
+     "hi": 0.011,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "PMC_VQA": {
+       "delta": 0.0095,
+       "lo": 0.0072,
+       "hi": 0.0118,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "SLAKE_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "MedXpertQA-MM": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "SLAKE_open": {
+       "delta": 0.0026,
+       "lo": -0.0165,
+       "hi": 0.0222,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": -0.0017,
+       "lo": -0.0433,
+       "hi": 0.04,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": 0.028,
+       "lo": 0.01,
+       "hi": 0.0451,
+       "sig": true,
+       "verdict": "WIN"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "PMC_VQA": 0.0041,
+       "SLAKE_closed": 0.0055,
+       "VQA_RAD_closed": 0.0055,
+       "PATH_VQA_closed": 0.0055,
+       "MedXpertQA-MM": 0.0055,
+       "SLAKE_open": 0.0051,
+       "VQA_RAD_open": 0.0057,
+       "PATH_VQA_open": 0.0015
+      },
+      "range": [
+       0.0015,
+       0.0057
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open"
+     }
+    },
+    "open_only_MATCHED": {
+     "delta": 0.0096,
+     "lo": -0.007,
+     "hi": 0.0257,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "SLAKE_open": {
+       "delta": 0.0026,
+       "lo": -0.0165,
+       "hi": 0.0217,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": -0.0017,
+       "lo": -0.0433,
+       "hi": 0.04,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": 0.028,
+       "lo": 0.0107,
+       "hi": 0.0453,
+       "sig": true,
+       "verdict": "WIN"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "SLAKE_open": 0.0132,
+       "VQA_RAD_open": 0.0153,
+       "PATH_VQA_open": 0.0004
+      },
+      "range": [
+       0.0004,
+       0.0153
+      ],
+      "cell_carrying_the_claim": "PATH_VQA_open"
+     }
+    },
+    "per_cell_open": {
+     "SLAKE_open": 0.8227,
+     "VQA_RAD_open": 0.6033,
+     "PATH_VQA_open": 0.412
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "se": 0.0012,
+      "flag": false,
+      "n": 33430
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 836
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 251
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 3362
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 2000
+     },
+     "SLAKE_open": {
+      "delta": 0.0026,
+      "se": 0.01,
+      "flag": false,
+      "n": 645
+     },
+     "VQA_RAD_open": {
+      "delta": -0.0017,
+      "se": 0.0212,
+      "flag": false,
+      "n": 200
+     },
+     "PATH_VQA_open": {
+      "delta": 0.028,
+      "se": 0.009,
+      "flag": false,
+      "n": 1500
+     }
+    }
+   },
+   "CONTROL_majority8": {
+    "macro": 0.6594,
+    "vs_always_32b_direct_MATCHED": {
+     "delta": 0.0009,
+     "lo": -0.0028,
+     "hi": 0.0049,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "PMC_VQA": {
+       "delta": 0.0095,
+       "lo": 0.0072,
+       "hi": 0.0118,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "SLAKE_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_closed": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "MedXpertQA-MM": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "SLAKE_open": {
+       "delta": 0.0026,
+       "lo": -0.0067,
+       "hi": 0.0124,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0117,
+       "lo": -0.0133,
+       "hi": 0.0383,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": -0.0162,
+       "lo": -0.0296,
+       "hi": -0.0036,
+       "sig": true,
+       "verdict": "LOSS"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "PMC_VQA": -0.0003,
+       "SLAKE_closed": 0.0011,
+       "VQA_RAD_closed": 0.0011,
+       "PATH_VQA_closed": 0.0011,
+       "MedXpertQA-MM": 0.0011,
+       "SLAKE_open": 0.0007,
+       "VQA_RAD_open": -0.0006,
+       "PATH_VQA_open": 0.0034
+      },
+      "range": [
+       -0.0006,
+       0.0034
+      ],
+      "cell_carrying_the_claim": "VQA_RAD_open"
+     }
+    },
+    "open_only_MATCHED": {
+     "delta": -0.0007,
+     "lo": -0.0108,
+     "hi": 0.0101,
+     "sig": false,
+     "verdict": "TIE",
+     "per_cell": {
+      "SLAKE_open": {
+       "delta": 0.0026,
+       "lo": -0.0072,
+       "hi": 0.0124,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0117,
+       "lo": -0.0133,
+       "hi": 0.0383,
+       "sig": false,
+       "verdict": "TIE"
+      },
+      "PATH_VQA_open": {
+       "delta": -0.0162,
+       "lo": -0.0291,
+       "hi": -0.0031,
+       "sig": true,
+       "verdict": "LOSS"
+      }
+     },
+     "macro_leave_one_out": {
+      "per_dropped_cell": {
+       "SLAKE_open": -0.0022,
+       "VQA_RAD_open": -0.0068,
+       "PATH_VQA_open": 0.0072
+      },
+      "range": [
+       -0.0068,
+       0.0072
+      ],
+      "cell_carrying_the_claim": "VQA_RAD_open"
+     }
+    },
+    "per_cell_open": {
+     "SLAKE_open": 0.8227,
+     "VQA_RAD_open": 0.6167,
+     "PATH_VQA_open": 0.3678
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "se": 0.0012,
+      "flag": false,
+      "n": 33430
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 836
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 251
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 3362
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "se": 0.0,
+      "flag": false,
+      "n": 2000
+     },
+     "SLAKE_open": {
+      "delta": 0.0026,
+      "se": 0.0049,
+      "flag": false,
+      "n": 645
+     },
+     "VQA_RAD_open": {
+      "delta": 0.0117,
+      "se": 0.0133,
+      "flag": false,
+      "n": 200
+     },
+     "PATH_VQA_open": {
+      "delta": -0.0162,
+      "se": 0.0067,
+      "flag": true,
+      "n": 1500
+     }
+    }
+   }
+  },
+  "estimator": "per item, the mean over the independent generation seeds of the selected answer's judge label -- i.e. the EXPECTED outcome of a randomly-seeded deployment. Item-level paired bootstrap, nboot=10000."
+ },
+ "seed_aggregated_headline": {
+  "by_arm": {
+   "A5_formataware": {
+    "n_seeds": 3,
+    "seeds": [
+     "A5_formataware_l32_bo8_s0",
+     "A5_formataware_l32_bo8_s1",
+     "A5_formataware_l32_bo8_s2"
+    ],
+    "macro_delta_MATCHED_mean": 0.0012,
+    "macro_delta_MATCHED_sd": 0.0007,
+    "macro_delta_MATCHED_range": [
+     0.0005,
+     0.0019
+    ],
+    "macro_delta_published_mean": 0.003,
+    "per_seed_MATCHED": {
+     "A5_formataware_l32_bo8_s0": 0.0013,
+     "A5_formataware_l32_bo8_s1": 0.0005,
+     "A5_formataware_l32_bo8_s2": 0.0019
+    },
+    "per_seed_ci": {
+     "A5_formataware_l32_bo8_s0": [
+      -0.0055,
+      0.0081
+     ],
+     "A5_formataware_l32_bo8_s1": [
+      -0.0063,
+      0.0074
+     ],
+     "A5_formataware_l32_bo8_s2": [
+      -0.0054,
+      0.0091
+     ]
+    }
+   },
+   "A2_N4": {
+    "n_seeds": 3,
+    "seeds": [
+     "A2_N4_l32_bo8_s0",
+     "A2_N4_l32_bo8_s1",
+     "A2_N4_l32_bo8_s2"
+    ],
+    "macro_delta_MATCHED_mean": 0.0048,
+    "macro_delta_MATCHED_sd": 0.0016,
+    "macro_delta_MATCHED_range": [
+     0.0034,
+     0.0065
+    ],
+    "macro_delta_published_mean": 0.0066,
+    "per_seed_MATCHED": {
+     "A2_N4_l32_bo8_s0": 0.0065,
+     "A2_N4_l32_bo8_s1": 0.0034,
+     "A2_N4_l32_bo8_s2": 0.0045
+    },
+    "per_seed_ci": {
+     "A2_N4_l32_bo8_s0": [
+      -0.0001,
+      0.0132
+     ],
+     "A2_N4_l32_bo8_s1": [
+      -0.0027,
+      0.0098
+     ],
+     "A2_N4_l32_bo8_s2": [
+      -0.0023,
+      0.0117
+     ]
+    }
+   },
+   "CONTROL_majority8": {
+    "n_seeds": 3,
+    "seeds": [
+     "CONTROL_majority8_l32_bo8_s0",
+     "CONTROL_majority8_l32_bo8_s1",
+     "CONTROL_majority8_l32_bo8_s2"
+    ],
+    "macro_delta_MATCHED_mean": 0.001,
+    "macro_delta_MATCHED_sd": 0.0022,
+    "macro_delta_MATCHED_range": [
+     -0.001,
+     0.0033
+    ],
+    "macro_delta_published_mean": 0.0028,
+    "per_seed_MATCHED": {
+     "CONTROL_majority8_l32_bo8_s0": 0.0033,
+     "CONTROL_majority8_l32_bo8_s1": -0.001,
+     "CONTROL_majority8_l32_bo8_s2": 0.0006
+    },
+    "per_seed_ci": {
+     "CONTROL_majority8_l32_bo8_s0": [
+      -0.0014,
+      0.0081
+     ],
+     "CONTROL_majority8_l32_bo8_s1": [
+      -0.0052,
+      0.0033
+     ],
+     "CONTROL_majority8_l32_bo8_s2": [
+      -0.0035,
+      0.0048
+     ]
+    }
+   },
+   "BASELINE_always32b_bo8": {
+    "n_seeds": 3,
+    "seeds": [
+     "BASELINE_always32b_bo8_l32_bo8_s0",
+     "BASELINE_always32b_bo8_l32_bo8_s1",
+     "BASELINE_always32b_bo8_l32_bo8_s2"
+    ],
+    "macro_delta_MATCHED_mean": 0.0,
+    "macro_delta_MATCHED_sd": 0.0007,
+    "macro_delta_MATCHED_range": [
+     -0.0007,
+     0.0007
+    ],
+    "macro_delta_published_mean": 0.0018,
+    "per_seed_MATCHED": {
+     "BASELINE_always32b_bo8_l32_bo8_s0": 0.0001,
+     "BASELINE_always32b_bo8_l32_bo8_s1": -0.0007,
+     "BASELINE_always32b_bo8_l32_bo8_s2": 0.0007
+    },
+    "per_seed_ci": {
+     "BASELINE_always32b_bo8_l32_bo8_s0": [
+      -0.0067,
+      0.0069
+     ],
+     "BASELINE_always32b_bo8_l32_bo8_s1": [
+      -0.0075,
+      0.0061
+     ],
+     "BASELINE_always32b_bo8_l32_bo8_s2": [
+      -0.0065,
+      0.0077
+     ]
+    }
+   }
+  },
+  "note": "seeds are INDEPENDENT vLLM generation-sampling seeds of the 8-sample pool; the verifier and the selector are FROZEN, so no training seed is involved. The seed-averaged number is the deployable one; the per-seed CIs are item-level."
+ },
+ "verdict": {
+  "primary_endpoint_arm": "A5_formataware_l32_bo8_s0",
+  "primary_macro_delta_vs_always_32b_direct_MATCHED": 0.0013,
+  "primary_ci": [
+   -0.0055,
+   0.0081
+  ],
+  "primary_verdict": "TIE",
+  "bar_for_a_significant_win": 0.0029,
+  "SUCCESS_primary_win": false,
+  "SUCCESS_partial_open_delta_ge_0.0077_CI_excl_zero": false,
+  "KILL_K1_fired": true,
+  "KILL_K1_cells": [
+   "SLAKE_open",
+   "VQA_RAD_open"
+  ],
+  "KILL_K2_fired": false,
+  "KILL_K2_min_sel_eff_on_32b_pool": 0.7063,
+  "guardrail_flags": []
+ },
+ "baseline_honesty": {
+  "obligation": "A1's own accuracy IS always-32B-best-of-8. The pre-registration required it to be reported as a new, stronger, costlier baseline if it exceeds always-32B-direct.",
+  "always_32b_bo8_macro": {
+   "l32_bo8_s0": 0.6586,
+   "l32_bo8_s1": 0.6578,
+   "l32_bo8_s2": 0.6592
+  },
+  "vs_always_32b_direct_MATCHED": {
+   "l32_bo8_s0": 0.0001,
+   "l32_bo8_s1": -0.0007,
+   "l32_bo8_s2": 0.0007
+  },
+  "finding": "always-32B-best-of-8-plus-verifier does NOT beat always-32B-direct on the 8-cell macro. The paper's bar therefore does NOT rise: always-32B-direct remains a fair and in fact compute-optimal way to spend the 32B on this suite.",
+  "cost_of_the_stronger_baseline": "4.26x always-32B-direct as-charged / 1.68x with the prefill-sharing credit (see cost.macro_cost_of_A5)."
+ },
+ "A3_incumbent_7b_bestof8": {
+  "selected_per_cell": {
+   "SLAKE_open": 0.7473,
+   "VQA_RAD_open": 0.48,
+   "PATH_VQA_open": 0.3733
+  },
+  "oracle_per_cell": {
+   "SLAKE_open": 0.8791,
+   "VQA_RAD_open": 0.63,
+   "PATH_VQA_open": 0.5167
+  },
+  "sel_eff_per_cell": {
+   "SLAKE_open": 0.8501,
+   "VQA_RAD_open": 0.7619,
+   "PATH_VQA_open": 0.7226
+  },
+  "greedy_7b_per_cell": {
+   "SLAKE_open": 0.7364,
+   "VQA_RAD_open": 0.465,
+   "PATH_VQA_open": 0.324
+  },
+  "note": "the SAME frozen verifier on the SAME items, selecting over LINGSHU-7B candidates. This is the contrast that isolates the generator: 7B pool vs 32B pool."
+ },
+ "mechanism": {
+  "headline_finding": "Giving the STRONG leg a best-of-8 pool does NOT beat always-32B-direct on the 8-cell macro. Seed-averaged over 3 independent generation seeds, the pre-registered format-aware policy is +0.0012 [-0.0055, +0.0080] -- a TIE, and the pre-registered kill criterion K1 fired.",
+  "why_it_fails_and_it_is_NOT_the_verifier": [
+   "K2 (verifier does not transfer) did NOT fire. The frozen clean verifier transfers to 32B candidates BETTER than to the 7B candidates it was measured on: sel_eff 0.897/0.831/0.706 (SLAKE/VQA-RAD/PathVQA) against 0.850/0.762/0.723 on the 7B pools.",
+   "Coverage also improves: the 32B's oracle@8 beats the 7B's on every cell (0.901 vs 0.879, 0.710 vs 0.630, 0.583 vs 0.517).",
+   "BOTH inputs to the identity `selected = sel_eff x oracle@8` therefore got BETTER, and the arm still ties -- because the BAR moved with them. To beat greedy on a cell you need sel_eff > greedy/oracle@8, and for the 32B that threshold is 0.911 (SLAKE) and 0.852 (VQA-RAD) against achieved 0.897 and 0.831. The stronger generator raises the target faster than it raises either factor.",
+   "The structural reason is pool CONCENTRATION. The 32B emits only 1.54 distinct answers in 8 samples on SLAKE (7B: 2.04) and 4.11 on PathVQA (7B: 4.61). Where the model is confident the pool is unanimous and best-of-N has nothing to choose between; where it is not confident the pool is diverse but its greedy answer was already the best guess. 75.2% of SLAKE's recoverable items are unanimous, so 75% of the 'selection win' is arithmetically unavailable."
+  ],
+  "the_one_place_it_works": "PATH_VQA_open, +0.0269 [+0.0089, +0.0456] seed-averaged, a CI-clean WIN and guardrail-clean. It is the only open cell with large headroom (oracle@8 0.583 vs greedy 0.384) and the lowest required sel_eff (0.658). It is also the load-bearing cell of every vs-reasoning and vs-direct claim in this project.",
+  "N_scaling_reproduces_on_a_new_generator": "sel_eff falls per doubling of N on the 32B pool too: -0.031 (SLAKE), -0.053 (VQA-RAD), -0.082 (PathVQA), against the -0.0761 measured on the 7B pool (verifier_n_scaling_2026-08-03.json). N=4 beats N=8 on 2 of 3 cells. 'More samples is the wrong lever' is now a two-generator result.",
+  "eval_visibility_warning": "A2 (N=4) is a PRE-REGISTERED ARM, but preferring N=4 over N=8 *because the eval says so* is an eval-visible choice. Its +0.0048 [-0.0014, +0.0110] is reported as a DIAGNOSTIC and is a TIE in any case. No N was selected on train-split information, because no 32B train-split pool exists.",
+  "verifier_free_control": "32B majority-of-8 (self-consistency, no verifier) is +0.0009 [-0.0028, +0.0049] and FAILS the guardrail on PathVQA-open (-0.0162 [-0.0296, -0.0036] LOSS). The trained verifier is strictly better than the free selector, which is the third independent confirmation of Finding 3 (training, not size, is the active ingredient in verification)."
+ }
+}

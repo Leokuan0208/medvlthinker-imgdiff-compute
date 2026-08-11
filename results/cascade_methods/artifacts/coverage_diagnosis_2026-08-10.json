@@ -1,0 +1,1715 @@
+{
+ "title": "SCOUT B -- COVERAGE DIAGNOSIS (open-text best-of-N, Lingshu-7B, n=2,345). Does raising oracle@N have a multiplier, and is the 8-sample coverage ceiling a DIVERSITY failure or a CAPABILITY failure?",
+ "date": "2026-08-10",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "reproduce": [
+  "python3 src/cascade_methods/coverage_diagnosis.py",
+  "python3 src/cascade_methods/coverage_diagnosis2.py",
+  "python3 src/cascade_methods/coverage_diagnosis3.py"
+ ],
+ "nboot": 10000,
+ "seed": 20260810,
+ "numerics": {
+  "OMP_NUM_THREADS": 1,
+  "PYTHONHASHSEED": 0,
+  "note": "pure-numpy counting + bootstrap; no GEMM, so the TF32 landmine does not apply. No model was run."
+ },
+ "HEADLINE": {
+  "1_the_briefs_arithmetic_is_WRONG": "selected = oracle x sel_eff is an EXACT identity (max |err| 5.6e-17 over 4 cells). The brief's additive form 'selected ~= greedy + sel_eff*(oracle-greedy)' over-predicts selected accuracy by +0.090 to +0.111 on every cell. It plugs the CONDITIONAL-MEAN sel_eff (0.775/0.811) into the DIFFERENCE-form formula; the difference-form sel_eff is 0.2029, not 0.81.",
+  "2_the_multiplier_is_0.45_not_0.81": "MEASURED conversion of NEWLY-covered questions by the deployed selector falls monotonically with N: 0.935 (covered at N=1) -> 0.671 (added by sample 2) -> 0.531 (added by 3..4) -> 0.4474 [0.3684, 0.5263] (added by 5..8). The realized d(selected)/d(oracle) is 0.303 over N=4->8 and 0.400 at N=7->8. The brief's 0.81 is optimistic by 1.8x and its CI excludes 0.81.",
+  "3_it_is_a_CAPABILITY_failure_not_a_DIVERSITY_failure": "The no-coverage subset is the HIGH-diversity subset. mean distinct answers 5.17 vs 3.00 on recoverable; mean modal share 0.432 vs 0.701; mean normalized entropy 0.830 vs 0.522. 50.2% of no-coverage questions already produce 6-8 distinct answers out of 8; only 7.8% produce one answer eight times. oracle@8 by exploration stratum: 0.890 at nd=1, 0.364 at nd=6-8. An INDEPENDENT 16-sample redraw (3x the total budget) rescues only 21.2% of them.",
+  "4_they_are_not_near_misses_so_IMAGE-SIDE_is_NOT_indicated": "On the no-coverage subset the best token-F1 of any pooled answer against gold is 0.113 (vs 0.889 on recoverable); 71.5% of no-coverage questions have ZERO gold tokens anywhere in the 8-answer pool; only 10.1% are near misses (F1>=0.5). The brief's conditional -- 'if coverage failures are perception failures on short factual answers, image-side interventions are indicated' -- has a FALSE antecedent. Gold is LONGER on no-coverage items (3.06 words vs 1.70) and only 74.8% are <=3 words vs 93.4% on recoverable. Laterality is a real but minor enrichment (14.5% of no-coverage vs 10.3% of recoverable; laterality oracle@8 0.543 vs 0.637).",
+  "5_the_iid_sampling_ceiling_is_below_what_is_needed_on_2_of_3_cells": "Capture-recapture (endpoint-8 vs independent-16, judge-labelled) puts the reachable-by-sampling share at slake 0.917 / vqa_rad 0.692 / pathvqa 0.626 (macro 0.745). At the MEASURED multiplier the oracle needed to merely TIE always-32B-direct is 0.958 / 0.868 / 0.518. SLAKE-open and VQA-RAD-open are UNREACHABLE by iid sampling at any N; PathVQA-open is already there.",
+  "6_the_one_real_lever_found_is_heterogeneous-config_union_and_it_is_too_small": "JUDGE-labelled, vqa_rad_open n=200: union of the endpoint 8-pool with a DIFFERENT-config 8-pool gives +0.065 [+0.035, +0.100] oracle (temp 1.0) or +0.060 [+0.030, +0.095] (think mode), versus +0.035 [+0.015, +0.060] for a second iid draw at the SAME config -- so config heterogeneity roughly DOUBLES the coverage gain per sample. At the measured 0.45 multiplier that is ~+0.029 selected accuracy for 2x the generation cost, against a 0.120 gap to 32B-direct on that cell.",
+  "VERDICT": "The coverage track does NOT have the multiplier the round's premise assumes, and the ceiling it can reach is below the bar on 2 of the 3 open cells. Coverage is worth ~0.45 on the margin, not 0.81; it saturates at ~+0.035 oracle per doubling of N; and the questions it cannot reach are ones the model gets wrong confidently-diversely, not ones it failed to explore. RECOMMENDATION: do NOT spend GPU on raising oracle@N by sampling. The only coverage lever with a measured, significant effect is heterogeneous-CONFIG generation, and even it is ~4x too small on the binding cell.",
+  "7_the_only_CI-clean_coverage_lever_found": "PathVQA-open, n=795, EXACT-MATCH currency on both sides: one sample at a CHANGED IMAGE RESOLUTION rescues more no-coverage questions than one more iid sample -- cap80 +0.0214 [+0.0050, +0.0377], cap160 +0.0201 [+0.0050, +0.0365]. Judge-labelled config heterogeneity points the same way but without individually-significant CIs (few-shot-5 rescues 0.1154 of SLAKE-open no-coverage vs 0.0602 for one more iid sample; think-mode 0.0389 vs 0.0186 per sample on VQA-RAD-open). Magnitude: adding both resolution views to PathVQA-open is worth ~+0.0016 on the 8-cell macro, on the one open cell already above always-32B-direct."
+ },
+ "sources": {
+  "endpoint": "ckpts/train/lora_verifier_disjoint/transfer_dump_{slake,vqa_rad,pathvqa}_open_lingshu7b.json",
+  "metric": "src/training_methods/genframe_data.py (frozen)",
+  "sc8": "ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b_sc8.jsonl (+ _scexploded.judge.jsonl)",
+  "sc16": "ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b_sc16.jsonl (+ _scexploded.judge.jsonl) -- INDEPENDENT draw",
+  "baselines": "results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json per_arm.disjoint"
+ },
+ "null_tests": {
+  "frozen_metric_null_test": {
+   "pass": true,
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7225806451612903
+    }
+   }
+  },
+  "sc8_dump_is_the_endpoint_pool": {
+   "slake_open": {
+    "n": 645,
+    "pred_mismatch": 0,
+    "judge_label_mismatch": 0
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "pred_mismatch": 0,
+    "judge_label_mismatch": 0
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "pred_mismatch": 0,
+    "judge_label_mismatch": 0
+   }
+  },
+  "note": "sc8 preds reproduce the transfer-dump pool item-for-item and the judge labels reconstructed from *_scexploded.judge.jsonl reproduce transfer-dump `sl` exactly; the sc8 file's own `oks` field is EXACT-MATCH correctness and does NOT equal the judge label -- never mix the two."
+ },
+ "part1_arithmetic": {
+  "per_cell": [
+   {
+    "cell": "slake_open",
+    "n": 645,
+    "greedy": 0.7364341085271318,
+    "oracle@8": 0.8790697674418605,
+    "selected": 0.7472868217054264,
+    "sel_eff": 0.8500881834215167,
+    "pred_multiplicative_oracle_x_seleff": 0.7472868217054264,
+    "err_multiplicative": 0.0,
+    "pred_brief_additive": 0.8576869967050846,
+    "err_brief_additive": -0.11040017499965826
+   },
+   {
+    "cell": "vqa_rad_open",
+    "n": 200,
+    "greedy": 0.465,
+    "oracle@8": 0.63,
+    "selected": 0.48,
+    "sel_eff": 0.7619047619047619,
+    "pred_multiplicative_oracle_x_seleff": 0.48,
+    "err_multiplicative": 0.0,
+    "pred_brief_additive": 0.5907142857142857,
+    "err_brief_additive": -0.11071428571428577
+   },
+   {
+    "cell": "pathvqa_open",
+    "n": 1500,
+    "greedy": 0.324,
+    "oracle@8": 0.5166666666666667,
+    "selected": 0.37333333333333335,
+    "sel_eff": 0.7225806451612903,
+    "pred_multiplicative_oracle_x_seleff": 0.37333333333333335,
+    "err_multiplicative": 0.0,
+    "pred_brief_additive": 0.46321720430107527,
+    "err_brief_additive": -0.08988387096774192
+   },
+   {
+    "cell": "POOLED",
+    "n": 2345,
+    "greedy": 0.4494669509594883,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "sel_eff": 0.7752043596730245,
+    "pred_multiplicative_oracle_x_seleff": 0.4852878464818763,
+    "err_multiplicative": 5.551115123125783e-17,
+    "pred_brief_additive": 0.5863260575286278,
+    "err_brief_additive": -0.10103821104675142
+   }
+  ],
+  "prefix_pool_curve": [
+   {
+    "N": 1,
+    "oracle": 0.423454157782516,
+    "selected": 0.423454157782516,
+    "sel_eff": 1.0,
+    "purity_given_recoverable": 1.0,
+    "random_pick_acc": 0.423454157782516
+   },
+   {
+    "N": 2,
+    "oracle": 0.49211087420042643,
+    "selected": 0.45245202558635395,
+    "sel_eff": 0.9194107452339688,
+    "purity_given_recoverable": 0.8596187175043327,
+    "random_pick_acc": 0.4230277185501066
+   },
+   {
+    "N": 3,
+    "oracle": 0.535181236673774,
+    "selected": 0.46780383795309166,
+    "sel_eff": 0.8741035856573706,
+    "purity_given_recoverable": 0.7891102257636121,
+    "random_pick_acc": 0.42231698649609095
+   },
+   {
+    "N": 4,
+    "oracle": 0.5611940298507463,
+    "selected": 0.47547974413646055,
+    "sel_eff": 0.8472644376899696,
+    "purity_given_recoverable": 0.7537993920972644,
+    "random_pick_acc": 0.4230277185501066
+   },
+   {
+    "N": 5,
+    "oracle": 0.5846481876332622,
+    "selected": 0.479317697228145,
+    "sel_eff": 0.8198395331874544,
+    "purity_given_recoverable": 0.725018234865062,
+    "random_pick_acc": 0.42388059701492536
+   },
+   {
+    "N": 6,
+    "oracle": 0.6004264392324093,
+    "selected": 0.48230277185501064,
+    "sel_eff": 0.8032670454545454,
+    "purity_given_recoverable": 0.704782196969697,
+    "random_pick_acc": 0.42316986496090975
+   },
+   {
+    "N": 7,
+    "oracle": 0.6132196162046908,
+    "selected": 0.4814498933901919,
+    "sel_eff": 0.7851182197496523,
+    "purity_given_recoverable": 0.6889529107887941,
+    "random_pick_acc": 0.42247943953700884
+   },
+   {
+    "N": 8,
+    "oracle": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "sel_eff": 0.7752043596730245,
+    "purity_given_recoverable": 0.6762602179836512,
+    "random_pick_acc": 0.42334754797441365
+   }
+  ]
+ },
+ "part1_oracle_at_N": {
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "oracle_at_N_subset_expectation_1..16": [
+     0.720736,
+     0.782171,
+     0.81448,
+     0.834965,
+     0.84919,
+     0.85968,
+     0.867761,
+     0.874204,
+     0.879487,
+     0.88392,
+     0.887712,
+     0.891005,
+     0.893898,
+     0.89646,
+     0.89874,
+     0.900775
+    ],
+    "oracle@8_sc16run": 0.8742041765297579,
+    "oracle@16_sc16run": 0.9007751937984496,
+    "delta_16_minus_8": 0.02657101726869171,
+    "oracle@8_endpoint_judge": 0.8790697674418605,
+    "union_endpoint8_plus_sc16_oracle@24": 0.9162790697674419,
+    "greedy": 0.7364341085271318,
+    "always_32b_direct": 0.8186
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "oracle_at_N_subset_expectation_1..16": [
+     0.440937,
+     0.512958,
+     0.551527,
+     0.576354,
+     0.593827,
+     0.60689,
+     0.617123,
+     0.625455,
+     0.632465,
+     0.638528,
+     0.643894,
+     0.648739,
+     0.653187,
+     0.657333,
+     0.66125,
+     0.665
+    ],
+    "oracle@8_sc16run": 0.6254549339549339,
+    "oracle@16_sc16run": 0.665,
+    "delta_16_minus_8": 0.039545066045066135,
+    "oracle@8_endpoint_judge": 0.63,
+    "union_endpoint8_plus_sc16_oracle@24": 0.69,
+    "greedy": 0.465,
+    "always_32b_direct": 0.6
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "oracle_at_N_subset_expectation_1..16": [
+     0.293708,
+     0.366211,
+     0.407731,
+     0.437032,
+     0.459639,
+     0.477967,
+     0.493311,
+     0.506455,
+     0.517905,
+     0.528009,
+     0.537016,
+     0.545108,
+     0.552423,
+     0.559067,
+     0.565125,
+     0.570667
+    ],
+    "oracle@8_sc16run": 0.5064547526547526,
+    "oracle@16_sc16run": 0.5706666666666667,
+    "delta_16_minus_8": 0.06421191401191406,
+    "oracle@8_endpoint_judge": 0.5166666666666667,
+    "union_endpoint8_plus_sc16_oracle@24": 0.6166666666666667,
+    "greedy": 0.324,
+    "always_32b_direct": 0.376
+   }
+  },
+  "macro": {
+   "oracle@8_sc16run": 0.6687046210464814,
+   "oracle@16_sc16run": 0.7121472868217055,
+   "oracle@8_endpoint_judge": 0.6752454780361757,
+   "union_endpoint8_plus_sc16_oracle@24": 0.7409819121447029,
+   "greedy": 0.5084780361757106,
+   "always_32b_direct": 0.5982,
+   "oracle_at_N_1..16": [
+    0.48512700000000003,
+    0.55378,
+    0.591246,
+    0.616117,
+    0.6342186666666666,
+    0.648179,
+    0.6593983333333334,
+    0.6687046666666666,
+    0.676619,
+    0.6834856666666665,
+    0.6895406666666667,
+    0.6949506666666667,
+    0.699836,
+    0.7042866666666666,
+    0.7083716666666667,
+    0.7121473333333332
+   ]
+  },
+  "sample_weighted": {
+   "oracle@8_sc16run": 0.6177547162621789,
+   "oracle@16_sc16run": 0.6695095948827292,
+   "oracle@8_endpoint_judge": 0.6260127931769722,
+   "union_endpoint8_plus_sc16_oracle@24": 0.7053304904051173,
+   "greedy": 0.4494669509594883,
+   "always_32b_direct": 0.5168430703624732
+  }
+ },
+ "part1_diversity_vs_capability": {
+  "n_distinct_hist_all": {
+   "1": 620,
+   "2": 342,
+   "3": 284,
+   "4": 209,
+   "5": 198,
+   "6": 173,
+   "7": 229,
+   "8": 290
+  },
+  "n_distinct_hist_recoverable": {
+   "1": 552,
+   "2": 247,
+   "3": 179,
+   "4": 134,
+   "5": 104,
+   "6": 76,
+   "7": 92,
+   "8": 84
+  },
+  "n_distinct_hist_no_coverage": {
+   "1": 68,
+   "2": 95,
+   "3": 105,
+   "4": 75,
+   "5": 94,
+   "6": 97,
+   "7": 137,
+   "8": 206
+  },
+  "mean_n_distinct": {
+   "all": 3.8136460554371,
+   "recoverable": 3.0047683923705724,
+   "no_coverage": 5.167616875712657
+  },
+  "mean_modal_share": {
+   "all": 0.6001066098081024,
+   "recoverable": 0.7006982288828338,
+   "no_coverage": 0.43172748004561
+  },
+  "mean_normalized_entropy": {
+   "all": 0.637264479375496,
+   "recoverable": 0.5218235518949965,
+   "no_coverage": 0.8304996920794564
+  },
+  "strata_by_n_distinct": {
+   "nd=1 (one answer 8x)": {
+    "n": 620,
+    "share_of_all": 0.26439232409381663,
+    "oracle@8": 0.8903225806451613,
+    "n_no_coverage": 68,
+    "share_of_no_coverage": 0.07753705815279362
+   },
+   "nd=2-3": {
+    "n": 626,
+    "share_of_all": 0.2669509594882729,
+    "oracle@8": 0.6805111821086262,
+    "n_no_coverage": 200,
+    "share_of_no_coverage": 0.22805017103762829
+   },
+   "nd=4-5": {
+    "n": 407,
+    "share_of_all": 0.17356076759061834,
+    "oracle@8": 0.5847665847665847,
+    "n_no_coverage": 169,
+    "share_of_no_coverage": 0.19270239452679588
+   },
+   "nd=6-8 (near-max exploration)": {
+    "n": 692,
+    "share_of_all": 0.2950959488272921,
+    "oracle@8": 0.36416184971098264,
+    "n_no_coverage": 440,
+    "share_of_no_coverage": 0.5017103762827823
+   }
+  },
+  "cross_run_rescue": {
+   "slake_open": {
+    "n_no_coverage_at_8": 78,
+    "rescued_by_independent_16": 24,
+    "rescue_rate": 0.3076923076923077,
+    "unanimous_nd1_subset": {
+     "n": 21,
+     "rescued": 0,
+     "rescue_rate": 0.0
+    },
+    "high_diversity_nd>=6_subset": {
+     "n": 9,
+     "rescued": 2,
+     "rescue_rate": 0.2222222222222222
+    }
+   },
+   "vqa_rad_open": {
+    "n_no_coverage_at_8": 74,
+    "rescued_by_independent_16": 12,
+    "rescue_rate": 0.16216216216216217,
+    "unanimous_nd1_subset": {
+     "n": 8,
+     "rescued": 0,
+     "rescue_rate": 0.0
+    },
+    "high_diversity_nd>=6_subset": {
+     "n": 24,
+     "rescued": 7,
+     "rescue_rate": 0.2916666666666667
+    }
+   },
+   "pathvqa_open": {
+    "n_no_coverage_at_8": 725,
+    "rescued_by_independent_16": 150,
+    "rescue_rate": 0.20689655172413793,
+    "unanimous_nd1_subset": {
+     "n": 39,
+     "rescued": 9,
+     "rescue_rate": 0.23076923076923078
+    },
+    "high_diversity_nd>=6_subset": {
+     "n": 407,
+     "rescued": 88,
+     "rescue_rate": 0.21621621621621623
+    }
+   }
+  },
+  "cross_run_rescue_pooled": {
+   "n_no_coverage_at_8": 877,
+   "rescued_by_independent_16": 186,
+   "rescue_rate": 0.2120866590649943,
+   "unanimous_nd1": {
+    "n": 68,
+    "rescued": 9,
+    "rescue_rate": 0.1323529411764706
+   },
+   "high_diversity_nd>=6": {
+    "n": 440,
+    "rescued": 97,
+    "rescue_rate": 0.22045454545454546
+   }
+  }
+ },
+ "part1_signature": {
+  "all": {
+   "n": 2345,
+   "mean_gold_words": 2.20682302771855,
+   "mean_pred_words": 1.9437100213219616,
+   "share_gold_<=3_words": 0.8643923240938166,
+   "mean_best_token_f1_vs_gold": 0.5989321334475374,
+   "share_best_f1_zero (NO gold token anywhere in pool)": 0.306183368869936,
+   "share_best_f1_>=0.5 (NEAR MISS)": 0.6046908315565032,
+   "mean_gold_token_recall_over_pool": 0.6088788886022641,
+   "share_laterality": 0.11855010660980811,
+   "share_yesno": 0.0008528784648187633,
+   "mean_n_distinct": 3.8136460554371
+  },
+  "recoverable": {
+   "n": 1468,
+   "mean_gold_words": 1.6961852861035422,
+   "mean_pred_words": 1.7209638964577656,
+   "share_gold_<=3_words": 0.9339237057220708,
+   "mean_best_token_f1_vs_gold": 0.8892096212860232,
+   "share_best_f1_zero (NO gold token anywhere in pool)": 0.06198910081743869,
+   "share_best_f1_>=0.5 (NEAR MISS)": 0.9053133514986376,
+   "mean_gold_token_recall_over_pool": 0.8990458678469578,
+   "share_laterality": 0.10286103542234333,
+   "share_yesno": 0.0006811989100817438,
+   "mean_n_distinct": 3.0047683923705724
+  },
+  "no_coverage": {
+   "n": 877,
+   "mean_gold_words": 3.0615735461801594,
+   "mean_pred_words": 2.3165621436716077,
+   "share_gold_<=3_words": 0.7480045610034207,
+   "mean_best_token_f1_vs_gold": 0.1130400557429798,
+   "share_best_f1_zero (NO gold token anywhere in pool)": 0.7149372862029647,
+   "share_best_f1_>=0.5 (NEAR MISS)": 0.10148232611174458,
+   "mean_gold_token_recall_over_pool": 0.12317178993497785,
+   "share_laterality": 0.14481185860889395,
+   "share_yesno": 0.0011402508551881414,
+   "mean_n_distinct": 5.167616875712657
+  },
+  "per_cell_no_coverage": {
+   "slake_open": {
+    "n": 78,
+    "mean_gold_words": 2.41025641025641,
+    "mean_pred_words": 2.53525641025641,
+    "share_gold_<=3_words": 0.8333333333333334,
+    "mean_best_token_f1_vs_gold": 0.30690264151802615,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.5256410256410257,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.4230769230769231,
+    "mean_gold_token_recall_over_pool": 0.33418803418803417,
+    "share_laterality": 0.32051282051282054,
+    "share_yesno": 0.0,
+    "mean_n_distinct": 2.9743589743589745
+   },
+   "vqa_rad_open": {
+    "n": 74,
+    "mean_gold_words": 3.2027027027027026,
+    "mean_pred_words": 2.231418918918919,
+    "share_gold_<=3_words": 0.6486486486486487,
+    "mean_best_token_f1_vs_gold": 0.12816387816387817,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.6756756756756757,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.12162162162162163,
+    "mean_gold_token_recall_over_pool": 0.13864221364221363,
+    "share_laterality": 0.3918918918918919,
+    "share_yesno": 0.013513513513513514,
+    "mean_n_distinct": 4.324324324324325
+   },
+   "pathvqa_open": {
+    "n": 725,
+    "mean_gold_words": 3.117241379310345,
+    "mean_pred_words": 2.3017241379310347,
+    "share_gold_<=3_words": 0.7489655172413793,
+    "mean_best_token_f1_vs_gold": 0.09063944257111761,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.7393103448275862,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.06482758620689655,
+    "mean_gold_token_recall_over_pool": 0.09889030247832427,
+    "share_laterality": 0.1006896551724138,
+    "share_yesno": 0.0,
+    "mean_n_distinct": 5.489655172413793
+   }
+  },
+  "per_cell_recoverable": {
+   "slake_open": {
+    "n": 567,
+    "mean_gold_words": 1.6754850088183422,
+    "mean_pred_words": 1.6849647266313934,
+    "share_gold_<=3_words": 0.9365079365079365,
+    "mean_best_token_f1_vs_gold": 0.9740178692559645,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.010582010582010581,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.982363315696649,
+    "mean_gold_token_recall_over_pool": 0.9799529688418577,
+    "share_laterality": 0.13403880070546736,
+    "share_yesno": 0.0,
+    "mean_n_distinct": 1.90652557319224
+   },
+   "vqa_rad_open": {
+    "n": 126,
+    "mean_gold_words": 1.8333333333333333,
+    "mean_pred_words": 1.8432539682539681,
+    "share_gold_<=3_words": 0.9206349206349206,
+    "mean_best_token_f1_vs_gold": 0.7480725623582767,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.15873015873015872,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.8015873015873016,
+    "mean_gold_token_recall_over_pool": 0.7670634920634921,
+    "share_laterality": 0.30952380952380953,
+    "share_yesno": 0.0,
+    "mean_n_distinct": 3.0873015873015874
+   },
+   "pathvqa_open": {
+    "n": 775,
+    "mean_gold_words": 1.689032258064516,
+    "mean_pred_words": 1.7274193548387098,
+    "share_gold_<=3_words": 0.9341935483870968,
+    "mean_best_token_f1_vs_gold": 0.8501089668678804,
+    "share_best_f1_zero (NO gold token anywhere in pool)": 0.08387096774193549,
+    "share_best_f1_>=0.5 (NEAR MISS)": 0.8658064516129033,
+    "mean_gold_token_recall_over_pool": 0.8613109686012912,
+    "share_laterality": 0.04645161290322581,
+    "share_yesno": 0.0012903225806451613,
+    "mean_n_distinct": 3.7948387096774194
+   }
+  },
+  "slices": {
+   "laterality": {
+    "n": 278,
+    "share_of_pool": 0.11855010660980811,
+    "oracle@8": 0.5431654676258992
+   },
+   "yesno": {
+    "n": 2,
+    "share_of_pool": 0.0008528784648187633,
+    "oracle@8": 0.5
+   },
+   "other": {
+    "n": 2066,
+    "oracle@8": 0.6369796708615683
+   }
+  }
+ },
+ "part2_multiplier": {
+  "incumbent_clean_disjoint": {
+   "sel_eff_all": 0.7752043596730245,
+   "selected": 0.48528784648187634,
+   "oracle": 0.6260127931769722,
+   "per_ds_sel_eff": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   },
+   "conversion_of_added_coverage": {
+    "recoverable_at_1": {
+     "n": 993,
+     "conversion_rate": 0.9013091641490433
+    },
+    "ADDED_by_samples_2..2": {
+     "rate": 0.6521739130434783,
+     "n": 161,
+     "ci95": [
+      0.577639751552795,
+      0.7267080745341615
+     ],
+     "share_of_all_items": 0.06865671641791045,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "recoverable_at_2": {
+     "n": 1154,
+     "conversion_rate": 0.8665511265164645
+    },
+    "ADDED_by_samples_3..4": {
+     "rate": 0.4876543209876543,
+     "n": 162,
+     "ci95": [
+      0.41358024691358025,
+      0.5617283950617284
+     ],
+     "share_of_all_items": 0.06908315565031983,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "recoverable_at_4": {
+     "n": 1316,
+     "conversion_rate": 0.8199088145896657
+    },
+    "ADDED_by_samples_5..8": {
+     "rate": 0.3881578947368421,
+     "n": 152,
+     "ci95": [
+      0.31562500000000016,
+      0.46710526315789475
+     ],
+     "share_of_all_items": 0.064818763326226,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "ADDED_by_samples_2..8": {
+     "rate": 0.511578947368421,
+     "n": 475,
+     "ci95": [
+      0.4673684210526316,
+      0.5578947368421052
+     ],
+     "share_of_all_items": 0.2025586353944563,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    }
+   },
+   "prefix_curve": [
+    {
+     "N": 1,
+     "oracle": 0.423454157782516,
+     "selected": 0.423454157782516
+    },
+    {
+     "N": 2,
+     "oracle": 0.49211087420042643,
+     "selected": 0.45245202558635395
+    },
+    {
+     "N": 3,
+     "oracle": 0.535181236673774,
+     "selected": 0.46780383795309166
+    },
+    {
+     "N": 4,
+     "oracle": 0.5611940298507463,
+     "selected": 0.47547974413646055
+    },
+    {
+     "N": 5,
+     "oracle": 0.5846481876332622,
+     "selected": 0.479317697228145
+    },
+    {
+     "N": 6,
+     "oracle": 0.6004264392324093,
+     "selected": 0.48230277185501064
+    },
+    {
+     "N": 7,
+     "oracle": 0.6132196162046908,
+     "selected": 0.4814498933901919
+    },
+    {
+     "N": 8,
+     "oracle": 0.6260127931769722,
+     "selected": 0.48528784648187634
+    }
+   ],
+   "realized_multiplier": {
+    "N1->N8": {
+     "d_oracle": 0.20255863539445623,
+     "d_selected": 0.061833688699360345,
+     "ratio": 0.30526315789473696
+    },
+    "N4->N8": {
+     "d_oracle": 0.06481876332622594,
+     "d_selected": 0.009808102345415792,
+     "ratio": 0.1513157894736846
+    },
+    "N7->N8 (marginal)": {
+     "d_oracle": 0.01279317697228144,
+     "d_selected": 0.003837953091684443,
+     "ratio": 0.3000000000000009
+    },
+    "brief_assumed_ratio": 0.810627,
+    "note": "selected = oracle x sel_eff is an EXACT identity, so d(selected)/d(oracle) = sel_eff + oracle * d(sel_eff)/d(oracle); the second term is strongly negative because added coverage arrives in diluted pools."
+   },
+   "per_cell_added_vs_base_conversion": {
+    "slake_open": {
+     "added_n": 26,
+     "added_conversion": 0.46153846153846156,
+     "base_n": 541,
+     "base_conversion": 0.8687615526802218
+    },
+    "vqa_rad_open": {
+     "added_n": 15,
+     "added_conversion": 0.5333333333333333,
+     "base_n": 111,
+     "base_conversion": 0.7927927927927928
+    },
+    "pathvqa_open": {
+     "added_n": 111,
+     "added_conversion": 0.35135135135135137,
+     "base_n": 664,
+     "base_conversion": 0.7846385542168675
+    }
+   }
+  },
+  "deployed_ens8_scaled": {
+   "sel_eff_all": 0.8106267029972752,
+   "selected": 0.5074626865671642,
+   "oracle": 0.6260127931769722,
+   "per_ds_sel_eff": {
+    "slake_open": 0.8853615520282186,
+    "vqa_rad_open": 0.8095238095238095,
+    "pathvqa_open": 0.7561290322580645
+   },
+   "conversion_of_added_coverage": {
+    "recoverable_at_1": {
+     "n": 993,
+     "conversion_rate": 0.9345417925478349
+    },
+    "ADDED_by_samples_2..2": {
+     "rate": 0.6708074534161491,
+     "n": 161,
+     "ci95": [
+      0.5962732919254659,
+      0.7453416149068323
+     ],
+     "share_of_all_items": 0.06865671641791045,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "recoverable_at_2": {
+     "n": 1154,
+     "conversion_rate": 0.8977469670710572
+    },
+    "ADDED_by_samples_3..4": {
+     "rate": 0.5308641975308642,
+     "n": 162,
+     "ci95": [
+      0.4506172839506173,
+      0.6049382716049383
+     ],
+     "share_of_all_items": 0.06908315565031983,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "recoverable_at_4": {
+     "n": 1316,
+     "conversion_rate": 0.8525835866261399
+    },
+    "ADDED_by_samples_5..8": {
+     "rate": 0.4473684210526316,
+     "n": 152,
+     "ci95": [
+      0.3684210526315789,
+      0.5263157894736842
+     ],
+     "share_of_all_items": 0.064818763326226,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    },
+    "ADDED_by_samples_2..8": {
+     "rate": 0.5515789473684211,
+     "n": 475,
+     "ci95": [
+      0.5073684210526316,
+      0.5957894736842105
+     ],
+     "share_of_all_items": 0.2025586353944563,
+     "interpretation": "fraction of NEWLY-covered questions the selector actually converts"
+    }
+   },
+   "prefix_curve": [
+    {
+     "N": 1,
+     "oracle": 0.423454157782516,
+     "selected": 0.423454157782516
+    },
+    {
+     "N": 2,
+     "oracle": 0.49211087420042643,
+     "selected": 0.4631130063965885
+    },
+    {
+     "N": 3,
+     "oracle": 0.535181236673774,
+     "selected": 0.48059701492537316
+    },
+    {
+     "N": 4,
+     "oracle": 0.5611940298507463,
+     "selected": 0.4878464818763326
+    },
+    {
+     "N": 5,
+     "oracle": 0.5846481876332622,
+     "selected": 0.49381663113006397
+    },
+    {
+     "N": 6,
+     "oracle": 0.6004264392324093,
+     "selected": 0.5010660980810234
+    },
+    {
+     "N": 7,
+     "oracle": 0.6132196162046908,
+     "selected": 0.5023454157782516
+    },
+    {
+     "N": 8,
+     "oracle": 0.6260127931769722,
+     "selected": 0.5074626865671642
+    }
+   ],
+   "realized_multiplier": {
+    "N1->N8": {
+     "d_oracle": 0.20255863539445623,
+     "d_selected": 0.0840085287846482,
+     "ratio": 0.41473684210526335
+    },
+    "N4->N8": {
+     "d_oracle": 0.06481876332622594,
+     "d_selected": 0.019616204690831585,
+     "ratio": 0.3026315789473692
+    },
+    "N7->N8 (marginal)": {
+     "d_oracle": 0.01279317697228144,
+     "d_selected": 0.0051172707889125535,
+     "ratio": 0.39999999999999825
+    },
+    "brief_assumed_ratio": 0.810627,
+    "note": "selected = oracle x sel_eff is an EXACT identity, so d(selected)/d(oracle) = sel_eff + oracle * d(sel_eff)/d(oracle); the second term is strongly negative because added coverage arrives in diluted pools."
+   },
+   "per_cell_added_vs_base_conversion": {
+    "slake_open": {
+     "added_n": 26,
+     "added_conversion": 0.6153846153846154,
+     "base_n": 541,
+     "base_conversion": 0.8983364140480592
+    },
+    "vqa_rad_open": {
+     "added_n": 15,
+     "added_conversion": 0.7333333333333333,
+     "base_n": 111,
+     "base_conversion": 0.8198198198198198
+    },
+    "pathvqa_open": {
+     "added_n": 111,
+     "added_conversion": 0.36936936936936937,
+     "base_n": 664,
+     "base_conversion": 0.8207831325301205
+    }
+   }
+  }
+ },
+ "part2_oracle_to_32": {
+  "cell": "vqa_rad_open",
+  "n": 200,
+  "source": "cheap_lingshu7b_scale/ckpt_vqa_rad_open_lingshu7b_sc32 (judge-labelled)",
+  "oracle_at_N_1..32": [
+   0.436563,
+   0.51131,
+   0.549852,
+   0.574673,
+   0.592546,
+   0.606287,
+   0.617301,
+   0.626384,
+   0.63403,
+   0.64057,
+   0.64624,
+   0.651213,
+   0.655623,
+   0.659574,
+   0.663148,
+   0.666412,
+   0.669417,
+   0.672208,
+   0.674819,
+   0.677277,
+   0.679607,
+   0.681825,
+   0.683947,
+   0.685984,
+   0.687946,
+   0.68984,
+   0.69167,
+   0.693443,
+   0.69516,
+   0.696825,
+   0.698438,
+   0.7
+  ],
+  "oracle@8": 0.6263842631413822,
+  "oracle@16": 0.6664117211260211,
+  "oracle@32": 0.7,
+  "gain_8_to_16": 0.040027457984638914,
+  "gain_16_to_32": 0.03358827887397886,
+  "always_32b_direct_this_cell": 0.6,
+  "n_correct_of_32_hist": {
+   "0": 60,
+   "1": 10,
+   "2": 5,
+   "3": 1,
+   "4": 4,
+   "5": 6,
+   "6": 5,
+   "7": 4,
+   "8": 3,
+   "9": 2,
+   "10": 1,
+   "11": 2,
+   "12": 3,
+   "14": 2,
+   "15": 4,
+   "16": 1,
+   "17": 5,
+   "19": 4,
+   "20": 1,
+   "21": 4,
+   "22": 2,
+   "23": 2,
+   "24": 3,
+   "25": 2,
+   "26": 3,
+   "27": 1,
+   "28": 6,
+   "29": 4,
+   "30": 5,
+   "31": 3,
+   "32": 42
+  },
+  "share_zero_correct_of_32": 0.3
+ },
+ "part2_text_side_alternatives": {
+  "cell": "vqa_rad_open",
+  "n": 200,
+  "note": "all three arms are 8-sample pools on the SAME 200 questions with JUDGE labels; the endpoint arm is cap320/temp0.7 (the deployed config).",
+  "arms": {
+   "t10": {
+    "label": "temp 1.0 (endpoint is temp 0.7)",
+    "n": 200,
+    "oracle@8_this_arm": 0.645,
+    "oracle@8_endpoint_arm": 0.63,
+    "delta_vs_endpoint": {
+     "delta": 0.015000000000000013,
+     "ci95": [
+      -0.030000000000000027,
+      0.06000000000000005
+     ]
+    },
+    "oracle@16_UNION_of_both_arms": 0.695,
+    "union_gain_over_endpoint": {
+     "delta": 0.06499999999999995,
+     "ci95": [
+      0.03499999999999992,
+      0.10000000000000009
+     ]
+    },
+    "rescued_of_endpoint_no_coverage": {
+     "n_no_coverage": 74,
+     "n_rescued": 13,
+     "rate": 0.17567567567567569
+    }
+   },
+   "think": {
+    "label": "reasoning-mode sampling",
+    "n": 200,
+    "oracle@8_this_arm": 0.66,
+    "oracle@8_endpoint_arm": 0.63,
+    "delta_vs_endpoint": {
+     "delta": 0.030000000000000027,
+     "ci95": [
+      -0.010000000000000009,
+      0.07000000000000006
+     ]
+    },
+    "oracle@16_UNION_of_both_arms": 0.69,
+    "union_gain_over_endpoint": {
+     "delta": 0.05999999999999994,
+     "ci95": [
+      0.030000000000000027,
+      0.09499999999999997
+     ]
+    },
+    "rescued_of_endpoint_no_coverage": {
+     "n_no_coverage": 74,
+     "n_rescued": 12,
+     "rate": 0.16216216216216217
+    }
+   },
+   "iid_redraw_first8_of_sc16": {
+    "label": "CONTROL: a second iid 8-sample draw at the SAME temp/prompt/resolution",
+    "n": 200,
+    "oracle@8_this_arm": 0.605,
+    "oracle@8_endpoint_arm": 0.63,
+    "delta_vs_endpoint": {
+     "delta": -0.025000000000000022,
+     "ci95": [
+      -0.06999999999999995,
+      0.015000000000000013
+     ]
+    },
+    "oracle@16_UNION_of_both_arms": 0.665,
+    "union_gain_over_endpoint": {
+     "delta": 0.03500000000000003,
+     "ci95": [
+      0.014999999999999902,
+      0.06000000000000005
+     ]
+    },
+    "rescued_of_endpoint_no_coverage": {
+     "n_no_coverage": 74,
+     "n_rescued": 7,
+     "rate": 0.0945945945945946
+    }
+   }
+  }
+ },
+ "part2_image_side_resolution": {
+  "labels": "EXACT-MATCH (`oks`) only -- the cap80/cap160 dumps were never judged. Exact match is strictly stronger than the judge, so every number here is a LOWER BOUND on the judge-measured rescue.",
+  "config": "cap80 = HIGH_PX/16, cap160 = HIGH_PX/8, endpoint pool = cap320 = HIGH_PX/4 (src/labeling/run_openvqa.py:52, runners/run_openvqa_lingshu7b.sh); the cap80/cap160 dumps are GREEDY (n_samples=1, temp 0), one answer each.",
+  "per_cell": {
+   "vqa_rad_open": {
+    "cap80": {
+     "n": 200,
+     "share_answer_NOT_in_the_8_pool (new candidate)": 0.26,
+     "greedy_exact_acc_at_this_cap": 0.38,
+     "pool_exact_oracle@8_at_cap320": 0.55,
+     "exact_match_rescues_of_exact_no_coverage": 2,
+     "exact_match_rescue_rate_of_exact_no_coverage": 0.022222222222222223,
+     "judge_no_coverage_subset": {
+      "n": 74,
+      "share_answer_NOT_in_pool": 0.3918918918918919,
+      "n_exact_match_correct (LOWER-BOUND rescue)": 4,
+      "lower_bound_rescue_rate": 0.05405405405405406
+     }
+    },
+    "cap160": {
+     "n": 200,
+     "share_answer_NOT_in_the_8_pool (new candidate)": 0.175,
+     "greedy_exact_acc_at_this_cap": 0.375,
+     "pool_exact_oracle@8_at_cap320": 0.55,
+     "exact_match_rescues_of_exact_no_coverage": 0,
+     "exact_match_rescue_rate_of_exact_no_coverage": 0.0,
+     "judge_no_coverage_subset": {
+      "n": 74,
+      "share_answer_NOT_in_pool": 0.22972972972972974,
+      "n_exact_match_correct (LOWER-BOUND rescue)": 4,
+      "lower_bound_rescue_rate": 0.05405405405405406
+     }
+    }
+   },
+   "pathvqa_open": {
+    "cap80": {
+     "n": 1500,
+     "share_answer_NOT_in_the_8_pool (new candidate)": 0.304,
+     "greedy_exact_acc_at_this_cap": 0.322,
+     "pool_exact_oracle@8_at_cap320": 0.4826666666666667,
+     "exact_match_rescues_of_exact_no_coverage": 31,
+     "exact_match_rescue_rate_of_exact_no_coverage": 0.03994845360824742,
+     "judge_no_coverage_subset": {
+      "n": 725,
+      "share_answer_NOT_in_pool": 0.4206896551724138,
+      "n_exact_match_correct (LOWER-BOUND rescue)": 56,
+      "lower_bound_rescue_rate": 0.07724137931034483
+     }
+    },
+    "cap160": {
+     "n": 1500,
+     "share_answer_NOT_in_the_8_pool (new candidate)": 0.26266666666666666,
+     "greedy_exact_acc_at_this_cap": 0.336,
+     "pool_exact_oracle@8_at_cap320": 0.4826666666666667,
+     "exact_match_rescues_of_exact_no_coverage": 28,
+     "exact_match_rescue_rate_of_exact_no_coverage": 0.03608247422680412,
+     "judge_no_coverage_subset": {
+      "n": 725,
+      "share_answer_NOT_in_pool": 0.37103448275862067,
+      "n_exact_match_correct (LOWER-BOUND rescue)": 53,
+      "lower_bound_rescue_rate": 0.07310344827586207
+     }
+    }
+   }
+  }
+ },
+ "part2_laterality": {
+  "definition": "a question is 'laterality' if the gold answer or any pooled answer contains one of {right,left,both,bilateral}",
+  "n_laterality": 278,
+  "share_of_pool": 0.11855010660980811,
+  "oracle@8_laterality": 0.5431654676258992,
+  "oracle@8_non_laterality": 0.637155297532656,
+  "delta": null,
+  "laterality_no_coverage": {
+   "n": 127,
+   "share_of_all_no_coverage": 0.14481185860889395,
+   "gold_laterality_token_present_in_pool": 0.1732283464566929,
+   "note": "if the gold laterality word appears in the pool but the item is still un-recoverable, the miss is in the REST of the answer, not the side."
+  },
+  "per_cell": {
+   "slake_open": {
+    "n_lat": 101,
+    "share": 0.15658914728682172,
+    "oracle@8_lat": 0.7524752475247525,
+    "oracle@8_nonlat": 0.9025735294117647,
+    "n_lat_no_coverage": 25
+   },
+   "vqa_rad_open": {
+    "n_lat": 68,
+    "share": 0.34,
+    "oracle@8_lat": 0.5735294117647058,
+    "oracle@8_nonlat": 0.6590909090909091,
+    "n_lat_no_coverage": 29
+   },
+   "pathvqa_open": {
+    "n_lat": 109,
+    "share": 0.07266666666666667,
+    "oracle@8_lat": 0.3302752293577982,
+    "oracle@8_nonlat": 0.5312724658519051,
+    "n_lat_no_coverage": 73
+   }
+  }
+ },
+ "part2_ceiling": {
+  "method": "Lincoln-Petersen / Chao two-sample: run A = the endpoint 8-sample pool, run B = the INDEPENDENT sc16 16-sample pool, both JUDGE-labelled. 'Captured' = at least one correct answer in the run. Heterogeneous per-item detection probability biases LP DOWNWARD, so this is a LOWER BOUND on the share of questions reachable by iid sampling at any N.",
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "captured_A_8samples": 567,
+    "captured_B_16samples": 581,
+    "captured_both": 557,
+    "captured_either": 591,
+    "LP_estimated_reachable_questions": 591.4308797127469,
+    "LP_estimated_reachable_share": 0.9169471003298402,
+    "observed_either_share": 0.9162790697674419,
+    "unreachable_share_upper_bound": 0.08305289967015983
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "captured_A_8samples": 126,
+    "captured_B_16samples": 133,
+    "captured_both": 121,
+    "captured_either": 138,
+    "LP_estimated_reachable_questions": 138.49586776859505,
+    "LP_estimated_reachable_share": 0.6924793388429752,
+    "observed_either_share": 0.69,
+    "unreachable_share_upper_bound": 0.3075206611570248
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "captured_A_8samples": 775,
+    "captured_B_16samples": 856,
+    "captured_both": 706,
+    "captured_either": 925,
+    "LP_estimated_reachable_questions": 939.6600566572238,
+    "LP_estimated_reachable_share": 0.6264400377714825,
+    "observed_either_share": 0.6166666666666667,
+    "unreachable_share_upper_bound": 0.3735599622285175
+   }
+  },
+  "macro_LP_reachable_share": 0.7452888256480993,
+  "macro_observed_either_share": 0.7409819121447029,
+  "always_32b_direct_macro_open": 0.5982
+ },
+ "part3_gold_quality_confound": {
+  "why": "The local LLM judge grades against dataset gold strings. On PathVQA-open those golds are CAPTION FRAGMENTS and the judge is known to penalise substantive but non-matching answers (PROJECT_RETROSPECTIVE_2026-07-29.md L1852-1861 + artifacts/pathvqa_judge_audit.json). The independent Claude-judge cross-validation covers SLAKE and VQA-RAD only -- NOT PathVQA. So part of the 'no coverage' mass is UNMEASURABLE GOLD, not model capability. Either way it is not reachable by more sampling; but the label matters.",
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "gold_words_mean_recoverable": 1.6754850088183422,
+    "gold_words_mean_no_coverage": 2.41025641025641,
+    "share_gold>=5_words_recoverable": 0.04938271604938271,
+    "share_gold>=5_words_no_coverage": 0.1282051282051282,
+    "oracle@8_by_gold_length": {
+     "1": 0.9254807692307693,
+     "2": 0.8828125,
+     "3-4": 0.6507936507936508,
+     "5+": 0.7368421052631579
+    },
+    "n_by_gold_length": {
+     "1": 416,
+     "2": 128,
+     "3-4": 63,
+     "5+": 38
+    },
+    "no_coverage_share_with_gold>=5_words": 0.1282051282051282
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "gold_words_mean_recoverable": 1.8333333333333333,
+    "gold_words_mean_no_coverage": 3.2027027027027026,
+    "share_gold>=5_words_recoverable": 0.03968253968253968,
+    "share_gold>=5_words_no_coverage": 0.22972972972972974,
+    "oracle@8_by_gold_length": {
+     "1": 0.8235294117647058,
+     "2": 0.5370370370370371,
+     "3-4": 0.5641025641025641,
+     "5+": 0.22727272727272727
+    },
+    "n_by_gold_length": {
+     "1": 85,
+     "2": 54,
+     "3-4": 39,
+     "5+": 22
+    },
+    "no_coverage_share_with_gold>=5_words": 0.22972972972972974
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "gold_words_mean_recoverable": 1.689032258064516,
+    "gold_words_mean_no_coverage": 3.117241379310345,
+    "share_gold>=5_words_recoverable": 0.04258064516129032,
+    "share_gold>=5_words_no_coverage": 0.19310344827586207,
+    "oracle@8_by_gold_length": {
+     "1": 0.6323713927227101,
+     "2": 0.49096385542168675,
+     "3-4": 0.3787878787878788,
+     "5+": 0.1907514450867052
+    },
+    "n_by_gold_length": {
+     "1": 797,
+     "2": 332,
+     "3-4": 198,
+     "5+": 173
+    },
+    "no_coverage_share_with_gold>=5_words": 0.19310344827586207
+   }
+  },
+  "pooled": {
+   "n_no_coverage": 877,
+   "of_which_gold>=5_words": 167,
+   "share": 0.1904218928164196,
+   "oracle@8_on_gold>=5_items": 0.2832618025751073,
+   "oracle@8_on_gold<=2_items": 0.6975717439293598,
+   "n_gold>=5": 233,
+   "n_gold<=2": 1812
+  }
+ },
+ "part3_projection_with_MEASURED_multiplier": {
+  "multiplier_used": {
+   "value": 0.4473684210526316,
+   "ci95": [
+    0.3684210526315789,
+    0.5263157894736842
+   ],
+   "what": "MEASURED fraction of newly-covered questions (covered by samples 5..8 but not 1..4) that the DEPLOYED selector converts",
+   "brief_assumed": 0.810627,
+   "brief_is_optimistic_by_factor": 1.8119897647058822
+  },
+  "per_cell": {
+   "slake_open": {
+    "selected_now_deployed_selector": 0.7782945736434108,
+    "always_32b_direct": 0.8186,
+    "accuracy_gap_to_close": 0.04030542635658918,
+    "oracle@8_now": 0.8790697674418605,
+    "oracle_needed__brief_assumption_fixed_sel_eff": 0.9245940239043825,
+    "oracle_needed__MEASURED_marginal_multiplier": 0.969164249886001,
+    "oracle_needed__measured_multiplier_CI": [
+     0.9556500775193799,
+     0.9884702104097454
+    ],
+    "LP_sampling_ceiling_oracle_at_N_infinity": 0.9169471003298402,
+    "VERDICT": "UNREACHABLE by iid sampling at any N (need 0.969 > ceiling 0.917)",
+    "headroom_at_the_ceiling": -0.0233603037488088
+   },
+   "vqa_rad_open": {
+    "selected_now_deployed_selector": 0.51,
+    "always_32b_direct": 0.6,
+    "accuracy_gap_to_close": 0.08999999999999997,
+    "oracle@8_now": 0.63,
+    "oracle_needed__brief_assumption_fixed_sel_eff": 0.7411764705882352,
+    "oracle_needed__MEASURED_marginal_multiplier": 0.8311764705882352,
+    "oracle_needed__measured_multiplier_CI": [
+     0.8009999999999999,
+     0.8742857142857142
+    ],
+    "LP_sampling_ceiling_oracle_at_N_infinity": 0.6924793388429752,
+    "VERDICT": "UNREACHABLE by iid sampling at any N (need 0.831 > ceiling 0.692)",
+    "headroom_at_the_ceiling": -0.062048716833405806
+   },
+   "pathvqa_open": {
+    "selected_now_deployed_selector": 0.39066666666666666,
+    "always_32b_direct": 0.376,
+    "accuracy_gap_to_close": -0.014666666666666661,
+    "oracle@8_now": 0.5166666666666667,
+    "oracle_needed__brief_assumption_fixed_sel_eff": 0.49726962457337887,
+    "oracle_needed__MEASURED_marginal_multiplier": 0.5166666666666667,
+    "oracle_needed__measured_multiplier_CI": [
+     0.5166666666666667,
+     0.5166666666666667
+    ],
+    "LP_sampling_ceiling_oracle_at_N_infinity": 0.6264400377714825,
+    "VERDICT": "ALREADY THERE",
+    "headroom_at_the_ceiling": 0.06377580637145266
+   }
+  },
+  "macro_open_now": 0.5596537467700259,
+  "macro_open_always_32b_direct": 0.5982,
+  "macro_open_at_the_iid_sampling_CEILING": 0.5909889285964126,
+  "macro8_scenarios": {
+   "_note": "5 MCQ cells held at the accuracy-max-veto values; open cells taken as max(7B-arm, 32B-direct) because the cascade always has the escalation option. This is an UPPER BOUND on what the coverage track can deliver: it charges no extra generation cost and assumes escalation is free and perfectly targeted.",
+   "always_32b_direct": 0.6567,
+   "method_accuracy_max_veto_measured": 0.6575,
+   "macro8_if_open_arm_reached_its_iid_sampling_CEILING": 0.6658469757964316,
+   "macro8_if_open_arm_were_a_PERFECT_selector_over_the_CURRENT_8_pool": 0.6867670542635659,
+   "delta_ceiling_vs_32b_direct": 0.009146975796431644,
+   "delta_perfect_selector_at_N8_vs_32b_direct": 0.03006705426356593
+  }
+ },
+ "caveats": [
+  "The endpoint labels are the project's local LLM judge. On PathVQA-open (725 of the 877 no-coverage items, 82.7%) the golds are caption fragments and the judge is known to penalise substantive-but-non-matching answers; the independent Claude-judge cross-validation covers SLAKE and VQA-RAD only, NOT PathVQA (retrospective L1852-1861). Part of the coverage wall on that cell is therefore UNMEASURABLE GOLD rather than model capability. This does not change the verdict -- neither is fixable by sampling -- but it does mean 'capability failure' is an upper bound on the model's share of the blame.",
+  "The sc16 dump is an INDEPENDENT sampling run, not a superset of the endpoint pool (first-8 preds agree on only 340/645, 32/200, 140/1500). It is used as a second draw, which is exactly what the capture-recapture and rescue analyses require.",
+  "The cap80/cap160 resolution dumps carry EXACT-MATCH labels only and are single GREEDY answers. Every image-side rescue number is a strict LOWER BOUND, and no HIGHER-than-cap320 open-text dump exists, so the interesting image-side direction (more pixels, multi-crop, multi-scale) is genuinely UNTESTED -- see 'what_was_never_tried'.",
+  "oracle@N to 32 is measured on vqa_rad_open only (the only cell with an sc32 dump).",
+  "The macro8 scenario table holds the 5 MCQ cells fixed at their measured accuracy-max-veto values and takes each open cell as max(7B arm, 32B-direct). It charges no extra generation cost. It is an UPPER BOUND, not a prediction.",
+  "vqa_rad_open is n=200; per-cell flags there move with a handful of items (the project's own guardrail-resolution caveat). The text-side union result (+0.065) rests on that cell alone and has NOT been replicated on slake_open or pathvqa_open."
+ ],
+ "what_was_never_tried": {
+  "prior_diverse_generation_experiment": "src/cascade_methods/diversity_generate_gpu.py + artifacts/diverse_generation_gpu.json varied ONLY the SYSTEM PROMPT (5-way portfolio: base/anatomy/modality/differential/concise) x TEMPERATURE (0.7/1.0/1.3), M=15. Same image, same cap320 resolution, same crop, same model. Result: oracle lift +0.0271 [+0.0099, +0.0431] at matched N=8 (DPP-selected), +0.0635 [+0.0468, +0.0801] at M=15 (1.88x gen cost) -- but sel_eff FELL 0.7321 -> 0.7229 -> 0.6989 and the confident-distractor rate ROSE 0.268 -> 0.301, so selected accuracy moved only +0.0142 [-0.0025, +0.0308] at matched N (NOT significant). Those numbers are on EXACT-MATCH labels with the CONTAMINATED pooled4 verifier and are not comparable to the judge-labelled endpoint.",
+  "never_varied": [
+   "image RESOLUTION upward (cap640 / fullres) as a generation-portfolio axis -- only cap80/cap160 (DOWNWARD) exist for open text, greedy, exact-match-labelled",
+   "multi-crop / zoom / region-of-interest views",
+   "multi-scale ensembling of the same image",
+   "a cross-MODEL candidate pool for the open-text cells (the retrospective notes a cross-model pool raises oracle-of-N by +0.11 to +0.15 -- the largest coverage effect recorded anywhere in this project, and it is a CAPABILITY change, not a sampling one)",
+   "the heterogeneous-config union measured here (endpoint-config + think-config, or + temp-1.0-config) on slake_open and pathvqa_open -- measured on vqa_rad_open only"
+  ],
+  "why_image_side_is_STILL_not_recommended": "71.5% of no-coverage questions share ZERO tokens with gold anywhere in the pool. A resolution or crop change moves the answer (cap80 produces an answer outside the 8-pool on 26-30% of questions) but converts almost nothing: on the judge-defined no-coverage subset a cap80 greedy answer is exact-match correct on 5.4% (vqa_rad) / 7.7% (pathvqa) of items -- and those are LOWER bounds on a metric that also has single-sample-vs-eight-samples working in its favour on cost, not on yield."
+ },
+ "part4_per_sample_rescue_yield": {
+  "question": "per ONE extra generated sample, P(covers a question the deployed 8-pool does not cover). Normalised per sample so a bigger budget cannot win by spending more.",
+  "iid_baseline": {
+   "slake_open": {
+    "rate": 0.060240963855421686,
+    "n": 83,
+    "ci95": [
+     0.012048192771084338,
+     0.12048192771084337
+    ],
+    "what": "P(sample #8 is correct | samples 1..7 all wrong), JUDGE labels, deployed config"
+   },
+   "vqa_rad_open": {
+    "rate": 0.02631578947368421,
+    "n": 76,
+    "ci95": [
+     0.0,
+     0.06578947368421052
+    ],
+    "what": "P(sample #8 is correct | samples 1..7 all wrong), JUDGE labels, deployed config"
+   },
+   "pathvqa_open": {
+    "rate": 0.03074866310160428,
+    "n": 748,
+    "ci95": [
+     0.01871657754010695,
+     0.04411764705882353
+    ],
+    "what": "P(sample #8 is correct | samples 1..7 all wrong), JUDGE labels, deployed config"
+   },
+   "POOLED": {
+    "rate": 0.03307607497243661,
+    "n": 907,
+    "ci95": [
+     0.022050716648291068,
+     0.04520396912899669
+    ],
+    "what": "pooled over the 3 cells"
+   },
+   "MACRO": 0.03910180547690339
+  },
+  "alternative_configs": {
+   "few_shot_5_prompt_JUDGE": {
+    "slake_open": {
+     "label": "few-shot-5 prompt, GREEDY, 1 sample, JUDGE-labelled",
+     "n_matched": 645,
+     "standalone_acc_on_all_items": 0.7054263565891473,
+     "rescue_of_endpoint_no_coverage": {
+      "rate": 0.11538461538461539,
+      "n": 78,
+      "ci95": [
+       0.05128205128205128,
+       0.19230769230769232
+      ]
+     },
+     "share_answer_new_to_the_pool": 0.358974358974359
+    },
+    "pathvqa_open": {
+     "label": "few-shot-5 prompt, GREEDY, 1 sample, JUDGE-labelled",
+     "n_matched": 1500,
+     "standalone_acc_on_all_items": 0.20266666666666666,
+     "rescue_of_endpoint_no_coverage": {
+      "rate": 0.03310344827586207,
+      "n": 725,
+      "ci95": [
+       0.020689655172413793,
+       0.04689655172413793
+      ]
+     },
+     "share_answer_new_to_the_pool": 0.7117241379310345
+    }
+   },
+   "vqa_rad_open_JUDGE_arms": {
+    "t10": {
+     "label": "temp 1.0 pool (8 samples)",
+     "per_sample_rescue": {
+      "rate": 0.030405405405405407,
+      "n": 74,
+      "ci95": [
+       0.015202702702702704,
+       0.0472972972972973
+      ]
+     },
+     "whole_8_sample_arm_rescue": {
+      "rate": 0.17567567567567569,
+      "n": 74,
+      "ci95": [
+       0.0945945945945946,
+       0.2702702702702703
+      ]
+     },
+     "n_no_coverage": 74
+    },
+    "think": {
+     "label": "reasoning-mode pool (8 samples)",
+     "per_sample_rescue": {
+      "rate": 0.03885135135135135,
+      "n": 74,
+      "ci95": [
+       0.016891891891891893,
+       0.06587837837837837
+      ]
+     },
+     "whole_8_sample_arm_rescue": {
+      "rate": 0.16216216216216217,
+      "n": 74,
+      "ci95": [
+       0.08108108108108109,
+       0.24358108108107618
+      ]
+     },
+     "n_no_coverage": 74
+    },
+    "iid_control_first8_of_sc16": {
+     "label": "CONTROL: independent iid 8-sample draw, SAME config",
+     "per_sample_rescue": {
+      "rate": 0.018581081081081082,
+      "n": 74,
+      "ci95": [
+       0.005067567567567568,
+       0.033783783783783786
+      ]
+     },
+     "whole_8_sample_arm_rescue": {
+      "rate": 0.0945945945945946,
+      "n": 74,
+      "ci95": [
+       0.02702702702702703,
+       0.16216216216216217
+      ]
+     },
+     "n_no_coverage": 74
+    }
+   },
+   "resolution_EXACTMATCH_lower_bound": {
+    "vqa_rad_open": {
+     "cap80": {
+      "rate": 0.05405405405405406,
+      "n": 74,
+      "ci95": [
+       0.013513513513513514,
+       0.10810810810810811
+      ],
+      "label": "cap80 GREEDY, 1 sample, EXACT-MATCH label (LOWER BOUND)"
+     },
+     "cap160": {
+      "rate": 0.05405405405405406,
+      "n": 74,
+      "ci95": [
+       0.013513513513513514,
+       0.10810810810810811
+      ],
+      "label": "cap160 GREEDY, 1 sample, EXACT-MATCH label (LOWER BOUND)"
+     }
+    },
+    "pathvqa_open": {
+     "cap80": {
+      "rate": 0.07724137931034483,
+      "n": 725,
+      "ci95": [
+       0.057931034482758624,
+       0.09793103448275862
+      ],
+      "label": "cap80 GREEDY, 1 sample, EXACT-MATCH label (LOWER BOUND)"
+     },
+     "cap160": {
+      "rate": 0.07310344827586207,
+      "n": 725,
+      "ci95": [
+       0.05517241379310345,
+       0.09241379310344827
+      ],
+      "label": "cap160 GREEDY, 1 sample, EXACT-MATCH label (LOWER BOUND)"
+     }
+    }
+   },
+   "prompt_temp_portfolio_EXACTMATCH": {
+    "slake_open": {
+     "label": "5-prompt x 3-temp portfolio, M=15, EXACT-MATCH labels on both sides",
+     "n_matched": 645,
+     "n_exactmatch_no_coverage_at_8": 72,
+     "per_sample_rescue": {
+      "rate": 0.041666666666666664,
+      "n": 72,
+      "ci95": [
+       0.025,
+       0.060185185185185196
+      ]
+     },
+     "whole_15_sample_arm_rescue": {
+      "rate": 0.3055555555555556,
+      "n": 72,
+      "ci95": [
+       0.20833333333333334,
+       0.4166666666666667
+      ]
+     },
+     "iid_per_sample_control_EXACTMATCH": {
+      "rate": 0.0,
+      "n": 72,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     }
+    },
+    "vqa_rad_open": {
+     "label": "5-prompt x 3-temp portfolio, M=15, EXACT-MATCH labels on both sides",
+     "n_matched": 200,
+     "n_exactmatch_no_coverage_at_8": 90,
+     "per_sample_rescue": {
+      "rate": 0.0162962962962963,
+      "n": 90,
+      "ci95": [
+       0.005925925925925927,
+       0.028907407407407142
+      ]
+     },
+     "whole_15_sample_arm_rescue": {
+      "rate": 0.1111111111111111,
+      "n": 90,
+      "ci95": [
+       0.05555555555555555,
+       0.17777777777777778
+      ]
+     },
+     "iid_per_sample_control_EXACTMATCH": {
+      "rate": 0.021739130434782608,
+      "n": 92,
+      "ci95": [
+       0.0,
+       0.05434782608695652
+      ]
+     }
+    },
+    "pathvqa_open": {
+     "label": "5-prompt x 3-temp portfolio, M=15, EXACT-MATCH labels on both sides",
+     "n_matched": 178,
+     "n_exactmatch_no_coverage_at_8": 134,
+     "per_sample_rescue": {
+      "rate": 0.006965174129353234,
+      "n": 134,
+      "ci95": [
+       0.0024875621890547268,
+       0.012437810945273632
+      ]
+     },
+     "whole_15_sample_arm_rescue": {
+      "rate": 0.07462686567164178,
+      "n": 134,
+      "ci95": [
+       0.029850746268656716,
+       0.11940298507462686
+      ]
+     },
+     "iid_per_sample_control_EXACTMATCH": {
+      "rate": 0.007407407407407408,
+      "n": 135,
+      "ci95": [
+       0.0,
+       0.022222222222222223
+      ]
+     }
+    }
+   }
+  },
+  "notes": [
+   "The four alternative-config families are NOT all on the same label currency. few_shot_5 and vqa_rad_open_JUDGE_arms use the endpoint's JUDGE labels and are directly comparable to iid_baseline. resolution_* and prompt_temp_portfolio_* use EXACT-MATCH on both sides of their own comparison, so they are internally consistent but NOT comparable to the judge-labelled rows.",
+   "pathvqa_open's diverse dump covers only 178 of the 1,500 endpoint questions.",
+   "A per-sample rescue rate is P(this one sample is correct | the deployed 8-pool covers nothing). It is the honest unit: an M=15 portfolio that rescues 20% of no-coverage questions using 15 samples is worse per sample than an 8-sample arm that rescues 15%."
+  ]
+ },
+ "part5_resolution_vs_iid_same_currency": {
+  "design": "EXACT-MATCH labels on BOTH sides (the cap80/cap160 dumps were never judged); both arms conditioned on 'samples 1..7 of the deployed cap320/temp0.7 pool are all wrong'; paired item-level bootstrap nboot=10000 seed 20260810.",
+  "currency_warning": "These rates are NOT comparable to the judge-labelled rates elsewhere in this artifact. Exact match is strictly stricter than the judge, so both arms are depressed together.",
+  "per_cell": {
+   "vqa_rad_open": {
+    "n_conditioned": 92,
+    "cap80_vs_one_more_iid_sample": {
+     "a_rate": 0.03260869565217391,
+     "b_rate": 0.021739130434782608,
+     "delta": 0.010869565217391304,
+     "ci95": [
+      -0.021739130434782608,
+      0.05434782608695652
+     ],
+     "n": 92
+    },
+    "cap160_vs_one_more_iid_sample": {
+     "a_rate": 0.0,
+     "b_rate": 0.021739130434782608,
+     "delta": -0.021739130434782608,
+     "ci95": [
+      -0.05434782608695652,
+      0.0
+     ],
+     "n": 92
+    },
+    "adding_BOTH_resolution_views": {
+     "rescue_of_exactmatch_no_coverage": 0.022222222222222223,
+     "n_no_coverage": 90,
+     "extra_generation_cost": "+2 samples on a pool of 8 = 1.25x",
+     "implied_oracle_lift_on_this_cell_EXACTMATCH": 0.01,
+     "implied_selected_lift_at_the_MEASURED_multiplier": 0.004473684210526316,
+     "implied_selected_lift_CI_from_multiplier_only": [
+      0.0036842105263157894,
+      0.005263157894736842
+     ],
+     "implied_macro8_contribution_if_it_all_lands": 0.0005592105263157895,
+     "selected_now_deployed": 0.51,
+     "always_32b_direct": 0.6
+    }
+   },
+   "pathvqa_open": {
+    "n_conditioned": 795,
+    "cap80_vs_one_more_iid_sample": {
+     "a_rate": 0.045283018867924525,
+     "b_rate": 0.02389937106918239,
+     "delta": 0.021383647798742134,
+     "ci95": [
+      0.005031446540880502,
+      0.03773584905660378
+     ],
+     "n": 795
+    },
+    "cap160_vs_one_more_iid_sample": {
+     "a_rate": 0.0440251572327044,
+     "b_rate": 0.02389937106918239,
+     "delta": 0.020125786163522008,
+     "ci95": [
+      0.005031446540880502,
+      0.03647798742138365
+     ],
+     "n": 795
+    },
+    "adding_BOTH_resolution_views": {
+     "rescue_of_exactmatch_no_coverage": 0.05670103092783505,
+     "n_no_coverage": 776,
+     "extra_generation_cost": "+2 samples on a pool of 8 = 1.25x",
+     "implied_oracle_lift_on_this_cell_EXACTMATCH": 0.029333333333333333,
+     "implied_selected_lift_at_the_MEASURED_multiplier": 0.013122807017543859,
+     "implied_selected_lift_CI_from_multiplier_only": [
+      0.010807017543859649,
+      0.01543859649122807
+     ],
+     "implied_macro8_contribution_if_it_all_lands": 0.0016403508771929824,
+     "selected_now_deployed": 0.39066666666666666,
+     "always_32b_direct": 0.376
+    }
+   }
+  },
+  "VERDICT": "On PathVQA-open (n=795, the cell holding 82.7% of the no-coverage mass) a single sample at a CHANGED IMAGE RESOLUTION rescues significantly more no-coverage questions than one more iid sample at the deployed resolution: cap80 +0.0214 [+0.0050, +0.0377], cap160 +0.0201 [+0.0050, +0.0365]. This is the ONLY coverage lever in the whole diagnosis whose paired CI excludes zero on the currency it is measured in. On VQA-RAD-open (n=92) it is noise (cap80 +0.0109 [-0.0217, +0.0543], cap160 -0.0217 [-0.0543, 0.0000]). BUT THE MAGNITUDE DOES NOT MOVE THE TARGET: adding BOTH resolution views to PathVQA-open costs 1.25x generation and, at the measured 0.447 multiplier, is worth about +0.0016 on the 8-cell macro -- and it lands on the one open cell that is ALREADY above always-32B-direct, where extra accuracy is not what the macro needs."
+ },
+ "CORRECTIONS_TO_THE_ROUND_BRIEF": {
+  "1_the_multiplier_formula": "BRIEF: 'selected ~= greedy + sel_eff*(oracle-greedy)' with sel_eff=0.81, so '+0.01 of oracle@8 buys ~+0.008 of selected accuracy' and 'raising oracle 0.626 -> 0.70 would put selected at ~0.652'. MEASURED: selected = oracle x sel_eff is an exact identity (max |err| 5.6e-17). At oracle 0.70 and sel_eff 0.811 the deployed arm would post 0.5674, not 0.652 -- the brief over-predicts by 0.085. The brief plugged the CONDITIONAL-MEAN sel_eff into the DIFFERENCE-form formula; the difference-form sel_eff on this endpoint is 0.2029.",
+  "2_the_marginal_multiplier": "Even the identity's 0.81 is the AVERAGE, not the MARGIN. The deployed selector converts 0.4474 [0.3684, 0.5263] of questions newly covered by samples 5..8. Realized d(selected)/d(oracle) is 0.303 (N=4->8) and 0.400 (N=7->8). Plan with ~0.45, not 0.81.",
+  "3_the_prior_diverse-generation_result_is_MISLABELLED_in_the_brief": "BRIEF: \"the project has a prior 'diverse generation' negative (pairwise-over-diverse 0.5376 <= pointwise 0.5494)\". That negative is about PAIRWISE selection failing to COMPOUND with diverse generation, not about diverse generation itself. Verbatim from artifacts/combine_diverse_pairwise.json verdict.lines: the diverse lever ALONE is B-A = +0.0303 CI[+0.0088,+0.0518] (SIGNIFICANT); the pairwise lever alone is +0.0205 CI[+0.0098,+0.0323]; BOTH is +0.0186 CI[-0.0020,+0.0411] (not significant) and pairwise-converts-diverse is -0.0117 CI[-0.0283,+0.0049]. So diverse generation was a POSITIVE, at 1.88x generation cost, on EXACT-MATCH labels with the CONTAMINATED pooled4 verifier, n=1023 (pathvqa restricted to 178).",
+  "4_oracle@8_beats_32B-direct_on_open_text__survives_but_shrinks_under_MACRO": "BRIEF: 'oracle@8 (0.626) ALREADY BEATS 32B-direct on open text (0.5168) by ~+0.109' -- correct, but SAMPLE-WEIGHTED. Under the round's own MACRO convention it is oracle@8 0.6752 vs direct 0.5982 = +0.0770, and the per-cell headroom is wildly uneven: slake +0.060, vqa_rad +0.030, pathvqa +0.141. Two of the three cells have almost no oracle headroom over 32B-direct at all.",
+  "5_what_this_means_for_the_round": "The premise 'COVERAGE HAS A MULTIPLIER; SELECTION IS EXHAUSTED' inverts on the measured headroom. Upper bounds on the 8-cell macro, both free of extra cost: open arm at its iid SAMPLING CEILING (N=infinity, capture-recapture) => 0.6658, +0.0091 vs always-32B-direct. Open arm with a PERFECT selector over the CURRENT 8-sample pool => 0.6868, +0.0301 vs direct. The selection ceiling is 3.3x the coverage ceiling. Selection is 'exhausted' in the sense that ~20 approaches converge at sel_eff 0.80-0.81 -- but it still holds 3.3x more remaining headroom than coverage does."
+ }
+}

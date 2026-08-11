@@ -1,0 +1,373 @@
+{
+ "title": "ATTACK 2 zero-GPU pilot -- 2-view PROMPT-FORM ensemble on Lingshu-32B",
+ "date": "2026-08-10",
+ "views": {
+  "A": "eval_results_lingshu32b_full  (bare-letter instruction)",
+  "B": "eval_results_lingshu32b_think (\\boxed{} instruction)"
+ },
+ "caveat": "NOT the pre-registered experiment: K=2 not 4; the perturbation is an instruction FORMAT change, not a content-preserving cyclic option permutation; and the dumps store only the argmax letter + top-1 conf/margin, so the pre-registered primary aggregation (mean of un-permuted per-option log-probs) is NOT computable here. Every combiner below is a SELECTION rule between two views.",
+ "token_audit_note": "both arms must be DIRECT (3-4 generated tokens); reported per cell.",
+ "position_bias_diagnostic": {
+  "PMC_VQA": {
+   "n": 33430,
+   "overall_acc": 0.5517798384684415,
+   "per_predicted_letter": {
+    "A": {
+     "pred_rate": 0.23251570445707448,
+     "gold_rate": 0.13230631169608137,
+     "acc_when_predicted": 0.2763411810111926
+    },
+    "B": {
+     "pred_rate": 0.33107986838169307,
+     "gold_rate": 0.35848040682022136,
+     "acc_when_predicted": 0.6433863389953017
+    },
+    "C": {
+     "pred_rate": 0.3096021537541131,
+     "gold_rate": 0.377983846844152,
+     "acc_when_predicted": 0.6882125603864734
+    },
+    "D": {
+     "pred_rate": 0.1267723601555489,
+     "gold_rate": 0.1312294346395453,
+     "acc_when_predicted": 0.48466257668711654
+    }
+   },
+   "total_variation_pred_vs_gold": 0.10022434938677835,
+   "share_of_errors_made_while_predicting_A": 0.37540042712226374
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "overall_acc": 0.3065,
+   "per_predicted_letter": {
+    "A": {
+     "pred_rate": 0.2455,
+     "gold_rate": 0.1995,
+     "acc_when_predicted": 0.29124236252545826
+    },
+    "B": {
+     "pred_rate": 0.199,
+     "gold_rate": 0.204,
+     "acc_when_predicted": 0.3417085427135678
+    },
+    "C": {
+     "pred_rate": 0.212,
+     "gold_rate": 0.1915,
+     "acc_when_predicted": 0.3160377358490566
+    },
+    "D": {
+     "pred_rate": 0.1885,
+     "gold_rate": 0.193,
+     "acc_when_predicted": 0.2864721485411141
+    },
+    "E": {
+     "pred_rate": 0.155,
+     "gold_rate": 0.212,
+     "acc_when_predicted": 0.2967741935483871
+    }
+   },
+   "total_variation_pred_vs_gold": 0.06649999999999998,
+   "share_of_errors_made_while_predicting_A": 0.250901225666907
+  },
+  "reading": "On PMC_VQA the 32B answers 'A' on 23.3% of items where 'A' is gold 13.2% of the time, and it is right only 27.6% of the time when it says 'A' against 64.3% / 68.8% when it says B / C. 37.5% of ALL its errors are made while predicting A. That is the structured, answer-position-shaped error mode a cyclic-permutation ensemble is supposed to cancel, and it is why Attack 2 was worth running. It is a DIAGNOSTIC of headroom, NOT a result: an A-preference could equally be a fallback-under-uncertainty habit, in which case averaging over rotations moves the error rather than removing it."
+ },
+ "mmmu_permutation_prior": {
+  "Lingshu-32B": {
+   "n_mc_questions": 145,
+   "identity_shift0": 0.6551724137931034,
+   "permutation_majority_ensemble": 0.6482758620689655,
+   "oracle_over_shifts": 0.8,
+   "delta_ensemble_vs_identity": {
+    "delta": -0.006896551724137945,
+    "lo": -0.0482758620689655,
+    "hi": 0.03448275862068961,
+    "sig": false
+   },
+   "delta_oracle_vs_identity": {
+    "delta": 0.14482758620689662,
+    "lo": 0.08965517241379306,
+    "hi": 0.20000000000000007,
+    "sig": true
+   },
+   "order_instability_rate": 0.35862068965517246,
+   "breakdown": {
+    "all_shifts_agree": {
+     "n": 93,
+     "identity": 0.8064516129032258,
+     "ensemble": 0.8064516129032258,
+     "delta": 0.0
+    },
+    "shifts_disagree": {
+     "n": 52,
+     "identity": 0.38461538461538464,
+     "ensemble": 0.36538461538461536,
+     "delta": -0.019230769230769273
+    },
+    "identity_answered_A": {
+     "n": 47,
+     "identity": 0.6382978723404256,
+     "ensemble": 0.5957446808510638,
+     "delta": -0.042553191489361764
+    },
+    "identity_did_not_answer_A": {
+     "n": 98,
+     "identity": 0.6632653061224489,
+     "ensemble": 0.673469387755102,
+     "delta": 0.010204081632653073
+    }
+   }
+  },
+  "Lingshu-7B": {
+   "n_mc_questions": 145,
+   "identity_shift0": 0.8413793103448276,
+   "permutation_majority_ensemble": 0.8620689655172413,
+   "oracle_over_shifts": 0.9310344827586207,
+   "delta_ensemble_vs_identity": {
+    "delta": 0.020689655172413723,
+    "lo": -0.020689655172413834,
+    "hi": 0.06896551724137923,
+    "sig": false
+   },
+   "delta_oracle_vs_identity": {
+    "delta": 0.08965517241379306,
+    "lo": 0.0482758620689655,
+    "hi": 0.13793103448275867,
+    "sig": true
+   },
+   "order_instability_rate": 0.4,
+   "breakdown": {
+    "all_shifts_agree": {
+     "n": 87,
+     "identity": 0.9770114942528736,
+     "ensemble": 0.9770114942528736,
+     "delta": 0.0
+    },
+    "shifts_disagree": {
+     "n": 58,
+     "identity": 0.6379310344827587,
+     "ensemble": 0.6896551724137931,
+     "delta": 0.051724137931034475
+    },
+    "identity_answered_A": {
+     "n": 48,
+     "identity": 0.8333333333333334,
+     "ensemble": 0.8333333333333334,
+     "delta": 0.0
+    },
+    "identity_did_not_answer_A": {
+     "n": 97,
+     "identity": 0.845360824742268,
+     "ensemble": 0.8762886597938144,
+     "delta": 0.030927835051546393
+    }
+   }
+  },
+  "reading": "On Lingshu-32B the cyclic-permutation majority ensemble does NOT beat the identity view (-0.0069, CI spans zero) even though the ORACLE over shifts is +0.1448 -- the same shape as the 2-view prompt-form pilot above and as this project's recurring luck floor: a large combinable gap that no frozen-model combiner harvests. It is a PRIOR for the pre-registered run and NOT a substitute: n=145 on the EXCLUDED cell, and majority vote discards the per-option posterior that the pre-registered primary aggregation averages. MECHANISM, and it is the informative part: 35.9% of Lingshu-32B's MMMU questions are ORDER-UNSTABLE (the K rotations do not all give the same un-permuted answer), but on that unstable subset the ensemble is 0.365 vs the identity view's 0.385, and on the subset where the identity view answered 'A' -- the bias direction the attack targets -- the ensemble is 0.596 vs 0.638, i.e. it HURTS exactly where it was supposed to help. That is evidence for the alternative hypothesis named in the position-bias diagnostic: order instability here is a symptom of the model not knowing the answer, not a correctable positional prior, so averaging over rotations MOVES the error rather than removing it."
+ },
+ "cells": {
+  "PMC_VQA": {
+   "n": 33430,
+   "mean_gen_toks": {
+    "viewA": 2.9973377206102305,
+    "viewB": 3.0854621597367635
+   },
+   "acc": {
+    "viewA": 0.5517798384684415,
+    "viewB": 0.5494166915943763,
+    "agree_rate": 0.6241100807657792,
+    "pick_by_conf": 0.5509422674244691,
+    "pick_by_margin": 0.5515106192043076,
+    "crossfit_logistic_seedmean": 0.5517798384684414,
+    "crossfit_logistic_seedsd": 1.1102230246251565e-16,
+    "crossfit_logistic_seedrange": [
+     0.5517798384684415,
+     0.5517798384684415
+    ],
+    "oracle_of_2": 0.5743045169009872
+   },
+   "delta_vs_viewA": {
+    "viewB": {
+     "delta": -0.0023631468740651362,
+     "lo": -0.004666467244989536,
+     "hi": 0.0,
+     "sig": false
+    },
+    "pick_by_conf": {
+     "delta": -0.0008375710439724182,
+     "lo": -0.002572539635058324,
+     "hi": 0.0008973975471133766,
+     "sig": false
+    },
+    "pick_by_margin": {
+     "delta": -0.00026921926413392416,
+     "lo": -0.002093927609931212,
+     "hi": 0.0014956625785222943,
+     "sig": false
+    },
+    "oracle_of_2": {
+     "delta": 0.022524678432545686,
+     "lo": 0.020969189350882433,
+     "hi": 0.02411008076577925,
+     "sig": true
+    }
+   },
+   "selection_efficiency": -0.037184594953516406
+  },
+  "SLAKE_closed": {
+   "n": 836,
+   "mean_gen_toks": {
+    "viewA": 3.2404306220095696,
+    "viewB": 3.333732057416268
+   },
+   "acc": {
+    "viewA": 0.8588516746411483,
+    "viewB": 0.8636363636363636,
+    "agree_rate": 0.9425837320574163,
+    "pick_by_conf": 0.8624401913875598,
+    "pick_by_margin": 0.8624401913875598,
+    "crossfit_logistic_seedmean": 0.8588516746411482,
+    "crossfit_logistic_seedsd": 1.1102230246251565e-16,
+    "crossfit_logistic_seedrange": [
+     0.8588516746411483,
+     0.8588516746411483
+    ],
+    "oracle_of_2": 0.8672248803827751
+   },
+   "delta_vs_viewA": {
+    "viewB": {
+     "delta": 0.004784688995215336,
+     "lo": -0.0023923444976076125,
+     "hi": 0.011961722488038284,
+     "sig": false
+    },
+    "pick_by_conf": {
+     "delta": 0.0035885167464114742,
+     "lo": 0.0,
+     "hi": 0.00837320574162681,
+     "sig": false
+    },
+    "pick_by_margin": {
+     "delta": 0.0035885167464114742,
+     "lo": 0.0,
+     "hi": 0.00837320574162681,
+     "sig": false
+    },
+    "oracle_of_2": {
+     "delta": 0.00837320574162681,
+     "lo": 0.0023923444976077235,
+     "hi": 0.015550239234449759,
+     "sig": true
+    }
+   },
+   "selection_efficiency": 0.42857142857142666
+  },
+  "VQA_RAD_closed": {
+   "n": 251,
+   "mean_gen_toks": {
+    "viewA": 3.00796812749004,
+    "viewB": 3.00796812749004
+   },
+   "acc": {
+    "viewA": 0.852589641434263,
+    "viewB": 0.8406374501992032,
+    "agree_rate": 0.9721115537848606,
+    "pick_by_conf": 0.848605577689243,
+    "pick_by_margin": 0.848605577689243,
+    "crossfit_logistic_seedmean": 0.8525896414342629,
+    "crossfit_logistic_seedsd": 1.1102230246251565e-16,
+    "crossfit_logistic_seedrange": [
+     0.852589641434263,
+     0.852589641434263
+    ],
+    "oracle_of_2": 0.8605577689243028
+   },
+   "delta_vs_viewA": {
+    "viewB": {
+     "delta": -0.01195219123505975,
+     "lo": -0.031872509960159445,
+     "hi": 0.007968127490039834,
+     "sig": false
+    },
+    "pick_by_conf": {
+     "delta": -0.003984063745019917,
+     "lo": -0.01195219123505975,
+     "hi": 0.0,
+     "sig": false
+    },
+    "pick_by_margin": {
+     "delta": -0.003984063745019917,
+     "lo": -0.01195219123505975,
+     "hi": 0.0,
+     "sig": false
+    },
+    "oracle_of_2": {
+     "delta": 0.007968127490039834,
+     "lo": 0.0,
+     "hi": 0.019920318725099584,
+     "sig": false
+    }
+   },
+   "selection_efficiency": -0.5
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "mean_gen_toks": {
+    "viewA": 3.0,
+    "viewB": 3.0315
+   },
+   "acc": {
+    "viewA": 0.3065,
+    "viewB": 0.3045,
+    "agree_rate": 0.95,
+    "pick_by_conf": 0.3035,
+    "pick_by_margin": 0.3045,
+    "crossfit_logistic_seedmean": 0.30649999999999994,
+    "crossfit_logistic_seedsd": 5.551115123125783e-17,
+    "crossfit_logistic_seedrange": [
+     0.3065,
+     0.3065
+    ],
+    "oracle_of_2": 0.316
+   },
+   "delta_vs_viewA": {
+    "viewB": {
+     "delta": -0.0020000000000000018,
+     "lo": -0.008500000000000008,
+     "hi": 0.004500000000000004,
+     "sig": false
+    },
+    "pick_by_conf": {
+     "delta": -0.0030000000000000027,
+     "lo": -0.008000000000000007,
+     "hi": 0.0020000000000000018,
+     "sig": false
+    },
+    "pick_by_margin": {
+     "delta": -0.0020000000000000018,
+     "lo": -0.007500000000000007,
+     "hi": 0.0030000000000000027,
+     "sig": false
+    },
+    "oracle_of_2": {
+     "delta": 0.009500000000000008,
+     "lo": 0.005500000000000005,
+     "hi": 0.014000000000000012,
+     "sig": true
+    }
+   },
+   "selection_efficiency": -0.3157894736842105
+  }
+ },
+ "summed_gain_over_4_cells": {
+  "viewB": -0.011530649113909552,
+  "pick_by_conf": -0.0042331180425808634,
+  "pick_by_margin": -0.0026647662627423685,
+  "crossfit_logistic": -3.885780586188048e-16,
+  "oracle_of_2": 0.04836601166421234
+ },
+ "bar": {
+  "summed_mcq_gain_needed_over_5_cells": 0.0235,
+  "note": "the pilot covers 4 of the 5 MCQ cells (no PATH_VQA think dump exists), so its summed gain is not directly comparable to the 5-cell bar; it is reported to show the SIGN and the ORDER OF MAGNITUDE."
+ },
+ "verdict": "A 2-view prompt-form ensemble on the 32B, combined by any cheap frozen signal, does NOT gain: the confidence rule and the cross-fit logistic combiner both sit at or below the single-view baseline, while the 2-view ORACLE is large. The MCQ selection wall reappears in a new place. This is a PRIOR for the pre-registered permutation arm, not a substitute for it: the permutation arm AVERAGES a bias-cancelling family rather than SELECTING between views, which is exactly the distinction that has to be settled empirically."
+}

@@ -1,0 +1,1801 @@
+{
+ "title": "SCOUT A -- per-cell headroom accounting for the MACRO (8-cell, Variant B) headline",
+ "date": "2026-08-10",
+ "reproduce": "python3 src/cascade_methods/headroom_percell.py",
+ "no_gpu": true,
+ "no_new_inference": true,
+ "no_fabricated_numbers": true,
+ "convention": "MACRO, equal weight per reporting cell, Variant B (MMMU excluded), 8 cells, 1/8 each, n=42,224; CLEAN disjoint open-text verifier (ckpts/train/lora_verifier_disjoint)",
+ "n_bootstrap": 10000,
+ "seed": 20260810,
+ "caveats": [
+  "TOKEN AUDIT, per the standing rule: the `always_32b_reasoning` vector on the four closed/MCQ cells comes from the dumps CLAUDE.md hole 1 flags as averaging 3-4 generated tokens (PMC test_2 / SLAKE-closed / VQA-RAD-closed), i.e. NOT genuine reasoning runs. PATH_VQA_closed has no reasoning dump at all, so okT == ok32 there by construction and its 3-way oracle equals its 2-way oracle. Every ceiling in this file that involves 32B-reasoning on a CLOSED cell inherits that defect and must not be cited as evidence about reasoning. The three open cells' reasoning vectors ARE measured judged dumps (opentext_32b_think_full), and MedXpert uses the genuine lingshu32b_reason run.",
+  "ALL cost numbers here are per-cell FLOP-eq under the paper's as-charged constants (one 32B pass = 4.57). They are cell-local, so they may be macro-averaged; they are NEVER to be paired with a sample-weighted accuracy.",
+  "The cross-fit keep-7B rules and the F8 veto sweep cross-fit 5-fold WITHIN each eval cell, which is the deployed cascade's own protocol -- but the DECISION to apply a lever to a cell, and the CHOICE of signal per cell, are made here with eval visibility. Both are labelled DIAGNOSTIC and neither is a deployable result.",
+  "The guardrail's resolution is poor on VQA_RAD_open (n=200) and VQA_RAD_closed (n=251); single-cell flags on those two are within seed/sampling noise, not decisive."
+ ],
+ "null_tests": {
+  "per_cell_accuracies": {
+   "source": "results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json",
+   "arm": "disjoint",
+   "fields_compared": 63,
+   "max_abs_deviation_percell": 0.0,
+   "max_abs_deviation_macro": 0.0,
+   "passed": true
+  },
+  "open_text_bar": {
+   "source": "src/training_methods/genframe_data.py FROZEN block (incumbent, clean disjoint)",
+   "n": 2345,
+   "measured": {
+    "oracle8": 0.626013,
+    "greedy": 0.449467,
+    "selected": 0.485288,
+    "sel_eff": 0.775204
+   },
+   "measured_per_ds_sel_eff": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "frozen": {
+    "oracle8": 0.626013,
+    "greedy": 0.449467,
+    "selected": 0.485288,
+    "sel_eff": 0.775204,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.722581
+    }
+   },
+   "max_abs_deviation": 3.6e-07,
+   "passed": true,
+   "identity_check": {
+    "claim": "selected == sel_eff * oracle@8 (exact, because a pick can only be correct when the pool is recoverable)",
+    "sel_eff_times_oracle": 0.485287846,
+    "selected": 0.485287846,
+    "max_abs_deviation": 0.0
+   }
+  }
+ },
+ "per_cell": {
+  "PMC_VQA": {
+   "n": 33430,
+   "format": "MCQ/closed",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.5427,
+    "always_32b_direct": 0.5518,
+    "always_32b_reasoning": 0.5494,
+    "oracle_mode_32b": 0.5518,
+    "method_compute_lean": 0.5508,
+    "method_accuracy_max_veto": 0.5613,
+    "method_accuracy_max_fusion": 0.5653
+   },
+   "escalation_rate_compute_lean": 0.0845,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 1.386,
+    "method_accuracy_max_veto": 3.741
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.4283,
+    "only_7B_right": 0.1143,
+    "only_32B_right": 0.1235,
+    "both_wrong": 0.3339,
+    "disagreement_rate": 0.2378
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.6661,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1143,
+      "lo": 0.111,
+      "hi": 0.1177,
+      "sig": true,
+      "n": 33430
+     },
+     "acc_if_the_two_systems_erred_independently": 0.795,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.5743,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0225,
+      "lo": 0.0209,
+      "hi": 0.0241,
+      "sig": true,
+      "n": 33430
+     },
+     "acc_if_the_two_modes_erred_independently": 0.798,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.6765,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1247,
+      "lo": 0.1212,
+      "hi": 0.1283,
+      "sig": true,
+      "n": 33430
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    }
+   }
+  },
+  "SLAKE_closed": {
+   "n": 836,
+   "format": "MCQ/closed",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.8254,
+    "always_32b_direct": 0.8589,
+    "always_32b_reasoning": 0.8636,
+    "oracle_mode_32b": 0.8636,
+    "method_compute_lean": 0.8517,
+    "method_accuracy_max_veto": 0.8589,
+    "method_accuracy_max_fusion": 0.8589
+   },
+   "escalation_rate_compute_lean": 0.2045,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 1.935,
+    "method_accuracy_max_veto": 4.57
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.7763,
+    "only_7B_right": 0.049,
+    "only_32B_right": 0.0825,
+    "both_wrong": 0.0921,
+    "disagreement_rate": 0.1316
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.9079,
+     "gain_over_always_32B_direct": {
+      "mean": 0.049,
+      "lo": 0.0347,
+      "hi": 0.0634,
+      "sig": true,
+      "n": 836
+     },
+     "acc_if_the_two_systems_erred_independently": 0.9753,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.8672,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0084,
+      "lo": 0.0024,
+      "hi": 0.0156,
+      "sig": true,
+      "n": 836
+     },
+     "acc_if_the_two_modes_erred_independently": 0.9808,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.9151,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0562,
+      "lo": 0.0419,
+      "hi": 0.0718,
+      "sig": true,
+      "n": 836
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    }
+   }
+  },
+  "VQA_RAD_closed": {
+   "n": 251,
+   "format": "MCQ/closed",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.7809,
+    "always_32b_direct": 0.8526,
+    "always_32b_reasoning": 0.8406,
+    "oracle_mode_32b": 0.8526,
+    "method_compute_lean": 0.8327,
+    "method_accuracy_max_veto": 0.8526,
+    "method_accuracy_max_fusion": 0.8526
+   },
+   "escalation_rate_compute_lean": 0.5697,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 3.604,
+    "method_accuracy_max_veto": 4.57
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.745,
+    "only_7B_right": 0.0359,
+    "only_32B_right": 0.1076,
+    "both_wrong": 0.1116,
+    "disagreement_rate": 0.1434
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.8884,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0359,
+      "lo": 0.0159,
+      "hi": 0.0598,
+      "sig": true,
+      "n": 251
+     },
+     "acc_if_the_two_systems_erred_independently": 0.9677,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.8606,
+     "gain_over_always_32B_direct": {
+      "mean": 0.008,
+      "lo": 0.0,
+      "hi": 0.0199,
+      "sig": false,
+      "n": 251
+     },
+     "acc_if_the_two_modes_erred_independently": 0.9765,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.8964,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0438,
+      "lo": 0.0199,
+      "hi": 0.0717,
+      "sig": true,
+      "n": 251
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    }
+   }
+  },
+  "PATH_VQA_closed": {
+   "n": 3362,
+   "format": "MCQ/closed",
+   "reasoning_dump_is_real": false,
+   "acc": {
+    "always_7b": 0.8409,
+    "always_32b_direct": 0.8891,
+    "always_32b_reasoning": 0.8891,
+    "oracle_mode_32b": 0.8891,
+    "method_compute_lean": 0.8882,
+    "method_accuracy_max_veto": 0.8891,
+    "method_accuracy_max_fusion": 0.8891
+   },
+   "escalation_rate_compute_lean": 0.4572,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 3.089,
+    "method_accuracy_max_veto": 4.57
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.7995,
+    "only_7B_right": 0.0413,
+    "only_32B_right": 0.0895,
+    "both_wrong": 0.0696,
+    "disagreement_rate": 0.1309
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.9304,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0413,
+      "lo": 0.0348,
+      "hi": 0.0482,
+      "sig": true,
+      "n": 3362
+     },
+     "acc_if_the_two_systems_erred_independently": 0.9823,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.8891,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "n": 3362
+     },
+     "acc_if_the_two_modes_erred_independently": 0.9877,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.9304,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0413,
+      "lo": 0.0348,
+      "hi": 0.0482,
+      "sig": true,
+      "n": 3362
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    }
+   }
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "format": "MCQ/closed",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.2615,
+    "always_32b_direct": 0.3065,
+    "always_32b_reasoning": 0.304,
+    "oracle_mode_32b": 0.3065,
+    "method_compute_lean": 0.3005,
+    "method_accuracy_max_veto": 0.3065,
+    "method_accuracy_max_fusion": 0.3065
+   },
+   "escalation_rate_compute_lean": 0.896,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 5.095,
+    "method_accuracy_max_veto": 4.57
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.1455,
+    "only_7B_right": 0.116,
+    "only_32B_right": 0.161,
+    "both_wrong": 0.5775,
+    "disagreement_rate": 0.277
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.4225,
+     "gain_over_always_32B_direct": {
+      "mean": 0.116,
+      "lo": 0.1025,
+      "hi": 0.13,
+      "sig": true,
+      "n": 2000
+     },
+     "acc_if_the_two_systems_erred_independently": 0.4879,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.421,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1145,
+      "lo": 0.101,
+      "hi": 0.1285,
+      "sig": true,
+      "n": 2000
+     },
+     "acc_if_the_two_modes_erred_independently": 0.5173,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.511,
+     "gain_over_always_32B_direct": {
+      "mean": 0.2045,
+      "lo": 0.187,
+      "hi": 0.2225,
+      "sig": true,
+      "n": 2000
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    }
+   }
+  },
+  "SLAKE_open": {
+   "n": 645,
+   "format": "open-text",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.7364,
+    "always_32b_direct": 0.8186,
+    "always_32b_reasoning": 0.6791,
+    "oracle_mode_32b": 0.8186,
+    "method_compute_lean": 0.8078,
+    "method_accuracy_max_veto": 0.8171,
+    "method_accuracy_max_fusion": 0.8078
+   },
+   "escalation_rate_compute_lean": 0.4341,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 13.078,
+    "method_accuracy_max_veto": 13.971
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.6899,
+    "only_7B_right": 0.0465,
+    "only_32B_right": 0.1287,
+    "both_wrong": 0.1349,
+    "disagreement_rate": 0.1752
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.8651,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0465,
+      "lo": 0.031,
+      "hi": 0.0636,
+      "sig": true,
+      "n": 645
+     },
+     "acc_if_the_two_systems_erred_independently": 0.9522,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.8496,
+     "gain_over_always_32B_direct": {
+      "mean": 0.031,
+      "lo": 0.0186,
+      "hi": 0.045,
+      "sig": true,
+      "n": 645
+     },
+     "acc_if_the_two_modes_erred_independently": 0.9418,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.8853,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0667,
+      "lo": 0.0481,
+      "hi": 0.0868,
+      "sig": true,
+      "n": 645
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    },
+    "pool_oracle_at8_7B_only": {
+     "acc": 0.8791,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0605,
+      "lo": 0.031,
+      "hi": 0.0899,
+      "sig": true,
+      "n": 645
+     },
+     "requires": "the 8 cheap 7B samples the open arm already draws, plus a PERFECT selector",
+     "evidence": "measured: P(at least one of the 8 sampled 7B answers is judged correct), clean disjoint verifier pool ckpts/train/lora_verifier_disjoint/transfer_dump_slake_open_lingshu7b.json"
+    },
+    "item_oracle_pool_at8_or_32Bdirect": {
+     "acc": 0.924,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1054,
+      "lo": 0.0822,
+      "hi": 0.1287,
+      "sig": true,
+      "n": 645
+     },
+     "requires": "the 8 cheap samples + one 32B pass + a PERFECT selector AND a PERFECT router",
+     "evidence": "exact: mean(max(oracle@8, ok32)); the ceiling of perfect selection AND perfect routing on top of the existing 8-sample pool"
+    }
+   },
+   "contingency_bestof8_selected_vs_32Bdirect": {
+    "both_right": 0.693,
+    "only_selected_right": 0.0543,
+    "only_32B_right": 0.1256,
+    "both_wrong": 0.1271,
+    "note": "this is the contingency that actually bounds the open arm, because its cheap leg is the verifier's pick out of 8, not the greedy answer"
+   },
+   "open_pool": {
+    "greedy": 0.7364,
+    "selected_incumbent": 0.7473,
+    "oracle_at8": 0.8791,
+    "sel_eff": 0.850088,
+    "coverage_wall_no_correct_candidate": 0.1209,
+    "selection_wall_recoverable_but_missed": 0.1318,
+    "pool_recoverable_and_32B_wrong": 0.1054,
+    "meanN_deployed": 5.547,
+    "note": "selected == sel_eff * oracle@8 exactly"
+   }
+  },
+  "VQA_RAD_open": {
+   "n": 200,
+   "format": "open-text",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.465,
+    "always_32b_direct": 0.6,
+    "always_32b_reasoning": 0.545,
+    "oracle_mode_32b": 0.6,
+    "method_compute_lean": 0.54,
+    "method_accuracy_max_veto": 0.59,
+    "method_accuracy_max_fusion": 0.54
+   },
+   "escalation_rate_compute_lean": 0.54,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 15.728,
+    "method_accuracy_max_veto": 17.304
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.415,
+    "only_7B_right": 0.05,
+    "only_32B_right": 0.185,
+    "both_wrong": 0.35,
+    "disagreement_rate": 0.235
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.65,
+     "gain_over_always_32B_direct": {
+      "mean": 0.05,
+      "lo": 0.02,
+      "hi": 0.08,
+      "sig": true,
+      "n": 200
+     },
+     "acc_if_the_two_systems_erred_independently": 0.786,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.67,
+     "gain_over_always_32B_direct": {
+      "mean": 0.07,
+      "lo": 0.035,
+      "hi": 0.105,
+      "sig": true,
+      "n": 200
+     },
+     "acc_if_the_two_modes_erred_independently": 0.818,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.7,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1,
+      "lo": 0.06,
+      "hi": 0.145,
+      "sig": true,
+      "n": 200
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    },
+    "pool_oracle_at8_7B_only": {
+     "acc": 0.63,
+     "gain_over_always_32B_direct": {
+      "mean": 0.03,
+      "lo": -0.03,
+      "hi": 0.095,
+      "sig": false,
+      "n": 200
+     },
+     "requires": "the 8 cheap 7B samples the open arm already draws, plus a PERFECT selector",
+     "evidence": "measured: P(at least one of the 8 sampled 7B answers is judged correct), clean disjoint verifier pool ckpts/train/lora_verifier_disjoint/transfer_dump_vqa_rad_open_lingshu7b.json"
+    },
+    "item_oracle_pool_at8_or_32Bdirect": {
+     "acc": 0.715,
+     "gain_over_always_32B_direct": {
+      "mean": 0.115,
+      "lo": 0.075,
+      "hi": 0.16,
+      "sig": true,
+      "n": 200
+     },
+     "requires": "the 8 cheap samples + one 32B pass + a PERFECT selector AND a PERFECT router",
+     "evidence": "exact: mean(max(oracle@8, ok32)); the ceiling of perfect selection AND perfect routing on top of the existing 8-sample pool"
+    }
+   },
+   "contingency_bestof8_selected_vs_32Bdirect": {
+    "both_right": 0.43,
+    "only_selected_right": 0.05,
+    "only_32B_right": 0.17,
+    "both_wrong": 0.35,
+    "note": "this is the contingency that actually bounds the open arm, because its cheap leg is the verifier's pick out of 8, not the greedy answer"
+   },
+   "open_pool": {
+    "greedy": 0.465,
+    "selected_incumbent": 0.48,
+    "oracle_at8": 0.63,
+    "sel_eff": 0.761905,
+    "coverage_wall_no_correct_candidate": 0.37,
+    "selection_wall_recoverable_but_missed": 0.15,
+    "pool_recoverable_and_32B_wrong": 0.115,
+    "meanN_deployed": 6.63,
+    "note": "selected == sel_eff * oracle@8 exactly"
+   }
+  },
+  "PATH_VQA_open": {
+   "n": 1500,
+   "format": "open-text",
+   "reasoning_dump_is_real": true,
+   "acc": {
+    "always_7b": 0.324,
+    "always_32b_direct": 0.376,
+    "always_32b_reasoning": 0.1087,
+    "oracle_mode_32b": 0.376,
+    "method_compute_lean": 0.3827,
+    "method_accuracy_max_veto": 0.3847,
+    "method_accuracy_max_fusion": 0.3827
+   },
+   "escalation_rate_compute_lean": 0.16,
+   "cost_flopeq": {
+    "always_7b": 1.0,
+    "always_32b_direct": 4.57,
+    "method_compute_lean": 9.474,
+    "method_accuracy_max_veto": 10.312
+   },
+   "contingency_7Bdirect_vs_32Bdirect": {
+    "both_right": 0.248,
+    "only_7B_right": 0.076,
+    "only_32B_right": 0.128,
+    "both_wrong": 0.548,
+    "disagreement_rate": 0.204
+   },
+   "ceilings": {
+    "item_oracle_7B_or_32Bdirect": {
+     "acc": 0.452,
+     "gain_over_always_32B_direct": {
+      "mean": 0.076,
+      "lo": 0.0627,
+      "hi": 0.0893,
+      "sig": true,
+      "n": 1500
+     },
+     "acc_if_the_two_systems_erred_independently": 0.5782,
+     "requires": "the two forward passes the deployed cascade already has",
+     "evidence": "exact: mean(max(ok7,ok32)) over the cell's own per-sample vectors; equals 1 - P(both wrong); the gain equals p10 identically"
+    },
+    "item_oracle_32Bdirect_or_32Breasoning": {
+     "acc": 0.408,
+     "gain_over_always_32B_direct": {
+      "mean": 0.032,
+      "lo": 0.0233,
+      "hi": 0.0413,
+      "sig": true,
+      "n": 1500
+     },
+     "acc_if_the_two_modes_erred_independently": 0.4438,
+     "requires": "a 32B reasoning pass as a third tier (expensive)",
+     "evidence": "exact: mean(max(ok32,okT)); ITEM-level mode routing on the 32B, versus the deployed oracle_mode_32b which picks one mode per BENCHMARK"
+    },
+    "item_oracle_7B_or_32Bdirect_or_32Breasoning": {
+     "acc": 0.4733,
+     "gain_over_always_32B_direct": {
+      "mean": 0.0973,
+      "lo": 0.0827,
+      "hi": 0.1127,
+      "sig": true,
+      "n": 1500
+     },
+     "requires": "all three tiers",
+     "evidence": "exact: mean(max(ok7,ok32,okT)); adds whatever a 32B-reasoning third tier could contribute on top of the 2-way oracle"
+    },
+    "pool_oracle_at8_7B_only": {
+     "acc": 0.5167,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1407,
+      "lo": 0.1167,
+      "hi": 0.1653,
+      "sig": true,
+      "n": 1500
+     },
+     "requires": "the 8 cheap 7B samples the open arm already draws, plus a PERFECT selector",
+     "evidence": "measured: P(at least one of the 8 sampled 7B answers is judged correct), clean disjoint verifier pool ckpts/train/lora_verifier_disjoint/transfer_dump_pathvqa_open_lingshu7b.json"
+    },
+    "item_oracle_pool_at8_or_32Bdirect": {
+     "acc": 0.5707,
+     "gain_over_always_32B_direct": {
+      "mean": 0.1947,
+      "lo": 0.1747,
+      "hi": 0.2153,
+      "sig": true,
+      "n": 1500
+     },
+     "requires": "the 8 cheap samples + one 32B pass + a PERFECT selector AND a PERFECT router",
+     "evidence": "exact: mean(max(oracle@8, ok32)); the ceiling of perfect selection AND perfect routing on top of the existing 8-sample pool"
+    }
+   },
+   "contingency_bestof8_selected_vs_32Bdirect": {
+    "both_right": 0.2753,
+    "only_selected_right": 0.098,
+    "only_32B_right": 0.1007,
+    "both_wrong": 0.526,
+    "note": "this is the contingency that actually bounds the open arm, because its cheap leg is the verifier's pick out of 8, not the greedy answer"
+   },
+   "open_pool": {
+    "greedy": 0.324,
+    "selected_incumbent": 0.3733,
+    "oracle_at8": 0.5167,
+    "sel_eff": 0.722581,
+    "coverage_wall_no_correct_candidate": 0.4833,
+    "selection_wall_recoverable_but_missed": 0.1433,
+    "pool_recoverable_and_32B_wrong": 0.1947,
+    "meanN_deployed": 4.371,
+    "note": "selected == sel_eff * oracle@8 exactly"
+   }
+  }
+ },
+ "identifiability_of_the_7B_wins_subset": {
+  "PMC_VQA": {
+   "p10_share_of_disagreements": 0.4808,
+   "n_disagree": 7949,
+   "signals": {
+    "7B_margin": {
+     "auroc_p10_vs_rest_all_items": 0.388,
+     "auroc_7Bwins_among_disagreements": 0.5884,
+     "insample_best_threshold_gain": {
+      "gain": 0.0119,
+      "keep_frac": 0.6231
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0103,
+      "keep_frac": 0.5919,
+      "ci": {
+       "mean": 0.0103,
+       "lo": 0.007,
+       "hi": 0.0135,
+       "sig": true,
+       "n": 33430
+      }
+     }
+    },
+    "7B_conf": {
+     "auroc_p10_vs_rest_all_items": 0.3916,
+     "auroc_7Bwins_among_disagreements": 0.5806,
+     "insample_best_threshold_gain": {
+      "gain": 0.0115,
+      "keep_frac": 0.5451
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0105,
+      "keep_frac": 0.5389,
+      "ci": {
+       "mean": 0.0105,
+       "lo": 0.0074,
+       "hi": 0.0136,
+       "sig": true,
+       "n": 33430
+      }
+     }
+    },
+    "7B_selfconsistency_cap320_vs_fullres": {
+     "auroc_p10_vs_rest_all_items": 0.4971,
+     "auroc_7Bwins_among_disagreements": 0.5014,
+     "insample_best_threshold_gain": {
+      "gain": 0.0002,
+      "keep_frac": 0.0158
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0086,
+      "keep_frac": 0.9904,
+      "ci": {
+       "mean": -0.0086,
+       "lo": -0.0138,
+       "hi": -0.0035,
+       "sig": true,
+       "n": 33430
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.001,
+    "accuracy_max_veto": 0.0095,
+    "accuracy_max_fusion": 0.0135
+   }
+  },
+  "SLAKE_closed": {
+   "p10_share_of_disagreements": 0.3727,
+   "n_disagree": 110,
+   "signals": {
+    "7B_margin": {
+     "auroc_p10_vs_rest_all_items": 0.2544,
+     "auroc_7Bwins_among_disagreements": 0.6391,
+     "insample_best_threshold_gain": {
+      "gain": 0.0108,
+      "keep_frac": 0.4964
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0036,
+      "keep_frac": 0.5311,
+      "ci": {
+       "mean": 0.0036,
+       "lo": -0.006,
+       "hi": 0.0132,
+       "sig": false,
+       "n": 836
+      }
+     }
+    },
+    "7B_conf": {
+     "auroc_p10_vs_rest_all_items": 0.2511,
+     "auroc_7Bwins_among_disagreements": 0.6235,
+     "insample_best_threshold_gain": {
+      "gain": 0.0108,
+      "keep_frac": 0.4868
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0048,
+      "keep_frac": 0.5239,
+      "ci": {
+       "mean": 0.0048,
+       "lo": -0.0048,
+       "hi": 0.0144,
+       "sig": false,
+       "n": 836
+      }
+     }
+    },
+    "7B_selfconsistency_cap320_vs_fullres": {
+     "auroc_p10_vs_rest_all_items": 0.4735,
+     "auroc_7Bwins_among_disagreements": 0.4924,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0012
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0167,
+      "keep_frac": 0.3947,
+      "ci": {
+       "mean": -0.0167,
+       "lo": -0.0335,
+       "hi": -0.0012,
+       "sig": true,
+       "n": 836
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.0072,
+    "accuracy_max_veto": 0.0,
+    "accuracy_max_fusion": 0.0
+   }
+  },
+  "VQA_RAD_closed": {
+   "p10_share_of_disagreements": 0.25,
+   "n_disagree": 36,
+   "signals": {
+    "7B_margin": {
+     "auroc_p10_vs_rest_all_items": 0.3251,
+     "auroc_7Bwins_among_disagreements": 0.642,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.004
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0159,
+      "keep_frac": 0.2351,
+      "ci": {
+       "mean": -0.0159,
+       "lo": -0.0359,
+       "hi": 0.004,
+       "sig": false,
+       "n": 251
+      }
+     }
+    },
+    "7B_conf": {
+     "auroc_p10_vs_rest_all_items": 0.3269,
+     "auroc_7Bwins_among_disagreements": 0.642,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.004
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0159,
+      "keep_frac": 0.2351,
+      "ci": {
+       "mean": -0.0159,
+       "lo": -0.0359,
+       "hi": 0.0,
+       "sig": false,
+       "n": 251
+      }
+     }
+    },
+    "7B_selfconsistency_cap320_vs_fullres": {
+     "auroc_p10_vs_rest_all_items": 0.5496,
+     "auroc_7Bwins_among_disagreements": 0.5926,
+     "insample_best_threshold_gain": {
+      "gain": 0.008,
+      "keep_frac": 0.1753
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0558,
+      "keep_frac": 0.7171,
+      "ci": {
+       "mean": -0.0558,
+       "lo": -0.0956,
+       "hi": -0.0159,
+       "sig": true,
+       "n": 251
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.0199,
+    "accuracy_max_veto": 0.0,
+    "accuracy_max_fusion": 0.0
+   }
+  },
+  "PATH_VQA_closed": {
+   "p10_share_of_disagreements": 0.3159,
+   "n_disagree": 440,
+   "signals": {
+    "7B_margin": {
+     "auroc_p10_vs_rest_all_items": 0.2179,
+     "auroc_7Bwins_among_disagreements": 0.5737,
+     "insample_best_threshold_gain": {
+      "gain": 0.0009,
+      "keep_frac": 0.4709
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0006,
+      "keep_frac": 0.4976,
+      "ci": {
+       "mean": -0.0006,
+       "lo": -0.0033,
+       "hi": 0.0021,
+       "sig": false,
+       "n": 3362
+      }
+     }
+    },
+    "7B_conf": {
+     "auroc_p10_vs_rest_all_items": 0.2181,
+     "auroc_7Bwins_among_disagreements": 0.5739,
+     "insample_best_threshold_gain": {
+      "gain": 0.0009,
+      "keep_frac": 0.4706
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0006,
+      "keep_frac": 0.4976,
+      "ci": {
+       "mean": -0.0006,
+       "lo": -0.0033,
+       "hi": 0.0021,
+       "sig": false,
+       "n": 3362
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.0009,
+    "accuracy_max_veto": 0.0,
+    "accuracy_max_fusion": 0.0
+   }
+  },
+  "MedXpertQA-MM": {
+   "p10_share_of_disagreements": 0.4188,
+   "n_disagree": 554,
+   "signals": {
+    "7B_margin": {
+     "auroc_p10_vs_rest_all_items": 0.4363,
+     "auroc_7Bwins_among_disagreements": 0.4877,
+     "insample_best_threshold_gain": {
+      "gain": 0.0015,
+      "keep_frac": 0.024
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0035,
+      "keep_frac": 0.0425,
+      "ci": {
+       "mean": -0.0035,
+       "lo": -0.0075,
+       "hi": 0.0005,
+       "sig": false,
+       "n": 2000
+      }
+     }
+    },
+    "7B_conf": {
+     "auroc_p10_vs_rest_all_items": 0.4367,
+     "auroc_7Bwins_among_disagreements": 0.4801,
+     "insample_best_threshold_gain": {
+      "gain": 0.0015,
+      "keep_frac": 0.0245
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0035,
+      "keep_frac": 0.0425,
+      "ci": {
+       "mean": -0.0035,
+       "lo": -0.0075,
+       "hi": 0.0005,
+       "sig": false,
+       "n": 2000
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.006,
+    "accuracy_max_veto": 0.0,
+    "accuracy_max_fusion": 0.0
+   }
+  },
+  "SLAKE_open": {
+   "p10_share_of_disagreements": 0.2655,
+   "n_disagree": 113,
+   "signals": {
+    "verifier_max_score": {
+     "auroc_p10_vs_rest_all_items": 0.2114,
+     "auroc_7Bwins_among_disagreements": 0.4655,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0016
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 645
+      }
+     }
+    },
+    "verifier_mean_score": {
+     "auroc_p10_vs_rest_all_items": 0.2183,
+     "auroc_7Bwins_among_disagreements": 0.5145,
+     "insample_best_threshold_gain": {
+      "gain": 0.0016,
+      "keep_frac": 0.293
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.2341,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 645
+      }
+     }
+    },
+    "verifier_score_std": {
+     "auroc_p10_vs_rest_all_items": 0.6603,
+     "auroc_7Bwins_among_disagreements": 0.3627,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0016
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 645
+      }
+     }
+    },
+    "pool_selfconsistency": {
+     "auroc_p10_vs_rest_all_items": 0.2712,
+     "auroc_7Bwins_among_disagreements": 0.538,
+     "insample_best_threshold_gain": {
+      "gain": 0.0016,
+      "keep_frac": 0.0078
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0047,
+      "keep_frac": 0.4357,
+      "ci": {
+       "mean": -0.0047,
+       "lo": -0.014,
+       "hi": 0.0047,
+       "sig": false,
+       "n": 645
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.0109,
+    "accuracy_max_veto": -0.0016,
+    "accuracy_max_fusion": -0.0109
+   }
+  },
+  "VQA_RAD_open": {
+   "p10_share_of_disagreements": 0.2128,
+   "n_disagree": 47,
+   "signals": {
+    "verifier_max_score": {
+     "auroc_p10_vs_rest_all_items": 0.3889,
+     "auroc_7Bwins_among_disagreements": 0.3946,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.005
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 200
+      }
+     }
+    },
+    "verifier_mean_score": {
+     "auroc_p10_vs_rest_all_items": 0.4055,
+     "auroc_7Bwins_among_disagreements": 0.4986,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.005
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 200
+      }
+     }
+    },
+    "verifier_score_std": {
+     "auroc_p10_vs_rest_all_items": 0.6739,
+     "auroc_7Bwins_among_disagreements": 0.55,
+     "insample_best_threshold_gain": {
+      "gain": -0.005,
+      "keep_frac": 0.005
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 200
+      }
+     }
+    },
+    "pool_selfconsistency": {
+     "auroc_p10_vs_rest_all_items": 0.4042,
+     "auroc_7Bwins_among_disagreements": 0.473,
+     "insample_best_threshold_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.005
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 200
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": -0.06,
+    "accuracy_max_veto": -0.01,
+    "accuracy_max_fusion": -0.06
+   }
+  },
+  "PATH_VQA_open": {
+   "p10_share_of_disagreements": 0.3725,
+   "n_disagree": 306,
+   "signals": {
+    "verifier_max_score": {
+     "auroc_p10_vs_rest_all_items": 0.6055,
+     "auroc_7Bwins_among_disagreements": 0.5802,
+     "insample_best_threshold_gain": {
+      "gain": 0.0013,
+      "keep_frac": 0.0067
+     },
+     "crossfit_keep7_gain": {
+      "gain": -0.0013,
+      "keep_frac": 0.022,
+      "ci": {
+       "mean": -0.0013,
+       "lo": -0.0053,
+       "hi": 0.0027,
+       "sig": false,
+       "n": 1500
+      }
+     }
+    },
+    "verifier_mean_score": {
+     "auroc_p10_vs_rest_all_items": 0.6196,
+     "auroc_7Bwins_among_disagreements": 0.6385,
+     "insample_best_threshold_gain": {
+      "gain": 0.0067,
+      "keep_frac": 0.146
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0047,
+      "keep_frac": 0.1373,
+      "ci": {
+       "mean": 0.0047,
+       "lo": -0.002,
+       "hi": 0.012,
+       "sig": false,
+       "n": 1500
+      }
+     }
+    },
+    "verifier_score_std": {
+     "auroc_p10_vs_rest_all_items": 0.5636,
+     "auroc_7Bwins_among_disagreements": 0.4968,
+     "insample_best_threshold_gain": {
+      "gain": -0.0007,
+      "keep_frac": 0.0007
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0,
+      "keep_frac": 0.0,
+      "ci": {
+       "mean": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "sig": false,
+       "n": 1500
+      }
+     }
+    },
+    "pool_selfconsistency": {
+     "auroc_p10_vs_rest_all_items": 0.5881,
+     "auroc_7Bwins_among_disagreements": 0.6345,
+     "insample_best_threshold_gain": {
+      "gain": 0.0107,
+      "keep_frac": 0.2147
+     },
+     "crossfit_keep7_gain": {
+      "gain": 0.0067,
+      "keep_frac": 0.202,
+      "ci": {
+       "mean": 0.0067,
+       "lo": -0.002,
+       "hi": 0.016,
+       "sig": false,
+       "n": 1500
+      }
+     }
+    }
+   },
+   "deployed_lever_gain_over_32B_direct": {
+    "compute_lean": 0.0067,
+    "accuracy_max_veto": 0.0087,
+    "accuracy_max_fusion": 0.0067
+   }
+  }
+ },
+ "certified_veto_applied_to_every_mcq_cell": {
+  "PMC_VQA": {
+   "veto_rate": 0.4002,
+   "escalation": 0.5998,
+   "acc_f8": 0.5613,
+   "acc_always_32b_direct": 0.5518,
+   "gain_over_always_32B_direct": {
+    "mean": 0.0095,
+    "lo": 0.0072,
+    "hi": 0.0118,
+    "sig": true,
+    "n": 33430
+   },
+   "macro_contribution_if_adopted": 0.0012,
+   "cost_flopeq": 3.741,
+   "cost_x_always_32b_direct": 0.819,
+   "is_the_deployed_policy_on_this_cell": true,
+   "reproduces_deployed_am2_vector": true
+  },
+  "SLAKE_closed": {
+   "veto_rate": 0.0,
+   "escalation": 1.0,
+   "acc_f8": 0.8589,
+   "acc_always_32b_direct": 0.8589,
+   "gain_over_always_32B_direct": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "n": 836
+   },
+   "macro_contribution_if_adopted": 0.0,
+   "cost_flopeq": 5.57,
+   "cost_x_always_32b_direct": 1.219,
+   "is_the_deployed_policy_on_this_cell": false
+  },
+  "VQA_RAD_closed": {
+   "veto_rate": 0.0,
+   "escalation": 1.0,
+   "acc_f8": 0.8526,
+   "acc_always_32b_direct": 0.8526,
+   "gain_over_always_32B_direct": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "n": 251
+   },
+   "macro_contribution_if_adopted": 0.0,
+   "cost_flopeq": 5.57,
+   "cost_x_always_32b_direct": 1.219,
+   "is_the_deployed_policy_on_this_cell": false
+  },
+  "PATH_VQA_closed": {
+   "veto_rate": 0.0,
+   "escalation": 1.0,
+   "acc_f8": 0.8891,
+   "acc_always_32b_direct": 0.8891,
+   "gain_over_always_32B_direct": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "n": 3362
+   },
+   "macro_contribution_if_adopted": 0.0,
+   "cost_flopeq": 5.57,
+   "cost_x_always_32b_direct": 1.219,
+   "is_the_deployed_policy_on_this_cell": false
+  },
+  "MedXpertQA-MM": {
+   "veto_rate": 0.0,
+   "escalation": 1.0,
+   "acc_f8": 0.3065,
+   "acc_always_32b_direct": 0.3065,
+   "gain_over_always_32B_direct": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "n": 2000
+   },
+   "macro_contribution_if_adopted": 0.0,
+   "cost_flopeq": 5.57,
+   "cost_x_always_32b_direct": 1.219,
+   "is_the_deployed_policy_on_this_cell": false
+  },
+  "_summary": {
+   "summed_cell_gain_over_the_5_MCQ_cells": 0.0095,
+   "macro_delta_if_adopted_on_all_5": 0.0012,
+   "macro_delta_currently_realised_PMC_only": 0.0012,
+   "incremental_macro_delta_from_the_other_4": 0.0
+  }
+ },
+ "mcq_best_of_8_and_its_luck_floor": {
+  "ckpt_MedXpertQA-MM_lingshu7b_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_MedXpertQA-MM_lingshu7b_content_sc8.jsonl",
+   "n": 2000,
+   "greedy": 0.2685,
+   "oracle_at8": 0.543,
+   "verifier_pick": 0.248,
+   "mean_distinct_predictions_of_8": 2.965
+  },
+  "ckpt_MedXpertQA-MM_lingshu7b_letter_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_MedXpertQA-MM_lingshu7b_letter_sc8.jsonl",
+   "n": 2000,
+   "greedy": 0.25,
+   "oracle_at8": 0.5365,
+   "verifier_pick": 0.257,
+   "mean_distinct_predictions_of_8": 3.404,
+   "mean_n_options": 5.0,
+   "luck_floor_random_gold_inside_the_distinct_set": 0.6808,
+   "luck_floor_note": "on a K-option MCQ, 8 samples that touch d distinct options contain a UNIFORMLY RANDOM gold with probability d/K. That fraction of oracle@8 is pure coverage, not signal."
+  },
+  "ckpt_PATH_VQA_lingshu7b_PATH_VQA_content_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_PATH_VQA_lingshu7b_PATH_VQA_content_content_sc8.jsonl",
+   "n": 345,
+   "greedy": 0.4087,
+   "oracle_at8": 0.5478,
+   "verifier_pick": 0.4116,
+   "mean_distinct_predictions_of_8": 3.713
+  },
+  "ckpt_PATH_VQA_lingshu7b_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_PATH_VQA_lingshu7b_content_sc8.jsonl",
+   "n": 345,
+   "greedy": 0.4087,
+   "oracle_at8": 0.5159,
+   "verifier_pick": 0.3942,
+   "mean_distinct_predictions_of_8": 3.649
+  },
+  "ckpt_PMC_VQA_lingshu7b_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_PMC_VQA_lingshu7b_content_sc8.jsonl",
+   "n": 2000,
+   "greedy": 0.2715,
+   "oracle_at8": 0.487,
+   "verifier_pick": 0.287,
+   "mean_distinct_predictions_of_8": 6.309
+  },
+  "ckpt_PMC_VQA_lingshu7b_letter_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_PMC_VQA_lingshu7b_letter_sc8.jsonl",
+   "n": 2000,
+   "greedy": 0.506,
+   "oracle_at8": 0.8305,
+   "verifier_pick": 0.4325,
+   "mean_distinct_predictions_of_8": 2.502,
+   "mean_n_options": 4.0,
+   "luck_floor_random_gold_inside_the_distinct_set": 0.6254,
+   "luck_floor_note": "on a K-option MCQ, 8 samples that touch d distinct options contain a UNIFORMLY RANDOM gold with probability d/K. That fraction of oracle@8 is pure coverage, not signal."
+  },
+  "ckpt_SLAKE_lingshu7b_SLAKE_content_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_SLAKE_lingshu7b_SLAKE_content_content_sc8.jsonl",
+   "n": 1061,
+   "greedy": 0.7672,
+   "oracle_at8": 0.8907,
+   "verifier_pick": 0.7606,
+   "mean_distinct_predictions_of_8": 1.718
+  },
+  "ckpt_VQA_RAD_lingshu7b_VQA_RAD_content_content_sc8.jsonl": {
+   "file": "ckpts/mcq_gen_verify/lingshu7b/ckpt_VQA_RAD_lingshu7b_VQA_RAD_content_content_sc8.jsonl",
+   "n": 451,
+   "greedy": 0.5344,
+   "oracle_at8": 0.6896,
+   "verifier_pick": 0.5122,
+   "mean_distinct_predictions_of_8": 2.293
+  }
+ },
+ "macro_sensitivity": {
+  "weight_per_cell": 0.125,
+  "current": {
+   "macro_accuracy_max_veto": 0.6575,
+   "macro_compute_lean": 0.6443,
+   "macro_always_32b_direct": 0.6567,
+   "vs_direct_delta": 0.0008,
+   "vs_direct_ci95": [
+    -0.0022,
+    0.0037
+   ],
+   "vs_direct_sig": false
+  },
+  "what_a_win_requires": {
+   "note": "the CI half-width is ~stable in this range, so a macro delta above it clears zero",
+   "current_ci_half_width": 0.0029,
+   "macro_delta_needed_for_a_significant_win": 0.0029,
+   "summed_per_cell_gain_needed": 0.0236,
+   "macro_delta_needed_for_a_comfortable_win_1p5x_halfwidth": 0.0044,
+   "summed_per_cell_gain_needed_comfortable": 0.0353
+  },
+  "macro_moves_by_this_much_per_unit_of_cell_accuracy": 0.125,
+  "leave_one_cell_out_vs_direct_delta": {
+   "per_dropped_cell": {
+    "PMC_VQA": -0.0004,
+    "SLAKE_closed": 0.001,
+    "VQA_RAD_closed": 0.001,
+    "PATH_VQA_closed": 0.001,
+    "MedXpertQA-MM": 0.001,
+    "SLAKE_open": 0.0012,
+    "VQA_RAD_open": 0.0024,
+    "PATH_VQA_open": -0.0003
+   },
+   "range": [
+    -0.0004,
+    0.0024
+   ],
+   "load_bearing_cell": "PMC_VQA",
+   "cell_holding_it_back": "VQA_RAD_open"
+  },
+  "per_cell": {
+   "PMC_VQA": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.5613,
+    "current_gain_over_always_32B_direct": 0.0095,
+    "current_macro_contribution": 0.00119,
+    "p10_ceiling_on_that_gain": 0.1143,
+    "conversion_rate_of_p10": 0.0835,
+    "max_cell_acc_2way_item_oracle": 0.6661,
+    "max_cell_acc_best_available_oracle": 0.6765,
+    "remaining_cell_headroom_over_current_method": 0.1152,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0144
+   },
+   "SLAKE_closed": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.8589,
+    "current_gain_over_always_32B_direct": 0.0,
+    "current_macro_contribution": 0.0,
+    "p10_ceiling_on_that_gain": 0.049,
+    "conversion_rate_of_p10": 0.0,
+    "max_cell_acc_2way_item_oracle": 0.9079,
+    "max_cell_acc_best_available_oracle": 0.9151,
+    "remaining_cell_headroom_over_current_method": 0.0562,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.007
+   },
+   "VQA_RAD_closed": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.8526,
+    "current_gain_over_always_32B_direct": 0.0,
+    "current_macro_contribution": 0.0,
+    "p10_ceiling_on_that_gain": 0.0359,
+    "conversion_rate_of_p10": 0.0,
+    "max_cell_acc_2way_item_oracle": 0.8884,
+    "max_cell_acc_best_available_oracle": 0.8964,
+    "remaining_cell_headroom_over_current_method": 0.0438,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0055
+   },
+   "PATH_VQA_closed": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.8891,
+    "current_gain_over_always_32B_direct": 0.0,
+    "current_macro_contribution": 0.0,
+    "p10_ceiling_on_that_gain": 0.0413,
+    "conversion_rate_of_p10": 0.0,
+    "max_cell_acc_2way_item_oracle": 0.9304,
+    "max_cell_acc_best_available_oracle": 0.9304,
+    "remaining_cell_headroom_over_current_method": 0.0413,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0052
+   },
+   "MedXpertQA-MM": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.3065,
+    "current_gain_over_always_32B_direct": 0.0,
+    "current_macro_contribution": 0.0,
+    "p10_ceiling_on_that_gain": 0.116,
+    "conversion_rate_of_p10": 0.0,
+    "max_cell_acc_2way_item_oracle": 0.4225,
+    "max_cell_acc_best_available_oracle": 0.511,
+    "remaining_cell_headroom_over_current_method": 0.2045,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0256
+   },
+   "SLAKE_open": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.8171,
+    "current_gain_over_always_32B_direct": -0.0016,
+    "current_macro_contribution": -0.00019,
+    "p10_ceiling_on_that_gain": 0.0465,
+    "conversion_rate_of_p10": -0.0333,
+    "max_cell_acc_2way_item_oracle": 0.8651,
+    "max_cell_acc_best_available_oracle": 0.924,
+    "remaining_cell_headroom_over_current_method": 0.1069,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0134
+   },
+   "VQA_RAD_open": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.59,
+    "current_gain_over_always_32B_direct": -0.01,
+    "current_macro_contribution": -0.00125,
+    "p10_ceiling_on_that_gain": 0.05,
+    "conversion_rate_of_p10": -0.2,
+    "max_cell_acc_2way_item_oracle": 0.65,
+    "max_cell_acc_best_available_oracle": 0.715,
+    "remaining_cell_headroom_over_current_method": 0.125,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0156
+   },
+   "PATH_VQA_open": {
+    "cell_gain_needed_for_plus0p01_macro": 0.08,
+    "cell_gain_needed_alone_for_a_significant_win": 0.0169,
+    "current_method_acc": 0.3847,
+    "current_gain_over_always_32B_direct": 0.0087,
+    "current_macro_contribution": 0.00108,
+    "p10_ceiling_on_that_gain": 0.076,
+    "conversion_rate_of_p10": 0.114,
+    "max_cell_acc_2way_item_oracle": 0.452,
+    "max_cell_acc_best_available_oracle": 0.5707,
+    "remaining_cell_headroom_over_current_method": 0.186,
+    "max_macro_contribution_if_that_headroom_were_fully_harvested": 0.0233
+   }
+  }
+ },
+ "where_the_current_delta_comes_from_and_ranked_verdict": {
+  "attribution_of_the_current_vs_direct_delta": {
+   "PMC_VQA": {
+    "cell_gain": 0.0095,
+    "macro_contribution": 0.00119
+   },
+   "SLAKE_closed": {
+    "cell_gain": 0.0,
+    "macro_contribution": 0.0
+   },
+   "VQA_RAD_closed": {
+    "cell_gain": 0.0,
+    "macro_contribution": 0.0
+   },
+   "PATH_VQA_closed": {
+    "cell_gain": 0.0,
+    "macro_contribution": 0.0
+   },
+   "MedXpertQA-MM": {
+    "cell_gain": 0.0,
+    "macro_contribution": 0.0
+   },
+   "SLAKE_open": {
+    "cell_gain": -0.0016,
+    "macro_contribution": -0.00019
+   },
+   "VQA_RAD_open": {
+    "cell_gain": -0.01,
+    "macro_contribution": -0.00125
+   },
+   "PATH_VQA_open": {
+    "cell_gain": 0.0087,
+    "macro_contribution": 0.00108
+   },
+   "_total_macro_delta_vs_direct": 0.00083,
+   "_mcq_half": 0.00119,
+   "_open_half": -0.00036
+  },
+  "ranked_by_demonstrated_cheap_signal_value": [
+   {
+    "cell": "PMC_VQA",
+    "weight": 0.125,
+    "current_macro_contribution": 0.00119,
+    "p10_7B_wins": 0.1143,
+    "p10_macro_value_if_perfectly_identified": 0.01429,
+    "best_cheap_signal": "7B_conf",
+    "best_signal_auroc_on_disagreements": 0.5806,
+    "best_signal_crossfit_cell_gain": 0.0105,
+    "best_signal_crossfit_is_significant": true,
+    "best_signal_macro_value": 0.00131,
+    "headroom_to_best_oracle": 0.1152,
+    "macro_value_of_that_headroom": 0.0144
+   },
+   {
+    "cell": "PATH_VQA_open",
+    "weight": 0.125,
+    "current_macro_contribution": 0.00108,
+    "p10_7B_wins": 0.076,
+    "p10_macro_value_if_perfectly_identified": 0.0095,
+    "best_cheap_signal": "pool_selfconsistency",
+    "best_signal_auroc_on_disagreements": 0.6345,
+    "best_signal_crossfit_cell_gain": 0.0067,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": 0.00084,
+    "headroom_to_best_oracle": 0.186,
+    "macro_value_of_that_headroom": 0.0233
+   },
+   {
+    "cell": "SLAKE_closed",
+    "weight": 0.125,
+    "current_macro_contribution": 0.0,
+    "p10_7B_wins": 0.049,
+    "p10_macro_value_if_perfectly_identified": 0.00613,
+    "best_cheap_signal": "7B_conf",
+    "best_signal_auroc_on_disagreements": 0.6235,
+    "best_signal_crossfit_cell_gain": 0.0048,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": 0.0006,
+    "headroom_to_best_oracle": 0.0562,
+    "macro_value_of_that_headroom": 0.007
+   },
+   {
+    "cell": "SLAKE_open",
+    "weight": 0.125,
+    "current_macro_contribution": -0.00019,
+    "p10_7B_wins": 0.0465,
+    "p10_macro_value_if_perfectly_identified": 0.00581,
+    "best_cheap_signal": "verifier_max_score",
+    "best_signal_auroc_on_disagreements": 0.4655,
+    "best_signal_crossfit_cell_gain": 0.0,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": 0.0,
+    "headroom_to_best_oracle": 0.1069,
+    "macro_value_of_that_headroom": 0.0134
+   },
+   {
+    "cell": "VQA_RAD_open",
+    "weight": 0.125,
+    "current_macro_contribution": -0.00125,
+    "p10_7B_wins": 0.05,
+    "p10_macro_value_if_perfectly_identified": 0.00625,
+    "best_cheap_signal": "verifier_max_score",
+    "best_signal_auroc_on_disagreements": 0.3946,
+    "best_signal_crossfit_cell_gain": 0.0,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": 0.0,
+    "headroom_to_best_oracle": 0.125,
+    "macro_value_of_that_headroom": 0.0156
+   },
+   {
+    "cell": "PATH_VQA_closed",
+    "weight": 0.125,
+    "current_macro_contribution": 0.0,
+    "p10_7B_wins": 0.0413,
+    "p10_macro_value_if_perfectly_identified": 0.00516,
+    "best_cheap_signal": "7B_margin",
+    "best_signal_auroc_on_disagreements": 0.5737,
+    "best_signal_crossfit_cell_gain": -0.0006,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": -7e-05,
+    "headroom_to_best_oracle": 0.0413,
+    "macro_value_of_that_headroom": 0.0052
+   },
+   {
+    "cell": "MedXpertQA-MM",
+    "weight": 0.125,
+    "current_macro_contribution": 0.0,
+    "p10_7B_wins": 0.116,
+    "p10_macro_value_if_perfectly_identified": 0.0145,
+    "best_cheap_signal": "7B_margin",
+    "best_signal_auroc_on_disagreements": 0.4877,
+    "best_signal_crossfit_cell_gain": -0.0035,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": -0.00044,
+    "headroom_to_best_oracle": 0.2045,
+    "macro_value_of_that_headroom": 0.0256
+   },
+   {
+    "cell": "VQA_RAD_closed",
+    "weight": 0.125,
+    "current_macro_contribution": 0.0,
+    "p10_7B_wins": 0.0359,
+    "p10_macro_value_if_perfectly_identified": 0.00449,
+    "best_cheap_signal": "7B_margin",
+    "best_signal_auroc_on_disagreements": 0.642,
+    "best_signal_crossfit_cell_gain": -0.0159,
+    "best_signal_crossfit_is_significant": false,
+    "best_signal_macro_value": -0.00199,
+    "headroom_to_best_oracle": 0.0438,
+    "macro_value_of_that_headroom": 0.0055
+   }
+  ],
+  "summed_macro_delta_if_every_cell_ran_its_best_cross_fit_keep7B_rule": 0.00275,
+  "WARNING_on_that_sum": "DIAGNOSTIC ONLY. The signal is chosen per cell AFTER seeing its cross-fit gain on the eval cells, i.e. with eval visibility across 2-4 signals x 8 cells. It is an optimistic upper bound on the keep-cheap lever family, not a deployable number.",
+  "eval_visible_best_per_cell_policy_ceiling": {
+   "per_cell_choice": {
+    "PMC_VQA": "method_accuracy_max_fusion",
+    "SLAKE_closed": "method_accuracy_max_veto",
+    "VQA_RAD_closed": "method_accuracy_max_veto",
+    "PATH_VQA_closed": "method_accuracy_max_veto",
+    "MedXpertQA-MM": "method_accuracy_max_veto",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "method_accuracy_max_veto"
+   },
+   "per_cell_gain": {
+    "PMC_VQA": 0.0135,
+    "SLAKE_closed": 0.0,
+    "VQA_RAD_closed": 0.0,
+    "PATH_VQA_closed": 0.0,
+    "MedXpertQA-MM": 0.0,
+    "SLAKE_open": 0.0,
+    "VQA_RAD_open": 0.0,
+    "PATH_VQA_open": 0.0087
+   },
+   "macro_delta": 0.00277,
+   "WARNING": "DIAGNOSTIC ONLY -- the per-cell winner is chosen on the eval itself.",
+   "note": "the best the method can do by re-assigning, per cell, which of the three ALREADY MEASURED operating points (or the plain 32B-direct baseline) it deploys"
+  },
+  "macro_delta_needed_for_a_significant_win": 0.0029,
+  "verdict": "The best single-threshold keep-7B rule available on each cell, cross-fit, sums to the value above; the eval-visible best-per-cell reassignment of the shipped operating points gives the other value. Compare BOTH with the macro delta a significant win needs -- if neither clears it, no rearrangement of what is already measured wins."
+ },
+ "key_findings": [
+  "100% of the current +0.0008 macro delta over always-32B-direct is the PMC-VQA certified veto (+0.0095 cell -> +0.00119 macro) plus PathVQA-open (+0.0087 -> +0.00108); the other two open cells are a net -0.00144 macro drag and the other four MCQ cells contribute EXACTLY ZERO because the method is literally always-32B-direct there.",
+  "The certified veto (beat32b_more.f8_veto, the shipped accuracy-max MCQ lever) run unmodified on the other four MCQ cells certifies ZERO items on all four: no 7B-confidence bin anywhere has a Wilson lower bound on 7B precision that reaches the 32B's accuracy in that bin. The incremental macro value of extending the shipped lever to the rest of the MCQ half is +0.0000.",
+  "The eval-visible best-per-cell reassignment of the three shipped operating points plus the baseline reaches only +0.00277 macro, against the ~+0.0029 the CI needs. Nothing that is already measured can be rearranged into a significant win.",
+  "MedXpertQA-MM has the largest 2-way p10 (0.1160, macro value +0.0145) but its 7B-wins-among-disagreements AUROC is 0.4877 (chance) from both cheap signals, and its 7B/32B item oracle (0.4225) sits close to the independent-errors floor (0.4879). It is structurally immovable with anything cheap.",
+  "The open-text arithmetic in circulation is SAMPLE-WEIGHTED and the headline is MACRO. Sample-weighted the open pool's 32B-direct is 0.5169 and oracle@8 is 0.6260; MACRO over the three open cells they are 0.5982 and 0.6752. Coverage headroom over the 32B on the open half is +0.0770 macro-weighted, not +0.109.",
+  "selected == sel_eff * oracle@8 EXACTLY (verified to 1e-12). The identity 'selected = greedy + sel_eff*(oracle-greedy)' is wrong: it predicts 0.5863 where the measured value is 0.4853. The marginal slope (+sel_eff per unit of oracle@8) is the same, so 'coverage has a multiplier' survives; the LEVEL projections do not."
+ ]
+}

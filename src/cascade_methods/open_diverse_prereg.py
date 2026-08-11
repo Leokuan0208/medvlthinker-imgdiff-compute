@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""open_diverse_prereg.py -- ATTACK 4 (OPEN-DIVERSE): write the pre-registration artifact.
+
+Run BEFORE any diverse-pool judge label or clean-verifier score has been read into an analysis.
+Writes results/cascade_methods/artifacts/open_diverse_2026-08-10_preregistration.json.
+
+  python3 src/cascade_methods/open_diverse_prereg.py
+"""
+import json, os, subprocess, time
+
+ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
+OUT = os.path.join(ROOT, "results/cascade_methods/artifacts/open_diverse_2026-08-10_preregistration.json")
+
+PREREG = {
+  "attack": "ATTACK 4 -- OPEN-DIVERSE (fixed-N portfolio generation, clean verifier, full pool)",
+  "written_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+  "written_before": "any judge label or clean-verifier score of the M=15 diverse pools was read into an analysis",
+
+  "claim_under_test": (
+    "Two repo artifacts contradict each other about WHY selection efficiency falls. "
+    "verifier_n_scaling_2026-08-03.json: sel_eff falls -0.0761 per doubling of N => pool SIZE hurts. "
+    "diverse_generation_gpu.json (2026-07-06) at FIXED N=8: iid-8 -> DPP-selected-8 raises sel_eff by "
+    "+0.0644 (vqa_rad_open) and +0.0962 (pathvqa_open), -0.0080 (slake_open) => REDUNDANCY hurts. "
+    "Both were measured with the CONTAMINATED lora_verifier_pooled4. Phase 0 reconciles them under the "
+    "CLEAN disjoint verifier and decides whether any coverage work in this project is worth GPU."),
+
+  "defect_found_before_running": {
+    "what": ("The published diverse scores were produced INSIDE diversity_generate_gpu.py::phase_generate, "
+             "which scores candidates with vLLM LoRARequest (enable_lora=True, max_lora_rank=32)."),
+    "why_it_matters": ("vLLM 0.9.0.1 silently drops all 192 visual.* LoRA modules; the same adapter scores "
+                       "sel_eff 0.775204 under HF and 0.702997 under vLLM. The published diverse-lever "
+                       "sel_eff numbers are therefore from a VISUALLY BLIND, CONTAMINATED verifier."),
+    "consequence": ("Phase 0 must re-score the SAME pools under HF with the disjoint adapter before the gate "
+                    "can be decided. This is a forced deviation from 'Phase 0 = ZERO GPU': the required "
+                    "scores do not exist on disk. Declared here, before the numbers."),
+    "second_forced_deviation": ("The diverse pools carry EXACT-MATCH `oks` only (diversity_generate_gpu.py "
+                                "map_correct); the frozen metric is JUDGE-labelled. Mixing currencies is "
+                                "forbidden, so the diverse pools are judge-labelled with the SAME judge "
+                                "(src/labeling/run_judge.py, MedVLThinker-32B) before the gate."),
+  },
+
+  "null_tests": {
+    "N1_frozen_metric": {"source": "src/training_methods/genframe_data.py PUBLISHED",
+                         "targets": {"n": 2345, "n_recoverable": 1468, "oracle@8": 0.626013,
+                                     "selected": 0.485288, "greedy": 0.449467, "sel_eff": 0.775204,
+                                     "per_ds": {"slake_open": 0.850088, "vqa_rad_open": 0.761905,
+                                                "pathvqa_open": 0.722581}},
+                         "abort_if_maxabsdev_gt": 1e-5},
+    "N2_published_diverse": {"source": "results/cascade_methods/artifacts/diverse_generation_gpu.json",
+                             "targets": "per-cell oracle iid@8 / dpp@8 / full@M and sel_eff/sel_acc for all three",
+                             "abort_if_maxabsdev_gt": 1e-3},
+  },
+
+  "phase0_gate": {
+    "primary_contrast": "sel_eff(DPP-8 from the M=15 portfolio pool) - sel_eff(iid-8), per reporting cell",
+    "currency": "JUDGE labels (run_judge.py, MedVLThinker-32B) on both arms",
+    "verifier": "ckpts/train/lora_verifier_disjoint, scored with HF transformers (never vLLM)",
+    "iid_arm": ("AMENDED (see amendment_1 below). PRIMARY = the mcq_gen_verify iid-8 pool the diverse pool "
+                "was generation-matched to, re-scored under the CLEAN disjoint adapter with HF; SECONDARY = "
+                "ckpts/train/lora_verifier_disjoint/transfer_dump_{ds}_lingshu7b.json (the DEPLOYED "
+                "incumbent pool). Both restricted to the diverse pool's idx set, both judge-labelled."),
+    "amendment_1": {
+      "when": "before any clean-verifier score or diverse judge label had been read into any analysis",
+      "what": ("The deployed incumbent pool (ckpts/openvqa/cheap_lingshu7b -> transfer_dump) and the pool "
+               "the diverse generator was restricted to (ckpts/mcq_gen_verify/lingshu7b) are DIFFERENT "
+               "8-sample generation runs: their preds agree on only 343/645 (slake), 28/200 (vqa_rad) and "
+               "4/1500 (pathvqa) items. Using the deployed pool as the iid arm would put a generation-run "
+               "confound inside the primary redundancy contrast."),
+      "fix": ("score the matched mcq_gen_verify iid-8 pool under the same clean disjoint adapter with HF "
+              "(3,004 extra unique (idx,answer) pairs) and make THAT the primary iid arm; report the "
+              "deployed pool alongside; report the confound-free within-pool control (DPP-8 vs random-8 "
+              "from the SAME M=15 pool, >=20 seeds) as the mechanism test."),
+    },
+    "cells": ["slake_open", "vqa_rad_open", "pathvqa_open"],
+    "pmc_content_excluded": "not one of the 8 reporting cells; it is what dragged the published pooled -0.0092",
+    "gate_rule": ("PASS if, under the CLEAN disjoint verifier in JUDGE currency, the fixed-N=8 redundancy "
+                  "reduction raises sel_eff on >= 2 of the 3 open reporting cells (point estimate). "
+                  "FAIL => STOP, spend no GPU on Phase 1, and report: 'the sel_eff decay tracks pool SIZE, "
+                  "not pool REDUNDANCY; the coverage lever is closed the way hole 4 closed the verifier lever.'"),
+    "secondary_controls": [
+      "within-pool control: DPP-8 vs RANDOM-8 drawn from the SAME M=15 portfolio pool (>=10 seeds) -- "
+      "isolates redundancy at fixed size AND fixed source distribution",
+      "size axis at fixed redundancy: sel_eff(N) for N in {2,4,8} on the iid pool and {2,4,8,15} on the "
+      "portfolio pool (>=10 random subset seeds)",
+      "contamination sensitivity: the same decomposition under pooled4 (as stored, vLLM-scored) so the "
+      "published direction is visible next to the clean one",
+      "SELECTED ACCURACY (not just sel_eff) on every arm -- sel_eff can rise while selected accuracy falls "
+      "if oracle falls; the cascade consumes selected accuracy, not sel_eff",
+    ],
+  },
+
+  "phase1_if_gate_passes": {
+    "generation": ("fixed N=8 portfolio pool on the FULL open eval pool (2345 items), Lingshu-7B, cap320, "
+                   "5 system prompts x temperature ladder {0.7,1.0,1.3}, DPP-select 8 of 15"),
+    "portfolio_prompts": [
+      ["base", "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain."],
+      ["anatomy", "You are an expert medical image analyst. First fix the relevant ANATOMY, then answer with a short, specific phrase. Do not explain."],
+      ["modality", "You are an expert medical image analyst. First identify the imaging MODALITY and region, then answer with a short, specific phrase. Do not explain."],
+      ["differential", "You are an expert medical image analyst. Consider the most likely alternative before deciding. Answer with a short, specific phrase. Do not explain."],
+      ["concise", "You are an expert radiologist. Give only the single most precise term or phrase. No hedging."]],
+    "temps": [0.7, 1.0, 1.3],
+    "dpp_kernel": "greedy farthest-first on 1 - token-Jaccard (diversity_generate_gpu.farthest_first_select)",
+    "judge": "src/labeling/run_judge.py, MedVLThinker-32B, tp=1",
+    "selector": "frozen deployed selector ckpts/train/genframe_head_ens8 (freeze_selector.py must NOT be re-run)",
+  },
+
+  "endpoints": {
+    "primary": ("macro over the 8 Variant-B cells of the deployed cascade with the open arm's pool swapped, "
+                "vs always-32B-direct = 0.6567; paired item-level bootstrap, nboot=10000"),
+    "secondary_required": ["per-cell escalation rate and macro-weighted cost",
+                           "oracle@8, sel_eff, confident-distractor rate per cell",
+                           "per-cell guardrail table"],
+  },
+
+  "success": {
+    "a_accuracy": "macro delta vs always-32B-direct >= +0.0029 with 95% CI excluding zero",
+    "b_cost": ("open-cell escalation falls enough to cut macro cost by >= 0.3x while macro accuracy delta's "
+               "lower CI bound stays >= -0.0029"),
+  },
+  "kill": {
+    "k1": "Phase-0 gate fails",
+    "k2": ("clean-verifier selected-accuracy delta CI includes zero on >= 2 of 3 open reporting cells => "
+           "report 'the diverse-generation lever was a contamination artifact'"),
+  },
+
+  "structural_warning_carried_forward": (
+    "In a cascade that can escalate, improving the cheap arm to any level BELOW the strong arm buys COST, "
+    "not accuracy. The open cells sit at 0.8171 / 0.5900 / 0.3847 vs 32B-direct 0.8186 / 0.6000 / 0.3760. "
+    "This attack is pitched as a cost reduction first and an accuracy claim second."),
+
+  "guardrail_resolution_warning": (
+    "vqa_rad_open is n=200 and its clean-seed guardrail counts have run 0/10 to 7/10 across seeds; a "
+    "guardrail flag there is within seed noise and must be labelled as such."),
+
+  "numerics_pins": {"tf32": "off (torch.backends.cuda.matmul.allow_tf32=False, cudnn.allow_tf32=False)",
+                    "OMP_NUM_THREADS": 1, "PYTHONHASHSEED": 0,
+                    "feature_row_order": "n/a (no head is fit in Phase 0); sorted where applicable",
+                    "rank_convention": "n/a in Phase 0 (argmax over raw scores, first-index tie-break, "
+                                       "the frozen pick rule from genframe_data.picks_from_scores)",
+                    "verifier_scoring_backend": "HF transformers ONLY (vLLM drops visual.* LoRA modules)",
+                    "bootstrap": "paired item-level, nboot=10000, seed 0",
+                    "n_seeds_random_subsets": 20},
+
+  "not_a_rediscovery_of": [
+    "the ~20 exhausted selection approaches (COMPARATIVE_VERIFIER_2026-08-05.md) -- this is a GENERATION "
+    "change at fixed selector",
+    "verifier_n_scaling ('more samples is the wrong lever') -- N=8 is held FIXED here",
+    "combine_diverse_pairwise (diverse x pairwise compounding)",
+    "contrastive alignment / SigLIP / BiomedCLIP / DPP-as-a-selector -- DPP here is a GENERATION-SLOT chooser",
+    "abstention in any form (CRITICAL RULE 6): every arm returns an answer",
+  ],
+}
+
+if __name__ == "__main__":
+    try:
+        PREREG["git_head"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT).decode().strip()
+    except Exception:
+        PREREG["git_head"] = "unavailable"
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    json.dump(PREREG, open(OUT, "w"), indent=1)
+    print("wrote", OUT)
