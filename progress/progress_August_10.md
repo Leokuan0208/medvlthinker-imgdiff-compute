@@ -322,7 +322,10 @@ a stronger escalation target, MCQ test-time augmentation, cost as the endpoint, 
    cells, and the uncovered questions are high-diversity capability failures with zero gold tokens in
    the pool 71.5% of the time. Selection: +0.0301 ceiling but a **seed spread (~0.021) larger than every
    architectural effect**.
-5. **And the measurement floor on open text (±0.008/cell) is 4.4× the delta being chased.**
+5. **And the measurement floor on open text is ±0.008 per cell — 1.03× the +0.00773 each open cell
+   would have to contribute to clear the bar**, or **±0.00183 macro = 63% of the +0.0029 bar** and
+   **2.3× the shipped +0.0008 delta**. *(Corrected 2026-08-12: this read "4.4× the delta being chased",
+   which divided a per-cell figure by a macro figure. Doc §9.8.)*
 
 **What survives, and it is a paper.** Against a 32B *actually made to reason*: **+0.0601
 [+0.0499, +0.0700]** (deployed selector) or **+0.0615 [+0.0514, +0.0715]** (frozen 8-seed selector), at
@@ -395,3 +398,41 @@ modified.**
    vLLM finding (a code inspection, not a measurement).
 4. **`git push` is still the top-priority chore**, and a push still does not protect `ckpts/`,
    `feats_hidden/` or `logs/` — the reproduction chain remains on one disk.
+
+---
+
+## Addendum — 2026-08-12 (audit of this round's own documentation)
+
+The round-1 artifacts were re-read against this diary and against
+`docs/current/BEAT32B_ROUND_2026-08-10.md`, one number at a time. **Every headline verifies.** Spot-checks
+re-derived from the files rather than copied: Σ p10 = **0.5290** over the eight
+`per_cell.*.ceilings.item_oracle_7B_or_32Bdirect.gain_over_always_32B_direct.mean` entries ⇒ macro
+**0.066125**, against a realised **+0.00083** — the **1.3% conversion** stands; the two coverage ceilings
+are **0.6658469757964316** and **0.6867670542635659**, so **selection headroom is 3.29× coverage
+headroom**; the exact identity holds at **max abs deviation 0.0** (`sel_eff × oracle = selected =
+0.485287846`); Attack 1's A5 is **+0.0012 [−0.0055, +0.0080]** with **PATH_VQA_open +0.0269
+[+0.0089, +0.0456]**; Attack 2's always-K upper bound is **−0.0077870559230383**; Attack 3's nested CV is
+**0.9931× at −0.0009 [−0.0034, +0.0015]**, missing the pre-registered tie by exactly **0.0005**; Attack 4's
+SLAKE-open loss is **−0.0748 [−0.1031, −0.0474]**. The doc's whole §9 discrepancy list also verifies,
+including the PathVQA-open pool-oracle CI (**[+0.1167, +0.1653]**, not the [+0.1173, +0.1647] I had been
+circulating) and the PMC veto rate (**0.4002**, i.e. escalation 0.5998, not the compute-lean 0.0845 that
+the escalation column shows).
+
+**One defect found, in my own summary rather than in any artifact.** §6 item 5 above and §10 step 4 of the
+doc both said the ±0.008 open-text measurement floor was **"4.4× the delta being chased"**. That ratio is
+`0.008 / 0.00182` — a **per-cell** deviation divided by the **macro** equivalent of the same deviation.
+Wrong units, same species as pairing a macro accuracy with a sample-weighted cost. Both files are
+corrected in place with the correction labelled; the doc records it as **§9.8**. The supported forms are
+**±0.008 per cell = 1.03×** the +0.00773 each open cell must contribute to clear the bar, and **±0.00183
+macro = 63%** of the +0.0029 bar / **2.3×** the shipped +0.0008 delta. **No measured value changed.**
+
+**And open question 1 above has been answered by events.** Rounds 2 and 3 ran, were killed by session
+limits too, and were salvaged in `18ee797`. There is now a **CI-clean macro win over always-32B-direct**
+(`artifacts/armcombine_mcqonly_2026-08-11.json`, status **POST-HOC / EXPLORATORY**): MCQ-half = the
+shipped certified veto, open half = always-32B-direct, macro **0.657865, +0.00119 [+0.0009, +0.00148]**,
+guardrail-clean, **0.9773× FLOP-eq**. It is **100% PMC_VQA** — byte-identical to the baseline on 7 of 8
+cells *by construction*, leave-one-out on PMC takes it to exactly 0.000 — on **`test_2.csv`**, the split
+with zero published verification, and it is **gated behind an owed answer-letter-bias audit** (B+C =
+73.6%, 37.8% constant-C floor). It does not contradict a line of this round. It is, in fact, the shape
+round 1 predicted: **the only way found to beat always-32B-direct is to switch the method off wherever
+it is not the baseline already.** A forward pointer to it now sits at the top of the doc.

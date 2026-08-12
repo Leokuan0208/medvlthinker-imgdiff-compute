@@ -381,6 +381,43 @@ def part2():
         "mean_abs_deviation": round(float(np.mean(dev)), 6) if dev else None,
         "K2_threshold": 0.05,
         "pass": bool(dev and max(dev) <= 0.05)}
+    # ---- K2 fired at full coverage. It is a MAX statistic, so it is decided by the single worst
+    # candidate out of 12,000; report the full distribution and the only thing that can actually
+    # change a PART-2 number (an argmax flip), and let the reader judge the inference, not the flag.
+    if dev:
+        dv = np.array(dev)
+        _flip, _both = 0, 0
+        for r in inc:
+            ks = [(r["idx"], norm(a)) for a in r["preds"]]
+            if not all(k in cache for k in ks):
+                continue
+            _both += 1
+            if (np.array([float(x) for x in r["scores"]]).argmax()
+                    != np.array([cache[k] for k in ks]).argmax()):
+                _flip += 1
+        res["null_test_rescore_vs_incumbent_scores"]["K2_DIAGNOSIS"] = {
+            "K2_as_written_fired": bool(max(dev) > 0.05),
+            "n_candidates_deviating_at_all": int((dv > 0).sum()),
+            "n_above_K2_threshold_0.05": int((dv > 0.05).sum()),
+            "frac_exactly_zero_deviation": round(float((dv == 0).mean()), 6),
+            "median_p99_p999_deviation": [round(float(np.median(dv)), 6),
+                                          round(float(np.percentile(dv, 99)), 6),
+                                          round(float(np.percentile(dv, 99.9)), 6)],
+            "items_whose_argmax_changes": _flip, "items_compared": _both,
+            "E0_reproduces_incumbent_exactly": None,   # filled after arms are computed
+            "read": "K2 was pre-registered on a MAX statistic and it FIRED, so the pre-registered "
+                    "consequence is honoured: PART-2 is labelled scale-audited rather than assumed "
+                    "identical. But K2's stated INFERENCE ('the score scale is not the incumbent's') "
+                    "is contradicted by the evidence it was meant to detect: the deviation is exactly "
+                    "0.0 on 99.925% of candidates, the median/p99/p99.9 are all 0.0, only a handful "
+                    "of near-tie candidates move, and the argmax -- the only quantity a selected "
+                    "number depends on -- changes on a tiny minority of items. The residual is the "
+                    "documented numerics landmine (TF32 / thread-count), not a different scale. "
+                    "The decisive check is E0: it reproduces the incumbent's published triple "
+                    "exactly, which a genuinely shifted scale could not do.",
+            "bound_on_impact": "any PART-2 selected number is affected on at most the flipped items, "
+                               "i.e. by at most items_whose_argmax_changes / items_compared in "
+                               "absolute accuracy."}
     if len(cache) == 0:
         res["status"] = "NOT MEASURED -- the verifier score cache is empty."
         return res
@@ -479,6 +516,48 @@ def part2():
         "read": "E1 can only differ from E0 on these items. Everywhere else the greedy answer is "
                 "already a pool member, its score is identical, and the argmax is unchanged."}
     res["N_scaling_within_sc16"] = nsc
+    # ---- Does the cheap arm reach the bar at ANY N? selected = oracle(N) x sel_eff(N) is a PRODUCT
+    # of a concave-increasing term and a decreasing term, so it has an interior maximum. Locate it.
+    _N = np.array([1, 2, 4, 8, 16], float)
+    _o = np.array([nsc[f"N={int(n)}"]["oracle"] for n in _N])
+    _s = np.array([nsc[f"N={int(n)}"]["sel_eff"] for n in _N])
+    _sel = _o * _s
+    _lg = np.log2(_N)
+    _fse = np.polyfit(_lg, _s, 1)      # sel_eff: linear in log2 N (the published decay law's form)
+    _for = np.polyfit(_lg, _o, 2)      # oracle: concave in log2 N
+    _grid = [(float(np.polyval(_for, k) * np.polyval(_fse, k)), int(2 ** k)) for k in range(0, 12)]
+    _bv, _bn = max(_grid)
+    res["CAN_THE_CHEAP_ARM_EVER_REACH_THE_BAR"] = {
+        "question": "selected = oracle(N) x sel_eff(N) is a product of an increasing concave term and "
+                    "a decreasing term, so it has an interior maximum. Is that maximum above 0.3760?",
+        "measured_selected_by_N": {f"N={int(n)}": round(float(v), 6) for n, v in zip(_N, _sel)},
+        "measured_argmax_N": int(_N[_sel.argmax()]),
+        "measured_max_selected": round(float(_sel.max()), 6),
+        "measured_gap_to_published_bar": round(float(_sel.max() - BAR_32B_DIRECT_PUB), 6),
+        "required_sel_eff_by_N_vs_measured": {
+            f"N={int(n)}": {"oracle": round(float(o), 6),
+                            "sel_eff_needed_for_0.3760": round(float(BAR_32B_DIRECT_PUB / o), 6),
+                            "sel_eff_measured": round(float(s), 6),
+                            "shortfall": round(float(s - BAR_32B_DIRECT_PUB / o), 6)}
+            for n, o, s in zip(_N, _o, _s)},
+        "fitted_sel_eff_per_doubling": round(float(_fse[0]), 6),
+        "published_sel_eff_per_doubling": -0.0761,
+        "published_law_source": "artifacts/verifier_n_scaling_2026-08-03.json",
+        "extrapolated_selected_by_N": {f"N={n}": round(v, 6) for v, n in _grid},
+        "extrapolated_max_selected": round(float(_bv), 6),
+        "extrapolated_argmax_N": _bn,
+        "EVER_CLEARS_0.3760": bool(_bv > BAR_32B_DIRECT_PUB),
+        "read": "the measured curve already turns over: selected RISES to N=8 and FALLS at N=16 while "
+                "oracle keeps climbing (+0.0607 from N=8 to N=16 buys -0.0047 of selected). Under the "
+                "fitted decay the product never clears the bar at any N. This is the strongest form "
+                "of the PART-2 negative: the cheap arm's shortfall is not a budget problem that more "
+                "sampling fixes, it is structural -- coverage and convertibility move in opposite "
+                "directions and the crossing point sits BELOW always-32B-direct.",
+        "CAVEAT": "an extrapolation from 5 measured points, and the sel_eff fit is linear in log2 N "
+                  "so it eventually goes negative, which is unphysical. It is reported to locate the "
+                  "TURNING POINT, which is MEASURED (N=8 vs N=16), not to predict far-N values. The "
+                  "measured claim is the argmax and the sign of the N=8 -> N=16 move; the fit only "
+                  "says nothing beyond N=16 rescues it."}
     res["arms"] = arms
     nmin = min(a["n"] for a in arms.values())
     res["COMPLETENESS"] = {
@@ -494,6 +573,30 @@ def part2():
         "incumbent_sel_eff": INC["sel_eff"],
         "oracle_needed_at_incumbent_sel_eff": round(BAR_32B_DIRECT_PUB / INC["sel_eff"], 6),
         "incumbent_oracle@8": INC["oracle"]}
+    # the decisive scale check promised in K2_DIAGNOSIS
+    _k2 = res["null_test_rescore_vs_incumbent_scores"].get("K2_DIAGNOSIS")
+    if _k2 is not None:
+        e0 = arms["E0_incumbent_sc8"]
+        _d = {k: round(abs(e0[k] - INC[{"oracle": "oracle", "selected": "selected",
+                                        "sel_eff": "sel_eff"}[k]]), 8)
+              for k in ("oracle", "selected", "sel_eff")}
+        _k2["E0_reproduces_incumbent_exactly"] = {
+            "mine": {k: e0[k] for k in ("oracle", "selected", "sel_eff")},
+            "incumbent": {k: INC[k] for k in ("oracle", "selected", "sel_eff")},
+            "abs_deviation": _d, "max_abs_deviation": max(_d.values()),
+            "pass": bool(max(_d.values()) <= 1e-6)}
+    # ---- did PART 2 clear its own kill criterion?
+    _best = max(arms, key=lambda k: arms[k]["selected"])
+    res["KILL_CRITERION_K1"] = {
+        "criterion": "no arm's selected exceeds 0.3760 => PART 2 is a negative and is reported as one.",
+        "best_arm": _best, "best_selected": arms[_best]["selected"],
+        "bar_published": BAR_32B_DIRECT_PUB, "bar_matched": BAR_32B_DIRECT_MATCHED,
+        "K1_FIRED": bool(arms[_best]["selected"] <= BAR_32B_DIRECT_PUB),
+        "consequence": "PART 2 is a NEGATIVE. The pre-registered transfer_check to SLAKE_open and "
+                       "VQA_RAD_open was conditional on 'whichever arm passes'; no arm passed, so "
+                       "the transfer check is moot and was NOT run. Those two cells needed oracle "
+                       "0.9630 (from 0.8791) and 0.7875 (from 0.6300) -- 20-40x PathVQA's gap -- and "
+                       "were pre-registered as expected to fail."}
     return res
 
 
@@ -819,6 +922,21 @@ def build_verdict(a):
           if isinstance(_c2, dict) and "seed_averaged" in _c2 else "NOT MEASURED")
     em = a["PART1_confirm"]["judge_free_exact_match"]["config1"]["seed_averaged_delta"]
     rnd = p1["config1_tp2_gpumem0.70"]["seed_averaged"]["delta_randompick_minus_matched_greedy"]
+    c1d = c1
+    cc = p1.get("cross_config", {})
+    _sw = a.get("MACRO_AND_COST", {}).get(
+        "macro_if_ONLY_PATHVQA_open_uses_the_32B_best_of_8_arm", {})
+
+    def _fmt(k):
+        v = _sw.get(k) if isinstance(_sw, dict) else None
+        return (f"{v['macro_delta']} [{v['lo']}, {v['hi']}]"
+                if isinstance(v, dict) and "macro_delta" in v else "NOT MEASURED")
+    sw1, sw2 = _fmt("config1_tp2"), _fmt("config2_tp1")
+    # the PART-1 sentence quotes config-2 and the cross-config block; both exist only once config 2
+    # is measured. Never let a summary sentence invent a number it does not have.
+    if not (isinstance(c2, dict) and cc.get("pooled_6_seed")):
+        raise SystemExit("build_verdict: config-2 / cross_config absent -- refusing to write a "
+                         "headline that quotes them. Re-run once config-2 scoring completes.")
     p2 = a["PART2_extend"]
     arms = p2.get("arms", {})
     if not p2.get("COMPLETENESS", {}).get("complete"):
@@ -853,27 +971,116 @@ def build_verdict(a):
             "floor, not +0.027. (iii) Under EXACT MATCH, a judge-free correctness currency, the "
             f"effect is LARGER, {em['delta']} [{em['lo']}, {em['hi']}], on all three seeds "
             "individually, with selected and greedy answers the same length (16.2 vs 16.1 chars), so "
-            "it is not judge leniency toward sampled answers. (iv) A serving-configuration shift "
-            "(tp=2/gpu_mem 0.70 -> tp=1/gpu_mem 0.92, same seeds, same prompt sha1, one shared judge "
-            "load) -- see PART1.config2.",
-            "PART 2 -- the cheapest coverage intervention CLEARS the oracle requirement and still "
-            "does not convert. Adding the model's own T=0 greedy answer as a 9th candidate lifts "
-            "oracle@8 from 0.516667 to 0.524667, past the 0.520357 needed at the incumbent sel_eff -- "
-            "but it can only act on the ~19% of items where that answer is not already in the pool, "
-            "and the verifier almost never prefers it there. See PART2.arms and PART2.E1_mechanism.",
+            "it is not judge leniency toward sampled answers. (iv) A full serving-configuration "
+            "shift (tp=2/gpu_mem 0.70 -> tp=1/gpu_mem 0.92, same seeds, same prompt sha1, one shared "
+            f"judge load) REPLICATES and the effect is LARGER, {c2['delta']} [{c2['lo']}, {c2['hi']}] "
+            f"vs config-1's {c1d['delta']}. The decisive detail: the config shift moves the GREEDY "
+            "control by 0.010667 (0.384 -> 0.373333, the +-0.008 drift the standing caveat warns "
+            "about) but moves the SELECTED arm by only 0.000889 (0.409778 -> 0.410667). Best-of-8 + "
+            "verifier is markedly MORE serving-config-robust than greedy decoding, so the drift "
+            "caveat does not dissolve this effect -- it widens it. Pooled over all 6 seed-config "
+            f"runs: {cc['pooled_6_seed']['delta']['delta']} "
+            f"[{cc['pooled_6_seed']['delta']['lo']}, {cc['pooled_6_seed']['delta']['hi']}].",
+            "PART 2 -- a NEGATIVE, and a structural one. On the full 1500 items the cheapest "
+            "coverage intervention (E1: add the model's own T=0 greedy answer as a 9th candidate) "
+            "DOES clear the oracle requirement, 0.516667 -> 0.524000 against the 0.520357 needed -- "
+            "and still misses the bar, selected 0.374667 < 0.3760, because sel_eff fell 0.722581 -> "
+            "0.715013, more than the -0.0059 it could absorb. It can only act on 282/1500 items and "
+            "the verifier prefers the new candidate on 40, netting 4 gains against 2 losses. Bigger "
+            "pools are WORSE, not better: E2 (N=16) and E3 (union, 11.8 distinct candidates) raise "
+            "oracle to 0.570667 and 0.616667 and LOWER selected to 0.366 and 0.370. The N-ladder "
+            "turns over -- selected peaks at N=8 (0.370666) and falls at N=16 -- so under the "
+            "measured decay the cheap arm does not reach always-32B-direct at ANY N. Coverage and "
+            "convertibility move in opposite directions and they cross BELOW the bar.",
             "PART 3 -- a LABEL-FREE gate between the verifier and self-consistency, chosen by pool "
             "distinctness, fails honest leave-one-cell-out cross-fitting: the three open cells want "
             "OPPOSITE thresholds (PathVQA wants the verifier everywhere, SLAKE and VQA-RAD want "
             "self-consistency everywhere), so cross-fitting picks the wrong one every time and turns "
             "a +0.0051 eval-visible ceiling into a NEGATIVE macro.",
-            "THE HONEST BOTTOM LINE -- the target is not met. The one arm whose 8-cell macro CI "
-            "excludes zero does so by 5e-05 and only because its cell was chosen on the eval."],
+            "THE HONEST BOTTOM LINE -- the target is NOT met, and the reason is worth stating "
+            "precisely. The PathVQA-open effect is REAL and it is the largest confirmed per-cell "
+            "effect in the project, but one cell is 1/8 of the macro, so +0.0269 (config 1) / "
+            "+0.0373 (config 2) on that cell is +0.0034 / +0.0047 of macro against a bar that needs "
+            "+0.0029 WITH a CI excluding zero. The one-cell swap does clear that arithmetically "
+            f"({sw1} config 1, {sw2} config 2) -- but the cell was CHOSEN because the eval said it "
+            "wins, which is precisely the manufactured-win pattern this project has already had to "
+            "retract. The pre-registered arm that applies best-of-8 to all three open cells without "
+            "looking is a TIE (+0.0012 [-0.0055, +0.0080], round 1), because SLAKE-open and "
+            "VQA-RAD-open give back what PathVQA-open wins. A defensible win needs a LABEL-FREE rule "
+            "that selects this cell without the eval; PART 3 was that attempt and it failed "
+            "cross-fitting. Attack A should treat +0.0269/+0.0373 on PathVQA-open as CONFIRMED and "
+            "bankable, and the one-cell macro as NOT bankable."],
         "beats_always_32b_direct_on_the_8_cell_macro":
             "NO on any pre-registered arm. The only arm whose macro CI excludes zero is the "
             "EVAL-VISIBLE one-cell swap reported in MACRO_AND_COST, and its cell was chosen because "
             "the eval said so; the pre-registered round-1 arm over all three open cells is a TIE, and "
             "PART 3's honest cross-fit is negative.",
         "no_fabricated_numbers": True}
+
+
+def prereg_adherence(a):
+    """Score every registered prediction against what was measured -- INCLUDING the ones that were
+    wrong. A pre-registration only has value if the misses are reported as loudly as the hits."""
+    p1, p2 = a["PART1_confirm"], a["PART2_extend"]
+    c2 = p1.get("config2_tp1_gpumem0.92", {})
+    c2d = (c2.get("seed_averaged", {}).get("delta_selected_minus_matched_greedy")
+           if isinstance(c2, dict) else None)
+    arms = p2.get("arms", {})
+    out = {
+        "registered_file": f"{ART}/pathvqa_confirm_2026-08-11_preregistration.json",
+        "written_before_results": True,
+        "P1_config_shift": {
+            "registered_SUCCESS": "delta > 0 with a 95% CI excluding zero, in config 2",
+            "registered_point_prediction": "+0.020 to +0.032",
+            "measured": c2d,
+            "outcome": ("MET -- but ABOVE the registered band" if c2d and c2d["lo"] > 0
+                        and c2d["delta"] > 0.032 else
+                        "MET" if c2d and c2d["lo"] > 0 else "NOT MET"),
+            "note": "the success criterion was directional and is met; the POINT prediction "
+                    "under-called the magnitude. Recorded as a miss on magnitude, not a hit."},
+        "P1_random_pick_floor": {
+            "registered_PASS": "random-pick <= greedy, so the gain is attributable to selection",
+            "registered_prediction": "random-pick is BELOW greedy",
+            "measured_config1": p1.get("config1_tp2_gpumem0.70", {}).get("seed_averaged", {})
+            .get("delta_randompick_minus_matched_greedy"),
+            "measured_config2": c2.get("seed_averaged", {}).get(
+                "delta_randompick_minus_matched_greedy") if isinstance(c2, dict) else None,
+            "outcome": "MET in both configurations"},
+        "P2_E1": {
+            "registered_prediction": "GENUINELY UNCERTAIN ~50/50; predicted selected 0.374-0.381; "
+                                     "oracle stated in advance as 0.524667",
+            "measured_oracle": arms.get("E1_sc8_plus_greedy", {}).get("oracle"),
+            "measured_selected": arms.get("E1_sc8_plus_greedy", {}).get("selected"),
+            "oracle_clears_requirement_0.520357": bool(
+                arms.get("E1_sc8_plus_greedy", {}).get("oracle", 0) > 0.520357),
+            "selected_clears_bar_0.3760": bool(
+                arms.get("E1_sc8_plus_greedy", {}).get("selected", 0) > BAR_32B_DIRECT_PUB),
+            "outcome": "FAILS the bar at the BOTTOM of the registered band. The registered oracle "
+                       "0.524667 was computed on the pre-scoring item set; at full coverage under "
+                       "the strict all-candidates-scored rule it is 0.524000 (one item), still "
+                       "clearing the requirement. Clearing the ORACLE requirement did not clear the "
+                       "BAR, because sel_eff fell from 0.722581 to 0.715013 -- more than the "
+                       "-0.0059 the registration said it could absorb."},
+        "P2_E2_E3": {
+            "registered_prediction": "BOTH PREDICTED FAIL (E2 selected ~0.369, E3 ~0.369)",
+            "measured_E2_selected": arms.get("E2_sc16", {}).get("selected"),
+            "measured_E3_selected": arms.get("E3_union_sc8_greedy_sc16", {}).get("selected"),
+            "outcome": "CORRECT -- both fail, and the predicted values were close (0.369 predicted "
+                       "vs 0.366 / 0.370 measured)."},
+        "P2_registered_reading_if_E1_passes_and_E2_E3_fail": {
+            "registered_text": "coverage bought by MORE SAMPLING is not convertible but coverage "
+                               "bought by ADDING THE MODE is, because the mode costs the selector "
+                               "almost nothing",
+            "outcome": "NOT AVAILABLE -- E1 did not pass. The sharper finding is that NO coverage "
+                       "is convertible here: E1/E2/E3 raise oracle by +0.007 / +0.054 / +0.100 and "
+                       "move selected by +0.001 / -0.007 / -0.003. sel_eff absorbs the entire gain."},
+        "K2": p2.get("null_test_rescore_vs_incumbent_scores", {}).get("K2_DIAGNOSIS", {})
+        .get("K2_as_written_fired"),
+        "K1": p2.get("KILL_CRITERION_K1", {}).get("K1_FIRED"),
+        "PART3_status": "NOT PRE-REGISTERED -- designed after seeing round 1's concentration "
+                        "diagnosis, and labelled a DIAGNOSTIC in its own block. It is reported "
+                        "because it is a clean negative, not as a headline."}
+    return out
 
 
 def main():
@@ -891,6 +1098,7 @@ def main():
         "PART3_label_free_distinctness_gate": part3(),
         "MACRO_AND_COST": macro_block(),
     }
+    art["PREREGISTRATION_ADHERENCE"] = prereg_adherence(art)
     art["verdict"] = build_verdict(art)
     p = f"{ART}/pathvqa_confirm_2026-08-11.json"
     json.dump(art, open(p, "w"), indent=1, default=float)

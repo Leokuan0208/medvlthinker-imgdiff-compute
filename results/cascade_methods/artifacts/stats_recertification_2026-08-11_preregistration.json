@@ -1,0 +1,39 @@
+{
+ "what": "PRE-REGISTRATION for ATTACK C part 3 (Best-of-Majority filtering) and part 4 (pre-generation router). Written BEFORE any part-3 / part-4 number was computed.",
+ "date": "2026-08-11",
+ "author_note": "Parts 1 and 2 are re-certifications of already-published quantities (no arm selection), so they need no pre-registration beyond their stated null tests. Parts 3 and 4 SELECT AMONG ARMS and therefore do.",
+
+ "part3_best_of_majority": {
+  "source_claim": "LITERATURE_UPDATE_2026-08-11.md: Best-of-Majority (ICLR 2026) filters candidates by majority/frequency BEFORE the verifier scores them, and is claimed to address the monotone sel_eff decay at larger K.",
+  "pool": "the frozen 8-sample open-text eval pool, n=2345 (slake_open 645 / vqa_rad_open 200 / pathvqa_open 1500), ckpts/train/lora_verifier_disjoint/transfer_dump_*.json",
+  "metric": "sel_eff = selected_accuracy / oracle@8, the project's frozen definition (src/training_methods/genframe_data.py). oracle@8 is a property of the pool and is UNCHANGED by filtering, so sel_eff is directly comparable across arms.",
+  "PRIMARY_ARM_declared_in_advance": "BoM-c2: keep every candidate whose normalised answer string occurs >= 2 times in the 8-pool; if no answer occurs twice, keep all 8. Then pick argmax selector score among the kept, first-index tie-break. ZERO free parameters.",
+  "secondary_sweep_labelled_as_such": ["BoM-top1 (keep only the single most frequent answer cluster)", "BoM-top2", "BoM-top3", "BoM-c3 (count >= 3)"],
+  "selectors_it_is_applied_to": ["incumbent LoRA verifier scores (transfer dump 'scores')", "the deployed frozen fused selector (rank_avg(incumbent) + rank_avg(8-seed genframe head rank)), recomputed read-only from ckpts/train/genframe_head_ens8"],
+  "success_criterion_declared_in_advance": "BoM-c2 beats the corresponding unfiltered selector on POOLED sel_eff over n=2345 with a paired item bootstrap CI (nboot=10000) excluding zero, AND does not lose significantly on any of the three cells (per-cell guardrail).",
+  "anti_leakage": "Any statement of the form 'the best BoM variant gives X' must come from 5-fold nested CV grouped by IMAGE CLUSTER (inner folds pick the variant, outer folds score it), never from the sweep maximum.",
+  "null_test": "argmax over all 8 with no filter must reproduce the published incumbent sel_eff 0.775204 and the deployed 0.810627 exactly (tolerance 1e-6).",
+  "decomposition_null": "'filter-only' control: keep the BoM filter but replace the selector score with a uniform random draw (>= 200 seeds). Separates how much of any BoM effect is the frequency filter versus the verifier.",
+  "prediction_recorded_in_advance": "The project has measured ~20 selection approaches converging at sel_eff 0.80-0.81 and the sweep calls 0.78-0.81 a FIELD CONSTANT. A filter that only restricts the candidate set cannot raise oracle@8 and can only help by removing candidates the verifier would have wrongly preferred. Expectation: no significant pooled gain; possible small gain on the cell with the most answer duplication (slake_open). A negative here is a real deliverable."
+ },
+
+ "part4_pre_generation_router": {
+  "source_claim": "LITERATURE_UPDATE_2026-08-11.md reports a published structural theorem: a pre-generation router beat the best cascade on 4/5 datasets mainly because it avoids the cheap model's generation cost -- cascades pay the cheap model before any escalation decision. That is exactly this project's macro cost reversal.",
+  "definition": "A router that decides FROM THE PROMPT ALONE (question text + a CPU-only image descriptor) which SINGLE model answers -- 7B or 32B-direct. It never runs both, so its cost at routing rate e is (1-e)*FLOP_7B + e*FLOP_32B, whereas the cascade's is FLOP_7B + e*FLOP_32B.",
+  "cost_constants": "FLOP_7B = 1.0, FLOP_32B = 4.57 as-charged, 3.816 honest re-cost -- verbatim from _selector_rerun_parts/summary_disjoint.json:cost_macro. Reported macro-weighted (1/8 per cell) and never paired with a sample-weighted accuracy.",
+  "features_PRIMARY": "prompt text only: word 1-2 gram + char 3-5 gram TF-IDF of the question string, plus question length. NO cell identity, NO image, NO model output. This is the deployment-realistic router.",
+  "features_SECONDARY_labelled_upper_bound": "+ the CPU thumbnail descriptor where available, and separately + the true cell identity (an upper bound, NOT deployable).",
+  "estimator": "5-fold cross-fitting GROUPED BY IMAGE CLUSTER so no image appears in both a fit and its own prediction. Target is the routing gain g = y32 - y7. Training rows are weighted 1/(8*n_cell) so the fit optimises the MACRO objective, not the PMC-VQA-dominated pooled one.",
+  "frontier": "Sweep the routing threshold to trace macro accuracy versus macro FLOP-eq cost. The comparison points are (a) always-32B-direct 0.6567 at 4.57, (b) always-7B 0.5971 at 1.0, (c) the shipped cascade accuracy-max 0.6575 at 7.951, (d) compute-lean 0.6443 at 6.674.",
+  "permutation_null": "Shuffle g WITHIN each cell (preserving every cell's base rate) and refit the whole cross-fitted pipeline, >= 200 permutations. This tests specifically for WITHIN-cell routable signal; any frontier gain that survives only the unshuffled fit is cross-cell (i.e. the router has learned which benchmark it is looking at) and must be reported as such.",
+  "prediction_recorded_in_advance": "32B-direct beats 7B on ALL EIGHT cells, so no router can beat always-32B-direct on accuracy; the free upper bound on perfect 7B-vs-32B routing is +0.0661 macro with only 1.3% converted, and single-model routing has previously measured ~29 sigma BELOW a random-allocation floor. Expectation: the within-cell permutation null is NOT beaten, and the router's entire value is on the COST axis -- it should reach accuracies near always-32B-direct at a fraction of the cascade's cost. The deliverable is the frontier, not an accuracy win."
+ },
+
+ "standing_rules_applied": [
+  "CRITICAL RULE 7: every number names its artifact; nothing estimated is labelled measured.",
+  "CRITICAL RULE 6: no abstention -- every arm here always returns an answer.",
+  "Paired item bootstrap nboot=10000 unless stated; cluster bootstrap where part 2 applies.",
+  "Per-cell guardrail reported; vqa_rad cells are n=200/251 and flags there may be seed noise.",
+  "MedEvalKit/ is not touched. ckpts/train/genframe_head_ens8/ is READ ONLY -- freeze_selector.py is never run."
+ ]
+}

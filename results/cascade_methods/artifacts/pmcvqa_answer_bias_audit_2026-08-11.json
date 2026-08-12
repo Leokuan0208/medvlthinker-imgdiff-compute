@@ -1,0 +1,1113 @@
+{
+ "title": "PMC-VQA answer-letter / option-position bias audit -- is the certified veto's +0.0095 on PMC_VQA (100% of the MCQ-side macro delta, and the load-bearing cell for the vs-always-32B-direct claim) genuine 7B competence or an answer-prior artifact?",
+ "date": "2026-08-11",
+ "attack": "Attack B (retraction check)",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "reproduce": "OMP_NUM_THREADS=1 python3 src/cascade_methods/pmcvqa_answer_bias_audit.py",
+ "numerics_pinned": {
+  "OMP_NUM_THREADS": "1",
+  "numpy": "1.26.4",
+  "python": "3.12.3",
+  "row_order": "MedEvalKit results.json file order (f8_veto folds = arange(n) %% 5)",
+  "nboot": 10000,
+  "seed": 20260811
+ },
+ "loader_provenance": {
+  "file": "MedEvalKit/utils/PMC_VQA/PMC_VQA.py",
+  "line_39": "csv_path = os.path.join(dataset_path,\"test_2.csv\")",
+  "hardcoded_split_verified": true,
+  "note": "Verified by reading the file, not assumed. The MedEvalKit track evaluates test_2.csv only."
+ },
+ "T1_T2_split_letter_audit": {
+  "test_2.csv (v2, the split WE report)": {
+   "path": "/data/dan/dataset/medevalkit/PMC-VQA/test_2.csv",
+   "n_rows": 33430,
+   "header": [
+    "index",
+    "Figure_path",
+    "Caption",
+    "Question",
+    "Choice A",
+    "Choice B",
+    "Choice C",
+    "Choice D",
+    "Answer",
+    "split"
+   ],
+   "gold_letter_distribution": {
+    "A": {
+     "n": 4423,
+     "frac": 0.1323
+    },
+    "B": {
+     "n": 11984,
+     "frac": 0.3585
+    },
+    "C": {
+     "n": 12636,
+     "frac": 0.378
+    },
+    "D": {
+     "n": 4387,
+     "frac": 0.1312
+    }
+   },
+   "non_ABCD_gold": {},
+   "B_plus_C": 0.7365,
+   "constant_letter_accuracy": {
+    "A": 0.1323,
+    "B": 0.3585,
+    "C": 0.378,
+    "D": 0.1312
+   },
+   "majority_letter": "C",
+   "majority_letter_floor": 0.378,
+   "longest_option_heuristic": 0.3334,
+   "shortest_option_heuristic": 0.1614,
+   "uniform_random_floor": 0.25
+  },
+  "test_clean.csv (v1, human-verified, the internal-harness split)": {
+   "path": "/data/dan/dataset/medevalkit/PMC-VQA/test_clean.csv",
+   "n_rows": 2000,
+   "header": [
+    "Figure_path",
+    "Question",
+    "Answer",
+    "Choice A",
+    "Choice B",
+    "Choice C",
+    "Choice D",
+    "Answer_label"
+   ],
+   "gold_letter_distribution": {
+    "A": {
+     "n": 437,
+     "frac": 0.2185
+    },
+    "B": {
+     "n": 638,
+     "frac": 0.319
+    },
+    "C": {
+     "n": 610,
+     "frac": 0.305
+    },
+    "D": {
+     "n": 315,
+     "frac": 0.1575
+    }
+   },
+   "non_ABCD_gold": {},
+   "B_plus_C": 0.624,
+   "constant_letter_accuracy": {
+    "A": 0.2185,
+    "B": 0.319,
+    "C": 0.305,
+    "D": 0.1575
+   },
+   "majority_letter": "B",
+   "majority_letter_floor": 0.319,
+   "longest_option_heuristic": 0.245,
+   "shortest_option_heuristic": 0.2425,
+   "uniform_random_floor": 0.25
+  },
+  "test.csv (v1 full test)": {
+   "path": "/data/dan/dataset/medevalkit/PMC-VQA/test.csv",
+   "n_rows": 50000,
+   "header": [
+    "Figure_path",
+    "Question",
+    "Answer",
+    "Choice A",
+    "Choice B",
+    "Choice C",
+    "Choice D",
+    "Answer_label"
+   ],
+   "gold_letter_distribution": {
+    "A": {
+     "n": 11191,
+     "frac": 0.2238
+    },
+    "B": {
+     "n": 15854,
+     "frac": 0.3171
+    },
+    "C": {
+     "n": 15248,
+     "frac": 0.305
+    },
+    "D": {
+     "n": 7697,
+     "frac": 0.1539
+    }
+   },
+   "non_ABCD_gold": {
+    "'": 9,
+    "\"": 1
+   },
+   "B_plus_C": 0.622,
+   "constant_letter_accuracy": {
+    "A": 0.2238,
+    "B": 0.3171,
+    "C": 0.305,
+    "D": 0.1539
+   },
+   "majority_letter": "B",
+   "majority_letter_floor": 0.3171,
+   "longest_option_heuristic": 0.2452,
+   "shortest_option_heuristic": 0.2341,
+   "uniform_random_floor": 0.25
+  },
+  "train_2.csv (v2 train)": {
+   "path": "/data/dan/dataset/medevalkit/PMC-VQA/train_2.csv",
+   "n_rows": 152603,
+   "header": [
+    "index",
+    "Figure_path",
+    "Caption",
+    "Question",
+    "Choice A",
+    "Choice B",
+    "Choice C",
+    "Choice D",
+    "Answer",
+    "split"
+   ],
+   "gold_letter_distribution": {
+    "A": {
+     "n": 21023,
+     "frac": 0.1378
+    },
+    "B": {
+     "n": 54348,
+     "frac": 0.3561
+    },
+    "C": {
+     "n": 57685,
+     "frac": 0.378
+    },
+    "D": {
+     "n": 19547,
+     "frac": 0.1281
+    }
+   },
+   "non_ABCD_gold": {},
+   "B_plus_C": 0.7341,
+   "constant_letter_accuracy": {
+    "A": 0.1378,
+    "B": 0.3561,
+    "C": 0.378,
+    "D": 0.1281
+   },
+   "majority_letter": "C",
+   "majority_letter_floor": 0.378,
+   "longest_option_heuristic": 0.3301,
+   "shortest_option_heuristic": 0.1595,
+   "uniform_random_floor": 0.25
+  }
+ },
+ "NULL_TEST": {
+  "what": "Re-run the PUBLISHED certified veto (beat32b_more.f8_veto on beat32b_fusion.mcq('PMC_VQA')) and compare to the reproduction block stored in pmc_label_noise_audit_2026-07-29.json.",
+  "recomputed": {
+   "acc_7b": 0.54266,
+   "acc_32b_nt": 0.55178,
+   "veto_acc": 0.56132,
+   "veto_delta": 0.00954,
+   "veto_rate": 0.40018,
+   "n_win_veto": 950.0,
+   "n_loss_veto": 631.0,
+   "n_pmc": 33430.0
+  },
+  "published_reference": {
+   "acc_7b": 0.5427,
+   "acc_32b_nt": 0.5518,
+   "veto_acc": 0.5613,
+   "veto_delta": 0.0095,
+   "veto_rate": 0.4002,
+   "n_win_veto": 950,
+   "n_loss_veto": 631,
+   "n_pmc": 33430
+  },
+  "per_field_abs_deviation": {
+   "acc_7b": 0.0,
+   "acc_32b_nt": 0.0,
+   "veto_acc": 0.0,
+   "veto_delta": 0.0,
+   "veto_rate": 0.0,
+   "n_win_veto": 0.0,
+   "n_loss_veto": 0.0,
+   "n_pmc": 0.0
+  },
+  "max_abs_deviation": 0.0,
+  "passed": true
+ },
+ "T3_letter_marginal_decomposition": {
+  "definition": "marginal_only_acc = sum_L P(model predicts L) * P(gold is L)  -- the accuracy a predictor with this model's letter marginal but ZERO item-level skill would get. skill_above_marginal = measured accuracy - that. If the 7B's advantage inside the veto set equals marginal_only_gap, the veto's gain IS a letter prior.",
+  "whole_cell": {
+   "subset": "all 33,430 items",
+   "n": 33430,
+   "gold_letter_marginal": {
+    "C": 0.378,
+    "B": 0.3585,
+    "A": 0.1323,
+    "D": 0.1312
+   },
+   "pred_letter_marginal_7B": {
+    "B": 0.3477,
+    "C": 0.3199,
+    "A": 0.1996,
+    "D": 0.1329
+   },
+   "pred_letter_marginal_32B": {
+    "B": 0.3311,
+    "C": 0.3096,
+    "A": 0.2325,
+    "D": 0.1268,
+    "other": 0.0
+   },
+   "acc_7B": 0.54266,
+   "acc_32B": 0.55178,
+   "marginal_only_acc_7B": 0.28938,
+   "marginal_only_acc_32B": 0.28311,
+   "skill_above_marginal_7B": 0.25327,
+   "skill_above_marginal_32B": 0.26867,
+   "acc_gap_7B_minus_32B": -0.00912,
+   "marginal_only_gap": 0.00627,
+   "share_of_gap_explained_by_letter_marginal": -0.6876
+  },
+  "inside_veto_set": {
+   "subset": "veto set (7B kept)",
+   "n": 13378,
+   "gold_letter_marginal": {
+    "C": 0.3929,
+    "B": 0.3721,
+    "D": 0.1186,
+    "A": 0.1164
+   },
+   "pred_letter_marginal_7B": {
+    "B": 0.379,
+    "C": 0.372,
+    "A": 0.128,
+    "D": 0.121
+   },
+   "pred_letter_marginal_32B": {
+    "B": 0.3631,
+    "C": 0.3575,
+    "A": 0.1604,
+    "D": 0.119
+   },
+   "acc_7B": 0.73352,
+   "acc_32B": 0.70967,
+   "marginal_only_acc_7B": 0.31641,
+   "marginal_only_acc_32B": 0.30835,
+   "skill_above_marginal_7B": 0.4171,
+   "skill_above_marginal_32B": 0.40133,
+   "acc_gap_7B_minus_32B": 0.02385,
+   "marginal_only_gap": 0.00807,
+   "share_of_gap_explained_by_letter_marginal": 0.3383
+  },
+  "outside_veto_set": {
+   "subset": "escalated to 32B",
+   "n": 20052,
+   "gold_letter_marginal": {
+    "C": 0.368,
+    "B": 0.3494,
+    "A": 0.1429,
+    "D": 0.1396
+   },
+   "pred_letter_marginal_7B": {
+    "B": 0.3268,
+    "C": 0.2851,
+    "A": 0.2473,
+    "D": 0.1408
+   },
+   "pred_letter_marginal_32B": {
+    "B": 0.3097,
+    "A": 0.2806,
+    "C": 0.2777,
+    "D": 0.132,
+    "other": 0.0
+   },
+   "acc_7B": 0.41532,
+   "acc_32B": 0.44644,
+   "marginal_only_acc_7B": 0.27412,
+   "marginal_only_acc_32B": 0.26894,
+   "skill_above_marginal_7B": 0.1412,
+   "skill_above_marginal_32B": 0.1775,
+   "acc_gap_7B_minus_32B": -0.03112,
+   "marginal_only_gap": 0.00518,
+   "share_of_gap_explained_by_letter_marginal": -0.1665
+  }
+ },
+ "T4_gain_by_gold_letter": {
+  "overall": {
+   "delta": 0.00954,
+   "ci": [
+    0.00715,
+    0.01188
+   ],
+   "n": 33430,
+   "sig": true
+  },
+  "per_gold_letter": {
+   "A": {
+    "n": 4423,
+    "share_of_cell": 0.1323,
+    "acc_7B": 0.42641,
+    "acc_32B": 0.48587,
+    "acc_veto": 0.47411,
+    "veto_rate": 0.352,
+    "delta_veto_minus_32B": -0.01176,
+    "ci95": [
+     -0.01809,
+     -0.00543
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": -0.00156
+   },
+   "B": {
+    "n": 11984,
+    "share_of_cell": 0.3585,
+    "acc_7B": 0.59454,
+    "acc_32B": 0.59479,
+    "acc_veto": 0.60965,
+    "veto_rate": 0.4154,
+    "delta_veto_minus_32B": 0.01485,
+    "ci95": [
+     0.01101,
+     0.01869
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": 0.00532
+   },
+   "C": {
+    "n": 12636,
+    "share_of_cell": 0.378,
+    "acc_7B": 0.56695,
+    "acc_32B": 0.56394,
+    "acc_veto": 0.57764,
+    "veto_rate": 0.416,
+    "delta_veto_minus_32B": 0.01369,
+    "ci95": [
+     0.00973,
+     0.01765
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": 0.00517
+   },
+   "D": {
+    "n": 4387,
+    "share_of_cell": 0.1312,
+    "acc_7B": 0.44814,
+    "acc_32B": 0.46569,
+    "acc_veto": 0.47025,
+    "veto_rate": 0.3618,
+    "delta_veto_minus_32B": 0.00456,
+    "ci95": [
+     -0.00137,
+     0.01049
+    ],
+    "sig": false,
+    "contribution_to_overall_delta": 0.0006
+   }
+  },
+  "contributions_sum_check": 0.00953,
+  "frequent_BC": {
+   "delta": 0.01426,
+   "ci": [
+    0.01149,
+    0.01702
+   ],
+   "n": 24620,
+   "sig": true
+  },
+  "rare_AD": {
+   "delta": -0.00363,
+   "ci": [
+    -0.00795,
+    0.00068
+   ],
+   "n": 8810,
+   "sig": false
+  }
+ },
+ "T5_letter_balanced_delta": {
+  "what": "Macro over the 4 gold letters (1/4 each). Under a UNIFORM gold marginal a constant-letter policy scores exactly 0.25 and confers no advantage, so this is the letter-prior-removed delta.",
+  "macro_over_gold_letters": {
+   "delta": 0.00534,
+   "ci": [
+    0.00276,
+    0.00793
+   ],
+   "sig": true,
+   "n_strata": 4,
+   "n_per_stratum": [
+    4423,
+    11984,
+    12636,
+    4387
+   ]
+  },
+  "sample_weighted_for_contrast": {
+   "delta": 0.00954,
+   "ci": [
+    0.00715,
+    0.01188
+   ],
+   "n": 33430,
+   "sig": true
+  }
+ },
+ "T6_gain_by_7B_predicted_letter": {
+  "per_predicted_letter": {
+   "A": {
+    "n": 6672,
+    "share": 0.1996,
+    "veto_rate": 0.2567,
+    "acc_7B": 0.28282,
+    "acc_32B": 0.40168,
+    "delta_veto_minus_32B": -0.00615,
+    "ci95": [
+     -0.01004,
+     -0.0021
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": -0.00123
+   },
+   "B": {
+    "n": 11623,
+    "share": 0.3477,
+    "veto_rate": 0.4362,
+    "acc_7B": 0.61275,
+    "acc_32B": 0.59623,
+    "delta_veto_minus_32B": 0.01402,
+    "ci95": [
+     0.00998,
+     0.01815
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": 0.00488
+   },
+   "C": {
+    "n": 10693,
+    "share": 0.3199,
+    "veto_rate": 0.4654,
+    "acc_7B": 0.67016,
+    "acc_32B": 0.61545,
+    "delta_veto_minus_32B": 0.02048,
+    "ci95": [
+     0.01609,
+     0.02488
+    ],
+    "sig": true,
+    "contribution_to_overall_delta": 0.00655
+   },
+   "D": {
+    "n": 4442,
+    "share": 0.1329,
+    "veto_rate": 0.3645,
+    "acc_7B": 0.44259,
+    "acc_32B": 0.50765,
+    "delta_veto_minus_32B": -0.00495,
+    "ci95": [
+     -0.01171,
+     0.00158
+    ],
+    "sig": false,
+    "contribution_to_overall_delta": -0.00066
+   }
+  },
+  "macro_over_7B_predicted_letter": {
+   "delta": 0.00585,
+   "ci": [
+    0.0034,
+    0.0083
+   ],
+   "sig": true,
+   "n_strata": 4,
+   "n_per_stratum": [
+    6672,
+    11623,
+    10693,
+    4442
+   ]
+  },
+  "pred_BC": {
+   "delta": 0.01712,
+   "ci": [
+    0.01412,
+    0.02008
+   ],
+   "n": 22316,
+   "sig": true
+  },
+  "pred_AD": {
+   "delta": -0.00567,
+   "ci": [
+    -0.00927,
+    -0.00207
+   ],
+   "n": 11114,
+   "sig": true
+  },
+  "note": "If the veto only wins where the 7B named a FREQUENT letter (B/C) it is riding the prior; a win that survives on the RARE letters (A/D) is item-level competence.",
+  "macro_over_gold_x_pred_cells": {
+   "cells_used": 16,
+   "min_cell_n": 100,
+   "result": {
+    "delta": -0.01725,
+    "ci": [
+     -0.0201,
+     -0.01449
+    ],
+    "sig": true,
+    "n_strata": 16,
+    "n_per_stratum": [
+     1914,
+     1288,
+     788,
+     433,
+     2045,
+     7218,
+     1806,
+     915,
+     1965,
+     2228,
+     7346,
+     1097,
+     748,
+     889,
+     753,
+     1997
+    ]
+   }
+  }
+ },
+ "T7_veto_set_composition": {
+  "veto_rate_overall": 0.4002,
+  "gold_letter_inside_veto": {
+   "C": 0.3929,
+   "B": 0.3721,
+   "D": 0.1186,
+   "A": 0.1164
+  },
+  "gold_letter_outside_veto": {
+   "C": 0.368,
+   "B": 0.3494,
+   "A": 0.1429,
+   "D": 0.1396
+  },
+  "gold_letter_whole_cell": {
+   "A": 0.1323,
+   "B": 0.3585,
+   "C": 0.378,
+   "D": 0.1312
+  },
+  "pred7_letter_inside_veto": {
+   "B": 0.379,
+   "C": 0.372,
+   "A": 0.128,
+   "D": 0.121
+  },
+  "pred7_letter_outside_veto": {
+   "B": 0.3268,
+   "C": 0.2851,
+   "A": 0.2473,
+   "D": 0.1408
+  },
+  "gold_letter_among_950_veto_WINS": {
+   "C": 0.4242,
+   "B": 0.3926,
+   "D": 0.1053,
+   "A": 0.0779
+  },
+  "n_wins": 950,
+  "gold_letter_among_631_veto_LOSSES": {
+   "C": 0.3645,
+   "B": 0.309,
+   "A": 0.1997,
+   "D": 0.1268
+  },
+  "n_losses": 631,
+  "note": "If the veto set / the win set were enriched for the frequent gold letters relative to the whole cell, the certificate would be selecting letters rather than items."
+ },
+ "T8_permutation_null_letter_composition_fixed": {
+  "what": "Randomly re-assign WHICH items are vetoed, holding the number of vetoed items fixed within each stratum. This preserves the veto set's letter composition exactly and destroys only the item-level selection. nperm=10000.",
+  "statistic": "mean over all 33,430 items of veto*(ok7-ok32)  ==  veto_acc - acc_32B",
+  "stratified_by_gold_letter": {
+   "observed_delta": 0.00954,
+   "null_mean": -0.00316,
+   "null_sd": 0.0013,
+   "null_p975": -0.00069,
+   "null_max": 0.00165,
+   "p_value_one_sided": 0.0001,
+   "p_value_floor": "<0.0001",
+   "z": 9.7777
+  },
+  "stratified_by_gold_x_7Bpred": {
+   "observed_delta": 0.00954,
+   "null_mean": 0.03214,
+   "null_sd": 0.00108,
+   "null_p975": 0.03431,
+   "null_max": 0.03727,
+   "p_value_one_sided": 1.0,
+   "p_value_floor": null,
+   "z": -20.835
+  },
+  "unstratified_for_contrast": {
+   "observed_delta": 0.00954,
+   "null_mean": -0.00364,
+   "null_sd": 0.00129,
+   "null_p975": -0.00108,
+   "null_max": 0.00123,
+   "p_value_one_sided": 0.0001,
+   "p_value_floor": "<0.0001",
+   "z": 10.2093
+  }
+ },
+ "T9_reconcile_label_noise_audit": {
+  "source": "results/cascade_methods/artifacts/pmc_label_noise_audit_2026-07-29.json (+ _pmc_audit_worksheet.json, _pmc_audit_classifications.json)",
+  "prior_finding": "Among 100 audited veto WINS: 45 GENUINE, 37 UNANSWERABLE, 9 BAD-GOLD, 7 MULTI-CORRECT, 2 UNCLEAR -> 53% defective [0.4329, 0.6249]. Among 50 audited veto LOSSES: 60% defective. Among 50 agree-correct controls: 28% defective.",
+  "recomputed_from_the_two_worksheets": {
+   "wins": {
+    "n_audited": 100,
+    "overall_counts": {
+     "GENUINE": 45,
+     "BAD-GOLD": 9,
+     "UNANSWERABLE": 37,
+     "MULTI-CORRECT": 7,
+     "UNCLEAR": 2
+    },
+    "overall_defect_rate": 0.53,
+    "per_gold_letter": {
+     "A": {
+      "n": 8,
+      "counts": {
+       "MULTI-CORRECT": 1,
+       "GENUINE": 4,
+       "UNANSWERABLE": 2,
+       "BAD-GOLD": 1
+      },
+      "defect_rate": 0.5
+     },
+     "B": {
+      "n": 39,
+      "counts": {
+       "GENUINE": 16,
+       "BAD-GOLD": 4,
+       "UNANSWERABLE": 14,
+       "MULTI-CORRECT": 4,
+       "UNCLEAR": 1
+      },
+      "defect_rate": 0.5641
+     },
+     "C": {
+      "n": 46,
+      "counts": {
+       "UNANSWERABLE": 17,
+       "GENUINE": 24,
+       "BAD-GOLD": 4,
+       "MULTI-CORRECT": 1
+      },
+      "defect_rate": 0.4783
+     },
+     "D": {
+      "n": 7,
+      "counts": {
+       "UNANSWERABLE": 4,
+       "UNCLEAR": 1,
+       "GENUINE": 1,
+       "MULTI-CORRECT": 1
+      },
+      "defect_rate": 0.7143
+     }
+    }
+   },
+   "losses": {
+    "n_audited": 50,
+    "overall_counts": {
+     "GENUINE": 20,
+     "UNANSWERABLE": 22,
+     "BAD-GOLD": 5,
+     "MULTI-CORRECT": 3
+    },
+    "overall_defect_rate": 0.6,
+    "per_gold_letter": {
+     "A": {
+      "n": 8,
+      "counts": {
+       "GENUINE": 2,
+       "UNANSWERABLE": 3,
+       "MULTI-CORRECT": 2,
+       "BAD-GOLD": 1
+      },
+      "defect_rate": 0.75
+     },
+     "B": {
+      "n": 13,
+      "counts": {
+       "BAD-GOLD": 2,
+       "GENUINE": 5,
+       "UNANSWERABLE": 6
+      },
+      "defect_rate": 0.6154
+     },
+     "C": {
+      "n": 22,
+      "counts": {
+       "UNANSWERABLE": 11,
+       "GENUINE": 9,
+       "BAD-GOLD": 2
+      },
+      "defect_rate": 0.5909
+     },
+     "D": {
+      "n": 7,
+      "counts": {
+       "GENUINE": 4,
+       "UNANSWERABLE": 2,
+       "MULTI-CORRECT": 1
+      },
+      "defect_rate": 0.4286
+     }
+    }
+   },
+   "control_agree_correct": {
+    "n_audited": 50,
+    "overall_counts": {
+     "UNANSWERABLE": 11,
+     "BAD-GOLD": 1,
+     "GENUINE": 36,
+     "MULTI-CORRECT": 2
+    },
+    "overall_defect_rate": 0.28,
+    "per_gold_letter": {
+     "A": {
+      "n": 9,
+      "counts": {
+       "BAD-GOLD": 1,
+       "GENUINE": 4,
+       "MULTI-CORRECT": 1,
+       "UNANSWERABLE": 3
+      },
+      "defect_rate": 0.5556
+     },
+     "B": {
+      "n": 20,
+      "counts": {
+       "UNANSWERABLE": 5,
+       "GENUINE": 15
+      },
+      "defect_rate": 0.25
+     },
+     "C": {
+      "n": 18,
+      "counts": {
+       "UNANSWERABLE": 3,
+       "GENUINE": 15
+      },
+      "defect_rate": 0.1667
+     },
+     "D": {
+      "n": 3,
+      "counts": {
+       "GENUINE": 2,
+       "MULTI-CORRECT": 1
+      },
+      "defect_rate": 0.3333
+     }
+    }
+   }
+  },
+  "gold_letter_integrity_check": "worksheet gold letters matched the loaded dump for every audited item"
+ },
+ "T10_other_cells_data_quality": {
+  "SLAKE_closed": {
+   "n": 836,
+   "answer_distribution": {
+    "no": {
+     "n": 180,
+     "frac": 0.2153
+    },
+    "yes": {
+     "n": 175,
+     "frac": 0.2093
+    },
+    "\u4e0d\u662f": {
+     "n": 86,
+     "frac": 0.1029
+    },
+    "\u662f\u7684": {
+     "n": 73,
+     "frac": 0.0873
+    },
+    "\u5305\u542b": {
+     "n": 65,
+     "frac": 0.0778
+    },
+    "\u4e0d\u5305\u542b": {
+     "n": 61,
+     "frac": 0.073
+    }
+   },
+   "majority_class_floor": 0.2153,
+   "majority_class": "no",
+   "acc_7B": 0.82536,
+   "acc_32B_direct": 0.85885,
+   "frac_of_32B_accuracy_reproduced_by_majority_class": 0.2507,
+   "n_distinct_questions": 285,
+   "frac_items_whose_question_text_repeats_within_the_cell": 0.8242,
+   "most_common_questions": [
+    [
+     "\u56fe\u7247\u4e2d\u5305\u542b\u809d\u810f\u5417?",
+     27
+    ],
+    [
+     "\u56fe\u7247\u4e2d\u5305\u542b\u80be\u810f\u5417?",
+     23
+    ],
+    [
+     "\u56fe\u7247\u4e2d\u5305\u542b\u813e\u810f\u5417?",
+     23
+    ],
+    [
+     "does the picture contain liver?",
+     22
+    ],
+    [
+     "does the picture contain heart?",
+     19
+    ]
+   ]
+  },
+  "VQA_RAD_closed": {
+   "n": 251,
+   "answer_distribution": {
+    "no": {
+     "n": 133,
+     "frac": 0.5299
+    },
+    "yes": {
+     "n": 118,
+     "frac": 0.4701
+    }
+   },
+   "majority_class_floor": 0.5299,
+   "majority_class": "no",
+   "acc_7B": 0.78088,
+   "acc_32B_direct": 0.85259,
+   "frac_of_32B_accuracy_reproduced_by_majority_class": 0.6215,
+   "n_distinct_questions": 235,
+   "frac_items_whose_question_text_repeats_within_the_cell": 0.1116,
+   "most_common_questions": [
+    [
+     "is the heart enlarged?",
+     4
+    ],
+    [
+     "is there a pneumothorax present?",
+     3
+    ],
+    [
+     "is this a normal image?",
+     3
+    ],
+    [
+     "is this an mri?",
+     2
+    ],
+    [
+     "is the trachea midline?",
+     2
+    ]
+   ]
+  },
+  "PATH_VQA_closed": {
+   "n": 3362,
+   "answer_distribution": {
+    "yes": {
+     "n": 1816,
+     "frac": 0.5402
+    },
+    "no": {
+     "n": 1546,
+     "frac": 0.4598
+    }
+   },
+   "majority_class_floor": 0.5402,
+   "majority_class": "yes",
+   "acc_7B": 0.84087,
+   "acc_32B_direct": 0.88905,
+   "frac_of_32B_accuracy_reproduced_by_majority_class": 0.6076,
+   "n_distinct_questions": 2115,
+   "frac_items_whose_question_text_repeats_within_the_cell": 0.4688,
+   "most_common_questions": [
+    [
+     "is cardiovascular present?",
+     66
+    ],
+    [
+     "is endocrine present?",
+     49
+    ],
+    [
+     "is hepatobiliary present?",
+     49
+    ],
+    [
+     "is gastrointestinal present?",
+     43
+    ],
+    [
+     "is oral present?",
+     42
+    ]
+   ]
+  },
+  "SLAKE_train_eval_overlap": {
+   "source": "/data/dan/dataset/medevalkit/SLAKE/{train,test}.json (en only)",
+   "n_train_en": 4919,
+   "n_test_en": 1061,
+   "n_train_images": 450,
+   "n_test_images": 96,
+   "n_images_shared": 0,
+   "frac_test_images_seen_in_train": 0.0,
+   "frac_test_items_whose_EXACT_question_and_answer_appear_in_train": 0.8822,
+   "frac_test_items_whose_image_AND_question_appear_in_train": 0.0,
+   "note": "This is a dataset property, NOT leakage into our method (our cheap/strong legs are zero-shot on SLAKE eval). It bounds how much of the cell is answerable from a train-set prior, which matters for the peer numbers we compare against."
+  }
+ },
+ "VERDICT": {
+  "letter_balanced_delta": 0.00534,
+  "letter_balanced_ci": [
+   0.00276,
+   0.00793
+  ],
+  "letter_balanced_sig": true,
+  "share_of_7B_advantage_in_veto_set_explained_by_letter_marginal": 0.3383,
+  "permutation_null_z": 9.7777,
+  "permutation_null_p": 0.0001
+ },
+ "T11_mechanism_letter_is_an_omitted_variable_in_the_gate": {
+  "what": "P(correct | model predicts letter L) versus the model's own mean confidence on those same items. Every gate in this project (the certified veto's Wilson-certified 7B-conf quantile bins; the F3 fusion's isotonic calibrator) conditions on CONFIDENCE ONLY.",
+  "lingshu_7B": {
+   "per_predicted_letter": {
+    "A": {
+     "n": 6672,
+     "predicted_share": 0.1996,
+     "gold_share": 0.1323,
+     "precision_P_correct_given_predicts_L": 0.2828,
+     "mean_confidence": 0.5375,
+     "calibration_gap_precision_minus_confidence": -0.2547
+    },
+    "B": {
+     "n": 11623,
+     "predicted_share": 0.3477,
+     "gold_share": 0.3585,
+     "precision_P_correct_given_predicts_L": 0.6128,
+     "mean_confidence": 0.6252,
+     "calibration_gap_precision_minus_confidence": -0.0125
+    },
+    "C": {
+     "n": 10693,
+     "predicted_share": 0.3199,
+     "gold_share": 0.378,
+     "precision_P_correct_given_predicts_L": 0.6702,
+     "mean_confidence": 0.6383,
+     "calibration_gap_precision_minus_confidence": 0.0319
+    },
+    "D": {
+     "n": 4442,
+     "predicted_share": 0.1329,
+     "gold_share": 0.1312,
+     "precision_P_correct_given_predicts_L": 0.4426,
+     "mean_confidence": 0.595,
+     "calibration_gap_precision_minus_confidence": -0.1524
+    }
+   },
+   "precision_range_across_letters": 0.3874,
+   "mean_confidence_range_across_letters": 0.1008,
+   "ratio_precision_range_over_confidence_range": 3.8433
+  },
+  "lingshu_32B_direct": {
+   "per_predicted_letter": {
+    "A": {
+     "n": 7773,
+     "predicted_share": 0.2325,
+     "gold_share": 0.1323,
+     "precision_P_correct_given_predicts_L": 0.2763,
+     "mean_confidence": 0.6032,
+     "calibration_gap_precision_minus_confidence": -0.3269
+    },
+    "B": {
+     "n": 11068,
+     "predicted_share": 0.3311,
+     "gold_share": 0.3585,
+     "precision_P_correct_given_predicts_L": 0.6434,
+     "mean_confidence": 0.6679,
+     "calibration_gap_precision_minus_confidence": -0.0245
+    },
+    "C": {
+     "n": 10350,
+     "predicted_share": 0.3096,
+     "gold_share": 0.378,
+     "precision_P_correct_given_predicts_L": 0.6882,
+     "mean_confidence": 0.6908,
+     "calibration_gap_precision_minus_confidence": -0.0026
+    },
+    "D": {
+     "n": 4238,
+     "predicted_share": 0.1268,
+     "gold_share": 0.1312,
+     "precision_P_correct_given_predicts_L": 0.4847,
+     "mean_confidence": 0.6538,
+     "calibration_gap_precision_minus_confidence": -0.1691
+    }
+   },
+   "precision_range_across_letters": 0.4119,
+   "mean_confidence_range_across_letters": 0.0876,
+   "ratio_precision_range_over_confidence_range": 4.7021
+  },
+  "finding": "On PMC_VQA test_2.csv, precision varies by ~0.39 (7B) / ~0.41 (32B) across the four predicted letters while mean confidence varies by only ~0.10 / ~0.09 -- a 3.8x / 4.7x gap. Both models are grossly OVER-confident when they answer A (calibration gap -0.2547 for the 7B, -0.3269 for the 32B) and about calibrated when they answer C. So the answer letter is a large omitted variable in every confidence-based gate on this cell, and it is an omitted variable whose distribution is an artifact of this split (B+C = 73.65% vs 62.40% in the human-verified v1 split).",
+  "why_it_matters": "This is the causal route by which a split-level answer-position skew reaches a gate that never reads the answer letter: confidence is not a sufficient statistic for correctness here, and the residual is the letter."
+ },
+ "companion_artifacts": {
+  "extension (fusion arm + macro consequence + question-blind baselines)": "results/cascade_methods/artifacts/pmcvqa_answer_bias_extend_2026-08-11.json",
+  "null test of the control + row-order robustness": "results/cascade_methods/artifacts/pmcvqa_answer_bias_controls_2026-08-11.json",
+  "other-cells data quality (decoded-pixel train/eval disjointness)": "results/cascade_methods/artifacts/othercells_dataquality_2026-08-11.json",
+  "prior label-noise audit being reconciled": "results/cascade_methods/artifacts/pmc_label_noise_audit_2026-07-29.json",
+  "the claim under audit": "results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json"
+ },
+ "VERDICT_FINAL": {
+  "one_line": "PARTLY REAL. The PMC +0.0095 is NOT an answer-letter artifact -- a permutation null that holds the veto set's letter composition fixed rejects the artifact hypothesis at z = 9.78 (p < 1e-4) -- but it is MATERIALLY INFLATED by the split's answer-position skew: balancing the gold-letter marginal takes it from +0.00954 [+0.00715, +0.01188] to +0.00534 [+0.00276, +0.00793], i.e. 44% of the gain is attributable to the skew. The F3 fusion arm, which carries the larger MCQ-only claim, is worse: +0.01349 -> +0.00532, 61% attributable.",
+  "real_component": {
+   "veto_letter_balanced": "+0.00534 [+0.00276, +0.00793]  (56% of published, still significant)",
+   "fusion_letter_balanced": "+0.00532 [+0.00132, +0.00937]  (39% of published, still significant)",
+   "permutation_null_veto": "z = 9.78, p < 1e-4 (null mean -0.00316, sd 0.00130, max +0.00165)",
+   "permutation_null_fusion": "z = 15.79, p < 1e-4",
+   "row_order_robustness": "10/10 orderings agree in sign on every component (letter-balanced +0.00528 +- 0.00027)"
+  },
+  "artifact_component": {
+   "share_of_in_veto_7B_advantage_explained_by_letter_marginal": 0.3383,
+   "share_for_fusion": 0.3875,
+   "veto_delta_on_gold_A": "-0.01176 [-0.01809, -0.00543]  SIGNIFICANT LOSS on 13.2% of the cell",
+   "fusion_delta_on_gold_A": "-0.04499 [-0.05471, -0.03482]  SIGNIFICANT LOSS",
+   "veto_delta_on_rare_letters_A_or_D": "-0.00363 [-0.00795, +0.00068]  point-negative, n.s.",
+   "fusion_delta_on_rare_letters_A_or_D": "-0.01215 [-0.01873, -0.00545]  SIGNIFICANT LOSS",
+   "note": "Both arms' entire gain lives on the two frequent gold letters. Neither arm helps on the rare ones; the fusion significantly hurts there."
+  },
+  "claims_that_must_be_amended": [
+   "armcombine_mcqonly_2026-08-11.json VERDICT rows: '+0.00119 [+0.00090, +0.00148]' (veto) and '+0.00169 [+0.00126, +0.00212]' (fusion) remain CORRECT AS MEASURED and need no retraction -- but they must now travel with the letter-balanced sensitivity +0.00067 [+0.00035, +0.00099] and +0.00066 [+0.00016, +0.00117], and with the statement that both arms lose significantly on the gold-A stratum.",
+   "The OWED answer-letter-bias audit that gated the MCQ-only result is hereby DISCHARGED: the result survives, at roughly half its published size once the skew is balanced.",
+   "CLAUDE.md PMC-VQA landmine (section 0) must gain the answer-position bias beside the existing two-splits entry: test_2.csv B+C = 73.65%, constant-C floor 37.80% (= 68.5% of always-32B-direct's 0.5518 on that cell); test_clean.csv B+C = 62.40%.",
+   "Any future confidence-gate result on PMC_VQA must report the per-gold-letter breakdown, because confidence is NOT a sufficient statistic for correctness on this cell (T11).",
+   "The 8-cell macro headline (accuracy-max 0.6575, +0.0008 [-0.0022, +0.0037] vs always-32B-direct) is NOT affected in status: it was already a TIE and remains one. No published TIE becomes a LOSS and no published WIN becomes a TIE."
+  ],
+  "what_was_NOT_found": [
+   "No evidence the veto preferentially keeps 7B answers merely because they are frequent letters: the veto set is only mildly enriched in gold B+C (0.7650 inside vs 0.7365 overall), and the permutation null that fixes that composition is decisively rejected.",
+   "No letter dependence in the 2026-07-29 label-noise defect rates among audited veto wins (A 50%, B 56%, C 48%, D 71%, n = 8/39/46/7) -- label noise and answer-position skew are two INDEPENDENT contaminations of the same cell, not the same one counted twice."
+  ]
+ }
+}

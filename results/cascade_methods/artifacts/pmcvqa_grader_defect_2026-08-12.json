@@ -1,0 +1,139 @@
+{
+ "title": "A GRADING DEFECT IN THE MedEvalKit PMC-VQA JUDGE THAT DIFFERENTIALLY PENALISES THE 32B, and what it does to round 2's only CI-clean macro win over always-32B-direct.",
+ "date": "2026-08-12",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "seed": 20260812,
+ "nboot": 10000,
+ "found_while": "running the owed answer-letter-bias audit (results/cascade_methods/artifacts/pmcvqa_letterbias_audit_2026-08-12.json)",
+ "gates": "results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/pmcvqa_grader_defect.py",
+ "MedEvalKit_untouched": "this script only READS MedEvalKit.  The grader here is a transcription; the vendor tree is not modified.  Verified: `git -C MedEvalKit diff --stat utils/utils.py` is empty (reported in provenance below).",
+ "defect": {
+  "file": "MedEvalKit/utils/utils.py",
+  "lines": "111-112",
+  "code": "split_response = response.split('.')[0]  /  split_response = split_response.split(':')[-1]",
+  "mechanism": "a bare-letter-plus-colon response ('C:') is reduced to the EMPTY STRING by line 112, matches nothing, and falls through to difflib similarity of the raw response against the four option TEXTS (utils.py:131-134).",
+  "why_it_is_not_symmetric": "the two legs emit that response form at different rates, so the defect is not a wash between arms -- it is a differential."
+ },
+ "null_tests": {
+  "N1_transcription_is_faithful": {
+   "name": "the transcribed grader reproduces the harness's stored `correct` field ELEMENT-WISE",
+   "n": 33430,
+   "mismatches_7b": 0,
+   "mismatches_32b": 0,
+   "verdict": "PASS"
+  },
+  "N2_dead_branches": {
+   "name": "the boxed / <answer> branches of parse_response cannot fire on this dump, so omitting their helpers cannot change a grade",
+   "n_responses_containing_boxed": 0,
+   "n_responses_containing_answer_tag": 0,
+   "verdict": "PASS"
+  },
+  "N3_alignment_to_deployed_vectors": {
+   "name": "the dumps re-graded here are the SAME per-item objects, in order, as the deployed vectors",
+   "elementwise_7b": true,
+   "elementwise_32b": true,
+   "verdict": "PASS"
+  }
+ },
+ "A1_size_of_the_defect": {
+  "note": "'gained' = items the repaired grader marks right that the harness marks wrong.  Every accuracy here is on PMC-VQA test_2.csv, n=33,430, the MedEvalKit track.",
+  "always_7b": {
+   "harness_acc": 0.542656,
+   "repaired_acc": 0.552647,
+   "gained": 351,
+   "lost": 17,
+   "net": 334,
+   "net_pp": 0.9991
+  },
+  "always_32b_direct": {
+   "harness_acc": 0.55178,
+   "repaired_acc": 0.569339,
+   "gained": 622,
+   "lost": 35,
+   "net": 587,
+   "net_pp": 1.7559
+  },
+  "differential_pp": 0.7568,
+  "response_forms_repaired": {
+   "always_7b": {
+    "C:": 187,
+    "B:": 100,
+    "D:": 34,
+    "A:": 30
+   },
+   "always_32b_direct": {
+    "C:": 279,
+    "A:": 136,
+    "B:": 130,
+    "D:": 77
+   }
+  },
+  "reading": "the harness under-scores BOTH legs, but it under-scores the 32B roughly twice as hard.  That differential is the confound: every arm that answers with 7B text where the baseline answers with 32B text collects it for free."
+ },
+ "A2_veto_mask_recovery": {
+  "method": "the certified veto answers with the 7B on V and the 32B on V^c, so V is identified EXACTLY wherever the two legs differ in correctness; a single threshold on the 7B's stored `conf` recovers the whole mask.",
+  "feature": "conf (MedEvalKit results.json field)",
+  "threshold": 0.644298,
+  "residual_mismatched_items": 10,
+  "residual_pct": 0.0299,
+  "veto_rate": 0.3994,
+  "verdict": "EXACT to 10 items (0.030%)",
+  "fusion_note": "the fusion arm is NOT recovered by any single threshold on conf or margin (best residual 2,215 items), so it is reported by BOUNDS only, never by a mask."
+ },
+ "A3_effect_on_the_gated_win": {
+  "arithmetic": "the gated policy is byte-identical to always-32B-direct on 7 of the 8 cells BY CONSTRUCTION, so the 8-cell macro delta is exactly (PMC_VQA delta)/8.",
+  "certified_veto": {
+   "pmc_delta_harness_grader": {
+    "delta": 0.00954,
+    "lo": 0.00718,
+    "hi": 0.01191,
+    "verdict": "WIN"
+   },
+   "pmc_delta_repaired_grader": {
+    "delta": 0.00793,
+    "lo": 0.00568,
+    "hi": 0.01014,
+    "verdict": "WIN"
+   },
+   "macro_delta_harness": 0.00119,
+   "macro_ci_harness": [
+    0.0009,
+    0.00149
+   ],
+   "macro_delta_repaired": 0.00099,
+   "macro_ci_repaired": [
+    0.00071,
+    0.00127
+   ],
+   "survives_the_repair": true,
+   "via": "the recovered mask (residual 10 items)",
+   "assumption_free_bounds": {
+    "delta_natural": 0.00954,
+    "delta_repaired_lower_bound": -0.0023,
+    "delta_repaired_upper_bound": 0.01454,
+    "note": "assumption-free: the leg is identified on every item where the two legs differ in correctness; on the rest the bound assigns the unknown legs adversarially (lower) and favourably (upper)."
+   }
+  },
+  "fusion": {
+   "pmc_delta_harness_grader": {
+    "delta": 0.01349,
+    "lo": 0.00996,
+    "hi": 0.01699,
+    "verdict": "WIN"
+   },
+   "assumption_free_bounds": {
+    "delta_natural": 0.01349,
+    "delta_repaired_lower_bound": 0.00395,
+    "delta_repaired_upper_bound": 0.02079,
+    "note": "assumption-free: the leg is identified on every item where the two legs differ in correctness; on the rest the bound assigns the unknown legs adversarially (lower) and favourably (upper)."
+   },
+   "macro_bounds": [
+    0.00049,
+    0.0026
+   ],
+   "note": "no mask is recoverable for the fusion arm, so ONLY bounds are reported.  Its repaired delta is NOT MEASURED."
+  }
+ }
+}

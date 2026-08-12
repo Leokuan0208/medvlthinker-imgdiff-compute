@@ -1,0 +1,452 @@
+{
+ "title": "OWED AUDIT -- answer-letter bias on PMC-VQA test_2.csv, and whether the round-2 MCQ-only macro win over always-32B-direct survives letter-balancing.",
+ "date": "2026-08-12",
+ "gates": "results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json",
+ "owed_by": "results/cascade_methods/docs/current/BEAT32B_ROUND_2026-08-10.md:26 -- which quotes 'B+C = 73.6%, 37.8% constant-C floor' with NO named artifact.  This file supplies it.",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/pmcvqa_letterbias_audit.py",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "seed": 20260812,
+ "nboot": 10000,
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1",
+  "PYTHONHASHSEED": "0",
+  "tf32": "not applicable -- pure numpy over stored 0/1 vectors and strings",
+  "bootstrap": "paired item-level, one shared index stream reused by every arm"
+ },
+ "null_tests": {
+  "N1_item_alignment": {
+   "name": "the harness dump used for the letter analysis is the SAME per-item object, in the SAME order, as the deployed evaluation vectors -- asserted ELEMENT-WISE, not just in mean",
+   "source": "MedEvalKit/eval_results_lingshu{7b,32b}_full/{}/PMC_VQA/results.json vs _selector_rerun_parts/vec_disjoint.npz",
+   "n_dump_7b": 33430,
+   "n_dump_32b": 33430,
+   "n_vec": 33430,
+   "elementwise_identical_7b": true,
+   "elementwise_identical_32b": true,
+   "acc_7b": 0.542656,
+   "acc_32b": 0.55178,
+   "verdict": "PASS (exact, asserted -- the script raises otherwise)"
+  },
+  "N2_reproduce_banked_arm_accuracies": {
+   "name": "reproduce the banked PMC_VQA accuracy of the arm the gated win deploys",
+   "fusion_acc_mine": 0.565271,
+   "fusion_acc_banked": 0.56527,
+   "veto_acc_mine": 0.561322,
+   "max_abs_dev": 7.15e-07,
+   "verdict": "PASS"
+  },
+  "N3_gold_consistency": {
+   "name": "the gold letter is identical between the 7B and the 32B dump for every item",
+   "verdict": "PASS (asserted)",
+   "n": 33430
+  },
+  "N4_parse": {
+   "name": "the leading-letter parse of `response` reproduces the harness's own `correct` field",
+   "agreement_7b": 0.988992,
+   "agreement_32b": 0.980347,
+   "unparsed_7b": 0,
+   "unparsed_32b": 0,
+   "note": "a parse agreement below 1.0 means the harness's grader accepted responses this simple leading-letter regex does not; the letter analysis below uses the HARNESS's `correct` field for every accuracy number and the regex only for the PREDICTED-letter histograms.",
+   "verdict": "REVIEW"
+  }
+ },
+ "A1_gold_letter_prior": {
+  "source": "MedEvalKit/eval_results_lingshu7b_full/{}/PMC_VQA/results.json -- the `answer` field, n=33,430, i.e. PMC-VQA test_2.csv as loaded by unmodified vendor code (MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39)",
+  "n": 33430,
+  "counts": {
+   "A": 4423,
+   "B": 11984,
+   "C": 12636,
+   "D": 4387
+  },
+  "fraction": {
+   "A": 0.13231,
+   "B": 0.35848,
+   "C": 0.37798,
+   "D": 0.13123
+  },
+  "B_plus_C": 0.73646,
+  "B_plus_C_pct": 73.6,
+  "constant_letter_baseline_accuracy": {
+   "A": 0.13231,
+   "B": 0.35848,
+   "C": 0.37798,
+   "D": 0.13123
+  },
+  "best_constant_letter": "C",
+  "best_constant_letter_accuracy": 0.37798,
+  "options_per_item": {
+   "4": 33430
+  },
+  "uniform_would_be": 0.25,
+  "max_deviation_from_uniform": 0.12798,
+  "QUOTED_IN_DOC": {
+   "claim": "BEAT32B_ROUND_2026-08-10.md:26 -- 'B+C = 73.6%, 37.8% constant-C floor'",
+   "B_plus_C_quoted": 0.736,
+   "B_plus_C_measured": 0.73646,
+   "constant_C_quoted": 0.378,
+   "constant_C_measured": 0.37798,
+   "B_plus_C_abs_dev": 0.00046,
+   "constant_C_abs_dev": 2e-05,
+   "verdict": "CONFIRMED"
+  }
+ },
+ "A2_predicted_letter_distribution": {
+  "note": "how much probability mass each leg puts on each letter, against the gold prior.  TV = total-variation distance to the gold prior; SMALLER means the leg's output distribution matches the benchmark's answer prior more closely.",
+  "gold_prior": {
+   "A": 0.13231,
+   "B": 0.35848,
+   "C": 0.37798,
+   "D": 0.13123
+  },
+  "always_7b": {
+   "A": 0.19958,
+   "B": 0.34768,
+   "C": 0.31986,
+   "D": 0.13287
+  },
+  "always_7b_TV_to_gold_prior": 0.06892,
+  "always_32b_direct": {
+   "A": 0.23252,
+   "B": 0.33108,
+   "C": 0.3096,
+   "D": 0.12677
+  },
+  "always_32b_direct_TV_to_gold_prior": 0.10022,
+  "reading": "the certified veto imports the 7B's answer wherever it fires, so if the 7B's letter distribution were the better-matched one, a naive prior-matching story would predict the veto's gain.  The decisive test is A3, not this table."
+ },
+ "A3_does_the_gain_survive_letter_balancing": {
+  "design": "every accuracy is the HARNESS's own `correct` field.  'natural prior' = the benchmark as shipped (each item weight 1/33430).  'letter-balanced' = each of the 4 gold letters carries weight 1/4, items inside a letter equally -- so an arm that wins only by putting more mask on the over-represented letters cannot profit.  Paired item-level bootstrap, nboot=10000, one shared index stream across every arm.",
+  "arms": {
+   "always_7b": {
+    "arm": "always_7b",
+    "acc": 0.542656,
+    "natural_prior": {
+     "delta": -0.00912,
+     "lo": -0.0143,
+     "hi": -0.00401
+    },
+    "letter_balanced": {
+     "delta": -0.01856,
+     "lo": -0.02449,
+     "hi": -0.01276
+    },
+    "shrinkage_natural_minus_balanced": 0.00944,
+    "per_gold_letter": {
+     "A": {
+      "n": 4423,
+      "acc_arm": 0.42641,
+      "acc_direct": 0.48587,
+      "delta": -0.05946,
+      "lo": -0.07393,
+      "hi": -0.04522,
+      "verdict": "LOSS"
+     },
+     "B": {
+      "n": 11984,
+      "acc_arm": 0.59454,
+      "acc_direct": 0.59479,
+      "delta": -0.00025,
+      "lo": -0.00876,
+      "hi": 0.00851,
+      "verdict": "TIE"
+     },
+     "C": {
+      "n": 12636,
+      "acc_arm": 0.56695,
+      "acc_direct": 0.56394,
+      "delta": 0.00301,
+      "lo": -0.00586,
+      "hi": 0.0114,
+      "verdict": "TIE"
+     },
+     "D": {
+      "n": 4387,
+      "acc_arm": 0.44814,
+      "acc_direct": 0.46569,
+      "delta": -0.01755,
+      "lo": -0.03168,
+      "hi": -0.00342,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "always_32b_reasoning": {
+    "arm": "always_32b_reasoning",
+    "acc": 0.549417,
+    "natural_prior": {
+     "delta": -0.00236,
+     "lo": -0.0047,
+     "hi": -6e-05
+    },
+    "letter_balanced": {
+     "delta": -0.00661,
+     "lo": -0.00932,
+     "hi": -0.00394
+    },
+    "shrinkage_natural_minus_balanced": 0.00425,
+    "per_gold_letter": {
+     "A": {
+      "n": 4423,
+      "acc_arm": 0.46145,
+      "acc_direct": 0.48587,
+      "delta": -0.02442,
+      "lo": -0.03097,
+      "hi": -0.01809,
+      "verdict": "LOSS"
+     },
+     "B": {
+      "n": 11984,
+      "acc_arm": 0.60347,
+      "acc_direct": 0.59479,
+      "delta": 0.00868,
+      "lo": 0.00467,
+      "hi": 0.01277,
+      "verdict": "WIN"
+     },
+     "C": {
+      "n": 12636,
+      "acc_arm": 0.56054,
+      "acc_direct": 0.56394,
+      "delta": -0.0034,
+      "lo": -0.00696,
+      "hi": 0.00024,
+      "verdict": "TIE"
+     },
+     "D": {
+      "n": 4387,
+      "acc_arm": 0.4584,
+      "acc_direct": 0.46569,
+      "delta": -0.00729,
+      "lo": -0.0139,
+      "hi": -0.00091,
+      "verdict": "LOSS"
+     }
+    }
+   },
+   "method_compute_lean": {
+    "arm": "method_compute_lean",
+    "acc": 0.550793,
+    "natural_prior": {
+     "delta": -0.00099,
+     "lo": -0.00577,
+     "hi": 0.00383
+    },
+    "letter_balanced": {
+     "delta": -0.01156,
+     "lo": -0.01713,
+     "hi": -0.00613
+    },
+    "shrinkage_natural_minus_balanced": 0.01057,
+    "per_gold_letter": {
+     "A": {
+      "n": 4423,
+      "acc_arm": 0.42121,
+      "acc_direct": 0.48587,
+      "delta": -0.06466,
+      "lo": -0.07868,
+      "hi": -0.0511,
+      "verdict": "LOSS"
+     },
+     "B": {
+      "n": 11984,
+      "acc_arm": 0.60147,
+      "acc_direct": 0.59479,
+      "delta": 0.00668,
+      "lo": -0.00108,
+      "hi": 0.01477,
+      "verdict": "TIE"
+     },
+     "C": {
+      "n": 12636,
+      "acc_arm": 0.57866,
+      "acc_direct": 0.56394,
+      "delta": 0.01472,
+      "lo": 0.00673,
+      "hi": 0.02327,
+      "verdict": "WIN"
+     },
+     "D": {
+      "n": 4387,
+      "acc_arm": 0.46273,
+      "acc_direct": 0.46569,
+      "delta": -0.00296,
+      "lo": -0.01664,
+      "hi": 0.01094,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_veto": {
+    "arm": "method_accuracy_max_veto",
+    "acc": 0.561322,
+    "natural_prior": {
+     "delta": 0.00954,
+     "lo": 0.00718,
+     "hi": 0.01191
+    },
+    "letter_balanced": {
+     "delta": 0.00534,
+     "lo": 0.00274,
+     "hi": 0.00793
+    },
+    "shrinkage_natural_minus_balanced": 0.00421,
+    "per_gold_letter": {
+     "A": {
+      "n": 4423,
+      "acc_arm": 0.47411,
+      "acc_direct": 0.48587,
+      "delta": -0.01176,
+      "lo": -0.01787,
+      "hi": -0.00543,
+      "verdict": "LOSS"
+     },
+     "B": {
+      "n": 11984,
+      "acc_arm": 0.60965,
+      "acc_direct": 0.59479,
+      "delta": 0.01485,
+      "lo": 0.01085,
+      "hi": 0.01878,
+      "verdict": "WIN"
+     },
+     "C": {
+      "n": 12636,
+      "acc_arm": 0.57764,
+      "acc_direct": 0.56394,
+      "delta": 0.01369,
+      "lo": 0.00958,
+      "hi": 0.01749,
+      "verdict": "WIN"
+     },
+     "D": {
+      "n": 4387,
+      "acc_arm": 0.47025,
+      "acc_direct": 0.46569,
+      "delta": 0.00456,
+      "lo": -0.00137,
+      "hi": 0.01049,
+      "verdict": "TIE"
+     }
+    }
+   },
+   "method_accuracy_max_fusion": {
+    "arm": "method_accuracy_max_fusion",
+    "acc": 0.565271,
+    "natural_prior": {
+     "delta": 0.01349,
+     "lo": 0.00996,
+     "hi": 0.01699
+    },
+    "letter_balanced": {
+     "delta": 0.00532,
+     "lo": 0.00138,
+     "hi": 0.00937
+    },
+    "shrinkage_natural_minus_balanced": 0.00817,
+    "per_gold_letter": {
+     "A": {
+      "n": 4423,
+      "acc_arm": 0.44088,
+      "acc_direct": 0.48587,
+      "delta": -0.04499,
+      "lo": -0.05471,
+      "hi": -0.03527,
+      "verdict": "LOSS"
+     },
+     "B": {
+      "n": 11984,
+      "acc_arm": 0.61674,
+      "acc_direct": 0.59479,
+      "delta": 0.02195,
+      "lo": 0.01619,
+      "hi": 0.0277,
+      "verdict": "WIN"
+     },
+     "C": {
+      "n": 12636,
+      "acc_arm": 0.58729,
+      "acc_direct": 0.56394,
+      "delta": 0.02335,
+      "lo": 0.01788,
+      "hi": 0.02912,
+      "verdict": "WIN"
+     },
+     "D": {
+      "n": 4387,
+      "acc_arm": 0.48667,
+      "acc_direct": 0.46569,
+      "delta": 0.02097,
+      "lo": 0.0114,
+      "hi": 0.03009,
+      "verdict": "WIN"
+     }
+    }
+   }
+  }
+ },
+ "A4_consequence_for_the_gated_win": {
+  "arithmetic": "the gated policy is byte-identical to always-32B-direct on 7 of 8 cells BY CONSTRUCTION, so its 8-cell macro delta is exactly (PMC_VQA delta)/8.  Re-weighting PMC_VQA therefore re-weights the entire claim.",
+  "banked_rows_for_comparison": [
+   {
+    "policy": "MCQ = certified veto (accuracy-max), OPEN = always-32B-direct",
+    "delta": 0.00119,
+    "ci": [
+     0.0009,
+     0.00148
+    ],
+    "flopeq_x": 0.9773
+   },
+   {
+    "policy": "MCQ = fusion (accuracy-max+), OPEN = always-32B-direct",
+    "delta": 0.00169,
+    "ci": [
+     0.00126,
+     0.00212
+    ],
+    "flopeq_x": 1.0274
+   }
+  ],
+  "rows": [
+   {
+    "policy": "MCQ = certified veto (accuracy-max), OPEN = always-32B-direct",
+    "arm": "method_accuracy_max_veto",
+    "macro_delta_natural": 0.00119,
+    "macro_ci_natural": [
+     0.0009,
+     0.00149
+    ],
+    "macro_delta_letter_balanced": 0.00067,
+    "macro_ci_letter_balanced": [
+     0.00034,
+     0.00099
+    ],
+    "survives": true
+   },
+   {
+    "policy": "MCQ = fusion (accuracy-max+), OPEN = always-32B-direct",
+    "arm": "method_accuracy_max_fusion",
+    "macro_delta_natural": 0.00169,
+    "macro_ci_natural": [
+     0.00125,
+     0.00212
+    ],
+    "macro_delta_letter_balanced": 0.00067,
+    "macro_ci_letter_balanced": [
+     0.00017,
+     0.00117
+    ],
+    "survives": true
+   }
+  ],
+  "cross_check": {
+   "note": "the natural-prior macro delta recomputed here must reproduce the banked one",
+   "veto_mine": 0.00119,
+   "veto_banked": 0.00119,
+   "abs_dev": 0.0,
+   "fusion_mine": 0.00169,
+   "fusion_banked": 0.00169,
+   "abs_dev_fusion": 0.0
+  }
+ }
+}

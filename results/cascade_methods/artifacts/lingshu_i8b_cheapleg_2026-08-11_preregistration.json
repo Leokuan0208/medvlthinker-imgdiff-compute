@@ -1,0 +1,61 @@
+{
+  "title": "PRE-REGISTRATION -- Attack A: swap the cascade's cheap leg to Lingshu-I-8B",
+  "written_at": "2026-08-12 (resume of the 2026-08-11 round)",
+  "written_before": "any Lingshu-I-8B accuracy number was computed. The only prior facts known at write time are (a) the model exists in /data/dan/hf_cache/hub with 7.944B parameters and architecture InternVLForConditionalGeneration, (b) it generates sane text on a random-noise smoke image, (c) vLLM 0.9.0.1 CANNOT serve it, (d) the literature's CLAIMED numbers (PathVQA 74.9 / SLAKE 91.6 / VQA-RAD 73.0 / PMC-VQA 55.8 / MedXpert 27.5 / MMMU-Med 49.1).",
+
+  "motivating_literature_claim": {
+    "source_doc": "results/cascade_methods/docs/current/LITERATURE_UPDATE_2026-08-11.md line 704",
+    "claim": "Lingshu-I-8B: MMMU-Med 49.1 | VQA-RAD 73.0 | SLAKE 91.6 | PathVQA 74.9 | PMC-VQA 55.8 | OmniMedVQA 79.7 | MedXpertQA-MM 27.5 | Avg 64.5, vs Lingshu-7B 54.0/67.9/83.1/61.9/56.3/82.9/26.7/61.8",
+    "status_at_write_time": "UNVERIFIED HYPOTHESIS. Model-card numbers, not reproduced here. CRITICAL RULE: a literature claim is a hypothesis, not a fact."
+  },
+
+  "blocking_infrastructure_fact_established_before_results": {
+    "vllm_cannot_serve_it": true,
+    "evidence": "vLLM 0.9.0.1 model registry contains only 'InternVLChatModel' (the OpenGVLab remote-code architecture). Lingshu-I-8B is the HF-native transformers port, architectures=['InternVLForConditionalGeneration'], model_type='internvl'. Attempting LLM(model=...) raises ValueError: `limit_mm_per_prompt` is only supported for multimodal models. Log: logs/i8b_vllm_try.log",
+    "consequence": "MedEvalKit's --use_vllm True path (which produced EVERY published cell in this project) is unavailable for this model. MedEvalKit's HF InternVL wrapper (models/InternVL/InternVL_hf.py) uses AutoModel+trust_remote_code+model.chat(), the OpenGVLab API, which this checkpoint does not implement. MedEvalKit MUST NOT BE MODIFIED (protected dependency).",
+    "chosen_resolution": "Write an OUTSIDE-MedEvalKit driver (src/cascade_methods/i8b_cheapleg_eval.py) that IMPORTS MedEvalKit's dataset classes, prompt builders and cal_metrics VERBATIM and supplies its own HF-transformers model object satisfying MedEvalKit's duck-typed interface (generate_outputs / last_meta). MedEvalKit files are read, never written.",
+    "mandatory_consequence": "Because the serving stack changes (HF instead of vLLM), NO stored number may be used as the control. A MATCHED Lingshu-7B control arm is generated in the SAME driver, same batch size, same dtype, same decoding. All reported deltas are I-8B minus THAT arm."
+  },
+
+  "hypotheses": {
+    "H1_primary": "Lingshu-I-8B greedy accuracy exceeds matched Lingshu-7B on PATH_VQA_closed. Chosen as primary because the literature claims PathVQA +13.0, the largest claimed gain, and PathVQA is the cell family that is load-bearing for this project.",
+    "H2_suite": "Lingshu-I-8B greedy accuracy exceeds matched Lingshu-7B on the macro over the reporting cells it is evaluated on.",
+    "H3_cascade": "Substituting Lingshu-I-8B for Lingshu-7B as the cheap leg raises the 8-cell macro of the cascade against always-32B-direct (bar 0.6567; a significant win needs macro delta ~ +0.0029).",
+    "H4_router_ceiling": "p10 = P(cheap correct AND 32B-direct wrong) rises per cell with a stronger cheap leg, raising the router ceiling the project keeps failing to convert."
+  },
+
+  "null_test_declared_in_advance": {
+    "what": "Run Lingshu-7B through the NEW HF driver and compare per-cell accuracy against the stored MedEvalKit vLLM tp=1 run of the SAME weights on the SAME items (MedEvalKit/eval_results_cheapleg_base7b, produced 2026-08-11 by runners/run_cheapleg_mcq.sh).",
+    "why": "This is the harness-fidelity check. It quantifies how much of any I-8B-vs-7B delta could be a serving-stack artifact rather than a model difference.",
+    "pass_criterion_declared_in_advance": "PASS if max abs per-cell deviation <= 0.02 on the closed/MCQ cells. Between 0.02 and 0.05 = REPORT WITH CAVEAT. > 0.05 = the driver is not faithful and no cross-harness statement may be made (the within-driver I-8B vs 7B contrast would still stand, because both arms are in the same driver).",
+    "reference_values_recorded_now_from_MedEvalKit_eval_results_cheapleg_base7b_metrics_json": {
+      "PMC_VQA": 0.5437032605444212,
+      "MedXpertQA-MM": 0.264,
+      "PATH_VQA_closed": 0.8370017846519928
+    }
+  },
+
+  "protocol": {
+    "prompts": "MedEvalKit utils/question_formats.py verbatim via the dataset classes, REASONING unset (=='False'), i.e. the DIRECT prompt. No system prompt is added by any dataset used here, so both arms are prompt-identical.",
+    "decoding": "greedy, do_sample=False, max_new_tokens=2048, bf16, attn sdpa, seed 42, torch deterministic settings NOT forced (stated, not assumed). Batch size fixed and identical across arms; recorded in the artifact.",
+    "images": "Lingshu-I-8B: its own preprocessor, crop_to_patches=false, 448x448, 256 image tokens/image, no tiling. Lingshu-7B: qwen_vl_utils.process_vision_info at FULL resolution (CAP_MAX_PIXELS unset), matching runners/run_cheapleg_mcq.sh. These are the two models' NATIVE settings; they are NOT pixel-matched, and that is stated as a limitation rather than hidden.",
+    "cells": "The 5 MedEvalKit closed/MCQ reporting cells first (PATH_VQA, SLAKE, VQA_RAD, MedXpertQA-MM, PMC_VQA -- smallest-first so the load-bearing PathVQA signal lands early), then the 3 open cells if time permits.",
+    "resumability": "per-item JSONL, per-item try/except error guard, nohup, never tmux.",
+    "statistics": "paired item bootstrap, nboot=10000, on the item ids common to both arms. Guardrail flag per cell. vqa_rad cells are n=251/200 and are explicitly noted as inside seed/serving noise."
+  },
+
+  "decision_rules_declared_in_advance": {
+    "KILL": "Lingshu-I-8B greedy does not improve on ANY reporting cell under the matched protocol. Report the negative and stop.",
+    "STRONG_PARTIAL": "a significant rise on any cell's greedy accuracy, or on oracle@8 / p10 on any open cell.",
+    "SUCCESS": "8-cell macro delta vs always-32B-direct with a CI excluding zero, guardrail-clean.",
+    "ANTI_FISHING": "The primary cell (PATH_VQA_closed) is named NOW. If PathVQA fails and some other cell wins, that is reported as EXPLORATORY, not as the pre-registered result.",
+    "HONESTY_CLAUSE": "If the driver's null test fails, or if the cells are not comparable, the correct output is a documented negative with a diagnosis. CRITICAL RULE 7 outranks the goal."
+  },
+
+  "known_limitations_declared_in_advance": [
+    "The two models do not share a serving stack with the published numbers (HF, not vLLM). Everything is re-derived inside one driver.",
+    "The two models do not share an image tokenizer or resolution policy. A 'protocol-matched' comparison at the PROMPT level is achievable; at the PIXEL level it is not, because they are different vision towers. This is stated, not papered over.",
+    "Lingshu-I-8B is a DIFFERENT BACKBONE (InternVL3 vision tower + Qwen2 text tower), not a Lingshu-7B variant, despite sharing the Lingshu training pipeline. 'Same family' is weaker than it sounds.",
+    "MMMU-Med is excluded (Variant B), so the literature's -4.9 MMMU regression does not enter the macro. That is the project's standing decision, not a choice made to favour this result."
+  ]
+}

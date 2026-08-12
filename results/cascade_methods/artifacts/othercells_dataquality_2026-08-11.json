@@ -1,0 +1,107 @@
+{
+ "title": "Data-quality quantification for the three cells with published concerns and no CLAUDE.md landmine: SLAKE, PathVQA, VQA-RAD. Zero GPU, everything measured from files on disk.",
+ "date": "2026-08-11",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "reproduce": "OMP_NUM_THREADS=4 python3 src/cascade_methods/othercells_dataquality_audit.py",
+ "disjointness_standard": "md5 of the DECODED RGB pixel buffer (PIL convert('RGB').tobytes()), per the project's standing methodology -- NOT file bytes.",
+ "external_claims_being_checked": {
+  "medgemma": "arXiv:2507.05201: 'we and others have identified potential data quality issues in PathVQA and MedVQA'; VQA-RAD's original splits carry 'train/test image contamination.'",
+  "slake_neighbours": "arXiv:2606.10066: 19.8% of SLAKE images have an extreme same-view near-neighbour in PMC-OA-beta under SigLIP-B-16 (4.2% under SO400M); VQA-RAD clean (<=0.9%). NOT reproducible here (needs PMC-OA-beta + SigLIP); what is measured below is the different, cheaper train<->eval question."
+ },
+ "scope_caveat": "NONE of this is leakage into OUR method: both cascade legs are zero-shot at eval time and never see these train splits. It bounds how much of each cell is answerable from a dataset prior, i.e. how much a per-cell delta can be trusted.",
+ "VQA_RAD": {
+  "source_train": [
+   "/data/dan/dataset/vqa_rad/data/train-00000-of-00001-eb8844602202be60.parquet"
+  ],
+  "source_test": [
+   "/data/dan/dataset/vqa_rad/data/test-00000-of-00001-e5bc3d208bb4deeb.parquet"
+  ],
+  "n_train": 1793,
+  "n_test": 451,
+  "n_unique_train_images_by_decoded_pixel_md5": 313,
+  "n_unique_test_images_by_decoded_pixel_md5": 203,
+  "n_test_items_whose_IMAGE_appears_in_train": 446,
+  "frac_test_items_whose_IMAGE_appears_in_train": 0.9889,
+  "n_test_images_shared_with_train": 202,
+  "frac_test_images_shared_with_train": 0.9951,
+  "frac_test_items_with_exact_QA_pair_in_train": 0.1153,
+  "frac_test_items_with_exact_IMAGE_and_QUESTION_in_train": 0.0,
+  "frac_test_items_with_exact_IMAGE_QUESTION_ANSWER_triple_in_train": 0.0,
+  "n_distinct_test_questions": 430,
+  "frac_test_items_whose_question_repeats_within_test": 0.082,
+  "test_answer_majority_class": "no",
+  "test_answer_majority_floor": 0.2949,
+  "test_answer_top6": {
+   "no": 0.2949,
+   "yes": 0.2616,
+   "axial": 0.0266,
+   "right": 0.0133,
+   "left": 0.0133,
+   "brain": 0.0111
+  }
+ },
+ "PATH_VQA": {
+  "source_train": [
+   "/data/dan/dataset/path_vqa/data/train-00000-of-00007-f2d0e9ef9f022d38.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00001-of-00007-47d8e0220bf6c933.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00002-of-00007-7fb5037c4c5da7be.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00003-of-00007-74b9b7b81cc55f90.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00004-of-00007-77eea90af4a55dce.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00005-of-00007-5332ec423be520bd.parquet",
+   "/data/dan/dataset/path_vqa/data/train-00006-of-00007-637a58c700b604af.parquet"
+  ],
+  "source_test": [
+   "/data/dan/dataset/path_vqa/data/test-00000-of-00003-e9adadb4799f44d3.parquet",
+   "/data/dan/dataset/path_vqa/data/test-00001-of-00003-7ea98873fc919813.parquet",
+   "/data/dan/dataset/path_vqa/data/test-00002-of-00003-1628308435019820.parquet"
+  ],
+  "n_train": 19654,
+  "n_test": 6719,
+  "n_unique_train_images_by_decoded_pixel_md5": 2599,
+  "n_unique_test_images_by_decoded_pixel_md5": 858,
+  "n_test_items_whose_IMAGE_appears_in_train": 0,
+  "frac_test_items_whose_IMAGE_appears_in_train": 0.0,
+  "n_test_images_shared_with_train": 0,
+  "frac_test_images_shared_with_train": 0.0,
+  "frac_test_items_with_exact_QA_pair_in_train": 0.6002,
+  "frac_test_items_with_exact_IMAGE_and_QUESTION_in_train": 0.0,
+  "frac_test_items_with_exact_IMAGE_QUESTION_ANSWER_triple_in_train": 0.0,
+  "n_distinct_test_questions": 2913,
+  "frac_test_items_whose_question_repeats_within_test": 0.6282,
+  "test_answer_majority_class": "yes",
+  "test_answer_majority_floor": 0.2703,
+  "test_answer_top6": {
+   "yes": 0.2703,
+   "no": 0.2301,
+   "cardiovascular": 0.0191,
+   "endocrine": 0.0143,
+   "oral": 0.0132,
+   "hepatobiliary": 0.0129
+  }
+ },
+ "SLAKE": {
+  "source": "/data/dan/dataset/medevalkit/SLAKE/{train,validation,test}.json + imgs/ (en only)",
+  "n_train": 4919,
+  "n_validation": 1053,
+  "n_test": 1061,
+  "n_unique_train_images_by_decoded_pixel_md5": 450,
+  "n_unique_test_images_by_decoded_pixel_md5": 96,
+  "n_test_images_shared_with_train": 0,
+  "frac_test_images_shared_with_train": 0.0,
+  "frac_test_ITEMS_whose_image_appears_in_train": 0.0,
+  "frac_test_items_with_exact_QA_pair_in_train": 0.8822,
+  "frac_test_items_with_exact_IMAGE_and_QUESTION_in_train": 0.0,
+  "n_test_closed": 416,
+  "closed_majority_class": "no",
+  "closed_majority_floor": 0.4327,
+  "closed_answer_top6": {
+   "no": 0.4327,
+   "yes": 0.4207,
+   "lung": 0.0288,
+   "liver": 0.0216,
+   "t2": 0.0168,
+   "heart": 0.012
+  }
+ }
+}

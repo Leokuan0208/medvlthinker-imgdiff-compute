@@ -1,0 +1,2771 @@
+{
+ "_meta": {
+  "title": "Test-time VRAM for the deployed Lingshu cascade legs, measured under HF transformers",
+  "created": "2026-08-11",
+  "why": "VRAM was essentially unmeasured in this project: 160 of 229 method rows in results/cascade_methods/artifacts/method_inventory_2026-08-11.json carry no VRAM, the IEEE paper contains none, and the nine figures that circulate are vLLM memory-pool RESERVATIONS set by a --gpu_mem flag. This artifact is the first per-quantity, per-item measurement of the current-era legs.",
+  "supersedes_nothing": "no existing number is retracted here. The vLLM reservations remain correct AS RESERVATIONS; this artifact says what they are and adds the footprint they were being mistaken for.",
+  "environment": {
+   "date": "2026-08-11",
+   "host": "dual A100 80GB PCIe, driver 550.54.15, CUDA 13.0",
+   "gpu_state_before_run": "both GPUs 13 MiB used, 0% util -- logs/vram_testtime_pre_run_nvidia_smi.txt",
+   "gpu_exclusivity": "one measured process pinned per GPU (CUDA_VISIBLE_DEVICES). Both cards were idle (13 MiB) at launch, but a SECOND TENANT appeared partway through and touched S4 and S5; S1/S2/S3 are clean. (a)/(b)/(c) are torch-internal and unaffected; (d) is corrected per scenario. Full account: conventions.d_process_footprint.a_second_tenant_DID_appear_partway_through and each scenario's contamination_audit.",
+   "framework": "HuggingFace transformers (NEVER vLLM)",
+   "torch": "2.9.0a0+50eac811a6.nv25.09",
+   "transformers": "4.55.2",
+   "peft": "0.14.0",
+   "dtype": "bfloat16",
+   "attn_implementation": "flash_attention_2 (flash_attn 2.7.4.post1)",
+   "tensor_parallel": 1,
+   "batch_size": 1,
+   "code": "src/cascade/measure_testtime_vram.py (+ this aggregator src/cascade/vram_testtime_report.py)",
+   "logs": [
+    "logs/vram_testtime_small_2026-08-11.log",
+    "logs/vram_testtime_big_2026-08-11.log",
+    "logs/vram_testtime_s5rerun_2026-08-11.log"
+   ],
+   "relation_to_existing_code": "the memory instrument of src/cascade/measure_single_leg.py:112-119, generalized to the Lingshu era + LoRA verifier + best-of-8 and extended with peak RESERVED and the whole-process footprint. measure_single_leg.py is untouched (it is the June reproducibility anchor).",
+   "scope": "an ESTIMATION, as asked: 5 scenarios, 12-15 representative items each, ~1 h of GPU time. NOT a sweep. Items were chosen to bracket the driver space (image pixels 7,659 -> 9,107,712; 1 -> 6 images per item; question length 20 -> 1,309 chars), because VRAM peaks are set by the largest image and the longest sequence, not by the mean."
+  }
+ },
+ "conventions": {
+  "units": "ALL VRAM values in this file are GiB = bytes / 1024**3, unless a key literally says _gb. The circulating vLLM numbers (71.45 / 152.82 / 154.08) are DECIMAL GB (bytes/1e9) because src/labeling/nvml_power.py:29 divides by 1e9 -- so they are not even in the same unit as (a)-(d). Both units are given in the reconciliation block.",
+  "a_weights_resident": {
+   "what": "torch.cuda.memory_allocated() immediately after from_pretrained().to('cuda') + synchronize.",
+   "is": "the model parameters, and nothing else. No activations, no KV cache, no CUDA context.",
+   "is_not": "what you provision. It is a floor."
+  },
+  "b_peak_allocated": {
+   "what": "torch.cuda.max_memory_allocated(), torch.cuda.reset_peak_memory_stats() called immediately before EVERY item.",
+   "is": "peak LIVE tensor bytes during the item: weights + activations + KV cache.",
+   "is_not": "what the allocator took from the driver (that is (c))."
+  },
+  "c_peak_reserved": {
+   "what": "torch.cuda.max_memory_reserved(), reset before every item.",
+   "is": "(b) plus caching-allocator fragmentation -- what torch held from the driver.",
+   "note": "torch.cuda.empty_cache() + reset_peak_memory_stats() is called BETWEEN scenarios so a later scenario's (c) is not inflated by an earlier one's high-water mark; each scenario's meta.scenario_reset records the post-release reserved/allocated as proof."
+  },
+  "d_process_footprint": {
+   "what": "whole-process GPU memory, max over a 20 ms NVML sampler running during the item. = (c) + CUDA context + cuBLAS workspaces + everything outside the torch allocator.",
+   "is": "WHAT A DEPLOYER PROVISIONS. This is the number to size a GPU against.",
+   "method_actually_used": "nvml_board_used_minus_prerun_baseline. NVML per-process usedGpuMemory was attempted first but returns 0 in this container: NVML reports HOST pids, which never match os.getpid(). Every row carries d_method, plus the raw d_board_used_gib and d_nvml_per_process_gib, so the substitution is auditable.",
+   "why_the_substitute_is_sound_here": [
+    "both A100s were verified idle at 13 MiB immediately before launch (logs/vram_testtime_pre_run_nvidia_smi.txt)",
+    "exactly ONE of our processes was pinned per GPU via CUDA_VISIBLE_DEVICES",
+    "(d_board_used - c_peak_reserved) is the CUDA-context offset and must be CONSTANT across items; every scenario is tested for that and the result is recorded in its contamination_audit block"
+   ],
+   "a_second_tenant_DID_appear_partway_through": "S1, S2 and S3 are CLEAN (offset constant at 1.3835-1.3855 GiB across every item). S4 and S5 are NOT: a foreign process shared the card for part of those runs (+0.59 GiB on 8 of 12 S4 items, +16.93 GiB on 1 of 15 S5 items), corroborated by nvidia-smi showing 43-48 GB occupied on GPU 0 with none of our processes running. (a), (b) and (c) are torch-internal and are UNAFFECTED. For (d) the contaminated board readings are discarded and the footprint is reconstructed as (c) + the CUDA-context offset from that scenario's own clean items. The reconstruction is validated on S5: it returns 72.696 GiB, which is exactly the board value directly measured on the uncontaminated peak-driving item (MM-1561). Raw board readings are retained in every row so the correction is auditable."
+  },
+  "what_is_NOT_here": "no vLLM number in this file is a measurement OF THIS METHOD. vLLM reserves a memory pool sized by --gpu_mem and reports the POOL. See reconciliation."
+ },
+ "scenarios": {
+  "S2_lingshu32b_direct_mcq": {
+   "meta": {
+    "scenario": "Lingshu-32B direct, batch 1, SAME items and resolution as S1 -- THE STRONG LEG / the paper's bar",
+    "model": "lingshu-medical-mllm/Lingshu-32B",
+    "tp": 1,
+    "batch_size": 1,
+    "adapter": null,
+    "tp_note": "tp=1 on ONE A100 80GB. The repo's own 32B runs used vLLM tp=2 for throughput; tp=1 here answers the deployer's question 'does it fit on one card'.",
+    "max_pixels": 12845056,
+    "min_pixels": 3136,
+    "max_new_tokens": 256,
+    "prompt": "MedEvalKit/utils/question_formats.py get_multiple_choice_prompt(is_reasoning=False), no system prompt",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-32B",
+     "tag": "Lingshu-32B",
+     "load_s": 33.1,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 62.3125,
+     "weights_reserved_after_load_gib": 62.3887,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 63.6785,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 33452718336
+    }
+   },
+   "n": 15,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 63.9561,
+    "peak": 67.868,
+    "min": 62.3595
+   },
+   "c_peak_reserved_gib": {
+    "mean": 64.681,
+    "peak": 71.2188,
+    "min": 62.4395
+   },
+   "d_board_used_gib": {
+    "mean": 66.0645,
+    "peak": 72.6023,
+    "min": 63.823
+   },
+   "input_tokens": {
+    "mean": 3514.3333,
+    "peak": 11931.0,
+    "min": 86.0
+   },
+   "vision_tokens": {
+    "mean": 13302.4,
+    "peak": 46816.0,
+    "min": 32.0
+   },
+   "gen_tokens": {
+    "mean": 3.0,
+    "peak": 3.0,
+    "min": 3.0
+   },
+   "wall_s": {
+    "mean": 1.8789,
+    "peak": 6.012,
+    "min": 0.352
+   },
+   "peak_driver": {
+    "source": "medxpert_mm_test",
+    "idx": "MM-1561",
+    "image_pixels": 9107712,
+    "n_images": 1,
+    "input_tokens": 11931,
+    "vision_tokens": 46816,
+    "gen_tokens": 3,
+    "b_peak_allocated_gib": 67.868
+   },
+   "rows": [
+    {
+     "b_peak_allocated_gib": 62.3595,
+     "c_peak_reserved_gib": 62.4395,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.823,
+     "wall_s": 1.317,
+     "src": "pmc_vqa_test_2",
+     "idx": 58735,
+     "image_pixels": 7659,
+     "n_images": 1,
+     "input_tokens": 86,
+     "vision_tokens": 32,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 63.823
+    },
+    {
+     "b_peak_allocated_gib": 62.3608,
+     "c_peak_reserved_gib": 62.459,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.8425,
+     "wall_s": 0.352,
+     "src": "pmc_vqa_test_2",
+     "idx": 196733,
+     "image_pixels": 9700,
+     "n_images": 1,
+     "input_tokens": 89,
+     "vision_tokens": 48,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 63.8425
+    },
+    {
+     "b_peak_allocated_gib": 62.3724,
+     "c_peak_reserved_gib": 62.4668,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.8503,
+     "wall_s": 0.393,
+     "src": "pmc_vqa_test_2",
+     "idx": 393,
+     "image_pixels": 13000,
+     "n_images": 1,
+     "input_tokens": 114,
+     "vision_tokens": 80,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 63.8503
+    },
+    {
+     "b_peak_allocated_gib": 62.574,
+     "c_peak_reserved_gib": 62.6855,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.0691,
+     "wall_s": 0.542,
+     "src": "pmc_vqa_test_2",
+     "idx": 1158100,
+     "image_pixels": 356384,
+     "n_images": 1,
+     "input_tokens": 540,
+     "vision_tokens": 1800,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.069
+    },
+    {
+     "b_peak_allocated_gib": 62.5864,
+     "c_peak_reserved_gib": 62.7441,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.1277,
+     "wall_s": 0.505,
+     "src": "pmc_vqa_test_2",
+     "idx": 241520,
+     "image_pixels": 384420,
+     "n_images": 1,
+     "input_tokens": 564,
+     "vision_tokens": 1984,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.1276
+    },
+    {
+     "b_peak_allocated_gib": 62.5958,
+     "c_peak_reserved_gib": 62.7754,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.1589,
+     "wall_s": 0.511,
+     "src": "pmc_vqa_test_2",
+     "idx": 866294,
+     "image_pixels": 393646,
+     "n_images": 1,
+     "input_tokens": 583,
+     "vision_tokens": 2024,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.1589
+    },
+    {
+     "b_peak_allocated_gib": 62.8254,
+     "c_peak_reserved_gib": 62.9473,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.3308,
+     "wall_s": 0.696,
+     "src": "pmc_vqa_test_2",
+     "idx": 116750,
+     "image_pixels": 757560,
+     "n_images": 1,
+     "input_tokens": 1077,
+     "vision_tokens": 3968,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.3308
+    },
+    {
+     "b_peak_allocated_gib": 62.7989,
+     "c_peak_reserved_gib": 62.9473,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.3308,
+     "wall_s": 0.716,
+     "src": "medxpert_mm_test",
+     "idx": "MM-490",
+     "image_pixels": 535200,
+     "n_images": 1,
+     "input_tokens": 1034,
+     "vision_tokens": 2752,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.3308
+    },
+    {
+     "b_peak_allocated_gib": 62.8398,
+     "c_peak_reserved_gib": 63.0645,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.448,
+     "wall_s": 0.706,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1446",
+     "image_pixels": 536316,
+     "n_images": 1,
+     "input_tokens": 1124,
+     "vision_tokens": 2808,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.448
+    },
+    {
+     "b_peak_allocated_gib": 62.7381,
+     "c_peak_reserved_gib": 63.0645,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.448,
+     "wall_s": 0.619,
+     "src": "medxpert_mm_test",
+     "idx": "MM-150",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 873,
+     "vision_tokens": 2688,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.448
+    },
+    {
+     "b_peak_allocated_gib": 62.7421,
+     "c_peak_reserved_gib": 63.0645,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.448,
+     "wall_s": 0.586,
+     "src": "medxpert_mm_test",
+     "idx": "MM-206",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 881,
+     "vision_tokens": 2688,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 64.448
+    },
+    {
+     "b_peak_allocated_gib": 67.2949,
+     "c_peak_reserved_gib": 68.5801,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 69.9636,
+     "wall_s": 4.768,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1955",
+     "image_pixels": 8069653,
+     "n_images": 1,
+     "input_tokens": 10713,
+     "vision_tokens": 41128,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 69.9636
+    },
+    {
+     "b_peak_allocated_gib": 67.6934,
+     "c_peak_reserved_gib": 69.8789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 71.2625,
+     "wall_s": 5.171,
+     "src": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11555,
+     "vision_tokens": 45360,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 71.2624
+    },
+    {
+     "b_peak_allocated_gib": 67.6916,
+     "c_peak_reserved_gib": 69.8789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 71.2625,
+     "wall_s": 5.29,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1642",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11551,
+     "vision_tokens": 45360,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 71.2624
+    },
+    {
+     "b_peak_allocated_gib": 67.868,
+     "c_peak_reserved_gib": 71.2188,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 72.6023,
+     "wall_s": 6.012,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1561",
+     "image_pixels": 9107712,
+     "n_images": 1,
+     "input_tokens": 11931,
+     "vision_tokens": 46816,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 72.6023
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_big.json",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3835,
+    "offset_spread_gib": 0.0001,
+    "verdict": "CLEAN -- (d_board - c_peak_reserved) is constant to <=0.01 GiB across every item, which a competing process could not leave intact",
+    "n_items_affected": 0,
+    "affected_item_positions": [],
+    "d_raw_board_peak_gib": 72.6023,
+    "d_clean_peak_gib": 72.6023,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "d_process_footprint_gib": {
+    "mean": 66.0645,
+    "peak": 72.6023,
+    "min": 63.823,
+    "n": 15
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "pmc_vqa_test_2": {
+     "n": 7,
+     "b_peak_allocated_gib": {
+      "mean": 62.5249,
+      "peak": 62.8254,
+      "min": 62.3595,
+      "n": 7
+     },
+     "c_peak_reserved_gib": {
+      "mean": 62.6454,
+      "peak": 62.9473,
+      "min": 62.4395,
+      "n": 7
+     },
+     "d_process_footprint_gib": {
+      "mean": 64.0289,
+      "peak": 64.3308,
+      "min": 63.823,
+      "n": 7
+     },
+     "image_pixels": {
+      "mean": 274624.1429,
+      "peak": 757560.0,
+      "min": 7659.0,
+      "n": 7
+     },
+     "vision_tokens": {
+      "mean": 1419.4286,
+      "peak": 3968.0,
+      "min": 32.0,
+      "n": 7
+     },
+     "input_tokens": {
+      "mean": 436.1429,
+      "peak": 1077.0,
+      "min": 86.0,
+      "n": 7
+     },
+     "gen_tokens": {
+      "mean": 3.0,
+      "peak": 3.0,
+      "min": 3.0,
+      "n": 7
+     }
+    },
+    "medxpert_mm_test": {
+     "n": 8,
+     "b_peak_allocated_gib": {
+      "mean": 65.2083,
+      "peak": 67.868,
+      "min": 62.7381,
+      "n": 8
+     },
+     "c_peak_reserved_gib": {
+      "mean": 66.4622,
+      "peak": 71.2188,
+      "min": 62.9473,
+      "n": 8
+     },
+     "d_process_footprint_gib": {
+      "mean": 67.8457,
+      "peak": 72.6023,
+      "min": 64.3308,
+      "n": 8
+     },
+     "image_pixels": {
+      "mean": 4607610.125,
+      "peak": 9107712.0,
+      "min": 535200.0,
+      "n": 8
+     },
+     "vision_tokens": {
+      "mean": 23700.0,
+      "peak": 46816.0,
+      "min": 2688.0,
+      "n": 8
+     },
+     "input_tokens": {
+      "mean": 6207.75,
+      "peak": 11931.0,
+      "min": 873.0,
+      "n": 8
+     },
+     "gen_tokens": {
+      "mean": 3.0,
+      "peak": 3.0,
+      "min": 3.0,
+      "n": 8
+     }
+    }
+   }
+  },
+  "S5_lingshu32b_genuine_reasoning": {
+   "meta": {
+    "scenario": "Lingshu-32B with GENUINE reasoning, batch 1 -- long generations, the KV-cache stress case",
+    "model": "lingshu-medical-mllm/Lingshu-32B",
+    "tp": 1,
+    "batch_size": 1,
+    "adapter": null,
+    "system_prompt_source": "runners/run_lingshu_32b_phase2.sh:6 ($TS) -- the prompt behind ckpts/acc_gen/lingshu32b/think_fullres",
+    "system_prompt": "You are an expert medical AI. Reason step by step about the image and the question, then end your response with a line 'Answer: X' where X is the correct option letter.",
+    "max_new_tokens": 1536,
+    "max_pixels": 12845056,
+    "min_pixels": 3136,
+    "resolution_note": "held at S2's resolution policy ON PURPOSE so the S5-S2 delta isolates KV growth from generated length. The repo's own think_fullres arm ran at a LOWER cap (1,003,520 px), so this measurement upper-bounds it on the vision side.",
+    "token_audit": {
+     "mean_gen_tokens": 259.1,
+     "min_gen_tokens": 155,
+     "max_gen_tokens": 348,
+     "reference_arm": "ckpts/acc_gen/lingshu32b/think_fullres reports 150-259 generated tokens",
+     "verdict": "GENUINE REASONING (mean gen_tokens >> 3)"
+    },
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-32B",
+     "tag": "Lingshu-32B",
+     "load_s": 25.4,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 62.3125,
+     "weights_reserved_after_load_gib": 62.3887,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 63.6785,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 33452718336
+    },
+    "scenario_reset": {
+     "reserved_after_empty_cache_gib": 62.3887,
+     "allocated_after_empty_cache_gib": 62.3125,
+     "nvml_process_after_empty_cache_gib": 0.0
+    }
+   },
+   "n": 15,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 63.9697,
+    "peak": 67.8736,
+    "min": 62.3854
+   },
+   "c_peak_reserved_gib": {
+    "mean": 64.7721,
+    "peak": 71.3125,
+    "min": 62.4961
+   },
+   "d_board_used_gib": {
+    "mean": 67.1924,
+    "peak": 79.9749,
+    "min": 63.8796
+   },
+   "input_tokens": {
+    "mean": 3527.3333,
+    "peak": 11944.0,
+    "min": 99.0
+   },
+   "vision_tokens": {
+    "mean": 13302.4,
+    "peak": 46816.0,
+    "min": 32.0
+   },
+   "gen_tokens": {
+    "mean": 259.1333,
+    "peak": 348.0,
+    "min": 155.0
+   },
+   "wall_s": {
+    "mean": 34.2823,
+    "peak": 53.353,
+    "min": 17.573
+   },
+   "peak_driver": {
+    "source": "medxpert_mm_test",
+    "idx": "MM-1561",
+    "image_pixels": 9107712,
+    "n_images": 1,
+    "input_tokens": 11944,
+    "vision_tokens": 46816,
+    "gen_tokens": 255,
+    "b_peak_allocated_gib": 67.8736
+   },
+   "rows": [
+    {
+     "b_peak_allocated_gib": 62.3854,
+     "c_peak_reserved_gib": 62.4961,
+     "d_process_footprint_gib": 63.0046,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 63.8796,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 18.273,
+     "src": "pmc_vqa_test_2",
+     "idx": 58735,
+     "image_pixels": 7659,
+     "n_images": 1,
+     "input_tokens": 99,
+     "vision_tokens": 32,
+     "gen_tokens": 155,
+     "text_head": "To determine which diagnostic tests were used to assess the cervical canal, we need to analyze the provided medical image. The image shows a lateral view of the cervical spine, whi",
+     "d_process_footprint_clean_gib": 63.8796
+    },
+    {
+     "b_peak_allocated_gib": 62.3993,
+     "c_peak_reserved_gib": 62.5195,
+     "d_process_footprint_gib": 63.0281,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 63.9031,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 23.313,
+     "src": "pmc_vqa_test_2",
+     "idx": 196733,
+     "image_pixels": 9700,
+     "n_images": 1,
+     "input_tokens": 102,
+     "vision_tokens": 48,
+     "gen_tokens": 209,
+     "text_head": "To determine the purpose of the red dots in the image, we need to analyze the visual cues provided. The image shows cells with distinct blue and red staining. Typically, blue stain",
+     "d_process_footprint_clean_gib": 63.903
+    },
+    {
+     "b_peak_allocated_gib": 62.429,
+     "c_peak_reserved_gib": 62.5605,
+     "d_process_footprint_gib": 63.0691,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 63.9441,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 33.283,
+     "src": "pmc_vqa_test_2",
+     "idx": 393,
+     "image_pixels": 13000,
+     "n_images": 1,
+     "input_tokens": 127,
+     "vision_tokens": 80,
+     "gen_tokens": 305,
+     "text_head": "To determine what (B') shows, we need to analyze the image and the provided options. The image appears to be a microscopic view of a biological sample, possibly related to plant ti",
+     "d_process_footprint_clean_gib": 63.944
+    },
+    {
+     "b_peak_allocated_gib": 62.5834,
+     "c_peak_reserved_gib": 62.7793,
+     "d_process_footprint_gib": 63.2878,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.1628,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 37.667,
+     "src": "pmc_vqa_test_2",
+     "idx": 1158100,
+     "image_pixels": 356384,
+     "n_images": 1,
+     "input_tokens": 554,
+     "vision_tokens": 1800,
+     "gen_tokens": 344,
+     "text_head": "To determine what the black arrow is indicating in the image, we need to carefully analyze the anatomical structures visible. The image appears to be from a surgical procedure invo",
+     "d_process_footprint_clean_gib": 64.1628
+    },
+    {
+     "b_peak_allocated_gib": 62.5943,
+     "c_peak_reserved_gib": 62.8691,
+     "d_process_footprint_gib": 63.3777,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.2527,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 17.573,
+     "src": "pmc_vqa_test_2",
+     "idx": 241520,
+     "image_pixels": 384420,
+     "n_images": 1,
+     "input_tokens": 577,
+     "vision_tokens": 1984,
+     "gen_tokens": 158,
+     "text_head": "To determine the position in which the ultrasound was taken, we need to analyze the visual cues present in the image. The image shows a label 'REPOUSO' in green text, which transla",
+     "d_process_footprint_clean_gib": 64.2526
+    },
+    {
+     "b_peak_allocated_gib": 62.6022,
+     "c_peak_reserved_gib": 62.8691,
+     "d_process_footprint_gib": 63.3777,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.2527,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 27.144,
+     "src": "pmc_vqa_test_2",
+     "idx": 866294,
+     "image_pixels": 393646,
+     "n_images": 1,
+     "input_tokens": 596,
+     "vision_tokens": 2024,
+     "gen_tokens": 200,
+     "text_head": "To determine which part of the ethmoid bone is shown in the image, we need to identify the anatomical structures visible. The ethmoid bone is located between the eyes and forms par",
+     "d_process_footprint_clean_gib": 64.2526
+    },
+    {
+     "b_peak_allocated_gib": 62.8329,
+     "c_peak_reserved_gib": 63.041,
+     "d_process_footprint_gib": 79.0999,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 79.9749,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 29.414,
+     "src": "pmc_vqa_test_2",
+     "idx": 116750,
+     "image_pixels": 757560,
+     "n_images": 1,
+     "input_tokens": 1089,
+     "vision_tokens": 3968,
+     "gen_tokens": 227,
+     "text_head": "To determine what the preoperative CT scan shows, we need to analyze the image provided. The image appears to be an intraoperative view rather than a CT scan, as it shows labeled a",
+     "d_process_footprint_clean_gib": 64.4245
+    },
+    {
+     "b_peak_allocated_gib": 62.8046,
+     "c_peak_reserved_gib": 63.041,
+     "d_process_footprint_gib": 63.5496,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.4246,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 43.038,
+     "src": "medxpert_mm_test",
+     "idx": "MM-490",
+     "image_pixels": 535200,
+     "n_images": 1,
+     "input_tokens": 1047,
+     "vision_tokens": 2752,
+     "gen_tokens": 332,
+     "text_head": "To determine the affected myocardial region and corresponding coronary artery from the ECG, we need to analyze the specific changes in the ECG leads. The patient's symptoms and med",
+     "d_process_footprint_clean_gib": 64.4245
+    },
+    {
+     "b_peak_allocated_gib": 62.8433,
+     "c_peak_reserved_gib": 63.1582,
+     "d_process_footprint_gib": 63.6667,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.5417,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 36.958,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1446",
+     "image_pixels": 536316,
+     "n_images": 1,
+     "input_tokens": 1137,
+     "vision_tokens": 2808,
+     "gen_tokens": 245,
+     "text_head": "The image depicts a hand with nodules along a surgical scar, consistent with the clinical scenario described. The presence of hard yellow particles in the biopsy, which stain posit",
+     "d_process_footprint_clean_gib": 64.5417
+    },
+    {
+     "b_peak_allocated_gib": 62.7481,
+     "c_peak_reserved_gib": 63.1582,
+     "d_process_footprint_gib": 63.6667,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.5417,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 53.353,
+     "src": "medxpert_mm_test",
+     "idx": "MM-150",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 886,
+     "vision_tokens": 2688,
+     "gen_tokens": 348,
+     "text_head": "To determine the new resultant hip joint force (J) after medializing the acetabular component, we need to analyze the changes in the distances and forces involved. In Figure A, the",
+     "d_process_footprint_clean_gib": 64.5417
+    },
+    {
+     "b_peak_allocated_gib": 62.7494,
+     "c_peak_reserved_gib": 63.1582,
+     "d_process_footprint_gib": 63.6667,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 64.5417,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 38.266,
+     "src": "medxpert_mm_test",
+     "idx": "MM-206",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 894,
+     "vision_tokens": 2688,
+     "gen_tokens": 294,
+     "text_head": "To determine the most appropriate treatment for the ring finger condition, we need to analyze the images and understand the underlying pathology. The patient has chronic rheumatoid",
+     "d_process_footprint_clean_gib": 64.5417
+    },
+    {
+     "b_peak_allocated_gib": 67.3014,
+     "c_peak_reserved_gib": 68.6738,
+     "d_process_footprint_gib": 69.1824,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 70.0574,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 45.489,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1955",
+     "image_pixels": 8069653,
+     "n_images": 1,
+     "input_tokens": 10726,
+     "vision_tokens": 41128,
+     "gen_tokens": 322,
+     "text_head": "To determine the most effective intervention for reducing mortality in this patient, we need to analyze the clinical presentation and the chest X-ray findings. The patient has a lo",
+     "d_process_footprint_clean_gib": 70.0573
+    },
+    {
+     "b_peak_allocated_gib": 67.6999,
+     "c_peak_reserved_gib": 69.9727,
+     "d_process_footprint_gib": 70.4812,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 71.3562,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 40.651,
+     "src": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11568,
+     "vision_tokens": 45360,
+     "gen_tokens": 286,
+     "text_head": "To determine which cell type is most likely responsible for orchestrating the immune response leading to chronic inflammation, we need to consider the roles of different immune cel",
+     "d_process_footprint_clean_gib": 71.3562
+    },
+    {
+     "b_peak_allocated_gib": 67.6982,
+     "c_peak_reserved_gib": 69.9727,
+     "d_process_footprint_gib": 70.4812,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 71.3562,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 35.744,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1642",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11564,
+     "vision_tokens": 45360,
+     "gen_tokens": 207,
+     "text_head": "To determine the most suitable surgical intervention for the patient's condition, we need to analyze the provided images and correlate them with the clinical scenario. The patient ",
+     "d_process_footprint_clean_gib": 71.3562
+    },
+    {
+     "b_peak_allocated_gib": 67.8736,
+     "c_peak_reserved_gib": 71.3125,
+     "d_process_footprint_gib": 71.821,
+     "d_method": "nvml_board_used_minus_prerun_baseline",
+     "d_board_used_gib": 72.696,
+     "d_nvml_per_process_gib": 0.0,
+     "wall_s": 34.068,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1561",
+     "image_pixels": 9107712,
+     "n_images": 1,
+     "input_tokens": 11944,
+     "vision_tokens": 46816,
+     "gen_tokens": 255,
+     "text_head": "To determine the anatomical source of an arrhythmia, it is crucial to analyze specific features on the electrocardiogram (ECG). The P wave represents atrial depolarization, and its",
+     "d_process_footprint_clean_gib": 72.696
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_big_reason.json",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3835,
+    "offset_spread_gib": 15.5504,
+    "verdict": "FOREIGN MEMORY DETECTED on 1 of 15 items (first: item 7), up to +15.5504 GiB above the 1.3835 GiB CUDA-context offset that every other item shows. A second tenant shared this GPU during the run (independently corroborated by nvidia-smi: foreign residue was observed on GPU 0 after our processes exited, and GPU occupancy rose to 43-48 GB with none of our processes running). (b) and (c) are torch-internal and therefore UNAFFECTED; only the raw board reading is. d_clean_peak_gib is the corrected figure and is the one quoted in deployer_guidance.",
+    "n_items_affected": 1,
+    "affected_item_positions": [
+     7
+    ],
+    "d_raw_board_peak_gib": 79.9749,
+    "d_clean_peak_gib": 72.696,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 66.3174,
+    "peak": 79.0999,
+    "min": 63.0046
+   },
+   "d_process_footprint_gib": {
+    "mean": 66.1556,
+    "peak": 72.696,
+    "min": 63.8796,
+    "n": 15
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "pmc_vqa_test_2": {
+     "n": 7,
+     "b_peak_allocated_gib": {
+      "mean": 62.5466,
+      "peak": 62.8329,
+      "min": 62.3854,
+      "n": 7
+     },
+     "c_peak_reserved_gib": {
+      "mean": 62.7335,
+      "peak": 63.041,
+      "min": 62.4961,
+      "n": 7
+     },
+     "d_process_footprint_gib": {
+      "mean": 64.117,
+      "peak": 64.4245,
+      "min": 63.8796,
+      "n": 7
+     },
+     "image_pixels": {
+      "mean": 274624.1429,
+      "peak": 757560.0,
+      "min": 7659.0,
+      "n": 7
+     },
+     "vision_tokens": {
+      "mean": 1419.4286,
+      "peak": 3968.0,
+      "min": 32.0,
+      "n": 7
+     },
+     "input_tokens": {
+      "mean": 449.1429,
+      "peak": 1089.0,
+      "min": 99.0,
+      "n": 7
+     },
+     "gen_tokens": {
+      "mean": 228.2857,
+      "peak": 344.0,
+      "min": 155.0,
+      "n": 7
+     }
+    },
+    "medxpert_mm_test": {
+     "n": 8,
+     "b_peak_allocated_gib": {
+      "mean": 65.2148,
+      "peak": 67.8736,
+      "min": 62.7481,
+      "n": 8
+     },
+     "c_peak_reserved_gib": {
+      "mean": 66.5559,
+      "peak": 71.3125,
+      "min": 63.041,
+      "n": 8
+     },
+     "d_process_footprint_gib": {
+      "mean": 67.9394,
+      "peak": 72.696,
+      "min": 64.4245,
+      "n": 8
+     },
+     "image_pixels": {
+      "mean": 4607610.125,
+      "peak": 9107712.0,
+      "min": 535200.0,
+      "n": 8
+     },
+     "vision_tokens": {
+      "mean": 23700.0,
+      "peak": 46816.0,
+      "min": 2688.0,
+      "n": 8
+     },
+     "input_tokens": {
+      "mean": 6220.75,
+      "peak": 11944.0,
+      "min": 886.0,
+      "n": 8
+     },
+     "gen_tokens": {
+      "mean": 286.125,
+      "peak": 348.0,
+      "min": 207.0,
+      "n": 8
+     }
+    }
+   }
+  },
+  "S5_lingshu32b_genuine_reasoning_ABORTED_prompt_conflict": {
+   "meta": {
+    "scenario": "Lingshu-32B with GENUINE reasoning, batch 1 -- long generations, the KV-cache stress case",
+    "model": "lingshu-medical-mllm/Lingshu-32B",
+    "tp": 1,
+    "batch_size": 1,
+    "adapter": null,
+    "system_prompt_source": "runners/run_lingshu_32b_phase2.sh:6 ($TS) -- the prompt behind ckpts/acc_gen/lingshu32b/think_fullres",
+    "system_prompt": "You are an expert medical AI. Reason step by step about the image and the question, then end your response with a line 'Answer: X' where X is the correct option letter.",
+    "max_new_tokens": 1536,
+    "max_pixels": 12845056,
+    "min_pixels": 3136,
+    "resolution_note": "held at S2's resolution policy ON PURPOSE so the S5-S2 delta isolates KV growth from generated length. The repo's own think_fullres arm ran at a LOWER cap (1,003,520 px), so this measurement upper-bounds it on the vision side.",
+    "token_audit": {
+     "mean_gen_tokens": 2.6,
+     "min_gen_tokens": 2,
+     "max_gen_tokens": 3,
+     "reference_arm": "ckpts/acc_gen/lingshu32b/think_fullres reports 150-259 generated tokens",
+     "verdict": "NOT A REASONING ARM -- mean gen_tokens too low; DO NOT LABEL AS REASONING"
+    },
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-32B",
+     "tag": "Lingshu-32B",
+     "load_s": 33.1,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 62.3125,
+     "weights_reserved_after_load_gib": 62.3887,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 63.6785,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 33452718336
+    },
+    "scenario_reset": {
+     "reserved_after_empty_cache_gib": 62.4102,
+     "allocated_after_empty_cache_gib": 62.3215,
+     "nvml_process_after_empty_cache_gib": 0.0
+    }
+   },
+   "n": 10,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 62.6223,
+    "peak": 62.8518,
+    "min": 62.3738
+   },
+   "c_peak_reserved_gib": {
+    "mean": 62.7863,
+    "peak": 63.1191,
+    "min": 62.4668
+   },
+   "d_board_used_gib": {
+    "mean": 64.1699,
+    "peak": 64.5027,
+    "min": 63.8503
+   },
+   "input_tokens": {
+    "mean": 640.4,
+    "peak": 1156.0,
+    "min": 118.0
+   },
+   "vision_tokens": {
+    "mean": 1818.4,
+    "peak": 3968.0,
+    "min": 32.0
+   },
+   "gen_tokens": {
+    "mean": 2.6,
+    "peak": 3.0,
+    "min": 2.0
+   },
+   "wall_s": {
+    "mean": 0.6708,
+    "peak": 0.9,
+    "min": 0.474
+   },
+   "peak_driver": {
+    "source": "medxpert_mm_test",
+    "idx": "MM-1446",
+    "image_pixels": 536316,
+    "n_images": 1,
+    "input_tokens": 1156,
+    "vision_tokens": 2808,
+    "gen_tokens": 3,
+    "b_peak_allocated_gib": 62.8518
+   },
+   "rows": [
+    {
+     "b_peak_allocated_gib": 62.3738,
+     "c_peak_reserved_gib": 62.4668,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.8503,
+     "wall_s": 0.685,
+     "src": "pmc_vqa_test_2",
+     "idx": 58735,
+     "image_pixels": 7659,
+     "n_images": 1,
+     "input_tokens": 118,
+     "vision_tokens": 32,
+     "gen_tokens": 3,
+     "text_head": "B:",
+     "d_process_footprint_clean_gib": 63.8503
+    },
+    {
+     "b_peak_allocated_gib": 62.3752,
+     "c_peak_reserved_gib": 62.4668,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.8503,
+     "wall_s": 0.474,
+     "src": "pmc_vqa_test_2",
+     "idx": 196733,
+     "image_pixels": 9700,
+     "n_images": 1,
+     "input_tokens": 121,
+     "vision_tokens": 48,
+     "gen_tokens": 2,
+     "text_head": "B",
+     "d_process_footprint_clean_gib": 63.8503
+    },
+    {
+     "b_peak_allocated_gib": 62.3884,
+     "c_peak_reserved_gib": 62.4746,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 63.8582,
+     "wall_s": 0.524,
+     "src": "pmc_vqa_test_2",
+     "idx": 393,
+     "image_pixels": 13000,
+     "n_images": 1,
+     "input_tokens": 146,
+     "vision_tokens": 80,
+     "gen_tokens": 2,
+     "text_head": "C",
+     "d_process_footprint_clean_gib": 63.8581
+    },
+    {
+     "b_peak_allocated_gib": 62.587,
+     "c_peak_reserved_gib": 62.7305,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.114,
+     "wall_s": 0.899,
+     "src": "pmc_vqa_test_2",
+     "idx": 1158100,
+     "image_pixels": 356384,
+     "n_images": 1,
+     "input_tokens": 572,
+     "vision_tokens": 1800,
+     "gen_tokens": 3,
+     "text_head": "C:",
+     "d_process_footprint_clean_gib": 64.114
+    },
+    {
+     "b_peak_allocated_gib": 62.6015,
+     "c_peak_reserved_gib": 62.7891,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.1726,
+     "wall_s": 0.628,
+     "src": "pmc_vqa_test_2",
+     "idx": 241520,
+     "image_pixels": 384420,
+     "n_images": 1,
+     "input_tokens": 596,
+     "vision_tokens": 1984,
+     "gen_tokens": 3,
+     "text_head": "C.",
+     "d_process_footprint_clean_gib": 64.1726
+    },
+    {
+     "b_peak_allocated_gib": 62.6404,
+     "c_peak_reserved_gib": 62.8223,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.2058,
+     "wall_s": 0.539,
+     "src": "pmc_vqa_test_2",
+     "idx": 866294,
+     "image_pixels": 393646,
+     "n_images": 1,
+     "input_tokens": 615,
+     "vision_tokens": 2024,
+     "gen_tokens": 3,
+     "text_head": "C:",
+     "d_process_footprint_clean_gib": 64.2058
+    },
+    {
+     "b_peak_allocated_gib": 62.8377,
+     "c_peak_reserved_gib": 62.9375,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.321,
+     "wall_s": 0.9,
+     "src": "pmc_vqa_test_2",
+     "idx": 116750,
+     "image_pixels": 757560,
+     "n_images": 1,
+     "input_tokens": 1109,
+     "vision_tokens": 3968,
+     "gen_tokens": 3,
+     "text_head": "D.",
+     "d_process_footprint_clean_gib": 64.321
+    },
+    {
+     "b_peak_allocated_gib": 62.8154,
+     "c_peak_reserved_gib": 62.9375,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.321,
+     "wall_s": 0.652,
+     "src": "medxpert_mm_test",
+     "idx": "MM-490",
+     "image_pixels": 535200,
+     "n_images": 1,
+     "input_tokens": 1066,
+     "vision_tokens": 2752,
+     "gen_tokens": 2,
+     "text_head": "E",
+     "d_process_footprint_clean_gib": 64.321
+    },
+    {
+     "b_peak_allocated_gib": 62.8518,
+     "c_peak_reserved_gib": 63.1191,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.5027,
+     "wall_s": 0.898,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1446",
+     "image_pixels": 536316,
+     "n_images": 1,
+     "input_tokens": 1156,
+     "vision_tokens": 2808,
+     "gen_tokens": 3,
+     "text_head": "B.",
+     "d_process_footprint_clean_gib": 64.5026
+    },
+    {
+     "b_peak_allocated_gib": 62.7519,
+     "c_peak_reserved_gib": 63.1191,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 64.5027,
+     "wall_s": 0.509,
+     "src": "medxpert_mm_test",
+     "idx": "MM-150",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 905,
+     "vision_tokens": 2688,
+     "gen_tokens": 2,
+     "text_head": "A",
+     "d_process_footprint_clean_gib": 64.5026
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_big.json",
+   "_status": "SUPERSEDED / ABORTED -- retained deliberately as the record of a failed token audit; see its meta.token_audit.verdict. DO NOT QUOTE.",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3835,
+    "offset_spread_gib": 0.0001,
+    "verdict": "CLEAN -- (d_board - c_peak_reserved) is constant to <=0.01 GiB across every item, which a competing process could not leave intact",
+    "n_items_affected": 0,
+    "affected_item_positions": [],
+    "d_raw_board_peak_gib": 64.5027,
+    "d_clean_peak_gib": 64.5026,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "d_process_footprint_gib": {
+    "mean": 64.1698,
+    "peak": 64.5026,
+    "min": 63.8503,
+    "n": 10
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "pmc_vqa_test_2": {
+     "n": 7,
+     "b_peak_allocated_gib": {
+      "mean": 62.5434,
+      "peak": 62.8377,
+      "min": 62.3738,
+      "n": 7
+     },
+     "c_peak_reserved_gib": {
+      "mean": 62.6697,
+      "peak": 62.9375,
+      "min": 62.4668,
+      "n": 7
+     },
+     "d_process_footprint_gib": {
+      "mean": 64.0532,
+      "peak": 64.321,
+      "min": 63.8503,
+      "n": 7
+     },
+     "image_pixels": {
+      "mean": 274624.1429,
+      "peak": 757560.0,
+      "min": 7659.0,
+      "n": 7
+     },
+     "vision_tokens": {
+      "mean": 1419.4286,
+      "peak": 3968.0,
+      "min": 32.0,
+      "n": 7
+     },
+     "input_tokens": {
+      "mean": 468.1429,
+      "peak": 1109.0,
+      "min": 118.0,
+      "n": 7
+     },
+     "gen_tokens": {
+      "mean": 2.7143,
+      "peak": 3.0,
+      "min": 2.0,
+      "n": 7
+     }
+    },
+    "medxpert_mm_test": {
+     "n": 3,
+     "b_peak_allocated_gib": {
+      "mean": 62.8064,
+      "peak": 62.8518,
+      "min": 62.7519,
+      "n": 3
+     },
+     "c_peak_reserved_gib": {
+      "mean": 63.0586,
+      "peak": 63.1191,
+      "min": 62.9375,
+      "n": 3
+     },
+     "d_process_footprint_gib": {
+      "mean": 64.4421,
+      "peak": 64.5026,
+      "min": 64.321,
+      "n": 3
+     },
+     "image_pixels": {
+      "mean": 537172.0,
+      "peak": 540000.0,
+      "min": 535200.0,
+      "n": 3
+     },
+     "vision_tokens": {
+      "mean": 2749.3333,
+      "peak": 2808.0,
+      "min": 2688.0,
+      "n": 3
+     },
+     "input_tokens": {
+      "mean": 1042.3333,
+      "peak": 1156.0,
+      "min": 905.0,
+      "n": 3
+     },
+     "gen_tokens": {
+      "mean": 2.3333,
+      "peak": 3.0,
+      "min": 2.0,
+      "n": 3
+     }
+    }
+   }
+  },
+  "S1_lingshu7b_direct_mcq": {
+   "meta": {
+    "scenario": "Lingshu-7B direct, batch 1, MedEvalKit (harness A) resolution policy -- THE CHEAP LEG",
+    "model": "lingshu-medical-mllm/Lingshu-7B",
+    "tp": 1,
+    "batch_size": 1,
+    "adapter": null,
+    "max_pixels": 12845056,
+    "min_pixels": 3136,
+    "resolution_note": "CAP_MAX_PIXELS unset at eval => qwen_vl_utils defaults; verified 12,845,056",
+    "max_new_tokens": 256,
+    "max_new_tokens_note": "deployed MedEvalKit cap is 8192 (MedEvalKit/eval.sh:23); capped at 256 here for runtime. Under HF the KV cache is allocated per GENERATED token, not per cap, so the cap is not binding on VRAM as long as observed gen_tokens stays well below it -- see gen_tokens.",
+    "prompt": "MedEvalKit/utils/question_formats.py get_multiple_choice_prompt(is_reasoning=False), no system prompt",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B",
+     "load_s": 7.6,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 15.4937,
+     "weights_reserved_after_load_gib": 15.6875,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 16.9773,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 8292166656
+    }
+   },
+   "n": 15,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 16.2473,
+    "peak": 18.0232,
+    "min": 15.5191
+   },
+   "c_peak_reserved_gib": {
+    "mean": 17.3037,
+    "peak": 22.0371,
+    "min": 15.7188
+   },
+   "d_board_used_gib": {
+    "mean": 18.6872,
+    "peak": 23.4207,
+    "min": 17.1023
+   },
+   "input_tokens": {
+    "mean": 3514.3333,
+    "peak": 11931.0,
+    "min": 86.0
+   },
+   "vision_tokens": {
+    "mean": 13302.4,
+    "peak": 46816.0,
+    "min": 32.0
+   },
+   "gen_tokens": {
+    "mean": 3.0667,
+    "peak": 5.0,
+    "min": 2.0
+   },
+   "wall_s": {
+    "mean": 0.7512,
+    "peak": 2.139,
+    "min": 0.214
+   },
+   "peak_driver": {
+    "source": "medxpert_mm_test",
+    "idx": "MM-1561",
+    "image_pixels": 9107712,
+    "n_images": 1,
+    "input_tokens": 11931,
+    "vision_tokens": 46816,
+    "gen_tokens": 3,
+    "b_peak_allocated_gib": 18.0232
+   },
+   "rows": [
+    {
+     "b_peak_allocated_gib": 15.5191,
+     "c_peak_reserved_gib": 15.7188,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.1023,
+     "wall_s": 1.136,
+     "src": "pmc_vqa_test_2",
+     "idx": 58735,
+     "image_pixels": 7659,
+     "n_images": 1,
+     "input_tokens": 86,
+     "vision_tokens": 32,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.1023
+    },
+    {
+     "b_peak_allocated_gib": 15.5197,
+     "c_peak_reserved_gib": 15.7188,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.1023,
+     "wall_s": 0.219,
+     "src": "pmc_vqa_test_2",
+     "idx": 196733,
+     "image_pixels": 9700,
+     "n_images": 1,
+     "input_tokens": 89,
+     "vision_tokens": 48,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.1023
+    },
+    {
+     "b_peak_allocated_gib": 15.5252,
+     "c_peak_reserved_gib": 15.7227,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.1062,
+     "wall_s": 0.214,
+     "src": "pmc_vqa_test_2",
+     "idx": 393,
+     "image_pixels": 13000,
+     "n_images": 1,
+     "input_tokens": 114,
+     "vision_tokens": 80,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.1062
+    },
+    {
+     "b_peak_allocated_gib": 15.6172,
+     "c_peak_reserved_gib": 15.8887,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.2722,
+     "wall_s": 0.284,
+     "src": "pmc_vqa_test_2",
+     "idx": 1158100,
+     "image_pixels": 356384,
+     "n_images": 1,
+     "input_tokens": 540,
+     "vision_tokens": 1800,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.2722
+    },
+    {
+     "b_peak_allocated_gib": 15.6203,
+     "c_peak_reserved_gib": 15.9316,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.3152,
+     "wall_s": 0.226,
+     "src": "pmc_vqa_test_2",
+     "idx": 241520,
+     "image_pixels": 384420,
+     "n_images": 1,
+     "input_tokens": 564,
+     "vision_tokens": 1984,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.3151
+    },
+    {
+     "b_peak_allocated_gib": 15.6259,
+     "c_peak_reserved_gib": 15.9531,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.3367,
+     "wall_s": 0.218,
+     "src": "pmc_vqa_test_2",
+     "idx": 866294,
+     "image_pixels": 393646,
+     "n_images": 1,
+     "input_tokens": 583,
+     "vision_tokens": 2024,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.3366
+    },
+    {
+     "b_peak_allocated_gib": 15.7523,
+     "c_peak_reserved_gib": 16.0781,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.4617,
+     "wall_s": 0.291,
+     "src": "pmc_vqa_test_2",
+     "idx": 116750,
+     "image_pixels": 757560,
+     "n_images": 1,
+     "input_tokens": 1077,
+     "vision_tokens": 3968,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.4616
+    },
+    {
+     "b_peak_allocated_gib": 15.7401,
+     "c_peak_reserved_gib": 16.0781,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.4617,
+     "wall_s": 0.271,
+     "src": "medxpert_mm_test",
+     "idx": "MM-490",
+     "image_pixels": 535200,
+     "n_images": 1,
+     "input_tokens": 1034,
+     "vision_tokens": 2752,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.4616
+    },
+    {
+     "b_peak_allocated_gib": 15.7525,
+     "c_peak_reserved_gib": 16.0781,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.4617,
+     "wall_s": 0.273,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1446",
+     "image_pixels": 536316,
+     "n_images": 1,
+     "input_tokens": 1124,
+     "vision_tokens": 2808,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.4616
+    },
+    {
+     "b_peak_allocated_gib": 15.6828,
+     "c_peak_reserved_gib": 16.0918,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.4753,
+     "wall_s": 0.236,
+     "src": "medxpert_mm_test",
+     "idx": "MM-150",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 873,
+     "vision_tokens": 2688,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.4753
+    },
+    {
+     "b_peak_allocated_gib": 15.6843,
+     "c_peak_reserved_gib": 16.0918,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.4753,
+     "wall_s": 0.246,
+     "src": "medxpert_mm_test",
+     "idx": "MM-206",
+     "image_pixels": 540000,
+     "n_images": 2,
+     "input_tokens": 881,
+     "vision_tokens": 2688,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 17.4753
+    },
+    {
+     "b_peak_allocated_gib": 17.7607,
+     "c_peak_reserved_gib": 19.9707,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 21.3542,
+     "wall_s": 1.828,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1955",
+     "image_pixels": 8069653,
+     "n_images": 1,
+     "input_tokens": 10713,
+     "vision_tokens": 41128,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 21.3542
+    },
+    {
+     "b_peak_allocated_gib": 17.9435,
+     "c_peak_reserved_gib": 21.0977,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 22.4812,
+     "wall_s": 1.78,
+     "src": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11555,
+     "vision_tokens": 45360,
+     "gen_tokens": 2,
+     "d_process_footprint_clean_gib": 22.4812
+    },
+    {
+     "b_peak_allocated_gib": 17.9428,
+     "c_peak_reserved_gib": 21.0977,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 22.4812,
+     "wall_s": 1.907,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1642",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11551,
+     "vision_tokens": 45360,
+     "gen_tokens": 5,
+     "d_process_footprint_clean_gib": 22.4812
+    },
+    {
+     "b_peak_allocated_gib": 18.0232,
+     "c_peak_reserved_gib": 22.0371,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 23.4207,
+     "wall_s": 2.139,
+     "src": "medxpert_mm_test",
+     "idx": "MM-1561",
+     "image_pixels": 9107712,
+     "n_images": 1,
+     "input_tokens": 11931,
+     "vision_tokens": 46816,
+     "gen_tokens": 3,
+     "d_process_footprint_clean_gib": 23.4206
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_small.json",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3835,
+    "offset_spread_gib": 0.0001,
+    "verdict": "CLEAN -- (d_board - c_peak_reserved) is constant to <=0.01 GiB across every item, which a competing process could not leave intact",
+    "n_items_affected": 0,
+    "affected_item_positions": [],
+    "d_raw_board_peak_gib": 23.4207,
+    "d_clean_peak_gib": 23.4206,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "d_process_footprint_gib": {
+    "mean": 18.6872,
+    "peak": 23.4206,
+    "min": 17.1023,
+    "n": 15
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "pmc_vqa_test_2": {
+     "n": 7,
+     "b_peak_allocated_gib": {
+      "mean": 15.5971,
+      "peak": 15.7523,
+      "min": 15.5191,
+      "n": 7
+     },
+     "c_peak_reserved_gib": {
+      "mean": 15.8588,
+      "peak": 16.0781,
+      "min": 15.7188,
+      "n": 7
+     },
+     "d_process_footprint_gib": {
+      "mean": 17.2423,
+      "peak": 17.4616,
+      "min": 17.1023,
+      "n": 7
+     },
+     "image_pixels": {
+      "mean": 274624.1429,
+      "peak": 757560.0,
+      "min": 7659.0,
+      "n": 7
+     },
+     "vision_tokens": {
+      "mean": 1419.4286,
+      "peak": 3968.0,
+      "min": 32.0,
+      "n": 7
+     },
+     "input_tokens": {
+      "mean": 436.1429,
+      "peak": 1077.0,
+      "min": 86.0,
+      "n": 7
+     },
+     "gen_tokens": {
+      "mean": 3.0,
+      "peak": 3.0,
+      "min": 3.0,
+      "n": 7
+     }
+    },
+    "medxpert_mm_test": {
+     "n": 8,
+     "b_peak_allocated_gib": {
+      "mean": 16.8162,
+      "peak": 18.0232,
+      "min": 15.6828,
+      "n": 8
+     },
+     "c_peak_reserved_gib": {
+      "mean": 18.5679,
+      "peak": 22.0371,
+      "min": 16.0781,
+      "n": 8
+     },
+     "d_process_footprint_gib": {
+      "mean": 19.9514,
+      "peak": 23.4206,
+      "min": 17.4616,
+      "n": 8
+     },
+     "image_pixels": {
+      "mean": 4607610.125,
+      "peak": 9107712.0,
+      "min": 535200.0,
+      "n": 8
+     },
+     "vision_tokens": {
+      "mean": 23700.0,
+      "peak": 46816.0,
+      "min": 2688.0,
+      "n": 8
+     },
+     "input_tokens": {
+      "mean": 6207.75,
+      "peak": 11931.0,
+      "min": 873.0,
+      "n": 8
+     },
+     "gen_tokens": {
+      "mean": 3.125,
+      "peak": 5.0,
+      "min": 2.0,
+      "n": 8
+     }
+    }
+   }
+  },
+  "S3_lingshu7b_plus_lora_verifier": {
+   "meta": {
+    "scenario": "Lingshu-7B + the CLEAN LoRA verifier (ckpts/train/lora_verifier_disjoint), batch 1, ONE scoring forward pass (no generation) -- as deployed by src/training_methods/cheapleg_score_open.py",
+    "model": "lingshu-medical-mllm/Lingshu-7B",
+    "adapter": "ckpts/train/lora_verifier_disjoint",
+    "tp": 1,
+    "batch_size": 1,
+    "max_pixels": 1003520,
+    "min_pixels": 3136,
+    "max_new_tokens": 0,
+    "forward_only": true,
+    "marginal_adapter_resident_gib": 0.1961,
+    "marginal_adapter_note": "(a)-style: torch.cuda.memory_allocated() delta across PeftModel.from_pretrained on the ALREADY-loaded base. The verifier is a LoRA adapter ON Lingshu-7B, so generator and verifier SHARE one set of base weights -- 'co-resident total' = base + this delta, NOT 2x7B.",
+    "co_resident_total_resident_gib": 15.6987,
+    "bare_base_resident_gib": 15.4937,
+    "n_lora_params": 584,
+    "n_lora_params_on_visual": 192,
+    "lora_note": "HF only. vLLM 0.9.0.1 silently drops all 192 visual.* LoRA modules.",
+    "prompt": "src/training_methods/cheapleg_score_open.py pyes()",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B",
+     "load_s": 7.6,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 15.4937,
+     "weights_reserved_after_load_gib": 15.6875,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 16.9773,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 8292166656
+    },
+    "scenario_reset": {
+     "reserved_after_empty_cache_gib": 15.793,
+     "allocated_after_empty_cache_gib": 15.6987,
+     "nvml_process_after_empty_cache_gib": 0.0
+    }
+   },
+   "n": 12,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 16.0745,
+    "peak": 16.4764,
+    "min": 15.7476
+   },
+   "c_peak_reserved_gib": {
+    "mean": 17.1349,
+    "peak": 17.6055,
+    "min": 15.8828
+   },
+   "d_board_used_gib": {
+    "mean": 18.5204,
+    "peak": 18.991,
+    "min": 17.2683
+   },
+   "input_tokens": {
+    "mean": 674.3333,
+    "peak": 1321.0,
+    "min": 157.0
+   },
+   "vision_tokens": {
+    "mean": 2362.6667,
+    "peak": 4960.0,
+    "min": 324.0
+   },
+   "gen_tokens": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "wall_s": {
+    "mean": 0.2311,
+    "peak": 0.313,
+    "min": 0.153
+   },
+   "peak_driver": {
+    "source": "vqa_rad_open",
+    "idx": 395,
+    "image_pixels": 1341440,
+    "n_images": 1,
+    "input_tokens": 1318,
+    "vision_tokens": 4960,
+    "gen_tokens": 0,
+    "b_peak_allocated_gib": 16.4764
+   },
+   "rows": [
+    {
+     "b_peak_allocated_gib": 15.7476,
+     "c_peak_reserved_gib": 15.8828,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.2683,
+     "wall_s": 0.171,
+     "src": "slake_open",
+     "idx": 12615,
+     "image_pixels": 57600,
+     "n_images": 1,
+     "input_tokens": 161,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 17.2683
+    },
+    {
+     "b_peak_allocated_gib": 15.7925,
+     "c_peak_reserved_gib": 15.9277,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.3132,
+     "wall_s": 0.153,
+     "src": "slake_open",
+     "idx": 12618,
+     "image_pixels": 57600,
+     "n_images": 1,
+     "input_tokens": 157,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 17.3132
+    },
+    {
+     "b_peak_allocated_gib": 16.1489,
+     "c_peak_reserved_gib": 16.8594,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.2449,
+     "wall_s": 0.306,
+     "src": "slake_open",
+     "idx": 12532,
+     "image_pixels": 1048576,
+     "n_images": 1,
+     "input_tokens": 1321,
+     "vision_tokens": 4900,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.2449
+    },
+    {
+     "b_peak_allocated_gib": 16.475,
+     "c_peak_reserved_gib": 17.2305,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.616,
+     "wall_s": 0.307,
+     "src": "slake_open",
+     "idx": 12533,
+     "image_pixels": 1048576,
+     "n_images": 1,
+     "input_tokens": 1308,
+     "vision_tokens": 4900,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.616
+    },
+    {
+     "b_peak_allocated_gib": 16.1202,
+     "c_peak_reserved_gib": 17.2305,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.616,
+     "wall_s": 0.161,
+     "src": "vqa_rad_open",
+     "idx": 133,
+     "image_pixels": 65536,
+     "n_images": 1,
+     "input_tokens": 166,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.616
+    },
+    {
+     "b_peak_allocated_gib": 15.7964,
+     "c_peak_reserved_gib": 17.2305,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.616,
+     "wall_s": 0.159,
+     "src": "vqa_rad_open",
+     "idx": 134,
+     "image_pixels": 65536,
+     "n_images": 1,
+     "input_tokens": 167,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.616
+    },
+    {
+     "b_peak_allocated_gib": 16.1504,
+     "c_peak_reserved_gib": 17.2305,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.616,
+     "wall_s": 0.313,
+     "src": "vqa_rad_open",
+     "idx": 394,
+     "image_pixels": 1341440,
+     "n_images": 1,
+     "input_tokens": 1320,
+     "vision_tokens": 4960,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.616
+    },
+    {
+     "b_peak_allocated_gib": 16.4764,
+     "c_peak_reserved_gib": 17.6055,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.991,
+     "wall_s": 0.313,
+     "src": "vqa_rad_open",
+     "idx": 395,
+     "image_pixels": 1341440,
+     "n_images": 1,
+     "input_tokens": 1318,
+     "vision_tokens": 4960,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.991
+    },
+    {
+     "b_peak_allocated_gib": 16.1204,
+     "c_peak_reserved_gib": 17.6055,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.991,
+     "wall_s": 0.191,
+     "src": "pathvqa_open",
+     "idx": 424,
+     "image_pixels": 58322,
+     "n_images": 1,
+     "input_tokens": 161,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.991
+    },
+    {
+     "b_peak_allocated_gib": 15.7952,
+     "c_peak_reserved_gib": 17.6055,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.991,
+     "wall_s": 0.215,
+     "src": "pathvqa_open",
+     "idx": 324,
+     "image_pixels": 58564,
+     "n_images": 1,
+     "input_tokens": 168,
+     "vision_tokens": 324,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.991
+    },
+    {
+     "b_peak_allocated_gib": 16.0288,
+     "c_peak_reserved_gib": 17.6055,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.991,
+     "wall_s": 0.243,
+     "src": "pathvqa_open",
+     "idx": 7,
+     "image_pixels": 657272,
+     "n_images": 1,
+     "input_tokens": 923,
+     "vision_tokens": 3344,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.991
+    },
+    {
+     "b_peak_allocated_gib": 16.2421,
+     "c_peak_reserved_gib": 17.6055,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.991,
+     "wall_s": 0.241,
+     "src": "pathvqa_open",
+     "idx": 8,
+     "image_pixels": 657272,
+     "n_images": 1,
+     "input_tokens": 922,
+     "vision_tokens": 3344,
+     "gen_tokens": 0,
+     "d_process_footprint_clean_gib": 18.991
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_small.json",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3855,
+    "offset_spread_gib": 0.0,
+    "verdict": "CLEAN -- (d_board - c_peak_reserved) is constant to <=0.01 GiB across every item, which a competing process could not leave intact",
+    "n_items_affected": 0,
+    "affected_item_positions": [],
+    "d_raw_board_peak_gib": 18.991,
+    "d_clean_peak_gib": 18.991,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "d_process_footprint_gib": {
+    "mean": 18.5204,
+    "peak": 18.991,
+    "min": 17.2683,
+    "n": 12
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "slake_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.041,
+      "peak": 16.475,
+      "min": 15.7476,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 16.4751,
+      "peak": 17.2305,
+      "min": 15.8828,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 17.8606,
+      "peak": 18.616,
+      "min": 17.2683,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 553088.0,
+      "peak": 1048576.0,
+      "min": 57600.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 2612.0,
+      "peak": 4900.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 736.75,
+      "peak": 1321.0,
+      "min": 157.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 0.0,
+      "peak": 0.0,
+      "min": 0.0,
+      "n": 4
+     }
+    },
+    "vqa_rad_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.1359,
+      "peak": 16.4764,
+      "min": 15.7964,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 17.3242,
+      "peak": 17.6055,
+      "min": 17.2305,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 18.7097,
+      "peak": 18.991,
+      "min": 18.616,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 703488.0,
+      "peak": 1341440.0,
+      "min": 65536.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 2642.0,
+      "peak": 4960.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 742.75,
+      "peak": 1320.0,
+      "min": 166.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 0.0,
+      "peak": 0.0,
+      "min": 0.0,
+      "n": 4
+     }
+    },
+    "pathvqa_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.0466,
+      "peak": 16.2421,
+      "min": 15.7952,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 17.6055,
+      "peak": 17.6055,
+      "min": 17.6055,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 18.991,
+      "peak": 18.991,
+      "min": 18.991,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 357857.5,
+      "peak": 657272.0,
+      "min": 58322.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 1834.0,
+      "peak": 3344.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 543.5,
+      "peak": 923.0,
+      "min": 161.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 0.0,
+      "peak": 0.0,
+      "min": 0.0,
+      "n": 4
+     }
+    }
+   }
+  },
+  "S4_opentext_bestof8_full_arm": {
+   "meta": {
+    "scenario": "THE OPEN-TEXT ARM END TO END in ONE process: Lingshu-7B generates 8 samples (temp 0.7, max_new_tokens 64, cap320, adapter DISABLED), then the clean LoRA verifier scores all 8 (adapter ENABLED, max_pixels 1,003,520). Peak is over the WHOLE pipeline.",
+    "model": "lingshu-medical-mllm/Lingshu-7B",
+    "adapter": "ckpts/train/lora_verifier_disjoint",
+    "tp": 1,
+    "batch_size": "1 question, num_return_sequences=8",
+    "generator_max_pixels": 250880,
+    "generator_min_pixels": 3136,
+    "generator_max_new_tokens": 64,
+    "generator_temperature": 0.7,
+    "n_samples": 8,
+    "verifier_max_pixels": 1003520,
+    "verifier_min_pixels": 3136,
+    "deployment_note": "As RUN in this repo the two phases are separate processes (vLLM generation then HF scoring). Measured here co-resident in ONE process because the verifier is a LoRA adapter on the SAME base -- which is the configuration a deployer should actually use, and it is why the arm costs one 7B, not two.",
+    "resolution_note": "the deployed generator runs cap320 (250,880 px) while the deployed verifier runs 1,003,520 px -- both reproduced verbatim, so the two phases really do differ in vision-token count.",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B",
+     "load_s": 7.6,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "a_weights_resident_gib": 15.4937,
+     "weights_reserved_after_load_gib": 15.6875,
+     "nvml_process_after_load_gib": 0.0,
+     "nvml_board_after_load_gib": 16.9773,
+     "nvml_board_before_load_gib": 0.875,
+     "n_params": 8292166656
+    },
+    "scenario_reset": {
+     "reserved_after_empty_cache_gib": 16.168,
+     "allocated_after_empty_cache_gib": 15.9599,
+     "nvml_process_after_empty_cache_gib": 0.0
+    }
+   },
+   "n": 12,
+   "n_failed": 0,
+   "b_peak_allocated_gib": {
+    "mean": 16.3141,
+    "peak": 16.6581,
+    "min": 15.9507
+   },
+   "c_peak_reserved_gib": {
+    "mean": 17.1982,
+    "peak": 17.3789,
+    "min": 16.2949
+   },
+   "d_board_used_gib": {
+    "mean": 18.9793,
+    "peak": 19.3577,
+    "min": 17.6804
+   },
+   "input_tokens": {
+    "mean": 236.8333,
+    "peak": 352.0,
+    "min": 125.0
+   },
+   "vision_tokens": {
+    "mean": 754.0,
+    "peak": 1200.0,
+    "min": 324.0
+   },
+   "gen_tokens": {
+    "mean": 6.3333,
+    "peak": 20.0,
+    "min": 3.0
+   },
+   "wall_s": {
+    "mean": 5.2326,
+    "peak": 8.054,
+    "min": 2.255
+   },
+   "peak_driver": {
+    "source": "vqa_rad_open",
+    "idx": 395,
+    "image_pixels": 1341440,
+    "n_images": 1,
+    "input_tokens": 346,
+    "vision_tokens": 1200,
+    "gen_tokens": 3,
+    "b_peak_allocated_gib": 16.6581
+   },
+   "rows": [
+    {
+     "src": "slake_open",
+     "idx": 12615,
+     "image_pixels": 57600,
+     "n_images": 1,
+     "input_tokens": 127,
+     "vision_tokens": 324,
+     "gen_tokens": 5,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.1687,
+     "b_peak_allocated_generator_phase_gib": 16.1687,
+     "c_peak_reserved_gib": 16.2949,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.6804,
+     "wall_s": 2.82,
+     "d_process_footprint_clean_gib": 17.6804
+    },
+    {
+     "src": "slake_open",
+     "idx": 12618,
+     "image_pixels": 57600,
+     "n_images": 1,
+     "input_tokens": 125,
+     "vision_tokens": 324,
+     "gen_tokens": 3,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 15.9507,
+     "b_peak_allocated_generator_phase_gib": 15.9507,
+     "c_peak_reserved_gib": 16.2949,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 17.6804,
+     "wall_s": 2.255,
+     "d_process_footprint_clean_gib": 17.6804
+    },
+    {
+     "src": "slake_open",
+     "idx": 12532,
+     "image_pixels": 1048576,
+     "n_images": 1,
+     "input_tokens": 344,
+     "vision_tokens": 1156,
+     "gen_tokens": 20,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.483,
+     "b_peak_allocated_generator_phase_gib": 16.3251,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.7644,
+     "wall_s": 5.513,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "slake_open",
+     "idx": 12533,
+     "image_pixels": 1048576,
+     "n_images": 1,
+     "input_tokens": 340,
+     "vision_tokens": 1156,
+     "gen_tokens": 4,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.6525,
+     "b_peak_allocated_generator_phase_gib": 16.6525,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 18.7644,
+     "wall_s": 8.054,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "vqa_rad_open",
+     "idx": 133,
+     "image_pixels": 65536,
+     "n_images": 1,
+     "input_tokens": 127,
+     "vision_tokens": 324,
+     "gen_tokens": 5,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.2782,
+     "b_peak_allocated_generator_phase_gib": 16.2782,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 5.34,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "vqa_rad_open",
+     "idx": 134,
+     "image_pixels": 65536,
+     "n_images": 1,
+     "input_tokens": 128,
+     "vision_tokens": 324,
+     "gen_tokens": 5,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 15.9546,
+     "b_peak_allocated_generator_phase_gib": 15.9546,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 5.44,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "vqa_rad_open",
+     "idx": 394,
+     "image_pixels": 1341440,
+     "n_images": 1,
+     "input_tokens": 348,
+     "vision_tokens": 1200,
+     "gen_tokens": 3,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.477,
+     "b_peak_allocated_generator_phase_gib": 16.3344,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 6.619,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "vqa_rad_open",
+     "idx": 395,
+     "image_pixels": 1341440,
+     "n_images": 1,
+     "input_tokens": 346,
+     "vision_tokens": 1200,
+     "gen_tokens": 3,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.6581,
+     "b_peak_allocated_generator_phase_gib": 16.6581,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 6.597,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "pathvqa_open",
+     "idx": 424,
+     "image_pixels": 58322,
+     "n_images": 1,
+     "input_tokens": 129,
+     "vision_tokens": 324,
+     "gen_tokens": 3,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.2937,
+     "b_peak_allocated_generator_phase_gib": 16.2937,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 4.773,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "pathvqa_open",
+     "idx": 324,
+     "image_pixels": 58564,
+     "n_images": 1,
+     "input_tokens": 132,
+     "vision_tokens": 324,
+     "gen_tokens": 10,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 15.9682,
+     "b_peak_allocated_generator_phase_gib": 15.9682,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 4.54,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "pathvqa_open",
+     "idx": 7,
+     "image_pixels": 657272,
+     "n_images": 1,
+     "input_tokens": 352,
+     "vision_tokens": 1196,
+     "gen_tokens": 7,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.34,
+     "b_peak_allocated_generator_phase_gib": 16.34,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 5.488,
+     "d_process_footprint_clean_gib": 18.7644
+    },
+    {
+     "src": "pathvqa_open",
+     "idx": 8,
+     "image_pixels": 657272,
+     "n_images": 1,
+     "input_tokens": 344,
+     "vision_tokens": 1196,
+     "gen_tokens": 8,
+     "n_samples": 8,
+     "n_verifier_passes": 8,
+     "b_peak_allocated_gib": 16.5441,
+     "b_peak_allocated_generator_phase_gib": 16.5441,
+     "c_peak_reserved_gib": 17.3789,
+     "d_process_footprint_gib": 0.0,
+     "d_board_used_gib": 19.3577,
+     "wall_s": 5.352,
+     "d_process_footprint_clean_gib": 18.7644
+    }
+   ],
+   "_part_file": "results/cascade_methods/artifacts/_vram_parts/vram_small.json",
+   "contamination_audit": {
+    "cuda_context_offset_gib": 1.3855,
+    "offset_spread_gib": 0.5933,
+    "verdict": "FOREIGN MEMORY DETECTED on 8 of 12 items (first: item 5), up to +0.5933 GiB above the 1.3855 GiB CUDA-context offset that every other item shows. A second tenant shared this GPU during the run (independently corroborated by nvidia-smi: foreign residue was observed on GPU 0 after our processes exited, and GPU occupancy rose to 43-48 GB with none of our processes running). (b) and (c) are torch-internal and therefore UNAFFECTED; only the raw board reading is. d_clean_peak_gib is the corrected figure and is the one quoted in deployer_guidance.",
+    "n_items_affected": 8,
+    "affected_item_positions": [
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12
+    ],
+    "d_raw_board_peak_gib": 19.3577,
+    "d_clean_peak_gib": 18.7644,
+    "d_clean_method": "c_peak_reserved + min(d_board - c_peak_reserved) over the scenario's items; identical to the raw board reading when the verdict is CLEAN"
+   },
+   "d_nvml_per_process_gib_UNAVAILABLE": {
+    "mean": 0.0,
+    "peak": 0.0,
+    "min": 0.0
+   },
+   "d_process_footprint_gib": {
+    "mean": 18.5837,
+    "peak": 18.7644,
+    "min": 17.6804,
+    "n": 12
+   },
+   "d_process_footprint_note": "= (c) + the CUDA-context offset measured on this scenario's own uncontaminated items. NVML per-process usedGpuMemory is unavailable in this container (host-pid mismatch), so the board reading is used and corrected -- see contamination_audit.",
+   "per_source_breakdown": {
+    "slake_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.3137,
+      "peak": 16.6525,
+      "min": 15.9507,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 16.8369,
+      "peak": 17.3789,
+      "min": 16.2949,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 18.2224,
+      "peak": 18.7644,
+      "min": 17.6804,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 553088.0,
+      "peak": 1048576.0,
+      "min": 57600.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 740.0,
+      "peak": 1156.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 234.0,
+      "peak": 344.0,
+      "min": 125.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 8.0,
+      "peak": 20.0,
+      "min": 3.0,
+      "n": 4
+     }
+    },
+    "vqa_rad_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.342,
+      "peak": 16.6581,
+      "min": 15.9546,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 17.3789,
+      "peak": 17.3789,
+      "min": 17.3789,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 18.7644,
+      "peak": 18.7644,
+      "min": 18.7644,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 703488.0,
+      "peak": 1341440.0,
+      "min": 65536.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 762.0,
+      "peak": 1200.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 237.25,
+      "peak": 348.0,
+      "min": 127.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 4.0,
+      "peak": 5.0,
+      "min": 3.0,
+      "n": 4
+     }
+    },
+    "pathvqa_open": {
+     "n": 4,
+     "b_peak_allocated_gib": {
+      "mean": 16.2865,
+      "peak": 16.5441,
+      "min": 15.9682,
+      "n": 4
+     },
+     "c_peak_reserved_gib": {
+      "mean": 17.3789,
+      "peak": 17.3789,
+      "min": 17.3789,
+      "n": 4
+     },
+     "d_process_footprint_gib": {
+      "mean": 18.7644,
+      "peak": 18.7644,
+      "min": 18.7644,
+      "n": 4
+     },
+     "image_pixels": {
+      "mean": 357857.5,
+      "peak": 657272.0,
+      "min": 58322.0,
+      "n": 4
+     },
+     "vision_tokens": {
+      "mean": 760.0,
+      "peak": 1196.0,
+      "min": 324.0,
+      "n": 4
+     },
+     "input_tokens": {
+      "mean": 239.25,
+      "peak": 352.0,
+      "min": 129.0,
+      "n": 4
+     },
+     "gen_tokens": {
+      "mean": 7.0,
+      "peak": 10.0,
+      "min": 3.0,
+      "n": 4
+     }
+    }
+   }
+  }
+ },
+ "reconciliation": {
+  "why_three_numbers_disagree": "They measure three different things. (1) The vLLM RESERVATION (71.45 / 152.82 / 154.08 'GB') is NVML board `used` while vLLM held a pre-allocated pool whose size is the --gpu_mem flag times the card, summed over every visible GPU -- it is a property of the FLAG and the number of GPUs, not of the model, which is why three different 7B models all report exactly 71.45 and three different 32B models exactly 152.82. (2) vLLM's own 'model weights take X GiB' line is honest but is PER TENSOR-PARALLEL WORKER and covers weights ONLY -- at tp=2 you must double it, and it excludes activations, KV cache and the CUDA context. (3) The HF numbers below are per-quantity and per-item: (a) matches vLLM's weights line to within 0.5%, which cross-validates both; (b)/(c)/(d) then add the activations, KV cache and CUDA context that (2) omits and that (1) buries inside an arbitrary pool. Rule of thumb from these measurements: provision (d). It is ~1.4 GiB above (c) and, at the 32B tier, roughly HALF the reservation that has been circulating.",
+  "tiers": {
+   "Lingshu-7B": {
+    "hf_measured_a_weights_resident_gib": 15.4937,
+    "hf_measured_source": "THIS artifact, scenarios below (torch.cuda.memory_allocated after load, tp=1, HF, bf16)",
+    "vllm_reservation_gb_decimal": 71.45,
+    "vllm_reservation_gib": 66.543,
+    "vllm_reservation_config": "vLLM tp=1, gpu_memory_utilization=0.85, max_model_len 8192, batch-1, 1 GPU",
+    "vllm_reservation_source": "logs/lat_lingshu_s.log 'PEAK_VRAM_GB=71.45' (scraped into results/cascade_methods/docs/archive_mcq/MASTER_TABLES.md '## Peak VRAM (GB, batch-1)')",
+    "vllm_reservation_status": "NOT A FOOTPRINT -- a memory-pool reservation set by --gpu_mem, summed over visible GPUs",
+    "vllm_honest_weights_line_gib_per_worker": 15.57,
+    "vllm_honest_weights_tp": 1,
+    "vllm_honest_weights_total_gib": 15.57,
+    "vllm_honest_weights_config": "vLLM tp=1, bfloat16",
+    "vllm_honest_weights_source": "logs/medevalkit_smoke.log 'model weights take 15.57GiB' (model='lingshu-medical-mllm/Lingshu-7B', tensor_parallel_size=1)",
+    "hf_vs_vllm_weights_delta_gib": -0.076,
+    "hf_vs_vllm_weights_delta_pct": -0.49,
+    "flag_arithmetic": "0.85 x 85.899 GB (A100 80GB total) = 73.0 GB, vs the 71.45 GB reported: the reservation tracks the FLAG, not the 15.57 GiB of weights it holds.",
+    "identical_value_across_families": "MASTER_TABLES.md reports the SAME 71.45 for MedVLThinker-7B, Lingshu-7B and QoQ-Med-7B -- the proof it is not a model property."
+   },
+   "Lingshu-32B": {
+    "hf_measured_a_weights_resident_gib": 62.3125,
+    "hf_measured_source": "THIS artifact, scenarios below (torch.cuda.memory_allocated after load, tp=1, HF, bf16)",
+    "vllm_reservation_gb_decimal": 152.82,
+    "vllm_reservation_gib": 142.325,
+    "vllm_reservation_config": "vLLM tp=2, gpu_memory_utilization = vLLM default 0.90 (not passed in that run's non-default args), max_model_len 8192, batch-1, SUMMED OVER BOTH GPUs",
+    "vllm_reservation_source": "logs/lat_lingshu_bnt.log 'PEAK_VRAM_GB=152.82' (scraped into MASTER_TABLES.md '## Peak VRAM (GB, batch-1)')",
+    "vllm_reservation_status": "NOT A FOOTPRINT -- a memory-pool reservation set by --gpu_mem, summed over visible GPUs",
+    "vllm_honest_weights_line_gib_per_worker": 31.28,
+    "vllm_honest_weights_tp": 2,
+    "vllm_honest_weights_total_gib": 62.56,
+    "vllm_honest_weights_config": "vLLM tp=2, bfloat16 -- PER WORKER, so the whole model is 2 x 31.28",
+    "vllm_honest_weights_source": "logs/medeval_mmmu_repro.log / logs/omnimed_rerun.log / logs/mmmu_perm_32b.log 'model weights take 31.28GiB' (model='lingshu-medical-mllm/Lingshu-32B', tensor_parallel_size=2)",
+    "hf_vs_vllm_weights_delta_gib": -0.248,
+    "hf_vs_vllm_weights_delta_pct": -0.4,
+    "flag_arithmetic": "2 x 0.90 x 85.899 GB = 154.6 GB, vs the 152.82 GB reported (and 154.08 for the 'think' tier): the reservation tracks the FLAG and the GPU COUNT. 'think adds 1.26 GB of VRAM' is an artifact of that, not a KV-cache measurement -- see S5 in this artifact for the real reasoning delta.",
+    "independent_tp1_confirmation": "logs/omni32b_tp1_probe.log:41 loaded Lingshu-32B at tp=1 and reported 'model weights take 62.43GiB; non_torch_memory takes 0.09GiB; PyTorch activation peak memory takes 6.90GiB; the rest of the memory reserved for KV Cache is 0.22GiB.' 62.43 GiB vs 2 x 31.28 = 62.56 GiB vs this artifact's HF 62.3125 GiB -- three independent routes to the same weights figure.",
+    "identical_value_across_families": "MASTER_TABLES.md reports the SAME 152.82 / 154.08 for MedVLThinker-32B, Lingshu-32B and QoQ-Med-32B."
+   }
+  }
+ },
+ "deployer_guidance": {
+  "rule": "provision (d) process_footprint peak, not (a), (b) or (c), and not the vLLM reservation.",
+  "cheap_leg_alone": {
+   "measured_peak_gib": 23.4206,
+   "measured_peak_gb_decimal": 25.15,
+   "smallest_card_with_5pct_headroom": "32 GB (V100 32GB)",
+   "smallest_card_that_holds_it_at_all": "24 GB (RTX 4090 / L4)",
+   "pct_of_one_A100_80GB": 29.3,
+   "headroom_on_A100_80GB_gib": 56.58
+  },
+  "full_opentext_arm": {
+   "measured_peak_gib": 18.7644,
+   "measured_peak_gb_decimal": 20.15,
+   "smallest_card_with_5pct_headroom": "24 GB (RTX 4090 / L4)",
+   "smallest_card_that_holds_it_at_all": "24 GB (RTX 4090 / L4)",
+   "pct_of_one_A100_80GB": 23.5,
+   "headroom_on_A100_80GB_gib": 61.24
+  },
+  "always_32b_direct": {
+   "measured_peak_gib": 72.6023,
+   "measured_peak_gb_decimal": 77.96,
+   "smallest_card_with_5pct_headroom": "80 GB (A100 80GB / H100 80GB)",
+   "smallest_card_that_holds_it_at_all": "80 GB (A100 80GB / H100 80GB)",
+   "pct_of_one_A100_80GB": 90.8,
+   "headroom_on_A100_80GB_gib": 7.4
+  },
+  "thirtytwob_with_reasoning": {
+   "measured_peak_gib": 72.696,
+   "measured_peak_gb_decimal": 78.06,
+   "smallest_card_with_5pct_headroom": "80 GB (A100 80GB / H100 80GB)",
+   "smallest_card_that_holds_it_at_all": "80 GB (A100 80GB / H100 80GB)",
+   "pct_of_one_A100_80GB": 90.9,
+   "headroom_on_A100_80GB_gib": 7.3
+  },
+  "caveat": "these peaks are set by the WORST item in a 15-item pool spanning the whole suite (MedXpert, up to 9.1 MP and 6 images per question). See per_source_breakdown in each scenario: on PMC-VQA-only traffic -- 79.2% of the paper's sample-weighted pool -- the peak is materially lower."
+ },
+ "key_findings": {
+  "1_reasoning_is_almost_FREE_in_VRAM": {
+   "claim": "Turning on genuine reasoning costs +0.09 GiB of footprint. VRAM is NOT the reason reasoning is expensive -- latency and energy are.",
+   "evidence": "S2 (direct, 3 generated tokens) vs S5 (genuine reasoning, mean 259.1 generated tokens) on the SAME 15 items at the SAME resolution: (d) peak 72.6023 -> 72.696 GiB on MedXpert and 64.3308 -> 64.4245 GiB on PMC-VQA; (b) peak 67.868 -> 67.8736 GiB, i.e. +0.006 GiB.",
+   "why": "the peak is set by the PREFILL of a long multimodal prompt (up to 46,816 vision tokens / 11,944 input tokens), not by the decode. ~255 extra KV entries on a 32B model is tens of MB against a ~5 GiB prefill activation peak.",
+   "consequence_for_the_repo": "the circulating 'think adds 1.26 GB' (152.82 -> 154.08) is NOT a KV-cache measurement -- both figures are --gpu_mem pool reservations. The real number is +0.09 GiB."
+  },
+  "2_the_driver_is_the_IMAGE_not_the_model_and_not_the_answer": {
+   "claim": "peak VRAM is set by vision-token count. Within a tier it moves ~6 GiB across the suite.",
+   "evidence": "7B: PMC-VQA (<=3,968 vision tokens) peaks at 17.4616 GiB, MedXpert (up to 46,816) at 23.4206 GiB. 32B: 64.3308 -> 72.6023 GiB. The MCQ arm runs at MedEvalKit's full resolution (12,845,056 px cap), so a 9.1 MP MedXpert image is not down-sampled.",
+   "consequence": "provision for the tail, or cap max_pixels. A resolution cap is the direct VRAM lever and it was never characterised -- see not_measured."
+  },
+  "3_the_verifier_is_nearly_free_and_the_open_arm_costs_ONE_7B": {
+   "claim": "the clean LoRA verifier adds 0.1961 GiB of weights to Lingshu-7B, and the whole best-of-8 open-text arm -- generator AND verifier -- fits in 18.76 GiB.",
+   "evidence": "S3: PeftModel.from_pretrained on the already-loaded base moves torch.cuda.memory_allocated by +0.1961 GiB (584 LoRA params, 192 of them on visual.*). S4 runs 8-sample generation then 8 verifier scoring passes in ONE process and peaks at (b) 16.6581 / (c) 17.3789 / (d) 18.7644 GiB.",
+   "why_it_matters": "the verifier is a LoRA adapter ON the generator's own base, so generator and verifier SHARE one copy of the weights. The open-text arm costs one 7B plus 0.2 GiB, not two 7Bs. It is the CHEAPEST configuration measured here -- cheaper than the 7B MCQ leg, because the open arm runs cap320 (250,880 px) while the MCQ arm runs uncapped.",
+   "which_phase_drives_the_S4_peak": "the GENERATOR phase on 10 of 12 items, the verifier on 2 (per-row b_peak_allocated_generator_phase_gib vs b_peak_allocated_gib). Generating 8 sequences at once costs more than scoring them one at a time, even though the verifier runs at 4x the generator's pixel cap.",
+   "the_192_visual_modules": "independently confirms the repo's standing warning: the adapter really does carry 192 visual.* LoRA modules, which vLLM 0.9.0.1 silently drops. HF is mandatory here, and this run is HF."
+  },
+  "4_the_32B_fits_on_one_80GB_card_but_only_just": {
+   "claim": "always-32B-direct peaks at 72.6023 GiB = 90.8% of one A100 80GB.",
+   "evidence": "S2, tp=1, HF, bf16, batch-1, measured on a single A100 80GB.",
+   "caveat": "7.4 GiB of headroom on the worst item in the pool. Batch >1, a larger image than the 9.1 MP seen here, or any co-tenant will not fit. The repo's own vLLM runs used tp=2, which is a throughput choice, not a capacity requirement."
+  }
+ },
+ "not_measured": [
+  {
+   "item": "batch sizes > 1",
+   "reason": "out of scope: the deployed cascade is batch-1 (single-query serving). Peaks scale roughly linearly in batch for activations and KV; do not extrapolate from this file."
+  },
+  {
+   "item": "tensor-parallel (tp=2) HF footprint",
+   "reason": "tp=1 answers the deployer question 'does it fit on one card'. The repo's own 32B runs used vLLM tp=2 for throughput; per-GPU footprint at tp=2 is roughly half the weights plus full activations, but it was NOT measured here."
+  },
+  {
+   "item": "the 32B leg inside the OPEN-TEXT arm (escalation target)",
+   "reason": "cut for time. Its footprint is S2's (same model, same batch-1 decode); only the prompt differs. Stated as an inference, not a measurement."
+  },
+  {
+   "item": "co-residency of the 7B and 32B legs on ONE card",
+   "reason": "cut for time. Additive from (d): S1 peak + S2 peak. The June cascade ran them on SEPARATE cards (logs/rt_cascade.log)."
+  },
+  {
+   "item": "INT4 / AWQ quantized strong leg",
+   "reason": "the AWQ shards were never downloaded (pre-existing project gap, method_inventory_2026-08-11.json). Still unmeasured."
+  },
+  {
+   "item": "resolution-cap ablation of VRAM",
+   "reason": "only the DEPLOYED caps were measured (MedEvalKit full-res 12,845,056 px for the MCQ arm; cap320 250,880 px for the open generator; 1,003,520 px for the verifier). The per-source breakdown does show the resolution effect indirectly, since PMC-VQA images are ~0.01-0.76 MP and MedXpert up to 9.1 MP."
+  },
+  {
+   "item": "energy / latency / power",
+   "reason": "this task was VRAM only. src/cascade/measure_single_leg.py owns latency and energy."
+  },
+  {
+   "item": "sustained multi-hour footprint / allocator drift",
+   "reason": "each scenario is 12-15 items. Fragmentation over a long serving run was not characterised."
+  }
+ ]
+}

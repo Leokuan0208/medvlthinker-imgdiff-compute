@@ -1,0 +1,592 @@
+{
+ "title": "Extension of the PMC-VQA answer-letter bias audit: the FUSION arm, the macro consequence, question-blind baselines on the other three cells, and an explicit retraction of one degenerate control.",
+ "date": "2026-08-11",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "parent": "results/cascade_methods/artifacts/pmcvqa_answer_bias_audit_2026-08-11.json",
+ "reproduce": "OMP_NUM_THREADS=1 python3 src/cascade_methods/pmcvqa_answer_bias_extend.py",
+ "numerics": {
+  "numpy": "1.26.4",
+  "nboot": 10000,
+  "seed": 20260811,
+  "OMP_NUM_THREADS": "1"
+ },
+ "NULL_TEST_both_arms": {
+  "published_reference": {
+   "title": "PMC-VQA label-noise audit worksheet (stage 1)",
+   "n_pmc": 33430,
+   "seed": 20260729,
+   "acc_7b": 0.5427,
+   "acc_32b_nt": 0.5518,
+   "fusion_acc": 0.5653,
+   "fusion_delta": 0.0135,
+   "veto_acc": 0.5613,
+   "veto_delta": 0.0095,
+   "n_win_fusion": 1969,
+   "n_loss_fusion": 1518,
+   "n_win_veto": 950,
+   "n_loss_veto": 631,
+   "n_agree_correct": 14361,
+   "disagree_rate": 0.3297,
+   "fusion_override_rate": 0.155,
+   "veto_rate": 0.4002,
+   "win_overlap_fusion_veto": 729
+  },
+  "recomputed": {
+   "acc_7b": 0.54266,
+   "acc_32b_nt": 0.55178,
+   "veto_acc": 0.56132,
+   "veto_delta": 0.00954,
+   "fusion_acc": 0.56527,
+   "fusion_delta": 0.01349,
+   "n_win_fusion": 1969,
+   "n_loss_fusion": 1518
+  },
+  "max_abs_deviation": 0.0
+ },
+ "E1_veto_arm": {
+  "arm": "certified veto (F8, accuracy-max MCQ)",
+  "overall": {
+   "delta": 0.00954,
+   "ci": [
+    0.00715,
+    0.01188
+   ],
+   "sig": true,
+   "n": 33430
+  },
+  "override_rate": 0.4002,
+  "per_gold_letter": {
+   "A": {
+    "n": 4423,
+    "share": 0.1323,
+    "acc_7B": 0.42641,
+    "acc_32B": 0.48587,
+    "acc_arm": 0.47411,
+    "took7_rate": 0.352,
+    "delta": -0.01176,
+    "ci95": [
+     -0.01809,
+     -0.00543
+    ],
+    "sig": true,
+    "contribution": -0.00156
+   },
+   "B": {
+    "n": 11984,
+    "share": 0.3585,
+    "acc_7B": 0.59454,
+    "acc_32B": 0.59479,
+    "acc_arm": 0.60965,
+    "took7_rate": 0.4154,
+    "delta": 0.01485,
+    "ci95": [
+     0.01101,
+     0.01869
+    ],
+    "sig": true,
+    "contribution": 0.00532
+   },
+   "C": {
+    "n": 12636,
+    "share": 0.378,
+    "acc_7B": 0.56695,
+    "acc_32B": 0.56394,
+    "acc_arm": 0.57764,
+    "took7_rate": 0.416,
+    "delta": 0.01369,
+    "ci95": [
+     0.00973,
+     0.01765
+    ],
+    "sig": true,
+    "contribution": 0.00517
+   },
+   "D": {
+    "n": 4387,
+    "share": 0.1312,
+    "acc_7B": 0.44814,
+    "acc_32B": 0.46569,
+    "acc_arm": 0.47025,
+    "took7_rate": 0.3618,
+    "delta": 0.00456,
+    "ci95": [
+     -0.00137,
+     0.01049
+    ],
+    "sig": false,
+    "contribution": 0.0006
+   }
+  },
+  "frequent_BC": {
+   "delta": 0.01426,
+   "ci": [
+    0.01149,
+    0.01702
+   ],
+   "sig": true,
+   "n": 24620
+  },
+  "rare_AD": {
+   "delta": -0.00363,
+   "ci": [
+    -0.00795,
+    0.00068
+   ],
+   "sig": false,
+   "n": 8810
+  },
+  "LETTER_BALANCED_macro_over_gold_letters": {
+   "delta": 0.00534,
+   "ci": [
+    0.00276,
+    0.00793
+   ],
+   "sig": true
+  },
+  "inside_override_set": {
+   "n": 13378,
+   "acc_7B": 0.73352,
+   "acc_32B": 0.70967,
+   "acc_gap": 0.02385,
+   "marginal_only_acc_7B": 0.31641,
+   "marginal_only_acc_32B": 0.30835,
+   "marginal_only_gap": 0.00807,
+   "share_of_gap_explained_by_letter_marginal": 0.3383
+  },
+  "permutation_null_letter_composition_fixed": {
+   "observed": 0.00954,
+   "null_mean": -0.00316,
+   "null_sd": 0.0013,
+   "null_max": 0.00165,
+   "z": 9.7777,
+   "p_one_sided": 0.0001,
+   "nperm": 10000
+  }
+ },
+ "E1_fusion_arm": {
+  "arm": "F3 confidence-advantage fusion (accuracy-max+ MCQ)",
+  "overall": {
+   "delta": 0.01349,
+   "ci": [
+    0.01002,
+    0.01699
+   ],
+   "sig": true,
+   "n": 33430
+  },
+  "override_rate": 0.155,
+  "per_gold_letter": {
+   "A": {
+    "n": 4423,
+    "share": 0.1323,
+    "acc_7B": 0.42641,
+    "acc_32B": 0.48587,
+    "acc_arm": 0.44088,
+    "took7_rate": 0.1718,
+    "delta": -0.04499,
+    "ci95": [
+     -0.05471,
+     -0.03482
+    ],
+    "sig": true,
+    "contribution": -0.00595
+   },
+   "B": {
+    "n": 11984,
+    "share": 0.3585,
+    "acc_7B": 0.59454,
+    "acc_32B": 0.59479,
+    "acc_arm": 0.61674,
+    "took7_rate": 0.1471,
+    "delta": 0.02195,
+    "ci95": [
+     0.01619,
+     0.02762
+    ],
+    "sig": true,
+    "contribution": 0.00787
+   },
+   "C": {
+    "n": 12636,
+    "share": 0.378,
+    "acc_7B": 0.56695,
+    "acc_32B": 0.56394,
+    "acc_arm": 0.58729,
+    "took7_rate": 0.1504,
+    "delta": 0.02335,
+    "ci95": [
+     0.01788,
+     0.02896
+    ],
+    "sig": true,
+    "contribution": 0.00882
+   },
+   "D": {
+    "n": 4387,
+    "share": 0.1312,
+    "acc_7B": 0.44814,
+    "acc_32B": 0.46569,
+    "acc_arm": 0.48667,
+    "took7_rate": 0.1726,
+    "delta": 0.02097,
+    "ci95": [
+     0.01185,
+     0.03032
+    ],
+    "sig": true,
+    "contribution": 0.00275
+   }
+  },
+  "frequent_BC": {
+   "delta": 0.02266,
+   "ci": [
+    0.01872,
+    0.02665
+   ],
+   "sig": true,
+   "n": 24620
+  },
+  "rare_AD": {
+   "delta": -0.01215,
+   "ci": [
+    -0.01873,
+    -0.00545
+   ],
+   "sig": true,
+   "n": 8810
+  },
+  "LETTER_BALANCED_macro_over_gold_letters": {
+   "delta": 0.00532,
+   "ci": [
+    0.00132,
+    0.00937
+   ],
+   "sig": true
+  },
+  "inside_override_set": {
+   "n": 5180,
+   "acc_7B": 0.38919,
+   "acc_32B": 0.30212,
+   "acc_gap": 0.08707,
+   "marginal_only_acc_7B": 0.28131,
+   "marginal_only_acc_32B": 0.24758,
+   "marginal_only_gap": 0.03374,
+   "share_of_gap_explained_by_letter_marginal": 0.3875
+  },
+  "permutation_null_letter_composition_fixed": {
+   "observed": 0.01349,
+   "null_mean": -0.00158,
+   "null_sd": 0.00095,
+   "null_max": 0.00242,
+   "z": 15.788,
+   "p_one_sided": 0.0001,
+   "nperm": 10000
+  }
+ },
+ "E2_macro_consequence": {
+  "MCQ-only certified veto": {
+   "published_macro_delta": 0.00119,
+   "published_macro_ci": [
+    0.0009,
+    0.00148
+   ],
+   "published_source": "results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json",
+   "structure": "byte-identical to always-32B-direct on 7 of 8 cells => macro delta == (PMC cell delta)/8 exactly",
+   "pmc_cell_delta_as_published": {
+    "delta": 0.00954,
+    "ci": [
+     0.00715,
+     0.01188
+    ],
+    "sig": true,
+    "n": 33430
+   },
+   "macro_delta_recomputed_as_pmc_over_8": {
+    "delta": 0.00119,
+    "ci": [
+     0.00089,
+     0.00148
+    ],
+    "sig": true,
+    "n": 33430
+   },
+   "SENSITIVITY_macro_delta_with_letter_balanced_PMC": {
+    "delta": 0.00067,
+    "ci": [
+     0.00035,
+     0.00099
+    ],
+    "sig": true
+   },
+   "interpretation": "The SENSITIVITY row is NOT a re-definition of the benchmark. It answers: how much of this macro win would remain if test_2.csv's gold-letter marginal were uniform instead of B+C=73.65%?"
+  },
+  "MCQ-only fusion": {
+   "published_macro_delta": 0.00169,
+   "published_macro_ci": [
+    0.00126,
+    0.00212
+   ],
+   "published_source": "results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json",
+   "structure": "byte-identical to always-32B-direct on 7 of 8 cells => macro delta == (PMC cell delta)/8 exactly",
+   "pmc_cell_delta_as_published": {
+    "delta": 0.01349,
+    "ci": [
+     0.01002,
+     0.01699
+    ],
+    "sig": true,
+    "n": 33430
+   },
+   "macro_delta_recomputed_as_pmc_over_8": {
+    "delta": 0.00169,
+    "ci": [
+     0.00125,
+     0.00212
+    ],
+    "sig": true,
+    "n": 33430
+   },
+   "SENSITIVITY_macro_delta_with_letter_balanced_PMC": {
+    "delta": 0.00066,
+    "ci": [
+     0.00016,
+     0.00117
+    ],
+    "sig": true
+   },
+   "interpretation": "The SENSITIVITY row is NOT a re-definition of the benchmark. It answers: how much of this macro win would remain if test_2.csv's gold-letter marginal were uniform instead of B+C=73.65%?"
+  }
+ },
+ "E3_E4_question_blind_baselines_other_cells": {
+  "VQA_RAD": {
+   "n_train": 1793,
+   "n_test": 451,
+   "n_test_closed_yesno": 251,
+   "frac_test_questions_seen_verbatim_in_train": 0.2151,
+   "QUESTION_BLIND_train_modal_answer_accuracy": 0.5458,
+   "majority_class_floor": 0.5299,
+   "majority_class": "no",
+   "global_train_modal_answer": "no"
+  },
+  "PATH_VQA": {
+   "n_train": 19654,
+   "n_test": 6719,
+   "n_test_closed_yesno": 3362,
+   "frac_test_questions_seen_verbatim_in_train": 0.5586,
+   "QUESTION_BLIND_train_modal_answer_accuracy": 0.6814,
+   "majority_class_floor": 0.5402,
+   "majority_class": "yes",
+   "global_train_modal_answer": "yes"
+  },
+  "SLAKE": {
+   "n_train": 9835,
+   "n_test": 2094,
+   "n_test_closed": 836,
+   "frac_test_questions_seen_verbatim_in_train": 0.9462,
+   "QUESTION_BLIND_train_modal_answer_accuracy": 0.64,
+   "majority_class_floor": 0.2153,
+   "majority_class": "no",
+   "global_train_modal_answer": "yes",
+   "E4_language_composition_of_closed_cell": {
+    "en": 0.4976,
+    "zh": 0.5024
+   },
+   "E4_note": "MedEvalKit evaluates BOTH SLAKE languages (no language filter in the loader), so SLAKE_closed as this project reports it is bilingual."
+  }
+ },
+ "RETRACTED_CONTROL": {
+  "which": "T6_gain_by_7B_predicted_letter.macro_over_gold_x_pred_cells and T8...stratified_by_gold_x_7Bpred in pmcvqa_answer_bias_audit_2026-08-11.json",
+  "values_not_to_be_cited": {
+   "macro_over_gold_x_pred": -0.01725,
+   "permutation_z": -20.835
+  },
+  "why": "gold == 7B-predicted-letter is EXACTLY the event 'the 7B is correct'. Stratifying or permuting within the (gold x pred) joint therefore conditions on the outcome being measured: it forces equal weight on the 4 diagonal (7B-correct) cells and the 12 off-diagonal (7B-wrong) cells, a 4:12 reweighting of a 54:46 population. Both numbers are artefacts of that conditioning and are formally invalid as controls. The VALID controls are the gold-letter-only stratification and the gold-letter-only permutation null, both of which are reported and both of which SUPPORT the arm."
+ },
+ "E5_post_stratified_onto_other_split_marginals": {
+  "what": "Post-stratify the SAME 33,430 items onto a different gold-letter marginal and re-read the PMC cell delta, and the MCQ-only macro delta (= cell delta / 8, since the policy is byte-identical to always-32B-direct on the other 7 cells).",
+  "target_marginals": {
+   "test_2.csv own marginal (= the published number; identity check)": {
+    "A": 0.1323,
+    "B": 0.3585,
+    "C": 0.378,
+    "D": 0.1312
+   },
+   "test_clean.csv v1 HUMAN-VERIFIED marginal": {
+    "A": 0.2185,
+    "B": 0.319,
+    "C": 0.305,
+    "D": 0.1575
+   },
+   "test.csv v1 full-test marginal": {
+    "A": 0.2239,
+    "B": 0.3171,
+    "C": 0.305,
+    "D": 0.154
+   },
+   "uniform (the letter-balanced control)": {
+    "A": 0.25,
+    "B": 0.25,
+    "C": 0.25,
+    "D": 0.25
+   }
+  },
+  "source_row_counts": {
+   "test_2.csv own marginal (= the published number; identity check)": 33430,
+   "test_clean.csv v1 HUMAN-VERIFIED marginal": 2000,
+   "test.csv v1 full-test marginal": 49990,
+   "uniform (the letter-balanced control)": null
+  },
+  "arms": {
+   "certified veto (F8)": {
+    "test_2.csv own marginal (= the published number; identity check)": {
+     "pmc_cell_delta": {
+      "delta": 0.00954,
+      "ci": [
+       0.00721,
+       0.01191
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00119,
+      "ci": [
+       0.0009,
+       0.00149
+      ],
+      "sig": true
+     }
+    },
+    "test_clean.csv v1 HUMAN-VERIFIED marginal": {
+     "pmc_cell_delta": {
+      "delta": 0.00706,
+      "ci": [
+       0.00463,
+       0.00947
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00088,
+      "ci": [
+       0.00058,
+       0.00118
+      ],
+      "sig": true
+     }
+    },
+    "test.csv v1 full-test marginal": {
+     "pmc_cell_delta": {
+      "delta": 0.00696,
+      "ci": [
+       0.00452,
+       0.00937
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00087,
+      "ci": [
+       0.00057,
+       0.00117
+      ],
+      "sig": true
+     }
+    },
+    "uniform (the letter-balanced control)": {
+     "pmc_cell_delta": {
+      "delta": 0.00534,
+      "ci": [
+       0.00276,
+       0.00793
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00067,
+      "ci": [
+       0.00035,
+       0.00099
+      ],
+      "sig": true
+     }
+    }
+   },
+   "F3 confidence-advantage fusion": {
+    "test_2.csv own marginal (= the published number; identity check)": {
+     "pmc_cell_delta": {
+      "delta": 0.01349,
+      "ci": [
+       0.00999,
+       0.01702
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00169,
+      "ci": [
+       0.00125,
+       0.00213
+      ],
+      "sig": true
+     }
+    },
+    "test_clean.csv v1 HUMAN-VERIFIED marginal": {
+     "pmc_cell_delta": {
+      "delta": 0.00759,
+      "ci": [
+       0.00392,
+       0.01131
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00095,
+      "ci": [
+       0.00049,
+       0.00141
+      ],
+      "sig": true
+     }
+    },
+    "test.csv v1 full-test marginal": {
+     "pmc_cell_delta": {
+      "delta": 0.00724,
+      "ci": [
+       0.00356,
+       0.01097
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.0009,
+      "ci": [
+       0.00045,
+       0.00137
+      ],
+      "sig": true
+     }
+    },
+    "uniform (the letter-balanced control)": {
+     "pmc_cell_delta": {
+      "delta": 0.00532,
+      "ci": [
+       0.00132,
+       0.00937
+      ],
+      "sig": true
+     },
+     "mcq_only_macro_delta": {
+      "delta": 0.00066,
+      "ci": [
+       0.00016,
+       0.00117
+      ],
+      "sig": true
+     }
+    }
+   }
+  },
+  "reading": "The first row must reproduce the published cell delta (identity check on the post-stratifier: reweighting onto a split's own marginal is the identity). The second row is the operationally meaningful counterfactual: what the gain would be on a split carrying the HUMAN-VERIFIED v1 answer-position profile rather than the training-split profile test_2.csv actually carries."
+ }
+}

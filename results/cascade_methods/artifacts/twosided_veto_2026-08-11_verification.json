@@ -1,0 +1,296 @@
+{
+ "title": "ATTACK C verification, overfitting-gap diagnosis, and verdict reconciliation",
+ "date": "2026-08-12",
+ "reproduce": "python3 src/cascade_methods/twosided_veto_verify.py",
+ "verifies": "results/cascade_methods/artifacts/twosided_veto_2026-08-11.json",
+ "main_artifact_is_modified": false,
+ "no_gpu": true,
+ "no_new_inference": true,
+ "sources": {
+  "canonical_vectors": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz",
+  "published_bar": "results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json (arm disjoint)",
+  "attack_c": "results/cascade_methods/artifacts/twosided_veto_2026-08-11.json"
+ },
+ "convention": "MACRO, equal weight per reporting cell, Variant B (MMMU excluded), 8 cells, 1/8 each, n=42,224; CLEAN disjoint open-text verifier",
+ "part1_independent_input_verification": {
+  "per_cell": {
+   "PMC_VQA": {
+    "n": 33430,
+    "always_7b": 0.5427,
+    "always_32b_direct": 0.5518,
+    "shipped_accuracy_max": 0.5613,
+    "p10_rederived": 0.114328,
+    "p10_in_artifact": 0.1143,
+    "abs_dev": 2.845e-05
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "always_7b": 0.8254,
+    "always_32b_direct": 0.8589,
+    "shipped_accuracy_max": 0.8589,
+    "p10_rederived": 0.049043,
+    "p10_in_artifact": 0.049,
+    "abs_dev": 4.306e-05
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "always_7b": 0.7809,
+    "always_32b_direct": 0.8526,
+    "shipped_accuracy_max": 0.8526,
+    "p10_rederived": 0.035857,
+    "p10_in_artifact": 0.0359,
+    "abs_dev": 4.343e-05
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "always_7b": 0.8409,
+    "always_32b_direct": 0.8891,
+    "shipped_accuracy_max": 0.8891,
+    "p10_rederived": 0.041344,
+    "p10_in_artifact": 0.0413,
+    "abs_dev": 4.444e-05
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "always_7b": 0.2615,
+    "always_32b_direct": 0.3065,
+    "shipped_accuracy_max": 0.3065,
+    "p10_rederived": 0.116,
+    "p10_in_artifact": 0.116,
+    "abs_dev": 0.0
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "always_7b": 0.7364,
+    "always_32b_direct": 0.8186,
+    "shipped_accuracy_max": 0.8171,
+    "p10_rederived": 0.046512,
+    "p10_in_artifact": 0.0465,
+    "abs_dev": 1.163e-05
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "always_7b": 0.465,
+    "always_32b_direct": 0.6,
+    "shipped_accuracy_max": 0.59,
+    "p10_rederived": 0.05,
+    "p10_in_artifact": 0.05,
+    "abs_dev": 0.0
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "always_7b": 0.324,
+    "always_32b_direct": 0.376,
+    "shipped_accuracy_max": 0.3847,
+    "p10_rederived": 0.076,
+    "p10_in_artifact": 0.076,
+    "abs_dev": 0.0
+   }
+  },
+  "macro": {
+   "always_7b": 0.5971,
+   "always_32b_direct": 0.6567,
+   "shipped_accuracy_max": 0.6575,
+   "shipped_delta_vs_direct": 0.00083,
+   "sigma_p10": 0.5291,
+   "macro_oracle_ceiling": 0.0661
+  },
+  "null_test": {
+   "what": "this script's re-derivation from vec_disjoint.npz vs the 2026-08-11 artifact and the briefed published bar",
+   "max_abs_deviation_p10_percell": 4.444e-05,
+   "macro_baselines_match_brief": {
+    "always_7b": true,
+    "always_32b_direct": true,
+    "shipped_accuracy_max": true,
+    "macro_oracle_ceiling": true
+   },
+   "shipped_delta_rederived": 0.00083,
+   "shipped_delta_in_brief": 0.0008,
+   "passed": true
+  },
+  "note": "the 4 null tests INSIDE the 2026-08-11 artifact (cascade_rerun, rebuilt_vectors 84,448 items, open_text_bar sel_eff, prior_art_F5) all record max_abs_deviation 0.0 / 3.6e-07 and passed:true; this block is an INDEPENDENT check of the same inputs from the canonical vectors."
+ },
+ "part2_overfitting_gap_diagnosis": {
+  "per_cell": {
+   "PMC_VQA": {
+    "n_decisive": 7949,
+    "base_rate_pi": 0.4808,
+    "best_auroc_one_sided_7B_only": 0.5884,
+    "best_auroc_using_the_32B_side": 0.6169,
+    "two_sided_auroc_advantage": 0.0285,
+    "oracle_gain": 0.1143,
+    "insample_upper_bound_DIAGNOSTIC": 0.0223,
+    "honest_nested_gain": 0.0126,
+    "honest_nested_ci": [
+     0.0095,
+     0.0158
+    ],
+    "sig": true,
+    "leave_one_cell_out_gain": 0.002
+   },
+   "SLAKE_closed": {
+    "n_decisive": 110,
+    "base_rate_pi": 0.3727,
+    "best_auroc_one_sided_7B_only": 0.6718,
+    "best_auroc_using_the_32B_side": 0.69,
+    "two_sided_auroc_advantage": 0.0182,
+    "oracle_gain": 0.049,
+    "insample_upper_bound_DIAGNOSTIC": 0.0455,
+    "honest_nested_gain": -0.0013,
+    "honest_nested_ci": [
+     -0.0116,
+     0.0092
+    ],
+    "sig": false,
+    "leave_one_cell_out_gain": -0.006
+   },
+   "VQA_RAD_closed": {
+    "n_decisive": 36,
+    "base_rate_pi": 0.25,
+    "best_auroc_one_sided_7B_only": 0.642,
+    "best_auroc_using_the_32B_side": 0.8189,
+    "two_sided_auroc_advantage": 0.1769,
+    "oracle_gain": 0.0359,
+    "insample_upper_bound_DIAGNOSTIC": 0.008,
+    "honest_nested_gain": -0.0072,
+    "honest_nested_ci": [
+     -0.0183,
+     0.0024
+    ],
+    "sig": false,
+    "leave_one_cell_out_gain": -0.004
+   },
+   "PATH_VQA_closed": {
+    "n_decisive": 440,
+    "base_rate_pi": 0.3159,
+    "best_auroc_one_sided_7B_only": 0.5739,
+    "best_auroc_using_the_32B_side": 0.7258,
+    "two_sided_auroc_advantage": 0.1519,
+    "oracle_gain": 0.0413,
+    "insample_upper_bound_DIAGNOSTIC": 0.019,
+    "honest_nested_gain": -0.0027,
+    "honest_nested_ci": [
+     -0.0056,
+     0.0001
+    ],
+    "sig": false,
+    "leave_one_cell_out_gain": -0.0048
+   },
+   "MedXpertQA-MM": {
+    "n_decisive": 554,
+    "base_rate_pi": 0.4188,
+    "best_auroc_one_sided_7B_only": 0.4877,
+    "best_auroc_using_the_32B_side": 0.5407,
+    "two_sided_auroc_advantage": 0.053,
+    "oracle_gain": 0.116,
+    "insample_upper_bound_DIAGNOSTIC": 0.072,
+    "honest_nested_gain": -0.0036,
+    "honest_nested_ci": [
+     -0.0056,
+     -0.0016
+    ],
+    "sig": true,
+    "leave_one_cell_out_gain": -0.0125
+   },
+   "SLAKE_open": {
+    "n_decisive": 113,
+    "base_rate_pi": 0.2655,
+    "best_auroc_one_sided_7B_only": 0.5958,
+    "best_auroc_using_the_32B_side": 0.6807,
+    "two_sided_auroc_advantage": 0.0849,
+    "oracle_gain": 0.0465,
+    "insample_upper_bound_DIAGNOSTIC": 0.0372,
+    "honest_nested_gain": -0.0019,
+    "honest_nested_ci": [
+     -0.0033,
+     -0.0006
+    ],
+    "sig": true,
+    "leave_one_cell_out_gain": 0.0
+   },
+   "VQA_RAD_open": {
+    "n_decisive": 47,
+    "base_rate_pi": 0.2128,
+    "best_auroc_one_sided_7B_only": 0.627,
+    "best_auroc_using_the_32B_side": 0.7649,
+    "two_sided_auroc_advantage": 0.1379,
+    "oracle_gain": 0.05,
+    "insample_upper_bound_DIAGNOSTIC": 0.01,
+    "honest_nested_gain": -0.0015,
+    "honest_nested_ci": [
+     -0.004,
+     0.0
+    ],
+    "sig": false,
+    "leave_one_cell_out_gain": -0.025
+   },
+   "PATH_VQA_open": {
+    "n_decisive": 306,
+    "base_rate_pi": 0.3725,
+    "best_auroc_one_sided_7B_only": 0.6129,
+    "best_auroc_using_the_32B_side": 0.7098,
+    "two_sided_auroc_advantage": 0.0969,
+    "oracle_gain": 0.076,
+    "insample_upper_bound_DIAGNOSTIC": 0.0573,
+    "honest_nested_gain": 0.0263,
+    "honest_nested_ci": [
+     0.0147,
+     0.0383
+    ],
+    "sig": true,
+    "leave_one_cell_out_gain": -0.0027
+   }
+  },
+  "macro": {
+   "macro_oracle_ceiling": 0.0661,
+   "macro_insample_upper_bound_DIAGNOSTIC": 0.0339,
+   "macro_honest_nested": 0.0026,
+   "macro_leave_one_cell_out": -0.0066,
+   "conversion_honest_over_oracle_pct": 3.9,
+   "conversion_honest_over_insample_pct": 7.6,
+   "overfitting_gap_insample_over_honest": 13.1,
+   "cells_sig_positive": [
+    "PMC_VQA",
+    "PATH_VQA_open"
+   ],
+   "cells_sig_negative": [
+    "MedXpertQA-MM",
+    "SLAKE_open"
+   ],
+   "macro_contribution_of_the_2_sig_positive_cells": 0.00486,
+   "macro_contribution_of_the_other_6_cells": -0.00228,
+   "mean_two_sided_auroc_advantage": 0.0935,
+   "cells_where_two_sided_beats_one_sided_auroc": 8,
+   "reading": "The PREMISE of Attack C is CONFIRMED at the signal level: adding the 32B's own confidence profile raises the best available AUROC on 8/8 cells (mean +0.094). It does NOT convert to accuracy. Even fitting the arbiter WITH FULL EVAL VISIBILITY (in-sample, the most optimistic quantity that exists) reaches only +0.0339 macro, 51% of the +0.0661 oracle; cross-fitting honestly collapses that to +0.0026, a 13.1x overfitting gap, and removing within-cell fitting entirely (leave-one-cell-out) makes it NEGATIVE at -0.0066. The discrimination is measured on decisive-disagreement sets of 36-554 items on six of the eight cells, and it does not survive cross-fitting there."
+  }
+ },
+ "part3_verdict_reconciliation": {
+  "the_tension": "twosided_veto_2026-08-11.json records HEADLINE.beats_always_32B_direct = true AND HEADLINE.kill_criterion_met = true. The 2026-08-11 session was killed before reconciling them. This block reconciles them; it does not change any measured number.",
+  "success_criterion_as_briefed": "macro delta vs always-32B-direct with CI excluding zero at a stated cost",
+  "success_criterion_literally_met": true,
+  "kill_criterion_as_briefed": "cross-fit arbiter gain CI covers zero on >=2 of the cells where it fires",
+  "kill_criterion_met": true,
+  "cells_where_it_fires_and_its_CI_covers_zero": [
+   "SLAKE_closed",
+   "VQA_RAD_closed",
+   "PATH_VQA_closed",
+   "VQA_RAD_open"
+  ],
+  "why_the_kill_criterion_wins": [
+   "PRE-REGISTERED KILL. The kill criterion was stated in the brief BEFORE the run and it fired on 4 cells, twice the threshold of 2. A pre-registered kill that is argued past after seeing the result is not a pre-registration.",
+   "GUARDRAIL FAILS. Methodology rule 6 is 'never worse on any single cell'. Two cells are SIGNIFICANTLY worse: MedXpertQA-MM -0.0036 [-0.0056,-0.0016] and SLAKE_open -0.0019 [-0.0033,-0.0006]. These are not the small-n vqa_rad cells the standing caveat excuses; MedXpert is n=2000 and SLAKE_open n=645.",
+   "SEED FRAGILITY. Methodology rule 4: a single seed is not a result. Only 3/10 fold seeds have their own 95% lower bound above zero, and 1/10 is negative (-0.00039). The headline CI bootstraps the SEED-AVERAGED per-item gain, which removes fit-to-fit variance a deployed system actually carries; the artifact flags this itself.",
+   "BELOW THE STATED BAR. The briefed significant-win threshold is macro +0.0029; the measured +0.0026 is under it, with a lower bound of +0.0001.",
+   "DOES NOT TRANSFER. Leave-one-cell-out, the only arm with zero within-cell fitting, is -0.0066 [-0.0132,-0.0002], a SIGNIFICANT LOSS.",
+   "REDISCOVERY. PRIOR_ART in the main artifact judges Attack C 'substantially a rediscovery' of beat32b_fusion.py F3/F5, whose published outcome was already 'wins on PMC-VQA only'. This round reproduces that shape with a richer feature set."
+  ],
+  "VERDICT": "NEGATIVE -- KILLED BY ITS OWN PRE-REGISTERED CRITERION",
+  "beats_always_32B_direct_defensible": false,
+  "what_may_be_quoted": "Post-hoc two-sided arbitration converts on exactly 2 of 8 cells -- PMC_VQA +0.0126 [+0.0095,+0.0158] and PATH_VQA_open +0.0263 [+0.0147,+0.0383], both seed-stable and both surviving their sensitivity check -- and the other 6 cells give it back (-0.00228 macro), two of them significantly. The macro is +0.0026 [+0.0001,+0.0051] at 1.219x always-32B-direct FLOP-eq (macro weighting), which clears zero but fails the guardrail, fails the pre-registered kill criterion, is individually significant in only 3/10 seeds, and reverses to -0.0066 without within-cell fitting. It must NOT be reported as beating always-32B-direct.",
+  "what_must_NOT_be_quoted": [
+   "'two-sided arbitration beats always-32B-direct' -- the guardrail and the pre-registered kill criterion both say no",
+   "the in-sample upper bounds (+0.0339 macro) as anything but a DIAGNOSTIC ceiling",
+   "any macro accuracy paired with a sample-weighted cost"
+  ]
+ }
+}
