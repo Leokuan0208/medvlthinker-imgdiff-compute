@@ -189,12 +189,12 @@ Read the one that matches what you are digging into. **Note the folder split** i
 | the final method, fully specified | `docs/current/METHOD_FINAL_2026-07.md` |
 | the full results ledger (76 KB) | `docs/current/RESEARCH_RESULTS_2026-07.md` |
 | the technical walkthrough | `docs/current/TECHNICAL_REPORT_2026-07.md` |
-| the open-text baselines & master table | `docs/current/OPENTEXT_BASELINE.md`, `docs/current/OPENTEXT_MASTER_TABLE.md` |
-| load-bearing facts traced to source | `docs/current/VERIFIED_FACTS.md` |
+| the open-text baselines & master table | `docs/archive_2026-07/OPENTEXT_BASELINE.md`, `docs/archive_2026-07/OPENTEXT_MASTER_TABLE.md` |
+| load-bearing facts traced to source | `docs/archive_2026-07/VERIFIED_FACTS.md` |
 | the OmniMedVQA infra fallback | `docs/current/OMNIMED_FALLBACK.md` |
-| the running experiment log (58 KB) | `docs/current/UNIFIED_METHOD_EXPERIMENTS.md` |
-| the ACC method (historical) | `docs/current/METHOD_ACC.md` |
-| the equations / cost model | `docs/current/METHOD_MATH.md` (or `progress/progress_June_17.md` Appendix B) |
+| the running experiment log (58 KB) | `docs/archive_2026-07/UNIFIED_METHOD_EXPERIMENTS.md` |
+| the ACC method (historical) | `docs/archive_2026-07/METHOD_ACC.md` |
+| the equations / cost model | `docs/archive_2026-07/METHOD_MATH.md` (or `progress/progress_June_17.md` Appendix B) |
 | the trained free-text verifier | `docs/archive_mcq/TRAINED_VERIFIER_RESULT.md` |
 | the grounding box-verifier (SLAKE + MS-CXR) | `docs/archive_mcq/BOX_VERIFIER_RESULT.md` |
 | why training-free selection is luck-floored | `docs/archive_mcq/OPENENDED_SELECTION_LUCKFLOOR.md` |

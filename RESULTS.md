@@ -116,7 +116,7 @@ Its successor, the 3-tier compute-configuration cascade (**ACC**: 7B-nothink@cap
 32B-NOTHINK@cap320 → 32B-think@fullres), at parity with always-32B-think: **ALL-6 latency 11.34 s →
 2.27 s (−80%), FLOPs 100 → 52%, energy 6,318.8 J → 1,181.9 J (~5.3×)**; ALL-5 8.88 s → 0.44 s,
 FLOPs 100 → 25%. Canonicalized in `INCONSISTENCIES.md` X1 → `artifacts/master_data.csv`.
-Spec: `results/cascade_methods/docs/current/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
+Spec: `results/cascade_methods/docs/archive_2026-07/METHOD_ACC.md`. Reproduce: `python3 src/cascade_methods/acc.py`.
 *Honest note:* ACC's agreement gate is prior art (Agreement-Based Cascading, arXiv 2407.02348).
 
 ## Canonical benchmark names (this era)

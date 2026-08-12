@@ -170,7 +170,7 @@ Open-ended / verifier phase: `OPENENDED_CASCADE.md`, `OPENENDED_SELECTION_LUCKFL
    (40.8% of questions have no correct answer anywhere in an 8-sample pool), which is why generator work
    now outranks verifier work.
 4. **Historically, ACC** (the 3-tier compute-configuration cascade) was the MedVLThinker-era structural
-   win and is preserved in `docs/current/METHOD_ACC.md`. It is **not** the current method: on Lingshu its
+   win and is preserved in `docs/archive_2026-07/METHOD_ACC.md`. It is **not** the current method: on Lingshu its
    slow reasoning tier would fire ~0% of the time. What carried forward is the *structure* and the
    compute-configuration idea — not the gate, whose agreement rule turned out to be prior art
    (Agreement-Based Cascading, arXiv 2407.02348).
