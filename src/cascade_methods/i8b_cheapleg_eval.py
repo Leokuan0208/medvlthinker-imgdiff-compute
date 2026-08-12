@@ -47,8 +47,15 @@ L7B = ("/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/"
        "snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9")
 
 ARMS = {
-    "i8b":    {"path": I8B, "family": "internvl"},
-    "base7b": {"path": L7B, "family": "qwen2_5_vl"},
+    # DEFAULT tiling: transformers' InternVLProcessor._defaults hard-codes crop_to_patches=True,
+    # which OVERRIDES this checkpoint's own preprocessor_config.json ("crop_to_patches": false).
+    # Real medical images therefore become 12 crops + 1 thumbnail = 3,340 prompt tokens.
+    "i8b":       {"path": I8B, "family": "internvl"},
+    # The checkpoint's OWN saved setting, forced back on: 1 crop, 268 prompt tokens.  Which of the
+    # two the published model-card numbers correspond to is NOT knowable from the files, so both
+    # are measured rather than one being assumed.  ~12x cheaper per pass.
+    "i8b_1tile": {"path": I8B, "family": "internvl", "crop_to_patches": False},
+    "base7b":    {"path": L7B, "family": "qwen2_5_vl"},
 }
 
 
@@ -60,7 +67,8 @@ class HFVLM:
     generate_outputs(messages_list) and last_meta.
     """
 
-    def __init__(self, model_path, family, max_new_tokens=2048, batch_size=32, device="cuda:0"):
+    def __init__(self, model_path, family, max_new_tokens=2048, batch_size=32, device="cuda:0",
+                 crop_to_patches=None):
         import torch
         from transformers import AutoProcessor, AutoModelForImageTextToText
 
@@ -69,8 +77,16 @@ class HFVLM:
         self.device = device
         self.max_new_tokens = max_new_tokens
         self.batch_size = batch_size
+        self.crop_to_patches = crop_to_patches
 
-        self.processor = AutoProcessor.from_pretrained(model_path)
+        # use_fast=True + device=cuda is a PURE THROUGHPUT fix, not a protocol change: on 32 real
+        # PathVQA images the InternVL processor emits byte-identical output (3,340 tokens, 185
+        # patches) at 47.4 img/s on the GPU versus 0.8 img/s on the CPU -- 59x.  Measured on CPU the
+        # I-8B arm alone would have needed ~17 h of single-threaded preprocessing for the suite.
+        # BOTH arms use their own model's default fast processor on the GPU, so the two arms stay
+        # symmetric; only the comparison against the STORED vLLM run carries the difference, and
+        # that is exactly what the null test measures.
+        self.processor = AutoProcessor.from_pretrained(model_path, use_fast=True)
         self.model = AutoModelForImageTextToText.from_pretrained(
             model_path, torch_dtype=torch.bfloat16, device_map=device,
             attn_implementation="sdpa",
@@ -120,7 +136,14 @@ class HFVLM:
         kw = {"text": texts, "return_tensors": "pt", "padding": True}
         if images:
             kw["images"] = images
-        inp = self.processor(**kw)
+            kw["device"] = self.device      # resize/normalise on the GPU (see __init__ note)
+            if self.crop_to_patches is not None:
+                kw["crop_to_patches"] = self.crop_to_patches
+        try:
+            inp = self.processor(**kw)
+        except TypeError:                   # processor without a `device` kwarg
+            kw.pop("device", None)
+            inp = self.processor(**kw)
         inp = {k: (v.to(self.device) if hasattr(v, "to") else v) for k, v in inp.items()}
         if "pixel_values" in inp and hasattr(inp["pixel_values"], "to"):
             # InternVL's fast image processor returns float32; the tower is bf16.
@@ -299,7 +322,8 @@ def main():
     spec = ARMS[args.arm]
     print(f"=== arm={args.arm} path={spec['path']} family={spec['family']}", flush=True)
     model = HFVLM(spec["path"], spec["family"],
-                  max_new_tokens=args.max_new_tokens, batch_size=args.batch_size)
+                  max_new_tokens=args.max_new_tokens, batch_size=args.batch_size,
+                  crop_to_patches=spec.get("crop_to_patches"))
 
     out_root = os.path.join(REPO, args.out_root, args.arm)
     os.makedirs(out_root, exist_ok=True)

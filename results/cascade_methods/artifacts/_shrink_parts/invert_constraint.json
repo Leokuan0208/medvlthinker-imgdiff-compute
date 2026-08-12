@@ -1,0 +1,1025 @@
+{
+ "title": "ATTACK 3 part 3 -- INVERTING the non-inferiority constraint: what accuracy must a strong leg of a given size reach to hold the tie against always-32B-direct?",
+ "date": "2026-08-12",
+ "cpu_only": true,
+ "objective": "MINIMISE macro FLOP-eq SUBJECT TO paired-bootstrap CI lower bound of (policy - always-32B-direct) on the 8-cell macro >= -0.0029",
+ "margin_eps": -0.0029,
+ "nboot": 10000,
+ "seed": 20260812,
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1",
+  "tf32": "not applicable -- pure numpy on stored 0/1 vectors",
+  "bootstrap": "paired item-level, ONE shared resample stream reused by every candidate and the baseline"
+ },
+ "sources": {
+  "per_item_vectors": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz",
+  "published": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json",
+  "footprint": "/home/jamesyang/medvlthinker-imgdiff-compute/results/cascade_methods/artifacts/_shrink_parts/footprint.json"
+ },
+ "null_test": {
+  "per_arm": {
+   "always_7b": {
+    "recomputed": 0.597087,
+    "published": 0.5971,
+    "abs_dev": 1.321e-05
+   },
+   "always_32b_direct": {
+    "recomputed": 0.656672,
+    "published": 0.6567,
+    "abs_dev": 2.751e-05
+   },
+   "always_32b_reasoning": {
+    "recomputed": 0.597435,
+    "published": 0.5974,
+    "abs_dev": 3.513e-05
+   },
+   "oracle_mode_32b": {
+    "recomputed": 0.657271,
+    "published": 0.6573,
+    "abs_dev": 2.942e-05
+   },
+   "method_compute_lean": {
+    "recomputed": 0.644277,
+    "published": 0.6443,
+    "abs_dev": 2.287e-05
+   },
+   "method_accuracy_max_veto": {
+    "recomputed": 0.657505,
+    "published": 0.6575,
+    "abs_dev": 4.82e-06
+   },
+   "method_accuracy_max_fusion": {
+    "recomputed": 0.650336,
+    "published": 0.6503,
+    "abs_dev": 3.56e-05
+   }
+  },
+  "max_abs_dev": 3.56e-05,
+  "verdict": "PASS",
+  "note": "recomputed 8-cell macro vs the published disjoint arm; deviation is the published file's 4-dp rounding"
+ },
+ "published_tie_reproduced": {
+  "arm": "method_accuracy_max_veto",
+  "delta": 0.00084,
+  "point_delta": 0.000832,
+  "lo": -0.002333,
+  "hi": 0.003677,
+  "published": "+0.0008 [-0.0022,+0.0037] TIE"
+ },
+ "baseline": {
+  "always_32b_direct_macro": 0.656672,
+  "R32": 3.816
+ },
+ "L2_requirement_curve": {
+  "family": "M(lambda): keep the measured 7B outcome, recover a fraction lambda of the items always-32B-direct FIXES over the 7B, and lose the same fraction of the items it BREAKS.  lambda=0 and lambda=1 are the two MEASURED arms exactly (asserted).  0<lambda<1 is a SIMULATED interpolation of measured per-item outcomes -- it is a requirement curve, NOT a measurement of any real model.",
+  "endpoint_identity": {
+   "lam0_family": 0.597087,
+   "lam0_measured_always_7b": 0.597087,
+   "lam1_family": 0.656672,
+   "lam1_measured_always_32b_direct": 0.656672
+  },
+  "grid": [
+   {
+    "lam": 0.0,
+    "macro": 0.597087,
+    "delta": -0.059586,
+    "lo": -0.071565,
+    "hi": -0.047752,
+    "passes": false
+   },
+   {
+    "lam": 0.02,
+    "macro": 0.59877,
+    "delta": -0.057902,
+    "lo": -0.069862,
+    "hi": -0.046369,
+    "passes": false
+   },
+   {
+    "lam": 0.04,
+    "macro": 0.599515,
+    "delta": -0.057158,
+    "lo": -0.069083,
+    "hi": -0.045667,
+    "passes": false
+   },
+   {
+    "lam": 0.06,
+    "macro": 0.600262,
+    "delta": -0.05641,
+    "lo": -0.068171,
+    "hi": -0.045157,
+    "passes": false
+   },
+   {
+    "lam": 0.08,
+    "macro": 0.601763,
+    "delta": -0.05491,
+    "lo": -0.066637,
+    "hi": -0.043634,
+    "passes": false
+   },
+   {
+    "lam": 0.1,
+    "macro": 0.603315,
+    "delta": -0.053357,
+    "lo": -0.064925,
+    "hi": -0.042088,
+    "passes": false
+   },
+   {
+    "lam": 0.12,
+    "macro": 0.603848,
+    "delta": -0.052825,
+    "lo": -0.064312,
+    "hi": -0.041608,
+    "passes": false
+   },
+   {
+    "lam": 0.14,
+    "macro": 0.605974,
+    "delta": -0.050698,
+    "lo": -0.062061,
+    "hi": -0.039552,
+    "passes": false
+   },
+   {
+    "lam": 0.16,
+    "macro": 0.606396,
+    "delta": -0.050276,
+    "lo": -0.061434,
+    "hi": -0.039404,
+    "passes": false
+   },
+   {
+    "lam": 0.18,
+    "macro": 0.607842,
+    "delta": -0.048831,
+    "lo": -0.059809,
+    "hi": -0.038116,
+    "passes": false
+   },
+   {
+    "lam": 0.2,
+    "macro": 0.608528,
+    "delta": -0.048145,
+    "lo": -0.059051,
+    "hi": -0.037464,
+    "passes": false
+   },
+   {
+    "lam": 0.22,
+    "macro": 0.610076,
+    "delta": -0.046596,
+    "lo": -0.0574,
+    "hi": -0.036151,
+    "passes": false
+   },
+   {
+    "lam": 0.24,
+    "macro": 0.611639,
+    "delta": -0.045034,
+    "lo": -0.055694,
+    "hi": -0.034578,
+    "passes": false
+   },
+   {
+    "lam": 0.26,
+    "macro": 0.612735,
+    "delta": -0.043937,
+    "lo": -0.054596,
+    "hi": -0.033707,
+    "passes": false
+   },
+   {
+    "lam": 0.28,
+    "macro": 0.613445,
+    "delta": -0.043227,
+    "lo": -0.053646,
+    "hi": -0.033122,
+    "passes": false
+   },
+   {
+    "lam": 0.3,
+    "macro": 0.614836,
+    "delta": -0.041837,
+    "lo": -0.05218,
+    "hi": -0.031864,
+    "passes": false
+   },
+   {
+    "lam": 0.32,
+    "macro": 0.616536,
+    "delta": -0.040137,
+    "lo": -0.050349,
+    "hi": -0.03039,
+    "passes": false
+   },
+   {
+    "lam": 0.34,
+    "macro": 0.617634,
+    "delta": -0.039038,
+    "lo": -0.049174,
+    "hi": -0.0294,
+    "passes": false
+   },
+   {
+    "lam": 0.36,
+    "macro": 0.618276,
+    "delta": -0.038396,
+    "lo": -0.048371,
+    "hi": -0.0289,
+    "passes": false
+   },
+   {
+    "lam": 0.38,
+    "macro": 0.619715,
+    "delta": -0.036958,
+    "lo": -0.046768,
+    "hi": -0.027669,
+    "passes": false
+   },
+   {
+    "lam": 0.4,
+    "macro": 0.620981,
+    "delta": -0.035692,
+    "lo": -0.045063,
+    "hi": -0.026537,
+    "passes": false
+   },
+   {
+    "lam": 0.42,
+    "macro": 0.622263,
+    "delta": -0.03441,
+    "lo": -0.043903,
+    "hi": -0.02537,
+    "passes": false
+   },
+   {
+    "lam": 0.44,
+    "macro": 0.62349,
+    "delta": -0.033182,
+    "lo": -0.042478,
+    "hi": -0.02417,
+    "passes": false
+   },
+   {
+    "lam": 0.46,
+    "macro": 0.624003,
+    "delta": -0.032669,
+    "lo": -0.041725,
+    "hi": -0.023782,
+    "passes": false
+   },
+   {
+    "lam": 0.48,
+    "macro": 0.625919,
+    "delta": -0.030754,
+    "lo": -0.039616,
+    "hi": -0.022108,
+    "passes": false
+   },
+   {
+    "lam": 0.5,
+    "macro": 0.627127,
+    "delta": -0.029546,
+    "lo": -0.038358,
+    "hi": -0.021099,
+    "passes": false
+   },
+   {
+    "lam": 0.52,
+    "macro": 0.627841,
+    "delta": -0.028832,
+    "lo": -0.037424,
+    "hi": -0.020489,
+    "passes": false
+   },
+   {
+    "lam": 0.54,
+    "macro": 0.629756,
+    "delta": -0.026916,
+    "lo": -0.035421,
+    "hi": -0.018773,
+    "passes": false
+   },
+   {
+    "lam": 0.56,
+    "macro": 0.630269,
+    "delta": -0.026404,
+    "lo": -0.034547,
+    "hi": -0.018385,
+    "passes": false
+   },
+   {
+    "lam": 0.58,
+    "macro": 0.631497,
+    "delta": -0.025176,
+    "lo": -0.033251,
+    "hi": -0.017248,
+    "passes": false
+   },
+   {
+    "lam": 0.6,
+    "macro": 0.632778,
+    "delta": -0.023894,
+    "lo": -0.031795,
+    "hi": -0.016151,
+    "passes": false
+   },
+   {
+    "lam": 0.62,
+    "macro": 0.634045,
+    "delta": -0.022628,
+    "lo": -0.030389,
+    "hi": -0.015229,
+    "passes": false
+   },
+   {
+    "lam": 0.64,
+    "macro": 0.635483,
+    "delta": -0.02119,
+    "lo": -0.028776,
+    "hi": -0.014002,
+    "passes": false
+   },
+   {
+    "lam": 0.66,
+    "macro": 0.636125,
+    "delta": -0.020548,
+    "lo": -0.028004,
+    "hi": -0.013561,
+    "passes": false
+   },
+   {
+    "lam": 0.68,
+    "macro": 0.637224,
+    "delta": -0.019449,
+    "lo": -0.0267,
+    "hi": -0.012701,
+    "passes": false
+   },
+   {
+    "lam": 0.7,
+    "macro": 0.638924,
+    "delta": -0.017749,
+    "lo": -0.024709,
+    "hi": -0.011239,
+    "passes": false
+   },
+   {
+    "lam": 0.72,
+    "macro": 0.640314,
+    "delta": -0.016359,
+    "lo": -0.023137,
+    "hi": -0.010083,
+    "passes": false
+   },
+   {
+    "lam": 0.74,
+    "macro": 0.641024,
+    "delta": -0.015648,
+    "lo": -0.022114,
+    "hi": -0.009615,
+    "passes": false
+   },
+   {
+    "lam": 0.76,
+    "macro": 0.642121,
+    "delta": -0.014552,
+    "lo": -0.02061,
+    "hi": -0.00881,
+    "passes": false
+   },
+   {
+    "lam": 0.78,
+    "macro": 0.643683,
+    "delta": -0.012989,
+    "lo": -0.018794,
+    "hi": -0.007365,
+    "passes": false
+   },
+   {
+    "lam": 0.8,
+    "macro": 0.645232,
+    "delta": -0.011441,
+    "lo": -0.017025,
+    "hi": -0.006097,
+    "passes": false
+   },
+   {
+    "lam": 0.82,
+    "macro": 0.645917,
+    "delta": -0.010755,
+    "lo": -0.016275,
+    "hi": -0.005519,
+    "passes": false
+   },
+   {
+    "lam": 0.84,
+    "macro": 0.647363,
+    "delta": -0.009309,
+    "lo": -0.014342,
+    "hi": -0.004582,
+    "passes": false
+   },
+   {
+    "lam": 0.86,
+    "macro": 0.647785,
+    "delta": -0.008888,
+    "lo": -0.013529,
+    "hi": -0.004565,
+    "passes": false
+   },
+   {
+    "lam": 0.88,
+    "macro": 0.649912,
+    "delta": -0.006761,
+    "lo": -0.010939,
+    "hi": -0.00275,
+    "passes": false
+   },
+   {
+    "lam": 0.9,
+    "macro": 0.650444,
+    "delta": -0.006229,
+    "lo": -0.010362,
+    "hi": -0.002361,
+    "passes": false
+   },
+   {
+    "lam": 0.92,
+    "macro": 0.651996,
+    "delta": -0.004676,
+    "lo": -0.008323,
+    "hi": -0.001269,
+    "passes": false
+   },
+   {
+    "lam": 0.94,
+    "macro": 0.653497,
+    "delta": -0.003175,
+    "lo": -0.006434,
+    "hi": -8.8e-05,
+    "passes": false
+   },
+   {
+    "lam": 0.96,
+    "macro": 0.654244,
+    "delta": -0.002428,
+    "lo": -0.004685,
+    "hi": -0.000572,
+    "passes": false
+   },
+   {
+    "lam": 0.98,
+    "macro": 0.654989,
+    "delta": -0.001684,
+    "lo": -0.003755,
+    "hi": -5.4e-05,
+    "passes": false
+   },
+   {
+    "lam": 1.0,
+    "macro": 0.656672,
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "passes": true
+   }
+  ],
+  "fine_grid": [
+   {
+    "lam": 0.98,
+    "macro": 0.654989,
+    "delta": -0.001684,
+    "lo": -0.003755,
+    "hi": -5.4e-05,
+    "passes": false
+   },
+   {
+    "lam": 0.982,
+    "macro": 0.655746,
+    "delta": -0.000926,
+    "lo": -0.002651,
+    "hi": 0.000374,
+    "passes": true
+   },
+   {
+    "lam": 0.984,
+    "macro": 0.655578,
+    "delta": -0.001095,
+    "lo": -0.002808,
+    "hi": 0.000135,
+    "passes": true
+   },
+   {
+    "lam": 0.986,
+    "macro": 0.655556,
+    "delta": -0.001116,
+    "lo": -0.00281,
+    "hi": 9.9e-05,
+    "passes": true
+   },
+   {
+    "lam": 0.988,
+    "macro": 0.656094,
+    "delta": -0.000578,
+    "lo": -0.001282,
+    "hi": 5.7e-05,
+    "passes": true
+   },
+   {
+    "lam": 0.99,
+    "macro": 0.656098,
+    "delta": -0.000575,
+    "lo": -0.001263,
+    "hi": 1.8e-05,
+    "passes": true
+   },
+   {
+    "lam": 0.992,
+    "macro": 0.656139,
+    "delta": -0.000534,
+    "lo": -0.001215,
+    "hi": 6.1e-05,
+    "passes": true
+   },
+   {
+    "lam": 0.994,
+    "macro": 0.656565,
+    "delta": -0.000107,
+    "lo": -0.000451,
+    "hi": 0.000232,
+    "passes": true
+   },
+   {
+    "lam": 0.996,
+    "macro": 0.656582,
+    "delta": -9.1e-05,
+    "lo": -0.000373,
+    "hi": 0.000157,
+    "passes": true
+   },
+   {
+    "lam": 0.998,
+    "macro": 0.656573,
+    "delta": -0.0001,
+    "lo": -0.000266,
+    "hi": 1.5e-05,
+    "passes": true
+   },
+   {
+    "lam": 1.0,
+    "macro": 0.656672,
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "passes": true
+   }
+  ],
+  "lambda_star": 0.982,
+  "at_lambda_star": {
+   "lam": 0.982,
+   "macro": 0.655746,
+   "delta": -0.000926,
+   "lo": -0.002651,
+   "hi": 0.000374,
+   "passes": true
+  }
+ },
+ "L2b_error_correlation_bracket": {
+  "bar": {
+   "correlated_bar": 0.655746,
+   "correlated_note": "M(lambda*) -- a candidate whose errors are a SUBSET of the measured 7B/32B disagreement, i.e. maximally correlated with the baseline. This is the EASIEST case and therefore the LOWER bound on the requirement.",
+   "independent_bar": 0.671046,
+   "independent_seed_robustness": {
+    "n_seeds": 12,
+    "bars": [
+     0.671594,
+     0.671509,
+     null,
+     0.671229,
+     0.671046,
+     0.670577,
+     null,
+     0.670646,
+     0.670977,
+     null,
+     0.670798,
+     0.671343
+    ],
+    "median": 0.671046,
+    "min": 0.670577,
+    "max": 0.671594,
+    "spread": 0.001017,
+    "note": "the independent bar is a MEDIAN over 12 seeds; the spread is reported because the family is drawn, not measured"
+   },
+   "independent_note": "a candidate erring independently of the 32B at the same per-cell accuracy. Wider paired CI => needs MORE accuracy. UPPER bound.",
+   "bracket": [
+    0.655746,
+    0.671046
+   ],
+   "headline": "To hold the tie deployed ALONE, a replacement strong leg needs an 8-cell macro of at least 0.6557 (errors correlated with the 32B) and up to 0.6710 (errors independent of it), against the baseline's 0.6567 -- i.e. it must land within -0.0144-0.0009 macro of always-32B-direct."
+  },
+  "independent_sweep_seed0": [
+   {
+    "target": 0.636672,
+    "macro": 0.637785,
+    "delta": -0.018887,
+    "lo": -0.035905,
+    "hi": -0.002146,
+    "passes": false
+   },
+   {
+    "target": 0.637672,
+    "macro": 0.638664,
+    "delta": -0.018008,
+    "lo": -0.035061,
+    "hi": -0.00116,
+    "passes": false
+   },
+   {
+    "target": 0.638672,
+    "macro": 0.640037,
+    "delta": -0.016635,
+    "lo": -0.033506,
+    "hi": 4.7e-05,
+    "passes": false
+   },
+   {
+    "target": 0.639672,
+    "macro": 0.640909,
+    "delta": -0.015764,
+    "lo": -0.032501,
+    "hi": 0.000904,
+    "passes": false
+   },
+   {
+    "target": 0.640672,
+    "macro": 0.641576,
+    "delta": -0.015096,
+    "lo": -0.03189,
+    "hi": 0.001634,
+    "passes": false
+   },
+   {
+    "target": 0.641672,
+    "macro": 0.641981,
+    "delta": -0.014692,
+    "lo": -0.031473,
+    "hi": 0.002026,
+    "passes": false
+   },
+   {
+    "target": 0.642672,
+    "macro": 0.644699,
+    "delta": -0.011974,
+    "lo": -0.02879,
+    "hi": 0.004825,
+    "passes": false
+   },
+   {
+    "target": 0.643672,
+    "macro": 0.645468,
+    "delta": -0.011205,
+    "lo": -0.02809,
+    "hi": 0.005616,
+    "passes": false
+   },
+   {
+    "target": 0.644672,
+    "macro": 0.645858,
+    "delta": -0.010815,
+    "lo": -0.027693,
+    "hi": 0.006004,
+    "passes": false
+   },
+   {
+    "target": 0.645672,
+    "macro": 0.646652,
+    "delta": -0.01002,
+    "lo": -0.026782,
+    "hi": 0.006789,
+    "passes": false
+   },
+   {
+    "target": 0.646672,
+    "macro": 0.647181,
+    "delta": -0.009492,
+    "lo": -0.026326,
+    "hi": 0.007309,
+    "passes": false
+   },
+   {
+    "target": 0.647672,
+    "macro": 0.648364,
+    "delta": -0.008308,
+    "lo": -0.025091,
+    "hi": 0.008459,
+    "passes": false
+   },
+   {
+    "target": 0.648672,
+    "macro": 0.648822,
+    "delta": -0.007851,
+    "lo": -0.024713,
+    "hi": 0.008929,
+    "passes": false
+   },
+   {
+    "target": 0.649672,
+    "macro": 0.649513,
+    "delta": -0.007159,
+    "lo": -0.024092,
+    "hi": 0.00963,
+    "passes": false
+   },
+   {
+    "target": 0.650672,
+    "macro": 0.650289,
+    "delta": -0.006384,
+    "lo": -0.022973,
+    "hi": 0.010332,
+    "passes": false
+   },
+   {
+    "target": 0.651672,
+    "macro": 0.6515,
+    "delta": -0.005173,
+    "lo": -0.021782,
+    "hi": 0.011408,
+    "passes": false
+   },
+   {
+    "target": 0.652672,
+    "macro": 0.652474,
+    "delta": -0.004198,
+    "lo": -0.020817,
+    "hi": 0.012451,
+    "passes": false
+   },
+   {
+    "target": 0.653672,
+    "macro": 0.652914,
+    "delta": -0.003758,
+    "lo": -0.020361,
+    "hi": 0.01289,
+    "passes": false
+   },
+   {
+    "target": 0.654672,
+    "macro": 0.654061,
+    "delta": -0.002612,
+    "lo": -0.019184,
+    "hi": 0.014021,
+    "passes": false
+   },
+   {
+    "target": 0.655672,
+    "macro": 0.655849,
+    "delta": -0.000824,
+    "lo": -0.017459,
+    "hi": 0.015758,
+    "passes": false
+   },
+   {
+    "target": 0.656672,
+    "macro": 0.657128,
+    "delta": 0.000456,
+    "lo": -0.016169,
+    "hi": 0.017105,
+    "passes": false
+   },
+   {
+    "target": 0.657672,
+    "macro": 0.658685,
+    "delta": 0.002013,
+    "lo": -0.014559,
+    "hi": 0.018688,
+    "passes": false
+   },
+   {
+    "target": 0.658672,
+    "macro": 0.660154,
+    "delta": 0.003482,
+    "lo": -0.013009,
+    "hi": 0.02,
+    "passes": false
+   },
+   {
+    "target": 0.659672,
+    "macro": 0.660885,
+    "delta": 0.004212,
+    "lo": -0.012339,
+    "hi": 0.020703,
+    "passes": false
+   },
+   {
+    "target": 0.660672,
+    "macro": 0.662182,
+    "delta": 0.005509,
+    "lo": -0.010948,
+    "hi": 0.022044,
+    "passes": false
+   },
+   {
+    "target": 0.661672,
+    "macro": 0.662449,
+    "delta": 0.005777,
+    "lo": -0.010697,
+    "hi": 0.022292,
+    "passes": false
+   },
+   {
+    "target": 0.662672,
+    "macro": 0.663606,
+    "delta": 0.006934,
+    "lo": -0.009528,
+    "hi": 0.023243,
+    "passes": false
+   },
+   {
+    "target": 0.663672,
+    "macro": 0.665259,
+    "delta": 0.008586,
+    "lo": -0.007943,
+    "hi": 0.024953,
+    "passes": false
+   },
+   {
+    "target": 0.664672,
+    "macro": 0.666035,
+    "delta": 0.009363,
+    "lo": -0.007158,
+    "hi": 0.025708,
+    "passes": false
+   },
+   {
+    "target": 0.665672,
+    "macro": 0.666595,
+    "delta": 0.009923,
+    "lo": -0.006621,
+    "hi": 0.026281,
+    "passes": false
+   },
+   {
+    "target": 0.666672,
+    "macro": 0.667496,
+    "delta": 0.010824,
+    "lo": -0.005675,
+    "hi": 0.02718,
+    "passes": false
+   },
+   {
+    "target": 0.667672,
+    "macro": 0.668508,
+    "delta": 0.011836,
+    "lo": -0.004713,
+    "hi": 0.027984,
+    "passes": false
+   },
+   {
+    "target": 0.668672,
+    "macro": 0.66969,
+    "delta": 0.013017,
+    "lo": -0.003602,
+    "hi": 0.029316,
+    "passes": false
+   },
+   {
+    "target": 0.669672,
+    "macro": 0.67051,
+    "delta": 0.013837,
+    "lo": -0.002905,
+    "hi": 0.030107,
+    "passes": false
+   },
+   {
+    "target": 0.670672,
+    "macro": 0.671594,
+    "delta": 0.014921,
+    "lo": -0.001802,
+    "hi": 0.031161,
+    "passes": true
+   },
+   {
+    "target": 0.671672,
+    "macro": 0.672118,
+    "delta": 0.015445,
+    "lo": -0.001241,
+    "hi": 0.031688,
+    "passes": true
+   },
+   {
+    "target": 0.672672,
+    "macro": 0.672392,
+    "delta": 0.01572,
+    "lo": -0.000902,
+    "hi": 0.031957,
+    "passes": true
+   },
+   {
+    "target": 0.673672,
+    "macro": 0.672927,
+    "delta": 0.016255,
+    "lo": -0.000425,
+    "hi": 0.032508,
+    "passes": true
+   },
+   {
+    "target": 0.674672,
+    "macro": 0.673872,
+    "delta": 0.017199,
+    "lo": 0.000571,
+    "hi": 0.033519,
+    "passes": true
+   },
+   {
+    "target": 0.675672,
+    "macro": 0.67473,
+    "delta": 0.018058,
+    "lo": 0.001442,
+    "hi": 0.034402,
+    "passes": true
+   },
+   {
+    "target": 0.676672,
+    "macro": 0.67586,
+    "delta": 0.019188,
+    "lo": 0.002594,
+    "hi": 0.035626,
+    "passes": true
+   }
+  ],
+  "independent_seed_robustness": {
+   "n_seeds": 12,
+   "bars": [
+    0.671594,
+    0.671509,
+    null,
+    0.671229,
+    0.671046,
+    0.670577,
+    null,
+    0.670646,
+    0.670977,
+    null,
+    0.670798,
+    0.671343
+   ],
+   "median": 0.671046,
+   "min": 0.670577,
+   "max": 0.671594,
+   "spread": 0.001017,
+   "note": "the independent bar is a MEDIAN over 12 seeds; the spread is reported because the family is drawn, not measured"
+  }
+ },
+ "selection_note": "NO ARM SELECTION HAPPENS IN THIS SCRIPT, so nested CV and a permutation null are not applicable: nothing is chosen on eval to produce a win.  lambda* is the crossing point of a MONOTONE requirement curve, i.e. a property of the eval distribution, and the reported result is a REQUIREMENT a future model must meet, not a claimed victory.  The degenerate null is built in and passes: at lambda=1 the family reproduces always-32B-direct exactly (delta 0.0000, CI [0.0000, 0.0000]), and at lambda=0 it reproduces always-7B exactly (both asserted in code).",
+ "L3_cost_frontier": [
+  {
+   "model": "lingshu_i8b",
+   "R_vs_7b": 0.8179,
+   "x_of_always_32b_direct": 0.2143,
+   "weight_gib": 14.7975,
+   "logical_params": 7944373760,
+   "required_macro_if_deployed_alone_correlated": 0.655746,
+   "required_macro_if_deployed_alone_independent": 0.671046,
+   "required_lambda": 0.982,
+   "cheaper_than_baseline": true
+  },
+  {
+   "model": "lingshu_7b",
+   "R_vs_7b": 1.0,
+   "x_of_always_32b_direct": 0.2621,
+   "weight_gib": 15.4454,
+   "logical_params": 8292166656,
+   "required_macro_if_deployed_alone_correlated": 0.655746,
+   "required_macro_if_deployed_alone_independent": 0.671046,
+   "required_lambda": 0.982,
+   "cheaper_than_baseline": true
+  },
+  {
+   "model": "lingshu_32b",
+   "R_vs_7b": 3.816,
+   "x_of_always_32b_direct": 1.0,
+   "weight_gib": 62.3105,
+   "logical_params": 33452718336,
+   "required_macro_if_deployed_alone_correlated": 0.655746,
+   "required_macro_if_deployed_alone_independent": 0.671046,
+   "required_lambda": 0.982,
+   "cheaper_than_baseline": false
+  },
+  {
+   "model": "qwen25vl_32b_awq",
+   "R_vs_7b": 3.816,
+   "x_of_always_32b_direct": 1.0,
+   "weight_gib": 19.2844,
+   "logical_params": 33452718336,
+   "required_macro_if_deployed_alone_correlated": 0.655746,
+   "required_macro_if_deployed_alone_independent": 0.671046,
+   "required_lambda": 0.982,
+   "cheaper_than_baseline": false
+  }
+ ]
+}

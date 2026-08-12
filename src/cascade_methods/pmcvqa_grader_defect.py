@@ -140,9 +140,20 @@ rep = dict(
                 "(results/cascade_methods/artifacts/pmcvqa_letterbias_audit_2026-08-12.json)",
     gates="results/cascade_methods/artifacts/armcombine_mcqonly_2026-08-11.json",
     reproduce="OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/pmcvqa_grader_defect.py",
-    MedEvalKit_untouched="this script only READS MedEvalKit.  The grader here is a transcription; "
-                         "the vendor tree is not modified.  Verified: `git -C MedEvalKit diff --stat "
-                         "utils/utils.py` is empty (reported in provenance below).",
+    MedEvalKit_untouched=dict(
+        statement="this script only READS MedEvalKit.  The grader below is a transcription; the "
+                  "vendor tree is NOT modified by anything here.",
+        checked="`git -C MedEvalKit diff utils/utils.py` is NOT empty -- but the single hunk is "
+                "PRE-EXISTING churn unrelated to grading: an import guard wrapping `from google "
+                "import genai` in try/except (4 insertions, 1 deletion, at the top of the file).  "
+                "CLAUDE.md documents this class of unrelated worktree churn and says to leave it "
+                "alone.",
+        grading_functions_vs_upstream_HEAD="IDENTICAL -- sha256 of each function body, worktree vs "
+                                           "`git show HEAD:utils/utils.py`: judge_multi_choice "
+                                           "a0015b9a55f61e32, parse_response d737f2732f52d309, "
+                                           "find_most_similar_index 9cb3d97ae9604792, str_similarity "
+                                           "71b04561dab005dd -- all four match HEAD exactly.",
+        consequence="the defect described here is in UPSTREAM MedEvalKit, not in a local edit."),
     defect=dict(
         file="MedEvalKit/utils/utils.py", lines="111-112",
         code="split_response = response.split('.')[0]  /  split_response = split_response.split(':')[-1]",

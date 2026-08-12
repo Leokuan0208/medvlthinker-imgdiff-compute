@@ -1,0 +1,86 @@
+{
+ "title": "ATTACK 1 -- THE VISION-AWARE VERIFIER. Pre-registered before any vision feature was extracted or any vision arm was scored on eval.",
+ "date": "2026-08-12",
+ "written_before": "feats_vision/vis_eval.npz existed (the extraction was still queued behind two full A100s when this file was written)",
+ "hypothesis": "Every verifier architecture this project has tested (~20) reads a LANGUAGE-side representation; the clean LoRA touches the vision tower only incidentally (192 tensors, 15.2% of 47,589,376 params, by accident of target_modules naming); and the documented failure mode is short laterality/anatomy answers. If the verifier cannot tell 'Right.' from 'Left.', it is because it is not really looking at the image, so giving a head EXPLICIT, SPATIALLY-RESOLVED access to the image representation should help, and should help FIRST and LARGEST on the laterality stratum.",
+
+ "structural_constraint_stated_in_advance": {
+  "claim": "Qwen2.5-VL's LM is causal and the chat template orders the sequence system | user:<image><question> | assistant:<answer>, so vision-token hidden states are a function of (system prompt, image) ALONE.",
+  "consequence_1": "extraction is per-IMAGE (3457 train + 528 eval unique images), not per (question,candidate) row",
+  "consequence_2": "a vision feature used ADDITIVELY is a per-question CONSTANT and cannot change a within-pool argmax; any gain MUST come from a candidate x image INTERACTION",
+  "how_it_is_tested": "--verify_causal in extract_vision_tokens.py measures max|dh| at vision positions with vs without a trailing question; the 'Vmean' arm measures consequence 2 empirically (it must collapse to the first-index tie-break, i.e. slot-0 accuracy 0.423454)"
+ },
+
+ "frozen_metric": "src/training_methods/genframe_data.py (single definition). sel_eff = P(pick correct | pool recoverable) over the 2345 open-text eval items, canonical order slake(645)/vqa_rad(200)/pathvqa(1500). Pick rule: argmax over the 8 slots, FIRST-INDEX tie-break.",
+
+ "primary_endpoint": "pooled sel_eff on the 2345 items, seed-averaged over 10 seeds",
+ "secondary_endpoints": [
+  "contested stratum (>=2 distinct candidates, n=916 recoverable)",
+  "per-set sel_eff (the guardrail: a win must not be a loss on any of the three sets)",
+  "candidate-level AUROC over 18760 labelled slots",
+  "the 8-cell MACRO headline with the three OPEN cells replaced by this selector and the five MCQ cells left at always-7B"
+ ],
+ "diagnostic_endpoint_that_decides_the_MECHANISM_claim": {
+  "name": "laterality stratum",
+  "definition": "eval items whose QUESTION, GOLD, or any of the 8 CANDIDATES matches the token set {left,right,bilateral,both sides,unilateral,lateral,medial,superior,inferior,anterior,posterior,upper,lower,proximal,distal}",
+  "rule": "if the best vision arm does not move this stratum, the round must SAY SO and must not claim the mechanism, whatever the pooled number does"
+ },
+
+ "controls_all_on_the_identical_2345_pool": {
+  "incumbent_clean_LoRA_verifier": 0.775204,
+  "deployed_frozen_8_seed_ensemble_fused": 0.810627,
+  "language_side_hidden_head_seed0_24threads": 0.795640,
+  "random_pick_closed_form": 0.676260,
+  "greedy_7B": 0.449467,
+  "oracle_at_8": 0.626013,
+  "slot0_first_index_tiebreak_accuracy": 0.423454,
+  "THE_BAR_THAT_MATTERS": "the LANGUAGE-SIDE head fit on identical rows, identical recipe, identical seeds -- that is the only contrast that isolates 'does vision add anything BEYOND language'"
+ },
+
+ "arms_declared_in_advance": {
+  "L": "language-side layer-21 span vector only (3584-d) -- THE BAR",
+  "Vmean": "image mean vision-token vector only (3584-d) -- DEGENERATE control, must collapse to slot-0",
+  "L_Vmean": "concat(L, Vmean) (7168-d) -- additive; tests whether an MLP can use a per-question constant",
+  "L_prod": "concat(L, L*Vmean) (7168-d) -- explicit multiplicative candidate x image interaction",
+  "L_simgrid": "concat(L, cosine(L, each of 36 pooled patches)) (3620-d) -- late interaction, spatially resolved",
+  "L_maxsim": "concat(L, [max,mean,top3,std,argmax_x,argmax_y] of the cosine grid) (3590-d)",
+  "L_prod_sim": "concat(L, L*Vmean, cosine grid) (7204-d)",
+  "xattn": "learned cross-attention: query from the candidate vector, keys/values from the 6x6 pooled patch grid, score = MLP([proj(L), attended_patch_context]) -- attack 1(b); the attention map is inspected on laterality items"
+ },
+ "arm_selection_protocol": "NESTED. The single arm carried to the primary eval comparison is chosen by 5-fold IMAGE-GROUPED cross-validation INSIDE THE TRAIN POOL ONLY (md5(img_md5)%5), endpoint = within-question argmax hit rate, protocol identical to fit_hidden_head.cv(). Every other arm is reported as SECONDARY/EXPLORATORY and labelled so.",
+
+ "seeds": "10 (0..9) for every arm; report mean / sd / range and the SEED-AVERAGED deployable number. A prior 'win' in this project was the top of its own 10-seed range.",
+ "statistics": "paired item bootstrap, nboot=10000, seed 0, paired seed-by-seed against the L arm on the SAME items; guardrail = per-set sel_eff not below the comparison arm.",
+
+ "numerics_pinned_in_advance": {
+  "OMP_NUM_THREADS": 8,
+  "torch_num_threads": 8,
+  "why": "the CPU trainer is thread-count sensitive (recipe.json: seed-0 0.795640 at 24 threads vs 0.800409 at 8). Every arm in the comparison is run at the SAME pin. 24-thread and 8-thread seed-0 L values are BOTH reproduced as null tests.",
+  "row_order": "concat (the published order; 'sorted' moves seed-0 by +0.0041)",
+  "ranker": "rank_avg where any rank fusion is used",
+  "device": "cpu for heads; HF transformers bf16 FA2 for the extraction (NEVER vLLM -- vLLM drops all 192 visual.* LoRA modules)"
+ },
+
+ "mandatory_image_ablation": "the CV-selected arm is re-scored with the eval vision features re-extracted from BLANK (mid-grey) and NOISE images of identical dimensions, so the merged patch grid is unchanged. If the score barely moves, the head is not using the image and any gain is coming from somewhere else. This project has been burned by exactly this attribution error.",
+
+ "falsification_conditions_agreed_in_advance": [
+  "if the CV-selected vision arm's seed-averaged sel_eff CI vs the L arm spans zero, the answer is NO GAIN and is reported as such",
+  "if a pooled gain appears but the laterality stratum does not move, the round reports that the mechanism claim is NOT supported",
+  "if the blank/noise ablation reproduces the real-image score, the arm is declared not image-dependent and any gain is retracted",
+  "no arm is promoted on the basis of a single seed"
+ ],
+
+ "honest_target_arithmetic_computed_before_any_vision_result": {
+  "source": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz, 8 cells",
+  "macro_always_7B": 0.597087,
+  "macro_always_32B_direct": 0.656672,
+  "gap_to_close_with_no_32B": 0.059586,
+  "macro_if_open_selection_were_ORACLE": 0.659625,
+  "macro_headroom_of_the_open_arm": 0.062538,
+  "uniform_open_sel_eff_required_for_parity_with_always_32B_direct": 0.988342,
+  "macro_at_the_incumbent_verifier": 0.606485,
+  "macro_at_the_deployed_8_seed_selector": 0.616278,
+  "fraction_of_the_gap_the_deployed_selector_already_closes": 0.322,
+  "reading": "the open-text arm's 8-sample coverage is JUST BARELY enough to close the whole macro gap, and only at ~98.8% selection efficiency. Twenty architectures sit at 0.80-0.81. The round therefore expects to quantify a shortfall, not to close the gap; a well-quantified shortfall IS the result."
+ }
+}

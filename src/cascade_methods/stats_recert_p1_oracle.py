@@ -225,7 +225,27 @@ def main():
                          "independent 16-sample re-generation. Answers 'would a re-run harvest "
                          "this?', not 'is the label right?'.",
         "both_conservative": "label_corr_conservative multiplied by the sampling replication "
-                             "probability -- the most pessimistic reading of both corrections.",
+                             "probability. NOTE: because the MEASURED item-level confirmation rate "
+                             "is 1.000 in all three cells (no recoverable item was contradicted by "
+                             "the independent judge pass), the label term is a no-op and this "
+                             "reduces to 'the sampling correction applied ONLY to items already "
+                             "seen to be recoverable', i.e. it discards the fresh-pool coverage "
+                             "that k=0 items gain. It is the most pessimistic bound available, not "
+                             "the best estimate; `sampling_corr` is the unbiased one.",
+        "IMPORTANT_serving_config_caveat": "the pool-level differences between pool A and pool B "
+                                           "(-0.005 / -0.005 / -0.010 per cell) are INSIDE this "
+                                           "project's own measured +/-0.008-per-cell "
+                                           "serving-configuration reproducibility band, so the "
+                                           "POOL-LEVEL sampling correction is NOT established. The "
+                                           "CONDITIONAL results (E[fresh|k=1] vs E[fresh|k>=4]) "
+                                           "compare two groups inside the SAME pool B and are "
+                                           "immune to that caveat.",
+        "IMPORTANT_judge_caveat": "the judge replication measured here is REPLICATION (the same "
+                                  "grader, the same (question, gold, answer) input, an independent "
+                                  "pass), NOT VALIDITY. It rules out stochastic label noise as a "
+                                  "source of inflated headroom; it cannot rule out a SYSTEMATICALLY "
+                                  "lenient grader, which would replicate perfectly and still be "
+                                  "wrong.",
         "macro8_perfect_selection_ceiling": "the 5 MCQ cells held at the shipped accuracy-max "
                                             "values and the 3 open cells replaced by the oracle, "
                                             "exactly as coverage_diagnosis_2026-08-10.json does it "

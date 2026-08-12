@@ -1,0 +1,52 @@
+{
+  "title": "ATTACK 4 -- MINIMUM ESCALATION AT PARITY, and CAN THE 32B BE DROPPED ENTIRELY?  PRE-REGISTRATION.",
+  "date": "2026-08-12",
+  "written_before": "any eval-side number in min_escalation_2026-08-12.json was computed.  Only the NULL TESTS (which reproduce already-published values) had been run when this file was written.",
+  "objective": {
+    "changed_from": "beat always-32B-direct on accuracy",
+    "changed_to": "MINIMISE compute SUBJECT TO macro accuracy being statistically non-inferior to always-32B-direct",
+    "primary_cost_endpoint": "macro-weighted (8 cells, 1/8 each) AS-CHARGED FLOP-eq as a ratio of one always-32B-direct forward pass, reported at BOTH R32 = 4.57 (paper constant, flatters the method) and R32 = 3.816 (derived, hurts it)",
+    "secondary_cost_endpoint": "resident model weights (parameters and GiB) that a deployment must hold",
+    "tertiary": "batch-1 parallel latency and energy, modelled AND measurement-corrected"
+  },
+  "constraint": {
+    "rule": "paired item bootstrap, nboot=10000, 95% CI of (policy - always_32b_direct) on the 8-cell macro; the LOWER bound must be >= -0.0029",
+    "tie_tol": -0.0029,
+    "secondary_looser_rule_reported_but_not_decisive": "CI merely spans zero",
+    "note": "a policy that is CHEAPER AND TIES is a WIN under this objective"
+  },
+  "part1": {
+    "question": "the lowest escalation rate, per cell and overall, that still satisfies the constraint",
+    "what_is_new_vs_cost_floor_2026-08-10": "cost_floor's own limitations[0] says its policy family was limited to the SHIPPED operating points because vec_disjoint.npz stores only per-item CORRECTNESS, not the per-item GATE FEATURES, so 'Re-tuning an escalation threshold inside an arm is therefore out of reach of this attack'.  This attack extracts the per-item gate features (7B margin / 7B confidence / per-candidate verifier scores) and sweeps the THRESHOLD, which cost_floor could not.",
+    "policy_menu_per_cell": [
+      "always_7b",
+      "always_32b_direct",
+      "margin cascade at 22 train-quantile thresholds (MCQ)",
+      "confidence cascade at 22 train-quantile thresholds (MCQ)",
+      "the shipped iso-cost tau (MCQ and open)",
+      "certified veto (Wilson LB on 7B precision per 7B-conf quantile bin) at n_bins in {3,5,10} (MCQ)",
+      "open best-of-k + verifier pick, k in 1..8, at 22 train-quantile gate thresholds"
+    ],
+    "selection_rule": "for a Lagrange multiplier lambda, each cell independently takes the menu entry maximising (train accuracy - lambda * train as-charged FLOP-eq).  Sweeping lambda traces the frontier.",
+    "cross_fitting": "5-fold.  Every threshold, every bin edge, every certificate and every menu choice is fitted on the 4 TRAINING folds and applied to the held-out fold.  No eval-fold label ever reaches a decision applied to it.",
+    "nested_cv": "lambda itself is chosen INSIDE the training folds by an inner 5-fold: the largest lambda (cheapest) whose inner held-out macro delta vs always-32B-direct is >= 0.0.  This is the PRIMARY, fully honest operating point.  The lambda-sweep rows with lambda picked on eval are DIAGNOSTIC.",
+    "seeds": "12 fold-split seeds; a row is reportable as a tie only if the tie survives on a clear majority of seeds; the deployable number is the seed mean",
+    "permutation_null": "the per-item GATE SCALAR is permuted within each cell (outcome vectors and best-of-N picks untouched), then the whole pipeline is re-run.  If the frontier does not collapse, the gate carries no information and any apparent saving is manufactured by selection.",
+    "guardrail": "per-cell delta vs always-32B-direct with a paired bootstrap CI; a cell is FLAGGED if its CI upper bound < 0.  vqa_rad cells are n=200/251 and a flag there is reported as within seed noise.",
+    "certified_veto": "reported separately: where it fires, where it cannot, and for every non-firing bin BOTH (a) the sample size that would be needed for the Wilson lower bound to reach the 32B's accuracy in that bin, when the POINT estimate already exceeds it, and (b) the fact that no sample size helps when the point estimate does not."
+  },
+  "part2": {
+    "question": "the best macro accuracy achievable with NO 32B AT TEST TIME AT ALL",
+    "menu": "7B greedy / 7B best-of-k + verifier pick (k in 1..8) on the open cells; 7B direct on the MCQ cells (no 7B best-of-N dump exists on the MedEvalKit Variant-B MCQ pool)",
+    "ceilings_reported": "oracle-of-8 (perfect verifier) and coverage-of-8 (at-least-one-correct) per open cell; both are UNREACHABLE upper bounds, labelled as such",
+    "decomposition": "per-cell gap to always-32B-direct, and the macro gap attributed cell by cell",
+    "expected_answer": "no.  The pre-registered deliverable is the QUANTIFIED negative: how far short, on which cells, and what would have to be true to close it."
+  },
+  "integrity": {
+    "null_test_first": "reproduce the published per-item vectors and the frozen open-text bar before computing anything new; state the max abs deviation",
+    "numerics_pins": {"OMP_NUM_THREADS": 1, "PYTHONHASHSEED": 0, "tf32": "not applicable -- pure numpy on stored vectors", "row_order": "the stored dump order, unchanged", "bootstrap": "one shared item-resample stream per cell, generated once and reused by every policy"},
+    "no_fabricated_numbers": true,
+    "abstention": "NOT INVOLVED.  Every policy in this file returns an answer on every item; the certified veto KEEPS the cheap model's answer, it does not decline to answer.",
+    "two_pmcvqa_splits": "the macro pool is the MedEvalKit track (PMC-VQA test_2.csv, n=33430).  Any number read from ckpts/mcq_gen_verify/ is on the INTERNAL harness track (PMC-VQA test_clean.csv, n=2000) and may only appear as an explicitly-labelled cross-track diagnostic, never inside the macro."
+  }
+}

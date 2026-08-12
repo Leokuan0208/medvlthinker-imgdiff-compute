@@ -1,0 +1,630 @@
+{
+ "_what": "ACCURACY half of the Attack-4 resolution frontier: Lingshu-7B direct MCQ, INTERNAL (MedVLThinker-Eval/NGC) harness, 5 resolution caps, 7 cells, perfectly paired on idx.",
+ "_source_dumps": "ckpts/acc_gen/lingshu7b/{fullres,cap640,cap320,cap160,cap80}/ckpt_<cell>_lingshu7b.jsonl -- produced by runners/run_lingshu_acc.sh (src/labeling/run_vlm_eval.py, vLLM, tp=1, temperature 0, greedy). NOT re-run here; read verbatim.",
+ "_track": "INTERNAL harness (evaluation context B). NOT MedEvalKit. Its PMC-VQA is test_clean.csv (v1, n=2,000); the paper's macro cells use test_2.csv (v2, n=33,430) and the two splits share 6 items. DELTAS here are valid (matched arms, one script, one serving config, only max_pixels differs); LEVELS must never be compared against a macro-8 cell level.",
+ "_stats": {
+  "nboot": 10000,
+  "seed": 20260812,
+  "method": "paired item bootstrap, one shared resample stream per cell reused across every cap so cap-to-cap comparisons are on identical resamples"
+ },
+ "_cap_definition": "max_pixels/(28*28) is the merged vision-token budget for Qwen2.5-VL (14x14 patches, 2x2 merge). cap320 == 320 vision tokens. MedEvalKit (harness A) uses the qwen_vl_utils default 12,845,056 px = 16,384 tokens = 12.8x this harness's own 'fullres' and 51.2x cap320.",
+ "per_cell": {
+  "PMC-VQA": {
+   "n": 2000,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 3.0,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.6225,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.6225,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      -0.0065,
+      0.0065
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.6215,
+     "delta_vs_fullres": -0.001,
+     "ci95": [
+      -0.0115,
+      0.0095
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.6015,
+     "delta_vs_fullres": -0.021,
+     "ci95": [
+      -0.0355,
+      -0.0065
+     ],
+     "significant": true,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.576,
+     "delta_vs_fullres": -0.0465,
+     "ci95": [
+      -0.0635,
+      -0.0295
+     ],
+     "significant": true,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "SLAKE": {
+   "n": 416,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 3.0,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.8462,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.8389,
+     "delta_vs_fullres": -0.0072,
+     "ci95": [
+      -0.0216,
+      0.0072
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.8413,
+     "delta_vs_fullres": -0.0048,
+     "ci95": [
+      -0.0264,
+      0.0168
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.8005,
+     "delta_vs_fullres": -0.0457,
+     "ci95": [
+      -0.0745,
+      -0.0168
+     ],
+     "significant": true,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.774,
+     "delta_vs_fullres": -0.0721,
+     "ci95": [
+      -0.1058,
+      -0.0385
+     ],
+     "significant": true,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "VQA-RAD": {
+   "n": 272,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 3.0,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.7574,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.7647,
+     "delta_vs_fullres": 0.0074,
+     "ci95": [
+      -0.011,
+      0.0294
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.7316,
+     "delta_vs_fullres": -0.0257,
+     "ci95": [
+      -0.0588,
+      0.0037
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.7243,
+     "delta_vs_fullres": -0.0331,
+     "ci95": [
+      -0.0772,
+      0.0074
+     ],
+     "significant": false,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.739,
+     "delta_vs_fullres": -0.0184,
+     "ci95": [
+      -0.0588,
+      0.0221
+     ],
+     "significant": false,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "PathVQA": {
+   "n": 3362,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 3.0,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.7793,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.779,
+     "delta_vs_fullres": -0.0003,
+     "ci95": [
+      -0.0024,
+      0.0018
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.782,
+     "delta_vs_fullres": 0.0027,
+     "ci95": [
+      -0.0057,
+      0.011
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.7739,
+     "delta_vs_fullres": -0.0054,
+     "ci95": [
+      -0.0146,
+      0.0042
+     ],
+     "significant": false,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.7701,
+     "delta_vs_fullres": -0.0092,
+     "ci95": [
+      -0.0202,
+      0.0018
+     ],
+     "significant": false,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "MedXpert-Reasoning": {
+   "n": 1446,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 3.0,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.2462,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.2483,
+     "delta_vs_fullres": 0.0021,
+     "ci95": [
+      -0.0041,
+      0.009
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.2469,
+     "delta_vs_fullres": 0.0007,
+     "ci95": [
+      -0.0083,
+      0.0104
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.2503,
+     "delta_vs_fullres": 0.0041,
+     "ci95": [
+      -0.0069,
+      0.0152
+     ],
+     "significant": false,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.2497,
+     "delta_vs_fullres": 0.0035,
+     "ci95": [
+      -0.009,
+      0.0159
+     ],
+     "significant": false,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "MedXpert-Understanding": {
+   "n": 554,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 2.99,
+    "cap640": 3.0,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.0
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.2762,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.278,
+     "delta_vs_fullres": 0.0018,
+     "ci95": [
+      -0.0126,
+      0.0162
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.278,
+     "delta_vs_fullres": 0.0018,
+     "ci95": [
+      -0.0162,
+      0.0199
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.2798,
+     "delta_vs_fullres": 0.0036,
+     "ci95": [
+      -0.0162,
+      0.0235
+     ],
+     "significant": false,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.2798,
+     "delta_vs_fullres": 0.0036,
+     "ci95": [
+      -0.0199,
+      0.0271
+     ],
+     "significant": false,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  },
+  "MMMU": {
+   "n": 170,
+   "parse_ok": {
+    "fullres": 1.0,
+    "cap640": 1.0,
+    "cap320": 1.0,
+    "cap160": 1.0,
+    "cap80": 1.0
+   },
+   "gen_tokens_mean": {
+    "fullres": 2.99,
+    "cap640": 2.99,
+    "cap320": 3.0,
+    "cap160": 3.0,
+    "cap80": 3.01
+   },
+   "by_cap": {
+    "fullres": {
+     "acc": 0.8529,
+     "delta_vs_fullres": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 1003520,
+     "vision_token_budget": 1280
+    },
+    "cap640": {
+     "acc": 0.8471,
+     "delta_vs_fullres": -0.0059,
+     "ci95": [
+      -0.0176,
+      0.0
+     ],
+     "significant": false,
+     "max_pixels": 501760,
+     "vision_token_budget": 640
+    },
+    "cap320": {
+     "acc": 0.8471,
+     "delta_vs_fullres": -0.0059,
+     "ci95": [
+      -0.0294,
+      0.0118
+     ],
+     "significant": false,
+     "max_pixels": 250880,
+     "vision_token_budget": 320
+    },
+    "cap160": {
+     "acc": 0.8353,
+     "delta_vs_fullres": -0.0176,
+     "ci95": [
+      -0.0471,
+      0.0118
+     ],
+     "significant": false,
+     "max_pixels": 125440,
+     "vision_token_budget": 160
+    },
+    "cap80": {
+     "acc": 0.8235,
+     "delta_vs_fullres": -0.0294,
+     "ci95": [
+      -0.0706,
+      0.0118
+     ],
+     "significant": false,
+     "max_pixels": 62720,
+     "vision_token_budget": 80
+    }
+   }
+  }
+ },
+ "internal_track_macro7": {
+  "fullres": {
+   "macro7": 0.6258,
+   "delta_vs_fullres": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "significant": false,
+   "max_pixels": 1003520,
+   "vision_token_budget": 1280
+  },
+  "cap640": {
+   "macro7": 0.6255,
+   "delta_vs_fullres": -0.0003,
+   "ci95": [
+    -0.005,
+    0.0043
+   ],
+   "significant": false,
+   "max_pixels": 501760,
+   "vision_token_budget": 640
+  },
+  "cap320": {
+   "macro7": 0.6212,
+   "delta_vs_fullres": -0.0046,
+   "ci95": [
+    -0.0119,
+    0.0023
+   ],
+   "significant": false,
+   "max_pixels": 250880,
+   "vision_token_budget": 320
+  },
+  "cap160": {
+   "macro7": 0.6094,
+   "delta_vs_fullres": -0.0164,
+   "ci95": [
+    -0.0259,
+    -0.0073
+   ],
+   "significant": true,
+   "max_pixels": 125440,
+   "vision_token_budget": 160
+  },
+  "cap80": {
+   "macro7": 0.6017,
+   "delta_vs_fullres": -0.0241,
+   "ci95": [
+    -0.0347,
+    -0.0137
+   ],
+   "significant": true,
+   "max_pixels": 62720,
+   "vision_token_budget": 80
+  }
+ },
+ "guardrail": {
+  "fullres": {
+   "n_cells_significantly_worse": 0,
+   "n_cells_significantly_better": 0,
+   "worst_cell_delta": [
+    0.0,
+    "MMMU"
+   ]
+  },
+  "cap640": {
+   "n_cells_significantly_worse": 0,
+   "n_cells_significantly_better": 0,
+   "worst_cell_delta": [
+    -0.0072,
+    "SLAKE"
+   ]
+  },
+  "cap320": {
+   "n_cells_significantly_worse": 0,
+   "n_cells_significantly_better": 0,
+   "worst_cell_delta": [
+    -0.0257,
+    "VQA-RAD"
+   ]
+  },
+  "cap160": {
+   "n_cells_significantly_worse": 2,
+   "n_cells_significantly_better": 0,
+   "worst_cell_delta": [
+    -0.0457,
+    "SLAKE"
+   ]
+  },
+  "cap80": {
+   "n_cells_significantly_worse": 2,
+   "n_cells_significantly_better": 0,
+   "worst_cell_delta": [
+    -0.0721,
+    "SLAKE"
+   ]
+  }
+ }
+}

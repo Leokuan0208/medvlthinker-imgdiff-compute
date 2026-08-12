@@ -1,0 +1,105 @@
+{
+ "date": "2026-08-12",
+ "attack": "ATTACK 2 -- one pipeline for both formats, candidate set read off the prompt",
+ "written_before_any_gpu_forward_pass": true,
+ "mechanism": {
+  "rule": "candidates = ANSWER_SPACE(prompt) if the prompt supplies one else SAMPLE_N(7B); pick = argmax_c verifier(image, question, c); the scorer, its features and the decision rule are IDENTICAL in both branches",
+  "no_32B_at_test_time": true,
+  "always_returns_an_answer": true,
+  "not_re_run_because_already_measured_and_dead": [
+   "(choice)(why) MCQ-as-constrained-open-text: -0.0226 sel_eff SIGNIFICANT LOSS [artifacts/choicewhy_measure_2026-08-03.json]",
+   "sample-8-and-verify on MCQ: PMC verifier pick 0.4325 < greedy 0.5060; MedXpert oracle@8 0.5365 < its own luck floor 0.6808"
+  ]
+ },
+ "cells": {
+  "option_branch": [
+   "PMC_VQA",
+   "MedXpertQA-MM",
+   "VQA_RAD_closed",
+   "PATH_VQA_closed"
+  ],
+  "sampled_branch": [
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_open",
+   "PATH_VQA_open"
+  ],
+  "PMC_VQA_subsample": {
+   "n": 6000,
+   "seed": 20260810,
+   "note": "the SAME 6,000 ids mcq_tta pre-registered on 2026-08-10"
+  },
+  "SLAKE_closed_handling": "its deployed prompt (get_close_ended_prompt) supplies NO answer space, so under the rule it falls in the sampled branch. No 8-sample pool exists for it. If none is generated the unified pipeline DEGENERATES to a 1-candidate set there = 7B greedy (0.8254), reported as such, never as a win."
+ },
+ "arms": {
+  "A_zero_shot": "the EXISTING clean open-text verifier ckpts/train/lora_verifier_disjoint scored over the option candidates -- no training, measures transfer",
+  "B_unified_trained": "ONE LoRA verifier trained on BOTH branches' candidate sets from images disjoint from all 8 eval cells (pixel-md5 asserted); MCQ training labels are FREE (option == gold), no judge needed"
+ },
+ "primary_endpoint": "per-cell accuracy of argmax-verifier-over-candidates vs always-7B greedy on the four option cells, paired item bootstrap nboot=10000",
+ "secondary_endpoints": [
+  "8-cell macro of the unified 7B-only pipeline vs always-32B-direct 0.6567",
+  "does the unified scorer lose to the format-specific open-text verifier on open text (sel_eff 0.775204 bar)",
+  "minimum strong-leg usage that closes the remaining macro gap"
+ ],
+ "controls": {
+  "null_tests": [
+   "N1 open-text incumbent sel_eff == 0.775204",
+   "N2 8-cell macro baselines == 0.5971/0.6567/0.5974/0.6573",
+   "N3 gold is in the candidate set on 100% of option-cell items"
+  ],
+  "luck_floor": {
+   "kind": "random-gold permutation, gold re-drawn uniformly among the item's own candidates with the verifier scores held fixed",
+   "nluck": 1000,
+   "seed": 20260812,
+   "analytic_expectation": "exactly 1/K per item"
+  },
+  "disjointness": "pixel-md5 of DECODED RGB between every verifier-training image and every scored eval image, reported PER CELL, never assumed",
+  "guardrail": "per cell, never worse than always-7B; flags reported with n"
+ },
+ "numerics_pins": {
+  "tf32": false,
+  "OMP_NUM_THREADS": 1,
+  "PYTHONHASHSEED": 0,
+  "serving": "HF transformers only -- vLLM drops all 192 visual.* LoRA modules (0.775204 HF vs 0.702997 vLLM)",
+  "max_pixels": 1003520,
+  "min_pixels": 3136,
+  "item_order": "sorted, fixed"
+ },
+ "seeds": {
+  "boot": 20260812,
+  "luck": 20260812,
+  "subsample": 20260810,
+  "train": 20260812
+ },
+ "nboot": 10000,
+ "bars": {
+  "always_7b_macro": 0.5971,
+  "always_32b_direct_macro": 0.6567,
+  "gap_to_close_with_no_32B": 0.0596,
+  "per_cell_7b": {
+   "PMC_VQA": 0.5427,
+   "SLAKE_closed": 0.8254,
+   "VQA_RAD_closed": 0.7809,
+   "PATH_VQA_closed": 0.8409,
+   "MedXpertQA-MM": 0.2615,
+   "SLAKE_open": 0.7364,
+   "VQA_RAD_open": 0.465,
+   "PATH_VQA_open": 0.324
+  },
+  "per_cell_32b_direct": {
+   "PMC_VQA": 0.5518,
+   "SLAKE_closed": 0.8589,
+   "VQA_RAD_closed": 0.8526,
+   "PATH_VQA_closed": 0.8891,
+   "MedXpertQA-MM": 0.3065,
+   "SLAKE_open": 0.8186,
+   "VQA_RAD_open": 0.6,
+   "PATH_VQA_open": 0.376
+  }
+ },
+ "declared_failure_modes": [
+  "if argmax-verifier-over-options is BELOW 7B greedy on the option cells, the unified pipeline has no MCQ headroom and that shortfall IS the reported result",
+  "a per-cell win inside the random-gold permutation p95 is NOT a win",
+  "any cell whose eval images intersect the verifier's training images is reported as CONTAMINATED and excluded from the headline"
+ ]
+}

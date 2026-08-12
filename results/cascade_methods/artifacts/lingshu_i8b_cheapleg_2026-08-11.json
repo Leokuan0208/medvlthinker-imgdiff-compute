@@ -1,0 +1,299 @@
+{
+ "title": "ATTACK A -- Lingshu-I-8B as the cascade's cheap leg",
+ "preregistration": "results/cascade_methods/artifacts/lingshu_i8b_cheapleg_2026-08-11_preregistration.json",
+ "driver": "src/cascade_methods/i8b_cheapleg_eval.py",
+ "why_not_vllm": "vLLM 0.9.0.1 registers only InternVLChatModel; Lingshu-I-8B is the HF-native InternVLForConditionalGeneration port and raises `limit_mm_per_prompt` is only supported for multimodal models (logs/i8b_vllm_try.log). MedEvalKit unmodified; its dataset classes, prompts and cal_metrics are imported verbatim.",
+ "model_verified": {
+  "path": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-I-8B/snapshots/b004bfc0554d90bd44baedf4de08c361e71ef017",
+  "architecture": "InternVLForConditionalGeneration",
+  "n_params_B": 7.94437376,
+  "trainer_state": "110,440 steps / 2 epochs, loss 2.3959 -> 0.4034, total_flos 3.24e20 -- a genuinely trained checkpoint, not a repackaged base",
+  "CORRECTION_to_the_preregistration": "The pre-registration recorded 'crop_to_patches=false, 256 image tokens/image, no tiling', read from preprocessor_config.json. THAT IS WRONG FOR REAL IMAGES and is corrected here. Measured with the model's own AutoProcessor: a 448x448 or 224x224 image gives 1 patch / 268 tokens, but 300x400, 1024x768 and real PathVQA images give 13 patches / 3,340 tokens -- max_patches=12 plus a thumbnail, i.e. InternVL3 dynamic tiling, applied despite image_processor.crop_to_patches evaluating to False. Passing crop_to_patches=False explicitly at call time does give 268 tokens. This run uses the AutoProcessor DEFAULT (13 patches), which is InternVL3's standard inference configuration and therefore the one the published model-card numbers are most likely to correspond to -- but that correspondence is an inference, not a verified fact.",
+  "measured_prompt_tokens": {
+   "448x448": 268,
+   "224x224": 268,
+   "300x400": 3340,
+   "1024x768": 3340
+  }
+ },
+ "deviations_from_the_preregistration": [
+  {
+   "what": "a THIRD arm, i8b_1tile, was added after the pre-registration was written",
+   "why": "mid-round it was discovered that transformers' InternVLProcessor._defaults hard-codes crop_to_patches=True, overriding this checkpoint's own saved preprocessor_config.json (crop_to_patches: false). The two settings differ by 9-11x in prompt tokens, so 'the' cost of this cheap leg is not well defined until the ambiguity is resolved. Both were therefore measured.",
+   "anti_fishing": "The PRE-REGISTERED primary comparison is unchanged: arm `i8b` (library default) vs `base7b`, on PATH_VQA_closed. `i8b_1tile` is a CONFIGURATION SENSITIVITY, not a second hypothesis; it is reported alongside, and it agrees with the primary in sign and magnitude, so nothing turns on which is called primary."
+  },
+  {
+   "what": "the i8b (13-tile) arm was stopped before completing PATH_VQA",
+   "why": "three arms on two GPUs starved base7b -- the MATCHED CONTROL that every reported delta depends on -- to 768/6719 items. The 13-tile arm's only job was to settle the tiling ambiguity, which its partial cell already does, so it was stopped and GPU0 given to the control.",
+   "consequence": "its cells are reported as `partial: true` with their actual n."
+  },
+  {
+   "what": "use_fast=True image processors, run on the GPU (device=cuda)",
+   "why": "pure throughput. Measured on 32 real PathVQA images the InternVL processor emits byte-identical output (3,340 tokens, 185 patches) at 47.4 img/s on GPU vs 0.8 img/s on CPU. On CPU the suite would have needed ~17 h of single-threaded preprocessing for one arm.",
+   "consequence": "both arms use their own model's default fast processor on GPU, so the two arms stay symmetric; only the comparison against the STORED vLLM run carries any difference, and the null test measures exactly that."
+  }
+ ],
+ "null_test": {
+  "what": "new HF driver running Lingshu-7B vs MedEvalKit/eval_results_cheapleg_base7b (identical weights, items, prompts; vLLM tp=1)",
+  "per_cell": {
+   "PATH_VQA_closed": {
+    "n": 485,
+    "driver_hf": 0.8041237113402062,
+    "stored_mek_vllm": 0.8041237113402062,
+    "abs_dev": 0.0,
+    "item_agreement": 0.9958762886597938,
+    "partial": true
+   }
+  },
+  "max_abs_deviation": 0.0,
+  "pass_threshold_preregistered": 0.02,
+  "verdict": "PASS",
+  "note": "This is a SERVING-STACK deviation, not a bug: HF eager attention vs vLLM paged attention on the same weights. It bounds how much of any cross-harness statement is artifact. The I-8B vs base7b contrast below is WITHIN one driver and is unaffected by it."
+ },
+ "cells": {
+  "PMC_VQA": {
+   "status": "control not run"
+  },
+  "SLAKE_closed": {
+   "status": "control not run"
+  },
+  "VQA_RAD_closed": {
+   "status": "control not run"
+  },
+  "PATH_VQA_closed": {
+   "cell_n_when_complete": 3362,
+   "i8b": {
+    "n_paired": 485,
+    "partial": true,
+    "acc": 0.9030927835051547,
+    "base7b_matched": 0.8041237113402062,
+    "delta_vs_base7b": 0.09896907216494844,
+    "ci95": [
+     0.06391752577319587,
+     0.13608247422680408
+    ],
+    "significant": true,
+    "guardrail_flag": false,
+    "mean_gen_tokens": 3.0,
+    "mean_prompt_tokens": 2471.5113402061857,
+    "mean_prompt_tokens_base7b": 585.3175257731958,
+    "class_balanced": {
+     "classes": [
+      "no",
+      "yes"
+     ],
+     "gold_counts": {
+      "no": 222,
+      "yes": 263
+     },
+     "majority_class_floor": 0.5422680412371134,
+     "balanced_acc_cheap": 0.9029219333401843,
+     "balanced_acc_base7b": 0.7972716062069674,
+     "balanced_delta": 0.10565032713321698
+    }
+   },
+   "i8b_1tile": {
+    "n_paired": 485,
+    "partial": true,
+    "acc": 0.9092783505154639,
+    "base7b_matched": 0.8041237113402062,
+    "delta_vs_base7b": 0.10515463917525769,
+    "ci95": [
+     0.07010309278350513,
+     0.14226804123711334
+    ],
+    "significant": true,
+    "guardrail_flag": false,
+    "mean_gen_tokens": 3.0,
+    "mean_prompt_tokens": 0.0,
+    "mean_prompt_tokens_base7b": 585.3175257731958,
+    "class_balanced": {
+     "classes": [
+      "no",
+      "yes"
+     ],
+     "gold_counts": {
+      "no": 222,
+      "yes": 263
+     },
+     "majority_class_floor": 0.5422680412371134,
+     "balanced_acc_cheap": 0.909678690096941,
+     "balanced_acc_base7b": 0.7972716062069674,
+     "balanced_delta": 0.11240708388997367
+    }
+   }
+  },
+  "MedXpertQA-MM": {
+   "status": "control not run"
+  }
+ },
+ "macro": {},
+ "router_ceiling": {
+  "SLAKE_closed": {
+   "n_common": 2094,
+   "i8b_1tile": {
+    "n": 836,
+    "partial": false,
+    "cheap_acc": 0.9246411483253588,
+    "acc_32b_direct": 0.8588516746411483,
+    "p10_cheap_right_32b_wrong": 0.08492822966507177,
+    "p01_cheap_wrong_32b_right": 0.019138755980861243,
+    "oracle_route": 0.94377990430622
+   },
+   "_caveat": "the 32B arm is the STORED vLLM run; the cheap arms are HF. p10/p01 therefore carry the null-test deviation. Compare p10 BETWEEN the two cheap arms (both HF), not against published p10."
+  },
+  "VQA_RAD_closed": {
+   "n_common": 451,
+   "i8b_1tile": {
+    "n": 251,
+    "partial": false,
+    "cheap_acc": 0.8047808764940239,
+    "acc_32b_direct": 0.852589641434263,
+    "p10_cheap_right_32b_wrong": 0.05976095617529881,
+    "p01_cheap_wrong_32b_right": 0.10756972111553785,
+    "oracle_route": 0.9123505976095617
+   },
+   "_caveat": "the 32B arm is the STORED vLLM run; the cheap arms are HF. p10/p01 therefore carry the null-test deviation. Compare p10 BETWEEN the two cheap arms (both HF), not against published p10."
+  },
+  "PATH_VQA_closed": {
+   "n_common": 1024,
+   "i8b": {
+    "n": 485,
+    "partial": true,
+    "cheap_acc": 0.9030927835051547,
+    "acc_32b_direct": 0.8536082474226804,
+    "p10_cheap_right_32b_wrong": 0.08453608247422681,
+    "p01_cheap_wrong_32b_right": 0.03505154639175258,
+    "oracle_route": 0.9381443298969072
+   },
+   "i8b_1tile": {
+    "n": 485,
+    "partial": false,
+    "cheap_acc": 0.9092783505154639,
+    "acc_32b_direct": 0.8536082474226804,
+    "p10_cheap_right_32b_wrong": 0.09278350515463918,
+    "p01_cheap_wrong_32b_right": 0.03711340206185567,
+    "oracle_route": 0.9463917525773196
+   },
+   "base7b": {
+    "n": 485,
+    "partial": true,
+    "cheap_acc": 0.8041237113402062,
+    "acc_32b_direct": 0.8536082474226804,
+    "p10_cheap_right_32b_wrong": 0.061855670103092786,
+    "p01_cheap_wrong_32b_right": 0.11134020618556702,
+    "oracle_route": 0.9154639175257732
+   },
+   "_caveat": "the 32B arm is the STORED vLLM run; the cheap arms are HF. p10/p01 therefore carry the null-test deviation. Compare p10 BETWEEN the two cheap arms (both HF), not against published p10."
+  },
+  "MedXpertQA-MM": {
+   "n_common": 512,
+   "i8b_1tile": {
+    "n": 512,
+    "partial": true,
+    "cheap_acc": 0.29296875,
+    "acc_32b_direct": 0.322265625,
+    "p10_cheap_right_32b_wrong": 0.12890625,
+    "p01_cheap_wrong_32b_right": 0.158203125,
+    "oracle_route": 0.451171875
+   },
+   "_caveat": "the 32B arm is the STORED vLLM run; the cheap arms are HF. p10/p01 therefore carry the null-test deviation. Compare p10 BETWEEN the two cheap arms (both HF), not against published p10."
+  }
+ },
+ "cells_vs_stored_vllm_7b": {
+  "SLAKE_closed": {
+   "i8b_1tile": {
+    "n_paired": 836,
+    "partial": false,
+    "acc": 0.9246411483253588,
+    "stored_vllm_7b": 0.8205741626794258,
+    "delta": 0.10406698564593297,
+    "ci95": [
+     0.0801435406698564,
+     0.12799043062200965
+    ],
+    "significant": true,
+    "guardrail_flag": false
+   }
+  },
+  "VQA_RAD_closed": {
+   "i8b_1tile": {
+    "n_paired": 251,
+    "partial": false,
+    "acc": 0.8047808764940239,
+    "stored_vllm_7b": 0.7848605577689243,
+    "delta": 0.019920318725099584,
+    "ci95": [
+     -0.02788844621513953,
+     0.0717131474103585
+    ],
+    "significant": false,
+    "guardrail_flag": false
+   }
+  },
+  "PATH_VQA_closed": {
+   "i8b": {
+    "n_paired": 1206,
+    "partial": true,
+    "acc": 0.9137645107794361,
+    "stored_vllm_7b": 0.8150912106135987,
+    "delta": 0.09867330016583742,
+    "ci95": [
+     0.07711442786069655,
+     0.12106135986733002
+    ],
+    "significant": true,
+    "guardrail_flag": false
+   },
+   "i8b_1tile": {
+    "n_paired": 3362,
+    "partial": false,
+    "acc": 0.9315883402736467,
+    "stored_vllm_7b": 0.8370017846519928,
+    "delta": 0.09458655562165386,
+    "ci95": [
+     0.08209399167162401,
+     0.10707911957168348
+    ],
+    "significant": true,
+    "guardrail_flag": false
+   }
+  },
+  "MedXpertQA-MM": {
+   "i8b_1tile": {
+    "n_paired": 512,
+    "partial": true,
+    "acc": 0.29296875,
+    "stored_vllm_7b": 0.279296875,
+    "delta": 0.013671875,
+    "ci95": [
+     -0.03125,
+     0.05859375
+    ],
+    "significant": false,
+    "guardrail_flag": false
+   }
+  }
+ },
+ "cheap_pass_cost": {
+  "formula": "(N_params_cheap / N_params_7b) * (mean_prompt_tokens_cheap / mean_prompt_tokens_7b); vs-32B divides by N_32B/N_7B = 3.98",
+  "caveat": "APPROXIMATION, not a measurement. Prefill-only (generated answers are ~5 tokens); ignores the two vision towers' differing per-token cost. The TOKEN COUNTS are measured per item by the driver; the parameter counts are 7.944B (summed from the loaded model) and 8.29B / 33B (published Qwen2.5-VL sizes).",
+  "param_only_ratio_would_be": 0.9582629674306394,
+  "why_this_matters": "The brief assumed an 8B cheap leg costs ~1.14x a 7B pass. By parameters alone it is 0.96x. The measured driver of cost is PROMPT LENGTH, not parameters.",
+  "arms": {
+   "i8b": {
+    "per_cell": {
+     "PATH_VQA_closed": {
+      "mean_prompt_tokens_cheap": 2471.5113402061857,
+      "mean_prompt_tokens_base7b": 585.3175257731958,
+      "token_ratio": 4.222513817506755,
+      "approx_prefill_flop_ratio_vs_7b": 4.0462786207809005,
+      "approx_prefill_flop_ratio_vs_32b_direct": 1.016474235341626
+     }
+    },
+    "macro_mean_ratio_vs_7b": 4.0462786207809005,
+    "macro_mean_ratio_vs_32b_direct": 1.016474235341626
+   }
+  }
+ }
+}

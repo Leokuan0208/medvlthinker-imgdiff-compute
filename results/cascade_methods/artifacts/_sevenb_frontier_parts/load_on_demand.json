@@ -1,0 +1,115 @@
+{
+  "title": "ATTACK 3 part 4 -- is load-on-demand of Lingshu-32B viable?",
+  "date": "2026-08-12",
+  "reproduce": "python3 src/cascade_methods/load_on_demand_measure.py",
+  "snapshot": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-32B/snapshots/36b98277cacb60db86f34b75ce0540b1ea35183c",
+  "n_shards": 14,
+  "total_bytes": 66905568048,
+  "total_gib": 62.3107,
+  "total_gb_decimal": 66.9056,
+  "storage": "/data (see df -h; the HF cache blobs live there, not on the repo disk)",
+  "no_fabricated_numbers": true,
+  "cold_read": {
+    "what": "sequential read of all shards after posix_fadvise(POSIX_FADV_DONTNEED) on every file",
+    "seconds": 410.222,
+    "gib_per_s": 0.1519,
+    "gb_decimal_per_s": 0.1631,
+    "meminfo_Cached_kB_before": 141822588,
+    "meminfo_Cached_kB_after": 212787340,
+    "per_shard": [
+      {
+        "bytes": 4958700928,
+        "s": 24.44,
+        "gib_s": 0.189
+      },
+      {
+        "bytes": 4928488272,
+        "s": 27.829,
+        "gib_s": 0.165
+      },
+      {
+        "bytes": 4876059368,
+        "s": 21.628,
+        "gib_s": 0.21
+      },
+      {
+        "bytes": 4876059416,
+        "s": 23.841,
+        "gib_s": 0.19
+      },
+      {
+        "bytes": 4876059416,
+        "s": 27.6,
+        "gib_s": 0.165
+      },
+      {
+        "bytes": 4876059416,
+        "s": 30.105,
+        "gib_s": 0.151
+      },
+      {
+        "bytes": 4876059416,
+        "s": 30.007,
+        "gib_s": 0.151
+      },
+      {
+        "bytes": 4876059416,
+        "s": 33.184,
+        "gib_s": 0.137
+      },
+      {
+        "bytes": 4876059416,
+        "s": 33.311,
+        "gib_s": 0.136
+      },
+      {
+        "bytes": 4876059416,
+        "s": 31.59,
+        "gib_s": 0.144
+      },
+      {
+        "bytes": 4876059416,
+        "s": 32.521,
+        "gib_s": 0.14
+      },
+      {
+        "bytes": 4876059416,
+        "s": 25.492,
+        "gib_s": 0.178
+      },
+      {
+        "bytes": 4876059416,
+        "s": 36.379,
+        "gib_s": 0.125
+      },
+      {
+        "bytes": 3381725320,
+        "s": 32.294,
+        "gib_s": 0.098
+      }
+    ]
+  },
+  "warm_read_one_shard": {
+    "shard_bytes": 4958700928,
+    "seconds": 4.668,
+    "gib_per_s": 0.9892,
+    "note": "page-cache-warm upper bound on read speed; a real swap-in is cold unless 63 GiB of RAM is dedicated to holding the model resident, which is a different (and larger) deployment cost."
+  },
+  "h2d_bandwidth": {
+    "measured": true,
+    "device": 0,
+    "buffer_gib": 1.0,
+    "reps": 5,
+    "gib_per_s": 22.912,
+    "free_gib_on_card_at_measure_time": 42.21,
+    "note": "pinned-memory H2D, bfloat16 buffer, non_blocking copy."
+  },
+  "composed_swap_in": {
+    "label": "SUM OF MEASURED COMPONENTS -- not an end-to-end measurement",
+    "why_not_end_to_end": "a real from_pretrained(Lingshu-32B).to('cuda') needs 62.31 GiB of free VRAM (vram_testtime_2026-08-11.json a_weights_resident_gib) and neither shared A100 had it during this round.",
+    "disk_to_ram_s": 410.222,
+    "ram_to_gpu_s": 2.72,
+    "total_cold_swap_in_s": 412.942,
+    "total_warm_swap_in_s_page_cache_hot": 65.711
+  }
+}

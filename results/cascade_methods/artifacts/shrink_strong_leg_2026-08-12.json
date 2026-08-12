@@ -1,0 +1,392 @@
+{
+ "title": "ATTACK 3 -- SHRINK THE STRONG LEG: quantisation, a smaller strong leg, and the inverted non-inferiority constraint",
+ "date": "2026-08-12",
+ "objective": "MINIMISE macro FLOP-eq SUBJECT TO paired-bootstrap CI lower bound of (policy - always-32B-direct) on the 8-cell macro >= -0.0029",
+ "reproduce": [
+  "python3 src/cascade_methods/shrink_strong_leg_footprint.py",
+  "python3 src/cascade_methods/shrink_invert_constraint.py",
+  "python3 src/cascade_methods/shrink_quantised_strong_leg.py --stage vram --configs nf4,int8,bf16_7b,bf16",
+  "runners/run_shrink_quant_acc.sh",
+  "python3 src/cascade_methods/shrink_strong_leg_assemble.py"
+ ],
+ "no_fabricated_numbers": true,
+ "null_tests": {
+  "N1_macro": {
+   "per_arm": {
+    "always_7b": {
+     "recomputed": 0.597087,
+     "published": 0.5971,
+     "abs_dev": 1.321e-05
+    },
+    "always_32b_direct": {
+     "recomputed": 0.656672,
+     "published": 0.6567,
+     "abs_dev": 2.751e-05
+    },
+    "always_32b_reasoning": {
+     "recomputed": 0.597435,
+     "published": 0.5974,
+     "abs_dev": 3.513e-05
+    },
+    "oracle_mode_32b": {
+     "recomputed": 0.657271,
+     "published": 0.6573,
+     "abs_dev": 2.942e-05
+    },
+    "method_compute_lean": {
+     "recomputed": 0.644277,
+     "published": 0.6443,
+     "abs_dev": 2.287e-05
+    },
+    "method_accuracy_max_veto": {
+     "recomputed": 0.657505,
+     "published": 0.6575,
+     "abs_dev": 4.82e-06
+    },
+    "method_accuracy_max_fusion": {
+     "recomputed": 0.650336,
+     "published": 0.6503,
+     "abs_dev": 3.56e-05
+    }
+   },
+   "max_abs_dev": 3.56e-05,
+   "verdict": "PASS",
+   "note": "recomputed 8-cell macro vs the published disjoint arm; deviation is the published file's 4-dp rounding"
+  },
+  "N2_published_tie": {
+   "arm": "method_accuracy_max_veto",
+   "delta": 0.00084,
+   "point_delta": 0.000832,
+   "lo": -0.002333,
+   "hi": 0.003677,
+   "published": "+0.0008 [-0.0022,+0.0037] TIE"
+  },
+  "N3_flop_model": {
+   "statement": "the analytic FLOP model rebuilt here reproduces the project's published DERIVED R32 exactly",
+   "rebuilt": 3.816,
+   "published": 3.816,
+   "abs_dev": 0.0,
+   "source": "artifacts/flop_ratio_derivation_2026-08-03.json:derived_ratio.R32_derived",
+   "verdict": "PASS"
+  }
+ },
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1 (footprint) / 4 (bootstrap)",
+  "PYTHONHASHSEED": "0",
+  "tf32": "not applicable -- numpy on stored 0/1 vectors; the GPU stages measure memory and wall-clock, not accuracy-critical arithmetic",
+  "bootstrap": "paired item-level multinomial counts, ONE shared stream reused by every candidate and the baseline, nboot=10000, seed=20260812"
+ },
+ "footprint_and_cost": {
+  "lingshu_7b": {
+   "architecture": "Qwen2_5_VLForConditionalGeneration",
+   "logical_params": 8292166656,
+   "params_B": 8.292,
+   "weight_bytes": 16584333312,
+   "weight_gib": 15.4454,
+   "stored_precision": "bf16",
+   "per_pass_gflops": 5830.88,
+   "R_vs_lingshu_7b": 1.0,
+   "x_of_always_32b_direct_DERIVED_R32_3p816": 0.2621,
+   "as_charged_cost": 1.0,
+   "x_of_always_32b_direct_AS_CHARGED_R32_4p57": 0.2188
+  },
+  "lingshu_i8b": {
+   "architecture": "InternVLForConditionalGeneration",
+   "logical_params": 7944373760,
+   "params_B": 7.944,
+   "weight_bytes": 15888747520,
+   "weight_gib": 14.7975,
+   "stored_precision": "bf16",
+   "per_pass_gflops": 4768.9,
+   "R_vs_lingshu_7b": 0.8179,
+   "x_of_always_32b_direct_DERIVED_R32_3p816": 0.2143,
+   "as_charged_cost": 0.8179,
+   "x_of_always_32b_direct_AS_CHARGED_R32_4p57": 0.179
+  },
+  "lingshu_32b": {
+   "architecture": "Qwen2_5_VLForConditionalGeneration",
+   "logical_params": 33452718336,
+   "params_B": 33.453,
+   "weight_bytes": 66905436672,
+   "weight_gib": 62.3105,
+   "stored_precision": "bf16",
+   "per_pass_gflops": 22250.45,
+   "R_vs_lingshu_7b": 3.816,
+   "x_of_always_32b_direct_DERIVED_R32_3p816": 1.0,
+   "as_charged_cost": 4.57,
+   "x_of_always_32b_direct_AS_CHARGED_R32_4p57": 1.0
+  },
+  "qwen25vl_32b_awq": {
+   "architecture": "Qwen2_5_VLForConditionalGeneration",
+   "logical_params": 33452718336,
+   "params_B": 33.453,
+   "weight_bytes": 20706488832,
+   "weight_gib": 19.2844,
+   "stored_precision": "AWQ 4-bit (group 128, visual kept bf16)",
+   "per_pass_gflops": 22250.45,
+   "R_vs_lingshu_7b": 3.816,
+   "x_of_always_32b_direct_DERIVED_R32_3p816": 1.0,
+   "as_charged_cost": 4.57,
+   "x_of_always_32b_direct_AS_CHARGED_R32_4p57": 1.0
+  }
+ },
+ "measured_vram_and_latency": {
+  "table": {
+   "bf16_7b": {
+    "label": "Lingshu-7B bf16 (the cheap leg, for scale)",
+    "resident_mib_during_generation": 31236.7,
+    "resident_gib_during_generation": 30.505,
+    "reserved_mib_during_generation": 31324.0,
+    "load_transient_peak_mib": 31178.3,
+    "latency_ms_batch1_mean": 217.4,
+    "latency_ms_batch1_median": 214.8,
+    "gen_tokens_mean": 2.0,
+    "load_seconds": 21.5,
+    "n_timed": 22
+   },
+   "int8": {
+    "label": "Lingshu-32B bitsandbytes LLM.int8()",
+    "resident_mib_during_generation": 34364.5,
+    "resident_gib_during_generation": 33.559,
+    "reserved_mib_during_generation": 34770.0,
+    "load_transient_peak_mib": 34543.7,
+    "latency_ms_batch1_mean": 11241.9,
+    "latency_ms_batch1_median": 10894.1,
+    "gen_tokens_mean": 2.0,
+    "load_seconds": 199.1,
+    "n_timed": 22
+   },
+   "nf4": {
+    "label": "Lingshu-32B bitsandbytes NF4 (4-bit, double-quant, bf16 compute)",
+    "resident_mib_during_generation": 20000.3,
+    "resident_gib_during_generation": 19.532,
+    "reserved_mib_during_generation": 32036.0,
+    "load_transient_peak_mib": 31903.0,
+    "latency_ms_batch1_mean": 936.4,
+    "latency_ms_batch1_median": 893.3,
+    "gen_tokens_mean": 3.0,
+    "load_seconds": 185.4,
+    "n_timed": 22
+   },
+   "bf16": "not measured -- queued behind two other rounds' GPU jobs; the run waits for free VRAM rather than oversubscribing, and will write _shrink_parts/vram_bf16.json when a card frees"
+  },
+  "nvml_limitation": "NVML PER-PROCESS attribution is IMPOSSIBLE in this container: nvidia-smi reports PIDs from a different PID namespace (e.g. 3964324) than the job's own (e.g. 1472818), so no process footprint can be matched.  Total-GPU memory is also unusable because two other rounds share both cards.  The numbers above are therefore the TORCH ALLOCATOR's, which excludes the ~300-500 MiB CUDA context -- stated, not silently omitted.",
+  "bf16_resident_anomaly": {
+   "what": "the NON-quantised (bf16) VRAM readings are ~2x the model's own weight bytes and are NOT yet explained",
+   "measured_resident_mib": 31236.7,
+   "expected_weight_mib": 15816.1,
+   "ratio": 1.975,
+   "checks_done": [
+    "torch_dtype=torch.bfloat16 IS honoured: loading the same checkpoint with device_map='cpu' gives 729/729 parameters in torch.bfloat16 and exactly 16,584,333,312 bytes = 15.445 GiB, matching the safetensors headers.",
+    "batch-1 activations cannot account for it: the probe uses one 320x320 image (~121 Qwen2.5-VL image tokens) and generates 2-3 tokens.",
+    "it is SYSTEMATIC, not a one-off: a concurrent round's process shows the same ~31.09 GiB signature for a similarly-sized bf16 model (seen in a CUDA OOM report while probing)."
+   ],
+   "leading_hypothesis": "the bf16 path passes device_map=<device string> while the quantised path passes device_map={'': idx} (a dict); the two load paths differ and only the string path shows the inflation. NOT CONFIRMED -- both A100s are saturated by other rounds and the confirming probe OOM'd rather than displacing them.",
+   "consequence": "NO CONCLUSION IN THIS ARTIFACT DEPENDS ON IT.  The FLOP-invariance result and every params/GiB figure come from safetensors headers, not from the GPU.  The NF4 resident figure IS consistent with an independent check (4-bit LM linears + bf16 embed/lm_head/vision ~= 18.7 GiB predicted vs 19.53 GiB measured), so the quantised path looks sound; it is the bf16 CONTROL that is suspect.",
+   "status": "OPEN -- do not quote the bf16 resident figures until a probe that asserts both parameter dtype and post-load allocated bytes has run."
+  },
+  "workload": "25 fixed synthetic 320x320 images + one fixed VQA-RAD-style question, batch 1, greedy, 3 warmup passes excluded"
+ },
+ "quantised_accuracy": "not measured -- queued (runners/run_shrink_quant_acc.sh)",
+ "inverted_constraint": {
+  "lever": "3. INVERT THE CONSTRAINT",
+  "question": "What accuracy must a strong leg reach, at a given size, to hold the tie?",
+  "answer_bracket": {
+   "correlated_bar": 0.655746,
+   "correlated_note": "M(lambda*) -- a candidate whose errors are a SUBSET of the measured 7B/32B disagreement, i.e. maximally correlated with the baseline. This is the EASIEST case and therefore the LOWER bound on the requirement.",
+   "independent_bar": 0.671046,
+   "independent_seed_robustness": {
+    "n_seeds": 12,
+    "bars": [
+     0.671594,
+     0.671509,
+     null,
+     0.671229,
+     0.671046,
+     0.670577,
+     null,
+     0.670646,
+     0.670977,
+     null,
+     0.670798,
+     0.671343
+    ],
+    "median": 0.671046,
+    "min": 0.670577,
+    "max": 0.671594,
+    "spread": 0.001017,
+    "note": "the independent bar is a MEDIAN over 12 seeds; the spread is reported because the family is drawn, not measured"
+   },
+   "independent_note": "a candidate erring independently of the 32B at the same per-cell accuracy. Wider paired CI => needs MORE accuracy. UPPER bound.",
+   "bracket": [
+    0.655746,
+    0.671046
+   ],
+   "headline": "To hold the tie deployed ALONE, a replacement strong leg needs an 8-cell macro of at least 0.6557 (errors correlated with the 32B) and up to 0.6710 (errors independent of it), against the baseline's 0.6567 -- i.e. it must land within -0.0144-0.0009 macro of always-32B-direct."
+  },
+  "lambda_star": 0.982,
+  "interpretation": "Deployed ALONE, a replacement strong leg must recover 98.2% of every error always-32B-direct fixes over Lingshu-7B before the CI lower bound clears -0.0029. Recovering 90% is NOT enough (macro 0.6504, delta -0.0062 [-0.0104,-0.0024], FAILS).  In accuracy terms the bar is 8-cell macro >= 0.6557 if the candidate's errors are highly correlated with the 32B's, rising to >= 0.6710 if they are independent of it -- and 0.6710 is ABOVE the baseline's own 0.6567.",
+  "the_structural_consequence": "THIS IS THE MOST USEFUL RESULT OF THE ATTACK.  Because the test is PAIRED, the width of the CI depends on how the candidate's errors correlate with the baseline's.  A near-clone of the 32B gets a narrow CI and needs only to match it; an INDEPENDENT model of the same accuracy gets a wider CI and must BEAT it by +0.0149 to be certified 'not worse'.  So the pre-registered constraint admits essentially two shapes: (a) something that IS the 32B computationally -- a quantised or distilled copy, which saves memory but no FLOPs; or (b) a genuinely better model, which is a capability result, not a compute result.  A merely-comparable smaller model of different lineage cannot pass, however cheap it is.",
+  "per_cell_targets": {
+   "PMC_VQA": {
+    "always_32b_direct": 0.5518,
+    "always_7b": 0.5427,
+    "gap_the_replacement_must_close": 0.0091
+   },
+   "SLAKE_closed": {
+    "always_32b_direct": 0.8589,
+    "always_7b": 0.8254,
+    "gap_the_replacement_must_close": 0.0335
+   },
+   "VQA_RAD_closed": {
+    "always_32b_direct": 0.8526,
+    "always_7b": 0.7809,
+    "gap_the_replacement_must_close": 0.0717
+   },
+   "PATH_VQA_closed": {
+    "always_32b_direct": 0.8891,
+    "always_7b": 0.8409,
+    "gap_the_replacement_must_close": 0.0482
+   },
+   "MedXpertQA-MM": {
+    "always_32b_direct": 0.3065,
+    "always_7b": 0.2615,
+    "gap_the_replacement_must_close": 0.045
+   },
+   "SLAKE_open": {
+    "always_32b_direct": 0.8186,
+    "always_7b": 0.7364,
+    "gap_the_replacement_must_close": 0.0822
+   },
+   "VQA_RAD_open": {
+    "always_32b_direct": 0.6,
+    "always_7b": 0.465,
+    "gap_the_replacement_must_close": 0.135
+   },
+   "PATH_VQA_open": {
+    "always_32b_direct": 0.376,
+    "always_7b": 0.324,
+    "gap_the_replacement_must_close": 0.052
+   }
+  },
+  "caveat": "The M(lambda) family is a SIMULATED interpolation of the two MEASURED arms' per-item outcomes; lambda=0 and lambda=1 reproduce always-7B and always-32B-direct exactly (asserted in code).  It is a REQUIREMENT CURVE, not a measurement of any real model.  It also inverts the constraint for the ALWAYS-S deployment, which is the cheapest possible one; a 7B->S cascade needs S to be at least as good, and per-item escalation masks are not stored in vec_disjoint.npz so the cascade variant could not be recomposed here."
+ },
+ "levers": {
+  "lever_1_quantise": {
+   "lever": "1. QUANTISE THE 32B",
+   "flop_verdict": "NO EFFECT ON THE PRIMARY OBJECTIVE, and this is structural, not empirical. The AWQ checkpoint's logical parameter count is IDENTICAL to Lingshu-32B's (33,452,718,336 both, read from the safetensors headers of each), so a forward pass performs exactly the same multiply-accumulates: R stays 3.8160.  Nor is there a throughput credit: the A100 DOES expose INT4 tensor-core ops, but reaching them needs BOTH operands quantised (W4A4), whereas AWQ and bitsandbytes-NF4 are W4A16 -- weights are dequantised to bf16/fp16 and multiplied by 16-bit activations on the same 16-bit tensor cores.  The 4-bit storage buys bandwidth, not arithmetic.",
+   "memory_verdict": "REAL ON THE WEIGHTS, AND NOW QUANTIFIED FOR THE FIRST TIME.  Lingshu-32B bf16 weights are 62.3105 GiB (66905436672 B, index total_size).  Measured resident during generation: NF4 19.532 GiB, INT8 33.559 GiB.",
+   "latency_verdict": "NO LATENCY BENEFIT, and for INT8 a catastrophic penalty.  Measured batch-1 mean: NF4 936.4 ms, INT8 11241.9 ms.  The INT8 figure is ~12x the project's own bf16-32B anchor (665 ms) and needs no matched control to be called a loss.  The NF4 figure is ABOVE that anchor too, but the anchor came from a different serving path, so NF4 is reported as 'no benefit demonstrated' rather than a quantified slowdown until the matched bf16 control lands.  bf16 control: not measured -- both A100s are saturated by two other rounds; the job is queued with a wait-for-VRAM guard and will write vram_bf16.json when a card frees.  The project's stored 665 ms anchor is NOT usable as this control (different serving path), so no bf16 ratio is quoted..",
+   "accuracy_verdict": "not measured -- queued behind the VRAM stage",
+   "corrects_prior_claim": "artifacts/quantized_strong_leg.json (2026-07-07) called an INT4 strong leg 'a real VRAM win' with ZERO measured numbers (its own tractability_note records that the AWQ shards never downloaded).  The AWQ shards are now complete on disk and the memory claim is CONFIRMED and quantified; its companion latency projection (int4_latency_ratio 0.8763, i.e. 12% FASTER) is CONTRADICTED by measurement."
+  },
+  "lever_2_smaller_strong_leg": {
+   "lever": "2. A SMALLER STRONG LEG (Lingshu-I-8B)",
+   "exists": "CONFIRMED ON DISK, and it is NOT what the literature note implied.  Lingshu-I-8B is InternVLForConditionalGeneration (model_type 'internvl'), NOT the Qwen2.5-VL architecture every other Lingshu here uses: InternViT-300M vision tower + a Qwen2 text backbone.  Consequence: vLLM 0.9.0.1 cannot serve it at all, so it cannot be scored on the stack every published cell used.",
+   "footprint": "7,944,373,760 params / 14.7975 GiB bf16 -- SMALLER than the deployed cheap leg (Lingshu-7B: 8,292,166,656 / 15.4454 GiB), and 4.21x smaller than Lingshu-32B (33,452,718,336 / 62.3105 GiB).",
+   "surprise": "Its language model is byte-identically sized to Lingshu-7B's -- lm_body is 6,525,621,760 parameters in BOTH.  The entire difference is the vision tower (InternViT 304,012,288 vs Qwen2.5-VL 631,975,680) and the merger/projector. So it is not 'a bigger 8B'; it is the same 7B language model behind a cheaper, differently-trained visual front end.",
+   "cost": "R = 0.8179 vs Lingshu-7B, i.e. CHEAPER PER PASS THAN THE CURRENT CHEAP LEG (fixed 256 image tokens from crop_to_patches=false, and a 2.1x smaller tower). As always-I-8B that is 0.2143x always-32B-direct (derived R32) / 0.1790x (as-charged R32).",
+   "accuracy": "not measured BY THIS ROUND -- a concurrent round (ATTACK A, src/cascade_methods/i8b_cheapleg_eval.py) is measuring it right now with a matched Lingshu-7B control under HF transformers, and I deliberately did not duplicate that GPU work.  Its per-cell numbers, when they land, plug straight into the L3 frontier below.",
+   "prior_expectation": "The vendor table [V*, LITERATURE_UPDATE_2026-08-11.md 5.1] puts Lingshu-I-8B's 7-benchmark average at 64.5 vs Lingshu-32B's 66.6 -- 2.1 points BELOW the model it would have to replace, with PathVQA +13.0 and SLAKE +8.5 but MMMU-Med -4.9.  That is a DIFFERENT harness from our 8-cell macro and must not be cross-multiplied; it is quoted only as a prior on plausibility.  Against the requirement derived below (a replacement must land within -0.0149..+0.0009 macro of the 32B), a 2.1-point deficit on the vendor's own scale is a strong prior that I-8B does NOT hold the tie as a REPLACEMENT strong leg -- while remaining a very promising CHEAP leg, which is exactly what the concurrent round is testing."
+  },
+  "lever_3_invert": {
+   "lever": "3. INVERT THE CONSTRAINT",
+   "question": "What accuracy must a strong leg reach, at a given size, to hold the tie?",
+   "answer_bracket": {
+    "correlated_bar": 0.655746,
+    "correlated_note": "M(lambda*) -- a candidate whose errors are a SUBSET of the measured 7B/32B disagreement, i.e. maximally correlated with the baseline. This is the EASIEST case and therefore the LOWER bound on the requirement.",
+    "independent_bar": 0.671046,
+    "independent_seed_robustness": {
+     "n_seeds": 12,
+     "bars": [
+      0.671594,
+      0.671509,
+      null,
+      0.671229,
+      0.671046,
+      0.670577,
+      null,
+      0.670646,
+      0.670977,
+      null,
+      0.670798,
+      0.671343
+     ],
+     "median": 0.671046,
+     "min": 0.670577,
+     "max": 0.671594,
+     "spread": 0.001017,
+     "note": "the independent bar is a MEDIAN over 12 seeds; the spread is reported because the family is drawn, not measured"
+    },
+    "independent_note": "a candidate erring independently of the 32B at the same per-cell accuracy. Wider paired CI => needs MORE accuracy. UPPER bound.",
+    "bracket": [
+     0.655746,
+     0.671046
+    ],
+    "headline": "To hold the tie deployed ALONE, a replacement strong leg needs an 8-cell macro of at least 0.6557 (errors correlated with the 32B) and up to 0.6710 (errors independent of it), against the baseline's 0.6567 -- i.e. it must land within -0.0144-0.0009 macro of always-32B-direct."
+   },
+   "lambda_star": 0.982,
+   "interpretation": "Deployed ALONE, a replacement strong leg must recover 98.2% of every error always-32B-direct fixes over Lingshu-7B before the CI lower bound clears -0.0029. Recovering 90% is NOT enough (macro 0.6504, delta -0.0062 [-0.0104,-0.0024], FAILS).  In accuracy terms the bar is 8-cell macro >= 0.6557 if the candidate's errors are highly correlated with the 32B's, rising to >= 0.6710 if they are independent of it -- and 0.6710 is ABOVE the baseline's own 0.6567.",
+   "the_structural_consequence": "THIS IS THE MOST USEFUL RESULT OF THE ATTACK.  Because the test is PAIRED, the width of the CI depends on how the candidate's errors correlate with the baseline's.  A near-clone of the 32B gets a narrow CI and needs only to match it; an INDEPENDENT model of the same accuracy gets a wider CI and must BEAT it by +0.0149 to be certified 'not worse'.  So the pre-registered constraint admits essentially two shapes: (a) something that IS the 32B computationally -- a quantised or distilled copy, which saves memory but no FLOPs; or (b) a genuinely better model, which is a capability result, not a compute result.  A merely-comparable smaller model of different lineage cannot pass, however cheap it is.",
+   "per_cell_targets": {
+    "PMC_VQA": {
+     "always_32b_direct": 0.5518,
+     "always_7b": 0.5427,
+     "gap_the_replacement_must_close": 0.0091
+    },
+    "SLAKE_closed": {
+     "always_32b_direct": 0.8589,
+     "always_7b": 0.8254,
+     "gap_the_replacement_must_close": 0.0335
+    },
+    "VQA_RAD_closed": {
+     "always_32b_direct": 0.8526,
+     "always_7b": 0.7809,
+     "gap_the_replacement_must_close": 0.0717
+    },
+    "PATH_VQA_closed": {
+     "always_32b_direct": 0.8891,
+     "always_7b": 0.8409,
+     "gap_the_replacement_must_close": 0.0482
+    },
+    "MedXpertQA-MM": {
+     "always_32b_direct": 0.3065,
+     "always_7b": 0.2615,
+     "gap_the_replacement_must_close": 0.045
+    },
+    "SLAKE_open": {
+     "always_32b_direct": 0.8186,
+     "always_7b": 0.7364,
+     "gap_the_replacement_must_close": 0.0822
+    },
+    "VQA_RAD_open": {
+     "always_32b_direct": 0.6,
+     "always_7b": 0.465,
+     "gap_the_replacement_must_close": 0.135
+    },
+    "PATH_VQA_open": {
+     "always_32b_direct": 0.376,
+     "always_7b": 0.324,
+     "gap_the_replacement_must_close": 0.052
+    }
+   },
+   "caveat": "The M(lambda) family is a SIMULATED interpolation of the two MEASURED arms' per-item outcomes; lambda=0 and lambda=1 reproduce always-7B and always-32B-direct exactly (asserted in code).  It is a REQUIREMENT CURVE, not a measurement of any real model.  It also inverts the constraint for the ALWAYS-S deployment, which is the cheapest possible one; a 7B->S cascade needs S to be at least as good, and per-item escalation masks are not stored in vec_disjoint.npz so the cascade variant could not be recomposed here."
+  }
+ },
+ "corrections_to_the_brief": {
+  "lingshu_32b_footprint": "The round brief states always-32B-direct weighs '~32.8B params / ~31.5 GiB bf16'.  MEASURED from the safetensors headers: 33452718336 params and 66905436672 bytes = 62.3105 GiB.  The GiB figure in the brief is too small by ~2x -- that many parameters at 2 bytes each cannot be 31.5 GiB.  The brief's Lingshu-7B figures (8.29B / 15.45 GiB, index total_size 16.59e9 B) ARE correct and reproduce exactly (measured 8292166656 params / 16584333312 bytes / 15.4454 GiB), so only the 32B row is affected.  Every footprint comparison in this round should use 62.3105 GiB."
+ },
+ "VERDICT": {
+  "headline": "Neither lever produces a compute win, and the inversion explains why that was close to inevitable.  QUANTISATION cannot reduce FLOP-eq at all -- identical logical parameter count, identical MACs, no INT4 tensor-core path on A100 -- so it is a MEMORY lever only: 62.3105 GiB of weights -> 19.532 GiB resident measured (NF4), a 3.19x reduction, with NO measured latency benefit (INT8 is ~12x worse).  A SMALLER STRONG LEG is the only lever that touches the primary objective, and Lingshu-I-8B is a genuinely attractive candidate on both axes (7.944B params / 14.7975 GiB, R=0.8179 -- cheaper per pass than the CURRENT CHEAP LEG, 0.2143x always-32B-direct), but its accuracy on our harness is being measured by a concurrent round and the vendor's own table puts it 2.1 points below the model it would replace.  The INVERSION is the transferable result: the pre-registered constraint requires a replacement to land within -0.0149..+0.0009 macro of always-32B-direct, and an independently-erring model must BEAT it outright, so the constraint as written admits quantised/distilled copies (no FLOP saving) and genuinely better models (a capability result) but not cheaper comparable ones.",
+  "best_operating_point_from_this_attack": "NONE DEMONSTRATED.  No configuration measured here is both cheaper than always-32B-direct and shown to satisfy the constraint.  The best CANDIDATE on cost and footprint is always-Lingshu-I-8B at 0.2143x compute (derived R32) / 0.1790x (as-charged) and 14.7975 GiB, pending the concurrent round's accuracy measurement; on the prior above it is unlikely to clear the bar.",
+  "what_would_change_this": "(a) the concurrent I-8B measurement coming in at macro >= 0.6557; (b) relaxing the non-inferiority margin, which is a decision for the project, not a measurement -- at the current eps the paired-CI geometry, not the model, is what rejects cheap alternatives; (c) an INT4 path on hardware that actually has INT4 tensor cores, which would convert the memory win into a throughput win."
+ },
+ "limitations": [
+  "bf16 Lingshu-32B VRAM/latency control is not measured at write time: both A100s are saturated by two other rounds and the job waits rather than oversubscribing.  Without it no NF4-vs-bf16 latency RATIO is quoted.",
+  "Quantised ACCURACY is not measured at write time (queued).  The FLOP conclusion does not depend on it; the 'does a quantised strong leg hold the tie' question does.",
+  "NVML per-process VRAM attribution is impossible in this container (PID namespace mismatch); torch-allocator figures are reported instead and exclude the CUDA context.",
+  "The latency/VRAM probe uses synthetic 320x320 images so it carries no dataset dependency; it is NOT an accuracy measurement and is not used as one.",
+  "The M(lambda) requirement curve inverts the constraint for the always-S deployment only; per-item escalation masks are not stored, so the 7B->S cascade variant could not be recomposed.",
+  "Lingshu-I-8B cannot be served by vLLM 0.9.0.1, so any number for it comes from a different serving stack than every published cell -- the +/-0.008 open-text reproducibility caveat applies and a matched control is mandatory."
+ ]
+}

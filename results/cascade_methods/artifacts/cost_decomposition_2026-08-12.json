@@ -1,0 +1,3563 @@
+{
+ "title": "ATTACK 1 -- where does every FLOP go, and what is the floor?  A complete (cell x stage) cost decomposition of the shipped accuracy-max arm, and the minimum-compute frontier under the new objective (minimise compute subject to macro non-inferiority vs always-32B-direct).",
+ "date": "2026-08-12",
+ "reproduce": "python3 src/cascade_methods/cost_decomposition.py",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "objective": {
+  "primary": "MINIMISE macro-weighted FLOP-eq as a ratio of one always-32B-direct forward pass",
+  "secondary": "MINIMISE model footprint -- parameters and GiB of weights that must be resident",
+  "tertiary": "parallel latency and energy (measured currencies)",
+  "constraint": "paired-bootstrap 95% CI lower bound of (policy - always-32B-direct) on the 8-cell macro must be >= -0.0029",
+  "pre_registered": true
+ },
+ "seed": 20260812,
+ "n_bootstrap": 10000,
+ "n_fold_seeds": 12,
+ "pool": "Variant B (MMMU excluded): 5 benchmarks / 8 cells / n=42,224; CLEAN disjoint verifier",
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1",
+  "OPENBLAS_NUM_THREADS": "1",
+  "MKL_NUM_THREADS": "1",
+  "PYTHONHASHSEED": "0",
+  "tf32": "not applicable -- pure numpy/sklearn on CPU, no GPU matmul",
+  "bootstrap": "paired item-level, one shared resample stream per cell reused by every policy and every baseline",
+  "rank_convention": "not applicable -- no ranking step"
+ },
+ "null_tests": {
+  "N1": {
+   "name": "N1 -- reproduce the published 8-cell macro accuracy, per-cell as-charged cost, and 1.740x",
+   "source_vectors": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz",
+   "source_published": "results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json:per_arm.disjoint",
+   "per_system": {
+    "always_7b": {
+     "macro_recomputed": 0.597087,
+     "macro_published": 0.5971,
+     "abs_dev_acc": 1.321e-05,
+     "cost_recomputed": 1.0,
+     "cost_published": 1.0,
+     "abs_dev_cost": 0.0
+    },
+    "always_32b_direct": {
+     "macro_recomputed": 0.656672,
+     "macro_published": 0.6567,
+     "abs_dev_acc": 2.751e-05,
+     "cost_recomputed": 4.57,
+     "cost_published": 4.57,
+     "abs_dev_cost": 0.0
+    },
+    "always_32b_reasoning": {
+     "macro_recomputed": 0.597435,
+     "macro_published": 0.5974,
+     "abs_dev_acc": 3.513e-05,
+     "cost_recomputed": 4.57,
+     "cost_published": 4.57,
+     "abs_dev_cost": 0.0
+    },
+    "method_compute_lean": {
+     "macro_recomputed": 0.644277,
+     "macro_published": 0.6443,
+     "abs_dev_acc": 2.287e-05,
+     "cost_recomputed": 6.673625,
+     "cost_published": 6.674,
+     "abs_dev_cost": 0.000375
+    },
+    "method_accuracy_max_veto": {
+     "macro_recomputed": 0.657505,
+     "macro_published": 0.6575,
+     "abs_dev_acc": 4.82e-06,
+     "cost_recomputed": 7.951,
+     "cost_published": 7.951,
+     "abs_dev_cost": 0.0
+    },
+    "method_accuracy_max_fusion": {
+     "macro_recomputed": 0.650336,
+     "macro_published": 0.6503,
+     "abs_dev_acc": 3.56e-05,
+     "cost_recomputed": 7.76625,
+     "cost_published": 7.766,
+     "abs_dev_cost": 0.00025
+    }
+   },
+   "max_abs_dev_accuracy": 3.56e-05,
+   "max_abs_dev_cost_flops": 0.000375,
+   "macro_ratio_accmax_vs_direct": 1.7398,
+   "published_ratio": 1.74,
+   "verdict": "PASS"
+  },
+  "N2": {
+   "name": "N2 -- rebuild the FLOP model from measured parameter counts; reproduce R32_derived and extract the per-stage shares",
+   "source": "results/cascade_methods/artifacts/flop_ratio_derivation_2026-08-03.json",
+   "operating_point": {
+    "prompt_tok": 326.68,
+    "image_tok_or_patches": {
+     "M": 280.48,
+     "P_patches": 1121.9
+    },
+    "gen_tok_7b": 5.64,
+    "gen_tok_32b": 5.6,
+    "note": "cap320 open-text geometry, the repo's single FLOP operating point"
+   },
+   "rebuilt_component_gflops": {
+    "lingshu_7b": {
+     "vision_tower_dense": 1418.03,
+     "vision_tower_attn": 36.07,
+     "vision_merger": 25.0,
+     "lm_prefill_dense": 4263.58,
+     "lm_prefill_attn": 21.42,
+     "lm_decode_dense": 60.56,
+     "lm_decode_attn": 0.61,
+     "lm_head": 6.15
+    },
+    "lingshu_32b": {
+     "vision_tower_dense": 1427.96,
+     "vision_tower_attn": 36.07,
+     "vision_merger": 29.42,
+     "lm_prefill_dense": 20389.24,
+     "lm_prefill_attn": 69.94,
+     "lm_decode_dense": 287.1,
+     "lm_decode_attn": 1.98,
+     "lm_head": 8.72
+    }
+   },
+   "rebuilt_total_gflops": {
+    "lingshu_7b": 5831.42,
+    "lingshu_32b": 22250.43
+   },
+   "published_total_gflops": null,
+   "reference_totals_cost_floor_N2": {
+    "lingshu_7b": 5831.42,
+    "lingshu_32b": 22250.42
+   },
+   "max_abs_dev_component_gflops": 0.0,
+   "max_abs_dev_total_gflops": 0.01,
+   "rebuilt_ratio": 3.8156,
+   "published_ratio": 3.816,
+   "stage_shares": {
+    "lingshu_7b": {
+     "vision_gflops": 1479.1,
+     "lm_prefill_gflops": 4285.0,
+     "decode_gflops": 67.32,
+     "total_gflops": 5831.42,
+     "vision_share": 0.253643,
+     "lm_prefill_share": 0.734812,
+     "decode_share": 0.011544
+    },
+    "lingshu_32b": {
+     "vision_gflops": 1493.45,
+     "lm_prefill_gflops": 20459.18,
+     "decode_gflops": 297.8,
+     "total_gflops": 22250.43,
+     "vision_share": 0.06712,
+     "lm_prefill_share": 0.919496,
+     "decode_share": 0.013384
+    }
+   },
+   "formula_note": "vision_tower_dense uses P_patches (1121.9) and decode attention is uncalibrated by the causal factor -- both matched to cost_floor_2026-08-10.json:N2 so the two rebuilds are bit-comparable",
+   "verdict": "PASS"
+  },
+  "N3": {
+   "name": "N3 -- per-item draw counts and escalation flags reproduce the published aggregates",
+   "method": "literal re-implementations of paper_baselines.cascade_persample / .pandora_persample and method_final_mmmu_corrected.f10_persample that additionally return the per-item vectors; beat32b_more.f8_veto already returns its per-item veto flag",
+   "verifier_dir": "ckpts/train/lora_verifier_disjoint",
+   "per_cell": {
+    "PMC_VQA": {
+     "cl_esc_recomputed": 0.084535,
+     "cl_esc_published": 0.0845,
+     "am2_esc_from_arm_decomposition": 0.5998
+    },
+    "SLAKE_closed": {
+     "cl_esc_recomputed": 0.204545,
+     "cl_esc_published": 0.2045,
+     "am2_esc_from_arm_decomposition": 1.0
+    },
+    "VQA_RAD_closed": {
+     "cl_esc_recomputed": 0.569721,
+     "cl_esc_published": 0.5697,
+     "am2_esc_from_arm_decomposition": 1.0
+    },
+    "PATH_VQA_closed": {
+     "cl_esc_recomputed": 0.457168,
+     "cl_esc_published": 0.4572,
+     "am2_esc_from_arm_decomposition": 1.0
+    },
+    "MedXpertQA-MM": {
+     "cl_esc_recomputed": 0.896,
+     "cl_esc_published": 0.896,
+     "am2_esc_from_arm_decomposition": 1.0
+    },
+    "SLAKE_open": {
+     "cl_esc_recomputed": 0.434109,
+     "cl_esc_published": 0.4341,
+     "meanN_recomputed": 5.547287,
+     "meanN_published": 5.547286821705426,
+     "am2_esc_recomputed": 0.629457,
+     "am2_esc_published": 0.6295,
+     "am2_esc_from_arm_decomposition": 0.6295
+    },
+    "VQA_RAD_open": {
+     "cl_esc_recomputed": 0.54,
+     "cl_esc_published": 0.54,
+     "meanN_recomputed": 6.63,
+     "meanN_published": 6.63,
+     "am2_esc_recomputed": 0.885,
+     "am2_esc_published": 0.885,
+     "am2_esc_from_arm_decomposition": 0.885
+    },
+    "PATH_VQA_open": {
+     "cl_esc_recomputed": 0.16,
+     "cl_esc_published": 0.16,
+     "meanN_recomputed": 4.371333,
+     "meanN_published": 4.371333333333333,
+     "am2_esc_recomputed": 0.343333,
+     "am2_esc_published": 0.3433,
+     "am2_esc_from_arm_decomposition": 0.3433
+    }
+   },
+   "item_counts": {
+    "PMC_VQA": {
+     "peritem": 33430,
+     "eval_vector": 33430
+    },
+    "SLAKE_closed": {
+     "peritem": 836,
+     "eval_vector": 836
+    },
+    "VQA_RAD_closed": {
+     "peritem": 251,
+     "eval_vector": 251
+    },
+    "PATH_VQA_closed": {
+     "peritem": 3362,
+     "eval_vector": 3362
+    },
+    "MedXpertQA-MM": {
+     "peritem": 2000,
+     "eval_vector": 2000
+    },
+    "SLAKE_open": {
+     "peritem": 645,
+     "eval_vector": 645
+    },
+    "VQA_RAD_open": {
+     "peritem": 200,
+     "eval_vector": 200
+    },
+    "PATH_VQA_open": {
+     "peritem": 1500,
+     "eval_vector": 1500
+    }
+   },
+   "item_counts_match_eval_vectors": true,
+   "max_abs_dev": 4.5e-05,
+   "verdict": "PASS",
+   "note": "tolerance 1e-3 because the published values are rounded to 4 dp"
+  },
+  "N4": {
+   "name": "N4 -- the stage decomposition re-sums to the published per-cell as-charged cost",
+   "max_abs_dev_vs_published_per_cell_flops": 0.000528,
+   "macro_x_direct_rebuilt": 1.73983,
+   "macro_x_direct_published": 1.74,
+   "verdict": "PASS"
+  }
+ },
+ "Q0_cost_decomposition": {
+  "convention": "PRIMARY = as-charged (R32 = 4.57, every 7B generation and every verifier forward charged one full batch-1 7B pass).  The per-stage SHARES are MEASURED from parameter counts + token geometry (N2); the per-forward TOTALS are the convention's constants.  The derived-R32 (3.816) view is given alongside and makes every ratio WORSE for the method.",
+  "stage_definitions": {
+   "cheap_gen_vision": "Lingshu-7B ViT + patch merger, once per generated sample",
+   "cheap_gen_lm_prefill": "Lingshu-7B LM prefill over the prompt, once per generated sample",
+   "cheap_gen_decode": "Lingshu-7B LM decode + lm_head for the generated tokens",
+   "verifier_vision": "the verifier is a LoRA on the SAME 7B base; its forward re-runs the ViT",
+   "verifier_lm_prefill": "verifier LM prefill over image+question+candidate",
+   "verifier_decode": "verifier scoring head / decode",
+   "selector_head": "the frozen 8-seed genframe head, 7,344,136 params measured from ckpts/train/genframe_head_ens8/head_seed*.pt.  ZERO in the canonical `disjoint` arm, which uses the LoRA verifier as its selector.",
+   "strong_vision": "Lingshu-32B ViT + merger on escalation",
+   "strong_lm_prefill": "Lingshu-32B LM prefill on escalation",
+   "strong_decode": "Lingshu-32B LM decode on escalation"
+  },
+  "shipped_accuracy_max_as_charged": {
+   "per_cell": {
+    "PMC_VQA": {
+     "n": 33430,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.5998,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.18398,
+      "strong_lm_prefill": 2.52042,
+      "strong_decode": 0.03669
+     },
+     "total_flopeq": 3.74109,
+     "x_direct": 0.81862,
+     "published_total_flopeq": 3.741
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.30674,
+      "strong_lm_prefill": 4.2021,
+      "strong_decode": 0.06116
+     },
+     "total_flopeq": 4.57,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.30674,
+      "strong_lm_prefill": 4.2021,
+      "strong_decode": 0.06116
+     },
+     "total_flopeq": 4.57,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.30674,
+      "strong_lm_prefill": 4.2021,
+      "strong_decode": 0.06116
+     },
+     "total_flopeq": 4.57,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.30674,
+      "strong_lm_prefill": 4.2021,
+      "strong_decode": 0.06116
+     },
+     "total_flopeq": 4.57,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "SLAKE_open": {
+     "n": 645,
+     "n_gen7": 5.5473,
+     "n_ver7": 5.5473,
+     "n_32b": 0.6295,
+     "stages": {
+      "cheap_gen_vision": 1.40703,
+      "cheap_gen_lm_prefill": 4.07622,
+      "cheap_gen_decode": 0.06404,
+      "verifier_vision": 1.40703,
+      "verifier_lm_prefill": 4.07622,
+      "verifier_decode": 0.06404,
+      "selector_head": 0.0,
+      "strong_vision": 0.19309,
+      "strong_lm_prefill": 2.64522,
+      "strong_decode": 0.0385
+     },
+     "total_flopeq": 13.9714,
+     "x_direct": 3.0572,
+     "published_total_flopeq": 13.971
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "n_gen7": 6.63,
+     "n_ver7": 6.63,
+     "n_32b": 0.885,
+     "stages": {
+      "cheap_gen_vision": 1.68165,
+      "cheap_gen_lm_prefill": 4.8718,
+      "cheap_gen_decode": 0.07654,
+      "verifier_vision": 1.68165,
+      "verifier_lm_prefill": 4.8718,
+      "verifier_decode": 0.07654,
+      "selector_head": 0.0,
+      "strong_vision": 0.27146,
+      "strong_lm_prefill": 3.71886,
+      "strong_decode": 0.05413
+     },
+     "total_flopeq": 17.30444,
+     "x_direct": 3.78653,
+     "published_total_flopeq": 17.304
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "n_gen7": 4.3713,
+     "n_ver7": 4.3713,
+     "n_32b": 0.3433,
+     "stages": {
+      "cheap_gen_vision": 1.10875,
+      "cheap_gen_lm_prefill": 3.21208,
+      "cheap_gen_decode": 0.05046,
+      "verifier_vision": 1.10875,
+      "verifier_lm_prefill": 3.21208,
+      "verifier_decode": 0.05046,
+      "selector_head": 0.0,
+      "strong_vision": 0.1053,
+      "strong_lm_prefill": 1.44258,
+      "strong_decode": 0.021
+     },
+     "total_flopeq": 10.31147,
+     "x_direct": 2.25634,
+     "published_total_flopeq": 10.312
+    }
+   },
+   "macro_stages": {
+    "cheap_gen_vision": 0.55638,
+    "cheap_gen_lm_prefill": 1.61186,
+    "cheap_gen_decode": 0.02532,
+    "verifier_vision": 0.52468,
+    "verifier_lm_prefill": 1.52001,
+    "verifier_decode": 0.02388,
+    "selector_head": 0.0,
+    "strong_vision": 0.2476,
+    "strong_lm_prefill": 3.39193,
+    "strong_decode": 0.04937
+   },
+   "macro_stage_pct": {
+    "cheap_gen_vision": 6.998,
+    "cheap_gen_lm_prefill": 20.272,
+    "cheap_gen_decode": 0.318,
+    "verifier_vision": 6.599,
+    "verifier_lm_prefill": 19.117,
+    "verifier_decode": 0.3,
+    "selector_head": 0.0,
+    "strong_vision": 3.114,
+    "strong_lm_prefill": 42.66,
+    "strong_decode": 0.621
+   },
+   "macro_total_flopeq": 7.95104,
+   "macro_x_direct": 1.73983,
+   "max_abs_dev_vs_published_per_cell": 0.000528
+  },
+  "shipped_accuracy_max_derived_R32": {
+   "per_cell": {
+    "PMC_VQA": {
+     "n": 33430,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.5998,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.15363,
+      "strong_lm_prefill": 2.10458,
+      "strong_decode": 0.03063
+     },
+     "total_flopeq": 3.28884,
+     "x_direct": 0.86185,
+     "published_total_flopeq": 3.741
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.25613,
+      "strong_lm_prefill": 3.5088,
+      "strong_decode": 0.05107
+     },
+     "total_flopeq": 3.816,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.25613,
+      "strong_lm_prefill": 3.5088,
+      "strong_decode": 0.05107
+     },
+     "total_flopeq": 3.816,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.25613,
+      "strong_lm_prefill": 3.5088,
+      "strong_decode": 0.05107
+     },
+     "total_flopeq": 3.816,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "n_gen7": 0.0,
+     "n_ver7": 0.0,
+     "n_32b": 1.0,
+     "stages": {
+      "cheap_gen_vision": 0.0,
+      "cheap_gen_lm_prefill": 0.0,
+      "cheap_gen_decode": 0.0,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.25613,
+      "strong_lm_prefill": 3.5088,
+      "strong_decode": 0.05107
+     },
+     "total_flopeq": 3.816,
+     "x_direct": 1.0,
+     "published_total_flopeq": 4.57
+    },
+    "SLAKE_open": {
+     "n": 645,
+     "n_gen7": 5.5473,
+     "n_ver7": 5.5473,
+     "n_32b": 0.6295,
+     "stages": {
+      "cheap_gen_vision": 1.40703,
+      "cheap_gen_lm_prefill": 4.07622,
+      "cheap_gen_decode": 0.06404,
+      "verifier_vision": 1.40703,
+      "verifier_lm_prefill": 4.07622,
+      "verifier_decode": 0.06404,
+      "selector_head": 0.0,
+      "strong_vision": 0.16123,
+      "strong_lm_prefill": 2.20879,
+      "strong_decode": 0.03215
+     },
+     "total_flopeq": 13.49676,
+     "x_direct": 3.53689,
+     "published_total_flopeq": 13.971
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "n_gen7": 6.63,
+     "n_ver7": 6.63,
+     "n_32b": 0.885,
+     "stages": {
+      "cheap_gen_vision": 1.68165,
+      "cheap_gen_lm_prefill": 4.8718,
+      "cheap_gen_decode": 0.07654,
+      "verifier_vision": 1.68165,
+      "verifier_lm_prefill": 4.8718,
+      "verifier_decode": 0.07654,
+      "selector_head": 0.0,
+      "strong_vision": 0.22667,
+      "strong_lm_prefill": 3.10529,
+      "strong_decode": 0.0452
+     },
+     "total_flopeq": 16.63715,
+     "x_direct": 4.35984,
+     "published_total_flopeq": 17.304
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "n_gen7": 4.3713,
+     "n_ver7": 4.3713,
+     "n_32b": 0.3433,
+     "stages": {
+      "cheap_gen_vision": 1.10875,
+      "cheap_gen_lm_prefill": 3.21208,
+      "cheap_gen_decode": 0.05046,
+      "verifier_vision": 1.10875,
+      "verifier_lm_prefill": 3.21208,
+      "verifier_decode": 0.05046,
+      "selector_head": 0.0,
+      "strong_vision": 0.08793,
+      "strong_lm_prefill": 1.20457,
+      "strong_decode": 0.01753
+     },
+     "total_flopeq": 10.05262,
+     "x_direct": 2.63434,
+     "published_total_flopeq": 10.312
+    }
+   },
+   "macro_stages": {
+    "cheap_gen_vision": 0.55638,
+    "cheap_gen_lm_prefill": 1.61186,
+    "cheap_gen_decode": 0.02532,
+    "verifier_vision": 0.52468,
+    "verifier_lm_prefill": 1.52001,
+    "verifier_decode": 0.02388,
+    "selector_head": 0.0,
+    "strong_vision": 0.20675,
+    "strong_lm_prefill": 2.8323,
+    "strong_decode": 0.04122
+   },
+   "macro_stage_pct": {
+    "cheap_gen_vision": 7.578,
+    "cheap_gen_lm_prefill": 21.953,
+    "cheap_gen_decode": 0.345,
+    "verifier_vision": 7.146,
+    "verifier_lm_prefill": 20.702,
+    "verifier_decode": 0.325,
+    "selector_head": 0.0,
+    "strong_vision": 2.816,
+    "strong_lm_prefill": 38.575,
+    "strong_decode": 0.561
+   },
+   "macro_total_flopeq": 7.34242,
+   "macro_x_direct": 1.92411,
+   "max_abs_dev_vs_published_per_cell": null
+  },
+  "shipped_compute_lean_as_charged": {
+   "per_cell": {
+    "PMC_VQA": {
+     "n": 33430,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.0845,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.02592,
+      "strong_lm_prefill": 0.35508,
+      "strong_decode": 0.00517
+     },
+     "total_flopeq": 1.38616,
+     "x_direct": 0.30332,
+     "published_total_flopeq": 1.386
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.2045,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.06273,
+      "strong_lm_prefill": 0.85933,
+      "strong_decode": 0.01251
+     },
+     "total_flopeq": 1.93456,
+     "x_direct": 0.42332,
+     "published_total_flopeq": 1.935
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.5697,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.17475,
+      "strong_lm_prefill": 2.39393,
+      "strong_decode": 0.03485
+     },
+     "total_flopeq": 3.60353,
+     "x_direct": 0.78852,
+     "published_total_flopeq": 3.604
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.4572,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.14024,
+      "strong_lm_prefill": 1.9212,
+      "strong_decode": 0.02796
+     },
+     "total_flopeq": 3.0894,
+     "x_direct": 0.67602,
+     "published_total_flopeq": 3.089
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "n_gen7": 1.0,
+     "n_ver7": 0.0,
+     "n_32b": 0.896,
+     "stages": {
+      "cheap_gen_vision": 0.25364,
+      "cheap_gen_lm_prefill": 0.73481,
+      "cheap_gen_decode": 0.01154,
+      "verifier_vision": 0.0,
+      "verifier_lm_prefill": 0.0,
+      "verifier_decode": 0.0,
+      "selector_head": 0.0,
+      "strong_vision": 0.27484,
+      "strong_lm_prefill": 3.76508,
+      "strong_decode": 0.0548
+     },
+     "total_flopeq": 5.09472,
+     "x_direct": 1.11482,
+     "published_total_flopeq": 5.095
+    },
+    "SLAKE_open": {
+     "n": 645,
+     "n_gen7": 5.5473,
+     "n_ver7": 5.5473,
+     "n_32b": 0.4341,
+     "stages": {
+      "cheap_gen_vision": 1.40703,
+      "cheap_gen_lm_prefill": 4.07622,
+      "cheap_gen_decode": 0.06404,
+      "verifier_vision": 1.40703,
+      "verifier_lm_prefill": 4.07622,
+      "verifier_decode": 0.06404,
+      "selector_head": 0.0,
+      "strong_vision": 0.13316,
+      "strong_lm_prefill": 1.82413,
+      "strong_decode": 0.02655
+     },
+     "total_flopeq": 13.07843,
+     "x_direct": 2.8618,
+     "published_total_flopeq": 13.078
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "n_gen7": 6.63,
+     "n_ver7": 6.63,
+     "n_32b": 0.54,
+     "stages": {
+      "cheap_gen_vision": 1.68165,
+      "cheap_gen_lm_prefill": 4.8718,
+      "cheap_gen_decode": 0.07654,
+      "verifier_vision": 1.68165,
+      "verifier_lm_prefill": 4.8718,
+      "verifier_decode": 0.07654,
+      "selector_head": 0.0,
+      "strong_vision": 0.16564,
+      "strong_lm_prefill": 2.26913,
+      "strong_decode": 0.03303
+     },
+     "total_flopeq": 15.72779,
+     "x_direct": 3.44153,
+     "published_total_flopeq": 15.728
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "n_gen7": 4.3713,
+     "n_ver7": 4.3713,
+     "n_32b": 0.16,
+     "stages": {
+      "cheap_gen_vision": 1.10875,
+      "cheap_gen_lm_prefill": 3.21208,
+      "cheap_gen_decode": 0.05046,
+      "verifier_vision": 1.10875,
+      "verifier_lm_prefill": 3.21208,
+      "verifier_decode": 0.05046,
+      "selector_head": 0.0,
+      "strong_vision": 0.04908,
+      "strong_lm_prefill": 0.67234,
+      "strong_decode": 0.00979
+     },
+     "total_flopeq": 9.47379,
+     "x_direct": 2.07304,
+     "published_total_flopeq": 9.474
+    }
+   },
+   "macro_stages": {
+    "cheap_gen_vision": 0.6832,
+    "cheap_gen_lm_prefill": 1.97927,
+    "cheap_gen_decode": 0.03109,
+    "verifier_vision": 0.52468,
+    "verifier_lm_prefill": 1.52001,
+    "verifier_decode": 0.02388,
+    "selector_head": 0.0,
+    "strong_vision": 0.12829,
+    "strong_lm_prefill": 1.75753,
+    "strong_decode": 0.02558
+   },
+   "macro_stage_pct": {
+    "cheap_gen_vision": 10.237,
+    "cheap_gen_lm_prefill": 29.658,
+    "cheap_gen_decode": 0.466,
+    "verifier_vision": 7.862,
+    "verifier_lm_prefill": 22.777,
+    "verifier_decode": 0.358,
+    "selector_head": 0.0,
+    "strong_vision": 1.922,
+    "strong_lm_prefill": 26.336,
+    "strong_decode": 0.383
+   },
+   "macro_total_flopeq": 6.67354,
+   "macro_x_direct": 1.46029,
+   "max_abs_dev_vs_published_per_cell": 0.000472
+  },
+  "grouped_accuracy_max": {
+   "by_leg": {
+    "cheap_leg_7B_generation": {
+     "flopeq": 2.19356,
+     "pct": 27.59
+    },
+    "verifier_7B_scoring": {
+     "flopeq": 2.06857,
+     "pct": 26.02
+    },
+    "selector_head": {
+     "flopeq": 0.0,
+     "pct": 0.0
+    },
+    "escalation_32B": {
+     "flopeq": 3.6889,
+     "pct": 46.4
+    }
+   },
+   "by_phase": {
+    "ALL_vision_towers": {
+     "flopeq": 1.32866,
+     "pct": 16.71
+    },
+    "ALL_lm_prefill": {
+     "flopeq": 6.5238,
+     "pct": 82.05
+    },
+    "ALL_decode": {
+     "flopeq": 0.09857,
+     "pct": 1.24
+    }
+   },
+   "total_flopeq": 7.95104
+  },
+  "grouped_compute_lean": {
+   "by_leg": {
+    "cheap_leg_7B_generation": {
+     "flopeq": 2.69356,
+     "pct": 40.36
+    },
+    "verifier_7B_scoring": {
+     "flopeq": 2.06857,
+     "pct": 31.0
+    },
+    "selector_head": {
+     "flopeq": 0.0,
+     "pct": 0.0
+    },
+    "escalation_32B": {
+     "flopeq": 1.9114,
+     "pct": 28.64
+    }
+   },
+   "by_phase": {
+    "ALL_vision_towers": {
+     "flopeq": 1.33617,
+     "pct": 20.02
+    },
+    "ALL_lm_prefill": {
+     "flopeq": 5.25681,
+     "pct": 78.77
+    },
+    "ALL_decode": {
+     "flopeq": 0.08055,
+     "pct": 1.21
+    }
+   },
+   "total_flopeq": 6.67354
+  },
+  "lora_adapter_flop_note": {
+   "lora_params": 47589376,
+   "base_params": 8292166656,
+   "lora_fraction_of_base": 0.005739,
+   "statement": "the as-charged convention charges the verifier a FULL 7B forward, which already over-covers the adapter's own arithmetic; the LoRA adds 0.57% more parameters to the matmul path."
+  },
+  "caveat": "the FLOP model has ONE operating point (cap320 open-text geometry, 326.68 prompt tokens, 5.6 generated tokens).  The MCQ arm actually runs at MedEvalKit's full resolution, where the vision share is LARGER -- vram_testtime_2026-08-11.json measures up to 46,816 vision tokens on MedXpert.  The stage SHARES on MCQ cells are therefore a lower bound on the vision fraction.  NOT MEASURED: a per-cell FLOP model."
+ },
+ "Q1_waste_on_escalated_questions": {
+  "question": "what fraction of total compute is spent on questions the cascade escalates anyway?",
+  "method": "per ITEM, on the joint (draw count, escalate) distribution -- NOT esc_rate x meanN.  The adaptive-N controller draws MORE samples on questions it later escalates, so the factorised product understates the waste; both are reported.",
+  "shipped_accuracy_max": {
+   "per_cell": {
+    "PMC_VQA": {
+     "n": 33430,
+     "esc_rate": 0.599821,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 3.74118,
+     "wasted_flopeq": 0.599821,
+     "wasted_pct_of_cell": 16.033,
+     "wasted_factorised_flopeq": 0.599821,
+     "factorisation_understates_by": 0.0
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "esc_rate": 1.0,
+     "meanN": 0.0,
+     "meanN_given_escalate": 0.0,
+     "meanN_given_keep": 0.0,
+     "cheap_side_flopeq": 0.0,
+     "total_flopeq": 4.57,
+     "wasted_flopeq": 0.0,
+     "wasted_pct_of_cell": 0.0,
+     "wasted_factorised_flopeq": 0.0,
+     "factorisation_understates_by": 0.0
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "esc_rate": 1.0,
+     "meanN": 0.0,
+     "meanN_given_escalate": 0.0,
+     "meanN_given_keep": 0.0,
+     "cheap_side_flopeq": 0.0,
+     "total_flopeq": 4.57,
+     "wasted_flopeq": 0.0,
+     "wasted_pct_of_cell": 0.0,
+     "wasted_factorised_flopeq": 0.0,
+     "factorisation_understates_by": 0.0
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "esc_rate": 1.0,
+     "meanN": 0.0,
+     "meanN_given_escalate": 0.0,
+     "meanN_given_keep": 0.0,
+     "cheap_side_flopeq": 0.0,
+     "total_flopeq": 4.57,
+     "wasted_flopeq": 0.0,
+     "wasted_pct_of_cell": 0.0,
+     "wasted_factorised_flopeq": 0.0,
+     "factorisation_understates_by": 0.0
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "esc_rate": 1.0,
+     "meanN": 0.0,
+     "meanN_given_escalate": 0.0,
+     "meanN_given_keep": 0.0,
+     "cheap_side_flopeq": 0.0,
+     "total_flopeq": 4.57,
+     "wasted_flopeq": 0.0,
+     "wasted_pct_of_cell": 0.0,
+     "wasted_factorised_flopeq": 0.0,
+     "factorisation_understates_by": 0.0
+    },
+    "SLAKE_open": {
+     "n": 645,
+     "esc_rate": 0.629457,
+     "meanN": 5.547287,
+     "meanN_given_escalate": 7.37931,
+     "meanN_given_keep": 2.435146,
+     "cheap_side_flopeq": 11.094574,
+     "total_flopeq": 13.971194,
+     "wasted_flopeq": 9.289922,
+     "wasted_pct_of_cell": 66.493,
+     "wasted_factorised_flopeq": 6.983561,
+     "factorisation_understates_by": 2.306361
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "esc_rate": 0.885,
+     "meanN": 6.63,
+     "meanN_given_escalate": 7.242938,
+     "meanN_given_keep": 1.913043,
+     "cheap_side_flopeq": 13.26,
+     "total_flopeq": 17.30445,
+     "wasted_flopeq": 12.82,
+     "wasted_pct_of_cell": 74.085,
+     "wasted_factorised_flopeq": 11.7351,
+     "factorisation_understates_by": 1.0849
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "esc_rate": 0.343333,
+     "meanN": 4.371333,
+     "meanN_given_escalate": 7.776699,
+     "meanN_given_keep": 2.590863,
+     "cheap_side_flopeq": 8.742667,
+     "total_flopeq": 10.3117,
+     "wasted_flopeq": 5.34,
+     "wasted_pct_of_cell": 51.786,
+     "wasted_factorised_flopeq": 3.001649,
+     "factorisation_understates_by": 2.338351
+    }
+   },
+   "macro_wasted_flopeq": 3.50622,
+   "macro_total_flopeq": 7.95107,
+   "macro_wasted_pct": 44.097,
+   "macro_wasted_as_x_direct": 0.76722,
+   "sample_weighted_wasted_pct": 20.067,
+   "open_only_wasted_pct": 66.005,
+   "mcq_only_wasted_pct": 2.724
+  },
+  "shipped_compute_lean": {
+   "per_cell": {
+    "PMC_VQA": {
+     "n": 33430,
+     "esc_rate": 0.084535,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 1.386324,
+     "wasted_flopeq": 0.084535,
+     "wasted_pct_of_cell": 6.098,
+     "wasted_factorised_flopeq": 0.084535,
+     "factorisation_understates_by": 0.0
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "esc_rate": 0.204545,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 1.934773,
+     "wasted_flopeq": 0.204545,
+     "wasted_pct_of_cell": 10.572,
+     "wasted_factorised_flopeq": 0.204545,
+     "factorisation_understates_by": 0.0
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "esc_rate": 0.569721,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 3.603625,
+     "wasted_flopeq": 0.569721,
+     "wasted_pct_of_cell": 15.81,
+     "wasted_factorised_flopeq": 0.569721,
+     "factorisation_understates_by": 0.0
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "esc_rate": 0.457168,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 3.089259,
+     "wasted_flopeq": 0.457168,
+     "wasted_pct_of_cell": 14.799,
+     "wasted_factorised_flopeq": 0.457168,
+     "factorisation_understates_by": 0.0
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "esc_rate": 0.896,
+     "meanN": 1.0,
+     "meanN_given_escalate": 1.0,
+     "meanN_given_keep": 1.0,
+     "cheap_side_flopeq": 1.0,
+     "total_flopeq": 5.09472,
+     "wasted_flopeq": 0.896,
+     "wasted_pct_of_cell": 17.587,
+     "wasted_factorised_flopeq": 0.896,
+     "factorisation_understates_by": 0.0
+    },
+    "SLAKE_open": {
+     "n": 645,
+     "esc_rate": 0.434109,
+     "meanN": 5.547287,
+     "meanN_given_escalate": 8.0,
+     "meanN_given_keep": 3.665753,
+     "cheap_side_flopeq": 11.094574,
+     "total_flopeq": 13.07845,
+     "wasted_flopeq": 6.945736,
+     "wasted_pct_of_cell": 53.108,
+     "wasted_factorised_flopeq": 4.816249,
+     "factorisation_understates_by": 2.129487
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "esc_rate": 0.54,
+     "meanN": 6.63,
+     "meanN_given_escalate": 8.0,
+     "meanN_given_keep": 5.021739,
+     "cheap_side_flopeq": 13.26,
+     "total_flopeq": 15.7278,
+     "wasted_flopeq": 8.64,
+     "wasted_pct_of_cell": 54.935,
+     "wasted_factorised_flopeq": 7.1604,
+     "factorisation_understates_by": 1.4796
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "esc_rate": 0.16,
+     "meanN": 4.371333,
+     "meanN_given_escalate": 8.0,
+     "meanN_given_keep": 3.680159,
+     "cheap_side_flopeq": 8.742667,
+     "total_flopeq": 9.473867,
+     "wasted_flopeq": 2.56,
+     "wasted_pct_of_cell": 27.022,
+     "wasted_factorised_flopeq": 1.398827,
+     "factorisation_understates_by": 1.161173
+    }
+   },
+   "macro_wasted_flopeq": 2.54471,
+   "macro_total_flopeq": 6.6736,
+   "macro_wasted_pct": 38.131,
+   "macro_wasted_as_x_direct": 0.55683,
+   "sample_weighted_wasted_pct": 17.344,
+   "open_only_wasted_pct": 47.403,
+   "mcq_only_wasted_pct": 14.64
+  }
+ },
+ "Q2_is_the_open_arm_worth_running": {
+  "per_cell": {
+   "SLAKE_open": {
+    "n": 645,
+    "always_7b_greedy": {
+     "acc": 0.7364,
+     "flopeq": 1.0,
+     "x_direct": 0.2188
+    },
+    "bestofN_verifier_select_NO_escalation": {
+     "acc": 0.7473,
+     "meanN": 5.5473,
+     "flopeq": 11.0946,
+     "x_direct": 2.4277,
+     "note": "the open arm's own selected answer, escalation switched off"
+    },
+    "bestof8_fixed_verifier_select": {
+     "acc": 0.7473,
+     "meanN": 8.0,
+     "flopeq": 16.0,
+     "x_direct": 3.5011,
+     "note": "the paper's fixed BO8 charge; the SELECTED answer is the same pick"
+    },
+    "oracle_of_8": {
+     "acc": 0.8791,
+     "note": "free upper bound on any selector over this pool"
+    },
+    "deployed_open_arm_accuracy_max": {
+     "acc": 0.8171,
+     "meanN": 5.5473,
+     "esc": 0.6295,
+     "flopeq": 13.9714,
+     "x_direct": 3.0572
+    },
+    "always_32b_direct": {
+     "acc": 0.8186,
+     "flopeq": 4.57,
+     "x_direct": 1.0
+    },
+    "deltas_vs_direct": {
+     "always_7b_greedy": {
+      "delta": -0.0822,
+      "lo": -0.1132,
+      "hi": -0.0512
+     },
+     "bestofN_verifier_select_NO_escalation": {
+      "delta": -0.0713,
+      "lo": -0.1039,
+      "hi": -0.0388
+     },
+     "deployed_open_arm_accuracy_max": {
+      "delta": -0.0016,
+      "lo": -0.0078,
+      "hi": 0.0031
+     }
+    }
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "always_7b_greedy": {
+     "acc": 0.465,
+     "flopeq": 1.0,
+     "x_direct": 0.2188
+    },
+    "bestofN_verifier_select_NO_escalation": {
+     "acc": 0.48,
+     "meanN": 6.63,
+     "flopeq": 13.26,
+     "x_direct": 2.9015,
+     "note": "the open arm's own selected answer, escalation switched off"
+    },
+    "bestof8_fixed_verifier_select": {
+     "acc": 0.48,
+     "meanN": 8.0,
+     "flopeq": 16.0,
+     "x_direct": 3.5011,
+     "note": "the paper's fixed BO8 charge; the SELECTED answer is the same pick"
+    },
+    "oracle_of_8": {
+     "acc": 0.63,
+     "note": "free upper bound on any selector over this pool"
+    },
+    "deployed_open_arm_accuracy_max": {
+     "acc": 0.59,
+     "meanN": 6.63,
+     "esc": 0.885,
+     "flopeq": 17.3044,
+     "x_direct": 3.7865
+    },
+    "always_32b_direct": {
+     "acc": 0.6,
+     "flopeq": 4.57,
+     "x_direct": 1.0
+    },
+    "deltas_vs_direct": {
+     "always_7b_greedy": {
+      "delta": -0.135,
+      "lo": -0.2,
+      "hi": -0.07
+     },
+     "bestofN_verifier_select_NO_escalation": {
+      "delta": -0.12,
+      "lo": -0.185,
+      "hi": -0.06
+     },
+     "deployed_open_arm_accuracy_max": {
+      "delta": -0.01,
+      "lo": -0.025,
+      "hi": 0.0
+     }
+    }
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "always_7b_greedy": {
+     "acc": 0.324,
+     "flopeq": 1.0,
+     "x_direct": 0.2188
+    },
+    "bestofN_verifier_select_NO_escalation": {
+     "acc": 0.3733,
+     "meanN": 4.3713,
+     "flopeq": 8.7427,
+     "x_direct": 1.9131,
+     "note": "the open arm's own selected answer, escalation switched off"
+    },
+    "bestof8_fixed_verifier_select": {
+     "acc": 0.3733,
+     "meanN": 8.0,
+     "flopeq": 16.0,
+     "x_direct": 3.5011,
+     "note": "the paper's fixed BO8 charge; the SELECTED answer is the same pick"
+    },
+    "oracle_of_8": {
+     "acc": 0.5167,
+     "note": "free upper bound on any selector over this pool"
+    },
+    "deployed_open_arm_accuracy_max": {
+     "acc": 0.3847,
+     "meanN": 4.3713,
+     "esc": 0.3433,
+     "flopeq": 10.3115,
+     "x_direct": 2.2563
+    },
+    "always_32b_direct": {
+     "acc": 0.376,
+     "flopeq": 4.57,
+     "x_direct": 1.0
+    },
+    "deltas_vs_direct": {
+     "always_7b_greedy": {
+      "delta": -0.052,
+      "lo": -0.0747,
+      "hi": -0.0293
+     },
+     "bestofN_verifier_select_NO_escalation": {
+      "delta": -0.0027,
+      "lo": -0.0253,
+      "hi": 0.02
+     },
+     "deployed_open_arm_accuracy_max": {
+      "delta": 0.0087,
+      "lo": -0.0093,
+      "hi": 0.028
+     }
+    }
+   }
+  },
+  "operating_points": [
+   {
+    "name": "SHIPPED accuracy-max (all 8 cells)",
+    "kind": "reference -- the shipped arm",
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "method_accuracy_max_veto",
+     "VQA_RAD_closed": "method_accuracy_max_veto",
+     "PATH_VQA_closed": "method_accuracy_max_veto",
+     "MedXpertQA-MM": "method_accuracy_max_veto",
+     "SLAKE_open": "method_accuracy_max_veto",
+     "VQA_RAD_open": "method_accuracy_max_veto",
+     "PATH_VQA_open": "method_accuracy_max_veto"
+    },
+    "macro_acc": 0.6575,
+    "delta_vs_direct": 0.0008,
+    "lo": -0.0023,
+    "hi": 0.0036,
+    "meets_constraint": true,
+    "not_significantly_worse": true,
+    "cost": {
+     "as_charged_R32_4p57": {
+      "flopeq": 7.951,
+      "x_direct": 1.7398
+     },
+     "derived_R32_3p816": {
+      "flopeq": 7.3424,
+      "x_direct": 1.9241
+     },
+     "lat_par_ms": 775.9,
+     "lat_seq_ms": 1660.0,
+     "energy_j": 255.3
+    },
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "verifier LoRA (same base, adapter only)",
+      "Lingshu-32B"
+     ],
+     "params": 41792474368,
+     "params_B": 41.7925,
+     "weight_bytes": 83680212744,
+     "weight_GiB": 77.9333,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "worse_sig": false
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "SLAKE_open": {
+      "delta": -0.0016,
+      "lo": -0.0078,
+      "hi": 0.0031,
+      "worse_sig": false
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.025,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0087,
+      "lo": -0.01,
+      "hi": 0.0273,
+      "worse_sig": false
+     }
+    },
+    "guardrail_flags": []
+   },
+   {
+    "name": "accuracy-max on MCQ, always-32B-direct on OPEN (open machinery OFF)",
+    "kind": "PRE-SPECIFIED arm swap, no eval-side selection",
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "method_accuracy_max_veto",
+     "VQA_RAD_closed": "method_accuracy_max_veto",
+     "PATH_VQA_closed": "method_accuracy_max_veto",
+     "MedXpertQA-MM": "method_accuracy_max_veto",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    },
+    "macro_acc": 0.6579,
+    "delta_vs_direct": 0.0012,
+    "lo": 0.0009,
+    "hi": 0.0015,
+    "meets_constraint": true,
+    "not_significantly_worse": true,
+    "cost": {
+     "as_charged_R32_4p57": {
+      "flopeq": 4.4664,
+      "x_direct": 0.9773
+     },
+     "derived_R32_3p816": {
+      "flopeq": 3.7501,
+      "x_direct": 0.9827
+     },
+     "lat_par_ms": 675.1,
+     "lat_seq_ms": 675.1,
+     "energy_j": 126.4
+    },
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": 0.0095,
+      "lo": 0.0072,
+      "hi": 0.0118,
+      "worse_sig": false
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "VQA_RAD_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     }
+    },
+    "guardrail_flags": []
+   },
+   {
+    "name": "compute-lean on MCQ, always-32B-direct on OPEN",
+    "kind": "PRE-SPECIFIED arm swap, no eval-side selection",
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "method_compute_lean",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    },
+    "macro_acc": 0.6523,
+    "delta_vs_direct": -0.0044,
+    "lo": -0.0079,
+    "hi": -0.001,
+    "meets_constraint": false,
+    "not_significantly_worse": false,
+    "cost": {
+     "as_charged_R32_4p57": {
+      "flopeq": 3.6023,
+      "x_direct": 0.7882
+     },
+     "derived_R32_3p816": {
+      "flopeq": 3.1111,
+      "x_direct": 0.8153
+     },
+     "lat_par_ms": 650.1,
+     "lat_seq_ms": 650.1,
+     "energy_j": 111.4
+    },
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "guardrail": {
+     "PMC_VQA": {
+      "delta": -0.001,
+      "lo": -0.0059,
+      "hi": 0.0039,
+      "worse_sig": false
+     },
+     "SLAKE_closed": {
+      "delta": -0.0072,
+      "lo": -0.0227,
+      "hi": 0.0096,
+      "worse_sig": false
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.0199,
+      "lo": -0.0398,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.0009,
+      "lo": -0.0042,
+      "hi": 0.0024,
+      "worse_sig": false
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.006,
+      "lo": -0.012,
+      "hi": -0.0005,
+      "worse_sig": true
+     },
+     "SLAKE_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "VQA_RAD_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     },
+     "PATH_VQA_open": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "worse_sig": false
+     }
+    },
+    "guardrail_flags": [
+     "MedXpertQA-MM"
+    ]
+   }
+  ],
+  "shipped_vs_open_off": {
+   "delta_open_off_minus_shipped": 0.0004,
+   "lo": -0.0025,
+   "hi": 0.0034
+  },
+  "open_arm_macro_flopeq_over_3_open_cells": 13.8624,
+  "open_arm_x_direct": 3.0334,
+  "open_cells_carry_pct_of_macro_cost": 65.38
+ },
+ "Q3_minimum_compute_at_parity": {
+  "menu": [
+   "always_7b",
+   "always_32b_direct",
+   "always_32b_reasoning",
+   "method_compute_lean",
+   "method_accuracy_max_veto",
+   "method_accuracy_max_fusion"
+  ],
+  "menu_note": "oracle_mode_32b is EXCLUDED -- it is an oracle, not deployable.  6 arms x 8 cells = 1,679,616 assignments, enumerated exhaustively.",
+  "eval_visible_bound": {
+   "name": "EVAL-VISIBLE minimum-cost assignment",
+   "kind": "DIAGNOSTIC UPPER BOUND -- fitted with full eval visibility, NOT achievable",
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "method_accuracy_max_fusion",
+    "VQA_RAD_closed": "method_accuracy_max_fusion",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   },
+   "macro_acc": 0.6554,
+   "delta_vs_direct": -0.0013,
+   "lo": -0.002,
+   "hi": -0.0005,
+   "meets_constraint": true,
+   "not_significantly_worse": false,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 3.9387,
+     "x_direct": 0.8619
+    },
+    "derived_R32_3p816": {
+     "flopeq": 3.3301,
+     "x_direct": 0.8727
+    },
+    "lat_par_ms": 623.5,
+    "lat_seq_ms": 623.5,
+    "energy_j": 114.0
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "Lingshu-32B"
+    ],
+    "params": 41744884992,
+    "params_B": 41.7449,
+    "weight_bytes": 83489769984,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.0091,
+     "lo": -0.0144,
+     "hi": -0.0039,
+     "worse_sig": true
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA"
+   ]
+  },
+  "eval_visible_bound_warning": "NOT ACHIEVABLE.  Fitted with full eval visibility; selecting the best arm per cell on eval is exactly how a fake win has already been manufactured in this project.  Quote the nested-CV row.",
+  "honest_nested_cv": {
+   "kind": "FULLY HONEST -- the per-cell arm is chosen inside the training folds only; this is the number to quote",
+   "n_fold_seeds": 12,
+   "x_direct_as_charged_mean": 0.8538,
+   "x_direct_as_charged_sd": 0.0056,
+   "x_direct_as_charged_min": 0.8495,
+   "x_direct_as_charged_max": 0.8619,
+   "delta_mean": -0.0018,
+   "lo_mean": -0.0033,
+   "seeds_meeting_constraint": 4,
+   "per_seed": [
+    {
+     "seed": 20260812,
+     "macro_acc": 0.6551,
+     "delta_vs_direct": -0.0016,
+     "lo": -0.0029,
+     "hi": -0.0002,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20261812,
+     "macro_acc": 0.6556,
+     "delta_vs_direct": -0.0011,
+     "lo": -0.0019,
+     "hi": -0.0003,
+     "meets_constraint": true,
+     "x_direct_as_charged": 0.8619,
+     "x_direct_derived": 0.8727,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20262812,
+     "macro_acc": 0.654,
+     "delta_vs_direct": -0.0027,
+     "lo": -0.0051,
+     "hi": -0.0008,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8587,
+     "x_direct_derived": 0.8706,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion"
+      ],
+      "VQA_RAD_closed": [
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20263812,
+     "macro_acc": 0.6546,
+     "delta_vs_direct": -0.002,
+     "lo": -0.0034,
+     "hi": -0.0007,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20264812,
+     "macro_acc": 0.6559,
+     "delta_vs_direct": -0.0008,
+     "lo": -0.0018,
+     "hi": 0.0002,
+     "meets_constraint": true,
+     "x_direct_as_charged": 0.8619,
+     "x_direct_derived": 0.8727,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "always_32b_reasoning",
+       "method_accuracy_max_veto"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20265812,
+     "macro_acc": 0.6555,
+     "delta_vs_direct": -0.0012,
+     "lo": -0.0027,
+     "hi": 0.0003,
+     "meets_constraint": true,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20266812,
+     "macro_acc": 0.6545,
+     "delta_vs_direct": -0.0022,
+     "lo": -0.0036,
+     "hi": -0.0008,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20267812,
+     "macro_acc": 0.6534,
+     "delta_vs_direct": -0.0033,
+     "lo": -0.0059,
+     "hi": -0.0009,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8545,
+     "x_direct_derived": 0.8664,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "always_32b_reasoning",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "PATH_VQA_closed": [
+       "always_32b_reasoning",
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20268812,
+     "macro_acc": 0.6545,
+     "delta_vs_direct": -0.0022,
+     "lo": -0.0036,
+     "hi": -0.0008,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20269812,
+     "macro_acc": 0.6556,
+     "delta_vs_direct": -0.0011,
+     "lo": -0.0019,
+     "hi": -0.0003,
+     "meets_constraint": true,
+     "x_direct_as_charged": 0.8619,
+     "x_direct_derived": 0.8727,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20270812,
+     "macro_acc": 0.6547,
+     "delta_vs_direct": -0.002,
+     "lo": -0.0034,
+     "hi": -0.0006,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_veto",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    },
+    {
+     "seed": 20271812,
+     "macro_acc": 0.6548,
+     "delta_vs_direct": -0.0019,
+     "lo": -0.0033,
+     "hi": -0.0006,
+     "meets_constraint": false,
+     "x_direct_as_charged": 0.8495,
+     "x_direct_derived": 0.8614,
+     "footprint": {
+      "resident": [
+       "Lingshu-7B base",
+       "Lingshu-32B"
+      ],
+      "params": 41744884992,
+      "params_B": 41.7449,
+      "weight_bytes": 83489769984,
+      "weight_GiB": 77.7559,
+      "needs_32B": true,
+      "fits_one_A100_80GB_weights_only": true
+     },
+     "picks": {
+      "PMC_VQA": [
+       "always_7b",
+       "method_compute_lean"
+      ],
+      "SLAKE_closed": [
+       "always_32b_reasoning",
+       "method_accuracy_max_fusion",
+       "method_compute_lean"
+      ],
+      "VQA_RAD_closed": [
+       "always_32b_direct",
+       "method_accuracy_max_fusion",
+       "method_accuracy_max_veto"
+      ],
+      "PATH_VQA_closed": [
+       "method_compute_lean"
+      ],
+      "MedXpertQA-MM": [
+       "always_32b_direct",
+       "method_accuracy_max_veto"
+      ],
+      "SLAKE_open": [
+       "always_32b_direct"
+      ],
+      "VQA_RAD_open": [
+       "always_32b_direct"
+      ],
+      "PATH_VQA_open": [
+       "always_32b_direct"
+      ]
+     }
+    }
+   ]
+  },
+  "nulls": {
+   "P1": {
+    "name": "P1 -- random-arm control (no selection skill), same nested machinery",
+    "n_draws": 200,
+    "delta_mean": -0.0232,
+    "delta_p2p5": -0.0388,
+    "delta_p97p5": -0.0123,
+    "pass_rate_of_the_preregistered_constraint": 0.0,
+    "x_direct_mean": 1.1855,
+    "reading": "if the honest nested-CV point is inside this distribution, the per-cell selection carries no transferable signal"
+   },
+   "P2": {
+    "name": "P2 -- equal-accuracy synthetic null (every arm i.i.d. Bernoulli(p_direct), same n)",
+    "n_draws": 60,
+    "delta_mean": 0.0,
+    "delta_p2p5": -0.0113,
+    "delta_p97p5": 0.0155,
+    "pass_rate_of_the_preregistered_constraint": 0.1167,
+    "x_direct_mean": 0.5307,
+    "x_direct_p2p5": 0.2546,
+    "reading": "under a TRUE tie the cheapest arm is always feasible, so this measures the FLOOR the constraint can be pushed to by chance; a real result must be dearer than this floor OR carry a delta the null cannot produce"
+   }
+  }
+ },
+ "Q4_footprint": {
+  "measured_on_disk": {
+   "lingshu_7b": {
+    "params": 8292166656,
+    "index_total_size_bytes": 16584333312,
+    "shards": 4,
+    "GiB": 15.4454,
+    "GB": 16.5843,
+    "path": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9"
+   },
+   "lingshu_32b": {
+    "params": 33452718336,
+    "index_total_size_bytes": 66905436672,
+    "shards": 14,
+    "GiB": 62.3105,
+    "GB": 66.9054,
+    "path": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-32B/snapshots/36b98277cacb60db86f34b75ce0540b1ea35183c"
+   },
+   "verifier_lora_disjoint": {
+    "params": 47589376,
+    "bytes": 190442760,
+    "MiB": 181.62,
+    "dtype": "F32",
+    "r": 16,
+    "alpha": 32,
+    "base": "lingshu-medical-mllm/Lingshu-7B",
+    "note": "an ADAPTER on the generator's own base -- generator and verifier are ONE resident model plus this."
+   },
+   "frozen_selector_head": {
+    "params": 7344136,
+    "per_seed": 918017,
+    "seeds": 8,
+    "note": "not used by the canonical `disjoint` arm"
+   }
+  },
+  "correction_to_the_brief": {
+   "brief_said": "always-32B-direct weights ~32.8B params / ~31.5 GiB bf16",
+   "measured": "33,452,718,336 params / 62.31 GiB (66,905,436,672 bytes, 14 shards, all bf16)",
+   "explanation": "32.8B is the 32B's parameter count EXCLUDING its 636,401,664-param vision tower (33,452,718,336 - 636,401,664 = 32,816,316,672).  31.5 GiB is not a bf16 weight size at all -- it is params/2^30, i.e. ONE byte per parameter.  The bf16 weights are 62.31 GiB.  Source: the safetensors index on disk, read this run; cross-checked against flop_ratio_derivation_2026-08-03.json:parameter_counts."
+  },
+  "co_residency": {
+   "seven_b_only": {
+    "params": 8339756032,
+    "GiB": 15.6227
+   },
+   "both_models": {
+    "params": 41792474368,
+    "GiB": 77.9333
+   },
+   "ratio": 4.988,
+   "statement": "a policy that NEVER touches the 32B needs 15.62 GiB of weights resident; one that does needs 77.93 GiB co-resident, or a model swap on the critical path."
+  },
+  "measured_test_time_vram": {
+   "source": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json",
+   "S1_lingshu7b_direct_mcq": {
+    "n": 15,
+    "b_peak_allocated_gib": {
+     "mean": 16.2473,
+     "peak": 18.0232,
+     "min": 15.5191
+    },
+    "c_peak_reserved_gib": {
+     "mean": 17.3037,
+     "peak": 22.0371,
+     "min": 15.7188
+    },
+    "d_board_used_gib": {
+     "mean": 18.6872,
+     "peak": 23.4207,
+     "min": 17.1023
+    }
+   },
+   "S2_lingshu32b_direct_mcq": {
+    "n": 15,
+    "b_peak_allocated_gib": {
+     "mean": 63.9561,
+     "peak": 67.868,
+     "min": 62.3595
+    },
+    "c_peak_reserved_gib": {
+     "mean": 64.681,
+     "peak": 71.2188,
+     "min": 62.4395
+    },
+    "d_board_used_gib": {
+     "mean": 66.0645,
+     "peak": 72.6023,
+     "min": 63.823
+    }
+   },
+   "S3_lingshu7b_plus_lora_verifier": {
+    "n": 12,
+    "b_peak_allocated_gib": {
+     "mean": 16.0745,
+     "peak": 16.4764,
+     "min": 15.7476
+    },
+    "c_peak_reserved_gib": {
+     "mean": 17.1349,
+     "peak": 17.6055,
+     "min": 15.8828
+    },
+    "d_board_used_gib": {
+     "mean": 18.5204,
+     "peak": 18.991,
+     "min": 17.2683
+    }
+   },
+   "S4_opentext_bestof8_full_arm": {
+    "n": 12,
+    "b_peak_allocated_gib": {
+     "mean": 16.3141,
+     "peak": 16.6581,
+     "min": 15.9507
+    },
+    "c_peak_reserved_gib": {
+     "mean": 17.1982,
+     "peak": 17.3789,
+     "min": 16.2949
+    },
+    "d_board_used_gib": {
+     "mean": 18.9793,
+     "peak": 19.3577,
+     "min": 17.6804
+    }
+   },
+   "key_finding": "the clean LoRA verifier adds 0.1961 GiB of weights to Lingshu-7B, and the whole best-of-8 open-text arm -- generator AND verifier -- fits in 18.76 GiB."
+  }
+ },
+ "operating_points_prespecified": [
+  {
+   "name": "always-32B-direct (THE BAR)",
+   "kind": "baseline",
+   "assignment": {
+    "PMC_VQA": "always_32b_direct",
+    "SLAKE_closed": "always_32b_direct",
+    "VQA_RAD_closed": "always_32b_direct",
+    "PATH_VQA_closed": "always_32b_direct",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   },
+   "macro_acc": 0.6567,
+   "delta_vs_direct": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "meets_constraint": true,
+   "not_significantly_worse": false,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 4.57,
+     "x_direct": 1.0
+    },
+    "derived_R32_3p816": {
+     "flopeq": 3.816,
+     "x_direct": 1.0
+    },
+    "lat_par_ms": 665.0,
+    "lat_seq_ms": 665.0,
+    "energy_j": 127.0
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-32B"
+    ],
+    "params": 33452718336,
+    "params_B": 33.4527,
+    "weight_bytes": 66905436672,
+    "weight_GiB": 62.3105,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": []
+  },
+  {
+   "name": "always-7B",
+   "kind": "cheap floor",
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "always_7b",
+    "VQA_RAD_closed": "always_7b",
+    "PATH_VQA_closed": "always_7b",
+    "MedXpertQA-MM": "always_7b",
+    "SLAKE_open": "always_7b",
+    "VQA_RAD_open": "always_7b",
+    "PATH_VQA_open": "always_7b"
+   },
+   "macro_acc": 0.5971,
+   "delta_vs_direct": -0.0596,
+   "lo": -0.0717,
+   "hi": -0.0477,
+   "meets_constraint": false,
+   "not_significantly_worse": false,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 1.0,
+     "x_direct": 0.2188
+    },
+    "derived_R32_3p816": {
+     "flopeq": 1.0,
+     "x_direct": 0.2621
+    },
+    "lat_par_ms": 347.0,
+    "lat_seq_ms": 347.0,
+    "energy_j": 45.8
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base"
+    ],
+    "params": 8292166656,
+    "params_B": 8.2922,
+    "weight_bytes": 16584333312,
+    "weight_GiB": 15.4454,
+    "needs_32B": false,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.0091,
+     "lo": -0.0144,
+     "hi": -0.0039,
+     "worse_sig": true
+    },
+    "SLAKE_closed": {
+     "delta": -0.0335,
+     "lo": -0.0586,
+     "hi": -0.0096,
+     "worse_sig": true
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0717,
+     "lo": -0.1156,
+     "hi": -0.0239,
+     "worse_sig": true
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0482,
+     "lo": -0.0604,
+     "hi": -0.0363,
+     "worse_sig": true
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.045,
+     "lo": -0.068,
+     "hi": -0.0215,
+     "worse_sig": true
+    },
+    "SLAKE_open": {
+     "delta": -0.0822,
+     "lo": -0.1147,
+     "hi": -0.0512,
+     "worse_sig": true
+    },
+    "VQA_RAD_open": {
+     "delta": -0.135,
+     "lo": -0.2,
+     "hi": -0.07,
+     "worse_sig": true
+    },
+    "PATH_VQA_open": {
+     "delta": -0.052,
+     "lo": -0.0753,
+     "hi": -0.0287,
+     "worse_sig": true
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA",
+    "SLAKE_closed",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed",
+    "MedXpertQA-MM",
+    "SLAKE_open",
+    "VQA_RAD_open",
+    "PATH_VQA_open"
+   ]
+  },
+  {
+   "name": "SHIPPED accuracy-max",
+   "kind": "the shipped arm",
+   "assignment": {
+    "PMC_VQA": "method_accuracy_max_veto",
+    "SLAKE_closed": "method_accuracy_max_veto",
+    "VQA_RAD_closed": "method_accuracy_max_veto",
+    "PATH_VQA_closed": "method_accuracy_max_veto",
+    "MedXpertQA-MM": "method_accuracy_max_veto",
+    "SLAKE_open": "method_accuracy_max_veto",
+    "VQA_RAD_open": "method_accuracy_max_veto",
+    "PATH_VQA_open": "method_accuracy_max_veto"
+   },
+   "macro_acc": 0.6575,
+   "delta_vs_direct": 0.0008,
+   "lo": -0.0023,
+   "hi": 0.0036,
+   "meets_constraint": true,
+   "not_significantly_worse": true,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 7.951,
+     "x_direct": 1.7398
+    },
+    "derived_R32_3p816": {
+     "flopeq": 7.3424,
+     "x_direct": 1.9241
+    },
+    "lat_par_ms": 775.9,
+    "lat_seq_ms": 1660.0,
+    "energy_j": 255.3
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "verifier LoRA (same base, adapter only)",
+     "Lingshu-32B"
+    ],
+    "params": 41792474368,
+    "params_B": 41.7925,
+    "weight_bytes": 83680212744,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "lo": 0.0072,
+     "hi": 0.0118,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": -0.0016,
+     "lo": -0.0078,
+     "hi": 0.0031,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": -0.01,
+     "lo": -0.025,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0087,
+     "lo": -0.01,
+     "hi": 0.0273,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": []
+  },
+  {
+   "name": "SHIPPED compute-lean",
+   "kind": "the shipped cheap knob",
+   "assignment": {
+    "PMC_VQA": "method_compute_lean",
+    "SLAKE_closed": "method_compute_lean",
+    "VQA_RAD_closed": "method_compute_lean",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "method_compute_lean",
+    "SLAKE_open": "method_compute_lean",
+    "VQA_RAD_open": "method_compute_lean",
+    "PATH_VQA_open": "method_compute_lean"
+   },
+   "macro_acc": 0.6443,
+   "delta_vs_direct": -0.0124,
+   "lo": -0.0189,
+   "hi": -0.0061,
+   "meets_constraint": false,
+   "not_significantly_worse": false,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 6.6735,
+     "x_direct": 1.4603
+    },
+    "derived_R32_3p816": {
+     "flopeq": 6.3582,
+     "x_direct": 1.6662
+    },
+    "lat_par_ms": 690.8,
+    "lat_seq_ms": 1574.8,
+    "energy_j": 228.8
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "verifier LoRA (same base, adapter only)",
+     "Lingshu-32B"
+    ],
+    "params": 41792474368,
+    "params_B": 41.7925,
+    "weight_bytes": 83680212744,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.001,
+     "lo": -0.0059,
+     "hi": 0.0039,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "lo": -0.0227,
+     "hi": 0.0096,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0199,
+     "lo": -0.0398,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "lo": -0.012,
+     "hi": -0.0005,
+     "worse_sig": true
+    },
+    "SLAKE_open": {
+     "delta": -0.0109,
+     "lo": -0.0233,
+     "hi": 0.0016,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": -0.06,
+     "lo": -0.095,
+     "hi": -0.025,
+     "worse_sig": true
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0067,
+     "lo": -0.0153,
+     "hi": 0.0287,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": [
+    "MedXpertQA-MM",
+    "VQA_RAD_open"
+   ]
+  },
+  {
+   "name": "accuracy-max MCQ + always-32B-direct OPEN",
+   "kind": "PRE-SPECIFIED: the open machinery switched off",
+   "assignment": {
+    "PMC_VQA": "method_accuracy_max_veto",
+    "SLAKE_closed": "method_accuracy_max_veto",
+    "VQA_RAD_closed": "method_accuracy_max_veto",
+    "PATH_VQA_closed": "method_accuracy_max_veto",
+    "MedXpertQA-MM": "method_accuracy_max_veto",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   },
+   "macro_acc": 0.6579,
+   "delta_vs_direct": 0.0012,
+   "lo": 0.0009,
+   "hi": 0.0015,
+   "meets_constraint": true,
+   "not_significantly_worse": true,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 4.4664,
+     "x_direct": 0.9773
+    },
+    "derived_R32_3p816": {
+     "flopeq": 3.7501,
+     "x_direct": 0.9827
+    },
+    "lat_par_ms": 675.1,
+    "lat_seq_ms": 675.1,
+    "energy_j": 126.4
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "Lingshu-32B"
+    ],
+    "params": 41744884992,
+    "params_B": 41.7449,
+    "weight_bytes": 83489769984,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "lo": 0.0072,
+     "hi": 0.0118,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": []
+  },
+  {
+   "name": "compute-lean MCQ + always-32B-direct OPEN",
+   "kind": "PRE-SPECIFIED",
+   "assignment": {
+    "PMC_VQA": "method_compute_lean",
+    "SLAKE_closed": "method_compute_lean",
+    "VQA_RAD_closed": "method_compute_lean",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "method_compute_lean",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   },
+   "macro_acc": 0.6523,
+   "delta_vs_direct": -0.0044,
+   "lo": -0.0079,
+   "hi": -0.001,
+   "meets_constraint": false,
+   "not_significantly_worse": false,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 3.6023,
+     "x_direct": 0.7882
+    },
+    "derived_R32_3p816": {
+     "flopeq": 3.1111,
+     "x_direct": 0.8153
+    },
+    "lat_par_ms": 650.1,
+    "lat_seq_ms": 650.1,
+    "energy_j": 111.4
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "Lingshu-32B"
+    ],
+    "params": 41744884992,
+    "params_B": 41.7449,
+    "weight_bytes": 83489769984,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.001,
+     "lo": -0.0059,
+     "hi": 0.0039,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "lo": -0.0227,
+     "hi": 0.0096,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.0199,
+     "lo": -0.0398,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "lo": -0.012,
+     "hi": -0.0005,
+     "worse_sig": true
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": [
+    "MedXpertQA-MM"
+   ]
+  },
+  {
+   "name": "veto on PMC + compute-lean on SLAKE-cl/PathVQA-cl + direct elsewhere",
+   "kind": "PRE-SPECIFIED from cost_floor_2026-08-10.json's cross-fit picks (an ARTIFACT-DERIVED prior, not fitted here)",
+   "assignment": {
+    "PMC_VQA": "method_accuracy_max_veto",
+    "SLAKE_closed": "method_compute_lean",
+    "VQA_RAD_closed": "always_32b_direct",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   },
+   "macro_acc": 0.6569,
+   "delta_vs_direct": 0.0002,
+   "lo": -0.0019,
+   "hi": 0.0023,
+   "meets_constraint": true,
+   "not_significantly_worse": true,
+   "cost": {
+    "as_charged_R32_4p57": {
+     "flopeq": 3.9519,
+     "x_direct": 0.8647
+    },
+    "derived_R32_3p816": {
+     "flopeq": 3.3617,
+     "x_direct": 0.881
+    },
+    "lat_par_ms": 650.6,
+    "lat_seq_ms": 650.6,
+    "energy_j": 116.6
+   },
+   "footprint": {
+    "resident": [
+     "Lingshu-7B base",
+     "Lingshu-32B"
+    ],
+    "params": 41744884992,
+    "params_B": 41.7449,
+    "weight_bytes": 83489769984,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "fits_one_A100_80GB_weights_only": true
+   },
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": 0.0095,
+     "lo": 0.0072,
+     "hi": 0.0118,
+     "worse_sig": false
+    },
+    "SLAKE_closed": {
+     "delta": -0.0072,
+     "lo": -0.0227,
+     "hi": 0.0096,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": []
+  }
+ ],
+ "PMC_sensitivity": {
+  "title": "PMC-VQA sensitivity for ATTACK 1 -- how much of the minimum-compute frontier survives the two confounds that landed on the PMC-VQA cell on 2026-08-12",
+  "date": "2026-08-12",
+  "kind": "CONSTANT-SHIFT SENSITIVITY on a measured delta, NOT a re-measurement",
+  "sources": [
+   "results/cascade_methods/artifacts/pmcvqa_letterbias_audit_2026-08-12.json",
+   "results/cascade_methods/artifacts/pmcvqa_grader_defect_2026-08-12.json"
+  ],
+  "reproduce": "python3 src/cascade_methods/cost_decomposition_pmc_sensitivity.py",
+  "null_test": {
+   "name": "S1 -- the PMC-VQA certified-veto delta recomputed here equals the audited value",
+   "recomputed": 0.009542,
+   "audit_natural_prior": 0.00954,
+   "abs_dev": 2e-06,
+   "verdict": "PASS"
+  },
+  "pmc_cell_delta": {
+   "harness_grader_natural_prior": 0.00954,
+   "repaired_grader_letter_balanced": {
+    "delta": 0.00305,
+    "lo": 0.00063,
+    "hi": 0.00549,
+    "verdict": "WIN"
+   },
+   "shift_applied": 0.00649,
+   "gold_letter_prior": {
+    "source": "MedEvalKit/eval_results_lingshu7b_full/{}/PMC_VQA/results.json -- the `answer` field, n=33,430, i.e. PMC-VQA test_2.csv as loaded by unmodified vendor code (MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39)",
+    "n": 33430,
+    "counts": {
+     "A": 4423,
+     "B": 11984,
+     "C": 12636,
+     "D": 4387
+    },
+    "fraction": {
+     "A": 0.13231,
+     "B": 0.35848,
+     "C": 0.37798,
+     "D": 0.13123
+    },
+    "B_plus_C": 0.73646,
+    "B_plus_C_pct": 73.6,
+    "constant_letter_baseline_accuracy": {
+     "A": 0.13231,
+     "B": 0.35848,
+     "C": 0.37798,
+     "D": 0.13123
+    },
+    "best_constant_letter": "C",
+    "best_constant_letter_accuracy": 0.37798,
+    "options_per_item": {
+     "4": 33430
+    },
+    "uniform_would_be": 0.25,
+    "max_deviation_from_uniform": 0.12798,
+    "QUOTED_IN_DOC": {
+     "claim": "BEAT32B_ROUND_2026-08-10.md:26 -- 'B+C = 73.6%, 37.8% constant-C floor'",
+     "B_plus_C_quoted": 0.736,
+     "B_plus_C_measured": 0.73646,
+     "constant_C_quoted": 0.378,
+     "constant_C_measured": 0.37798,
+     "B_plus_C_abs_dev": 0.00046,
+     "constant_C_abs_dev": 2e-05,
+     "verdict": "CONFIRMED"
+    }
+   },
+   "grader_defect_differential_pp": 0.7568
+  },
+  "menu_change": "method_accuracy_max_fusion REMOVED from the PMC menu -- its corrected value is explicitly NOT MEASURED (pmcvqa_grader_defect_2026-08-12.json:A4.design)",
+  "prespecified_points_before_and_after": {
+   "SHIPPED accuracy-max": {
+    "before": {
+     "macro_acc": 0.6575,
+     "delta": 0.0008,
+     "lo": -0.0023,
+     "hi": 0.0036,
+     "meets": true,
+     "x_direct": 1.7398
+    },
+    "after": {
+     "macro_acc": 0.6567,
+     "delta": 0.0,
+     "lo": -0.0031,
+     "hi": 0.0028,
+     "meets": false,
+     "x_direct": 1.7398
+    }
+   },
+   "accuracy-max MCQ + always-32B-direct OPEN": {
+    "before": {
+     "macro_acc": 0.6579,
+     "delta": 0.0012,
+     "lo": 0.0009,
+     "hi": 0.0015,
+     "meets": true,
+     "x_direct": 0.9773
+    },
+    "after": {
+     "macro_acc": 0.6571,
+     "delta": 0.0004,
+     "lo": 0.0001,
+     "hi": 0.0007,
+     "meets": true,
+     "x_direct": 0.9773
+    }
+   },
+   "compute-lean MCQ + always-32B-direct OPEN": {
+    "before": {
+     "macro_acc": 0.6523,
+     "delta": -0.0044,
+     "lo": -0.0079,
+     "hi": -0.001,
+     "meets": false,
+     "x_direct": 0.7882
+    },
+    "after": {
+     "macro_acc": 0.6523,
+     "delta": -0.0044,
+     "lo": -0.0079,
+     "hi": -0.001,
+     "meets": false,
+     "x_direct": 0.7882
+    }
+   },
+   "cost_floor cross-fit picks (veto PMC | lean SLAKE-cl,PathVQA-cl | direct elsewhere)": {
+    "before": {
+     "macro_acc": 0.6569,
+     "delta": 0.0002,
+     "lo": -0.0019,
+     "hi": 0.0023,
+     "meets": true,
+     "x_direct": 0.8647
+    },
+    "after": {
+     "macro_acc": 0.656,
+     "delta": -0.0006,
+     "lo": -0.0027,
+     "hi": 0.0014,
+     "meets": true,
+     "x_direct": 0.8647
+    }
+   }
+  },
+  "cheapest_feasible_before": {
+   "macro_acc": 0.6554,
+   "delta_vs_direct": -0.0013,
+   "lo": -0.002,
+   "hi": -0.0005,
+   "meets_constraint": true,
+   "x_direct_as_charged": 0.8619,
+   "x_direct_derived": 0.8727,
+   "needs_32B": true,
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.0091,
+     "lo": -0.0144,
+     "hi": -0.0039,
+     "worse_sig": true
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA"
+   ],
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "method_accuracy_max_fusion",
+    "VQA_RAD_closed": "method_accuracy_max_fusion",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   }
+  },
+  "cheapest_feasible_after": {
+   "macro_acc": 0.6554,
+   "delta_vs_direct": -0.0013,
+   "lo": -0.002,
+   "hi": -0.0005,
+   "meets_constraint": true,
+   "x_direct_as_charged": 0.8619,
+   "x_direct_derived": 0.8727,
+   "needs_32B": true,
+   "guardrail": {
+    "PMC_VQA": {
+     "delta": -0.0091,
+     "lo": -0.0144,
+     "hi": -0.0039,
+     "worse_sig": true
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.0009,
+     "lo": -0.0042,
+     "hi": 0.0024,
+     "worse_sig": false
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "worse_sig": false
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA"
+   ],
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "method_accuracy_max_veto",
+    "VQA_RAD_closed": "always_32b_direct",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   }
+  },
+  "reading": "The Attack-1 frontier buys its non-inferiority slack almost entirely from PMC-VQA.  Under the strictest honest version of that cell (repaired grader + equal weight per gold letter) the cell delta falls +0.00954 -> +0.00305, i.e. the macro gains +0.00081 less slack.  Any frontier point that clears the constraint by less than that margin should be treated as NOT ESTABLISHED.",
+  "eval_visible_warning": "cheapest_feasible_* are EVAL-VISIBLE bounds, computed with full eval visibility.  They are upper bounds on what a cross-fit selector could reach and must not be quoted as achievable results."
+ }
+}
