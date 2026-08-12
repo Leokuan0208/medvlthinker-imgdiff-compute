@@ -43,14 +43,25 @@ class XAttn(nn.Module):
         self.out = nn.Sequential(nn.Linear(dh + dk, dh), nn.GELU(), nn.Linear(dh, 1))
         self.dk = dk
 
-    def attn(self, h, Vg):
+    def kv(self, Vg):
+        """Project a patch bank once. Vg (N,P2,d) -> k,v each (N,P2,dk)."""
+        return self.k(Vg), self.v(Vg)
+
+    def attn(self, h, Vg=None, k=None):
+        if k is None:
+            k = self.k(Vg)
         q = self.q(h).unsqueeze(1)                                  # (B,1,dk)
-        k = self.k(Vg)                                              # (B,P2,dk)
         return torch.softmax((q * k).sum(-1) / math.sqrt(self.dk), -1)   # (B,P2)
 
-    def forward(self, h, Vg):
-        a = self.attn(h, Vg)
-        c = (a.unsqueeze(-1) * self.v(Vg)).sum(1)                   # (B,dk)
+    def forward(self, h, Vg=None, k=None, v=None):
+        """k/v may be supplied pre-projected. All candidates of a question share ONE image, so
+        projecting the bank per ROW re-does identical work up to 8x; callers pass the deduplicated
+        projection instead. The arithmetic is unchanged -- k and v are a function of the image
+        alone, so projecting once and indexing is the same tensor the per-row path would build."""
+        if k is None or v is None:
+            k, v = self.kv(Vg)
+        a = self.attn(h, k=k)
+        c = (a.unsqueeze(-1) * v).sum(1)                            # (B,dk)
         return self.out(torch.cat([self.p(h), c], -1)).squeeze(-1)
 
 
@@ -85,7 +96,10 @@ def fit_xattn(Htr, Gtr_idx, VgB, ytr, gtr, seed, epochs=30, lr=1e-3, wd=1e-2, gb
             j = perm[i:i + gb]
             gi, gm = idx[j], msk[j]
             flat = gi.reshape(-1)
-            s = m(H[flat], B[GI[flat]]).reshape(gi.shape)
+            img = GI[flat]
+            uniq, inv = torch.unique(img, return_inverse=True)      # dedupe: 1 image per question
+            ku, vu = m.kv(B[uniq])
+            s = m(H[flat], k=ku[inv], v=vu[inv]).reshape(gi.shape)
             yy = y[flat].reshape(gi.shape) * gm
             s = s.masked_fill(gm == 0, -1e9)
             pm = yy.unsqueeze(2); nm = ((1 - yy) * gm).unsqueeze(1)
@@ -101,17 +115,21 @@ def predict_xattn(m, Hev, Gev_idx, VgB, bs=512, want_attn=False):
     outs, atts = [], []
     with torch.no_grad():
         for i in range(0, len(Hev), bs):
-            h = H[i:i + bs]; vg = B[GI[i:i + bs]]
-            outs.append(m(h, vg).numpy())
+            h = H[i:i + bs]
+            uniq, inv = torch.unique(GI[i:i + bs], return_inverse=True)
+            ku, vu = m.kv(B[uniq])
+            k, v = ku[inv], vu[inv]
+            outs.append(m(h, k=k, v=v).numpy())
             if want_attn:
-                atts.append(m.attn(h, vg).numpy().astype(np.float32))
+                atts.append(m.attn(h, k=k).numpy().astype(np.float32))
     return np.concatenate(outs), (np.concatenate(atts) if want_attn else None)
 
 
 # ---------------------------------------------------------------- data
-def load_all(layer, grid_layer, ablate_eval="none"):
+def load_all(layer, grid_layer, ablate_eval="none", lang_eval_featdir=None):
     tr = G.load_candidates("train", layers=[layer], pooling=("span",))
-    ev = G.load_candidates("eval", layers=[layer], pooling=("span",))
+    ev = G.load_candidates("eval", layers=[layer], pooling=("span",),
+                           **({"featdir": lang_eval_featdir} if lang_eval_featdir else {}))
     vtr = V.load_vision("train")
     vev = V.load_vision("eval", ablate=ablate_eval)
     Vm_tr, Vg_tr, itr = V.align(tr, vtr, layer, grid_layer)
@@ -129,6 +147,12 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--ablate_eval", choices=["none", "blank", "noise"], default="none")
     ap.add_argument("--no_vision", type=int, default=0, help="skip the vision cache (arm L only)")
+    ap.add_argument("--lang_eval_featdir", default=None,
+                    help="LANGUAGE-SIDE image ablation: load the EVAL hidden-state cache from this "
+                         "directory instead of feats_hidden (e.g. feats_hidden_noise, built by "
+                         "extract_generator_hidden_ablated.py). Training rows are ALWAYS the real "
+                         "ones, so this measures how much of the head's eval-time behaviour depends "
+                         "on image content reaching the language-side vector.")
     ap.add_argument("--save_attn", type=int, default=0)
     ap.add_argument("--perm_vision", type=int, default=0,
                     help="PERMUTATION NULL: give every question a DIFFERENT question's image "
@@ -148,11 +172,12 @@ def main():
     t0 = time.time()
     if A.no_vision:
         tr = G.load_candidates("train", layers=[A.layer], pooling=("span",))
-        ev = G.load_candidates("eval", layers=[A.layer], pooling=("span",))
+        ev = G.load_candidates("eval", layers=[A.layer], pooling=("span",),
+                               **({"featdir": A.lang_eval_featdir} if A.lang_eval_featdir else {}))
         Vm_tr = Vg_tr = itr = Vm_ev = Vg_ev = iev = None
     else:
         tr, ev, (Vm_tr, Vg_tr, itr, vtr), (Vm_ev, Vg_ev, iev, vev) = \
-            load_all(A.layer, A.grid_layer, A.ablate_eval)
+            load_all(A.layer, A.grid_layer, A.ablate_eval, A.lang_eval_featdir)
         if A.perm_vision:
             # derange at the IMAGE level, then re-broadcast to rows, so the within-question
             # structure (all candidates share ONE image) is preserved and only the CONTENT is wrong

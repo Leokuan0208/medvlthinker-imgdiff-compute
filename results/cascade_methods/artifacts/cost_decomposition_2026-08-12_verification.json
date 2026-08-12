@@ -1,0 +1,2700 @@
+{
+ "title": "INDEPENDENT VERIFICATION of ATTACK 1 (cost_decomposition_2026-08-12.json), plus the exact CI-constrained minimum and the macro cost-accuracy frontier",
+ "date": "2026-08-12",
+ "reproduce": "python3 src/cascade_methods/cost_decomposition_verify.py",
+ "verifies": "results/cascade_methods/artifacts/cost_decomposition_2026-08-12.json",
+ "no_gpu": true,
+ "no_new_inference": true,
+ "no_fabricated_numbers": true,
+ "not_abstention": "every policy enumerated here returns an answer on every item; the certified veto KEEPS the cheap answer.  CRITICAL RULE 6 respected.",
+ "convention": "MACRO, equal weight per reporting cell, 8 cells, Variant B (MMMU excluded), n=42,224, CLEAN disjoint verifier.  Macro cost is NEVER paired with a sample-weighted accuracy.",
+ "numerics": {
+  "OMP_NUM_THREADS": "1",
+  "bootstrap": "paired item resample, one shared stream per cell reused by every arm",
+  "nboot": 10000,
+  "seed": 20260812777,
+  "seed_note": "deliberately DIFFERENT from the artifact's 20260812",
+  "tf32": "not applicable -- pure numpy on CPU over stored int8 vectors",
+  "row_order": "the stored dump order, unchanged"
+ },
+ "null_tests": {
+  "V1": {
+   "name": "V1 -- independent recomputation of per-cell + macro accuracy and as-charged cost",
+   "source_vectors": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz",
+   "source_cost": "results/cascade_methods/artifacts/cost_floor_2026-08-10.json:arm_decomposition.table  (n_gen7, n_ver7, n_32b)",
+   "formula": "cell_flopeq = n_gen7*1.0 + n_ver7*1.0 + n_32b*R32;  macro = mean over the 8 cells",
+   "per_system": {
+    "always_7b": {
+     "macro_recomputed": 0.597087,
+     "macro_published": 0.5971,
+     "abs_dev_macro": 1.321e-05,
+     "max_abs_dev_per_cell": 4.4e-05,
+     "cost_recomputed": 1.0,
+     "cost_published": 1.0,
+     "abs_dev_cost": 0.0
+    },
+    "always_32b_direct": {
+     "macro_recomputed": 0.656672,
+     "macro_published": 0.6567,
+     "abs_dev_macro": 2.751e-05,
+     "max_abs_dev_per_cell": 4.8e-05,
+     "cost_recomputed": 4.57,
+     "cost_published": 4.57,
+     "abs_dev_cost": 0.0
+    },
+    "always_32b_reasoning": {
+     "macro_recomputed": 0.597435,
+     "macro_published": 0.5974,
+     "abs_dev_macro": 3.513e-05,
+     "max_abs_dev_per_cell": 4.6e-05,
+     "cost_recomputed": 4.57,
+     "cost_published": 4.57,
+     "abs_dev_cost": 0.0
+    },
+    "method_compute_lean": {
+     "macro_recomputed": 0.644277,
+     "macro_published": 0.6443,
+     "abs_dev_macro": 2.287e-05,
+     "max_abs_dev_per_cell": 4.8e-05,
+     "cost_recomputed": 6.673553,
+     "cost_published": 6.674,
+     "abs_dev_cost": 0.0004475
+    },
+    "method_accuracy_max_veto": {
+     "macro_recomputed": 0.657505,
+     "macro_published": 0.6575,
+     "abs_dev_macro": 4.82e-06,
+     "max_abs_dev_per_cell": 4.8e-05,
+     "cost_recomputed": 7.951054,
+     "cost_published": 7.951,
+     "abs_dev_cost": 5.4e-05
+    },
+    "method_accuracy_max_fusion": {
+     "macro_recomputed": 0.650336,
+     "macro_published": 0.6503,
+     "abs_dev_macro": 3.56e-05,
+     "max_abs_dev_per_cell": 4.8e-05,
+     "cost_recomputed": 7.766255,
+     "cost_published": 7.766,
+     "abs_dev_cost": 0.00025463
+    }
+   },
+   "max_abs_dev_accuracy": 4.8e-05,
+   "max_abs_dev_cost_flops": 0.0004475,
+   "macro_ratio_accmax_vs_direct": 1.73984,
+   "published_ratio": 1.74,
+   "artifact_ratio": 1.73983,
+   "verdict": "PASS"
+  },
+  "V2": {
+   "name": "V2 -- the artifact's per-stage table re-sums to the per-cell cost, independently recomputed",
+   "max_abs_dev_stage_sum_vs_cell_total": 2.5e-05,
+   "macro_x_direct_from_stage_sums": 1.73983,
+   "published": 1.74,
+   "verdict": "PASS"
+  },
+  "V3": {
+   "name": "V3 -- Q1 waste = esc_rate x meanN_given_escalate x (gen + verifier), re-derived",
+   "per_policy": {
+    "shipped_accuracy_max": {
+     "macro_wasted_recomputed": 3.50622,
+     "macro_wasted_published": 3.50622,
+     "macro_wasted_pct_recomputed": 44.097,
+     "macro_wasted_pct_published": 44.097
+    },
+    "shipped_compute_lean": {
+     "macro_wasted_recomputed": 2.54471,
+     "macro_wasted_published": 2.54471,
+     "macro_wasted_pct_recomputed": 38.131,
+     "macro_wasted_pct_published": 38.131
+    }
+   },
+   "max_abs_dev": 8e-06,
+   "verdict": "PASS"
+  },
+  "V4": {
+   "name": "V4 -- pre-specified operating points reproduced with an INDEPENDENT bootstrap stream (seed 20260812777 vs the artifact's 20260812)",
+   "note": "point estimates must match exactly; CI bounds may differ by Monte-Carlo noise (~1e-4 at nboot=10,000)",
+   "per_point": {
+    "always-32B-direct (THE BAR)": {
+     "delta_recomputed": 0.0,
+     "delta_published": 0.0,
+     "lo_recomputed": 0.0,
+     "lo_published": 0.0,
+     "hi_recomputed": 0.0,
+     "hi_published": 0.0,
+     "x_direct_recomputed": 1.0,
+     "x_direct_published": 1.0,
+     "meets_recomputed": true,
+     "meets_published": true,
+     "agrees": true
+    },
+    "always-7B": {
+     "delta_recomputed": -0.0596,
+     "delta_published": -0.0596,
+     "lo_recomputed": -0.0716,
+     "lo_published": -0.0717,
+     "hi_recomputed": -0.0475,
+     "hi_published": -0.0477,
+     "x_direct_recomputed": 0.2188,
+     "x_direct_published": 0.2188,
+     "meets_recomputed": false,
+     "meets_published": false,
+     "agrees": true
+    },
+    "SHIPPED accuracy-max": {
+     "delta_recomputed": 0.0008,
+     "delta_published": 0.0008,
+     "lo_recomputed": -0.0022,
+     "lo_published": -0.0023,
+     "hi_recomputed": 0.0037,
+     "hi_published": 0.0036,
+     "x_direct_recomputed": 1.7398,
+     "x_direct_published": 1.7398,
+     "meets_recomputed": true,
+     "meets_published": true,
+     "agrees": true
+    },
+    "SHIPPED compute-lean": {
+     "delta_recomputed": -0.0124,
+     "delta_published": -0.0124,
+     "lo_recomputed": -0.0191,
+     "lo_published": -0.0189,
+     "hi_recomputed": -0.0061,
+     "hi_published": -0.0061,
+     "x_direct_recomputed": 1.4603,
+     "x_direct_published": 1.4603,
+     "meets_recomputed": false,
+     "meets_published": false,
+     "agrees": true
+    },
+    "accuracy-max MCQ + always-32B-direct OPEN": {
+     "delta_recomputed": 0.0012,
+     "delta_published": 0.0012,
+     "lo_recomputed": 0.0009,
+     "lo_published": 0.0009,
+     "hi_recomputed": 0.0015,
+     "hi_published": 0.0015,
+     "x_direct_recomputed": 0.9773,
+     "x_direct_published": 0.9773,
+     "meets_recomputed": true,
+     "meets_published": true,
+     "agrees": true
+    },
+    "compute-lean MCQ + always-32B-direct OPEN": {
+     "delta_recomputed": -0.0044,
+     "delta_published": -0.0044,
+     "lo_recomputed": -0.0079,
+     "lo_published": -0.0079,
+     "hi_recomputed": -0.001,
+     "hi_published": -0.001,
+     "x_direct_recomputed": 0.7882,
+     "x_direct_published": 0.7882,
+     "meets_recomputed": false,
+     "meets_published": false,
+     "agrees": true
+    },
+    "veto on PMC + compute-lean on SLAKE-cl/PathVQA-cl + direct elsewhere": {
+     "delta_recomputed": 0.0002,
+     "delta_published": 0.0002,
+     "lo_recomputed": -0.002,
+     "lo_published": -0.0019,
+     "hi_recomputed": 0.0023,
+     "hi_published": 0.0023,
+     "x_direct_recomputed": 0.8647,
+     "x_direct_published": 0.8647,
+     "meets_recomputed": true,
+     "meets_published": true,
+     "agrees": true
+    }
+   },
+   "max_abs_dev_point_estimates": 0.0,
+   "all_constraint_verdicts_agree": true,
+   "verdict": "PASS"
+  },
+  "ALL_PASSED": true
+ },
+ "F1_exact_CI_constrained_minimum": {
+  "name": "EXACT CI-constrained minimum-cost assignment",
+  "kind": "EVAL-VISIBLE DIAGNOSTIC UPPER BOUND -- not achievable",
+  "assignment": {
+   "PMC_VQA": "always_7b",
+   "SLAKE_closed": "always_32b_direct",
+   "VQA_RAD_closed": "always_32b_direct",
+   "PATH_VQA_closed": "method_compute_lean",
+   "MedXpertQA-MM": "always_32b_direct",
+   "SLAKE_open": "always_32b_direct",
+   "VQA_RAD_open": "always_32b_direct",
+   "PATH_VQA_open": "always_32b_direct"
+  },
+  "macro_acc": 0.6554,
+  "delta_vs_direct": -0.0013,
+  "lo": -0.002,
+  "hi": -0.0005,
+  "meets_constraint": true,
+  "not_significantly_worse": false,
+  "cost": {
+   "as_charged_R32_4p57": {
+    "flopeq": 3.9387,
+    "x_direct": 0.8619
+   },
+   "derived_R32_3p816": {
+    "flopeq": 3.3301,
+    "x_direct": 0.8727
+   },
+   "lat_par_ms": 623.5,
+   "lat_seq_ms": 623.5,
+   "energy_j": 114.0
+  },
+  "footprint": {
+   "resident": [
+    "Lingshu-7B base",
+    "Lingshu-32B"
+   ],
+   "params": 41744884992,
+   "params_B": 41.7449,
+   "weight_bytes": 83489769984,
+   "weight_GiB": 77.7559,
+   "needs_32B": true
+  },
+  "guardrail": {
+   "PMC_VQA": {
+    "delta": -0.0091,
+    "lo": -0.0144,
+    "hi": -0.0039,
+    "worse_sig": true
+   },
+   "SLAKE_closed": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   },
+   "VQA_RAD_closed": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   },
+   "PATH_VQA_closed": {
+    "delta": -0.0009,
+    "lo": -0.0042,
+    "hi": 0.0024,
+    "worse_sig": false
+   },
+   "MedXpertQA-MM": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "worse_sig": false
+   }
+  },
+  "guardrail_flags": [
+   "PMC_VQA"
+  ],
+  "n_assignments_enumerated": 1679616,
+  "n_passing_the_point_estimate_prefilter": 93511,
+  "n_ci_evaluations_before_first_feasible": 188
+ },
+ "F1_warning": "EVAL-VISIBLE.  Fitted with full eval visibility; selecting the best arm per cell on eval is exactly how a fake win has already been manufactured in this project.  Quote the nested-CV row instead.",
+ "F2_macro_frontier": {
+  "n_envelope_points": 66,
+  "cheapest_feasible_on_the_envelope": {
+   "x_direct_as_charged": 0.8619,
+   "x_direct_derived": 0.8727,
+   "macro_acc": 0.656,
+   "delta_vs_direct": -0.0007,
+   "lo": -0.0019,
+   "hi": 0.0005,
+   "meets_constraint": true,
+   "lat_par_ms": 1855.6,
+   "energy_j": 348.3,
+   "weight_GiB": 77.7559,
+   "needs_32B": true,
+   "n_guardrail_flags": 1,
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "always_32b_reasoning",
+    "VQA_RAD_closed": "always_32b_direct",
+    "PATH_VQA_closed": "method_compute_lean",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   }
+  },
+  "cheapest_point_any": {
+   "x_direct_as_charged": 0.2188,
+   "x_direct_derived": 0.2621,
+   "macro_acc": 0.5971,
+   "delta_vs_direct": -0.0596,
+   "lo": -0.0716,
+   "hi": -0.0475,
+   "meets_constraint": false,
+   "lat_par_ms": 347.0,
+   "energy_j": 45.8,
+   "weight_GiB": 15.4454,
+   "needs_32B": false,
+   "n_guardrail_flags": 8,
+   "assignment": {
+    "PMC_VQA": "always_7b",
+    "SLAKE_closed": "always_7b",
+    "VQA_RAD_closed": "always_7b",
+    "PATH_VQA_closed": "always_7b",
+    "MedXpertQA-MM": "always_7b",
+    "SLAKE_open": "always_7b",
+    "VQA_RAD_open": "always_7b",
+    "PATH_VQA_open": "always_7b"
+   }
+  },
+  "points": [
+   {
+    "x_direct_as_charged": 0.2188,
+    "x_direct_derived": 0.2621,
+    "macro_acc": 0.5971,
+    "delta_vs_direct": -0.0596,
+    "lo": -0.0716,
+    "hi": -0.0475,
+    "meets_constraint": false,
+    "lat_par_ms": 347.0,
+    "energy_j": 45.8,
+    "weight_GiB": 15.4454,
+    "needs_32B": false,
+    "n_guardrail_flags": 8,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.2294,
+    "x_direct_derived": 0.2726,
+    "macro_acc": 0.5981,
+    "delta_vs_direct": -0.0586,
+    "lo": -0.0705,
+    "hi": -0.0465,
+    "meets_constraint": false,
+    "lat_par_ms": 354.0,
+    "energy_j": 47.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 7,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.2444,
+    "x_direct_derived": 0.2876,
+    "macro_acc": 0.6004,
+    "delta_vs_direct": -0.0563,
+    "lo": -0.0681,
+    "hi": -0.0444,
+    "meets_constraint": false,
+    "lat_par_ms": 364.0,
+    "energy_j": 49.0,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 7,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.2549,
+    "x_direct_derived": 0.2982,
+    "macro_acc": 0.6014,
+    "delta_vs_direct": -0.0553,
+    "lo": -0.0671,
+    "hi": -0.0434,
+    "meets_constraint": false,
+    "lat_par_ms": 371.0,
+    "energy_j": 50.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.276,
+    "x_direct_derived": 0.3192,
+    "macro_acc": 0.603,
+    "delta_vs_direct": -0.0537,
+    "lo": -0.0656,
+    "hi": -0.0417,
+    "meets_constraint": false,
+    "lat_par_ms": 385.0,
+    "energy_j": 53.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 7,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.2865,
+    "x_direct_derived": 0.3298,
+    "macro_acc": 0.604,
+    "delta_vs_direct": -0.0527,
+    "lo": -0.0645,
+    "hi": -0.0407,
+    "meets_constraint": false,
+    "lat_par_ms": 392.0,
+    "energy_j": 54.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3006,
+    "x_direct_derived": 0.3438,
+    "macro_acc": 0.6046,
+    "delta_vs_direct": -0.0521,
+    "lo": -0.0628,
+    "hi": -0.0412,
+    "meets_constraint": false,
+    "lat_par_ms": 401.4,
+    "energy_j": 56.2,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3015,
+    "x_direct_derived": 0.3448,
+    "macro_acc": 0.6063,
+    "delta_vs_direct": -0.0504,
+    "lo": -0.0621,
+    "hi": -0.0385,
+    "meets_constraint": false,
+    "lat_par_ms": 402.0,
+    "energy_j": 56.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3121,
+    "x_direct_derived": 0.3553,
+    "macro_acc": 0.6073,
+    "delta_vs_direct": -0.0494,
+    "lo": -0.0611,
+    "hi": -0.0375,
+    "meets_constraint": false,
+    "lat_par_ms": 409.0,
+    "energy_j": 57.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_7b",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3165,
+    "x_direct_derived": 0.3543,
+    "macro_acc": 0.614,
+    "delta_vs_direct": -0.0427,
+    "lo": -0.0514,
+    "hi": -0.0339,
+    "meets_constraint": false,
+    "lat_par_ms": 386.8,
+    "energy_j": 55.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 7,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.327,
+    "x_direct_derived": 0.3649,
+    "macro_acc": 0.615,
+    "delta_vs_direct": -0.0417,
+    "lo": -0.0504,
+    "hi": -0.0329,
+    "meets_constraint": false,
+    "lat_par_ms": 393.8,
+    "energy_j": 57.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.342,
+    "x_direct_derived": 0.3799,
+    "macro_acc": 0.6173,
+    "delta_vs_direct": -0.0394,
+    "lo": -0.048,
+    "hi": -0.0309,
+    "meets_constraint": false,
+    "lat_par_ms": 403.8,
+    "energy_j": 59.2,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3526,
+    "x_direct_derived": 0.3904,
+    "macro_acc": 0.6183,
+    "delta_vs_direct": -0.0384,
+    "lo": -0.047,
+    "hi": -0.0298,
+    "meets_constraint": false,
+    "lat_par_ms": 410.8,
+    "energy_j": 60.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3736,
+    "x_direct_derived": 0.4114,
+    "macro_acc": 0.6199,
+    "delta_vs_direct": -0.0368,
+    "lo": -0.0453,
+    "hi": -0.0281,
+    "meets_constraint": false,
+    "lat_par_ms": 424.8,
+    "energy_j": 63.2,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3842,
+    "x_direct_derived": 0.422,
+    "macro_acc": 0.6209,
+    "delta_vs_direct": -0.0358,
+    "lo": -0.0443,
+    "hi": -0.0271,
+    "meets_constraint": false,
+    "lat_par_ms": 431.8,
+    "energy_j": 64.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3982,
+    "x_direct_derived": 0.4361,
+    "macro_acc": 0.6215,
+    "delta_vs_direct": -0.0352,
+    "lo": -0.0424,
+    "hi": -0.028,
+    "meets_constraint": false,
+    "lat_par_ms": 441.1,
+    "energy_j": 66.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.3992,
+    "x_direct_derived": 0.437,
+    "macro_acc": 0.6232,
+    "delta_vs_direct": -0.0335,
+    "lo": -0.0418,
+    "hi": -0.0251,
+    "meets_constraint": false,
+    "lat_par_ms": 441.8,
+    "energy_j": 66.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4097,
+    "x_direct_derived": 0.4476,
+    "macro_acc": 0.6242,
+    "delta_vs_direct": -0.0325,
+    "lo": -0.0409,
+    "hi": -0.0241,
+    "meets_constraint": false,
+    "lat_par_ms": 448.8,
+    "energy_j": 67.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4141,
+    "x_direct_derived": 0.4465,
+    "macro_acc": 0.6242,
+    "delta_vs_direct": -0.0324,
+    "lo": -0.0402,
+    "hi": -0.0244,
+    "meets_constraint": false,
+    "lat_par_ms": 426.5,
+    "energy_j": 66.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 6,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4238,
+    "x_direct_derived": 0.4616,
+    "macro_acc": 0.6247,
+    "delta_vs_direct": -0.0319,
+    "lo": -0.0388,
+    "hi": -0.0251,
+    "meets_constraint": false,
+    "lat_par_ms": 458.1,
+    "energy_j": 69.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4247,
+    "x_direct_derived": 0.4571,
+    "macro_acc": 0.6253,
+    "delta_vs_direct": -0.0314,
+    "lo": -0.0392,
+    "hi": -0.0234,
+    "meets_constraint": false,
+    "lat_par_ms": 433.5,
+    "energy_j": 67.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4397,
+    "x_direct_derived": 0.4721,
+    "macro_acc": 0.6275,
+    "delta_vs_direct": -0.0291,
+    "lo": -0.0366,
+    "hi": -0.0216,
+    "meets_constraint": false,
+    "lat_par_ms": 443.5,
+    "energy_j": 69.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4502,
+    "x_direct_derived": 0.4827,
+    "macro_acc": 0.6285,
+    "delta_vs_direct": -0.0281,
+    "lo": -0.0356,
+    "hi": -0.0206,
+    "meets_constraint": false,
+    "lat_par_ms": 450.5,
+    "energy_j": 70.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4704,
+    "x_direct_derived": 0.5082,
+    "macro_acc": 0.6296,
+    "delta_vs_direct": -0.027,
+    "lo": -0.0337,
+    "hi": -0.0203,
+    "meets_constraint": false,
+    "lat_par_ms": 489.1,
+    "energy_j": 75.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4713,
+    "x_direct_derived": 0.5037,
+    "macro_acc": 0.6301,
+    "delta_vs_direct": -0.0265,
+    "lo": -0.0341,
+    "hi": -0.0187,
+    "meets_constraint": false,
+    "lat_par_ms": 464.5,
+    "energy_j": 73.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 5,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.481,
+    "x_direct_derived": 0.5188,
+    "macro_acc": 0.6307,
+    "delta_vs_direct": -0.026,
+    "lo": -0.0327,
+    "hi": -0.0193,
+    "meets_constraint": false,
+    "lat_par_ms": 496.1,
+    "energy_j": 76.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_7b",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4818,
+    "x_direct_derived": 0.5143,
+    "macro_acc": 0.6312,
+    "delta_vs_direct": -0.0255,
+    "lo": -0.033,
+    "hi": -0.0177,
+    "meets_constraint": false,
+    "lat_par_ms": 471.5,
+    "energy_j": 74.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4959,
+    "x_direct_derived": 0.5283,
+    "macro_acc": 0.6317,
+    "delta_vs_direct": -0.0249,
+    "lo": -0.0309,
+    "hi": -0.019,
+    "meets_constraint": false,
+    "lat_par_ms": 480.9,
+    "energy_j": 76.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.4968,
+    "x_direct_derived": 0.5293,
+    "macro_acc": 0.6334,
+    "delta_vs_direct": -0.0232,
+    "lo": -0.0304,
+    "hi": -0.0157,
+    "meets_constraint": false,
+    "lat_par_ms": 481.5,
+    "energy_j": 76.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5074,
+    "x_direct_derived": 0.5398,
+    "macro_acc": 0.6345,
+    "delta_vs_direct": -0.0222,
+    "lo": -0.0294,
+    "hi": -0.0148,
+    "meets_constraint": false,
+    "lat_par_ms": 488.5,
+    "energy_j": 77.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_7b",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5215,
+    "x_direct_derived": 0.5539,
+    "macro_acc": 0.635,
+    "delta_vs_direct": -0.0217,
+    "lo": -0.0271,
+    "hi": -0.0162,
+    "meets_constraint": false,
+    "lat_par_ms": 497.9,
+    "energy_j": 79.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5373,
+    "x_direct_derived": 0.5643,
+    "macro_acc": 0.6365,
+    "delta_vs_direct": -0.0202,
+    "lo": -0.025,
+    "hi": -0.0154,
+    "meets_constraint": false,
+    "lat_par_ms": 483.3,
+    "energy_j": 79.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5425,
+    "x_direct_derived": 0.5749,
+    "macro_acc": 0.6366,
+    "delta_vs_direct": -0.0201,
+    "lo": -0.0258,
+    "hi": -0.0143,
+    "meets_constraint": false,
+    "lat_par_ms": 511.9,
+    "energy_j": 82.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 4,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5479,
+    "x_direct_derived": 0.5749,
+    "macro_acc": 0.6375,
+    "delta_vs_direct": -0.0192,
+    "lo": -0.024,
+    "hi": -0.0144,
+    "meets_constraint": false,
+    "lat_par_ms": 490.3,
+    "energy_j": 80.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.553,
+    "x_direct_derived": 0.5855,
+    "macro_acc": 0.6376,
+    "delta_vs_direct": -0.019,
+    "lo": -0.0248,
+    "hi": -0.0132,
+    "meets_constraint": false,
+    "lat_par_ms": 518.9,
+    "energy_j": 83.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.568,
+    "x_direct_derived": 0.6005,
+    "macro_acc": 0.6399,
+    "delta_vs_direct": -0.0168,
+    "lo": -0.0221,
+    "hi": -0.0114,
+    "meets_constraint": false,
+    "lat_par_ms": 528.9,
+    "energy_j": 85.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5786,
+    "x_direct_derived": 0.611,
+    "macro_acc": 0.6409,
+    "delta_vs_direct": -0.0157,
+    "lo": -0.021,
+    "hi": -0.0104,
+    "meets_constraint": false,
+    "lat_par_ms": 535.9,
+    "energy_j": 87.0,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.5945,
+    "x_direct_derived": 0.6215,
+    "macro_acc": 0.6424,
+    "delta_vs_direct": -0.0143,
+    "lo": -0.0188,
+    "hi": -0.0097,
+    "meets_constraint": false,
+    "lat_par_ms": 521.3,
+    "energy_j": 86.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 3,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.605,
+    "x_direct_derived": 0.6321,
+    "macro_acc": 0.6434,
+    "delta_vs_direct": -0.0133,
+    "lo": -0.0178,
+    "hi": -0.0086,
+    "meets_constraint": false,
+    "lat_par_ms": 528.3,
+    "energy_j": 88.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_7b"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.6455,
+    "x_direct_derived": 0.6672,
+    "macro_acc": 0.644,
+    "delta_vs_direct": -0.0127,
+    "lo": -0.0165,
+    "hi": -0.0088,
+    "meets_constraint": false,
+    "lat_par_ms": 530.0,
+    "energy_j": 91.0,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_7b",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.6507,
+    "x_direct_derived": 0.6777,
+    "macro_acc": 0.6441,
+    "delta_vs_direct": -0.0125,
+    "lo": -0.0175,
+    "hi": -0.0076,
+    "meets_constraint": false,
+    "lat_par_ms": 558.6,
+    "energy_j": 93.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_7b",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.6657,
+    "x_direct_derived": 0.6927,
+    "macro_acc": 0.6464,
+    "delta_vs_direct": -0.0103,
+    "lo": -0.0147,
+    "hi": -0.0058,
+    "meets_constraint": false,
+    "lat_par_ms": 568.6,
+    "energy_j": 95.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.6762,
+    "x_direct_derived": 0.7033,
+    "macro_acc": 0.6474,
+    "delta_vs_direct": -0.0092,
+    "lo": -0.0137,
+    "hi": -0.0047,
+    "meets_constraint": false,
+    "lat_par_ms": 575.6,
+    "energy_j": 97.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.6921,
+    "x_direct_derived": 0.7137,
+    "macro_acc": 0.6489,
+    "delta_vs_direct": -0.0078,
+    "lo": -0.0113,
+    "hi": -0.0042,
+    "meets_constraint": false,
+    "lat_par_ms": 561.0,
+    "energy_j": 96.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 2,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.7027,
+    "x_direct_derived": 0.7243,
+    "macro_acc": 0.6499,
+    "delta_vs_direct": -0.0068,
+    "lo": -0.0103,
+    "hi": -0.0032,
+    "meets_constraint": false,
+    "lat_par_ms": 568.0,
+    "energy_j": 98.2,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.7432,
+    "x_direct_derived": 0.7594,
+    "macro_acc": 0.65,
+    "delta_vs_direct": -0.0066,
+    "lo": -0.0101,
+    "hi": -0.0031,
+    "meets_constraint": false,
+    "lat_par_ms": 569.8,
+    "energy_j": 101.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_7b",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.7633,
+    "x_direct_derived": 0.785,
+    "macro_acc": 0.652,
+    "delta_vs_direct": -0.0046,
+    "lo": -0.0081,
+    "hi": -0.0013,
+    "meets_constraint": false,
+    "lat_par_ms": 608.4,
+    "energy_j": 105.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.7739,
+    "x_direct_derived": 0.7955,
+    "macro_acc": 0.6531,
+    "delta_vs_direct": -0.0036,
+    "lo": -0.0071,
+    "hi": -0.0003,
+    "meets_constraint": false,
+    "lat_par_ms": 615.4,
+    "energy_j": 107.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "method_compute_lean",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.7898,
+    "x_direct_derived": 0.806,
+    "macro_acc": 0.6545,
+    "delta_vs_direct": -0.0021,
+    "lo": -0.0044,
+    "hi": 0.0,
+    "meets_constraint": false,
+    "lat_par_ms": 600.8,
+    "energy_j": 107.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.8003,
+    "x_direct_derived": 0.8165,
+    "macro_acc": 0.6555,
+    "delta_vs_direct": -0.0011,
+    "lo": -0.0034,
+    "hi": 0.001,
+    "meets_constraint": false,
+    "lat_par_ms": 607.8,
+    "energy_j": 108.4,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.8408,
+    "x_direct_derived": 0.8516,
+    "macro_acc": 0.6557,
+    "delta_vs_direct": -0.001,
+    "lo": -0.0032,
+    "hi": 0.0011,
+    "meets_constraint": false,
+    "lat_par_ms": 609.5,
+    "energy_j": 111.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.8619,
+    "x_direct_derived": 0.8727,
+    "macro_acc": 0.656,
+    "delta_vs_direct": -0.0007,
+    "lo": -0.0019,
+    "hi": 0.0005,
+    "meets_constraint": true,
+    "lat_par_ms": 1855.6,
+    "energy_j": 348.3,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 1,
+    "assignment": {
+     "PMC_VQA": "always_7b",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.8647,
+    "x_direct_derived": 0.881,
+    "macro_acc": 0.6569,
+    "delta_vs_direct": 0.0002,
+    "lo": -0.002,
+    "hi": 0.0023,
+    "meets_constraint": true,
+    "lat_par_ms": 650.6,
+    "energy_j": 116.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.8724,
+    "x_direct_derived": 0.8832,
+    "macro_acc": 0.657,
+    "delta_vs_direct": 0.0004,
+    "lo": -0.0008,
+    "hi": 0.0015,
+    "meets_constraint": true,
+    "lat_par_ms": 1862.6,
+    "energy_j": 349.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9129,
+    "x_direct_derived": 0.9183,
+    "macro_acc": 0.6571,
+    "delta_vs_direct": 0.0005,
+    "lo": -0.0006,
+    "hi": 0.0016,
+    "meets_constraint": true,
+    "lat_par_ms": 1864.4,
+    "energy_j": 352.6,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_compute_lean",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9148,
+    "x_direct_derived": 0.931,
+    "macro_acc": 0.6574,
+    "delta_vs_direct": 0.0007,
+    "lo": -0.0015,
+    "hi": 0.0028,
+    "meets_constraint": true,
+    "lat_par_ms": 640.5,
+    "energy_j": 122.9,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "method_compute_lean",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9368,
+    "x_direct_derived": 0.9476,
+    "macro_acc": 0.6578,
+    "delta_vs_direct": 0.0011,
+    "lo": 0.0006,
+    "hi": 0.0016,
+    "meets_constraint": true,
+    "lat_par_ms": 673.4,
+    "energy_j": 123.5,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "always_32b_direct",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9368,
+    "x_direct_derived": 0.9476,
+    "macro_acc": 0.6584,
+    "delta_vs_direct": 0.0017,
+    "lo": 0.0006,
+    "hi": 0.0028,
+    "meets_constraint": true,
+    "lat_par_ms": 1905.4,
+    "energy_j": 357.8,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9773,
+    "x_direct_derived": 0.9827,
+    "macro_acc": 0.6585,
+    "delta_vs_direct": 0.0018,
+    "lo": 0.0008,
+    "hi": 0.0028,
+    "meets_constraint": true,
+    "lat_par_ms": 1907.2,
+    "energy_j": 360.7,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 0.9869,
+    "x_direct_derived": 0.9977,
+    "macro_acc": 0.6588,
+    "delta_vs_direct": 0.0022,
+    "lo": 0.0011,
+    "hi": 0.0033,
+    "meets_constraint": true,
+    "lat_par_ms": 1895.3,
+    "energy_j": 364.2,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.0274,
+    "x_direct_derived": 1.0328,
+    "macro_acc": 0.659,
+    "delta_vs_direct": 0.0023,
+    "lo": 0.0013,
+    "hi": 0.0033,
+    "meets_constraint": true,
+    "lat_par_ms": 1897.1,
+    "energy_j": 367.1,
+    "weight_GiB": 77.7559,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "always_32b_direct"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.071,
+    "x_direct_derived": 1.129,
+    "macro_acc": 0.6592,
+    "delta_vs_direct": 0.0025,
+    "lo": -0.0004,
+    "hi": 0.0054,
+    "meets_constraint": true,
+    "lat_par_ms": 1900.9,
+    "energy_j": 383.4,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "method_compute_lean"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.0939,
+    "x_direct_derived": 1.1519,
+    "macro_acc": 0.6594,
+    "delta_vs_direct": 0.0028,
+    "lo": 0.0003,
+    "hi": 0.0053,
+    "meets_constraint": true,
+    "lat_par_ms": 1916.1,
+    "energy_j": 386.3,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_veto",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "method_accuracy_max_veto"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.121,
+    "x_direct_derived": 1.179,
+    "macro_acc": 0.6597,
+    "delta_vs_direct": 0.003,
+    "lo": 0.0001,
+    "hi": 0.0059,
+    "meets_constraint": true,
+    "lat_par_ms": 1890.8,
+    "energy_j": 389.7,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "method_compute_lean"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.1439,
+    "x_direct_derived": 1.202,
+    "macro_acc": 0.6599,
+    "delta_vs_direct": 0.0033,
+    "lo": 0.0007,
+    "hi": 0.0058,
+    "meets_constraint": true,
+    "lat_par_ms": 1906.0,
+    "energy_j": 392.6,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "method_compute_lean",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "method_accuracy_max_veto"
+    }
+   },
+   {
+    "x_direct_as_charged": 1.1844,
+    "x_direct_derived": 1.237,
+    "macro_acc": 0.66,
+    "delta_vs_direct": 0.0034,
+    "lo": 0.0009,
+    "hi": 0.0059,
+    "meets_constraint": true,
+    "lat_par_ms": 1907.7,
+    "energy_j": 395.5,
+    "weight_GiB": 77.9333,
+    "needs_32B": true,
+    "n_guardrail_flags": 0,
+    "assignment": {
+     "PMC_VQA": "method_accuracy_max_fusion",
+     "SLAKE_closed": "always_32b_reasoning",
+     "VQA_RAD_closed": "always_32b_direct",
+     "PATH_VQA_closed": "always_32b_direct",
+     "MedXpertQA-MM": "always_32b_direct",
+     "SLAKE_open": "always_32b_direct",
+     "VQA_RAD_open": "always_32b_direct",
+     "PATH_VQA_open": "method_accuracy_max_veto"
+    }
+   }
+  ]
+ },
+ "F3_permutation_null": {
+  "name": "F3 -- accuracy<->cost decoupling permutation null for the F1 search",
+  "n_draws": 100,
+  "observed_x_direct": 0.8619,
+  "observed_delta": -0.0013,
+  "feasible_rate": 1.0,
+  "x_direct_mean": 0.5801,
+  "x_direct_min": 0.3165,
+  "x_direct_p2p5": 0.327,
+  "x_direct_p97p5": 0.9146,
+  "null_draws_at_or_below_observed": 93,
+  "empirical_p_one_sided": 0.93,
+  "delta_mean": 0.00056,
+  "reading": "the real F1 solution must be CHEAPER than this null distribution; if it sits inside it, the cost floor is a property of the arm-cost spread, not of which arm is accurate on which cell"
+ },
+ "honest_nested_cv_quoted_verbatim": {
+  "kind": "FULLY HONEST -- the per-cell arm is chosen inside the training folds only; this is the number to quote",
+  "n_fold_seeds": 12,
+  "x_direct_as_charged_mean": 0.8538,
+  "x_direct_as_charged_sd": 0.0056,
+  "x_direct_as_charged_min": 0.8495,
+  "x_direct_as_charged_max": 0.8619,
+  "delta_mean": -0.0018,
+  "lo_mean": -0.0033,
+  "seeds_meeting_constraint": 4,
+  "per_seed": [
+   {
+    "seed": 20260812,
+    "macro_acc": 0.6551,
+    "delta_vs_direct": -0.0016,
+    "lo": -0.0029,
+    "hi": -0.0002,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20261812,
+    "macro_acc": 0.6556,
+    "delta_vs_direct": -0.0011,
+    "lo": -0.0019,
+    "hi": -0.0003,
+    "meets_constraint": true,
+    "x_direct_as_charged": 0.8619,
+    "x_direct_derived": 0.8727,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20262812,
+    "macro_acc": 0.654,
+    "delta_vs_direct": -0.0027,
+    "lo": -0.0051,
+    "hi": -0.0008,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8587,
+    "x_direct_derived": 0.8706,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion"
+     ],
+     "VQA_RAD_closed": [
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20263812,
+    "macro_acc": 0.6546,
+    "delta_vs_direct": -0.002,
+    "lo": -0.0034,
+    "hi": -0.0007,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20264812,
+    "macro_acc": 0.6559,
+    "delta_vs_direct": -0.0008,
+    "lo": -0.0018,
+    "hi": 0.0002,
+    "meets_constraint": true,
+    "x_direct_as_charged": 0.8619,
+    "x_direct_derived": 0.8727,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "always_32b_reasoning",
+      "method_accuracy_max_veto"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20265812,
+    "macro_acc": 0.6555,
+    "delta_vs_direct": -0.0012,
+    "lo": -0.0027,
+    "hi": 0.0003,
+    "meets_constraint": true,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20266812,
+    "macro_acc": 0.6545,
+    "delta_vs_direct": -0.0022,
+    "lo": -0.0036,
+    "hi": -0.0008,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20267812,
+    "macro_acc": 0.6534,
+    "delta_vs_direct": -0.0033,
+    "lo": -0.0059,
+    "hi": -0.0009,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8545,
+    "x_direct_derived": 0.8664,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "always_32b_reasoning",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "PATH_VQA_closed": [
+      "always_32b_reasoning",
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20268812,
+    "macro_acc": 0.6545,
+    "delta_vs_direct": -0.0022,
+    "lo": -0.0036,
+    "hi": -0.0008,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20269812,
+    "macro_acc": 0.6556,
+    "delta_vs_direct": -0.0011,
+    "lo": -0.0019,
+    "hi": -0.0003,
+    "meets_constraint": true,
+    "x_direct_as_charged": 0.8619,
+    "x_direct_derived": 0.8727,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20270812,
+    "macro_acc": 0.6547,
+    "delta_vs_direct": -0.002,
+    "lo": -0.0034,
+    "hi": -0.0006,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_veto",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   },
+   {
+    "seed": 20271812,
+    "macro_acc": 0.6548,
+    "delta_vs_direct": -0.0019,
+    "lo": -0.0033,
+    "hi": -0.0006,
+    "meets_constraint": false,
+    "x_direct_as_charged": 0.8495,
+    "x_direct_derived": 0.8614,
+    "footprint": {
+     "resident": [
+      "Lingshu-7B base",
+      "Lingshu-32B"
+     ],
+     "params": 41744884992,
+     "params_B": 41.7449,
+     "weight_bytes": 83489769984,
+     "weight_GiB": 77.7559,
+     "needs_32B": true,
+     "fits_one_A100_80GB_weights_only": true
+    },
+    "picks": {
+     "PMC_VQA": [
+      "always_7b",
+      "method_compute_lean"
+     ],
+     "SLAKE_closed": [
+      "always_32b_reasoning",
+      "method_accuracy_max_fusion",
+      "method_compute_lean"
+     ],
+     "VQA_RAD_closed": [
+      "always_32b_direct",
+      "method_accuracy_max_fusion",
+      "method_accuracy_max_veto"
+     ],
+     "PATH_VQA_closed": [
+      "method_compute_lean"
+     ],
+     "MedXpertQA-MM": [
+      "always_32b_direct",
+      "method_accuracy_max_veto"
+     ],
+     "SLAKE_open": [
+      "always_32b_direct"
+     ],
+     "VQA_RAD_open": [
+      "always_32b_direct"
+     ],
+     "PATH_VQA_open": [
+      "always_32b_direct"
+     ]
+    }
+   }
+  ]
+ },
+ "honest_nested_cv_source": "cost_decomposition_2026-08-12.json:Q3_minimum_compute_at_parity.honest_nested_cv -- quoted, NOT recomputed here",
+ "Q2b_open_arm_flop_efficiency": {
+  "title": "how much accuracy does each open-text FLOP-eq buy, measured from the SAME 7B-greedy start",
+  "convention": "macro over the 3 open cells (equal weight), as-charged R32=4.57",
+  "source": "cost_decomposition_2026-08-12.json:Q2_is_the_open_arm_worth_running.per_cell",
+  "open_macro_accuracy": {
+   "always_7b_greedy": 0.5085,
+   "bestofN_verifier_no_escalation": 0.5335,
+   "deployed_open_arm_accuracy_max": 0.5973,
+   "always_32b_direct": 0.5982
+  },
+  "open_macro_flopeq": {
+   "always_7b_greedy": 1.0,
+   "bestofN_verifier_no_escalation": 11.0324,
+   "deployed_open_arm_accuracy_max": 13.8624,
+   "always_32b_direct": 4.57
+  },
+  "accuracy_points_per_extra_flopeq": {
+   "sevenB_bestofN_plus_verifier": 0.0025,
+   "one_32B_direct_pass": 0.02514,
+   "ratio_32B_over_bestofN": 10.06
+  },
+  "open_arm_7B_side_only_flopeq": 11.0324,
+  "open_arm_7B_side_only_x_direct": 2.4141,
+  "verdict": "on open text one 32B-direct forward buys 10.06x more macro accuracy per FLOP-eq than the whole 7B best-of-N + verifier machinery (0.02514 vs 0.00250 points per extra FLOP-eq).  The 7B side of the open arm alone costs 2.41x one always-32B-direct pass and still lands 0.0647 BELOW it in macro-open accuracy."
+ },
+ "F2b_the_wall": {
+  "title": "the compute wall: the cheapest cost at which the pre-registered non-inferiority constraint can be met AT ALL, with full eval visibility",
+  "cheapest_feasible_x_direct_as_charged": 0.8619,
+  "cheapest_feasible_x_direct_derived": 0.8727,
+  "dearest_infeasible_below_it": {
+   "x_direct_as_charged": 0.8408,
+   "x_direct_derived": 0.8516,
+   "macro_acc": 0.6557,
+   "delta_vs_direct": -0.001,
+   "lo": -0.0032,
+   "hi": 0.0011,
+   "meets_constraint": false,
+   "lat_par_ms": 609.5,
+   "energy_j": 111.3,
+   "weight_GiB": 77.7559,
+   "needs_32B": true,
+   "n_guardrail_flags": 0,
+   "assignment": {
+    "PMC_VQA": "method_compute_lean",
+    "SLAKE_closed": "method_compute_lean",
+    "VQA_RAD_closed": "always_32b_direct",
+    "PATH_VQA_closed": "always_32b_direct",
+    "MedXpertQA-MM": "always_32b_direct",
+    "SLAKE_open": "always_32b_direct",
+    "VQA_RAD_open": "always_32b_direct",
+    "PATH_VQA_open": "always_32b_direct"
+   }
+  },
+  "statement": "with FULL EVAL VISIBILITY and a free per-cell choice over all 6 deployable arms, no assignment cheaper than 0.8619x always-32B-direct (as-charged) / 0.8727x (derived R32) can satisfy CI-lower-bound >= -0.0029.  The best achievable macro accuracy at the next cheaper envelope point (0.8408x) is 0.6557, delta -0.0010 with lo -0.0032 -- it FAILS.  The compute floor at non-inferiority is therefore ~0.86x, i.e. at most ~14% cheaper than the baseline, and that is an UNREACHABLE bound, not a result.",
+  "every_feasible_point_needs_the_32B": true,
+  "only_32B_free_point": {
+   "x_direct_as_charged": 0.2188,
+   "macro_acc": 0.5971,
+   "delta": -0.0596,
+   "lo": -0.0716,
+   "weight_GiB": 15.4454,
+   "meets_constraint": false,
+   "note": "always-7B on all 8 cells -- the ONLY envelope point that never loads the 32B"
+  }
+ }
+}

@@ -1,0 +1,140 @@
+{
+ "what": "NULL TEST: are vision-token hidden states independent of the text that FOLLOWS the image (question and candidate answer)?",
+ "date": "2026-08-12",
+ "n_images": 24,
+ "layers": [
+  7,
+  14,
+  21,
+  28
+ ],
+ "pool": 6,
+ "model": "lingshu-medical-mllm/Lingshu-7B",
+ "dtype": "bfloat16",
+ "attn": "flash_attention_2",
+ "reference_arm": "A_same_prompt_twice IS the kernel non-determinism floor -- every other contrast must be judged against it, not against zero",
+ "contrasts": {
+  "A_same_prompt_twice": {
+   "raw": {
+    "max_abs": 0.0,
+    "max_rel": 0.0,
+    "mean_abs": 0.0,
+    "min_cosine": 0.9999999999999998,
+    "max_abs_activation_seen": 62.5
+   },
+   "v_mean": {
+    "max_abs": 0.0,
+    "max_rel": 0.0,
+    "mean_abs": 0.0,
+    "min_cosine": 0.9999999999999993,
+    "max_abs_activation_seen": 31.07291603088379
+   },
+   "v_grid": {
+    "max_abs": 0.0,
+    "max_rel": 0.0,
+    "mean_abs": 0.0,
+    "min_cosine": 0.9999999999999998,
+    "max_abs_activation_seen": 42.9375
+   }
+  },
+  "B_short_question": {
+   "raw": {
+    "max_abs": 12.75,
+    "max_rel": 2.0,
+    "mean_abs": 0.008691862122411553,
+    "min_cosine": 0.9986931133361677,
+    "max_abs_activation_seen": 145.0
+   },
+   "v_mean": {
+    "max_abs": 1.0754756927490234,
+    "max_rel": 1.9906430209877322,
+    "mean_abs": 0.001935953516572492,
+    "min_cosine": 0.9997382070844991,
+    "max_abs_activation_seen": 56.60181427001953
+   },
+   "v_grid": {
+    "max_abs": 5.354167938232422,
+    "max_rel": 2.0,
+    "mean_abs": 0.004589970893936616,
+    "min_cosine": 0.9991392327327805,
+    "max_abs_activation_seen": 80.75
+   }
+  },
+  "C_long_question": {
+   "raw": {
+    "max_abs": 23.0,
+    "max_rel": 2.0,
+    "mean_abs": 0.022027046303456116,
+    "min_cosine": 0.9978668527805284,
+    "max_abs_activation_seen": 174.0
+   },
+   "v_mean": {
+    "max_abs": 1.5806846618652344,
+    "max_rel": 1.9906430209877322,
+    "mean_abs": 0.0051491218400983455,
+    "min_cosine": 0.9996845362645911,
+    "max_abs_activation_seen": 57.20182418823242
+   },
+   "v_grid": {
+    "max_abs": 9.725911378860474,
+    "max_rel": 2.0,
+    "mean_abs": 0.012035187486374456,
+    "min_cosine": 0.9983882137160877,
+    "max_abs_activation_seen": 98.0
+   }
+  },
+  "D_candidate_answer_appended": {
+   "raw": {
+    "max_abs": 12.75,
+    "max_rel": 2.0,
+    "mean_abs": 0.008691862122411553,
+    "min_cosine": 0.9986931133361677,
+    "max_abs_activation_seen": 145.0
+   },
+   "v_mean": {
+    "max_abs": 1.0754756927490234,
+    "max_rel": 1.9906430209877322,
+    "mean_abs": 0.001935953516572492,
+    "min_cosine": 0.9997382070844991,
+    "max_abs_activation_seen": 56.60181427001953
+   },
+   "v_grid": {
+    "max_abs": 5.354167938232422,
+    "max_rel": 2.0,
+    "mean_abs": 0.004589970893936616,
+    "min_cosine": 0.9991392327327805,
+    "max_abs_activation_seen": 80.75
+   }
+  },
+  "E_different_candidate_answer": {
+   "raw": {
+    "max_abs": 12.75,
+    "max_rel": 2.0,
+    "mean_abs": 0.008691862122411553,
+    "min_cosine": 0.9986931133361677,
+    "max_abs_activation_seen": 145.0
+   },
+   "v_mean": {
+    "max_abs": 1.0754756927490234,
+    "max_rel": 1.9906430209877322,
+    "mean_abs": 0.001935953516572492,
+    "min_cosine": 0.9997382070844991,
+    "max_abs_activation_seen": 56.60181427001953
+   },
+   "v_grid": {
+    "max_abs": 5.354167938232422,
+    "max_rel": 2.0,
+    "mean_abs": 0.004589970893936616,
+    "min_cosine": 0.9991392327327805,
+    "max_abs_activation_seen": 80.75
+   }
+  }
+ },
+ "verdict": {
+  "kernel_floor_v_mean_max_abs": 0.0,
+  "worst_text_contrast_v_mean_max_abs": 1.5806846618652344,
+  "min_cosine_over_all_text_contrasts_v_mean": 0.9996845362645911,
+  "pass": false,
+  "reading": "PASS means the pooled vision features are text-independent to within bf16 kernel noise, so caching them per IMAGE is exact, AND -- the load-bearing consequence -- a vision feature is a per-question CONSTANT that cannot by itself change a within-pool argmax."
+ }
+}

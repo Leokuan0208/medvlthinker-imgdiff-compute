@@ -1,0 +1,26 @@
+{
+ "amendment": 4,
+ "written_at_utc": "2026-08-12T08:05:00Z",
+ "honest_status": "Written after arm A, arm A' and the 2x2/gate diagnostics, BEFORE the arm below was computed. Declared with its decision rule in advance.",
+ "motivation": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/rescue_break_2x2_zeroshot.json",
+  "fact": "the option-branch verifier RESCUES and BREAKS at very different rates per cell. P(verifier right | 7B wrong) vs the 1/K floor: PATH_VQA_closed 0.5794 vs 0.50 (signal), PMC_VQA 0.2438 vs 0.25 (none), VQA_RAD_closed 0.4000 vs 0.50 (below), MedXpertQA-MM 0.1300 vs 0.20 (ANTI-correlated). And on the RECOVERABLE stratum (32B right, 7B wrong): 0.6246 / 0.3252 / 0.4074 / 0.1708 against the same floors.",
+  "consequence": "arm A replaced the generator's answer UNCONDITIONALLY. The generator's own answer is itself evidence, and a scorer that ignores it throws that evidence away. The minimal repair that keeps ONE scorer and ONE decision rule is to put the generator's preference INTO the score."
+ },
+ "arm_A_double_prime_generator_prior_fusion": {
+  "rule": "s'(c) = s_verifier(image, question, c) + lambda * 1[c == the 7B's own greedy answer]; answer = argmax_c s'(c). Identical formula in both branches. lambda = 0 is arm A; lambda -> infinity is always-7B.",
+  "why_it_is_still_ONE_pipeline": "one scorer, one additive term, one argmax, no format branch; the candidate set is still the only thing that differs between branches",
+  "fitting": "lambda selected by NESTED 5-fold CV (grid 0, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0), fit on the 4 training folds and applied to the held-out fold, repeated over 10 fold-split seeds; reported as mean/sd/range over seeds. A SINGLE GLOBAL lambda (fit across all four cells jointly, cross-fit the same way) is reported alongside the per-cell one, because a per-cell lambda is four knobs, not one.",
+  "decision_rule_stated_in_advance": [
+   "a win requires the cross-fit accuracy to beat always-7B on the cell by a paired-bootstrap CI that excludes zero, at the SEED-AVERAGED value, not at the top of the seed range",
+   "if the CV drives lambda to the top of the grid on a cell, that cell's honest reading is 'the verifier adds nothing there and the fusion has degenerated to always-7B'",
+   "the macro is reported with the GLOBAL lambda, not the per-cell one"
+  ]
+ },
+ "gate_endpoint_verdict_recorded_now": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/gate_zeroshot.json",
+  "rule_from_amendment_3": "a gate claim requires the fitted combiner to beat -margin7b on RECOVERABILITY AUROC by more than the fold-seed sd, on more than one cell",
+  "result": "met on ONE cell only (PATH_VQA_closed +0.0178, sd 0.0005); PMC_VQA -0.0027, MedXpertQA-MM -0.0128, VQA_RAD_closed -0.0498",
+  "verdict": "RULE NOT MET -- the option-branch verifier does NOT generally improve the MCQ escalation gate over the deployed 7B margin. Reported as a per-cell exception, never as a gate claim."
+ }
+}

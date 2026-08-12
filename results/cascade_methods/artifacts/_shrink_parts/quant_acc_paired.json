@@ -1,0 +1,357 @@
+{
+ "title": "ATTACK 3 -- paired accuracy analysis: quantised strong leg, and Lingshu-I-8B against a MATCHED-STACK Lingshu-32B",
+ "date": "2026-08-12",
+ "nboot": 10000,
+ "seed": 20260812,
+ "scoring": "MedEvalKit's own unmodified cal_metrics; per-item out_sample['correct'].  The three OPEN cells are scored WITHOUT the LLM judge (use_llm_judge=False), so their 'correct' is exact-match and is NOT comparable to the project's published open-cell accuracies, which used the Claude judge.  Open-cell rows are emitted for completeness and must not be read as accuracy.",
+ "cells_available_per_arm": {
+  "bf16": [],
+  "nf4": [],
+  "stored_vllm_32b": [
+   "MedXpertQA-MM",
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "PMC_VQA",
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ],
+  "i8b_1tile_hf": [
+   "MedXpertQA-MM",
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "PMC_VQA",
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ],
+  "hf_7b": [
+   "MedXpertQA-MM",
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "PMC_VQA",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ],
+  "stored_vllm_7b": [
+   "MedXpertQA-MM",
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "PMC_VQA",
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ]
+ },
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1",
+  "bootstrap": "paired item-level, one shared RNG stream drawn in a fixed arm order, nboot=10000, seed=20260812",
+  "tf32": "not applicable -- numpy on stored 0/1 correctness vectors"
+ },
+ "N4_serving_stack_null_test": {
+  "what": "my bf16 Lingshu-32B (HF driver) vs the STORED vLLM Lingshu-32B that every published cell came from (MedEvalKit/eval_results_lingshu32b_full).  Identical weights, items, prompts, greedy decoding.  Any difference is the serving stack.",
+  "why_it_matters": "it bounds how much of the I-8B-vs-32B comparison (B) is artifact.  It does NOT affect (A), where the deviation cancels.",
+  "per_cell": "not measured"
+ },
+ "A_quantisation_delta_PRIMARY": {
+  "what": "NF4 minus bf16, same driver, same items, same batch size, same greedy decoding.  Attributable to weight quantisation alone.",
+  "per_cell": "not measured"
+ },
+ "N4b_serving_stack_measured_on_lingshu_7b": {
+  "what": "Lingshu-7B under the HF driver (ckpts/i8b_cheapleg/base7b) minus Lingshu-7B under vLLM 0.9.0.1 (MedEvalKit/eval_results_cheapleg_base7b).  IDENTICAL weights, items, prompts and greedy decoding -- the ONLY difference is the serving stack.",
+  "why": "the Lingshu-I-8B arm is HF and always-32B-direct is vLLM, so the I-8B-vs-32B comparison is cross-stack.  This quantifies the confound on the same cells.  It is measured on the 7B, not the 32B, so it TRANSFERS ONLY AS AN INDICATION.",
+  "direction_note": "a NEGATIVE value means the HF driver scores LOWER than vLLM on the same weights.  Where that is so, Lingshu-I-8B (measured on HF) is being compared against a 32B measured on the MORE GENEROUS stack, so its reported advantage is if anything UNDERSTATED.",
+  "per_cell": {
+   "MedXpertQA-MM": {
+    "delta": 0.0015,
+    "lo": -0.0075,
+    "hi": 0.0105,
+    "n": 2000,
+    "n_discordant": 91,
+    "a_acc": 0.2655,
+    "b_acc": 0.264,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   },
+   "PATH_VQA_closed": {
+    "delta": -0.07079119571683522,
+    "lo": -0.08298631766805473,
+    "hi": -0.05889351576442594,
+    "n": 3362,
+    "n_discordant": 452,
+    "a_acc": 0.7662105889351577,
+    "b_acc": 0.8370017846519928,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   },
+   "PATH_VQA_open": {
+    "delta": -0.0002978850163836759,
+    "lo": -0.0008936550491510277,
+    "hi": 0.0,
+    "n": 3357,
+    "n_discordant": 1,
+    "a_acc": 0.0,
+    "b_acc": 0.0002978850163836759,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   },
+   "PMC_VQA": {
+    "delta": -0.4113969488483398,
+    "lo": -0.41833682321268323,
+    "hi": -0.40460664074184866,
+    "n": 33430,
+    "n_discordant": 18815,
+    "a_acc": 0.13230631169608137,
+    "b_acc": 0.5437032605444212,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   },
+   "VQA_RAD_closed": {
+    "delta": -0.00398406374501992,
+    "lo": -0.0199203187250996,
+    "hi": 0.01195219123505976,
+    "n": 251,
+    "n_discordant": 5,
+    "a_acc": 0.7808764940239044,
+    "b_acc": 0.7848605577689243,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 200,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "hf_7b",
+    "arm_b": "stored_vllm_7b"
+   }
+  }
+ },
+ "B0_i8b_vs_stored_vllm_32b": {
+  "what": "Lingshu-I-8B (HF, ATTACK A arm i8b_1tile) minus always-32B-direct as PUBLISHED (stored vLLM, MedEvalKit/eval_results_lingshu32b_full).",
+  "caveat": "CROSS-STACK: the two arms differ in serving stack as well as in model.  The N4 null test above measures how large that confound is; read this row only together with N4.",
+  "per_cell": {
+   "MedXpertQA-MM": {
+    "delta": -0.019,
+    "lo": -0.0425,
+    "hi": 0.0045,
+    "n": 2000,
+    "n_discordant": 570,
+    "a_acc": 0.2875,
+    "b_acc": 0.3065,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "PATH_VQA_closed": {
+    "delta": 0.04253420582986318,
+    "lo": 0.03242117787031529,
+    "hi": 0.052647233789411066,
+    "n": 3362,
+    "n_discordant": 307,
+    "a_acc": 0.9315883402736467,
+    "b_acc": 0.8890541344437835,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 3357,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "PMC_VQA": {
+    "delta": -0.41947352677236016,
+    "lo": -0.4260245288662878,
+    "hi": -0.4127430451690099,
+    "n": 33430,
+    "n_discordant": 18571,
+    "a_acc": 0.13230631169608137,
+    "b_acc": 0.5517798384684415,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "SLAKE_closed": {
+    "delta": 0.06578947368421052,
+    "lo": 0.04425837320574163,
+    "hi": 0.08732057416267942,
+    "n": 836,
+    "n_discordant": 87,
+    "a_acc": 0.9246411483253588,
+    "b_acc": 0.8588516746411483,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 1258,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "VQA_RAD_closed": {
+    "delta": -0.04780876494023904,
+    "lo": -0.099601593625498,
+    "hi": 0.00398406374501992,
+    "n": 251,
+    "n_discordant": 42,
+    "a_acc": 0.8047808764940239,
+    "b_acc": 0.852589641434263,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 200,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile_hf",
+    "arm_b": "stored_vllm_32b"
+   }
+  }
+ },
+ "VOID_CELLS": {
+  "i8b_1tile_hf/PMC_VQA": {
+   "n": 33430,
+   "n_blank_responses": 33430,
+   "mean_gen_tokens": 0.0,
+   "verdict": "VOID -- the arm generated nothing on this dataset.  Its reported accuracy is an artifact of MedEvalKit scoring blank strings, NOT a measurement.  Excluded from every macro below."
+  },
+  "hf_7b/PMC_VQA": {
+   "n": 33430,
+   "n_blank_responses": 33430,
+   "mean_gen_tokens": 0.0,
+   "verdict": "VOID -- the arm generated nothing on this dataset.  Its reported accuracy is an artifact of MedEvalKit scoring blank strings, NOT a measurement.  Excluded from every macro below."
+  }
+ },
+ "B_i8b_vs_matched_32b": {
+  "what": "Lingshu-I-8B (concurrent round ATTACK A, arm i8b_1tile) minus my bf16 Lingshu-32B, both under the SAME HF driver.",
+  "caveat": "NOT fully matched: the I-8B arm used AutoProcessor(use_fast=True) at batch_size=32, my 32B arm the checkpoint's default slow processor at batch_size=4.  Both are HF transformers, bf16, greedy, and both go through MedEvalKit's own items/prompts/metrics.  Treat as a strong indication, not a certified contrast.",
+  "per_cell": "not measured"
+ },
+ "C_partial_macro_i8b_vs_32b": {
+  "what": "equal-weight macro over the 4 of 8 reporting cells that are usable here.",
+  "excluded": {
+   "PMC_VQA": "VOID under the HF driver (all 33,430 responses blank, mean gen_tokens 0.0) -- see VOID_CELLS.  This also voids the PMC_VQA row of artifacts/lingshu_i8b_cheapleg_2026-08-11.json.",
+   "SLAKE_open": "scored without the LLM judge => exact-match => 0.0000 for BOTH arms; carries no information.",
+   "VQA_RAD_open": "same",
+   "PATH_VQA_open": "same"
+  },
+  "result": {
+   "cells_used": [
+    "SLAKE_closed",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed",
+    "MedXpertQA-MM"
+   ],
+   "n_cells": 4,
+   "per_cell": {
+    "SLAKE_closed": {
+     "a": 0.9246411483253588,
+     "b": 0.8588516746411483,
+     "delta": 0.06578947368421052
+    },
+    "VQA_RAD_closed": {
+     "a": 0.8047808764940239,
+     "b": 0.852589641434263,
+     "delta": -0.04780876494023904
+    },
+    "PATH_VQA_closed": {
+     "a": 0.9315883402736467,
+     "b": 0.8890541344437835,
+     "delta": 0.04253420582986318
+    },
+    "MedXpertQA-MM": {
+     "a": 0.2875,
+     "b": 0.3065,
+     "delta": -0.019
+    }
+   },
+   "macro_a": 0.7371275912732573,
+   "macro_b": 0.7267488626297987,
+   "delta": 0.010378728643458665,
+   "lo": -0.004777054932259555,
+   "hi": 0.02512784172014752
+  },
+  "requirement": {
+   "eight_cell_bar_correlated": 0.655746,
+   "eight_cell_bar_independent": 0.671046,
+   "always_32b_direct_macro": 0.656672,
+   "projection_if_i8b_MATCHED_the_32b_on_the_4_unmeasured_cells": 0.6619,
+   "projection_label": "EXPLICITLY LABELLED ASSUMPTION, NOT A MEASUREMENT: it assumes I-8B exactly ties always-32B-direct on PMC_VQA and on the three OPEN cells.  Those four cells are 4/8 of the macro and three of them are open-text, where the 32B's margin over the 7B is largest, so this assumption is GENEROUS to I-8B.",
+   "which_bar_applies": "the INDEPENDENT bar.  Lingshu-I-8B is a different architecture (InternViT-300M + Qwen2 vs Qwen2.5-VL) trained by a different pipeline, so its errors cannot be assumed correlated with Lingshu-32B's.  Under the paired test an independently-erring candidate needs macro >= 0.6710, i.e. it must BEAT always-32B-direct by +0.0144.",
+   "verdict": "FAILS the pre-registered constraint on the generous projection: 0.6619 < 0.6710"
+  }
+ },
+ "D_cross_stack_sensitivity": {
+  "what": "how the HF-vs-vLLM deviation, measured on Lingshu-7B, would move the I-8B-minus-32B deltas if the same stack penalty applied to I-8B.",
+  "status": "SENSITIVITY, NOT A CORRECTION.  Nothing in the reported numbers is adjusted by it.  It transfers a deviation measured on one model (Lingshu-7B, Qwen2.5-VL) to another (Lingshu-I-8B, InternVL), which is exactly the kind of cross-multiplication this repo forbids in a headline.  It is reported only to establish the SIGN of the confound.",
+  "per_cell": {
+   "SLAKE_closed": "no HF-vs-vLLM pair exists for this cell (the HF Lingshu-7B arm did not run it), so the confound is unquantified here",
+   "VQA_RAD_closed": {
+    "i8b_minus_32b_as_measured": -0.0478,
+    "hf_minus_vllm_on_lingshu_7b": -0.004,
+    "hf_penalty_is_significant": false,
+    "i8b_delta_if_the_same_stack_penalty_applied_to_i8b": -0.0438
+   },
+   "PATH_VQA_closed": {
+    "i8b_minus_32b_as_measured": 0.0425,
+    "hf_minus_vllm_on_lingshu_7b": -0.0708,
+    "hf_penalty_is_significant": true,
+    "i8b_delta_if_the_same_stack_penalty_applied_to_i8b": 0.1133
+   },
+   "MedXpertQA-MM": {
+    "i8b_minus_32b_as_measured": -0.019,
+    "hf_minus_vllm_on_lingshu_7b": 0.0015,
+    "hf_penalty_is_significant": false,
+    "i8b_delta_if_the_same_stack_penalty_applied_to_i8b": -0.0205
+   }
+  },
+  "conclusion": "THE CONFOUND RUNS AGAINST LINGSHU-I-8B, NOT FOR IT.  On the one cell where the deviation is significant, PATH_VQA_closed, the HF driver scores 0.0708 LOWER than vLLM on IDENTICAL Lingshu-7B weights.  Lingshu-I-8B is measured on HF; always-32B-direct is measured on vLLM.  So I-8B is being scored on the harsher stack and its opponent on the kinder one.  Either the penalty transfers -- in which case I-8B's advantage is understated -- or it is Qwen2.5-VL-specific and does not apply to an InternVL model, in which case no adjustment is warranted.  Neither branch makes the measured +0.0104 partial-macro tie an overstatement on the SERVING-STACK axis.  It remains uncertified on the axis that actually matters: 4 of the 8 cells are not measured at all."
+ }
+}

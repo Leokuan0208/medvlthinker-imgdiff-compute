@@ -1,0 +1,29 @@
+{
+ "amendment": 2,
+ "written_at_utc": "2026-08-12T07:05:00Z",
+ "honest_status": "Written BEFORE any training run started (the eval-image ban list was still being built on CPU; no GPU forward pass of any trained arm existed). It splits the pre-registered arm B into a cheap decisive probe and the full arm, and it states the prediction that arm A' now forces.",
+ "why": "Both A100s are shared with three other concurrent rounds and were at 74-81 GiB used for most of this round. A full arm B is ~5.5 GPU-hours per seed (train 20,728 examples, then 41,226 option forwards, then 18,760 open forwards). Staging it buys the decisive answer first.",
+ "arm_B0_option_only": {
+  "what": "the SAME recipe and the SAME hyperparameters, trained on the OPTION branch ALONE (max_open 0, max_option 10364) -> ckpts/train/lora_verifier_optiononly_s0",
+  "why_it_is_decisive": "a format-SPECIFIC option verifier is an UPPER BOUND on what the unified scorer can do on the option branch under this recipe, because the unified scorer spends half its capacity on open text. If B0 does not beat always-7B on the option cells, arm B cannot either.",
+  "which_cells_first": "PATH_VQA_closed (n=3,362, the cell arm A lost by -0.1689 and therefore the cell with the most room to move) and VQA_RAD_closed (n=251), then MedXpertQA-MM, then PMC_VQA -- cheapest-decisive first so a GPU deadline still buys the answer",
+  "it_is_also_pre_registered_comparison_iv": "the round's brief asks for the format-specific verifiers on their own formats; B0 IS that comparison for the option format"
+ },
+ "arm_B_unified": {
+  "what": "one verifier on BOTH branches (max_open 10364 + max_option 10364) -> ckpts/train/lora_verifier_unified_s0, scored on all four option cells AND re-scored on the 2,345-item open pool",
+  "run_when": "after B0, GPU permitting",
+  "note_on_the_design": "the open half is example-for-example the incumbent's 10,364, so the open-text arm's composition is unchanged and any open-text movement is attributable to INTERFERENCE from the option half, not to a different open recipe. The confound that remains is total training size (20,728 vs 10,364); it is stated, not removed."
+ },
+ "prediction_forced_by_arm_A_prime_stated_before_the_training_runs": {
+  "claim": "arm B0 and arm B are predicted to FALL SHORT of always-7B on the option cells",
+  "reason": "arm A' removed the candidate-identity bias with nested 5-fold CV and recovered only 26.9% (PATH_VQA_closed) and 23.1% (VQA_RAD_closed) of the shortfall vs always-7B, and made PMC WORSE (0.4735 -> 0.4085, because the slot offsets it removes are themselves informative: PMC-VQA test_2 gold slots are 13.3/36.9/37.3/12.6%). So ~3/4 of the arm-A shortfall is a RANKING shortfall, and training changes ranking only through the same P(Yes|image,question,candidate) head that already achieves AUROC 0.583-0.800.",
+  "what_would_falsify_it": "arm B0 reaching or exceeding always-7B on PATH_VQA_closed (0.8409) or PMC_VQA (0.5392)",
+  "this_prediction_is_recorded_so_that_a_null_result_cannot_later_be_presented_as_expected_and_a_positive_result_cannot_be_presented_as_predicted": true
+ },
+ "floors_every_option_branch_number_must_clear": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/floors_zeroshot.json (src/cascade_methods/unified_pipeline_floors.py)",
+  "F1_random_gold_1_over_K": {"PMC_VQA": 0.25, "MedXpertQA-MM": 0.2, "VQA_RAD_closed": 0.5, "PATH_VQA_closed": 0.5},
+  "F2_best_constant_identity": {"PMC_VQA": 0.3725, "MedXpertQA-MM": 0.212, "VQA_RAD_closed": 0.5299, "PATH_VQA_closed": 0.5402},
+  "note": "F2 is the floor that matters and it is FAR above F1 on PMC-VQA test_2, whose gold slots are 13.3/36.9/37.3/12.6%. Any option-branch claim is reported against F2, not F1."
+ }
+}

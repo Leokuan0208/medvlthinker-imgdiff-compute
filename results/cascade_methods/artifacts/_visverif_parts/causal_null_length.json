@@ -1,0 +1,86 @@
+{
+ "what": "DISCRIMINATE tiling-noise from backwards text leakage in the vision-token cache.",
+ "date": "2026-08-12",
+ "n_images": 12,
+ "layers": [
+  7,
+  14,
+  21,
+  28
+ ],
+ "trailing_token_counts": [
+  4,
+  8,
+  16
+ ],
+ "texts": {
+  "left": "Is the abnormality on the left side of this image",
+  "right": "Is the abnormality on the right side of this image",
+  "nonsense": "Purple bicycle helium seventeen marmalade orbit trombone quietly",
+  "empty_ish": "the the the the the the the the"
+ },
+ "model": "lingshu-medical-mllm/Lingshu-7B",
+ "dtype": "bfloat16",
+ "attn": "flash_attention_2",
+ "design": "for each trailing TOKEN COUNT, four semantically very different texts are forced to exactly that count. H_content predicts equal-length texts differ; H_length predicts they are bit-identical and only the COUNT matters.",
+ "H_content_equal_length_different_meaning": {
+  "n_pairs": 216,
+  "raw_max_abs": {
+   "max": 0.0,
+   "mean": 0.0
+  },
+  "v_mean_max_abs": {
+   "max": 0.0,
+   "mean": 0.0
+  },
+  "DECISIVE_max_abs_raw": 0.0,
+  "DECISIVE_max_abs_v_mean": 0.0,
+  "left_vs_right_only": {
+   "n_pairs": 36,
+   "max_abs_raw": 0.0,
+   "max_abs_v_mean": 0.0
+  }
+ },
+ "H_length_same_text_different_length": {
+  "n_pairs": 36,
+  "raw_max_abs": {
+   "max": 0.0,
+   "mean": 0.0
+  },
+  "v_mean_max_abs": {
+   "max": 0.0,
+   "mean": 0.0
+  },
+  "max_abs_raw": 0.0
+ },
+ "total_sequence_lengths_seen_per_bucket": {
+  "4": [
+   113,
+   209,
+   239,
+   257,
+   573
+  ],
+  "8": [
+   117,
+   213,
+   243,
+   261,
+   577
+  ],
+  "16": [
+   125,
+   221,
+   251,
+   269,
+   585
+  ]
+ },
+ "verdict": {
+  "equal_length_different_meaning_is_bit_identical": true,
+  "left_vs_right_max_abs": 0.0,
+  "length_change_max_abs": 0.0,
+  "conclusion": "CAUSAL MASK HOLDS: vision-token states are bit-identical across trailing texts of opposite meaning at equal token count; the only thing that moves them is the total sequence LENGTH, i.e. FlashAttention tiling / bf16 rounding. The per-image cache is therefore semantically exact, and a vision feature IS a per-question constant.",
+  "consequence_for_this_round": "a vision feature used ADDITIVELY cannot change a within-pool argmax; only a candidate x image INTERACTION can."
+ }
+}

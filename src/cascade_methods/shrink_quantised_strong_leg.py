@@ -109,6 +109,12 @@ def build_model(cfg, batch_size=8, max_new_tokens=2048):
             self.device = device
             self.max_new_tokens = max_new_tokens
             self.batch_size = batch_size
+            # BUGFIX 2026-08-12: drv.HFVLM._encode reads self.crop_to_patches (an InternVL-only
+            # tiling switch).  This subclass never set it, so every item raised AttributeError and
+            # the 2026-08-12 03:29 accuracy run wrote 2,545 error rows per arm.  Lingshu-32B is
+            # qwen2_5_vl, which has no tiling, so None is the correct value: it makes _encode skip
+            # the kwarg entirely, exactly as the base7b arm does.
+            self.crop_to_patches = None
             self.processor = AutoProcessor.from_pretrained(model_path)
             kw = dict(torch_dtype=torch.bfloat16, attn_implementation="sdpa")
             if quant is None:
@@ -251,11 +257,40 @@ def stage_acc(name, cfg, datasets, limit, batch_size):
             if limit:
                 dataset.samples = dataset.samples[:limit]
             samples = drv.resumable_run(dataset, m, os.path.join(outdir, "gen.jsonl"))
-            met = dataset.cal_metrics(samples)
+            n_empty = sum(1 for s in samples if not str(s.get("response", "")).strip())
+            # MedEvalKit's cal_metrics returns (metrics, judged_samples) for the open-ended
+            # datasets and a bare dict for the MCQ-only ones.  The 2026-08-12 03:29 run treated it
+            # as a bare value in both cases.  Unpack properly and PERSIST the judged per-item rows
+            # -- the paired quant-minus-bf16 bootstrap needs per-item correctness, not cell means.
+            out_samples = None
+            try:
+                met = dataset.cal_metrics(samples)
+            except ValueError:
+                # MedEvalKit/utils/utils.py:44 rouge() raises "Hypothesis is empty." on a blank
+                # response, which kills the whole cell.  Score the non-blank subset with
+                # MedEvalKit's OWN unmodified metric and report the blanks separately; a blank is
+                # scored wrong, never dropped, in the accuracy recomputed downstream from
+                # results.json.
+                traceback.print_exc()
+                keep = [s for s in samples if str(s.get("response", "")).strip()]
+                met = dataset.cal_metrics(keep)
+                if isinstance(met, tuple):
+                    met, out_samples = met
+                met = {"metrics": met} if not isinstance(met, dict) else met
+                met["_EMPTY_RESPONSE_FALLBACK"] = (
+                    "cal_metrics raised on blank responses; the metric above is over the %d "
+                    "non-blank items only.  %d blank items are excluded from it and are counted "
+                    "as WRONG in the per-item accuracy recomputed from results.json."
+                    % (len(keep), n_empty))
+            if isinstance(met, tuple):
+                met, out_samples = met
             if not isinstance(met, dict):
                 met = {"metrics": met}
             met["_n"] = len(samples)
+            met["_n_empty_response"] = n_empty
             json.dump(met, open(mpath, "w"), indent=1)
+            if out_samples is not None:
+                json.dump(out_samples, open(os.path.join(outdir, "results.json"), "w"))
             results[ds] = met
             print(name, ds, json.dumps(met)[:400], flush=True)
         except Exception:

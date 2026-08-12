@@ -141,6 +141,8 @@ def json_imgs(jp):
 
 
 def build_open_examples(rng):
+    if A.max_open <= 0:                       # option-only arm B0: skip the whole open build
+        return [], {"per_source": {}, "quota_shortfall": {}, "skipped": "max_open == 0"}
     SPL = json.load(open(os.path.join(ROOT, A.split)))
     assert SPL["disjointness_assertion"]["image_pixel_hash_intersection"] == 0
     DSETS = list(SPL["train"].keys())
@@ -282,14 +284,30 @@ def build_option_examples(rng, banned):
     drop = {}
 
     # ---- PMC-VQA train (4 options) ----------------------------------------------------------
+    # LANDMINE (CLAUDE.md sec.0): there are TWO PMC-VQA splits.  The EVAL cell is v2 `test_2.csv`,
+    # whose Figure_path values are SUB-FIGURE CROPS ("PMC8253797_Fig4_11.jpg").  The images actually
+    # on disk under pmc_vqa_train/images are the v1 full figures, so v2 `train_2.csv` resolves ZERO
+    # images (verified: 0 hits in the first 2,000 rows; the first dry build produced 0 PMC examples
+    # and would have trained an "MCQ" verifier that never saw a lettered 4-option item).  Train on
+    # the v1 `train.csv`, which resolves 2000/2000.
+    # Because a v2 test CROP cannot pixel-md5-match a v1 full FIGURE, the md5 ban list alone would
+    # not catch "this training figure contains that test crop".  So a STRICTLY STRONGER filter is
+    # applied here as well: drop any training row whose PMC ARTICLE ID appears anywhere in the v2
+    # test_2 figure list.
     base = "/data/dan/dataset/pmc_vqa_train"
-    rows = list(csv.reader(open(os.path.join(base, "train_2.csv"), encoding="utf-8")))[1:]
+    ev = "/data/dan/dataset/medevalkit/PMC-VQA"
+    ban_pmcid = {str(r[1]).split("_")[0] for r in
+                 list(csv.reader(open(os.path.join(ev, "test_2.csv"), encoding="utf-8")))[1:]}
+    rows = list(csv.reader(open(os.path.join(base, "train.csv"), encoding="utf-8")))[1:]
     rng.shuffle(rows)
-    pool, dropped, seen_img = [], 0, 0
+    pool, dropped, seen_img, dropped_id = [], 0, 0, 0
     for r in rows:
         if len(pool) >= A.max_option:            # PMC alone can fill the quota; cap the scan
             break
-        _, fig, _cap, q, cA, cB, cC, cD, ans, _sp = r
+        fig, q, _ans_text, cA, cB, cC, cD, ans = r[:8]
+        if str(fig).split("_")[0] in ban_pmcid:
+            dropped_id += 1
+            continue
         ip = os.path.join(base, "images", fig)
         if not os.path.exists(ip):
             continue
@@ -315,7 +333,10 @@ def build_option_examples(rng, banned):
         for j, b in enumerate(bodies):
             pool.append(("option", "pmc_vqa_train", q.strip(), ip, b, int(j == gi)))
     pools["pmc_vqa_train"] = pool
-    drop["pmc_vqa_train"] = {"images_checked": seen_img, "images_dropped_as_eval": dropped}
+    drop["pmc_vqa_train"] = {"source_csv": "pmc_vqa_train/train.csv (v1)",
+                             "images_checked": seen_img, "images_dropped_as_eval": dropped,
+                             "rows_dropped_by_PMC_article_id_shared_with_test_2": dropped_id,
+                             "n_banned_pmc_article_ids": len(ban_pmcid)}
 
     # ---- PathVQA train yes/no ---------------------------------------------------------------
     pool, dropped, seen_img = [], 0, 0
@@ -428,6 +449,50 @@ def main():
         print("[skip] adapter already exists; pass --force 1 to retrain", flush=True)
         return
 
+    # ---- GPU etiquette: three other rounds share these cards, and the CPU data build above takes
+    # ~10 min, which is long enough for a card that was free when the runner picked it to fill up
+    # (it did, once: OOM at load with four foreign processes holding 79.07 of 79.14 GiB).  So the
+    # wait for room happens HERE, immediately before the weights are touched, and it never kills
+    # anything -- it only waits.
+    import subprocess
+    global DEV
+
+    def free_per_visible():
+        """(local_index, free GiB) for every VISIBLE device, in torch's own ordering."""
+        q = subprocess.run(["nvidia-smi", "--query-gpu=memory.total,memory.used",
+                            "--format=csv,noheader,nounits"], capture_output=True, text=True)
+        rows = [[int(x) for x in ln.split(",")] for ln in q.stdout.strip().splitlines()]
+        vis = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+        order = [int(x) for x in vis.split(",")] if vis.strip() else list(range(len(rows)))
+        return [(i, (rows[p][0] - rows[p][1]) / 1024.0) for i, p in enumerate(order)]
+
+    need = float(os.environ.get("TRAIN_MIN_FREE_GIB", "26"))
+
+    def wait_room(tag=""):
+        """Wait for ANY visible device to hold a sustained `need` GiB, then bind to it."""
+        streak, waited, chosen = 0, 0, None
+        while waited < 21600:
+            cand = max(free_per_visible(), key=lambda t: t[1])
+            if cand[1] >= need and (chosen is None or cand[0] == chosen):
+                chosen = cand[0]
+                streak += 1
+                if streak >= 3:
+                    DEV = f"cuda:{chosen}"
+                    torch.cuda.set_device(chosen)
+                    print(f"[gpu]{tag} bound {DEV} with {cand[1]:.1f} GiB free after {waited}s",
+                          flush=True)
+                    return True
+            else:
+                streak, chosen = 0, None
+                if waited % 300 == 0:
+                    print(f"  [gpu-wait]{tag} best={cand} need {need}, waited {waited}s", flush=True)
+            time.sleep(30); waited += 30
+        return False
+
+    if not wait_room():
+        print("[gpu] ABORT: no room in 6h", flush=True)
+        return
+
     from transformers import AutoProcessor, AutoModelForImageTextToText
     from qwen_vl_utils import process_vision_info
     from peft import LoraConfig, get_peft_model
@@ -447,8 +512,22 @@ def main():
         imgs, vids = process_vision_info(msgs)
         return proc(text=[text], images=imgs, videos=vids, return_tensors="pt", padding=True)
 
-    model = AutoModelForImageTextToText.from_pretrained(
-        A.model_path, torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2").to(DEV)
+    model = None
+    for attempt in range(40):                    # a foreign process can grab the card mid-load
+        try:
+            model = AutoModelForImageTextToText.from_pretrained(
+                A.model_path, torch_dtype=torch.bfloat16,
+                attn_implementation="flash_attention_2").to(DEV)
+            break
+        except torch.OutOfMemoryError as e:
+            print(f"  [load-oom] attempt {attempt}: {str(e)[:100]}", flush=True)
+            model = None
+            torch.cuda.empty_cache()
+            time.sleep(120)
+            wait_room(f" retry{attempt}")
+    if model is None:
+        print("[gpu] ABORT: could not load the base model without OOM", flush=True)
+        return
     model = get_peft_model(model, LoraConfig(
         r=A.lora_r, lora_alpha=2 * A.lora_r, lora_dropout=0.05, bias="none",
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]))

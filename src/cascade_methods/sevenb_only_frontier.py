@@ -71,6 +71,178 @@ def cell_boot_delta(a, b, ix):
             "worse_sig": bool(hi < 0)}
 
 
+def _amortise(lod, hf_load_s):
+    """The brief asks for 'the latency cost per escalated query'.  Under a genuine load-on-demand
+    policy the 32B's VRAM is RELEASED between queries -- that release is the whole point, it is what
+    keeps the box a 7B box -- so every escalation pays a full swap-in.  Expected added latency per
+    query is therefore escalation_rate x swap_in_seconds.  A 32B forward pass is 1.88 s mean /
+    6.01 s max (vram_testtime_2026-08-11.json S2 wall_s), which is the cost the SECOND-CARD policy
+    pays instead."""
+    fwd_mean, fwd_max = 1.88, 6.01
+    variants = {
+        "hf_from_pretrained_end_to_end_MEASURED": hf_load_s,
+        "composed_cold_disk_to_gpu": lod["composed_swap_in"]["total_cold_swap_in_s"],
+        "composed_warm_page_cache_hot": lod["composed_swap_in"]["total_warm_swap_in_s_page_cache_hot"],
+    }
+    rates = [0.01, 0.05, 0.10, 0.172745, 0.5, 1.0]
+    tbl = []
+    for r in rates:
+        row = {"escalation_fraction_of_items": r}
+        for name, s in variants.items():
+            if s is None:
+                continue
+            row[f"added_s_per_query|{name}"] = round(r * s, 3)
+        row["added_s_per_query|second_card_32B_resident"] = round(r * fwd_mean, 3)
+        tbl.append(row)
+    return {
+        "policy_being_costed": ("load-on-demand: only the 7B stays resident; the 32B is paged in from "
+                                "the HF cache on each escalation and its VRAM released afterwards.  If "
+                                "it is NOT released the deployment is regime B and already needs the "
+                                "32B's VRAM, which defeats the purpose."),
+        "the_measured_swap_in_seconds": variants,
+        "a_32b_forward_pass_s": {"mean": fwd_mean, "max": fwd_max,
+                                 "source": "vram_testtime_2026-08-11.json S2 wall_s"},
+        "slowdown_factor_swap_in_vs_one_forward_pass": {
+            k: round(v / fwd_mean, 1) for k, v in variants.items() if v is not None},
+        "expected_added_latency_per_query": tbl,
+        "at_THIS_ROUNDS_measured_tie_escalation": {
+            "escalation_fraction_of_items": 0.172745,
+            "source": "PART3 a_exact_cell_subset_enumeration.minimum_escalation_that_ties",
+            "added_s_per_query_best_case_measured_load": (
+                round(0.172745 * hf_load_s, 2) if hf_load_s else None),
+            "added_s_per_query_second_card": round(0.172745 * fwd_mean, 3),
+            "ratio": round(hf_load_s / fwd_mean, 1) if hf_load_s else None,
+        },
+        "VERDICT": (
+            "the brief's own deployability test -- '5% escalation with a 30 s model load is not "
+            "deployable' -- is FAILED by a wide margin on both terms.  The measured load is "
+            f"{hf_load_s:.0f} s end-to-end (not 30 s), the measured tie escalation is 17.3% of items "
+            f"(not 5%), and the product is {0.172745 * hf_load_s:.0f} s of added latency PER QUERY "
+            "averaged over all traffic, against 0.32 s for the same policy with the 32B resident on a "
+            "second card.  Load-on-demand is not a marginal call here; it is worse than the thing it is "
+            "trying to avoid by roughly two orders of magnitude." if hf_load_s else "not measured"),
+    }
+
+
+def _debias_note():
+    """ATTACK 2's diagnostic arm A': subtract a per-candidate-identity offset (fit on training folds
+    only) before the argmax, to test whether the option-scoring loss is a candidate-identity bias
+    rather than missing ranking signal.  DIAGNOSTIC ONLY -- its offsets are fit on eval-distribution
+    items, so it is not a deployable policy and is never a menu entry here."""
+    p = os.path.join(ART, "_unified_pipeline_parts", "arm_a_prime_debias.json")
+    if not os.path.exists(p):
+        return "not measured -- no arm_a_prime_debias.json on disk"
+    d = json.load(open(p))
+    rows = {c: {"acc_raw_argmax": round(v["acc_raw_argmax"], 6),
+                "acc_debiased_argmax": round(v["acc_debiased_argmax"], 6),
+                "acc_7b_greedy": round(v["acc_7b_greedy"], 6),
+                "delta_debiased_vs_raw": v["delta_debiased_vs_raw"],
+                "delta_debiased_vs_7b": v["delta_debiased_vs_7b"]}
+            for c, v in d.get("cells", {}).items()}
+    return {
+        "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/arm_a_prime_debias.json "
+                  "(ATTACK 2, amendment 1) -- DIAGNOSTIC ONLY, never a deployable policy",
+        "per_cell": rows,
+        "ANSWER": (
+            "NO.  De-biasing does not rescue the mechanism, and on the largest cell it makes it WORSE: "
+            + "; ".join(f"{c} {r['delta_debiased_vs_raw']['delta']:+.4f} vs raw"
+                        f"{' SIG' if r['delta_debiased_vs_raw'].get('sig') else ' n.s.'}"
+                        for c, r in rows.items())
+            + ".  After de-biasing the arm is still significantly below 7B greedy wherever it was "
+              "before.  So the shortfall is NOT an artifact of the verifier preferring particular "
+              "candidate strings or slots -- the ranking signal genuinely is not competitive with the "
+              "generator's own posterior over the options.  This is the stronger, and more useful, "
+              "form of the negative result."),
+    }
+
+
+def _mcq_options_arm():
+    """The one 7B-only MCQ mechanism this round actually MEASURED: score the GIVEN OPTIONS with the
+    same trained verifier and take the argmax (the 'unified pipeline' candidate-set rule).  It was
+    generated by the sibling ATTACK 2 and left unassembled; assembled here because this artifact's
+    MCQ menu is exactly the thing it bears on.  READ ONLY -- no scoring is re-run."""
+    p = os.path.join(ART, "_unified_pipeline_parts", "analysis_zeroshot.json")
+    if not os.path.exists(p):
+        return {"status": "not measured -- no analysis_zeroshot.json on disk"}
+    d = json.load(open(p))
+    rows, worse = {}, []
+    for cell, v in d.get("cells", {}).items():
+        # only the cells the OPTION-SCORING mechanism actually ran on.  The other four carry a
+        # 'branch' pass-through (SLAKE_closed has no answer space in its deployed prompt; the three
+        # open cells are the sampled arm, which is not what this section is about).
+        if "acc_unified_pick" not in v or "k_candidates_mean" not in v:
+            continue
+        rows[cell] = {
+            "n_scored": v["n_scored"],
+            "scored_is_full_cell": v.get("scored_is_full_cell"),
+            "k_options": v.get("k_candidates_mean"),
+            "acc_verifier_over_options": round(v["acc_unified_pick"], 6),
+            "acc_7b_greedy_same_items": round(v["acc_7b_greedy_same_items"], 6),
+            "acc_32b_direct_same_items": round(v["acc_32b_direct_same_items"], 6),
+            "delta_vs_7b_greedy": v["delta_vs_7b"],
+            "candidate_auroc_gold_vs_distractor": round(v["candidate_auroc_gold_vs_distractor"], 4),
+            "agreement_with_7b_greedy": round(v["agreement_with_7b_greedy"], 4),
+            "luck_floor_random_gold_permutation_mean": round(
+                v["luck_floor_random_gold"]["permutation_mean"], 4),
+        }
+        if v["delta_vs_7b"]["delta"] < 0 and v["delta_vs_7b"].get("sig"):
+            worse.append(cell)
+    return {
+        "mechanism": ("the unified candidate-set rule: for an MCQ item the candidates are the GIVEN "
+                      "OPTIONS (a fixed, complete, non-lucky set -- gold present on 100% of items, so "
+                      "coverage carries no information and the luck floor is exactly 1/K), scored by the "
+                      "same trained verifier that serves the open-text arm, argmax wins.  This is the "
+                      "mechanism the round's brief singled out as never tried."),
+        "provenance": ("scores generated by ATTACK 2 (src/cascade_methods/unified_pipeline_score.py, "
+                       "zero-shot tag) into ckpts/unified_pipeline/zeroshot_*.jsonl; assembled by "
+                       "`python3 src/cascade_methods/unified_pipeline.py --analyse --tag zeroshot` -> "
+                       "results/cascade_methods/artifacts/_unified_pipeline_parts/analysis_zeroshot.json.  "
+                       "HF transformers, never vLLM (a visual LoRA under vLLM drops all 192 visual.* "
+                       "modules)."),
+        "per_cell": rows,
+        "cells_significantly_WORSE_than_7B_greedy": worse,
+        "SLAKE_closed": "not scored -- its deployed prompt supplies no explicit answer space, so no "
+                        "option set could be built without changing the prompt",
+        "VERDICT": (
+            "MEASURED NEGATIVE, and decisively so.  Verifier-over-options vs taking the 7B's greedy "
+            "answer, per cell: "
+            + "; ".join(
+                f"{c} {r['delta_vs_7b_greedy']['delta']:+.4f} "
+                f"[{r['delta_vs_7b_greedy']['lo']:+.4f}, {r['delta_vs_7b_greedy']['hi']:+.4f}]"
+                f"{' SIG' if r['delta_vs_7b_greedy'].get('sig') else ' n.s.'}"
+                for c, r in rows.items())
+            + ".  The MCQ menu in this artifact therefore stands at greedy_7b, now on a MEASUREMENT "
+              "rather than on the absence of one.  MedXpert's positive point estimate is not a win: its "
+              "CI spans zero and both models sit near chance on that cell."),
+        "why_it_fails_is_informative": (
+            "the verifier is NOT at chance -- its candidate-level AUROC for gold-vs-distractor is "
+            + ", ".join(f"{r['candidate_auroc_gold_vs_distractor']:.2f} ({c})" for c, r in rows.items())
+            + ", all above 0.5.  It ranks gold above "
+            "distractors better than coin-flipping and STILL loses, because the bar is not chance, it is "
+            "the generator's own next-token distribution over the option letters, which is a strictly "
+            "better-calibrated read of the same evidence.  This is Finding 2 in its sharpest form: on "
+            "discrete option sets an external scorer has nothing to add to the generator's own posterior. "
+            " It also independently reproduces the (choice)(why) result "
+            "[choicewhy_measure_2026-08-03.json] by a different route."),
+        "consequence_for_the_direction": (
+            "the brief's proposed unification -- one scorer, candidate set defined per format -- is now "
+            "MEASURED on its MCQ half and it does not work.  Since MCQ carries 62.5% of the macro weight "
+            "and all five MCQ cells are capability-limited (PART2), the unified pipeline cannot be the "
+            "route to closing the 0.0596 gap."),
+        "does_a_candidate_identity_DEBIAS_rescue_it": _debias_note(),
+        "WHAT_COULD_STILL_CHANGE_THIS": (
+            "this is the ZERO-SHOT arm: the incumbent open-text verifier applied to option sets it was "
+            "never trained on.  ATTACK 2 has a TRAINED option-branch verifier in flight at the time of "
+            "writing (ckpts/train/lora_verifier_optiononly_s0, its amendment 2), which is the honest "
+            "upper bound on the option branch under that recipe.  If it lands positive, this artifact's "
+            "MCQ menu -- and therefore the 7B-only frontier value 0.616278 -- must be recomputed.  The "
+            "frontier reported here is CONDITIONAL ON THE MENU, and the menu is stated in full so the "
+            "recomputation is mechanical.  Nothing else in this artifact depends on it: PART2's "
+            "capability floors, PART3's minimum-32B frontier and PART4's VRAM cliff are all unaffected "
+            "by the MCQ arm choice."),
+    }
+
+
 def main():
     out = {
         "title": ("ATTACK 3 -- THE 7B-ONLY FRONTIER: how close does a 7B+verifier pipeline with NO 32B "
@@ -325,6 +497,7 @@ def main():
                         "1.0 and carries no information); open cells at oracle@8.  UPPER BOUND.",
             },
         },
+        "MCQ_MENU_UPDATE_2026-08-12_verifier_over_options": _mcq_options_arm(),
     }
 
     # ==================================================================================
@@ -398,8 +571,27 @@ def main():
             "residual_PURE_CAPABILITY": round(
                 float(np.mean([percell[c]["residual_pure_capability"] for c in CELLS])), 6),
             "caveat": ("each lever is CAPPED at the cell's own gap, in the order selection -> coverage -> "
-                       "residual, before averaging, so the three parts sum EXACTLY to the total gap.  The "
-                       "UNCAPPED headroom is reported per cell alongside."),
+                       "residual, before averaging.  The UNCAPPED headroom is reported per cell alongside."),
+            "CORRECTED_2026-08-12_the_three_parts_do_NOT_sum_to_the_total_gap": {
+                "what_an_earlier_build_claimed": "that the three parts sum EXACTLY to the total gap",
+                "sum_of_the_three_parts": round(
+                    float(np.mean([percell[c]["gap_closable_by_SELECTION_capped_at_the_gap"]
+                                   + percell[c]["gap_closable_by_COVERAGE_capped_at_the_gap"]
+                                   + percell[c]["residual_pure_capability"] for c in CELLS])), 6),
+                "total_gap": round(macro_direct - float(np.mean(list(best7_percell.values()))), 6),
+                "difference": round(
+                    float(np.mean([max(0.0, percell[c]["gap"]) - percell[c]["gap"] for c in CELLS])), 6),
+                "why": ("the per-cell capping clamps at zero, so a cell where the 7B pipeline BEATS the "
+                        "32B contributes 0 to the decomposition but its NEGATIVE gap still lowers the "
+                        "total.  Exactly one cell does this -- PATH_VQA_open, where the 7B-only arm is "
+                        f"{-percell['PATH_VQA_open']['gap']:+.6f} AHEAD of always-32B-direct -- and "
+                        f"{-percell['PATH_VQA_open']['gap']:.6f}/8 = "
+                        f"{-percell['PATH_VQA_open']['gap'] / 8:.6f} is the entire discrepancy."),
+                "how_to_read_it": ("the decomposition partitions the POSITIVE-PART gap (the sum of the "
+                                   "deficits on the cells that have one).  That is the right object for "
+                                   "'what would we have to fix', because a surplus on one cell cannot be "
+                                   "spent to repair a deficit on another under macro averaging."),
+            },
             "uncapped_headroom_for_reference": {
                 "SELECTION": round(float(np.mean([percell[c]["headroom_from_better_SELECTION_over_the_current_pool"] for c in CELLS])), 6),
                 "COVERAGE": round(float(np.mean([percell[c]["headroom_from_better_COVERAGE_up_to_the_iid_ceiling"] for c in CELLS])), 6)},
@@ -585,6 +777,31 @@ def main():
     CARD = 80.0
     lod = json.load(open(os.path.join(PARTS, "load_on_demand.json")))
 
+    # regime-A accuracy, taken from the COMPUTED PART1 result -- never hard-coded
+    A_acc = out["PART1_7B_only_frontier"]["honest_crossfit"]["macro_seed_mean"]
+    A_d = out["PART1_7B_only_frontier"]["honest_crossfit"]["vs_always_32b_direct"]
+
+    # ---- quantised strong leg: VRAM measured 2026-08-12 by the sibling SHRINK attack ----
+    def _shrink(tag):
+        p = os.path.join(ART, "_shrink_parts", f"vram_{tag}.json")
+        return json.load(open(p)) if os.path.exists(p) else None
+
+    q = {t: _shrink(t) for t in ("bf16", "nf4", "int8", "bf16_7b")}
+    MIB = 1024.0
+
+    def _acc_measured(tag):
+        p = os.path.join(ART, "_shrink_parts", f"acc_{tag}.json")
+        if not os.path.exists(p):
+            return "not measured -- no artifact on disk"
+        d = json.load(open(p))
+        if not d.get("results"):
+            return ("NOT MEASURED -- the run CRASHED before writing any cell.  logs/"
+                    "shrink_quant_acc_2026-08-12.log ends in MedEvalKit utils.py:190 "
+                    "judge_open_end_vqa -> rouge() ValueError('Hypothesis is empty.'), i.e. the "
+                    "quantised model emitted an empty string on an open-text item and the vendor "
+                    "judge raised instead of scoring it.  The results dict is {}.")
+        return d["results"]
+
     out["PART4_the_VRAM_cliff_and_load_on_demand"] = {
         "why_this_is_the_decisive_section": (
             "the user's goal is 'match the 32B with LESS VRAM than the 32B'.  Accuracy and compute are "
@@ -693,15 +910,153 @@ def main():
                     "17.3% of items -- not 5% -- so the 32B is not a rare guest but a co-equal tier, and "
                     "load-on-demand is not even a candidate.  The honest options are: (i) accept regime A "
                     "and its measured accuracy shortfall, or (ii) accept a two-card deployment."),
+                "INDEPENDENT_CORROBORATION_2026-08-12": {
+                    "what": ("the sibling SHRINK attack timed a real HuggingFace from_pretrained load of "
+                             "the SAME 32B checkpoint on a GPU, which is a second instrument on the same "
+                             "quantity as the composed swap-in estimate above."),
+                    "source": "results/cascade_methods/artifacts/_shrink_parts/vram_bf16.json:load_seconds",
+                    "hf_from_pretrained_load_s_32b_bf16": q["bf16"]["load_seconds"] if q["bf16"] else None,
+                    "hf_from_pretrained_load_s_7b_bf16": q["bf16_7b"]["load_seconds"] if q["bf16_7b"] else None,
+                    "composed_cold_swap_in_s_this_artifact": lod["composed_swap_in"]["total_cold_swap_in_s"],
+                    "reading": (
+                        f"{q['bf16']['load_seconds']:.0f} s measured end-to-end (weights already in page "
+                        f"cache from the probe's own earlier passes) against this artifact's "
+                        f"{lod['composed_swap_in']['total_cold_swap_in_s']:.0f} s cold / "
+                        f"{lod['composed_swap_in']['total_warm_swap_in_s_page_cache_hot']:.0f} s warm "
+                        "composed estimate.  The two instruments BRACKET the truth rather than agreeing: "
+                        f"{q['bf16']['load_seconds']:.0f} s sits between them, which is what a partially "
+                        "warm cache should give.  THE VERDICT IS UNCHANGED AND IS NOW ROBUST TO THE "
+                        f"INSTRUMENT: even the most favourable measured load, {q['bf16']['load_seconds']:.0f} "
+                        "s, is ~74x a single 32B forward pass (1.88 s mean).  A policy that escalates even "
+                        "1% of queries would pay this on every cold escalation."),
+                    "AMORTISED_COST_PER_QUERY": _amortise(
+                        lod, q["bf16"]["load_seconds"] if q["bf16"] else None),
+                    "measurement_note": ("the same probe read the 32B's post-load allocation as "
+                                         f"{q['bf16']['vram_mib']['torch_alloc_after_load'] / MIB:.4f} GiB, "
+                                         f"against vram_testtime's {w32} GiB -- a THIRD independent "
+                                         "instrument on the 32B weight footprint, agreeing to "
+                                         f"{abs(q['bf16']['vram_mib']['torch_alloc_after_load'] / MIB - w32):.4f} GiB."),
+                },
             },
         },
+        "quantised_strong_leg_UPDATE_2026-08-12": {
+            "why_this_is_here": (
+                "this artifact's original conclusion was 'ANY escalation, however rare, changes the "
+                "hardware class'.  That is a statement about a bf16 strong leg.  Between that run and this "
+                "one the sibling SHRINK attack MEASURED the VRAM of a 4-bit and an 8-bit 32B, which is the "
+                "one lever that could put a strong leg back on a single card.  The claim is therefore "
+                "NARROWED here, and the narrowing is stated rather than buried."),
+            "source": "results/cascade_methods/artifacts/_shrink_parts/vram_{bf16,nf4,int8}.json "
+                      "(MEASURED: torch allocator, 25 synthetic 320x320 images, batch 1, greedy, warmup excluded)",
+            "measured_resident_gib": {
+                t: (round(q[t]["vram_mib"]["torch_peak_alloc_during_gen"] / MIB, 4) if q[t] else None)
+                for t in ("bf16", "nf4", "int8")},
+            "measured_latency_ms_batch1_mean": {
+                t: (q[t]["latency_ms_batch1"]["mean"] if q[t] else None) for t in ("bf16", "nf4", "int8")},
+            "co_residency_with_the_7B_cheap_leg": {
+                "note": ("uses this artifact's vram_testtime 7B weight figure (15.4937 GiB), NOT the "
+                         "SHRINK probe's 7B reading of "
+                         f"{q['bf16_7b']['vram_mib']['torch_peak_alloc_during_gen'] / MIB:.2f} GiB, which "
+                         "that artifact itself flags as an unexplained ~2x inflation "
+                         "(bf16_resident_anomaly, status OPEN).  The 32B bf16 reading in the SAME probe "
+                         "agrees with vram_testtime to 0.006 GiB, so the anomaly is confined to its 7B row."),
+                "sum_7b_plus_strong_leg_weights_gib": {
+                    t: (round(w7 + q[t]["vram_mib"]["torch_peak_alloc_during_gen"] / MIB, 4) if q[t] else None)
+                    for t in ("bf16", "nf4", "int8")},
+                "WEIGHTS_ONLY_IS_THE_WRONG_TEST": (
+                    "a weights-only comparison says bf16 'fits' (77.90 < 80.0) and that is exactly the "
+                    "error this artifact exists to prevent.  The deployed peak is weights + the 32B's "
+                    f"MEASURED peak activations ({act32:.4f} GiB on its worst item) + the CUDA context "
+                    f"({ctx} GiB).  Both columns are given; only the second one is a deployability test."),
+                "realistic_peak_gib_weights_plus_32b_activations_plus_context": {
+                    t: (round(w7 + q[t]["vram_mib"]["torch_peak_alloc_during_gen"] / MIB + act32 + ctx, 4)
+                        if q[t] else None) for t in ("bf16", "nf4", "int8")},
+                "FITS_ON_ONE_80_GIB_CARD": {
+                    t: (bool(w7 + q[t]["vram_mib"]["torch_peak_alloc_during_gen"] / MIB + act32 + ctx < CARD)
+                        if q[t] else None) for t in ("bf16", "nf4", "int8")},
+                "activation_caveat": (
+                    f"the {act32:.4f} GiB activation term is the bf16 32B's, measured on MedXpert MM-1561 "
+                    "(46,816 vision tokens).  Applying it unchanged to the quantised rows is CONSERVATIVE "
+                    "for weights but NOT necessarily right for activations: bitsandbytes dequantises to "
+                    "bf16 for compute, so activation memory should be similar, but it was not measured at "
+                    "4-bit (the probe used one 320x320 image, ~121 vision tokens, which exercises almost "
+                    "no activation memory).  Treat the quantised peak as INFERRED, not measured."),
+            },
+            "accuracy_of_the_quantised_strong_leg": _acc_measured("nf4"),
+            "VERDICT": (
+                "THE VRAM CLIFF IS REAL AT bf16 AND ONLY AT bf16.  A 4-bit 32B is measured at "
+                f"{q['nf4']['vram_mib']['torch_peak_alloc_during_gen'] / MIB:.2f} GiB resident, so 7B + "
+                f"NF4-32B = {w7 + q['nf4']['vram_mib']['torch_peak_alloc_during_gen'] / MIB:.2f} GiB of "
+                "weights, which fits on ONE 80 GB card with room to spare -- and even on a 48 GB card.  "
+                "THIS IS NOT YET AN OPERATING POINT, because the quantised model's ACCURACY IS NOT "
+                "MEASURED: the accuracy run crashed with an empty results dict (see "
+                "accuracy_of_the_quantised_strong_leg).  Quoting the 4-bit VRAM as if it were a working "
+                "cascade tier would be exactly the estimate-relabelled-as-measurement failure CRITICAL "
+                "RULE 7 forbids.  What is honestly established: (i) at bf16 the cliff stands and any "
+                "escalation forces a second card; (ii) 4-bit removes the VRAM obstacle and costs "
+                f"{q['nf4']['latency_ms_batch1']['mean'] / q['bf16']['latency_ms_batch1']['mean']:.2f}x "
+                "latency per strong-leg call (measured); (iii) whether it keeps the 32B's accuracy -- the "
+                "entire reason to escalate -- is OPEN and is the single highest-value follow-up this "
+                "round produced.  int8 is measured SLOWER than bf16 by "
+                f"{q['int8']['latency_ms_batch1']['mean'] / q['bf16']['latency_ms_batch1']['mean']:.1f}x "
+                "and is not a candidate."),
+        },
+        "reconciliation_with_ATTACK4": {
+            "why": ("two artifacts of the SAME round report a 'best zero-32B macro' and they differ.  "
+                    "Naming which is which prevents the repo's documented failure mode -- a correction "
+                    "made in a new file and never propagated."),
+            "this_artifact": {
+                "value": A_acc,
+                "menu": "greedy_7b, bo1..bo8 incumbent verifier, AND bo8 frozen 8-seed ens8 selector",
+                "arm_chosen_on_all_three_open_cells": "bo8_frozen_ens8_selector",
+                "selector_sel_eff": 0.810627,
+            },
+            "attack4_min_escalation": {
+                "value": 0.60532,
+                "source": "results/cascade_methods/artifacts/min_escalation_2026-08-12.json:PART2_zero_32b.macro_best_no32b",
+                "menu": "greedy_7b and incumbent-verifier best-of-k with cross-fit k only",
+                "selector_sel_eff": 0.775204,
+            },
+            "difference": round(A_acc - 0.60532, 6),
+            "which_to_quote": (
+                "quote THIS artifact's value for 'the best a 7B-only pipeline can do', because its menu is "
+                "a strict superset and the extra arm is a frozen, deployable, already-measured artifact.  "
+                "Quote ATTACK 4's value when the question is specifically about the INCUMBENT deployed "
+                "verifier.  BOTH lose to always-32B-direct significantly, so the qualitative verdict is "
+                "identical either way and no conclusion in either artifact turns on the difference."),
+            "cost_hazard": (
+                "this artifact's cost_SIMPLE_CONVENTION row at escalation 0 reads 0.2188x always-32B-direct "
+                "and DELIBERATELY does not charge the 8 open-cell generations (it says so inline).  ATTACK "
+                "4 does charge them and gets 1.3403x.  The zero-32B arm is CHEAP IN VRAM AND EXPENSIVE IN "
+                "FLOPs -- 8 x 7B forward passes exceed one 32B pass.  Never pair the 0.2188x with the "
+                "best-of-8 accuracy; that pairing would overstate the arm on both axes at once."),
+        },
         "consequence_for_the_users_goal": (
-            "'less VRAM than the 32B' is achievable ONLY in regime A -- 18.76 GiB measured, 3.9x smaller "
-            "than always-32B-direct's 72.60 GiB, on a 24 GB card instead of an 80 GB card.  But regime A's "
-            "measured accuracy is 0.6030 macro against the 32B's 0.6567, a SIGNIFICANT shortfall of "
-            "-0.0528 [-0.0646, -0.0408].  Every policy that recovers that accuracy is in regime B, where "
-            "the footprint is not 'less than the 32B' -- it is the 32B PLUS the 7B, on more hardware than "
-            "always-32B-direct needs.  There is no measured operating point in between."),
+            f"'less VRAM than the 32B' is achievable ONLY in regime A -- {f_open:.2f} GiB measured, "
+            f"{f32 / f_open:.1f}x smaller than always-32B-direct's {f32:.2f} GiB, on a 24 GB card instead "
+            f"of an 80 GB card.  But regime A's best measured accuracy is {A_acc:.6f} macro against the "
+            f"32B's {macro_direct:.6f}, a SIGNIFICANT shortfall of {A_d['delta']:+.4f} "
+            f"[{A_d['lo']:+.4f}, {A_d['hi']:+.4f}].  Every policy that recovers that accuracy is in regime "
+            "B, where the footprint is not 'less than the 32B' -- it is the 32B PLUS the 7B, on more "
+            "hardware than always-32B-direct needs.  There is no measured operating point in between "
+            "AT bf16.  The one lever that could create one is a QUANTISED strong leg, whose VRAM is now "
+            "measured and whose accuracy is NOT -- see quantised_strong_leg_UPDATE_2026-08-12."),
+        "CORRECTION_2026-08-12": {
+            "what": ("an earlier build of this artifact carried a HARD-CODED consequence sentence quoting "
+                     "'0.6030 macro' and '-0.0528 [-0.0646, -0.0408]' for regime A, while the computed "
+                     "value in the SAME block (the_two_deployment_REGIMES.A.best_macro_accuracy_ATTAINABLE) "
+                     "was 0.616278 / -0.040395 [-0.052275, -0.028427].  The sentence is now an f-string "
+                     "over the computed variables and cannot drift again."),
+            "why_the_two_numbers_differ": (
+                "0.6030 was never produced by this script; 0.60532 IS the sibling ATTACK 4 value "
+                "(min_escalation_2026-08-12.json PART2_zero_32b.macro_best_no32b), which searched a "
+                "STRICTLY SMALLER arm menu -- incumbent-verifier best-of-k only.  This script's menu also "
+                "contains the FROZEN 8-seed ens8 selector (ckpts/train/genframe_head_ens8, measured "
+                "sel_eff 0.810627 vs the incumbent's 0.775204), which is a real deployable artifact, and "
+                "the cross-fit picks it on all three open cells.  Both numbers are correct for their own "
+                "menu; the larger menu gives the honest answer to 'best achievable with no 32B'."),
+            "reconciliation": "see reconciliation_with_ATTACK4 below",
+        },
     }
 
     json.dump(out, open(os.path.join(PARTS, "core.json"), "w"), indent=2, default=str)

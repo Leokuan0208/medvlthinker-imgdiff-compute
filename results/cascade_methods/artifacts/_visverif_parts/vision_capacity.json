@@ -1,0 +1,104 @@
+{
+ "what": "ATTACK 1(c) BY ABLATION: how much of the deployed clean verifier's selection comes from the 15.17% of its LoRA capacity that lands on the vision tower?",
+ "date": "2026-08-12",
+ "code": [
+  "src/training_methods/verifier_vision_capacity_ablation.py",
+  "src/training_methods/vision_capacity_summarise.py"
+ ],
+ "adapter": "ckpts/train/lora_verifier_disjoint",
+ "adapter_composition": {
+  "total_lora_params": 47589376,
+  "vision_tower_params": 7219200,
+  "vision_fraction": 0.1517,
+  "vision_tensors": 192,
+  "adapted_modules": 292,
+  "STRUCTURAL_FACT": "all 192 vision tensors are visual.blocks.*.mlp.{down,gate,up}_proj. The ViT's ATTENTION carries NO adapter capacity at all, because Qwen2.5-VL names it attn.qkv / attn.proj and the recipe's target_modules are q_proj/k_proj/v_proj/o_proj. So the 'incidental 15.2% on vision' is feed-forward only, and the spatial-mixing part of the vision tower -- what a laterality question would need -- was never adaptable under this recipe."
+ },
+ "arms": {
+  "full": "adapter untouched (fidelity gate + reference)",
+  "no_visual_lora": "lora_B zeroed on all 96 visual.* modules",
+  "visual_only": "lora_B zeroed on all 196 language_model.* modules"
+ },
+ "metric": "mixed_selection_accuracy -- see module docstring. NOT comparable to sel_eff 0.775204; it is computed on mixed items only, on a capped subsample.",
+ "item_selection": "mixed items only (pool has both a correct and an incorrect candidate; n=852 of 2345), capped per dataset by a fixed shuffle (seed 20260812)",
+ "fidelity_gate": {
+  "n_candidate_scores_compared": 2192,
+  "mean_abs_deviation": 2.6496350364973448e-06,
+  "max_abs_deviation": 5.000000000032756e-06,
+  "frac_within_0.01": 1.0,
+  "verdict": "PASS",
+  "what": "re-scoring with lora_B untouched must reproduce the stored transfer dump; any deviation in the ablated arms is then the ablation, not the harness"
+ },
+ "results": {
+  "full": {
+   "n": 88,
+   "mixed_selection_accuracy": 0.5909090909090909,
+   "per_ds": {
+    "slake_open": {
+     "n": 88,
+     "acc": 0.5909090909090909
+    }
+   },
+   "n_scored_total": 274
+  },
+  "no_visual_lora": {
+   "n": 88,
+   "mixed_selection_accuracy": 0.6022727272727273,
+   "per_ds": {
+    "slake_open": {
+     "n": 88,
+     "acc": 0.6022727272727273
+    }
+   },
+   "n_scored_total": 253
+  },
+  "visual_only": {
+   "n": 88,
+   "mixed_selection_accuracy": 0.5113636363636364,
+   "per_ds": {
+    "slake_open": {
+     "n": 88,
+     "acc": 0.5113636363636364
+    }
+   },
+   "n_scored_total": 88
+  },
+  "incumbent_stored_dump": {
+   "n": 88,
+   "mixed_selection_accuracy": 0.5909090909090909
+  }
+ },
+ "comparisons": {
+  "no_visual_lora_minus_full": {
+   "delta": 0.015810276679841917,
+   "ci95": [
+    -0.01976284584980237,
+    0.05533596837944654
+   ],
+   "n_paired_items": 253,
+   "arm_accuracy": 0.6086956521739131,
+   "full_accuracy": 0.5928853754940712,
+   "incumbent_dump_on_same_items": 0.5928853754940712,
+   "per_ds_n": {
+    "pathvqa_open": 90,
+    "slake_open": 90,
+    "vqa_rad_open": 73
+   }
+  },
+  "visual_only_minus_full": {
+   "delta": -0.07954545454545459,
+   "ci95": [
+    -0.19318181818181818,
+    0.03409090909090906
+   ],
+   "n_paired_items": 88,
+   "arm_accuracy": 0.5113636363636364,
+   "full_accuracy": 0.5909090909090909,
+   "incumbent_dump_on_same_items": 0.5909090909090909,
+   "per_ds_n": {
+    "slake_open": 88
+   }
+  }
+ },
+ "n_common_items": 88
+}

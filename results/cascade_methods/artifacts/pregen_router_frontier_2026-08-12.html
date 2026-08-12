@@ -1,0 +1,1498 @@
+<title>Pre-Generation Router Frontier</title>
+<style>
+:root {
+  --surface-0:#f6f5f2; --surface-1:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --ink-muted:#84837d;
+  --grid:#e6e5e1; --band:#f0efec; --rule:#dedcd7;
+  --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+  --good:#0ca30c; --crit:#d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0:#111110; --surface-1:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --ink-muted:#8f8e86;
+    --grid:#2e2e2b; --band:#232320; --rule:#33332f;
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-0:#111110; --surface-1:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --ink-muted:#8f8e86;
+  --grid:#2e2e2b; --band:#232320; --rule:#33332f;
+  --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+}
+* { box-sizing:border-box; }
+:root {
+  --sans:"Optima","Palatino Sans",Avenir,"Segoe UI",system-ui,ui-sans-serif,sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+}
+body { background:var(--surface-0); color:var(--ink); margin:0;
+  font:15.5px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+.wrap { max-width:940px; margin:0 auto; padding:44px 20px 76px; display:flex;
+  flex-direction:column; gap:4px; }
+h1 { font-size:30px; line-height:1.18; margin:0; letter-spacing:-.018em; text-wrap:balance;
+  font-weight:600; }
+.sub { color:var(--ink-2); margin:6px 0 26px; max-width:64ch; }
+h2 { font-family:var(--mono); font-size:12px; margin:38px 0 10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-2); font-weight:600; }
+.dim { color:var(--ink-muted); font-size:12px; margin-top:2px; }
+.card { background:var(--surface-1); border:1px solid var(--rule); border-radius:12px;
+  padding:18px; margin:16px 0; }
+svg { display:block; width:100%; height:auto; }
+.grid { stroke:var(--grid); stroke-width:1; }
+.bar { stroke:var(--ink-muted); stroke-width:1.5; stroke-dasharray:3 4; }
+.tick { fill:var(--ink-muted); font-size:11px; }
+.axlab { fill:var(--ink-2); font-size:12px; }
+.reflab { fill:var(--ink-2); font-size:11px; font-weight:600; }
+.bandlab { fill:var(--ink-muted); font-size:11px; }
+.legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:12px; }
+.lg { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2); }
+.lg i { width:14px; height:3px; border-radius:2px; display:inline-block; }
+.scroll { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:13px; min-width:660px; }
+th,td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--rule); }
+th { font-family:var(--mono); color:var(--ink-2); font-weight:600; font-size:10.5px;
+  text-transform:uppercase; letter-spacing:.07em; }
+td.n { text-align:right; font-family:var(--mono); font-size:12px;
+  font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ci { color:var(--ink-muted); }
+.ok { color:var(--good); font-weight:700; font-size:12px; }
+.no { color:var(--crit); font-weight:700; font-size:12px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+.kpi { background:var(--surface-1); border:1px solid var(--rule); border-radius:10px; padding:15px 16px; }
+.kpi.lead { border-color:var(--series-1); box-shadow:inset 3px 0 0 var(--series-1); }
+.kpi .v { font-family:var(--mono); font-size:26px; font-weight:600; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums; }
+.kpi .k { font-family:var(--mono); font-size:10.5px; color:var(--ink-2); text-transform:uppercase;
+  letter-spacing:.07em; }
+.kpi .d { font-size:12.5px; color:var(--ink-muted); margin-top:4px; line-height:1.45; }
+.warn { border-left:3px solid var(--crit); padding-left:14px; }
+code { font-size:12px; background:var(--band); padding:1px 5px; border-radius:4px; }
+p { margin:10px 0; }
+</style>
+
+<div class="wrap">
+<h1>The pre-generation router: the frontier</h1>
+<p class="sub">Decide from the prompt and the image <em>alone</em> which single model answers, and pay
+only that one. Minimise macro FLOP-eq subject to macro accuracy staying non-inferior to
+always-32B-direct (paired-bootstrap CI lower bound &ge; &minus;0.0029).</p>
+
+<div class="kpis">
+  <div class="kpi lead"><div class="k">Best honest operating point</div>
+    <div class="v">0.833x</div>
+    <div class="d">hybrid, nested CV &middot; +0.0045
+      [+0.0004, +0.0088] &mdash; cheaper <b>and</b> significantly
+      more accurate</div></div>
+  <div class="kpi"><div class="k">Zero-information bar</div>
+    <div class="v">1.0x</div>
+    <div class="d">a <b>pure-noise</b> router cannot get below the bar at all, so every
+      saving here is earned</div></div>
+  <div class="kpi"><div class="k">Within-cell skill</div>
+    <div class="v">4/4</div>
+    <div class="d">matched costs where the router beats its own permutation null</div></div>
+  <div class="kpi"><div class="k">Prompt-only, honestly selected</div>
+    <div class="v">0/10</div>
+    <div class="d">seeds meeting the constraint at
+      0.731x &mdash; the honest selector overshoots on cost</div></div>
+</div>
+
+<h2>Compute against macro accuracy</h2>
+<div class="card">
+<svg viewBox="0 0 860 560" role="img" aria-label="Compute-accuracy frontier for pre-generation
+routers against always-32B-direct"><rect x="74.0" y="24" width="380.0" height="474" fill="var(--band)"/>
+<text x="446.0" y="38" text-anchor="end" class="bandlab">cheaper than the bar</text>
+<line x1="74" y1="498.0" x2="834" y2="498.0" class="grid"/>
+<text x="64" y="502.0" text-anchor="end" class="tick">0.585</text>
+<line x1="74" y1="419.0" x2="834" y2="419.0" class="grid"/>
+<text x="64" y="423.0" text-anchor="end" class="tick">0.600</text>
+<line x1="74" y1="340.0" x2="834" y2="340.0" class="grid"/>
+<text x="64" y="344.0" text-anchor="end" class="tick">0.615</text>
+<line x1="74" y1="261.0" x2="834" y2="261.0" class="grid"/>
+<text x="64" y="265.0" text-anchor="end" class="tick">0.630</text>
+<line x1="74" y1="182.0" x2="834" y2="182.0" class="grid"/>
+<text x="64" y="186.0" text-anchor="end" class="tick">0.645</text>
+<line x1="74" y1="103.0" x2="834" y2="103.0" class="grid"/>
+<text x="64" y="107.0" text-anchor="end" class="tick">0.660</text>
+<line x1="74" y1="24.0" x2="834" y2="24.0" class="grid"/>
+<text x="64" y="28.0" text-anchor="end" class="tick">0.675</text>
+<line x1="118.7" y1="24" x2="118.7" y2="498" class="grid"/>
+<text x="118.7" y="518" text-anchor="middle" class="tick">0.25x</text>
+<line x1="230.5" y1="24" x2="230.5" y2="498" class="grid"/>
+<text x="230.5" y="518" text-anchor="middle" class="tick">0.5x</text>
+<line x1="342.2" y1="24" x2="342.2" y2="498" class="grid"/>
+<text x="342.2" y="518" text-anchor="middle" class="tick">0.75x</text>
+<line x1="454.0" y1="24" x2="454.0" y2="498" class="grid"/>
+<text x="454.0" y="518" text-anchor="middle" class="tick">1x</text>
+<line x1="565.8" y1="24" x2="565.8" y2="498" class="grid"/>
+<text x="565.8" y="518" text-anchor="middle" class="tick">1.25x</text>
+<line x1="677.5" y1="24" x2="677.5" y2="498" class="grid"/>
+<text x="677.5" y="518" text-anchor="middle" class="tick">1.5x</text>
+<line x1="789.3" y1="24" x2="789.3" y2="498" class="grid"/>
+<text x="789.3" y="518" text-anchor="middle" class="tick">1.75x</text>
+<line x1="454.0" y1="24" x2="454.0" y2="498" class="bar"/>
+<line x1="74" y1="120.5" x2="834" y2="120.5" class="bar"/>
+<polyline points="104.8,434.3 104.8,434.3 110.4,399.6 116.4,377.6 122.2,374.3 128.0,369.1 133.9,358.7 139.7,355.8 145.5,346.0 151.3,337.3 157.2,331.8 163.0,321.8 168.8,301.9 174.6,296.7 180.4,288.7 186.3,276.6 192.0,265.2 197.9,260.6 203.7,250.5 209.5,248.3 215.3,243.1 221.2,238.6 227.0,231.2 232.7,230.8 238.6,224.6 244.4,218.6 250.3,210.3 256.0,212.1 261.8,204.3 267.7,196.7 273.5,193.1 279.2,183.2 285.1,172.5 290.9,162.9 296.8,156.0 302.7,156.5 308.4,153.3 314.3,147.0 320.1,138.0 326.0,132.0 331.8,123.8 337.6,122.3 343.4,119.0 349.2,119.5 355.1,114.9 360.9,111.4 366.6,110.2 372.5,111.1 378.3,109.0 384.2,107.6 390.0,108.5 395.8,111.3 401.6,106.6 407.4,106.4 413.2,103.2 419.1,98.7 424.9,98.9 430.7,95.2 436.5,106.4 442.3,111.8 448.1,107.3 453.8,120.5 454.0,120.5" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="110.4" cy="399.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2315x  ·  macro acc 0.6037
+delta vs 32B-direct -0.0530 [-0.0642, -0.0420]
+32B fraction 0.0163  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0056</title></circle>
+<circle cx="116.4" cy="377.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2448x  ·  macro acc 0.6079
+delta vs 32B-direct -0.0488 [-0.0596, -0.0381]
+32B fraction 0.0332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0088</title></circle>
+<circle cx="122.2" cy="374.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2578x  ·  macro acc 0.6085
+delta vs 32B-direct -0.0482 [-0.0589, -0.0377]
+32B fraction 0.0499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0084</title></circle>
+<circle cx="128.0" cy="369.1" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2708x  ·  macro acc 0.6095
+delta vs 32B-direct -0.0472 [-0.0576, -0.0369]
+32B fraction 0.0666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0084</title></circle>
+<circle cx="133.9" cy="358.7" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2839x  ·  macro acc 0.6114
+delta vs 32B-direct -0.0452 [-0.0556, -0.0350]
+32B fraction 0.0833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0094</title></circle>
+<circle cx="139.7" cy="355.8" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.2969x  ·  macro acc 0.6120
+delta vs 32B-direct -0.0447 [-0.0551, -0.0344]
+32B fraction 0.0999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0090</title></circle>
+<circle cx="145.5" cy="346.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.3099x  ·  macro acc 0.6139
+delta vs 32B-direct -0.0428 [-0.0529, -0.0328]
+32B fraction 0.1167  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0098</title></circle>
+<circle cx="151.3" cy="337.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.3229x  ·  macro acc 0.6155
+delta vs 32B-direct -0.0412 [-0.0512, -0.0311]
+32B fraction 0.1332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0105</title></circle>
+<circle cx="157.2" cy="331.8" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.336x  ·  macro acc 0.6166
+delta vs 32B-direct -0.0401 [-0.0500, -0.0304]
+32B fraction 0.15  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0105</title></circle>
+<circle cx="163.0" cy="321.8" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.349x  ·  macro acc 0.6185
+delta vs 32B-direct -0.0382 [-0.0478, -0.0284]
+32B fraction 0.1666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0114</title></circle>
+<circle cx="168.8" cy="301.9" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.362x  ·  macro acc 0.6222
+delta vs 32B-direct -0.0344 [-0.0438, -0.0251]
+32B fraction 0.1833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0142</title></circle>
+<circle cx="174.6" cy="296.7" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.375x  ·  macro acc 0.6232
+delta vs 32B-direct -0.0334 [-0.0427, -0.0244]
+32B fraction 0.1999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0142</title></circle>
+<circle cx="180.4" cy="288.7" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.388x  ·  macro acc 0.6247
+delta vs 32B-direct -0.0319 [-0.0409, -0.0230]
+32B fraction 0.2166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0147</title></circle>
+<circle cx="186.3" cy="276.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4011x  ·  macro acc 0.6270
+delta vs 32B-direct -0.0296 [-0.0385, -0.0207]
+32B fraction 0.2333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0161</title></circle>
+<circle cx="192.0" cy="265.2" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.414x  ·  macro acc 0.6292
+delta vs 32B-direct -0.0275 [-0.0361, -0.0188]
+32B fraction 0.2499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0172</title></circle>
+<circle cx="197.9" cy="260.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4271x  ·  macro acc 0.6301
+delta vs 32B-direct -0.0266 [-0.0350, -0.0181]
+32B fraction 0.2666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0171</title></circle>
+<circle cx="203.7" cy="250.5" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4401x  ·  macro acc 0.6320
+delta vs 32B-direct -0.0247 [-0.0330, -0.0163]
+32B fraction 0.2832  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0180</title></circle>
+<circle cx="209.5" cy="248.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4532x  ·  macro acc 0.6324
+delta vs 32B-direct -0.0243 [-0.0325, -0.0159]
+32B fraction 0.3  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0175</title></circle>
+<circle cx="215.3" cy="243.1" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4661x  ·  macro acc 0.6334
+delta vs 32B-direct -0.0233 [-0.0315, -0.0150]
+32B fraction 0.3165  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0175</title></circle>
+<circle cx="221.2" cy="238.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4792x  ·  macro acc 0.6343
+delta vs 32B-direct -0.0224 [-0.0305, -0.0142]
+32B fraction 0.3333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0173</title></circle>
+<circle cx="227.0" cy="231.2" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.4922x  ·  macro acc 0.6357
+delta vs 32B-direct -0.0210 [-0.0290, -0.0130]
+32B fraction 0.35  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0177</title></circle>
+<circle cx="232.7" cy="230.8" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.505x  ·  macro acc 0.6357
+delta vs 32B-direct -0.0209 [-0.0290, -0.0129]
+32B fraction 0.3663  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0168</title></circle>
+<circle cx="238.6" cy="224.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5182x  ·  macro acc 0.6369
+delta vs 32B-direct -0.0198 [-0.0277, -0.0118]
+32B fraction 0.3833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0170</title></circle>
+<circle cx="244.4" cy="218.6" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5312x  ·  macro acc 0.6381
+delta vs 32B-direct -0.0186 [-0.0264, -0.0108]
+32B fraction 0.3999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0171</title></circle>
+<circle cx="250.3" cy="210.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5443x  ·  macro acc 0.6396
+delta vs 32B-direct -0.0170 [-0.0248, -0.0093]
+32B fraction 0.4166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0177</title></circle>
+<circle cx="256.0" cy="212.1" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5572x  ·  macro acc 0.6393
+delta vs 32B-direct -0.0174 [-0.0250, -0.0098]
+32B fraction 0.4332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0164</title></circle>
+<circle cx="261.8" cy="204.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5701x  ·  macro acc 0.6408
+delta vs 32B-direct -0.0159 [-0.0233, -0.0085]
+32B fraction 0.4497  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0169</title></circle>
+<circle cx="267.7" cy="196.7" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5833x  ·  macro acc 0.6422
+delta vs 32B-direct -0.0145 [-0.0218, -0.0071]
+32B fraction 0.4666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0173</title></circle>
+<circle cx="273.5" cy="193.1" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.5963x  ·  macro acc 0.6429
+delta vs 32B-direct -0.0138 [-0.0211, -0.0064]
+32B fraction 0.4832  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0170</title></circle>
+<circle cx="279.2" cy="183.2" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.609x  ·  macro acc 0.6448
+delta vs 32B-direct -0.0119 [-0.0190, -0.0047]
+32B fraction 0.4995  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0179</title></circle>
+<circle cx="285.1" cy="172.5" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6223x  ·  macro acc 0.6468
+delta vs 32B-direct -0.0099 [-0.0168, -0.0030]
+32B fraction 0.5166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0189</title></circle>
+<circle cx="290.9" cy="162.9" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6351x  ·  macro acc 0.6486
+delta vs 32B-direct -0.0081 [-0.0147, -0.0013]
+32B fraction 0.5329  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0198</title></circle>
+<circle cx="296.8" cy="156.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6484x  ·  macro acc 0.6499
+delta vs 32B-direct -0.0067 [-0.0133, -0.0001]
+32B fraction 0.5499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0201</title></circle>
+<circle cx="302.7" cy="156.5" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6615x  ·  macro acc 0.6498
+delta vs 32B-direct -0.0068 [-0.0133, -0.0003]
+32B fraction 0.5667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0190</title></circle>
+<circle cx="308.4" cy="153.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6744x  ·  macro acc 0.6505
+delta vs 32B-direct -0.0062 [-0.0127, +0.0003]
+32B fraction 0.5832  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0186</title></circle>
+<circle cx="314.3" cy="147.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.6875x  ·  macro acc 0.6516
+delta vs 32B-direct -0.0050 [-0.0114, +0.0014]
+32B fraction 0.6  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0188</title></circle>
+<circle cx="320.1" cy="138.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7005x  ·  macro acc 0.6534
+delta vs 32B-direct -0.0033 [-0.0095, +0.0030]
+32B fraction 0.6165  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0195</title></circle>
+<circle cx="326.0" cy="132.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7136x  ·  macro acc 0.6545
+delta vs 32B-direct -0.0022 [-0.0083, +0.0039]
+32B fraction 0.6333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0197</title></circle>
+<circle cx="331.8" cy="123.8" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7266x  ·  macro acc 0.6560
+delta vs 32B-direct -0.0006 [-0.0066, +0.0054]
+32B fraction 0.65  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0202</title></circle>
+<circle cx="337.6" cy="122.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7396x  ·  macro acc 0.6563
+delta vs 32B-direct -0.0003 [-0.0060, +0.0054]
+32B fraction 0.6667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0195</title></circle>
+<circle cx="343.4" cy="119.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7526x  ·  macro acc 0.6570
+delta vs 32B-direct +0.0003 [-0.0054, +0.0060]
+32B fraction 0.6833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0192</title></circle>
+<circle cx="349.2" cy="119.5" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7656x  ·  macro acc 0.6569
+delta vs 32B-direct +0.0002 [-0.0054, +0.0058]
+32B fraction 0.7  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0181</title></circle>
+<circle cx="355.1" cy="114.9" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7787x  ·  macro acc 0.6577
+delta vs 32B-direct +0.0011 [-0.0045, +0.0066]
+32B fraction 0.7167  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0179</title></circle>
+<circle cx="360.9" cy="111.4" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.7917x  ·  macro acc 0.6584
+delta vs 32B-direct +0.0017 [-0.0037, +0.0071]
+32B fraction 0.7333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0176</title></circle>
+<circle cx="366.6" cy="110.2" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8046x  ·  macro acc 0.6586
+delta vs 32B-direct +0.0020 [-0.0034, +0.0073]
+32B fraction 0.7499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0169</title></circle>
+<circle cx="372.5" cy="111.1" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8177x  ·  macro acc 0.6585
+delta vs 32B-direct +0.0018 [-0.0036, +0.0071]
+32B fraction 0.7667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0157</title></circle>
+<circle cx="378.3" cy="109.0" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8307x  ·  macro acc 0.6589
+delta vs 32B-direct +0.0022 [-0.0032, +0.0074]
+32B fraction 0.7833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0151</title></circle>
+<circle cx="384.2" cy="107.6" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8438x  ·  macro acc 0.6591
+delta vs 32B-direct +0.0025 [-0.0028, +0.0077]
+32B fraction 0.8  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0144</title></circle>
+<circle cx="390.0" cy="108.5" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8568x  ·  macro acc 0.6590
+delta vs 32B-direct +0.0023 [-0.0029, +0.0075]
+32B fraction 0.8166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0132</title></circle>
+<circle cx="395.8" cy="111.3" r="3" fill="var(--surface-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8698x  ·  macro acc 0.6584
+delta vs 32B-direct +0.0018 [-0.0032, +0.0067]
+32B fraction 0.8333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0117</title></circle>
+<circle cx="401.6" cy="106.6" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8828x  ·  macro acc 0.6593
+delta vs 32B-direct +0.0026 [-0.0021, +0.0074]
+32B fraction 0.85  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0116</title></circle>
+<circle cx="407.4" cy="106.4" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.8958x  ·  macro acc 0.6593
+delta vs 32B-direct +0.0027 [-0.0021, +0.0075]
+32B fraction 0.8666  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0106</title></circle>
+<circle cx="413.2" cy="103.2" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9088x  ·  macro acc 0.6600
+delta vs 32B-direct +0.0033 [-0.0011, +0.0078]
+32B fraction 0.8833  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0102</title></circle>
+<circle cx="419.1" cy="98.7" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9219x  ·  macro acc 0.6608
+delta vs 32B-direct +0.0041 [-0.0002, +0.0085]
+32B fraction 0.9  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0101</title></circle>
+<circle cx="424.9" cy="98.9" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9349x  ·  macro acc 0.6608
+delta vs 32B-direct +0.0041 [-0.0001, +0.0082]
+32B fraction 0.9166  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0091</title></circle>
+<circle cx="430.7" cy="95.2" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9479x  ·  macro acc 0.6615
+delta vs 32B-direct +0.0048 [+0.0010, +0.0086]
+32B fraction 0.9332  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0088</title></circle>
+<circle cx="436.5" cy="106.4" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9608x  ·  macro acc 0.6594
+delta vs 32B-direct +0.0027 [-0.0007, +0.0061]
+32B fraction 0.9498  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0057</title></circle>
+<circle cx="442.3" cy="111.8" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9739x  ·  macro acc 0.6583
+delta vs 32B-direct +0.0017 [-0.0016, +0.0047]
+32B fraction 0.9666  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0037</title></circle>
+<circle cx="448.1" cy="107.3" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9867x  ·  macro acc 0.6592
+delta vs 32B-direct +0.0025 [+0.0002, +0.0049]
+32B fraction 0.983  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0035</title></circle>
+<circle cx="453.8" cy="120.5" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 0.9996x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 0.9995  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="454.0" cy="120.5" r="4.5" fill="var(--series-1)" stroke="var(--series-1)" stroke-width="2"><title>R-B pooled router (deployable, prompt-only)
+compute 1.0x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<polyline points="104.8,434.3 104.8,434.3 110.5,426.0 116.4,408.4 122.2,377.2 127.9,359.5 133.7,354.7 139.6,346.0 145.5,329.3 151.2,322.1 157.2,316.4 162.9,308.5 168.8,292.9 174.6,285.8 180.4,275.3 186.3,272.0 192.1,262.4 197.9,253.5 203.6,246.9 209.5,233.8 215.3,231.4 221.2,221.6 227.0,210.4 232.8,204.4 238.6,195.6 244.3,188.0 250.2,184.0 256.1,182.9 261.9,176.7 267.7,176.6 273.6,169.8 279.4,169.8 285.2,166.4 291.0,164.7 296.8,165.1 302.7,156.6 308.5,162.5 314.3,164.8 320.1,162.3 325.9,160.8 331.8,153.7 337.6,153.0 343.4,151.2 349.1,148.6 355.0,144.1 360.7,142.5 366.7,137.8 372.5,133.4 378.3,132.2 384.2,131.5 390.0,132.2 395.8,129.3 401.6,122.4 407.4,121.2 413.3,119.2 419.0,116.5 424.9,112.7 430.7,111.4 436.5,108.6 442.3,106.7 448.2,107.3 454.0,119.7 454.0,120.5" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="110.5" cy="426.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2317x  ·  macro acc 0.5987
+delta vs 32B-direct -0.0580 [-0.0695, -0.0467]
+32B fraction 0.0165  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0006</title></circle>
+<circle cx="116.4" cy="408.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2448x  ·  macro acc 0.6020
+delta vs 32B-direct -0.0547 [-0.0660, -0.0434]
+32B fraction 0.0333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0029</title></circle>
+<circle cx="122.2" cy="377.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2578x  ·  macro acc 0.6079
+delta vs 32B-direct -0.0487 [-0.0596, -0.0378]
+32B fraction 0.0499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0079</title></circle>
+<circle cx="127.9" cy="359.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2706x  ·  macro acc 0.6113
+delta vs 32B-direct -0.0454 [-0.0560, -0.0348]
+32B fraction 0.0663  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0103</title></circle>
+<circle cx="133.7" cy="354.7" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2835x  ·  macro acc 0.6122
+delta vs 32B-direct -0.0445 [-0.0549, -0.0340]
+32B fraction 0.0828  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0102</title></circle>
+<circle cx="139.6" cy="346.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.2968x  ·  macro acc 0.6139
+delta vs 32B-direct -0.0428 [-0.0533, -0.0325]
+32B fraction 0.0999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0108</title></circle>
+<circle cx="145.5" cy="329.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.3099x  ·  macro acc 0.6170
+delta vs 32B-direct -0.0396 [-0.0497, -0.0296]
+32B fraction 0.1166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0130</title></circle>
+<circle cx="151.2" cy="322.1" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.3227x  ·  macro acc 0.6184
+delta vs 32B-direct -0.0383 [-0.0481, -0.0285]
+32B fraction 0.1329  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0134</title></circle>
+<circle cx="157.2" cy="316.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.336x  ·  macro acc 0.6195
+delta vs 32B-direct -0.0372 [-0.0470, -0.0275]
+32B fraction 0.15  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0135</title></circle>
+<circle cx="162.9" cy="308.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.3488x  ·  macro acc 0.6210
+delta vs 32B-direct -0.0357 [-0.0455, -0.0261]
+32B fraction 0.1664  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0140</title></circle>
+<circle cx="168.8" cy="292.9" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.362x  ·  macro acc 0.6239
+delta vs 32B-direct -0.0327 [-0.0422, -0.0235]
+32B fraction 0.1833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0159</title></circle>
+<circle cx="174.6" cy="285.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.375x  ·  macro acc 0.6253
+delta vs 32B-direct -0.0314 [-0.0408, -0.0221]
+32B fraction 0.1999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0163</title></circle>
+<circle cx="180.4" cy="275.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.388x  ·  macro acc 0.6273
+delta vs 32B-direct -0.0294 [-0.0386, -0.0203]
+32B fraction 0.2166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0173</title></circle>
+<circle cx="186.3" cy="272.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4011x  ·  macro acc 0.6279
+delta vs 32B-direct -0.0288 [-0.0378, -0.0198]
+32B fraction 0.2333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0169</title></circle>
+<circle cx="192.1" cy="262.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4141x  ·  macro acc 0.6297
+delta vs 32B-direct -0.0269 [-0.0358, -0.0182]
+32B fraction 0.25  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0177</title></circle>
+<circle cx="197.9" cy="253.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4271x  ·  macro acc 0.6314
+delta vs 32B-direct -0.0252 [-0.0339, -0.0167]
+32B fraction 0.2667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0184</title></circle>
+<circle cx="203.6" cy="246.9" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4398x  ·  macro acc 0.6327
+delta vs 32B-direct -0.0240 [-0.0327, -0.0155]
+32B fraction 0.2828  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0187</title></circle>
+<circle cx="209.5" cy="233.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4531x  ·  macro acc 0.6352
+delta vs 32B-direct -0.0215 [-0.0300, -0.0131]
+32B fraction 0.2999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0202</title></circle>
+<circle cx="215.3" cy="231.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4661x  ·  macro acc 0.6356
+delta vs 32B-direct -0.0211 [-0.0295, -0.0130]
+32B fraction 0.3166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0197</title></circle>
+<circle cx="221.2" cy="221.6" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4792x  ·  macro acc 0.6375
+delta vs 32B-direct -0.0192 [-0.0274, -0.0111]
+32B fraction 0.3333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0205</title></circle>
+<circle cx="227.0" cy="210.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.4922x  ·  macro acc 0.6396
+delta vs 32B-direct -0.0171 [-0.0250, -0.0092]
+32B fraction 0.35  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0217</title></circle>
+<circle cx="232.8" cy="204.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5052x  ·  macro acc 0.6408
+delta vs 32B-direct -0.0159 [-0.0239, -0.0081]
+32B fraction 0.3666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0218</title></circle>
+<circle cx="238.6" cy="195.6" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5182x  ·  macro acc 0.6424
+delta vs 32B-direct -0.0143 [-0.0219, -0.0067]
+32B fraction 0.3832  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0225</title></circle>
+<circle cx="244.3" cy="188.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.531x  ·  macro acc 0.6439
+delta vs 32B-direct -0.0128 [-0.0203, -0.0053]
+32B fraction 0.3996  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0230</title></circle>
+<circle cx="250.2" cy="184.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5442x  ·  macro acc 0.6446
+delta vs 32B-direct -0.0120 [-0.0196, -0.0047]
+32B fraction 0.4165  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0227</title></circle>
+<circle cx="256.1" cy="182.9" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5573x  ·  macro acc 0.6448
+delta vs 32B-direct -0.0118 [-0.0193, -0.0046]
+32B fraction 0.4333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0219</title></circle>
+<circle cx="261.9" cy="176.7" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5703x  ·  macro acc 0.6460
+delta vs 32B-direct -0.0107 [-0.0181, -0.0035]
+32B fraction 0.45  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0221</title></circle>
+<circle cx="267.7" cy="176.6" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5833x  ·  macro acc 0.6460
+delta vs 32B-direct -0.0106 [-0.0180, -0.0034]
+32B fraction 0.4666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0211</title></circle>
+<circle cx="273.6" cy="169.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.5964x  ·  macro acc 0.6473
+delta vs 32B-direct -0.0094 [-0.0167, -0.0023]
+32B fraction 0.4833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0214</title></circle>
+<circle cx="279.4" cy="169.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6094x  ·  macro acc 0.6473
+delta vs 32B-direct -0.0094 [-0.0167, -0.0023]
+32B fraction 0.5  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0204</title></circle>
+<circle cx="285.2" cy="166.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6224x  ·  macro acc 0.6480
+delta vs 32B-direct -0.0087 [-0.0158, -0.0018]
+32B fraction 0.5167  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0201</title></circle>
+<circle cx="291.0" cy="164.7" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6354x  ·  macro acc 0.6483
+delta vs 32B-direct -0.0084 [-0.0154, -0.0015]
+32B fraction 0.5332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0194</title></circle>
+<circle cx="296.8" cy="165.1" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6484x  ·  macro acc 0.6482
+delta vs 32B-direct -0.0085 [-0.0154, -0.0017]
+32B fraction 0.5499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0184</title></circle>
+<circle cx="302.7" cy="156.6" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6615x  ·  macro acc 0.6498
+delta vs 32B-direct -0.0069 [-0.0134, -0.0005]
+32B fraction 0.5667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0190</title></circle>
+<circle cx="308.5" cy="162.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6745x  ·  macro acc 0.6487
+delta vs 32B-direct -0.0080 [-0.0143, -0.0018]
+32B fraction 0.5833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0169</title></circle>
+<circle cx="314.3" cy="164.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.6875x  ·  macro acc 0.6483
+delta vs 32B-direct -0.0084 [-0.0146, -0.0023]
+32B fraction 0.6  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0154</title></circle>
+<circle cx="320.1" cy="162.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7005x  ·  macro acc 0.6487
+delta vs 32B-direct -0.0079 [-0.0140, -0.0020]
+32B fraction 0.6166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0149</title></circle>
+<circle cx="325.9" cy="160.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7134x  ·  macro acc 0.6490
+delta vs 32B-direct -0.0077 [-0.0135, -0.0020]
+32B fraction 0.6332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0142</title></circle>
+<circle cx="331.8" cy="153.7" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7266x  ·  macro acc 0.6504
+delta vs 32B-direct -0.0063 [-0.0120, -0.0008]
+32B fraction 0.65  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0146</title></circle>
+<circle cx="337.6" cy="153.0" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7396x  ·  macro acc 0.6505
+delta vs 32B-direct -0.0062 [-0.0118, -0.0007]
+32B fraction 0.6667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0137</title></circle>
+<circle cx="343.4" cy="151.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7526x  ·  macro acc 0.6508
+delta vs 32B-direct -0.0058 [-0.0112, -0.0007]
+32B fraction 0.6833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0130</title></circle>
+<circle cx="349.1" cy="148.6" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7653x  ·  macro acc 0.6513
+delta vs 32B-direct -0.0053 [-0.0106, -0.0001]
+32B fraction 0.6996  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0126</title></circle>
+<circle cx="355.0" cy="144.1" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7785x  ·  macro acc 0.6522
+delta vs 32B-direct -0.0045 [-0.0094, +0.0004]
+32B fraction 0.7165  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0124</title></circle>
+<circle cx="360.7" cy="142.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.7914x  ·  macro acc 0.6525
+delta vs 32B-direct -0.0042 [-0.0090, +0.0007]
+32B fraction 0.733  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0117</title></circle>
+<circle cx="366.7" cy="137.8" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8047x  ·  macro acc 0.6534
+delta vs 32B-direct -0.0033 [-0.0080, +0.0015]
+32B fraction 0.75  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0116</title></circle>
+<circle cx="372.5" cy="133.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8176x  ·  macro acc 0.6542
+delta vs 32B-direct -0.0024 [-0.0070, +0.0022]
+32B fraction 0.7665  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0115</title></circle>
+<circle cx="378.3" cy="132.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8307x  ·  macro acc 0.6545
+delta vs 32B-direct -0.0022 [-0.0068, +0.0022]
+32B fraction 0.7833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0107</title></circle>
+<circle cx="384.2" cy="131.5" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8438x  ·  macro acc 0.6546
+delta vs 32B-direct -0.0021 [-0.0065, +0.0023]
+32B fraction 0.8  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0098</title></circle>
+<circle cx="390.0" cy="132.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8568x  ·  macro acc 0.6545
+delta vs 32B-direct -0.0022 [-0.0066, +0.0020]
+32B fraction 0.8167  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0087</title></circle>
+<circle cx="395.8" cy="129.3" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8698x  ·  macro acc 0.6550
+delta vs 32B-direct -0.0017 [-0.0060, +0.0025]
+32B fraction 0.8333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0083</title></circle>
+<circle cx="401.6" cy="122.4" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8828x  ·  macro acc 0.6563
+delta vs 32B-direct -0.0004 [-0.0044, +0.0035]
+32B fraction 0.85  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0086</title></circle>
+<circle cx="407.4" cy="121.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.8958x  ·  macro acc 0.6565
+delta vs 32B-direct -0.0001 [-0.0037, +0.0033]
+32B fraction 0.8667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="413.3" cy="119.2" r="3" fill="var(--surface-1)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9089x  ·  macro acc 0.6569
+delta vs 32B-direct +0.0003 [-0.0029, +0.0034]
+32B fraction 0.8833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0072</title></circle>
+<circle cx="419.0" cy="116.5" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9217x  ·  macro acc 0.6574
+delta vs 32B-direct +0.0008 [-0.0022, +0.0036]
+32B fraction 0.8998  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0067</title></circle>
+<circle cx="424.9" cy="112.7" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9348x  ·  macro acc 0.6582
+delta vs 32B-direct +0.0015 [-0.0011, +0.0041]
+32B fraction 0.9165  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0065</title></circle>
+<circle cx="430.7" cy="111.4" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9479x  ·  macro acc 0.6584
+delta vs 32B-direct +0.0017 [-0.0004, +0.0040]
+32B fraction 0.9333  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0057</title></circle>
+<circle cx="436.5" cy="108.6" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9609x  ·  macro acc 0.6589
+delta vs 32B-direct +0.0023 [+0.0003, +0.0043]
+32B fraction 0.95  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0052</title></circle>
+<circle cx="442.3" cy="106.7" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9739x  ·  macro acc 0.6593
+delta vs 32B-direct +0.0026 [+0.0009, +0.0044]
+32B fraction 0.9666  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0046</title></circle>
+<circle cx="448.2" cy="107.3" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.987x  ·  macro acc 0.6592
+delta vs 32B-direct +0.0025 [+0.0011, +0.0040]
+32B fraction 0.9833  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0035</title></circle>
+<circle cx="454.0" cy="119.7" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 0.9999x  ·  macro acc 0.6568
+delta vs 32B-direct +0.0001 [-0.0000, +0.0004]
+32B fraction 0.9999  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0002</title></circle>
+<circle cx="454.0" cy="120.5" r="4.5" fill="var(--series-2)" stroke="var(--series-2)" stroke-width="2"><title>R-A per-cell router (uses dataset identity)
+compute 1.0x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<polyline points="104.8,434.3 104.8,434.3 110.6,431.1 116.4,404.7 122.0,394.4 128.0,379.5 133.7,374.4 139.7,372.5 145.4,360.5 151.1,356.4 157.2,359.2 162.9,349.8 168.8,337.8 174.6,330.3 180.4,322.9 186.1,319.4 192.1,314.8 197.8,313.4 203.7,304.3 209.5,299.0 215.3,294.4 221.2,286.9 227.0,281.7 232.7,267.2 238.7,260.4 244.4,257.5 250.1,256.7 256.0,248.0 261.9,243.1 267.7,239.3 273.5,240.4 279.4,236.5 285.1,231.9 291.0,220.8 296.8,210.4 302.7,199.2 308.5,193.4 314.3,190.6 320.1,188.8 325.9,176.7 331.8,171.9 337.6,166.5 343.4,164.5 349.2,159.5 355.0,158.6 360.9,156.1 366.7,154.7 372.5,151.6 378.3,145.5 384.1,143.8 389.9,140.2 395.7,136.4 401.6,137.5 407.4,133.9 413.3,128.5 419.0,126.3 424.9,124.6 430.7,124.1 436.5,125.3 442.4,123.0 448.1,122.7 454.0,120.5 454.0,120.5" fill="none" stroke="var(--series-3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="110.6" cy="431.1" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2318x  ·  macro acc 0.5977
+delta vs 32B-direct -0.0590 [-0.0708, -0.0474]
+32B fraction 0.0166  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0004</title></circle>
+<circle cx="116.4" cy="404.7" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2448x  ·  macro acc 0.6027
+delta vs 32B-direct -0.0540 [-0.0651, -0.0430]
+32B fraction 0.0333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0036</title></circle>
+<circle cx="122.0" cy="394.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2574x  ·  macro acc 0.6047
+delta vs 32B-direct -0.0520 [-0.0630, -0.0410]
+32B fraction 0.0494  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0046</title></circle>
+<circle cx="128.0" cy="379.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2707x  ·  macro acc 0.6075
+delta vs 32B-direct -0.0492 [-0.0596, -0.0384]
+32B fraction 0.0664  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0065</title></circle>
+<circle cx="133.7" cy="374.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2835x  ·  macro acc 0.6085
+delta vs 32B-direct -0.0482 [-0.0584, -0.0380]
+32B fraction 0.0828  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0064</title></circle>
+<circle cx="139.7" cy="372.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.2969x  ·  macro acc 0.6088
+delta vs 32B-direct -0.0478 [-0.0580, -0.0377]
+32B fraction 0.1  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0058</title></circle>
+<circle cx="145.4" cy="360.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.3098x  ·  macro acc 0.6111
+delta vs 32B-direct -0.0456 [-0.0556, -0.0356]
+32B fraction 0.1164  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0071</title></circle>
+<circle cx="151.1" cy="356.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.3225x  ·  macro acc 0.6119
+delta vs 32B-direct -0.0448 [-0.0546, -0.0349]
+32B fraction 0.1327  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0069</title></circle>
+<circle cx="157.2" cy="359.2" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.336x  ·  macro acc 0.6114
+delta vs 32B-direct -0.0453 [-0.0549, -0.0356]
+32B fraction 0.15  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0053</title></circle>
+<circle cx="162.9" cy="349.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.3489x  ·  macro acc 0.6131
+delta vs 32B-direct -0.0435 [-0.0527, -0.0345]
+32B fraction 0.1665  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0061</title></circle>
+<circle cx="168.8" cy="337.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.362x  ·  macro acc 0.6154
+delta vs 32B-direct -0.0413 [-0.0499, -0.0324]
+32B fraction 0.1833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0074</title></circle>
+<circle cx="174.6" cy="330.3" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.375x  ·  macro acc 0.6168
+delta vs 32B-direct -0.0398 [-0.0485, -0.0311]
+32B fraction 0.2  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="180.4" cy="322.9" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.388x  ·  macro acc 0.6182
+delta vs 32B-direct -0.0384 [-0.0470, -0.0299]
+32B fraction 0.2166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0082</title></circle>
+<circle cx="186.1" cy="319.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4008x  ·  macro acc 0.6189
+delta vs 32B-direct -0.0378 [-0.0460, -0.0293]
+32B fraction 0.2329  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0079</title></circle>
+<circle cx="192.1" cy="314.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4141x  ·  macro acc 0.6198
+delta vs 32B-direct -0.0369 [-0.0449, -0.0287]
+32B fraction 0.25  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="197.8" cy="313.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4269x  ·  macro acc 0.6200
+delta vs 32B-direct -0.0366 [-0.0444, -0.0286]
+32B fraction 0.2663  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0071</title></circle>
+<circle cx="203.7" cy="304.3" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4401x  ·  macro acc 0.6218
+delta vs 32B-direct -0.0349 [-0.0426, -0.0270]
+32B fraction 0.2832  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="209.5" cy="299.0" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4531x  ·  macro acc 0.6228
+delta vs 32B-direct -0.0339 [-0.0415, -0.0261]
+32B fraction 0.2999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="215.3" cy="294.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4661x  ·  macro acc 0.6237
+delta vs 32B-direct -0.0330 [-0.0405, -0.0253]
+32B fraction 0.3166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0077</title></circle>
+<circle cx="221.2" cy="286.9" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4792x  ·  macro acc 0.6251
+delta vs 32B-direct -0.0316 [-0.0389, -0.0241]
+32B fraction 0.3333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0081</title></circle>
+<circle cx="227.0" cy="281.7" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.4922x  ·  macro acc 0.6261
+delta vs 32B-direct -0.0306 [-0.0377, -0.0234]
+32B fraction 0.3499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0081</title></circle>
+<circle cx="232.7" cy="267.2" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.505x  ·  macro acc 0.6288
+delta vs 32B-direct -0.0278 [-0.0346, -0.0210]
+32B fraction 0.3663  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0099</title></circle>
+<circle cx="238.7" cy="260.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5183x  ·  macro acc 0.6301
+delta vs 32B-direct -0.0266 [-0.0332, -0.0198]
+32B fraction 0.3833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0102</title></circle>
+<circle cx="244.4" cy="257.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5312x  ·  macro acc 0.6307
+delta vs 32B-direct -0.0260 [-0.0325, -0.0192]
+32B fraction 0.3999  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0098</title></circle>
+<circle cx="250.1" cy="256.7" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.544x  ·  macro acc 0.6308
+delta vs 32B-direct -0.0259 [-0.0322, -0.0193]
+32B fraction 0.4162  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0089</title></circle>
+<circle cx="256.0" cy="248.0" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5572x  ·  macro acc 0.6325
+delta vs 32B-direct -0.0242 [-0.0305, -0.0179]
+32B fraction 0.4332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0096</title></circle>
+<circle cx="261.9" cy="243.1" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5703x  ·  macro acc 0.6334
+delta vs 32B-direct -0.0233 [-0.0295, -0.0170]
+32B fraction 0.45  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0095</title></circle>
+<circle cx="267.7" cy="239.3" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5833x  ·  macro acc 0.6341
+delta vs 32B-direct -0.0225 [-0.0287, -0.0163]
+32B fraction 0.4666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0092</title></circle>
+<circle cx="273.5" cy="240.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.5963x  ·  macro acc 0.6339
+delta vs 32B-direct -0.0228 [-0.0288, -0.0168]
+32B fraction 0.4833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0080</title></circle>
+<circle cx="279.4" cy="236.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6094x  ·  macro acc 0.6347
+delta vs 32B-direct -0.0220 [-0.0277, -0.0163]
+32B fraction 0.5  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0078</title></circle>
+<circle cx="285.1" cy="231.9" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6221x  ·  macro acc 0.6355
+delta vs 32B-direct -0.0211 [-0.0268, -0.0155]
+32B fraction 0.5163  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0077</title></circle>
+<circle cx="291.0" cy="220.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6354x  ·  macro acc 0.6376
+delta vs 32B-direct -0.0190 [-0.0245, -0.0136]
+32B fraction 0.5333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0088</title></circle>
+<circle cx="296.8" cy="210.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6484x  ·  macro acc 0.6396
+delta vs 32B-direct -0.0171 [-0.0221, -0.0121]
+32B fraction 0.55  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0098</title></circle>
+<circle cx="302.7" cy="199.2" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6615x  ·  macro acc 0.6417
+delta vs 32B-direct -0.0149 [-0.0196, -0.0103]
+32B fraction 0.5667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0109</title></circle>
+<circle cx="308.5" cy="193.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6745x  ·  macro acc 0.6428
+delta vs 32B-direct -0.0138 [-0.0183, -0.0094]
+32B fraction 0.5833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0110</title></circle>
+<circle cx="314.3" cy="190.6" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.6875x  ·  macro acc 0.6434
+delta vs 32B-direct -0.0133 [-0.0178, -0.0089]
+32B fraction 0.6  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0105</title></circle>
+<circle cx="320.1" cy="188.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7005x  ·  macro acc 0.6437
+delta vs 32B-direct -0.0130 [-0.0173, -0.0087]
+32B fraction 0.6167  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0099</title></circle>
+<circle cx="325.9" cy="176.7" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7135x  ·  macro acc 0.6460
+delta vs 32B-direct -0.0107 [-0.0146, -0.0066]
+32B fraction 0.6333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0112</title></circle>
+<circle cx="331.8" cy="171.9" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7266x  ·  macro acc 0.6469
+delta vs 32B-direct -0.0098 [-0.0136, -0.0059]
+32B fraction 0.65  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0111</title></circle>
+<circle cx="337.6" cy="166.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7396x  ·  macro acc 0.6479
+delta vs 32B-direct -0.0087 [-0.0125, -0.0050]
+32B fraction 0.6666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0111</title></circle>
+<circle cx="343.4" cy="164.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7526x  ·  macro acc 0.6483
+delta vs 32B-direct -0.0084 [-0.0120, -0.0047]
+32B fraction 0.6833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0105</title></circle>
+<circle cx="349.2" cy="159.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7656x  ·  macro acc 0.6493
+delta vs 32B-direct -0.0074 [-0.0109, -0.0039]
+32B fraction 0.7  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0105</title></circle>
+<circle cx="355.0" cy="158.6" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7786x  ·  macro acc 0.6494
+delta vs 32B-direct -0.0072 [-0.0106, -0.0039]
+32B fraction 0.7166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0097</title></circle>
+<circle cx="360.9" cy="156.1" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.7917x  ·  macro acc 0.6499
+delta vs 32B-direct -0.0067 [-0.0100, -0.0035]
+32B fraction 0.7333  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0091</title></circle>
+<circle cx="366.7" cy="154.7" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8047x  ·  macro acc 0.6502
+delta vs 32B-direct -0.0065 [-0.0096, -0.0034]
+32B fraction 0.75  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0084</title></circle>
+<circle cx="372.5" cy="151.6" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8177x  ·  macro acc 0.6508
+delta vs 32B-direct -0.0059 [-0.0089, -0.0029]
+32B fraction 0.7666  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0080</title></circle>
+<circle cx="378.3" cy="145.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8307x  ·  macro acc 0.6519
+delta vs 32B-direct -0.0047 [-0.0076, -0.0018]
+32B fraction 0.7833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0082</title></circle>
+<circle cx="384.1" cy="143.8" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8437x  ·  macro acc 0.6523
+delta vs 32B-direct -0.0044 [-0.0071, -0.0017]
+32B fraction 0.8  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0075</title></circle>
+<circle cx="389.9" cy="140.2" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8567x  ·  macro acc 0.6529
+delta vs 32B-direct -0.0037 [-0.0063, -0.0012]
+32B fraction 0.8166  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0072</title></circle>
+<circle cx="395.7" cy="136.4" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8697x  ·  macro acc 0.6537
+delta vs 32B-direct -0.0030 [-0.0055, -0.0005]
+32B fraction 0.8332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0069</title></circle>
+<circle cx="401.6" cy="137.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8827x  ·  macro acc 0.6535
+delta vs 32B-direct -0.0032 [-0.0055, -0.0008]
+32B fraction 0.8499  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0057</title></circle>
+<circle cx="407.4" cy="133.9" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.8958x  ·  macro acc 0.6541
+delta vs 32B-direct -0.0025 [-0.0047, -0.0003]
+32B fraction 0.8667  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0054</title></circle>
+<circle cx="413.3" cy="128.5" r="3" fill="var(--surface-1)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9089x  ·  macro acc 0.6552
+delta vs 32B-direct -0.0015 [-0.0034, +0.0005]
+32B fraction 0.8833  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0054</title></circle>
+<circle cx="419.0" cy="126.3" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9218x  ·  macro acc 0.6556
+delta vs 32B-direct -0.0011 [-0.0029, +0.0009]
+32B fraction 0.9  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0049</title></circle>
+<circle cx="424.9" cy="124.6" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9349x  ·  macro acc 0.6559
+delta vs 32B-direct -0.0008 [-0.0024, +0.0010]
+32B fraction 0.9167  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0042</title></circle>
+<circle cx="430.7" cy="124.1" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9478x  ·  macro acc 0.6560
+delta vs 32B-direct -0.0007 [-0.0022, +0.0010]
+32B fraction 0.9332  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0033</title></circle>
+<circle cx="436.5" cy="125.3" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9609x  ·  macro acc 0.6558
+delta vs 32B-direct -0.0009 [-0.0020, +0.0002]
+32B fraction 0.95  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0021</title></circle>
+<circle cx="442.4" cy="123.0" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.974x  ·  macro acc 0.6562
+delta vs 32B-direct -0.0005 [-0.0013, +0.0004]
+32B fraction 0.9667  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0015</title></circle>
+<circle cx="448.1" cy="122.7" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 0.9869x  ·  macro acc 0.6563
+delta vs 32B-direct -0.0004 [-0.0010, +0.0001]
+32B fraction 0.9833  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0006</title></circle>
+<circle cx="454.0" cy="120.5" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 1.0x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="454.0" cy="120.5" r="4.5" fill="var(--series-3)" stroke="var(--series-3)" stroke-width="2"><title>Within-cell permutation null
+compute 1.0x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<polyline points="104.8,434.3 104.8,434.3 110.6,437.7 116.4,430.1 122.2,424.1 128.0,420.5 133.9,417.2 139.7,407.1 145.4,400.3 151.3,401.8 157.1,398.9 163.0,388.7 168.8,378.5 174.5,372.8 180.4,366.7 186.2,359.5 191.9,354.7 197.9,351.4 203.7,348.7 209.5,351.9 215.4,347.8 221.0,339.8 227.0,333.6 232.8,327.3 238.6,323.8 244.5,317.4 250.2,316.9 256.1,311.8 261.9,319.3 267.7,316.3 273.6,311.1 279.4,303.1 285.2,292.2 291.0,287.2 296.8,282.3 302.6,279.4 308.5,273.7 314.3,264.2 320.0,261.7 325.9,260.2 331.8,257.7 337.5,248.5 343.4,246.5 349.2,239.3 355.1,234.2 360.8,225.4 366.7,224.5 372.5,216.1 378.3,207.9 384.2,207.4 390.0,197.7 395.8,193.8 401.6,193.5 407.4,178.7 413.1,170.3 419.1,157.0 424.8,147.3 430.6,142.6 436.5,139.1 442.3,135.8 448.1,128.2 454.0,120.7 454.0,120.5" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 5"/>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="104.8" cy="434.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2188x  ·  macro acc 0.5971
+delta vs 32B-direct -0.0596 [-0.0714, -0.0479]
+32B fraction 0.0  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="110.6" cy="437.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2318x  ·  macro acc 0.5964
+delta vs 32B-direct -0.0602 [-0.0719, -0.0486]
+32B fraction 0.0166  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0016</title></circle>
+<circle cx="116.4" cy="430.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2448x  ·  macro acc 0.5979
+delta vs 32B-direct -0.0588 [-0.0705, -0.0472]
+32B fraction 0.0333  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0012</title></circle>
+<circle cx="122.2" cy="424.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2579x  ·  macro acc 0.5990
+delta vs 32B-direct -0.0576 [-0.0692, -0.0462]
+32B fraction 0.05  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0010</title></circle>
+<circle cx="128.0" cy="420.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2709x  ·  macro acc 0.5997
+delta vs 32B-direct -0.0570 [-0.0685, -0.0456]
+32B fraction 0.0667  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0014</title></circle>
+<circle cx="133.9" cy="417.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2839x  ·  macro acc 0.6003
+delta vs 32B-direct -0.0563 [-0.0677, -0.0450]
+32B fraction 0.0833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0017</title></circle>
+<circle cx="139.7" cy="407.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.2969x  ·  macro acc 0.6023
+delta vs 32B-direct -0.0544 [-0.0658, -0.0433]
+32B fraction 0.1  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0008</title></circle>
+<circle cx="145.4" cy="400.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.3096x  ·  macro acc 0.6036
+delta vs 32B-direct -0.0531 [-0.0642, -0.0420]
+32B fraction 0.1162  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0005</title></circle>
+<circle cx="151.3" cy="401.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.3229x  ·  macro acc 0.6033
+delta vs 32B-direct -0.0534 [-0.0644, -0.0426]
+32B fraction 0.1332  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0018</title></circle>
+<circle cx="157.1" cy="398.9" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.3359x  ·  macro acc 0.6038
+delta vs 32B-direct -0.0529 [-0.0637, -0.0422]
+32B fraction 0.1499  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0022</title></circle>
+<circle cx="163.0" cy="388.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.349x  ·  macro acc 0.6058
+delta vs 32B-direct -0.0509 [-0.0618, -0.0402]
+32B fraction 0.1666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0013</title></circle>
+<circle cx="168.8" cy="378.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.362x  ·  macro acc 0.6077
+delta vs 32B-direct -0.0490 [-0.0598, -0.0385]
+32B fraction 0.1833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0003</title></circle>
+<circle cx="174.5" cy="372.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.3749x  ·  macro acc 0.6088
+delta vs 32B-direct -0.0479 [-0.0586, -0.0375]
+32B fraction 0.1997  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0002</title></circle>
+<circle cx="180.4" cy="366.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.388x  ·  macro acc 0.6099
+delta vs 32B-direct -0.0467 [-0.0571, -0.0364]
+32B fraction 0.2166  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0001</title></circle>
+<circle cx="186.2" cy="359.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.401x  ·  macro acc 0.6113
+delta vs 32B-direct -0.0454 [-0.0557, -0.0352]
+32B fraction 0.2332  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0003</title></circle>
+<circle cx="191.9" cy="354.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4138x  ·  macro acc 0.6122
+delta vs 32B-direct -0.0445 [-0.0547, -0.0344]
+32B fraction 0.2495  ·  fails the non-inferiority constraint
+gain over no-skill line +0.0002</title></circle>
+<circle cx="197.9" cy="351.4" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4271x  ·  macro acc 0.6128
+delta vs 32B-direct -0.0438 [-0.0541, -0.0338]
+32B fraction 0.2666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0001</title></circle>
+<circle cx="203.7" cy="348.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4401x  ·  macro acc 0.6133
+delta vs 32B-direct -0.0433 [-0.0533, -0.0335]
+32B fraction 0.2833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0006</title></circle>
+<circle cx="209.5" cy="351.9" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.453x  ·  macro acc 0.6127
+delta vs 32B-direct -0.0439 [-0.0538, -0.0343]
+32B fraction 0.2998  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0022</title></circle>
+<circle cx="215.4" cy="347.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4662x  ·  macro acc 0.6135
+delta vs 32B-direct -0.0432 [-0.0529, -0.0336]
+32B fraction 0.3166  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0024</title></circle>
+<circle cx="221.0" cy="339.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4788x  ·  macro acc 0.6150
+delta vs 32B-direct -0.0416 [-0.0514, -0.0321]
+32B fraction 0.3328  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0019</title></circle>
+<circle cx="227.0" cy="333.6" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.4922x  ·  macro acc 0.6162
+delta vs 32B-direct -0.0405 [-0.0500, -0.0313]
+32B fraction 0.3499  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0017</title></circle>
+<circle cx="232.8" cy="327.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5052x  ·  macro acc 0.6174
+delta vs 32B-direct -0.0393 [-0.0487, -0.0302]
+32B fraction 0.3666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0015</title></circle>
+<circle cx="238.6" cy="323.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5182x  ·  macro acc 0.6181
+delta vs 32B-direct -0.0386 [-0.0480, -0.0295]
+32B fraction 0.3833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0018</title></circle>
+<circle cx="244.5" cy="317.4" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5313x  ·  macro acc 0.6193
+delta vs 32B-direct -0.0374 [-0.0467, -0.0283]
+32B fraction 0.4  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0016</title></circle>
+<circle cx="250.2" cy="316.9" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5442x  ·  macro acc 0.6194
+delta vs 32B-direct -0.0373 [-0.0464, -0.0285]
+32B fraction 0.4165  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0025</title></circle>
+<circle cx="256.1" cy="311.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5573x  ·  macro acc 0.6204
+delta vs 32B-direct -0.0363 [-0.0454, -0.0275]
+32B fraction 0.4333  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0025</title></circle>
+<circle cx="261.9" cy="319.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5703x  ·  macro acc 0.6189
+delta vs 32B-direct -0.0377 [-0.0467, -0.0290]
+32B fraction 0.4499  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0050</title></circle>
+<circle cx="267.7" cy="316.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5833x  ·  macro acc 0.6195
+delta vs 32B-direct -0.0372 [-0.0461, -0.0285]
+32B fraction 0.4666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0054</title></circle>
+<circle cx="273.6" cy="311.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.5964x  ·  macro acc 0.6205
+delta vs 32B-direct -0.0362 [-0.0451, -0.0275]
+32B fraction 0.4833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0054</title></circle>
+<circle cx="279.4" cy="303.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6094x  ·  macro acc 0.6220
+delta vs 32B-direct -0.0347 [-0.0434, -0.0262]
+32B fraction 0.5  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0049</title></circle>
+<circle cx="285.2" cy="292.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6224x  ·  macro acc 0.6241
+delta vs 32B-direct -0.0326 [-0.0412, -0.0243]
+32B fraction 0.5167  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0038</title></circle>
+<circle cx="291.0" cy="287.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6353x  ·  macro acc 0.6250
+delta vs 32B-direct -0.0316 [-0.0401, -0.0234]
+32B fraction 0.5331  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0038</title></circle>
+<circle cx="296.8" cy="282.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6484x  ·  macro acc 0.6260
+delta vs 32B-direct -0.0307 [-0.0389, -0.0227]
+32B fraction 0.5499  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0039</title></circle>
+<circle cx="302.6" cy="279.4" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6614x  ·  macro acc 0.6265
+delta vs 32B-direct -0.0302 [-0.0382, -0.0223]
+32B fraction 0.5666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0043</title></circle>
+<circle cx="308.5" cy="273.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6745x  ·  macro acc 0.6276
+delta vs 32B-direct -0.0291 [-0.0371, -0.0213]
+32B fraction 0.5833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0042</title></circle>
+<circle cx="314.3" cy="264.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.6875x  ·  macro acc 0.6294
+delta vs 32B-direct -0.0273 [-0.0349, -0.0197]
+32B fraction 0.6  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0034</title></circle>
+<circle cx="320.0" cy="261.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7002x  ·  macro acc 0.6299
+delta vs 32B-direct -0.0268 [-0.0345, -0.0192]
+32B fraction 0.6162  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0039</title></circle>
+<circle cx="325.9" cy="260.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7135x  ·  macro acc 0.6301
+delta vs 32B-direct -0.0265 [-0.0341, -0.0191]
+32B fraction 0.6333  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0047</title></circle>
+<circle cx="331.8" cy="257.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7266x  ·  macro acc 0.6306
+delta vs 32B-direct -0.0260 [-0.0335, -0.0188]
+32B fraction 0.65  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0052</title></circle>
+<circle cx="337.5" cy="248.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7395x  ·  macro acc 0.6324
+delta vs 32B-direct -0.0243 [-0.0317, -0.0173]
+32B fraction 0.6666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0044</title></circle>
+<circle cx="343.4" cy="246.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7526x  ·  macro acc 0.6328
+delta vs 32B-direct -0.0239 [-0.0313, -0.0170]
+32B fraction 0.6833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0050</title></circle>
+<circle cx="349.2" cy="239.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7656x  ·  macro acc 0.6341
+delta vs 32B-direct -0.0226 [-0.0297, -0.0158]
+32B fraction 0.6999  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0047</title></circle>
+<circle cx="355.1" cy="234.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7787x  ·  macro acc 0.6351
+delta vs 32B-direct -0.0216 [-0.0285, -0.0150]
+32B fraction 0.7167  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0047</title></circle>
+<circle cx="360.8" cy="225.4" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.7915x  ·  macro acc 0.6368
+delta vs 32B-direct -0.0199 [-0.0266, -0.0135]
+32B fraction 0.7331  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0040</title></circle>
+<circle cx="366.7" cy="224.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8047x  ·  macro acc 0.6369
+delta vs 32B-direct -0.0198 [-0.0264, -0.0135]
+32B fraction 0.75  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0049</title></circle>
+<circle cx="372.5" cy="216.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8177x  ·  macro acc 0.6385
+delta vs 32B-direct -0.0181 [-0.0244, -0.0122]
+32B fraction 0.7666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0042</title></circle>
+<circle cx="378.3" cy="207.9" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8307x  ·  macro acc 0.6401
+delta vs 32B-direct -0.0166 [-0.0227, -0.0108]
+32B fraction 0.7833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0037</title></circle>
+<circle cx="384.2" cy="207.4" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8438x  ·  macro acc 0.6402
+delta vs 32B-direct -0.0165 [-0.0223, -0.0109]
+32B fraction 0.8  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0046</title></circle>
+<circle cx="390.0" cy="197.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8568x  ·  macro acc 0.6420
+delta vs 32B-direct -0.0146 [-0.0202, -0.0093]
+32B fraction 0.8166  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0037</title></circle>
+<circle cx="395.8" cy="193.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8698x  ·  macro acc 0.6428
+delta vs 32B-direct -0.0139 [-0.0193, -0.0087]
+32B fraction 0.8333  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0040</title></circle>
+<circle cx="401.6" cy="193.5" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8828x  ·  macro acc 0.6428
+delta vs 32B-direct -0.0139 [-0.0190, -0.0089]
+32B fraction 0.85  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0049</title></circle>
+<circle cx="407.4" cy="178.7" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.8958x  ·  macro acc 0.6456
+delta vs 32B-direct -0.0110 [-0.0157, -0.0066]
+32B fraction 0.8667  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0031</title></circle>
+<circle cx="413.1" cy="170.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9085x  ·  macro acc 0.6472
+delta vs 32B-direct -0.0094 [-0.0139, -0.0053]
+32B fraction 0.8829  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0025</title></circle>
+<circle cx="419.1" cy="157.0" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9219x  ·  macro acc 0.6498
+delta vs 32B-direct -0.0069 [-0.0109, -0.0033]
+32B fraction 0.9  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0010</title></circle>
+<circle cx="424.8" cy="147.3" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9347x  ·  macro acc 0.6516
+delta vs 32B-direct -0.0051 [-0.0084, -0.0019]
+32B fraction 0.9164  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0001</title></circle>
+<circle cx="430.6" cy="142.6" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9476x  ·  macro acc 0.6525
+delta vs 32B-direct -0.0042 [-0.0069, -0.0018]
+32B fraction 0.9329  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0002</title></circle>
+<circle cx="436.5" cy="139.1" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9609x  ·  macro acc 0.6531
+delta vs 32B-direct -0.0035 [-0.0059, -0.0015]
+32B fraction 0.9499  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0005</title></circle>
+<circle cx="442.3" cy="135.8" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9739x  ·  macro acc 0.6538
+delta vs 32B-direct -0.0029 [-0.0051, -0.0011]
+32B fraction 0.9666  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0009</title></circle>
+<circle cx="448.1" cy="128.2" r="3" fill="var(--surface-1)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 0.9869x  ·  macro acc 0.6552
+delta vs 32B-direct -0.0015 [-0.0032, -0.0002]
+32B fraction 0.9833  ·  fails the non-inferiority constraint
+gain over no-skill line -0.0005</title></circle>
+<circle cx="454.0" cy="120.7" r="4.5" fill="var(--ink-muted)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 1.0x  ·  macro acc 0.6566
+delta vs 32B-direct -0.0000 [-0.0001, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line -0.0000</title></circle>
+<circle cx="454.0" cy="120.5" r="4.5" fill="var(--ink-muted)" stroke="var(--ink-muted)" stroke-width="2"><title>Pure-noise router = no-skill line (global null)
+compute 1.0x  ·  macro acc 0.6567
+delta vs 32B-direct +0.0000 [-0.0000, +0.0000]
+32B fraction 1.0  ·  MEETS the non-inferiority constraint
+gain over no-skill line +0.0000</title></circle>
+<circle cx="454.0" cy="120.5" r="5" fill="var(--ink)" stroke="var(--surface-1)" stroke-width="2"><title>always-32B-direct (THE BAR)
+1.0x  ·  0.6567</title></circle>
+<text x="444.0" y="110.5" text-anchor="end" class="reflab">always-32B-direct (THE BAR)</text>
+<circle cx="104.8" cy="434.3" r="5" fill="var(--ink)" stroke="var(--surface-1)" stroke-width="2"><title>always-7B
+0.2188x  ·  0.5971</title></circle>
+<text x="114.8" y="438.3" text-anchor="start" class="reflab">always-7B</text>
+<circle cx="784.7" cy="116.1" r="5" fill="var(--ink)" stroke="var(--surface-1)" stroke-width="2"><title>shipped cascade (accuracy-max)
+1.7398x  ·  0.6575</title></circle>
+<text x="774.7" y="132.1" text-anchor="end" class="reflab">shipped cascade (accuracy-max)</text>
+<circle cx="659.8" cy="185.8" r="5" fill="var(--ink)" stroke="var(--surface-1)" stroke-width="2"><title>shipped cascade (compute-lean)
+1.4603x  ·  0.6443</title></circle>
+<text x="649.8" y="199.8" text-anchor="end" class="reflab">shipped cascade (compute-lean)</text>
+<circle cx="527.7" cy="114.6" r="5" fill="var(--ink)" stroke="var(--surface-1)" stroke-width="2"><title>cost-floor per-cell arm selection
+1.1648x  ·  0.6578</title></circle>
+<text x="537.7" y="106.6" text-anchor="start" class="reflab">cost-floor per-cell arm selection</text>
+<text x="454" y="546" text-anchor="middle" class="axlab">macro FLOP-eq, x one always-32B-direct pass (as charged, R32 = 4.57)</text>
+<text transform="translate(18,261) rotate(-90)" text-anchor="middle" class="axlab">macro accuracy (8 cells, 1/8 each)</text></svg>
+<div class="legend"><span class="lg"><i style="background:var(--series-1);"></i>R-B pooled router (deployable, prompt-only)</span>
+<span class="lg"><i style="background:var(--series-2);"></i>R-A per-cell router (uses dataset identity)</span>
+<span class="lg"><i style="background:var(--series-3);"></i>Within-cell permutation null</span>
+<span class="lg"><i style="background:var(--ink-muted);opacity:.75"></i>Pure-noise router = no-skill line (global null)</span>
+<span class="lg"><i style="background:var(--ink)"></i>fixed reference systems</span></div>
+<p style="font-size:12.5px;color:var(--ink-2);margin-top:12px">Filled markers meet the
+non-inferiority constraint; hollow markers fail it. The dashed cross-hairs are always-32B-direct on
+both axes. Hover any marker for its accuracy, delta, CI and 32B fraction.</p>
+</div>
+
+<h2>Every operating point, side by side</h2>
+<div class="card scroll">
+<table><thead><tr><th>system</th><th class="n">macro acc</th>
+<th class="n">&Delta; vs 32B-direct [95% CI]</th><th class="n">compute</th>
+<th class="n">lat par ms</th><th class="n">energy J</th><th>constraint</th></tr></thead>
+<tbody><tr><td>always-32B-direct (THE BAR, 1.000x by definition)</td><td class="n">0.6567</td><td class="n">+0.0000 <span class="ci">[+0.0000, +0.0000]</span></td><td class="n"><b>1.000x</b></td><td class="n">665.0</td><td class="n">127.0</td><td><span class="ok">meets</span></td></tr>
+<tr><td>always-7B</td><td class="n">0.5971</td><td class="n">-0.0596 <span class="ci">[-0.0714, -0.0479]</span></td><td class="n"><b>0.219x</b></td><td class="n">347.0</td><td class="n">45.8</td><td><span class="no">fails</span></td></tr>
+<tr><td>SHIPPED cascade, accuracy-max (clean disjoint verifier)</td><td class="n">0.6575</td><td class="n">+0.0008 <span class="ci">[-0.0023, +0.0037]</span></td><td class="n"><b>1.740x</b></td><td class="n">775.9</td><td class="n">255.3</td><td><span class="ok">meets</span></td></tr>
+<tr><td>SHIPPED cascade, compute-lean</td><td class="n">0.6443</td><td class="n">-0.0124 <span class="ci">[-0.0190, -0.0061]</span></td><td class="n"><b>1.460x</b></td><td class="n">690.8</td><td class="n">228.8</td><td><span class="no">fails</span></td></tr>
+<tr><td>ITEM-LEVEL ORACLE pre-gen router (UNREACHABLE ceiling)</td><td class="n">0.7228</td><td class="n">+0.0661 <span class="ci">[+0.0602, +0.0723]</span></td><td class="n"><b>0.317x</b></td><td class="n">387.0</td><td class="n">56.0</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-A_percell_gbm_dense -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6574</td><td class="n">+0.0008 <span class="ci">[-0.0022, +0.0036]</span></td><td class="n"><b>0.922x</b></td><td class="n">633.1</td><td class="n">118.9</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-B_pooled_gbm_dense -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6591</td><td class="n">+0.0025 <span class="ci">[-0.0028, +0.0077]</span></td><td class="n"><b>0.844x</b></td><td class="n">601.4</td><td class="n">110.8</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-B_pooled_ridge_full -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6587</td><td class="n">+0.0020 <span class="ci">[-0.0013, +0.0054]</span></td><td class="n"><b>0.974x</b></td><td class="n">654.4</td><td class="n">124.3</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-B_pooled_gbm_txtstats -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6567</td><td class="n">-0.0000 <span class="ci">[-0.0000, +0.0000]</span></td><td class="n"><b>1.000x</b></td><td class="n">665.0</td><td class="n">127.0</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-B_pooled_gbm_imgonly -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6587</td><td class="n">+0.0020 <span class="ci">[-0.0028, +0.0069]</span></td><td class="n"><b>0.883x</b></td><td class="n">617.3</td><td class="n">114.8</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER R-C_pooled_gbm_ds1hot -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6591</td><td class="n">+0.0025 <span class="ci">[-0.0027, +0.0076]</span></td><td class="n"><b>0.844x</b></td><td class="n">601.4</td><td class="n">110.8</td><td><span class="ok">meets</span></td></tr>
+<tr><td>NULL / DIAGNOSTIC PURE_NOISE_ROUTER -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6566</td><td class="n">-0.0000 <span class="ci">[-0.0001, +0.0000]</span></td><td class="n"><b>1.000x</b></td><td class="n">665.0</td><td class="n">127.0</td><td><span class="ok">meets</span></td></tr>
+<tr><td>NULL / DIAGNOSTIC PERMUTATION_NULL_pooled -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6556</td><td class="n">-0.0011 <span class="ci">[-0.0029, +0.0009]</span></td><td class="n"><b>0.922x</b></td><td class="n">633.2</td><td class="n">118.9</td><td><span class="ok">meets</span></td></tr>
+<tr><td>NULL / DIAGNOSTIC PERMUTATION_NULL_percell -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6549</td><td class="n">-0.0017 <span class="ci">[-0.0029, -0.0006]</span></td><td class="n"><b>0.987x</b></td><td class="n">659.7</td><td class="n">125.6</td><td><span class="ok">meets</span></td></tr>
+<tr><td>NULL / DIAGNOSTIC DIAG_R-B_BETWEEN_cell_only -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6555</td><td class="n">-0.0011 <span class="ci">[-0.0018, -0.0005]</span></td><td class="n"><b>0.902x</b></td><td class="n">625.2</td><td class="n">116.8</td><td><span class="ok">meets</span></td></tr>
+<tr><td>NULL / DIAGNOSTIC DIAG_R-B_WITHIN_cell_only -- cheapest feasible point (EVAL-SELECTED lambda)</td><td class="n">0.6600</td><td class="n">+0.0033 <span class="ci">[-0.0017, +0.0084]</span></td><td class="n"><b>0.869x</b></td><td class="n">611.8</td><td class="n">113.4</td><td><span class="ok">meets</span></td></tr>
+<tr><td>PRE-GEN ROUTER, NESTED honest selection of (config, lambda), seed 0</td><td class="n">0.6559</td><td class="n">-0.0007 <span class="ci">[-0.0066, +0.0053]</span></td><td class="n"><b>0.743x</b></td><td class="n">560.2</td><td class="n">100.3</td><td><span class="no">fails</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.0</td><td class="n">0.6613</td><td class="n">+0.0046 <span class="ci">[-0.0001, +0.0094]</span></td><td class="n"><b>0.890x</b></td><td class="n">639.7</td><td class="n">117.3</td><td><span class="ok">meets</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.002</td><td class="n">0.6608</td><td class="n">+0.0041 <span class="ci">[-0.0008, +0.0089]</span></td><td class="n"><b>0.852x</b></td><td class="n">635.9</td><td class="n">114.4</td><td><span class="ok">meets</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.005</td><td class="n">0.6603</td><td class="n">+0.0036 <span class="ci">[-0.0017, +0.0088]</span></td><td class="n"><b>0.816x</b></td><td class="n">624.3</td><td class="n">111.0</td><td><span class="ok">meets</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.01</td><td class="n">0.6557</td><td class="n">-0.0010 <span class="ci">[-0.0069, +0.0047]</span></td><td class="n"><b>0.739x</b></td><td class="n">578.6</td><td class="n">101.7</td><td><span class="no">fails</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.02</td><td class="n">0.6470</td><td class="n">-0.0097 <span class="ci">[-0.0166, -0.0025]</span></td><td class="n"><b>0.601x</b></td><td class="n">502.7</td><td class="n">85.5</td><td><span class="no">fails</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.03</td><td class="n">0.6392</td><td class="n">-0.0175 <span class="ci">[-0.0250, -0.0099]</span></td><td class="n"><b>0.510x</b></td><td class="n">469.7</td><td class="n">76.5</td><td><span class="no">fails</span></td></tr>
+<tr><td>HYBRID_crossfit_eps0.05</td><td class="n">0.6213</td><td class="n">-0.0354 <span class="ci">[-0.0444, -0.0264]</span></td><td class="n"><b>0.359x</b></td><td class="n">403.9</td><td class="n">60.3</td><td><span class="no">fails</span></td></tr>
+<tr><td>HYBRID_nested_cv</td><td class="n">0.6612</td><td class="n">+0.0045 <span class="ci">[+0.0004, +0.0088]</span></td><td class="n"><b>0.833x</b></td><td class="n">631.1</td><td class="n">112.7</td><td><span class="ok">meets</span></td></tr></tbody></table>
+</div>
+
+<h2>Where the saving comes from</h2>
+<p>Each row is the cheapest policy that still clears the constraint, given only that much
+information. The gap between the first and last row is what the router's features actually buy.</p>
+<div class="card scroll">
+<table><thead><tr><th>what the router is allowed to know</th><th class="n">compute</th>
+<th class="n">macro acc</th><th class="n">&Delta; vs 32B-direct [95% CI]</th></tr></thead>
+<tbody><tr><td>No information at all<div class="dim">traces the no-skill line</div></td><td class="n"><b>1.000x</b></td><td class="n">0.6566</td><td class="n">-0.0000 <span class="ci">[-0.0001, +0.0000]</span></td></tr><tr><td>Which benchmark it is, only<div class="dim">routes whole datasets</div></td><td class="n"><b>0.902x</b></td><td class="n">0.6555</td><td class="n">-0.0011 <span class="ci">[-0.0018, -0.0005]</span></td></tr><tr><td>Within-cell labels shuffled<div class="dim">keeps between-cell means</div></td><td class="n"><b>0.922x</b></td><td class="n">0.6556</td><td class="n">-0.0011 <span class="ci">[-0.0029, +0.0009]</span></td></tr><tr><td>Which item it is, only<div class="dim">between-cell levels removed</div></td><td class="n"><b>0.869x</b></td><td class="n">0.6600</td><td class="n">+0.0033 <span class="ci">[-0.0017, +0.0084]</span></td></tr><tr><td>The full prompt-only router<div class="dim">both signals together</div></td><td class="n"><b>0.844x</b></td><td class="n">0.6591</td><td class="n">+0.0025 <span class="ci">[-0.0028, +0.0077]</span></td></tr></tbody></table>
+</div>
+<p>Two things follow. The zero-information router cannot get below <b>1.000x</b> at all &mdash; so
+unlike a wide-CI &ldquo;tie&rdquo;, nothing here is handed over by the tolerance. And routing whole
+datasets gets only to <b>0.902x</b>, which is exactly the policy &ldquo;send PMC-VQA to the 7B and
+everything else to the 32B&rdquo;: the between-cell component is one cell.</p>
+
+<h2>Is there real within-item skill?</h2>
+<p>The permutation null shuffles labels <em>inside</em> each cell, so it destroys within-cell signal
+but keeps each cell's mean advantage. Comparing the router against it at matched cost isolates
+within-item skill from dataset recognition.</p>
+<div class="card scroll">
+<table><thead><tr><th class="n">32B fraction</th><th class="n">router</th><th class="n">null</th>
+<th class="n">difference [95% CI]</th><th>significant</th></tr></thead>
+<tbody><tr><td class="n">0.25</td><td class="n">0.6292</td><td class="n">0.6198</td><td class="n">+0.0094 <span class="ci">[+0.0015, +0.0171]</span></td><td><span class=ok>yes</span></td></tr><tr><td class="n">0.50</td><td class="n">0.6448</td><td class="n">0.6347</td><td class="n">+0.0101 <span class="ci">[+0.0025, +0.0179]</span></td><td><span class=ok>yes</span></td></tr><tr><td class="n">0.75</td><td class="n">0.6586</td><td class="n">0.6502</td><td class="n">+0.0084 <span class="ci">[+0.0028, +0.0143]</span></td><td><span class=ok>yes</span></td></tr><tr><td class="n">0.90</td><td class="n">0.6608</td><td class="n">0.6556</td><td class="n">+0.0052 <span class="ci">[+0.0005, +0.0099]</span></td><td><span class=ok>yes</span></td></tr></tbody></table>
+</div>
+
+<h2>What this does not show</h2>
+<div class="card warn">
+<p><b>Eval-selected frontier points are upper bounds.</b> Choosing the cheapest of 649 swept policies
+by whether its bootstrap CI clears &minus;0.0029 is a multiple-comparison procedure, and the
+feasibility flag is visibly noisy &mdash; 0.844x qualifies, 0.857x and 0.870x do not, 0.883x does
+again. Read the frontier's shape, not its cheapest qualifying point.</p>
+<p><b>The prompt-only router does not survive honest selection.</b> Choosing configuration and
+threshold inside training folds only lands at 0.731x with
+0/10 seeds meeting the constraint: that selector minimises cost against
+a point-estimate screen, which does not control the CI at the operating point. The hybrid's nested
+selection does hold, but it picks an arm per cell and therefore needs to know which benchmark a
+question came from.</p>
+<p><b>It saves compute, not memory.</b> A router that can send a question straight to the 32B still
+needs the 32B resident, and the 7B as well &mdash; 46.95 GiB against the bar's 31.5 GiB.</p>
+</div>
+
+<p style="font-size:12px;color:var(--ink-muted);margin-top:28px">
+Every figure copied verbatim from <code>results/cascade_methods/artifacts/pregen_router_2026-08-12.json</code>
+&middot; pool: Variant B, 5 benchmarks / 8 cells / n = 42224, CLEAN disjoint verifier &middot;
+paired item bootstrap, nboot = 10000, one shared resample stream &middot;
+10 seeds &middot; 5-fold cross-fit &middot; no GPU.</p>
+</div>

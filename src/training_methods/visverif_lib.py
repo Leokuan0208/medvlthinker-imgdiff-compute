@@ -188,9 +188,17 @@ def strata(items=None):
     lat_c = np.array([bool(LATERAL.search(" ".join(str(a) for a in it["preds"]))) for it in items])
     lat_g = np.array([bool(LATERAL.search(g)) for g in gold])
     return {"short3": goldlen <= 3, "long4plus": goldlen >= 4,
+            # length BANDS -- the retrospective's "79% short / 90% medium / 80% long" was derived
+            # from ckpts/train/lora_verifier_pooled4/perq_sc8.json on a DIFFERENT, 1,064-question
+            # pool with the CONTAMINATED verifier. These bands recompute it on the clean n=2345
+            # pool with the deployed clean verifier, so the two are not like-for-like.
+            "gold_1word": goldlen == 1, "gold_2to3": (goldlen >= 2) & (goldlen <= 3),
+            "gold_4to8": (goldlen >= 4) & (goldlen <= 8), "gold_9plus": goldlen >= 9,
             "laterality": lat_q | lat_c | lat_g,
             "laterality_question": lat_q, "laterality_candidate": lat_c,
+            "laterality_gold": lat_g,
             "short3_and_laterality": (goldlen <= 3) & (lat_q | lat_c | lat_g),
+            "short3_not_laterality": (goldlen <= 3) & ~(lat_q | lat_c | lat_g),
             "gold_words": goldlen, "n_gold_missing": miss}
 
 

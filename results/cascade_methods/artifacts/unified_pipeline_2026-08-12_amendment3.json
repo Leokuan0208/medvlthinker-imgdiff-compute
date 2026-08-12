@@ -1,0 +1,22 @@
+{
+ "amendment": 3,
+ "written_at_utc": "2026-08-12T07:35:00Z",
+ "honest_status": "Written after arm A, before the gate measurement below was computed. It refines the PRE-REGISTERED secondary endpoint 'minimum strong-leg usage that closes the remaining macro gap' by measuring the gate feature itself, instead of assuming the 7B margin is the best available one.",
+ "motivation_from_arm_A": "Arm A's disagreement stratum is the loudest signal in the whole round: on PATH_VQA_closed the 1,188 items where the option-scoring verifier disagrees with the 7B's own greedy answer are ones the 7B still gets right 73.9% of the time (vs 84.1% overall) and the 32B gets right 84.3%; on PMC the 2,362 disagreements are 45.3% for the 7B (vs 53.9%) and 47.4% for the 32B. So verifier-generator DISAGREEMENT marks hard items even though the verifier's own answer there is bad. A signal that is useless as an ANSWER can still be useful as a GATE.",
+ "endpoint": {
+  "name": "is verifier-over-options a better MCQ escalation gate than the DEPLOYED 7B margin?",
+  "targets": [
+   "DETECTION: y = (7B greedy is wrong)",
+   "RECOVERABILITY: y = (32B-direct is right AND 7B greedy is wrong), the quantity a cascade gate should actually rank -- this project's recurring ~0.5-0.6 AUROC wall"
+  ],
+  "features_compared_with_NO_fitting": [
+   "-margin7b  (the deployed MCQ gate, read verbatim from MedEvalKit/eval_results_lingshu7b_full)",
+   "-(verifier top1 - top2) over the given options",
+   "1[verifier argmax != 7B greedy]  (pure disagreement, binary)",
+   "-(verifier score assigned to the 7B's OWN answer)  -- the verifier used as a critic of the generator rather than as an answerer"
+  ],
+  "fitted_arm": "logistic combiner of the four features under NESTED 5-fold CV (fit on 4 folds, scored on the held-out fold, 10 fold-split seeds); reported with mean/sd/range so a fold-luck win cannot be mistaken for a real one",
+  "decision_rule_stated_in_advance": "a gate claim requires the fitted combiner to beat -margin7b on RECOVERABILITY AUROC by more than the fold-seed sd, on more than one cell. Otherwise the round reports that the option-branch verifier adds nothing as a gate either."
+ },
+ "not_abstention": "an escalation gate routes to the strong model; the pipeline still answers every item. CRITICAL RULE 6 respected."
+}

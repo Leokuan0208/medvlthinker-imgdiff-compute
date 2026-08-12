@@ -48,13 +48,22 @@ No GPU.  Launch from the repo root:
 Writes results/cascade_methods/artifacts/pregen_router_2026-08-12.json
 """
 import os, sys, json, time, hashlib
-import numpy as np
 
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+# ⚠ THESE MUST PRECEDE `import numpy`.  BLAS and OpenMP read their thread configuration when the
+# library is LOADED, so setting these after `import numpy as np` -- as the first version of this file
+# did -- silently does nothing (the process ran on ~49 threads while the artifact claimed
+# OMP_NUM_THREADS=1).  CLAUDE.md lists CPU thread count as a numerics landmine worth +0.0048, which is
+# larger than this attack's entire 0.0029 tie tolerance, so the pin has to be real AND stated.  8 is
+# chosen over 1 to keep the cross-fit tractable on a shared box; null test N5 verifies empirically that
+# the trained scores are invariant to the thread count anyway.
+THREADS = "8"
+for _v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS",
+           "VECLIB_MAXIMUM_THREADS"):
+    os.environ[_v] = THREADS
 os.environ.setdefault("PYTHONHASHSEED", "0")
 
+import numpy as np
+from threadpoolctl import threadpool_limits
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.feature_extraction.text import HashingVectorizer
 from scipy import sparse as sp
@@ -449,8 +458,12 @@ CONFIGS = [
      "router fitted inside each cell.  USES DATASET IDENTITY: at deployment you must know which "
      "benchmark the question came from in order to pick which router to run, and its score LEVEL is "
      "that cell's own mean advantage.  Reported as an upper reference, not as a prompt-only result."),
-    ("R-A_percell_ridge_full", "within", "ridge", "full",
-     "PER-CELL ridge on dense features + hashed question n-grams.  USES DATASET IDENTITY, same reason."),
+    # ("R-A_percell_ridge_full", "within", "ridge", "full") was DROPPED on 2026-08-12 for compute, and
+    # the removal is recorded rather than hidden: it is a SECOND per-cell (dataset-identity) reference
+    # that R-A_percell_gbm_dense already supplies, it is explicitly not deployable, and it cost 38% of
+    # the whole cross-fit (400 solves of a 4,181-dim Gram) -- 1h26m on a box at load average 78 versus
+    # 14 min idle.  No deployable arm, ablation, null or diagnostic was removed.  See
+    # rep["configs_dropped_for_compute"].
     ("R-B_pooled_gbm_dense", "pooled", "gbm", "dense",
      "POOLED gradient boosting over all 8 cells with NO dataset feature -- ONE model, one threshold, "
      "no dataset label needed at deployment.  THE DEPLOYABLE PROMPT-ONLY ROUTER.  Caveat kept in "
@@ -481,6 +494,20 @@ def main():
                         "python3 src/cascade_methods/pregen_router.py"]
     rep["no_gpu"] = True
     rep["no_fabricated_numbers"] = True
+    rep["configs_dropped_for_compute"] = dict(
+        dropped=["R-A_percell_ridge_full"],
+        reason="a SECOND per-cell (dataset-identity) reference, duplicating R-A_percell_gbm_dense, "
+               "explicitly not deployable, and costing 38% of the entire cross-fit (400 solves of a "
+               "4,181-dimensional Gram matrix).  On a shared box at load average 78 it had consumed "
+               "1h26m against 14 min idle when it was cut.",
+        what_was_NOT_dropped="every deployable arm (R-B pooled), the dataset-identity contrast (R-C), "
+                             "both feature ablations (text-only, image-only), both permutation nulls, "
+                             "the pure-noise global null, both between/within diagnostics, the nested "
+                             "honest selector, the guardrail and the hybrid.",
+        observed_before_the_cut="in the 2026-08-12 02:32 run this config reached a cheapest feasible "
+                                "point of 0.9349x at macro 0.6572, delta +0.0005 [-0.0027,+0.0041] -- "
+                                "i.e. WORSE than R-A_percell_gbm_dense (0.9217x) and than "
+                                "R-B_pooled_gbm_dense (0.8438x), so it was never the headline.")
     rep["seed"] = SEED
     rep["n_seeds"] = NSEED
     rep["n_bootstrap"] = NBOOT
@@ -500,7 +527,15 @@ def main():
                              "answer, not a win.'  That prediction is tested here and reported "
                              "whichever way it lands.")
     rep["numerics_pins"] = dict(
-        OMP_NUM_THREADS="1", MKL_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", PYTHONHASHSEED="0",
+        OMP_NUM_THREADS=THREADS, MKL_NUM_THREADS=THREADS, OPENBLAS_NUM_THREADS=THREADS,
+        PYTHONHASHSEED="0",
+        THREAD_PIN_PROVENANCE=(
+            "The thread environment variables are now set BEFORE numpy is imported, so the pin binds. "
+            "It did NOT bind in the first version of this script (they were set after `import numpy`, "
+            "which is too late for BLAS/OpenMP), and the cross-fit scores cached at "
+            "_pregen_router_parts/scores_cache.npz were produced by that unpinned run on ~49 threads. "
+            "Rather than assert that this is immaterial, null test N5 RETRAINS a configuration at "
+            "ONE thread and compares it against the cached vectors item by item."),
         tf32="not applicable -- CPU only, no torch matmul anywhere in this script",
         python=sys.version.split()[0], numpy=np.__version__,
         sklearn=__import__("sklearn").__version__,
@@ -563,20 +598,83 @@ def main():
 
     # ---------------- train ---------------------------------------------------------------------
     print("training routers ...", flush=True)
-    SCORES = {}
-    for name, variant, model, mode, _ in CONFIGS:
-        t = time.time()
-        SCORES[name] = [crossfit_scores(variant, model, mode, SEED + s) for s in range(NSEED)]
-        print(f"  {name}: {NSEED} seeds in {time.time()-t:.0f}s  (total {time.time()-T0:.0f}s)", flush=True)
-    PERM = [crossfit_scores("pooled", "gbm", "dense", SEED + s, permute=True) for s in range(NSEED)]
-    PERM_W = [crossfit_scores("within", "gbm", "dense", SEED + s, permute=True) for s in range(NSEED)]
-    print(f"  permutation nulls done ({time.time()-T0:.0f}s)", flush=True)
+    # Cross-fit training is ~40 min.  Cache the HELD-OUT scores under a key that pins every input that
+    # could change them, so a downstream edit does not force a retrain.  A key mismatch retrains.
+    CACHE = os.path.join(PARTS, "scores_cache.npz")
+    CKEY = hashlib.md5(json.dumps(
+        [[n, v, m, md] for n, v, m, md, _ in CONFIGS]
+        + [SEED, NSEED, KFOLD, [FEATMAN[c]["text_md5"] for c in CELLS]]).encode()).hexdigest()
+    SCORES, PERM, PERM_W = {}, None, None
+    if os.path.exists(CACHE):
+        z = np.load(CACHE, allow_pickle=True)
+        if str(z["key"]) == CKEY:
+            SCORES = {n: [{c: z[f"{n}|{s}|{c}"] for c in CELLS} for s in range(NSEED)]
+                      for n, _, _, _, _ in CONFIGS}
+            PERM = [{c: z[f"PERM|{s}|{c}"] for c in CELLS} for s in range(NSEED)]
+            PERM_W = [{c: z[f"PERMW|{s}|{c}"] for c in CELLS} for s in range(NSEED)]
+            print(f"  loaded cached cross-fit scores (key {CKEY[:12]})", flush=True)
+    if PERM is None:
+        SCORES = {}
+        for name, variant, model, mode, _ in CONFIGS:
+            t = time.time()
+            SCORES[name] = [crossfit_scores(variant, model, mode, SEED + s) for s in range(NSEED)]
+            print(f"  {name}: {NSEED} seeds in {time.time()-t:.0f}s  (total {time.time()-T0:.0f}s)",
+                  flush=True)
+        PERM = [crossfit_scores("pooled", "gbm", "dense", SEED + s, permute=True) for s in range(NSEED)]
+        PERM_W = [crossfit_scores("within", "gbm", "dense", SEED + s, permute=True) for s in range(NSEED)]
+        print(f"  permutation nulls done ({time.time()-T0:.0f}s)", flush=True)
+        blob = {"key": np.array(CKEY)}
+        for n in SCORES:
+            for s in range(NSEED):
+                for c in CELLS:
+                    blob[f"{n}|{s}|{c}"] = SCORES[n][s][c]
+        for s in range(NSEED):
+            for c in CELLS:
+                blob[f"PERM|{s}|{c}"] = PERM[s][c]
+                blob[f"PERMW|{s}|{c}"] = PERM_W[s][c]
+        np.savez_compressed(CACHE, **blob)
+    rep["score_cache_key"] = CKEY
+
+    # N5 -- THREAD-COUNT INVARIANCE, measured rather than asserted.  Retrain one configuration for one
+    # seed under a hard 1-thread limit and compare, item by item, against the vectors this run is
+    # actually using.  Thread count changes only the float REDUCTION ORDER inside BLAS/OpenMP here --
+    # it does not touch the fold assignment, the row order, or any random_state -- so the expectation
+    # is exact or near-exact agreement.  If it were not, every number in this file would be unpinned
+    # noise and the artifact would have to be discarded.
+    t5 = time.time()
+    with threadpool_limits(limits=1):
+        ref1 = crossfit_scores("pooled", "gbm", "dense", SEED)
+    d5 = max(float(np.abs(ref1[c] - SCORES["R-B_pooled_gbm_dense"][0][c]).max()) for c in CELLS)
+    r5 = max(float(np.abs(ref1[c] - SCORES["R-B_pooled_gbm_dense"][0][c]).max()
+                   / max(np.abs(SCORES["R-B_pooled_gbm_dense"][0][c]).max(), 1e-30)) for c in CELLS)
+    rep["null_tests"]["N5"] = dict(
+        name="N5 -- the cross-fit scores are invariant to the CPU thread count",
+        detail="R-B_pooled_gbm_dense, seed 0, retrained under threadpool_limits(1) and compared "
+               "item by item against the vectors used everywhere else in this run (which were trained "
+               "with BLAS/OpenMP unpinned on ~49 threads).",
+        config="R-B_pooled_gbm_dense", seed_index=0, n_items_compared=NTOT,
+        max_abs_dev=d5, max_rel_dev=r5, seconds=round(time.time() - t5, 1),
+        why_it_matters="CLAUDE.md lists CPU thread count as a numerics landmine worth +0.0048 macro, "
+                       "which is larger than this attack's 0.0029 tie tolerance; it is therefore "
+                       "closed by measurement, not by assertion.",
+        verdict=("PASS -- max abs deviation %.3e over %d items, i.e. the trained scores do not depend "
+                 "on the thread count" % (d5, NTOT)) if d5 < 1e-9 else
+                ("FAIL -- max abs deviation %.3e; the cross-fit is thread-dependent and every number "
+                 "derived from it is unpinned" % d5))
+    print(f"  N5: {rep['null_tests']['N5']['verdict']}", flush=True)
 
     ENS = {k: ensemble(v) for k, v in SCORES.items()}
     ENS["DIAG_R-B_BETWEEN_cell_only"] = between_only(ENS["R-B_pooled_gbm_dense"])
     ENS["DIAG_R-B_WITHIN_cell_only"] = within_only(ENS["R-B_pooled_gbm_dense"])
     ENS["PERMUTATION_NULL_pooled"] = ensemble(PERM)
     ENS["PERMUTATION_NULL_percell"] = ensemble(PERM_W)
+    # THE GLOBAL NULL, made concrete so it carries a bootstrap CI like every other arm: a router whose
+    # score is pure noise.  It has neither within-cell nor between-cell information, so it traces the
+    # analytic no-skill line.  Its CHEAPEST POINT MEETING THE CONSTRAINT is the honest bar for the whole
+    # attack: it is what "cheaper than 1.0x while still tying" is worth when the router knows NOTHING.
+    ENS["PURE_NOISE_ROUTER"] = ensemble([
+        {c: np.random.default_rng(SEED * 65537 + hash_cell(c) + s * 104729).standard_normal(N[c])
+         for c in CELLS} for s in range(NSEED)])
 
     # ---------------- discrimination -------------------------------------------------------------
     def auroc(score, y):
@@ -678,10 +776,14 @@ def main():
             r["lam"] = round(float(lam), 8)
             r["policy_id"] = f"{cfg}@{i}"
             r["per_cell_32b_fraction"] = {c: round(frac[c], 4) for c in CELLS}
-            # N4: the prefix-cumsum bootstrap point estimate must equal the literal re-evaluation
+            # N4: the prefix-cumsum bootstrap point estimate must equal the literal re-evaluation.
+            # Compare against the UNROUNDED estimate pts[.]; r["macro_acc"] is rounded to 6 dp for
+            # reporting, and comparing a 6-dp-rounded number against an exact one fails a 1e-12
+            # tolerance by construction (deviations up to 5e-7) -- which is the bug that aborted the
+            # 2026-08-12 02:32 run, NOT a defect in the estimator.
             lit = float(np.mean([np.where(sc[c] > lam, OK[(c, "always_32b_direct")],
                                           OK[(c, "always_7b")]).mean() for c in CELLS]))
-            N4DEV.append(abs(lit - r["macro_acc"]))
+            N4DEV.append(abs(lit - float(pts[IDX[f"{cfg}@{i}"]])))
             r["no_skill_line_acc_at_same_fraction"] = round(
                 (1 - r["macro_32b_fraction"]) * a7m + r["macro_32b_fraction"] * a32m, 6)
             r["gain_over_no_skill_line"] = round(r["macro_acc"] - r["no_skill_line_acc_at_same_fraction"], 6)
@@ -702,7 +804,13 @@ def main():
                 "PERMUTATION NULL -- labels y = ok32 - ok7 shuffled WITHIN each cell before training "
                 "the pooled GBM; folds, features, seeds and ensembling identical.",
             "PERMUTATION_NULL_percell":
-                "PERMUTATION NULL for the per-cell GBM -- labels shuffled within each cell."}
+                "PERMUTATION NULL for the per-cell GBM -- labels shuffled within each cell.",
+            "PURE_NOISE_ROUTER":
+                "GLOBAL NULL -- the router's score is pure Gaussian noise, ensembled over the same 10 "
+                "seeds.  It has NO within-cell and NO between-cell information and therefore traces "
+                "the analytic no-skill line.  Its cheapest point meeting the non-inferiority "
+                "constraint measures what the CONSTRAINT ALONE buys with zero routing skill, and is "
+                "the bar every real router in this file has to beat."}
         rep["frontier"][cfg] = dict(
             description=next((d for nm, _, _, _, d in CONFIGS if nm == cfg), DIAGDESC.get(cfg, "")),
             n_points=len(rows), n_points_meeting_constraint=len(ok_rows),
@@ -718,7 +826,12 @@ def main():
         name="N4 -- the prefix-cumsum bootstrap estimator reproduces the literal policy evaluation",
         detail="every threshold policy's macro accuracy is computed twice: once via the cumulative-sum "
                "shortcut that makes the shared bootstrap affordable, and once by literally applying "
-               "np.where(score > lambda, ok32, ok7) per cell.  They must agree exactly.",
+               "np.where(score > lambda, ok32, ok7) per cell.  They must agree to floating-point "
+               "exactness.  The comparison is against the UNROUNDED point estimate; an earlier version "
+               "of this test compared the literal value against the 6-dp-rounded REPORTED accuracy and "
+               "therefore failed by construction at up to 5e-7 (the 2026-08-12 02:32 abort).  That was "
+               "a defect in the test, not in the estimator: the shortcut is algebraically exact because "
+               "value(lambda) = ok7 + 1{score>lambda}*(ok32-ok7).",
         n_points_checked=len(N4DEV), max_abs_dev=float(max(N4DEV)),
         verdict="PASS -- max abs deviation %.2e" % max(N4DEV) if max(N4DEV) < 1e-12 else "FAIL")
     print(f"  N4: {rep['null_tests']['N4']['verdict']}", flush=True)
@@ -728,6 +841,22 @@ def main():
     def interp_at(cfg, key, target):
         rows = sorted(ROUTER_ROWS[cfg], key=lambda r: r["macro_32b_fraction"])
         return float(np.interp(target, [r["macro_32b_fraction"] for r in rows], [r[key] for r in rows]))
+
+    def nearest_idx(cfg, target):
+        rows = ROUTER_ROWS[cfg]
+        return min(range(len(rows)), key=lambda i: abs(rows[i]["macro_32b_fraction"] - target))
+
+    def matched_ci(cfg_a, cfg_b, target):
+        """Paired CI of (cfg_a - cfg_b) at the frontier points closest to a MATCHED macro 32B-fraction,
+        on the ONE shared bootstrap stream, so cost is held constant and the resamples are identical."""
+        ia, ib = nearest_idx(cfg_a, target), nearest_idx(cfg_b, target)
+        ra, rb_ = ROUTER_ROWS[cfg_a][ia], ROUTER_ROWS[cfg_b][ib]
+        lo, hi = ci(boots[:, IDX[f"{cfg_a}@{ia}"]] - boots[:, IDX[f"{cfg_b}@{ib}"]])
+        return dict(target_32b_fraction=target, a=cfg_a, b=cfg_b,
+                    a_32b_fraction=ra["macro_32b_fraction"], b_32b_fraction=rb_["macro_32b_fraction"],
+                    a_acc=ra["macro_acc"], b_acc=rb_["macro_acc"],
+                    delta=round(ra["macro_acc"] - rb_["macro_acc"], 6),
+                    ci_lo=round(lo, 6), ci_hi=round(hi, 6), a_significantly_better=bool(lo > 0))
 
     perm_rows = []
     for t in [0.1, 0.25, 0.5, 0.75, 0.9, 0.95]:
@@ -743,20 +872,82 @@ def main():
             no_skill_line_acc=round(line, 6),
             real_minus_null_pooled=round(interp_at("R-B_pooled_gbm_dense", "macro_acc", t)
                                          - interp_at("PERMUTATION_NULL_pooled", "macro_acc", t), 6),
-            null_minus_line=round(interp_at("PERMUTATION_NULL_pooled", "macro_acc", t) - line, 6)))
-    mx = max(abs(r["null_minus_line"]) for r in perm_rows)
+            null_minus_line=round(interp_at("PERMUTATION_NULL_pooled", "macro_acc", t) - line, 6),
+            null_minus_between_diag=round(interp_at("PERMUTATION_NULL_pooled", "macro_acc", t)
+                                          - interp_at("DIAG_R-B_BETWEEN_cell_only", "macro_acc", t), 6)))
+    mx_line = max(abs(r["null_minus_line"]) for r in perm_rows)
+    mx_btw = max(abs(r["null_minus_between_diag"]) for r in perm_rows)
+    skill = [matched_ci("R-B_pooled_gbm_dense", "PERMUTATION_NULL_pooled", t)
+             for t in [0.25, 0.5, 0.75, 0.9]]
+    nsig = sum(1 for s in skill if s["a_significantly_better"])
     rep["permutation_null"] = dict(
         design="labels y = ok32 - ok7 shuffled WITHIN each cell before training; identical folds, "
-               "features, 10 seeds and ensembling.  A shuffled-label router must land ON the no-skill "
-               "line at every matched 32B-fraction.",
+               "features, 10 seeds and ensembling.",
+        WHAT_THIS_NULL_DOES_AND_DOES_NOT_DESTROY=(
+            "CRITICAL, and it was mis-stated in the first draft of this script.  Shuffling WITHIN a cell "
+            "destroys every WITHIN-cell association between features and advantage, but it leaves each "
+            "cell's MEAN advantage exactly intact.  A pooled router can therefore still learn 'questions "
+            "that look like PMC-VQA have low mean advantage' from the shuffled labels, and a single "
+            "global threshold will still allocate the 32B preferentially to high-advantage cells.  So "
+            "this is a null for WITHIN-CELL routing skill ONLY, not a global null, and it is NOT "
+            "expected to land on the no-skill line.  Its correct reference is "
+            "DIAG_R-B_BETWEEN_cell_only.  THE GLOBAL NULL IS THE ANALYTIC NO-SKILL LINE "
+            "(acc = (1-f)*macro_acc_7b + f*macro_acc_32b), which is what a router with no information "
+            "of any kind traces, and it is tabulated in every frontier row as "
+            "no_skill_line_acc_at_same_fraction / gain_over_no_skill_line."),
         rows=perm_rows,
-        max_abs_null_minus_no_skill_line=round(mx, 6),
+        max_abs_null_minus_no_skill_line=round(mx_line, 6),
+        max_abs_null_minus_between_cell_diagnostic=round(mx_btw, 6),
+        null_tracks_its_correct_reference=bool(mx_btw < 0.01),
+        WITHIN_CELL_SKILL_TEST=dict(
+            design="paired CI of (real pooled router - within-cell permutation null) at MATCHED macro "
+                   "32B-fraction on the shared bootstrap stream.  This is the only clean test of "
+                   "whether the router has any WITHIN-cell skill, because both arms carry the same "
+                   "between-cell allocation ability.",
+            rows=skill, n_targets_significant=f"{nsig}/{len(skill)}"),
         best_permutation_frontier_point=rep["frontier"]["PERMUTATION_NULL_pooled"]
         ["cheapest_point_meeting_constraint"],
-        verdict=("PASS -- the shuffled-label router tracks the no-skill line to within %.4f macro "
-                 "accuracy at every matched cost" % mx) if mx < 0.01 else
-                ("SUSPECT -- the shuffled-label router deviates from the no-skill line by up to %.4f" % mx))
-    print(f"  permutation null: {rep['permutation_null']['verdict']}", flush=True)
+        SELECTION_SAFETY_WARNING=(
+            "The within-cell permutation null ALSO yields a 'cheapest point meeting the constraint' "
+            "below 1.0x.  That is the single most important integrity fact in this file: choosing the "
+            "cheapest of ~650 frontier policies by whether its bootstrap CI clears -0.0029 is a "
+            "multiple-comparison procedure that a NULL router passes.  Every EVAL-SELECTED frontier "
+            "point in this artifact is therefore an upper bound on what is real, and the honest "
+            "primary endpoint is NESTED_HONEST_PRIMARY."),
+        verdict=("the null tracks its correct reference (the between-cell diagnostic) to %.4f; it "
+                 "sits %.4f ABOVE the no-skill line, which is the between-cell allocation component, "
+                 "not skill.  Within-cell skill significant at %s matched costs."
+                 % (mx_btw, mx_line, f"{nsig}/{len(skill)}")))
+    print(f"  permutation null: within-cell skill significant at {nsig}/{len(skill)} matched costs; "
+          f"null-vs-between {mx_btw:.4f}, null-vs-line {mx_line:+.4f}", flush=True)
+
+    noise_best = rep["frontier"]["PURE_NOISE_ROUTER"]["cheapest_point_meeting_constraint"]
+    real_best = rep["frontier"]["R-B_pooled_gbm_dense"]["cheapest_point_meeting_constraint"]
+    rep["ZERO_INFORMATION_BAR"] = dict(
+        question="How much of 'cheaper than always-32B-direct while still tying' is bought by the "
+                 "NON-INFERIORITY CONSTRAINT ITSELF, with no routing skill whatsoever?",
+        method="A PURE NOISE router (Gaussian scores, same 10-seed ensembling, same 61-point lambda "
+               "sweep, same shared bootstrap) is swept and its cheapest constraint-satisfying point is "
+               "read off exactly as for every real router.  Routing a random minority of items to the "
+               "7B costs accuracy in proportion, so the constraint stops it somewhere below 1.0x -- and "
+               "wherever it stops is free, unearned saving that any router would also collect.",
+        pure_noise_cheapest_feasible=noise_best,
+        real_router_cheapest_feasible=real_best,
+        EARNED_SAVING_as_charged=(round(noise_best["ratio_as_charged"] - real_best["ratio_as_charged"], 4)
+                                  if noise_best and real_best else None),
+        interpretation="ratio(pure noise) - ratio(real router) is the part of the saving that the "
+                       "router's features actually earned.  ratio(pure noise) itself is the part that "
+                       "the tie tolerance hands out for free and must NOT be credited to the attack.",
+        analytic_check=dict(
+            f_where_point_delta_equals_minus_tie_tol=round(1.0 - TIE_TOL / (a32m - a7m), 4),
+            ratio_there=round(((1 - (1.0 - TIE_TOL / (a32m - a7m)))
+                               + (1.0 - TIE_TOL / (a32m - a7m)) * R32_CHARGED) / R32_CHARGED, 4),
+            note="closed form for the POINT estimate only; the reported pure-noise point is stricter "
+                 "because it must clear the constraint on the bootstrap CI LOWER BOUND, not the point."))
+    if noise_best and real_best:
+        print(f"  ZERO-INFO BAR: pure noise reaches {noise_best['ratio_as_charged']}x; "
+              f"real router {real_best['ratio_as_charged']}x; earned = "
+              f"{noise_best['ratio_as_charged'] - real_best['ratio_as_charged']:+.4f}x", flush=True)
 
     # ---------------- NESTED selection of (config, lambda) ---------------------------------------
     # Selecting the best config AND the best lambda by looking at the eval macro is exactly how a fake
@@ -1045,7 +1236,32 @@ def main():
         arm_menu=ARMNAMES, rows=hrows,
         comparator="results/cascade_methods/artifacts/cost_floor_2026-08-10.json ran the same "
                    "construction WITHOUT any router arm and got 1.1648x at +0.0011 [-0.0014,+0.0035] "
-                   "(eps=0, 12-seed mean, tie on 10/12 seeds).")
+                   "(eps=0, 12-seed mean, tie on 10/12 seeds).",
+        HONESTY_CAVEAT="the router scores fed into this arm menu were cross-fit on a DIFFERENT fold "
+                       "partition from this selector's outer folds, so the router's training rows "
+                       "overlap this selector's held-out rows.  That is the standard construction and "
+                       "it is not eval leakage of the ARM CHOICE, but it is not a fully disjoint "
+                       "nested loop either -- the same caveat as NESTED_HONEST_PRIMARY.")
+
+    # The hybrid's nested-CV point is the headline of this attack, so it gets the mandated per-cell
+    # guardrail too.  Same bootstrap seed and per_cell stream as the guardrail above, so the rows are
+    # paired against the identical resamples and are directly comparable.
+    for c in CELLS:
+        gsel = {k: v for k, v in hyb_vals.items()
+                if k in ("HYBRID_nested_cv", "HYBRID_crossfit_eps0.0", "HYBRID_crossfit_eps0.005")}
+        nmz, p, bt = shared_bootstrap(dict(gsel, always_32b_direct=fixed["always_32b_direct"]), {},
+                                      seed=SEED + 555, per_cell=c)
+        bi = nmz.index("always_32b_direct")
+        for j, nm in enumerate(nmz):
+            if nm == "always_32b_direct":
+                continue
+            lo, hi = ci(bt[:, j] - bt[:, bi])
+            rep["guardrail_per_cell"]["per_cell"][c][nm] = dict(
+                delta=round(float(p[j] - p[bi]), 6), lo=round(lo, 6), hi=round(hi, 6),
+                flag_significant_loss=bool(hi < 0))
+    rep["guardrail_per_cell"]["hybrid_rows_added"] = (
+        "HYBRID_nested_cv, HYBRID_crossfit_eps0.0 and HYBRID_crossfit_eps0.005 are included in "
+        "per_cell above; they were added after the hybrid was built and share its bootstrap stream.")
 
     # ---------------- footprint --------------------------------------------------------------------
     router_params = dict(
@@ -1095,6 +1311,14 @@ def main():
             r["label"] = f"PRE-GEN ROUTER {cfg} -- cheapest feasible point (EVAL-SELECTED lambda)"
             r["kind"] = "pregen_eval_selected"
             head.append(r)
+    for cfg in ["PURE_NOISE_ROUTER", "PERMUTATION_NULL_pooled", "PERMUTATION_NULL_percell",
+                "DIAG_R-B_BETWEEN_cell_only", "DIAG_R-B_WITHIN_cell_only"]:
+        b = rep["frontier"][cfg]["cheapest_point_meeting_constraint"]
+        if b:
+            r = dict(b); r.pop("per_cell_32b_fraction", None)
+            r["label"] = f"NULL / DIAGNOSTIC {cfg} -- cheapest feasible point (EVAL-SELECTED lambda)"
+            r["kind"] = "null_or_diagnostic"
+            head.append(r)
     r = dict(rep["NESTED_HONEST_PRIMARY"]["per_seed"]["NESTED_seed0"])
     r.pop("picks", None)
     r["label"] = "PRE-GEN ROUTER, NESTED honest selection of (config, lambda), seed 0"
@@ -1132,4 +1356,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BaseException:
+        # Never lose a 40-minute cross-fit to a downstream error: persist whatever was established,
+        # clearly marked INCOMPLETE so it can never be mistaken for the finished artifact.
+        if rep:
+            rep["INCOMPLETE"] = "run aborted before completion -- partial, do not quote"
+            json.dump(rep, open(OUT + ".partial", "w"), indent=1, default=float)
+            print("wrote PARTIAL report to " + OUT + ".partial", flush=True)
+        raise

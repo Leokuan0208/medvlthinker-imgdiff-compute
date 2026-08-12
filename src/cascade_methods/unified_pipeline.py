@@ -365,7 +365,7 @@ def load_scores(cell, tag):
     return {i: d for i, d in per.items()}
 
 
-def pick_vector(rows, scores, k_of):
+def pick_vector(rows, scores, k_of=None):
     """Per-item delivered-ok for argmax-over-candidates.  Items with no score fall back to the
     7B's own greedy answer (the pipeline ALWAYS returns an answer)."""
     ok, picked, covered = [], [], []
@@ -482,6 +482,32 @@ def sevenb_pick(cell, rows):
                    "dump_correct_equals_parsed_pick_is_gold": agree / max(1, n)}
 
 
+_DSNAME = {"PMC_VQA": "PMC_VQA", "MedXpertQA-MM": "MedXpertQA-MM", "VQA_RAD_closed": "VQA_RAD",
+           "PATH_VQA_closed": "PATH_VQA", "SLAKE_closed": "SLAKE"}
+
+
+_MARGIN_CACHE = {}
+
+
+def sevenb_margin(cell):
+    """The DEPLOYED 7B's own top1-top2 confidence margin, read verbatim from the MedEvalKit dump
+    (`margin` field).  This is the incumbent MCQ gate signal, so a min-strong-leg curve that gates
+    the option cells with it is gating them the way the incumbent method actually does."""
+    if cell in _MARGIN_CACHE:
+        return _MARGIN_CACHE[cell]
+    disk = os.path.join(DATA, "sevenb_margin.json")
+    cached = json.load(open(disk)) if os.path.exists(disk) else {}
+    if cell not in cached:
+        import mcq_tta as M
+        raw = json.load(open(f"{MEK}/eval_results_lingshu7b_full/{{}}/{_DSNAME[cell]}/results.json"))
+        items = M.build_items()[cell]
+        cached[cell] = [float(raw[it["src"]].get("margin") or 0.0) for it in items]
+        os.makedirs(DATA, exist_ok=True)
+        json.dump(cached, open(disk, "w"))
+    _MARGIN_CACHE[cell] = np.array(cached[cell], float)
+    return _MARGIN_CACHE[cell]
+
+
 def cost_flopeq(cell, k_mean, esc=0.0):
     """FLOP-eq per query in units of ONE 7B forward (paper_baselines constants: 7B gen 1.0,
     verifier forward 1.0, 32B direct 4.57).  The option branch needs NO generation at all --
@@ -496,6 +522,7 @@ def analyse(tag="zeroshot"):
 
     macro_pipe, macro_7b, macro_32d = {}, {}, {}
     gate_conf, gate_ok, gate_32 = {}, {}, {}
+    mar7 = {}
 
     for cell in OPTION_CELLS:
         rows = work[cell]
@@ -546,6 +573,7 @@ def analyse(tag="zeroshot"):
         }
         macro_pipe[cell] = a_pipe; macro_7b[cell] = a_7b; macro_32d[cell] = a_32
         gate_conf[cell] = np.array(conf, float); gate_ok[cell] = a_pipe; gate_32[cell] = a_32
+        mar7[cell] = sevenb_margin(cell)[idx]
 
     # ---- the other four cells: the SAME scorer, unchanged (open) or degenerate (SLAKE_closed) --
     for cell in SAMPLED_CELLS:
@@ -557,7 +585,7 @@ def analyse(tag="zeroshot"):
             vp = v7.copy()
             note = ("no candidate pool generated; 1-candidate set == 7B greedy. NOT a win, and the "
                     "cell is carried at the 7B floor.")
-            cf = np.zeros(len(vp))
+            cf = sevenb_margin(cell)          # gate it with the 7B's own deployed margin
         else:
             dp = os.path.join(DUMP_DIR_CLEAN,
                               f"transfer_dump_{ {'SLAKE_open':'slake','VQA_RAD_open':'vqa_rad','PATH_VQA_open':'pathvqa'}[cell] }_open_lingshu7b.json")
@@ -601,6 +629,32 @@ def analyse(tag="zeroshot"):
         }
         # ---- minimum strong-leg usage that closes the remainder --------------------------
         res["min_strong_leg"] = min_strong_leg(gate_conf, gate_ok, gate_32)
+
+        # ---- CONTROL: the same pipeline with the OPTION BRANCH DISABLED -------------------
+        # i.e. when the prompt supplies an answer space we IGNORE it and keep the 1-candidate
+        # set {7B greedy}.  This is the best a 7B-only pipeline can do without touching MCQ,
+        # and it is the honest envelope the user's "one pipeline, no 32B" target must be
+        # measured against.  Same items, so every comparison stays paired.
+        off = {c: (macro_7b[c] if c in OPTION_CELLS else macro_pipe[c]) for c in MACRO8}
+        res["option_branch_off_control"] = {
+            "definition": "candidate set = {7B greedy} on the four prompt-supplied-answer-space "
+                          "cells; the sampled branch unchanged. NOT the unified rule -- the control "
+                          "that says what the option branch COST.",
+            "macro": float(np.mean([off[c].mean() for c in MACRO8])),
+            "vs_always_7b": macro_boot(off, macro_7b),
+            "vs_32b_direct": macro_boot(off, macro_32d),
+            "vs_unified": macro_boot(off, macro_pipe),
+            "per_cell": {c: float(off[c].mean()) for c in MACRO8},
+            "fraction_of_the_0p0596_gap_closed":
+                float((np.mean([off[c].mean() for c in MACRO8])
+                       - np.mean([macro_7b[c].mean() for c in MACRO8])) / 0.0596),
+            "min_strong_leg": min_strong_leg(
+                {c: (mar7[c] if c in OPTION_CELLS else gate_conf[c]) for c in MACRO8},
+                off, macro_32d),
+            "gate_note": "the option cells are gated by the DEPLOYED 7B's own margin (the incumbent "
+                         "MCQ gate signal, read verbatim from the MedEvalKit dump), the open cells "
+                         "by the verifier's top1-top2, SLAKE_closed by the 7B margin.",
+        }
     else:
         res["macro"] = {"status": "incomplete -- cells missing: "
                                   + ",".join(c for c in MACRO8 if c not in macro_pipe)}

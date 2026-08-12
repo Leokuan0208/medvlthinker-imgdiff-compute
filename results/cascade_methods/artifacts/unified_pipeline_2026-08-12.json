@@ -1,0 +1,2150 @@
+{
+ "title": "ATTACK 2 -- ONE PIPELINE FOR BOTH ANSWER FORMATS: the candidate set is read off the prompt, the scorer is the same in both branches, and there is no 32B at test time.",
+ "date": "2026-08-12",
+ "preregistration": "results/cascade_methods/artifacts/unified_pipeline_2026-08-12_preregistration.json",
+ "amendments": [
+  "results/cascade_methods/artifacts/unified_pipeline_2026-08-12_amendment1.json",
+  "results/cascade_methods/artifacts/unified_pipeline_2026-08-12_amendment2.json"
+ ],
+ "reproduce": {
+  "null tests + disjointness": "python3 src/cascade_methods/unified_pipeline.py --nulltest --disjoint",
+  "score the option branch": "python3 src/cascade_methods/unified_pipeline_score.py --adapter <A> --tag <T>",
+  "assemble a tag": "python3 src/cascade_methods/unified_pipeline.py --analyse --tag <T>",
+  "floors": "python3 src/cascade_methods/unified_pipeline_floors.py --tag <T>",
+  "arm A' debias": "python3 src/cascade_methods/unified_pipeline_debias.py",
+  "this file": "python3 src/cascade_methods/unified_pipeline_finalize.py",
+  "train arms B0/B": "bash runners/run_unified_pipeline_armB0.sh"
+ },
+ "not_abstention": "every branch returns an answer on every item: the option branch answers with argmax over the prompt's own answer space, the sampled branch with argmax over the 7B's samples, and a 1-candidate set answers with the 7B's greedy answer. No reject option anywhere. CRITICAL RULE 6 respected.",
+ "no_32B_at_test_time": "the pipeline itself never calls the 32B. always-32B-direct appears only as the bar, and the min-strong-leg curve is a diagnostic that says how much 32B would be needed, not part of the pipeline.",
+ "VERDICT": {
+  "one_line": "The unification WORKS as a rule and FAILS as a mechanism: reading the candidate set off the prompt does unify the two formats with one scorer, one decision rule, no format branch and no sampling luck -- but scoring the GIVEN OPTIONS is no better than the 7B's own argmax on any of the four option cells and significantly worse on two, so the unified pipeline scores 0.5706 macro against always-7B 0.5967 and always-32B-direct 0.6567.",
+  "Q1_does_verifier_over_options_beat_the_7B_argmax": {
+   "answer": "NO -- on none of the four option cells, under a repaired grader. Two significant losses, two statistical ties, zero wins.",
+   "per_cell_delta_vs_always_7b": {
+    "PMC_VQA": "-0.0758 [-0.0897, -0.0625] SIG LOSS (repaired grader)",
+    "MedXpertQA-MM": "+0.0025 [-0.0160, +0.0215] n.s.",
+    "VQA_RAD_closed": "-0.0518 [-0.1116, +0.0080] n.s.",
+    "PATH_VQA_closed": "-0.1689 [-0.1886, -0.1499] SIG LOSS"
+   },
+   "and_it_is_not_a_floor_artifact": "all four cells clear F1, F2 and F3; candidate-level AUROC 0.583-0.800. The verifier HAS ranking signal over the options -- it is simply worse than the generator's own argmax.",
+   "the_best_the_verifier_can_add": "with the generator's own answer folded into the score, the cross-fit GLOBAL lambda is 1.0, at which the generator can never be overturned. The verifier is given zero effective weight."
+  },
+  "Q2_does_unifying_COST_anything_on_open_text": {
+   "answer": "NO -- the sampled branch is the incumbent best-of-8 arm unchanged (same adapter, same argmax rule); only the candidate set differs",
+   "cells": "SLAKE_open 0.7473 (+0.0109 n.s.), VQA_RAD_open 0.4800 (+0.0150 n.s.), PATH_VQA_open 0.3733 (+0.0493 SIG) against always-7B"
+  },
+  "Q3_the_macro_and_the_gap": {
+   "unified_rule_as_specified": "0.570560, -0.0261 [-0.0373, -0.0152] vs always-7B, -0.0862 [-0.0991, -0.0735] vs always-32B-direct -- it moves BACKWARD by 44% of the 0.0596 gap",
+   "option_branch_off_control": "0.606049, +0.0094 [+0.0021, +0.0170] vs always-7B, -0.0507 [-0.0627, -0.0390] vs always-32B-direct -- closes 15.8% of the gap, and all of it comes from the three OPEN cells",
+   "a_better_7B_only_point_measured_by_the_sibling_round": "0.616278 (frozen 8-seed selector on the open cells), -0.040395 [-0.052275, -0.028427] vs always-32B-direct, closes 32.2% [results/cascade_methods/artifacts/sevenb_only_frontier_2026-08-12.json]",
+   "minimum_strong_leg_usage": "under a SINGLE GLOBAL escalation budget ranked by the pipeline's own confidence (7B margin on the MCQ cells, verifier top1-top2 on the open cells), NO budget below 100% reaches always-32B-direct: 90% escalation reaches 0.6518 against the 0.6567 target. The per-cell-subset version of this question is answered exactly in the sibling round's PART3."
+  },
+  "what_the_user_asked_for": {
+   "one_pipeline_for_both_formats": "ACHIEVED as a rule -- one scorer, one decision rule, no format branch anywhere except the candidate-set constructor, which reads the deployed prompt",
+   "no_32B_at_test_time": "ACHIEVED",
+   "less_VRAM_than_the_32B": "ACHIEVED and measured: one 7B-class process (generator and verifier share one copy of the weights, +0.1961 GiB for the adapter) at 18.76-23.42 GiB board peak against 72.60 GiB for always-32B-direct, i.e. 3.1-3.9x less [artifacts/vram_testtime_2026-08-11.json]",
+   "match_always_32B_direct": "NOT ACHIEVED, and this round makes the shortfall larger, not smaller"
+  },
+  "the_finding_worth_keeping": "one adapter, one scoring function, one argmax rule, two candidate sets: on the generator's OWN samples the verifier rescues at 2.18x the pool's random floor where greedy is wrong (0.1456 vs 0.0668, 188 rescues / 104 breaks); on PROMPT-supplied options it is BELOW 1/K there on 3 of 4 cells. A verifier built on the generator's own base adds information only inside the generator's support.",
+  "the_methodological_catch": "the round's only apparent positive (+0.0132 SIG on PMC-VQA for the fusion arm) was entirely an artifact of a defect in MedEvalKit's PMC-VQA answer extractor. Against a repaired grader it is +0.0030 [-0.0023, +0.0083], NOT SIGNIFICANT. Any arm graded `pick == gold` collects +0.0102 of free grader defect on this cell."
+ },
+ "LIMITATIONS_stated_not_hidden": [
+  "PMC-VQA is scored on a pre-registered 6,000-item subsample of test_2 (seed 20260810, the same ids mcq_tta used), not all 33,430. Every PMC number here is on that subsample and is labelled with n=6000. always-7B on it is 0.539167 against 0.542656 on the full cell.",
+  "SLAKE_closed has no 8-sample pool on disk, so under the unified rule its candidate set degenerates to {7B greedy}. That cell is carried at the 7B floor and contributes exactly 0.0000 to every delta. It is NOT evidence that the rule works there.",
+  "arm A' (the debias diagnostic) used ONE 5-fold split (seed 20260812), not 10 fold-split seeds. The fusion arm and the gate arm both used 10. A' is diagnostic only and no claim rests on it.",
+  "arms B0/B involve training and therefore owe >=10 seeds. They did not finish at all under this round's shared-GPU contention, so the seed question is moot but unresolved: if they are ever run, they need the seed spread reported.",
+  "padded-batch scoring jitters the item argmax on ~1.7% of items (N4). Every option-branch number carries that jitter. It cannot explain -0.169 or -0.076; it is comparable to the MedXpert +0.0025 and to the repaired-grader PMC fusion +0.0030, both of which are reported as not significant.",
+  "VQA_RAD_closed is image-contaminated for the zero-shot arm (64/135 eval images are in the verifier's vqa_rad_open_train pool). The arm loses on that cell, so contamination cannot be what produced the loss.",
+  "the option branch costs K verifier forwards per query and needs NO generation, so its FLOP-eq is exactly K (4.0 / 5.0 / 2.0 / 2.0 per cell in units of one 7B forward) against 4.57 for one 32B-direct pass. It is not cheap, and it buys nothing."
+ ],
+ "the_rule": {
+  "statement": "candidates(item) = ANSWER_SPACE(prompt) if the deployed prompt supplies a complete answer space, else SAMPLE_N(7B, item); answer = argmax_c s(image, question, c) with ONE scorer s and ONE decision rule.",
+  "there_is_no_format_branch_in_the_code": "answer_space() reads the MedEvalKit prompt template that was already used for that item (src/cascade_methods/unified_pipeline.py:123)",
+  "which_cells_land_where": {
+   "option_branch (get_multiple_choice_prompt / get_judgement_prompt)": [
+    "PMC_VQA",
+    "MedXpertQA-MM",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed"
+   ],
+   "sampled_branch (get_close_ended_prompt / open-ended)": [
+    "SLAKE_closed",
+    "SLAKE_open",
+    "VQA_RAD_open",
+    "PATH_VQA_open"
+   ]
+  },
+  "verified_against_the_harness": {
+   "MedEvalKit/utils/PMC_VQA, MedXpertQA": "get_multiple_choice_prompt -> option bodies",
+   "MedEvalKit/utils/VQA_RAD/VQA_RAD.py:45, MedEvalKit/utils/PATH_VQA/PATH_VQA.py:60": "get_judgement_prompt -> \"Please output 'yes' or 'no'(no extra output).\" -> {yes,no}",
+   "MedEvalKit/utils/SLAKE/SLAKE.py:56": "get_close_ended_prompt -> NO answer space -> sampled branch (and with no 8-sample pool on disk it degenerates to a 1-candidate set = 7B greedy, carried at the 7B floor, never a win)"
+  },
+  "why_not_the_two_obvious_unifications": {
+   "(choice)(why) MCQ-as-constrained-open-text": "already measured, SIGNIFICANT LOSS -0.0226 sel_eff [artifacts/choicewhy_measure_2026-08-03.json]; not re-run",
+   "sample-8-and-verify on MCQ": "structurally dead: PMC verifier pick 0.4325 < greedy 0.5060, MedXpert oracle@8 0.5365 < its own luck floor 0.6808; not re-run"
+  }
+ },
+ "null_tests": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/nulltests.json",
+  "N1_open_text_seleff": {
+   "published": 0.775204,
+   "got": 0.7752043596730245,
+   "max_abs_dev": 3.5967302447481586e-07,
+   "n": 2345,
+   "n_recoverable": 1468,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "N2_macro_baselines": {
+   "per_system": {
+    "always_7b": {
+     "published": 0.5971,
+     "got": 0.5970867852002073,
+     "abs_dev": 1.3214799792660159e-05
+    },
+    "always_32b_direct": {
+     "published": 0.6567,
+     "got": 0.6566724925188034,
+     "abs_dev": 2.7507481196509254e-05
+    },
+    "always_32b_reasoning": {
+     "published": 0.5974,
+     "got": 0.5974351342477817,
+     "abs_dev": 3.5134247781676287e-05
+    },
+    "oracle_mode_32b": {
+     "published": 0.6573,
+     "got": 0.6572705786432053,
+     "abs_dev": 2.9421356794734344e-05
+    }
+   },
+   "max_abs_dev": 3.5134247781676287e-05,
+   "cell_n": {
+    "PMC_VQA": 33430,
+    "SLAKE_closed": 836,
+    "VQA_RAD_closed": 251,
+    "PATH_VQA_closed": 3362,
+    "MedXpertQA-MM": 2000,
+    "SLAKE_open": 645,
+    "VQA_RAD_open": 200,
+    "PATH_VQA_open": 1500
+   }
+  },
+  "N3_candidate_coverage": {
+   "PMC_VQA": {
+    "n": 6000,
+    "gold_not_in_candidate_set": 0,
+    "coverage": 1.0,
+    "k_candidates": [
+     4
+    ],
+    "always_7b_on_scored_subset": 0.5391666666666667
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "gold_not_in_candidate_set": 0,
+    "coverage": 1.0,
+    "k_candidates": [
+     5
+    ],
+    "always_7b_on_scored_subset": 0.2615
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "gold_not_in_candidate_set": 0,
+    "coverage": 1.0,
+    "k_candidates": [
+     2
+    ],
+    "always_7b_on_scored_subset": 0.7808764940239044
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "gold_not_in_candidate_set": 0,
+    "coverage": 1.0,
+    "k_candidates": [
+     2
+    ],
+    "always_7b_on_scored_subset": 0.8408685306365259
+   }
+  },
+  "max_abs_deviation_overall": 3.5134247781676287e-05
+ },
+ "disjointness_pixel_md5_of_decoded_RGB": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/disjointness.json",
+  "reading": "PMC_VQA, MedXpertQA-MM and PATH_VQA_closed are CLEAN (0 eval images in any verifier training pool). VQA_RAD_closed is NOT: 64 of its 135 eval images (47.4%) reappear in the vqa_rad_open_train pool the clean verifier was trained on -- VQA-RAD recycles images across its own splits. Per the pre-registration that cell is reported CONTAMINATED. It does not rescue any claim here: the arm LOSES on it (-0.0518), and contamination can only inflate an arm, so the loss stands a fortiori. Dropping the cell leaves the unified pipeline at -0.0808 vs always-32B-direct instead of -0.0862 (leave_one_cell_out_vs_32b_direct in the arm-A macro block).",
+  "trained_arms": "arms B0/B ban every eval image of every cell by decoded-RGB md5 BEFORE training (33,079 hashes), and PMC additionally by shared PMC article id because the v2 test figures are sub-figure CROPS that cannot md5-match a v1 train full figure",
+  "n_train_images": 5229,
+  "train_pool_sizes": {
+   "slake_open_train": 449,
+   "vqa_rad_open_train": 155,
+   "pathvqa_open_train": 2577,
+   "kvasir_open": 1048,
+   "radimagenet_open": 1000
+  },
+  "method": "md5 of DECODED RGB pixels (WxH + raw bytes); catches re-encoded copies",
+  "per_cell": {
+   "PMC_VQA": {
+    "n_eval_images": 5853,
+    "intersection": 0,
+    "intersection_frac_of_eval_images": 0.0,
+    "by_train_pool": {},
+    "clean_for_zero_shot_arm": true
+   },
+   "MedXpertQA-MM": {
+    "n_eval_images": 2811,
+    "intersection": 0,
+    "intersection_frac_of_eval_images": 0.0,
+    "by_train_pool": {},
+    "clean_for_zero_shot_arm": true
+   },
+   "VQA_RAD_closed": {
+    "n_eval_images": 135,
+    "intersection": 64,
+    "intersection_frac_of_eval_images": 0.4740740740740741,
+    "by_train_pool": {
+     "vqa_rad_open_train": 64
+    },
+    "clean_for_zero_shot_arm": false
+   },
+   "PATH_VQA_closed": {
+    "n_eval_images": 839,
+    "intersection": 0,
+    "intersection_frac_of_eval_images": 0.0,
+    "by_train_pool": {},
+    "clean_for_zero_shot_arm": true
+   }
+  }
+ },
+ "numerics": {
+  "tf32": false,
+  "OMP_NUM_THREADS": 1,
+  "PYTHONHASHSEED": 0,
+  "serving": "HF transformers ONLY -- a visual LoRA under vLLM drops all 192 visual.* modules (0.775204 HF vs 0.702997 vLLM)",
+  "max_pixels": 1003520,
+  "min_pixels": 3136,
+  "nboot": 10000,
+  "nluck": 1000,
+  "seeds": {
+   "boot": 20260812,
+   "luck": 20260812,
+   "pmc_subsample": 20260810
+  },
+  "N4_padded_batch_vs_batch1": {
+   "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/n4_batch_numerics_zeroshot.json",
+   "n_pairs": 120,
+   "max_abs_dev": 0.06145721673965454,
+   "mean_abs_dev": 0.010079345386475324,
+   "p99_abs_dev": 0.05302911877632145,
+   "argmax_flips": 1,
+   "n_full_items": 60
+  },
+  "N4_consequence": "padded-batch scoring deviates from batch=1 by up to 0.0615 (mean 0.0101) and flipped the item argmax on 1 of 60 sampled items. Immaterial to the -0.169 / -0.066 deltas; MATERIAL to the MedXpert and VQA_RAD_closed calls, which are reported as not significant anyway."
+ },
+ "THE_FLOORS_every_option_branch_number_must_clear": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/floors_zeroshot.json",
+  "why_three": "this project has retracted a claim for mistaking coverage for signal. F1 is the random-gold 1/K floor (coverage carries NO information here -- the gold is in the candidate set on 100% of items, see null test N3). F2 is the best constant-identity rule and is FAR above F1 on PMC-VQA test_2, whose gold slots are 13.3/36.9/37.3/12.6%. F3 permutes the real score vectors within each item.",
+  "cells": {
+   "PMC_VQA": {
+    "n": 6000,
+    "acc_verifier_over_options": 0.4735,
+    "acc_7b_greedy": 0.5391666666666667,
+    "acc_32b_direct": 0.5523333333333333,
+    "F1_random_gold_1_over_K": 0.25,
+    "F2_best_constant_identity": {
+     "identity": "slot2",
+     "acc": 0.3725,
+     "gold_identity_distribution": {
+      "slot0": 0.1325,
+      "slot1": 0.369,
+      "slot2": 0.3725,
+      "slot3": 0.126
+     }
+    },
+    "F3_within_item_score_permutation": {
+     "mean": 0.249375,
+     "sd": 0.005601788358246712,
+     "p95": 0.25916666666666666
+    },
+    "margin_above_F2": 0.10099999999999998,
+    "margin_of_7b_above_F2": 0.16666666666666669,
+    "clears_F2": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc_verifier_over_options": 0.264,
+    "acc_7b_greedy": 0.2615,
+    "acc_32b_direct": 0.3065,
+    "F1_random_gold_1_over_K": 0.20000000000000004,
+    "F2_best_constant_identity": {
+     "identity": "slot4",
+     "acc": 0.212,
+     "gold_identity_distribution": {
+      "slot0": 0.1995,
+      "slot1": 0.204,
+      "slot2": 0.1915,
+      "slot3": 0.193,
+      "slot4": 0.212
+     }
+    },
+    "F3_within_item_score_permutation": {
+     "mean": 0.19922499999999999,
+     "sd": 0.008704202326355822,
+     "p95": 0.214
+    },
+    "margin_above_F2": 0.05200000000000002,
+    "margin_of_7b_above_F2": 0.049500000000000016,
+    "clears_F2": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc_verifier_over_options": 0.7290836653386454,
+    "acc_7b_greedy": 0.7808764940239044,
+    "acc_32b_direct": 0.852589641434263,
+    "F1_random_gold_1_over_K": 0.5,
+    "F2_best_constant_identity": {
+     "identity": "no",
+     "acc": 0.5298804780876494,
+     "gold_identity_distribution": {
+      "no": 0.5298804780876494,
+      "yes": 0.4701195219123506
+     }
+    },
+    "F3_within_item_score_permutation": {
+     "mean": 0.496597609561753,
+     "sd": 0.030805462691701646,
+     "p95": 0.545816733067729
+    },
+    "margin_above_F2": 0.19920318725099606,
+    "margin_of_7b_above_F2": 0.250996015936255,
+    "clears_F2": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc_verifier_over_options": 0.671921475312314,
+    "acc_7b_greedy": 0.8408685306365259,
+    "acc_32b_direct": 0.8890541344437835,
+    "F1_random_gold_1_over_K": 0.5,
+    "F2_best_constant_identity": {
+     "identity": "yes",
+     "acc": 0.5401546698393813,
+     "gold_identity_distribution": {
+      "no": 0.4598453301606187,
+      "yes": 0.5401546698393813
+     }
+    },
+    "F3_within_item_score_permutation": {
+     "mean": 0.5035737656157049,
+     "sd": 0.008819533820375114,
+     "p95": 0.5184414039262344
+    },
+    "margin_above_F2": 0.13176680547293274,
+    "margin_of_7b_above_F2": 0.30071386079714457,
+    "clears_F2": true
+   }
+  }
+ },
+ "ARM_A_zero_shot_the_existing_clean_open_text_verifier_over_the_given_options": {
+  "adapter": "ckpts/train/lora_verifier_disjoint (no training of any kind for this arm)",
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/analysis_zeroshot.json",
+  "n_forward_passes": 41226,
+  "option_cells": {
+   "PMC_VQA": {
+    "n_scored": 6000,
+    "acc_unified_pick": 0.4735,
+    "acc_7b_greedy_same_items": 0.5391666666666667,
+    "acc_32b_direct_same_items": 0.5523333333333333,
+    "delta_vs_7b": {
+     "delta": -0.06566666666666666,
+     "lo": -0.07966666666666666,
+     "hi": -0.052,
+     "sig": true
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.07883333333333334,
+     "lo": -0.09316666666666666,
+     "hi": -0.06416666666666666,
+     "sig": true
+    },
+    "candidate_auroc_gold_vs_distractor": 0.6709626851851852,
+    "agreement_with_7b_greedy": 0.6063333333333333,
+    "disagreement_stratum": {
+     "n": 2362,
+     "acc_unified": 0.26545300592718035,
+     "acc_7b": 0.45258255715495344,
+     "acc_32b_direct": 0.4737510584250635
+    },
+    "luck_floor_random_gold": {
+     "n": 6000,
+     "analytic_1_over_K": 0.25,
+     "permutation_mean": 0.24974383333333333,
+     "permutation_sd": 0.005517231757224779,
+     "permutation_p95": 0.259,
+     "permutation_max": 0.269
+    }
+   },
+   "MedXpertQA-MM": {
+    "n_scored": 2000,
+    "acc_unified_pick": 0.264,
+    "acc_7b_greedy_same_items": 0.2615,
+    "acc_32b_direct_same_items": 0.3065,
+    "delta_vs_7b": {
+     "delta": 0.0025,
+     "lo": -0.016,
+     "hi": 0.0215,
+     "sig": false
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.0425,
+     "lo": -0.067,
+     "hi": -0.0175,
+     "sig": true
+    },
+    "candidate_auroc_gold_vs_distractor": 0.58258875,
+    "agreement_with_7b_greedy": 0.621,
+    "disagreement_stratum": {
+     "n": 758,
+     "acc_unified": 0.2532981530343008,
+     "acc_7b": 0.24670184696569922,
+     "acc_32b_direct": 0.29023746701846964
+    },
+    "luck_floor_random_gold": {
+     "n": 2000,
+     "analytic_1_over_K": 0.20000000000000004,
+     "permutation_mean": 0.2000845,
+     "permutation_sd": 0.008595638123184613,
+     "permutation_p95": 0.214,
+     "permutation_max": 0.2285
+    }
+   },
+   "VQA_RAD_closed": {
+    "n_scored": 251,
+    "acc_unified_pick": 0.7290836653386454,
+    "acc_7b_greedy_same_items": 0.7808764940239044,
+    "acc_32b_direct_same_items": 0.852589641434263,
+    "delta_vs_7b": {
+     "delta": -0.05179282868525897,
+     "lo": -0.11155378486055777,
+     "hi": 0.00796812749003984,
+     "sig": false
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.12350597609561753,
+     "lo": -0.18326693227091634,
+     "hi": -0.06772908366533864,
+     "sig": true
+    },
+    "candidate_auroc_gold_vs_distractor": 0.7998444469135411,
+    "agreement_with_7b_greedy": 0.7729083665338645,
+    "disagreement_stratum": {
+     "n": 57,
+     "acc_unified": 0.38596491228070173,
+     "acc_7b": 0.6140350877192983,
+     "acc_32b_direct": 0.7017543859649122
+    },
+    "luck_floor_random_gold": {
+     "n": 251,
+     "analytic_1_over_K": 0.5,
+     "permutation_mean": 0.49916733067729085,
+     "permutation_sd": 0.031509604737431925,
+     "permutation_p95": 0.549800796812749,
+     "permutation_max": 0.5976095617529881
+    }
+   },
+   "PATH_VQA_closed": {
+    "n_scored": 3362,
+    "acc_unified_pick": 0.671921475312314,
+    "acc_7b_greedy_same_items": 0.8408685306365259,
+    "acc_32b_direct_same_items": 0.8890541344437835,
+    "delta_vs_7b": {
+     "delta": -0.16894705532421178,
+     "lo": -0.1885782272456871,
+     "hi": -0.14991076740035694,
+     "sig": true
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.21713265913146937,
+     "lo": -0.23527662105889352,
+     "hi": -0.19958358120166567,
+     "sig": true
+    },
+    "candidate_auroc_gold_vs_distractor": 0.72498554371725,
+    "agreement_with_7b_greedy": 0.6466389054134444,
+    "disagreement_stratum": {
+     "n": 1188,
+     "acc_unified": 0.2609427609427609,
+     "acc_7b": 0.7390572390572391,
+     "acc_32b_direct": 0.8425925925925926
+    },
+    "luck_floor_random_gold": {
+     "n": 3362,
+     "analytic_1_over_K": 0.5,
+     "permutation_mean": 0.5002787031528853,
+     "permutation_sd": 0.008486459007216765,
+     "permutation_p95": 0.5148720999405116,
+     "permutation_max": 0.52558001189768
+    }
+   }
+  },
+  "sampled_cells": {
+   "SLAKE_closed": {
+    "n_scored": 836,
+    "acc_unified_pick": 0.8253588516746412,
+    "acc_7b_greedy_same_items": 0.8253588516746412,
+    "acc_32b_direct_same_items": 0.8588516746411483,
+    "delta_vs_7b": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.03349282296650718,
+     "lo": -0.05861244019138756,
+     "hi": -0.009569377990430622,
+     "sig": true
+    },
+    "note": "no candidate pool generated; 1-candidate set == 7B greedy. NOT a win, and the cell is carried at the 7B floor."
+   },
+   "SLAKE_open": {
+    "n_scored": 645,
+    "acc_unified_pick": 0.7472868217054264,
+    "acc_7b_greedy_same_items": 0.7364341085271318,
+    "acc_32b_direct_same_items": 0.8186046511627907,
+    "delta_vs_7b": {
+     "delta": 0.010852713178294573,
+     "lo": -0.017054263565891473,
+     "hi": 0.03875968992248062,
+     "sig": false
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.07131782945736434,
+     "lo": -0.10387596899224806,
+     "hi": -0.03875968992248062,
+     "sig": true
+    },
+    "note": "the SAME adapter, the SAME argmax rule; only the candidate set is sampled instead of prompt-given (incumbent best-of-8 arm)"
+   },
+   "VQA_RAD_open": {
+    "n_scored": 200,
+    "acc_unified_pick": 0.48,
+    "acc_7b_greedy_same_items": 0.465,
+    "acc_32b_direct_same_items": 0.6,
+    "delta_vs_7b": {
+     "delta": 0.015,
+     "lo": -0.035,
+     "hi": 0.065,
+     "sig": false
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.12,
+     "lo": -0.18,
+     "hi": -0.06,
+     "sig": true
+    },
+    "note": "the SAME adapter, the SAME argmax rule; only the candidate set is sampled instead of prompt-given (incumbent best-of-8 arm)"
+   },
+   "PATH_VQA_open": {
+    "n_scored": 1500,
+    "acc_unified_pick": 0.37333333333333335,
+    "acc_7b_greedy_same_items": 0.324,
+    "acc_32b_direct_same_items": 0.376,
+    "delta_vs_7b": {
+     "delta": 0.04933333333333333,
+     "lo": 0.032,
+     "hi": 0.06666666666666667,
+     "sig": true
+    },
+    "delta_vs_32b_direct": {
+     "delta": -0.0026666666666666666,
+     "lo": -0.025333333333333333,
+     "hi": 0.02,
+     "sig": false
+    },
+    "note": "the SAME adapter, the SAME argmax rule; only the candidate set is sampled instead of prompt-given (incumbent best-of-8 arm)"
+   }
+  },
+  "macro": {
+   "unified_pipeline_7b_only": 0.570560518420545,
+   "always_7b_on_same_items": 0.5966505814411087,
+   "always_32b_direct_on_same_items": 0.6567416793769149,
+   "vs_7b": {
+    "delta": -0.026090063020563693,
+    "lo": -0.037339278238086845,
+    "hi": -0.01515529365043206,
+    "sig": true
+   },
+   "vs_32b_direct": {
+    "delta": -0.0861811609563698,
+    "lo": -0.09906856851018031,
+    "hi": -0.07352078131790457,
+    "sig": true
+   },
+   "published_bars": {
+    "always_7b": 0.5971,
+    "always_32b_direct": 0.6567,
+    "gap_to_close": 0.0596
+   },
+   "per_cell_delta_vs_7b": {
+    "PMC_VQA": -0.0656666666666667,
+    "SLAKE_closed": 0.0,
+    "VQA_RAD_closed": -0.05179282868525892,
+    "PATH_VQA_closed": -0.16894705532421184,
+    "MedXpertQA-MM": 0.0025000000000000022,
+    "SLAKE_open": 0.010852713178294615,
+    "VQA_RAD_open": 0.014999999999999958,
+    "PATH_VQA_open": 0.04933333333333334
+   },
+   "leave_one_cell_out_vs_32b_direct": {
+    "PMC_VQA": -0.08723085061680358,
+    "SLAKE_closed": -0.09370806638349305,
+    "VQA_RAD_closed": -0.08084904450790582,
+    "PATH_VQA_closed": -0.0674738040742127,
+    "MedXpertQA-MM": -0.09242132680727977,
+    "SLAKE_open": -0.08830449402765628,
+    "VQA_RAD_open": -0.08134989823585118,
+    "PATH_VQA_open": -0.09811180299775595
+   }
+  },
+  "candidate_identity_bias_diagnostic": {
+   "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/bias_diag_zeroshot.json",
+   "PMC_VQA": {
+    "n": 6000,
+    "pick_slot_dist": [
+     0.2788333333333333,
+     0.2985,
+     0.2743333333333333,
+     0.14833333333333334
+    ],
+    "gold_slot_dist": [
+     0.1325,
+     0.369,
+     0.3725,
+     0.126
+    ],
+    "mean_score_by_slot": [
+     0.1629796285,
+     0.1847745086666667,
+     0.1885132615,
+     0.14123599516666668
+    ],
+    "mean_score_gold": 0.25169980200000003,
+    "mean_score_nongold": 0.14193453061111114,
+    "frac_all_scores_above_0.5": 0.00016666666666666666,
+    "frac_all_scores_below_0.5": 0.7988333333333333,
+    "mean_top1_minus_top2": 0.13672716633333334
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "pick_slot_dist": [
+     0.216,
+     0.1685,
+     0.2005,
+     0.1955,
+     0.2195
+    ],
+    "gold_slot_dist": [
+     0.1995,
+     0.204,
+     0.1915,
+     0.193,
+     0.212
+    ],
+    "mean_score_by_slot": [
+     0.240270761,
+     0.21847702750000003,
+     0.23909965600000002,
+     0.24683093200000003,
+     0.25281235900000004
+    ],
+    "mean_score_gold": 0.27753445499999996,
+    "mean_score_nongold": 0.229989070125,
+    "frac_all_scores_above_0.5": 0.0005,
+    "frac_all_scores_below_0.5": 0.5205,
+    "mean_top1_minus_top2": 0.20612863600000003
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "pick_slot_dist": [
+     0.3346613545816733,
+     0.6653386454183267
+    ],
+    "gold_slot_dist": [
+     0.4701195219123506,
+     0.5298804780876494
+    ],
+    "mean_score_by_slot": [
+     0.3763801513944223,
+     0.6373661832669323
+    ],
+    "mean_score_gold": 0.6701937768924303,
+    "mean_score_nongold": 0.34355255776892435,
+    "frac_all_scores_above_0.5": 0.03187250996015936,
+    "frac_all_scores_below_0.5": 0.0398406374501992,
+    "mean_top1_minus_top2": 0.5549132430278884,
+    "candidates": [
+     "yes",
+     "no"
+    ]
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "pick_slot_dist": [
+     0.26918500892325997,
+     0.7308149910767401
+    ],
+    "gold_slot_dist": [
+     0.5401546698393813,
+     0.4598453301606187
+    ],
+    "mean_score_by_slot": [
+     0.2601812305175491,
+     0.5290788640690065
+    ],
+    "mean_score_gold": 0.5096874649018441,
+    "mean_score_nongold": 0.2795726296847115,
+    "frac_all_scores_above_0.5": 0.00148720999405116,
+    "frac_all_scores_below_0.5": 0.2688875669244497,
+    "mean_top1_minus_top2": 0.49565280428316477,
+    "candidates": [
+     "yes",
+     "no"
+    ]
+   }
+  }
+ },
+ "ARM_A_PRIME_candidate_identity_bias_removed_NESTED_CV_DIAGNOSTIC_ONLY": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/arm_a_prime_debias.json",
+  "warning": "the offsets are fit on eval-distribution items (other CV folds of the same cell). This is mechanism attribution, NOT a deployable pipeline, and must never be quoted as one.",
+  "cells": {
+   "PMC_VQA": {
+    "n": 6000,
+    "acc_raw_argmax": 0.4735,
+    "acc_debiased_argmax": 0.4085,
+    "acc_7b_greedy": 0.5391666666666667,
+    "acc_32b_direct": 0.5523333333333333,
+    "delta_debiased_vs_raw": {
+     "delta": -0.065,
+     "lo": -0.07416666666666667,
+     "hi": -0.0559958333333334,
+     "sig": true
+    },
+    "delta_debiased_vs_7b": {
+     "delta": -0.13066666666666665,
+     "lo": -0.145,
+     "hi": -0.11666666666666667,
+     "sig": true
+    },
+    "delta_debiased_vs_32b_direct": {
+     "delta": -0.14383333333333334,
+     "lo": -0.15883333333333333,
+     "hi": -0.12883333333333333,
+     "sig": true
+    },
+    "luck_floor_random_gold_debiased": {
+     "analytic_1_over_K": 0.25,
+     "permutation_mean": 0.2501251666666667,
+     "permutation_p95": 0.25916666666666666
+    },
+    "recovered_fraction_of_arm_A_shortfall_vs_7b": -0.98984771573604
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc_raw_argmax": 0.264,
+    "acc_debiased_argmax": 0.265,
+    "acc_7b_greedy": 0.2615,
+    "acc_32b_direct": 0.3065,
+    "delta_debiased_vs_raw": {
+     "delta": 0.001,
+     "lo": -0.0035,
+     "hi": 0.006,
+     "sig": false
+    },
+    "delta_debiased_vs_7b": {
+     "delta": 0.0035,
+     "lo": -0.015,
+     "hi": 0.0225,
+     "sig": false
+    },
+    "delta_debiased_vs_32b_direct": {
+     "delta": -0.0415,
+     "lo": -0.0665,
+     "hi": -0.017,
+     "sig": true
+    },
+    "luck_floor_random_gold_debiased": {
+     "analytic_1_over_K": 0.20000000000000004,
+     "permutation_mean": 0.1999825,
+     "permutation_p95": 0.21352499999999996
+    },
+    "recovered_fraction_of_arm_A_shortfall_vs_7b": null
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc_raw_argmax": 0.7290836653386454,
+    "acc_debiased_argmax": 0.7410358565737052,
+    "acc_7b_greedy": 0.7808764940239044,
+    "acc_32b_direct": 0.852589641434263,
+    "delta_debiased_vs_raw": {
+     "delta": 0.01195219123505976,
+     "lo": -0.0199203187250996,
+     "hi": 0.043824701195219126,
+     "sig": false
+    },
+    "delta_debiased_vs_7b": {
+     "delta": -0.0398406374501992,
+     "lo": -0.099601593625498,
+     "hi": 0.01593625498007968,
+     "sig": false
+    },
+    "delta_debiased_vs_32b_direct": {
+     "delta": -0.11155378486055777,
+     "lo": -0.16733067729083664,
+     "hi": -0.05976095617529881,
+     "sig": true
+    },
+    "luck_floor_random_gold_debiased": {
+     "analytic_1_over_K": 0.5,
+     "permutation_mean": 0.49915936254980076,
+     "permutation_p95": 0.5537848605577689
+    },
+    "recovered_fraction_of_arm_A_shortfall_vs_7b": 0.23076923076923078
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc_raw_argmax": 0.671921475312314,
+    "acc_debiased_argmax": 0.7174301011302796,
+    "acc_7b_greedy": 0.8408685306365259,
+    "acc_32b_direct": 0.8890541344437835,
+    "delta_debiased_vs_raw": {
+     "delta": 0.0455086258179655,
+     "lo": 0.031826293872694825,
+     "hi": 0.05919095776323617,
+     "sig": true
+    },
+    "delta_debiased_vs_7b": {
+     "delta": -0.12343842950624628,
+     "lo": -0.1403926234384295,
+     "hi": -0.10707911957168352,
+     "sig": true
+    },
+    "delta_debiased_vs_32b_direct": {
+     "delta": -0.17162403331350387,
+     "lo": -0.18887566924449734,
+     "hi": -0.15496728138013088,
+     "sig": true
+    },
+    "luck_floor_random_gold_debiased": {
+     "analytic_1_over_K": 0.5,
+     "permutation_mean": 0.5000466983938132,
+     "permutation_p95": 0.5139797739440809
+    },
+    "recovered_fraction_of_arm_A_shortfall_vs_7b": 0.26936619718309884
+   }
+  }
+ },
+ "ARMS_B0_AND_B_trained_on_the_option_candidates": {
+  "prediction_recorded_in_advance": "amendment 2 (written before any training run) predicts B0 and B FALL SHORT of always-7B on the option cells, because arm A' showed ~3/4 of the arm-A shortfall is a RANKING shortfall, not a candidate-prior shortfall. The rescue/break 2x2 sharpens the prediction: on 3 of 4 cells the verifier's rescue rate is already BELOW 1/K, so training would have to create ranking signal where there is currently none.",
+  "training_set_actually_built": {
+   "seed": 0,
+   "n_open": 0,
+   "n_option": 10364,
+   "n_total": 10364,
+   "pos_rate_open": null,
+   "pos_rate_option": 0.352566576611347,
+   "open_meta": {
+    "per_source": {},
+    "quota_shortfall": {},
+    "skipped": "max_open == 0"
+   },
+   "option_meta": {
+    "per_source": {
+     "pathvqa_closed_train": 3454,
+     "vqa_rad_closed_train": 800,
+     "pmc_vqa_train": 6110
+    },
+    "image_filter": {
+     "pmc_vqa_train": {
+      "source_csv": "pmc_vqa_train/train.csv (v1)",
+      "images_checked": 2591,
+      "images_dropped_as_eval": 0,
+      "rows_dropped_by_PMC_article_id_shared_with_test_2": 0,
+      "n_banned_pmc_article_ids": 11112
+     },
+     "pathvqa_closed_train": {
+      "images_checked": 5182,
+      "images_dropped_as_eval": 0
+     },
+     "vqa_rad_closed_train": {
+      "images_checked": 940,
+      "images_dropped_as_eval": 540
+     }
+    },
+    "available": {
+     "pmc_vqa_train": 10364,
+     "pathvqa_closed_train": 10364,
+     "vqa_rad_closed_train": 800
+    }
+   },
+   "hp": {
+    "lora_r": 16,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "min_pixels": 3136,
+    "identical_to": "src/training_methods/run_lora_verifier_disjoint.py"
+   },
+   "n_banned_eval_images": 33079
+  },
+  "a_bug_this_round_caught_and_fixed": "the first build produced ZERO PMC-VQA option examples. PMC-VQA v2 `train_2.csv` names sub-figure CROPS ('PMC8253797_Fig4_11.jpg') and the images on disk under pmc_vqa_train/images are the v1 full figures, so it resolved 0/2000 images and would have trained an 'MCQ verifier' that never saw a lettered 4-option item. Fixed to v1 `train.csv` (2000/2000 resolve) plus a STRICTLY STRONGER leakage filter: a v2 test CROP cannot pixel-md5-match a v1 train full FIGURE, so training rows are also dropped when their PMC ARTICLE ID appears in test_2. Measured: 11,112 banned article ids, 0 training rows dropped by them (the two splits share no article), 540 of 940 VQA-RAD train images dropped as eval images.",
+  "results": {
+   "status": "NOT MEASURED -- no adapter exists. Reported as not measured rather than as a weak result, because a half-trained adapter would look like a trained arm.",
+   "why": "both A100s were held by three other concurrent rounds for this entire session. Attempt 1 and 2 OOMed at model load (four foreign processes holding 79.07 of 79.14 GiB). Attempt 3 bound cuda:1 with 27.5 GiB free, loaded, and then OOMed on 409 consecutive training examples as the foreign processes grew back to 81.0 GiB -- 0 optimiser steps completed. The run was stopped rather than allowed to save an adapter trained on skipped examples.",
+   "what_DOES_exist_on_disk": [
+    "the training set, built and leakage-checked: ckpts/train/lora_verifier_optiononly_s0/unified_manifest.json",
+    "the runner, resumable and GPU-polite: runners/run_unified_pipeline_armB0.sh",
+    "logs/unified_armB0_master.log, logs/unified_train_lora_verifier_optiononly_s0.log"
+   ],
+   "to_finish_it": "bash runners/run_unified_pipeline_armB0.sh on an idle card; the script waits for a sustained 26 GiB block, binds whichever card has it, retries the load on OOM, and scores the cheap decisive cells (PATH_VQA_closed, VQA_RAD_closed) first"
+  }
+ },
+ "THE_FINDING_the_verifier_can_rank_the_generators_OWN_samples_and_not_answers_it_never_produced": {
+  "source": [
+   "results/cascade_methods/artifacts/_unified_pipeline_parts/open_branch_2x2.json",
+   "results/cascade_methods/artifacts/_unified_pipeline_parts/rescue_break_2x2_zeroshot.json"
+  ],
+  "statement": "One adapter, one scoring function, one argmax rule, two candidate sets. Where the candidates are the generator's OWN 8 samples, on exactly the items the greedy answer got wrong the verifier picks a correct one 14.56% of the time against that same pool's random-pick floor of 6.68% -- 2.18x the floor, 188 rescues against 104 breaks. Where the candidates come from the PROMPT, on the items the 7B got wrong it is BELOW the 1/K floor on 3 of 4 cells (PMC 0.2438 vs 0.25, MedXpert 0.1300 vs 0.20, VQA_RAD_closed 0.4000 vs 0.50). The only thing that changed is where the candidates came from.",
+  "why_it_matters": "it is a sharper version of Finding 2 (routing signals are degenerate on 4-option MCQ). The limit is not option DISCRETENESS as such -- the yes/no cells are 2 options and behave the same way -- it is that a verifier trained on P(correct | image, question, candidate) inherits the generator's own belief distribution, so it adds information only inside the generator's support. A prompt-supplied option the generator never considered is exactly where it has nothing to say.",
+  "consequence_for_the_direction": "a unified pipeline whose scorer is a verifier on the generator's own base CANNOT gain on MCQ. To gain there the scorer must be a DIFFERENT computation from the generator's -- which is the same conclusion docs/current/COMPARATIVE_VERIFIER_2026-08-05.md reached from the open-text side ('the lever is the different computation').",
+  "open_branch": {
+   "what": "the OPEN-branch analogue of the option branch's rescue/break 2x2. On the open branch the candidates are the GENERATOR'S OWN samples; on the option branch they come from the prompt. This is the contrast that explains the whole round.",
+   "cells": {
+    "SLAKE_open": {
+     "n": 645,
+     "acc_verifier_pick": 0.7472868217054264,
+     "acc_greedy": 0.7364341085271318,
+     "P_verifier_right_given_greedy_wrong": 0.27647058823529413,
+     "random_pick_floor_among_the_SAME_pools_when_greedy_wrong": 0.13088235294117648,
+     "rescue_signal_above_the_pool_floor": 0.14558823529411766,
+     "P_verifier_wrong_given_greedy_right": 0.08421052631578951,
+     "rescues_n": 47,
+     "breaks_n": 40
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "acc_verifier_pick": 0.48,
+     "acc_greedy": 0.465,
+     "P_verifier_right_given_greedy_wrong": 0.1308411214953271,
+     "random_pick_floor_among_the_SAME_pools_when_greedy_wrong": 0.07009345794392523,
+     "rescue_signal_above_the_pool_floor": 0.06074766355140186,
+     "P_verifier_wrong_given_greedy_right": 0.11827956989247312,
+     "rescues_n": 14,
+     "breaks_n": 11
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "acc_verifier_pick": 0.37333333333333335,
+     "acc_greedy": 0.324,
+     "P_verifier_right_given_greedy_wrong": 0.1252465483234714,
+     "random_pick_floor_among_the_SAME_pools_when_greedy_wrong": 0.05571992110453649,
+     "rescue_signal_above_the_pool_floor": 0.0695266272189349,
+     "P_verifier_wrong_given_greedy_right": 0.10905349794238683,
+     "rescues_n": 127,
+     "breaks_n": 53
+    }
+   },
+   "pooled_2345": {
+    "n": 2345,
+    "P_verifier_right_given_greedy_wrong": 0.14562354763749033,
+    "random_pick_floor_when_greedy_wrong": 0.06680867544539117,
+    "P_verifier_wrong_given_greedy_right": 0.09867172675521822,
+    "rescues_n": 188,
+    "breaks_n": 104
+   },
+   "contrast": "OPEN branch: the verifier is far ABOVE the pool's own random-pick floor on exactly the items the greedy answer got wrong. OPTION branch: it is BELOW the 1/K floor there on 3 of 4 cells. Same adapter, same scoring function, same argmax rule -- the only thing that changed is WHERE THE CANDIDATES CAME FROM."
+  }
+ },
+ "RESCUES_AND_BREAKS_2x2": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/rescue_break_2x2_zeroshot.json",
+  "why": "delta_vs_7b = P(7B wrong AND verifier right) - P(7B right AND verifier wrong). The second term is what sinks the option branch, and P(verifier right | 7B wrong) against the 1/K floor says whether the verifier knows anything where it matters.",
+  "cells": {
+   "PMC_VQA": {
+    "n": 6000,
+    "acc_verifier_over_options": 0.4735,
+    "acc_7b_greedy": 0.5391666666666667,
+    "rescues_n": 674,
+    "rescues_rate": 0.11233333333333333,
+    "breaks_n": 1068,
+    "breaks_rate": 0.178,
+    "delta_vs_7b_check": -0.06566666666666666,
+    "rescue_per_break": 0.6310861423220974,
+    "P_verifier_right_given_7b_wrong": 0.24376130198915008,
+    "P_verifier_wrong_given_7b_right": 0.33013910355486864,
+    "recoverable_stratum": {
+     "definition": "32B-direct right AND 7B greedy wrong -- the only errors a cascade can win",
+     "n": 741,
+     "share_of_cell": 0.1235,
+     "P_verifier_right_there": 0.3252361673414305,
+     "note": "compare with 1/K: on a recoverable item the verifier is choosing among the same complete option set, so anything above 1/K is signal and anything below means the verifier is ANTI-correlated with recoverability"
+    },
+    "one_over_K": 0.25
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc_verifier_over_options": 0.264,
+    "acc_7b_greedy": 0.2615,
+    "rescues_n": 192,
+    "rescues_rate": 0.096,
+    "breaks_n": 187,
+    "breaks_rate": 0.0935,
+    "delta_vs_7b_check": 0.0025,
+    "rescue_per_break": 1.0267379679144386,
+    "P_verifier_right_given_7b_wrong": 0.12999322951929587,
+    "P_verifier_wrong_given_7b_right": 0.35755258126195033,
+    "recoverable_stratum": {
+     "definition": "32B-direct right AND 7B greedy wrong -- the only errors a cascade can win",
+     "n": 322,
+     "share_of_cell": 0.161,
+     "P_verifier_right_there": 0.17080745341614906,
+     "note": "compare with 1/K: on a recoverable item the verifier is choosing among the same complete option set, so anything above 1/K is signal and anything below means the verifier is ANTI-correlated with recoverability"
+    },
+    "one_over_K": 0.20000000000000004
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc_verifier_over_options": 0.7290836653386454,
+    "acc_7b_greedy": 0.7808764940239044,
+    "rescues_n": 22,
+    "rescues_rate": 0.08764940239043825,
+    "breaks_n": 35,
+    "breaks_rate": 0.1394422310756972,
+    "delta_vs_7b_check": -0.05179282868525897,
+    "rescue_per_break": 0.6285714285714286,
+    "P_verifier_right_given_7b_wrong": 0.4,
+    "P_verifier_wrong_given_7b_right": 0.1785714285714286,
+    "recoverable_stratum": {
+     "definition": "32B-direct right AND 7B greedy wrong -- the only errors a cascade can win",
+     "n": 27,
+     "share_of_cell": 0.10756972111553785,
+     "P_verifier_right_there": 0.4074074074074074,
+     "note": "compare with 1/K: on a recoverable item the verifier is choosing among the same complete option set, so anything above 1/K is signal and anything below means the verifier is ANTI-correlated with recoverability"
+    },
+    "one_over_K": 0.5
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc_verifier_over_options": 0.671921475312314,
+    "acc_7b_greedy": 0.8408685306365259,
+    "rescues_n": 310,
+    "rescues_rate": 0.09220701963117192,
+    "breaks_n": 878,
+    "breaks_rate": 0.2611540749553837,
+    "delta_vs_7b_check": -0.16894705532421178,
+    "rescue_per_break": 0.3530751708428246,
+    "P_verifier_right_given_7b_wrong": 0.5794392523364486,
+    "P_verifier_wrong_given_7b_right": 0.3105765829501238,
+    "recoverable_stratum": {
+     "definition": "32B-direct right AND 7B greedy wrong -- the only errors a cascade can win",
+     "n": 301,
+     "share_of_cell": 0.08953004164187983,
+     "P_verifier_right_there": 0.6245847176079734,
+     "note": "compare with 1/K: on a recoverable item the verifier is choosing among the same complete option set, so anything above 1/K is signal and anything below means the verifier is ANTI-correlated with recoverability"
+    },
+    "one_over_K": 0.5
+   }
+  },
+  "THE_MECHANISM_IN_ONE_SENTENCE": "the verifier's option-ranking signal is concentrated on items the generator ALREADY GETS RIGHT. On 3 of the 4 option cells P(verifier right | 7B wrong) is BELOW the 1/K floor -- PMC 0.2438 vs 0.25, MedXpert 0.1300 vs 0.20, VQA_RAD_closed 0.4000 vs 0.50 -- i.e. on exactly the items a cascade needs to fix, the verifier is no better than guessing among the same options. Only PATH_VQA_closed clears it (0.5794 vs 0.50), and there the break rate would still have to shrink 2.83x to break even.",
+  "what_would_have_to_be_true": {
+   "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/what_would_have_to_be_true.json",
+   "what": "For the option branch to BEAT the generator on a cell it must satisfy P(right|7B wrong)*P(7B wrong) > P(wrong|7B right)*P(7B right). Holding the measured rescue rate fixed, this is the LARGEST break rate that still ties always-7B, next to the one actually measured.",
+   "cells": {
+    "PMC_VQA": {
+     "n": 6000,
+     "P_7b_wrong": 0.4608333333333333,
+     "P_verifier_right_given_7b_wrong": 0.24376130198915008,
+     "one_over_K": 0.25,
+     "rescue_signal_above_1overK": -0.006238698010849919,
+     "break_rate_measured": 0.33013910355486864,
+     "break_rate_needed_to_TIE_always_7b": 0.20834621329211744,
+     "factor_the_break_rate_must_shrink_by": 1.5845697329376858,
+     "verdict": "not satisfied"
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "P_7b_wrong": 0.7384999999999999,
+     "P_verifier_right_given_7b_wrong": 0.12999322951929587,
+     "one_over_K": 0.20000000000000004,
+     "rescue_signal_above_1overK": -0.07000677048070417,
+     "break_rate_measured": 0.35755258126195033,
+     "break_rate_needed_to_TIE_always_7b": 0.36711281070745694,
+     "factor_the_break_rate_must_shrink_by": 0.9739583333333336,
+     "verdict": "already satisfied"
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "P_7b_wrong": 0.21912350597609564,
+     "P_verifier_right_given_7b_wrong": 0.4,
+     "one_over_K": 0.5,
+     "rescue_signal_above_1overK": -0.09999999999999998,
+     "break_rate_measured": 0.1785714285714286,
+     "break_rate_needed_to_TIE_always_7b": 0.1122448979591837,
+     "factor_the_break_rate_must_shrink_by": 1.5909090909090908,
+     "verdict": "not satisfied"
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "P_7b_wrong": 0.1591314693634741,
+     "P_verifier_right_given_7b_wrong": 0.5794392523364486,
+     "one_over_K": 0.5,
+     "rescue_signal_above_1overK": 0.07943925233644855,
+     "break_rate_measured": 0.3105765829501238,
+     "break_rate_needed_to_TIE_always_7b": 0.10965688008489563,
+     "factor_the_break_rate_must_shrink_by": 2.8322580645161293,
+     "verdict": "not satisfied"
+    }
+   }
+  }
+ },
+ "GATE_endpoint_is_the_verifier_a_better_MCQ_gate_than_the_7B_margin": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/gate_zeroshot.json",
+  "prereg_rule": "amendment 3: beat -margin7b on RECOVERABILITY AUROC by more than the fold-seed sd, on MORE THAN ONE cell",
+  "verdict": "RULE NOT MET -- met on PATH_VQA_closed only (+0.0178, sd 0.0005); PMC_VQA -0.0027, MedXpertQA-MM -0.0128, VQA_RAD_closed -0.0498",
+  "cells": {
+   "PMC_VQA": {
+    "n": 6000,
+    "base_rate": {
+     "detection_7b_wrong": 0.4608333333333333,
+     "recoverability_32b_fixes_it": 0.1235
+    },
+    "unfitted_auroc": {
+     "detection_7b_wrong": {
+      "neg_margin7b": 0.7080616337470758,
+      "neg_verifier_top1_minus_top2": 0.5913709959166106,
+      "verifier_disagrees_with_7b": 0.5685914402542266,
+      "neg_verifier_score_of_7b_answer": 0.6087921160677602
+     },
+     "recoverability_32b_fixes_it": {
+      "neg_margin7b": 0.6828989773716108,
+      "neg_verifier_top1_minus_top2": 0.5858765604314587,
+      "verifier_disagrees_with_7b": 0.5687412286475546,
+      "neg_verifier_score_of_7b_answer": 0.5884020170806732
+     }
+    },
+    "fitted_combiner_auroc": {
+     "detection_7b_wrong": {
+      "mean": 0.7079089188939911,
+      "sd": 0.000709008206247042,
+      "min": 0.7061710887082123,
+      "max": 0.708801339329385,
+      "beats_margin7b_by": -0.0001527148530846567
+     },
+     "recoverability_32b_fixes_it": {
+      "mean": 0.6801602881661127,
+      "sd": 0.0008774597702176209,
+      "min": 0.6789290462542331,
+      "max": 0.6816103952892015,
+      "beats_margin7b_by": -0.002738689205498024
+     }
+    }
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "base_rate": {
+     "detection_7b_wrong": 0.7385,
+     "recoverability_32b_fixes_it": 0.161
+    },
+    "unfitted_auroc": {
+     "detection_7b_wrong": {
+      "neg_margin7b": 0.5250656658955482,
+      "neg_verifier_top1_minus_top2": 0.5261731508367304,
+      "verifier_disagrees_with_7b": 0.5145209334719362,
+      "neg_verifier_score_of_7b_answer": 0.5171689293190295
+     },
+     "recoverability_32b_fixes_it": {
+      "neg_margin7b": 0.5546994721607356,
+      "neg_verifier_top1_minus_top2": 0.5369015539054923,
+      "verifier_disagrees_with_7b": 0.5128850524507881,
+      "neg_verifier_score_of_7b_answer": 0.5394880033165778
+     }
+    },
+    "fitted_combiner_auroc": {
+     "detection_7b_wrong": {
+      "mean": 0.4979148084523562,
+      "sd": 0.0065023321789909,
+      "min": 0.486682995219238,
+      "max": 0.5056021520548991,
+      "beats_margin7b_by": -0.027150857443191956
+     },
+     "recoverability_32b_fixes_it": {
+      "mean": 0.5419102895342724,
+      "sd": 0.004007582849441787,
+      "min": 0.5342114614410827,
+      "max": 0.5498393532673472,
+      "beats_margin7b_by": -0.012789182626463114
+     }
+    }
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "base_rate": {
+     "detection_7b_wrong": 0.21912350597609562,
+     "recoverability_32b_fixes_it": 0.10756972111553785
+    },
+    "unfitted_auroc": {
+     "detection_7b_wrong": {
+      "neg_margin7b": 0.7125231910946197,
+      "neg_verifier_top1_minus_top2": 0.7011595547309833,
+      "verifier_disagrees_with_7b": 0.6016233766233766,
+      "neg_verifier_score_of_7b_answer": 0.7095083487940631
+     },
+     "recoverability_32b_fixes_it": {
+      "neg_margin7b": 0.7528108465608465,
+      "neg_verifier_top1_minus_top2": 0.6763392857142857,
+      "verifier_disagrees_with_7b": 0.6032572751322751,
+      "neg_verifier_score_of_7b_answer": 0.6885747354497355
+     }
+    },
+    "fitted_combiner_auroc": {
+     "detection_7b_wrong": {
+      "mean": 0.7114564007421151,
+      "sd": 0.014509464480724425,
+      "min": 0.6834879406307978,
+      "max": 0.7258812615955473,
+      "beats_margin7b_by": -0.0010667903525045652
+     },
+     "recoverability_32b_fixes_it": {
+      "mean": 0.7030092592592593,
+      "sd": 0.022768790376928548,
+      "min": 0.6579034391534392,
+      "max": 0.7407407407407407,
+      "beats_margin7b_by": -0.049801587301587236
+     }
+    }
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "base_rate": {
+     "detection_7b_wrong": 0.1591314693634741,
+     "recoverability_32b_fixes_it": 0.08953004164187983
+    },
+    "unfitted_auroc": {
+     "detection_7b_wrong": {
+      "neg_margin7b": 0.8024298404239493,
+      "neg_verifier_top1_minus_top2": 0.5927256858927101,
+      "verifier_disagrees_with_7b": 0.63349675525391,
+      "neg_verifier_score_of_7b_answer": 0.6814280849882145
+     },
+     "recoverability_32b_fixes_it": {
+      "neg_margin7b": 0.8428536697342301,
+      "neg_verifier_top1_minus_top2": 0.6011319124642784,
+      "verifier_disagrees_with_7b": 0.6472859172463346,
+      "neg_verifier_score_of_7b_answer": 0.7039618564276109
+     }
+    },
+    "fitted_combiner_auroc": {
+     "detection_7b_wrong": {
+      "mean": 0.8137280033323526,
+      "sd": 0.0007399377515868434,
+      "min": 0.8120196106304692,
+      "max": 0.8145258174677427,
+      "beats_margin7b_by": 0.011298162908403353
+     },
+     "recoverability_32b_fixes_it": {
+      "mean": 0.8606583087410906,
+      "sd": 0.0004998403955978287,
+      "min": 0.8601633887260259,
+      "max": 0.8616253564021051,
+      "beats_margin7b_by": 0.017804639006860468
+     }
+    }
+   }
+  }
+ },
+ "ARM_A_DOUBLE_PRIME_generator_prior_fusion": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/fusion_zeroshot.json",
+  "rule": "s'(c) = s_verifier(c) + lambda * 1[c == the 7B's own answer]; lambda cross-fit (5-fold, 10 fold-split seeds), per cell AND globally",
+  "prior_art_that_bounds_it": "on the OPEN branch the analogous fusion is ALREADY MEASURED NEGATIVE -- fusing a self-consistency count into the incumbent costs -0.019755 [-0.036785, -0.002725] (docs/current/COMPARATIVE_VERIFIER_2026-08-05.md), so this arm is reported for the OPTION branch only",
+  "per_cell": {
+   "PMC_VQA": {
+    "n": 6000,
+    "acc_by_lambda_EVAL_VISIBLE_not_a_result": {
+     "0.0": 0.4735,
+     "0.02": 0.518,
+     "0.05": 0.5416666666666666,
+     "0.1": 0.5523333333333333,
+     "0.15": 0.5491666666666667,
+     "0.2": 0.5516666666666666,
+     "0.3": 0.5516666666666666,
+     "0.5": 0.5515,
+     "0.75": 0.5496666666666666,
+     "1.0": 0.5493333333333333,
+     "1.5": 0.5493333333333333,
+     "2.0": 0.5493333333333333
+    },
+    "acc_7b_greedy": 0.5391666666666667,
+    "acc_32b_direct": 0.5523333333333333,
+    "crossfit_percell": {
+     "acc_seed_mean": 0.5495666666666666,
+     "acc_seed_sd": 0.0009913203565864537,
+     "acc_seed_min": 0.548,
+     "acc_seed_max": 0.5508333333333333,
+     "lambda_chosen_counts": {
+      "0.1": 32,
+      "0.2": 8,
+      "0.3": 4,
+      "0.5": 6
+     },
+     "delta_vs_7b_at_seed_mean_lambda": null,
+     "modal_lambda": 0.1,
+     "acc_at_modal_lambda": 0.5523333333333333,
+     "delta_vs_7b_at_modal_lambda": {
+      "delta": 0.013166666666666667,
+      "lo": 0.007166666666666667,
+      "hi": 0.019166666666666665,
+      "sig": true
+     },
+     "delta_vs_32b_direct_at_modal_lambda": {
+      "delta": 0.0,
+      "lo": -0.012666666666666666,
+      "hi": 0.012666666666666666,
+      "sig": false
+     }
+    },
+    "n5_dump_consistency": {
+     "n_parsed": 6000,
+     "n_items": 6000,
+     "dump_correct_equals_parsed_pick_is_gold": 0.9885
+    },
+    "OK_cache_note": "acc_by_lambda is EVAL-VISIBLE and is printed only to show the shape of the curve; the reported number is the cross-fit one"
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc_by_lambda_EVAL_VISIBLE_not_a_result": {
+     "0.0": 0.264,
+     "0.02": 0.2625,
+     "0.05": 0.2635,
+     "0.1": 0.267,
+     "0.15": 0.2665,
+     "0.2": 0.265,
+     "0.3": 0.268,
+     "0.5": 0.2605,
+     "0.75": 0.2615,
+     "1.0": 0.2615,
+     "1.5": 0.2615,
+     "2.0": 0.2615
+    },
+    "acc_7b_greedy": 0.2615,
+    "acc_32b_direct": 0.3065,
+    "crossfit_percell": {
+     "acc_seed_mean": 0.2589,
+     "acc_seed_sd": 0.0037475918193480558,
+     "acc_seed_min": 0.252,
+     "acc_seed_max": 0.265,
+     "lambda_chosen_counts": {
+      "0.0": 4,
+      "0.05": 1,
+      "0.1": 16,
+      "0.15": 6,
+      "0.3": 23
+     },
+     "delta_vs_7b_at_seed_mean_lambda": null,
+     "modal_lambda": 0.3,
+     "acc_at_modal_lambda": 0.268,
+     "delta_vs_7b_at_modal_lambda": {
+      "delta": 0.0065,
+      "lo": -0.0005,
+      "hi": 0.0135,
+      "sig": false
+     },
+     "delta_vs_32b_direct_at_modal_lambda": {
+      "delta": -0.0385,
+      "lo": -0.062,
+      "hi": -0.015,
+      "sig": true
+     }
+    },
+    "n5_dump_consistency": {
+     "n_parsed": 2000,
+     "n_items": 2000,
+     "dump_correct_equals_parsed_pick_is_gold": 1.0
+    },
+    "OK_cache_note": "acc_by_lambda is EVAL-VISIBLE and is printed only to show the shape of the curve; the reported number is the cross-fit one"
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc_by_lambda_EVAL_VISIBLE_not_a_result": {
+     "0.0": 0.7290836653386454,
+     "0.02": 0.7330677290836654,
+     "0.05": 0.7330677290836654,
+     "0.1": 0.7410358565737052,
+     "0.15": 0.7370517928286853,
+     "0.2": 0.7370517928286853,
+     "0.3": 0.7410358565737052,
+     "0.5": 0.7609561752988048,
+     "0.75": 0.7848605577689243,
+     "1.0": 0.7848605577689243,
+     "1.5": 0.7848605577689243,
+     "2.0": 0.7848605577689243
+    },
+    "acc_7b_greedy": 0.7808764940239044,
+    "acc_32b_direct": 0.852589641434263,
+    "crossfit_percell": {
+     "acc_seed_mean": 0.7772908366533865,
+     "acc_seed_sd": 0.009839911581855345,
+     "acc_seed_min": 0.7569721115537849,
+     "acc_seed_max": 0.7848605577689243,
+     "lambda_chosen_counts": {
+      "0.5": 2,
+      "0.75": 41,
+      "1.0": 7
+     },
+     "delta_vs_7b_at_seed_mean_lambda": null,
+     "modal_lambda": 0.75,
+     "acc_at_modal_lambda": 0.7848605577689243,
+     "delta_vs_7b_at_modal_lambda": {
+      "delta": 0.00398406374501992,
+      "lo": -0.00796812749003984,
+      "hi": 0.0199203187250996,
+      "sig": false
+     },
+     "delta_vs_32b_direct_at_modal_lambda": {
+      "delta": -0.06772908366533864,
+      "lo": -0.11553784860557768,
+      "hi": -0.0199203187250996,
+      "sig": true
+     }
+    },
+    "n5_dump_consistency": {
+     "n_parsed": 250,
+     "n_items": 251,
+     "dump_correct_equals_parsed_pick_is_gold": 1.0
+    },
+    "OK_cache_note": "acc_by_lambda is EVAL-VISIBLE and is printed only to show the shape of the curve; the reported number is the cross-fit one"
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc_by_lambda_EVAL_VISIBLE_not_a_result": {
+     "0.0": 0.671921475312314,
+     "0.02": 0.6734086853063652,
+     "0.05": 0.6805472932778108,
+     "0.1": 0.7004759071980964,
+     "0.15": 0.7168352171326592,
+     "0.2": 0.728138013087448,
+     "0.3": 0.7441998810232004,
+     "0.5": 0.7784057108863771,
+     "0.75": 0.8200475907198096,
+     "1.0": 0.8411659726353361,
+     "1.5": 0.8411659726353361,
+     "2.0": 0.8411659726353361
+    },
+    "acc_7b_greedy": 0.8408685306365259,
+    "acc_32b_direct": 0.8890541344437835,
+    "crossfit_percell": {
+     "acc_seed_mean": 0.8411659726353362,
+     "acc_seed_sd": 1.1702778228589004e-16,
+     "acc_seed_min": 0.8411659726353361,
+     "acc_seed_max": 0.8411659726353361,
+     "lambda_chosen_counts": {
+      "1.0": 50
+     },
+     "delta_vs_7b_at_seed_mean_lambda": null,
+     "modal_lambda": 1.0,
+     "acc_at_modal_lambda": 0.8411659726353361,
+     "delta_vs_7b_at_modal_lambda": {
+      "delta": 0.000297441998810232,
+      "lo": 0.0,
+      "hi": 0.000892325996430696,
+      "sig": false
+     },
+     "delta_vs_32b_direct_at_modal_lambda": {
+      "delta": -0.047888161808447356,
+      "lo": -0.060083283759666865,
+      "hi": -0.03569303985722784,
+      "sig": true
+     }
+    },
+    "n5_dump_consistency": {
+     "n_parsed": 3361,
+     "n_items": 3362,
+     "dump_correct_equals_parsed_pick_is_gold": 1.0
+    },
+    "OK_cache_note": "acc_by_lambda is EVAL-VISIBLE and is printed only to show the shape of the curve; the reported number is the cross-fit one"
+   }
+  },
+  "global_lambda": {
+   "cells": [
+    "PMC_VQA",
+    "MedXpertQA-MM",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed"
+   ],
+   "four_cell_macro_seed_mean": 0.6092149659343985,
+   "sd": 1.1702778228589004e-16,
+   "min": 0.6092149659343984,
+   "max": 0.6092149659343984,
+   "lambda_chosen_counts": {
+    "1.0": 50
+   },
+   "modal_lambda": 1.0,
+   "four_cell_macro_always_7b": 0.6056029228317742,
+   "four_cell_macro_always_32b_direct": 0.6501192773028449,
+   "four_cell_macro_at_modal_lambda": 0.6092149659343984,
+   "per_cell_at_modal_lambda": {
+    "PMC_VQA": 0.5493333333333333,
+    "MedXpertQA-MM": 0.2615,
+    "VQA_RAD_closed": 0.7848605577689243,
+    "PATH_VQA_closed": 0.8411659726353361
+   },
+   "per_cell_delta_vs_7b_at_modal_lambda": {
+    "PMC_VQA": {
+     "delta": 0.010166666666666666,
+     "lo": 0.0075,
+     "hi": 0.013,
+     "sig": true
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.00398406374501992,
+     "lo": 0.0,
+     "hi": 0.01195219123505976,
+     "sig": false
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.000297441998810232,
+     "lo": 0.0,
+     "hi": 0.000892325996430696,
+     "sig": false
+    }
+   },
+   "macro_vs_7b_at_modal_lambda": {
+    "delta": 0.003612043102624196,
+    "lo": 0.0020833333333333537,
+    "hi": 0.006020741641800831,
+    "sig": true
+   }
+  }
+ },
+ "THE_GRADER_DEFECT_THAT_KILLS_THE_ONLY_POSITIVE": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/repaired_grader_zeroshot.json",
+  "parse_audit": {
+   "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/n5_parse_audit.json",
+   "PMC_VQA": {
+    "n": 6000,
+    "graded_acc_from_vec_npz": 0.5391666666666667,
+    "my_parse_acc": 0.5493333333333333,
+    "parse_rate": 1.0,
+    "n_disagree": 69,
+    "n_parse_says_right_dump_says_wrong": 65,
+    "n_parse_says_wrong_dump_says_right": 4,
+    "examples": [
+     {
+      "resp": "C:",
+      "dump_correct": false,
+      "my_pick": 2,
+      "gold_idx": 2,
+      "gold_ans": "X-ray and CT scan"
+     },
+     {
+      "resp": "C:",
+      "dump_correct": false,
+      "my_pick": 2,
+      "gold_idx": 2,
+      "gold_ans": "Color Doppler"
+     },
+     {
+      "resp": "A:",
+      "dump_correct": false,
+      "my_pick": 0,
+      "gold_idx": 0,
+      "gold_ans": "Neuronal cell bodies"
+     },
+     {
+      "resp": "C:",
+      "dump_correct": false,
+      "my_pick": 2,
+      "gold_idx": 2,
+      "gold_ans": "Venous infarction of middle cerebellar peduncle after MVD su"
+     }
+    ]
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "graded_acc_from_vec_npz": 0.2615,
+    "my_parse_acc": 0.2615,
+    "parse_rate": 1.0,
+    "n_disagree": 0,
+    "n_parse_says_right_dump_says_wrong": 0,
+    "n_parse_says_wrong_dump_says_right": 0,
+    "examples": []
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "graded_acc_from_vec_npz": 0.7808764940239044,
+    "my_parse_acc": 0.7808764940239044,
+    "parse_rate": 0.9960159362549801,
+    "n_disagree": 0,
+    "n_parse_says_right_dump_says_wrong": 0,
+    "n_parse_says_wrong_dump_says_right": 0,
+    "examples": []
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "graded_acc_from_vec_npz": 0.8408685306365259,
+    "my_parse_acc": 0.8408685306365259,
+    "parse_rate": 0.9997025580011898,
+    "n_disagree": 0,
+    "n_parse_says_right_dump_says_wrong": 0,
+    "n_parse_says_wrong_dump_says_right": 0,
+    "examples": []
+   }
+  },
+  "independent_confirmation": "results/cascade_methods/artifacts/pmcvqa_grader_defect_2026-08-12.json",
+  "what": "the option branch delivers a candidate INDEX and is graded pick == gold, while the baselines are graded by MedEvalKit's extractor, which reduces a bare 'C:' response to the empty string (utils/utils.py:111-112) and then falls through to difflib similarity. On the 6,000 scored PMC items the two graders disagree on 69 items for the 7B (65 gained / 4 lost) and 94 for the 32B.",
+  "consequence": "the fusion arm's PMC win is +0.0132 [+0.0072, +0.0192] SIG against the harness grader and +0.0030 [-0.0023, +0.0083] NOT SIGNIFICANT against a repaired one. The entire apparent win was the grader.",
+  "cells": {
+   "PMC_VQA": {
+    "n": 6000,
+    "always_7b_harness_grader": 0.5391666666666667,
+    "always_7b_repaired_grader": 0.5493333333333333,
+    "always_32b_direct_harness_grader": 0.5523333333333333,
+    "always_32b_direct_repaired_grader": 0.567,
+    "grader_disagreement_items_7b": 69,
+    "grader_disagreement_items_32b": 94,
+    "armA_verifier_over_options": 0.4735,
+    "armA_vs_7b_HARNESS_grader": {
+     "delta": -0.06566666666666666,
+     "lo": -0.07966666666666666,
+     "hi": -0.052,
+     "sig": true
+    },
+    "armA_vs_7b_REPAIRED_grader": {
+     "delta": -0.07583333333333334,
+     "lo": -0.08966666666666667,
+     "hi": -0.0625,
+     "sig": true
+    },
+    "armA_vs_32b_REPAIRED_grader": {
+     "delta": -0.0935,
+     "lo": -0.10783333333333334,
+     "hi": -0.079,
+     "sig": true
+    },
+    "fusion_lambda_0p1": 0.5523333333333333,
+    "fusion_lambda_0p1_vs_7b_HARNESS": {
+     "delta": 0.013166666666666667,
+     "lo": 0.007166666666666667,
+     "hi": 0.019166666666666665,
+     "sig": true
+    },
+    "fusion_lambda_0p1_vs_7b_REPAIRED": {
+     "delta": 0.003,
+     "lo": -0.0023333333333333335,
+     "hi": 0.008333333333333333,
+     "sig": false
+    },
+    "fusion_lambda_1p0_equals_always_7b_repaired": 0.5493333333333333,
+    "fusion_lambda_1p0_vs_7b_REPAIRED": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false
+    }
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "always_7b_harness_grader": 0.2615,
+    "always_7b_repaired_grader": 0.2615,
+    "always_32b_direct_harness_grader": 0.3065,
+    "always_32b_direct_repaired_grader": 0.3065,
+    "grader_disagreement_items_7b": 0,
+    "grader_disagreement_items_32b": 0,
+    "armA_verifier_over_options": 0.264,
+    "armA_vs_7b_HARNESS_grader": {
+     "delta": 0.0025,
+     "lo": -0.016,
+     "hi": 0.0215,
+     "sig": false
+    },
+    "armA_vs_7b_REPAIRED_grader": {
+     "delta": 0.0025,
+     "lo": -0.016,
+     "hi": 0.0215,
+     "sig": false
+    },
+    "armA_vs_32b_REPAIRED_grader": {
+     "delta": -0.0425,
+     "lo": -0.067,
+     "hi": -0.0175,
+     "sig": true
+    },
+    "fusion_lambda_0p1": 0.267,
+    "fusion_lambda_0p1_vs_7b_HARNESS": {
+     "delta": 0.0055,
+     "lo": -0.009,
+     "hi": 0.02,
+     "sig": false
+    },
+    "fusion_lambda_0p1_vs_7b_REPAIRED": {
+     "delta": 0.0055,
+     "lo": -0.009,
+     "hi": 0.02,
+     "sig": false
+    },
+    "fusion_lambda_1p0_equals_always_7b_repaired": 0.2615,
+    "fusion_lambda_1p0_vs_7b_REPAIRED": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false
+    }
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "always_7b_harness_grader": 0.7808764940239044,
+    "always_7b_repaired_grader": 0.7808764940239044,
+    "always_32b_direct_harness_grader": 0.852589641434263,
+    "always_32b_direct_repaired_grader": 0.852589641434263,
+    "grader_disagreement_items_7b": 0,
+    "grader_disagreement_items_32b": 0,
+    "armA_verifier_over_options": 0.7290836653386454,
+    "armA_vs_7b_HARNESS_grader": {
+     "delta": -0.05179282868525897,
+     "lo": -0.11155378486055777,
+     "hi": 0.00796812749003984,
+     "sig": false
+    },
+    "armA_vs_7b_REPAIRED_grader": {
+     "delta": -0.05179282868525897,
+     "lo": -0.11155378486055777,
+     "hi": 0.00796812749003984,
+     "sig": false
+    },
+    "armA_vs_32b_REPAIRED_grader": {
+     "delta": -0.12350597609561753,
+     "lo": -0.18326693227091634,
+     "hi": -0.06772908366533864,
+     "sig": true
+    },
+    "fusion_lambda_0p1": 0.7410358565737052,
+    "fusion_lambda_0p1_vs_7b_HARNESS": {
+     "delta": -0.0398406374501992,
+     "lo": -0.09561752988047809,
+     "hi": 0.01593625498007968,
+     "sig": false
+    },
+    "fusion_lambda_0p1_vs_7b_REPAIRED": {
+     "delta": -0.0398406374501992,
+     "lo": -0.09561752988047809,
+     "hi": 0.01593625498007968,
+     "sig": false
+    },
+    "fusion_lambda_1p0_equals_always_7b_repaired": 0.7848605577689243,
+    "fusion_lambda_1p0_vs_7b_REPAIRED": {
+     "delta": 0.00398406374501992,
+     "lo": 0.0,
+     "hi": 0.01195219123505976,
+     "sig": false
+    }
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "always_7b_harness_grader": 0.8408685306365259,
+    "always_7b_repaired_grader": 0.8408685306365259,
+    "always_32b_direct_harness_grader": 0.8890541344437835,
+    "always_32b_direct_repaired_grader": 0.8890541344437835,
+    "grader_disagreement_items_7b": 0,
+    "grader_disagreement_items_32b": 0,
+    "armA_verifier_over_options": 0.671921475312314,
+    "armA_vs_7b_HARNESS_grader": {
+     "delta": -0.16894705532421178,
+     "lo": -0.1885782272456871,
+     "hi": -0.14991076740035694,
+     "sig": true
+    },
+    "armA_vs_7b_REPAIRED_grader": {
+     "delta": -0.16894705532421178,
+     "lo": -0.1885782272456871,
+     "hi": -0.14991076740035694,
+     "sig": true
+    },
+    "armA_vs_32b_REPAIRED_grader": {
+     "delta": -0.21713265913146937,
+     "lo": -0.23527662105889352,
+     "hi": -0.19958358120166567,
+     "sig": true
+    },
+    "fusion_lambda_0p1": 0.7004759071980964,
+    "fusion_lambda_0p1_vs_7b_HARNESS": {
+     "delta": -0.1403926234384295,
+     "lo": -0.15823914336704342,
+     "hi": -0.12254610350981558,
+     "sig": true
+    },
+    "fusion_lambda_0p1_vs_7b_REPAIRED": {
+     "delta": -0.1403926234384295,
+     "lo": -0.15823914336704342,
+     "hi": -0.12254610350981558,
+     "sig": true
+    },
+    "fusion_lambda_1p0_equals_always_7b_repaired": 0.8411659726353361,
+    "fusion_lambda_1p0_vs_7b_REPAIRED": {
+     "delta": 0.000297441998810232,
+     "lo": 0.0,
+     "hi": 0.000892325996430696,
+     "sig": false
+    }
+   }
+  },
+  "four_cell_macro": {
+   "cells": [
+    "PMC_VQA",
+    "MedXpertQA-MM",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed"
+   ],
+   "always_7b_harness": 0.6056029228317742,
+   "always_7b_REPAIRED": 0.6081445894984409,
+   "always_32b_direct_harness": 0.6501192773028449,
+   "always_32b_direct_REPAIRED": 0.6537859439695116,
+   "armA_verifier_over_options": 0.5346262851627399,
+   "fusion_lambda_0p1": 0.5652112742762838,
+   "fusion_lambda_1p0_GLOBAL_CROSSFIT_CHOICE": 0.6092149659343984,
+   "fusion_lambda_1p0_vs_7b_REPAIRED": {
+    "delta": 0.0010703764359575318,
+    "lo": 0.0,
+    "hi": 0.0031367688081700706,
+    "sig": false
+   },
+   "fusion_lambda_0p1_vs_7b_REPAIRED": {
+    "delta": -0.04293331522215717,
+    "lo": -0.05817265282267716,
+    "hi": -0.02769201231461224,
+    "sig": true
+   },
+   "fusion_lambda_1p0_vs_7b_HARNESS_the_INFLATED_comparison": {
+    "delta": 0.003612043102624196,
+    "lo": 0.0020833333333333537,
+    "hi": 0.006020741641800831,
+    "sig": true
+   },
+   "reading": "the cross-fit GLOBAL lambda is 1.0, and at lambda >= 1.0 the generator's own answer can never be overturned (verifier scores live in [0,1]), so the fusion has DEGENERATED to always-7B. Against the harness grader that degenerate arm still looks like a win; against a repaired grader it is not."
+  }
+ },
+ "CONTROL_option_branch_off": {
+  "definition": "candidate set = {7B greedy} on the four prompt-supplied-answer-space cells; the sampled branch unchanged. NOT the unified rule -- the control that says what the option branch COST.",
+  "macro": 0.6060488372550622,
+  "vs_always_7b": {
+   "delta": 0.00939825581395349,
+   "lo": 0.002070276162790695,
+   "hi": 0.016975872093023252,
+   "sig": true
+  },
+  "vs_32b_direct": {
+   "delta": -0.05069284212185261,
+   "lo": -0.06272911332778958,
+   "hi": -0.03902172112501014,
+   "sig": true
+  },
+  "vs_unified": {
+   "delta": 0.03548831883451718,
+   "lo": 0.027342775744138237,
+   "hi": 0.043761897526886306,
+   "sig": true
+  },
+  "per_cell": {
+   "PMC_VQA": 0.5391666666666667,
+   "SLAKE_closed": 0.8253588516746412,
+   "VQA_RAD_closed": 0.7808764940239044,
+   "PATH_VQA_closed": 0.8408685306365259,
+   "MedXpertQA-MM": 0.2615,
+   "SLAKE_open": 0.7472868217054264,
+   "VQA_RAD_open": 0.48,
+   "PATH_VQA_open": 0.37333333333333335
+  },
+  "fraction_of_the_0p0596_gap_closed": 0.15768885593881682,
+  "min_strong_leg": {
+   "grid": [
+    {
+     "escalation": 0.0,
+     "macro_confidence_gate": 0.6060488372550622,
+     "macro_random_gate": 0.6060488372550622
+    },
+    {
+     "escalation": 0.02,
+     "macro_confidence_gate": 0.6087364702658383,
+     "macro_random_gate": 0.6063046148998529
+    },
+    {
+     "escalation": 0.04,
+     "macro_confidence_gate": 0.611605859655455,
+     "macro_random_gate": 0.6066216013166683
+    },
+    {
+     "escalation": 0.06,
+     "macro_confidence_gate": 0.6133202790181363,
+     "macro_random_gate": 0.6067405184617565
+    },
+    {
+     "escalation": 0.08,
+     "macro_confidence_gate": 0.6142045625489716,
+     "macro_random_gate": 0.6065803302437777
+    },
+    {
+     "escalation": 0.1,
+     "macro_confidence_gate": 0.6158046532238255,
+     "macro_random_gate": 0.6071650706719887
+    },
+    {
+     "escalation": 0.12,
+     "macro_confidence_gate": 0.6185415046705838,
+     "macro_random_gate": 0.6074187588697557
+    },
+    {
+     "escalation": 0.14,
+     "macro_confidence_gate": 0.6192824066259073,
+     "macro_random_gate": 0.6081505713838928
+    },
+    {
+     "escalation": 0.16,
+     "macro_confidence_gate": 0.6206686845012621,
+     "macro_random_gate": 0.6088877303534194
+    },
+    {
+     "escalation": 0.18,
+     "macro_confidence_gate": 0.6214633339365044,
+     "macro_random_gate": 0.6105795985906852
+    },
+    {
+     "escalation": 0.2,
+     "macro_confidence_gate": 0.6237942518482946,
+     "macro_random_gate": 0.611242788028991
+    },
+    {
+     "escalation": 0.22,
+     "macro_confidence_gate": 0.6261470399842124,
+     "macro_random_gate": 0.6120274577547952
+    },
+    {
+     "escalation": 0.24,
+     "macro_confidence_gate": 0.6265405922146563,
+     "macro_random_gate": 0.6125617836215526
+    },
+    {
+     "escalation": 0.26,
+     "macro_confidence_gate": 0.6278314962578997,
+     "macro_random_gate": 0.6138373143411076
+    },
+    {
+     "escalation": 0.28,
+     "macro_confidence_gate": 0.6298303380407005,
+     "macro_random_gate": 0.6144759868736072
+    },
+    {
+     "escalation": 0.3,
+     "macro_confidence_gate": 0.6324730829444881,
+     "macro_random_gate": 0.6148357696377404
+    },
+    {
+     "escalation": 0.32,
+     "macro_confidence_gate": 0.6334328418244505,
+     "macro_random_gate": 0.616009012168246
+    },
+    {
+     "escalation": 0.34,
+     "macro_confidence_gate": 0.6338025571885868,
+     "macro_random_gate": 0.6167032038989874
+    },
+    {
+     "escalation": 0.36,
+     "macro_confidence_gate": 0.6336794310409098,
+     "macro_random_gate": 0.6181971210440754
+    },
+    {
+     "escalation": 0.38,
+     "macro_confidence_gate": 0.6346860069047487,
+     "macro_random_gate": 0.6202430756767308
+    },
+    {
+     "escalation": 0.4,
+     "macro_confidence_gate": 0.634703547634091,
+     "macro_random_gate": 0.6215658397383368
+    },
+    {
+     "escalation": 0.42,
+     "macro_confidence_gate": 0.635193776581412,
+     "macro_random_gate": 0.6226972356031002
+    },
+    {
+     "escalation": 0.44,
+     "macro_confidence_gate": 0.6370224434988545,
+     "macro_random_gate": 0.6250595561199509
+    },
+    {
+     "escalation": 0.46,
+     "macro_confidence_gate": 0.6364276429469474,
+     "macro_random_gate": 0.6257778119684907
+    },
+    {
+     "escalation": 0.48,
+     "macro_confidence_gate": 0.6378611588832024,
+     "macro_random_gate": 0.6271920198458395
+    },
+    {
+     "escalation": 0.5,
+     "macro_confidence_gate": 0.6399264847297481,
+     "macro_random_gate": 0.6282599559442306
+    },
+    {
+     "escalation": 0.52,
+     "macro_confidence_gate": 0.6408583045001086,
+     "macro_random_gate": 0.6282511963926531
+    },
+    {
+     "escalation": 0.54,
+     "macro_confidence_gate": 0.6410338798682329,
+     "macro_random_gate": 0.6287156125808984
+    },
+    {
+     "escalation": 0.56,
+     "macro_confidence_gate": 0.6412943309604107,
+     "macro_random_gate": 0.6300572820761384
+    },
+    {
+     "escalation": 0.58,
+     "macro_confidence_gate": 0.6415648845668703,
+     "macro_random_gate": 0.6306933443567927
+    },
+    {
+     "escalation": 0.6,
+     "macro_confidence_gate": 0.6423716425177046,
+     "macro_random_gate": 0.6318619846035805
+    },
+    {
+     "escalation": 0.62,
+     "macro_confidence_gate": 0.6424637663729461,
+     "macro_random_gate": 0.6341292835143213
+    },
+    {
+     "escalation": 0.64,
+     "macro_confidence_gate": 0.6434012663729461,
+     "macro_random_gate": 0.6351833748532869
+    },
+    {
+     "escalation": 0.66,
+     "macro_confidence_gate": 0.6441387235210978,
+     "macro_random_gate": 0.6356823325029901
+    },
+    {
+     "escalation": 0.68,
+     "macro_confidence_gate": 0.6447655355538948,
+     "macro_random_gate": 0.6359578678478393
+    },
+    {
+     "escalation": 0.7,
+     "macro_confidence_gate": 0.6463034522032682,
+     "macro_random_gate": 0.6378326237165907
+    },
+    {
+     "escalation": 0.72,
+     "macro_confidence_gate": 0.6469972506528807,
+     "macro_random_gate": 0.6393183021149231
+    },
+    {
+     "escalation": 0.74,
+     "macro_confidence_gate": 0.6465786460017179,
+     "macro_random_gate": 0.6395764767295057
+    },
+    {
+     "escalation": 0.76,
+     "macro_confidence_gate": 0.646314111117997,
+     "macro_random_gate": 0.6396281895504308
+    },
+    {
+     "escalation": 0.78,
+     "macro_confidence_gate": 0.6461057777846637,
+     "macro_random_gate": 0.6419706471799222
+    },
+    {
+     "escalation": 0.8,
+     "macro_confidence_gate": 0.6462932777846637,
+     "macro_random_gate": 0.6426076591421522
+    },
+    {
+     "escalation": 0.82,
+     "macro_confidence_gate": 0.6464100413505551,
+     "macro_random_gate": 0.643058211142032
+    },
+    {
+     "escalation": 0.84,
+     "macro_confidence_gate": 0.6472768049164466,
+     "macro_random_gate": 0.6447619754746254
+    },
+    {
+     "escalation": 0.86,
+     "macro_confidence_gate": 0.648722415398856,
+     "macro_random_gate": 0.6472012256878965
+    },
+    {
+     "escalation": 0.88,
+     "macro_confidence_gate": 0.6501644018156714,
+     "macro_random_gate": 0.6474501477419745
+    },
+    {
+     "escalation": 0.9,
+     "macro_confidence_gate": 0.6518334369155818,
+     "macro_random_gate": 0.6480739895247754
+    },
+    {
+     "escalation": 0.92,
+     "macro_confidence_gate": 0.6530580553459071,
+     "macro_random_gate": 0.6499254199878977
+    },
+    {
+     "escalation": 0.94,
+     "macro_confidence_gate": 0.6543913886792404,
+     "macro_random_gate": 0.6519741671841208
+    },
+    {
+     "escalation": 0.96,
+     "macro_confidence_gate": 0.6545226871288529,
+     "macro_random_gate": 0.6541552427828092
+    },
+    {
+     "escalation": 0.98,
+     "macro_confidence_gate": 0.654995555345907,
+     "macro_random_gate": 0.6560874581469456
+    },
+    {
+     "escalation": 1.0,
+     "macro_confidence_gate": 0.6566791793769149,
+     "macro_random_gate": 0.6567416793769149
+    }
+   ],
+   "target_macro_always_32b_direct": 0.6567416793769149,
+   "min_escalation_to_match_always_32b_direct": null,
+   "min_escalation_random_gate": 1.0
+  },
+  "gate_note": "the option cells are gated by the DEPLOYED 7B's own margin (the incumbent MCQ gate signal, read verbatim from the MedEvalKit dump), the open cells by the verifier's top1-top2, SLAKE_closed by the 7B margin."
+ },
+ "VRAM": {
+  "status": "not measured for the option branch in this round",
+  "closest_measured_configurations": {
+   "source": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json",
+   "lingshu7b_MCQ_leg_uncapped_board_peak_gib": 23.4206,
+   "lingshu7b_plus_LoRA_verifier_open_arm_board_peak_gib": 18.7644,
+   "lingshu32b_direct_board_peak_gib": 72.6023,
+   "note": "generator and verifier SHARE one copy of the 7B weights (the verifier is a LoRA on the generator's own base, +0.1961 GiB), so the whole pipeline is one 7B-class process either way"
+  }
+ }
+}

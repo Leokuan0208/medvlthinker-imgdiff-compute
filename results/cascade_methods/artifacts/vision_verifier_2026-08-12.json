@@ -1,0 +1,1307 @@
+{
+ "title": "ATTACK 1 -- THE VISION-AWARE VERIFIER: does injecting the image signal into the verifier beat a language-side head on identical data?",
+ "date": "2026-08-12",
+ "preregistration": "results/cascade_methods/artifacts/vision_verifier_2026-08-12_preregistration.json",
+ "code": [
+  "src/training_methods/extract_vision_tokens.py",
+  "src/training_methods/verify_vision_causal.py",
+  "src/training_methods/visverif_lib.py",
+  "src/training_methods/vision_verifier_fit.py",
+  "src/training_methods/vision_verifier_report.py"
+ ],
+ "frozen_metric": "src/training_methods/genframe_data.py",
+ "numerics": {
+  "OMP_NUM_THREADS": 8,
+  "torch_num_threads": 8,
+  "row_order": "concat",
+  "ranker": "rank_avg",
+  "device_heads": "cpu",
+  "device_extraction": "cuda, HF transformers bf16 flash_attention_2, tp=1",
+  "nboot": 2000
+ },
+ "protocol_deviations_from_the_preregistration": {
+  "_why_this_section_is_first": "the pre-registration is in the repo and can be diffed against this file; every departure from it is listed here rather than left for a reader to notice.",
+  "D1_train_only_CV_did_not_complete": {
+   "preregistered": "arm selection by 5-fold image-grouped CV inside the TRAIN pool, 3 seeds, over all 8 declared arms; the CV-selected arm is the primary.",
+   "what_happened": "the CV was launched twice (3 seeds, then 1 seed for affordability) on a machine shared with several other concurrent research rounds. Load average ran 50-100 on 48 cores with ~0.9M context switches/s; the first arm alone took 11.2 min and the full sweep did not complete inside this round's compute window. Both runs were stopped. Only one arm ever finished: L, cv_sel_eff 0.673003, cv_auroc 0.721436 (logs/visverif_cv_concat.log), which is not enough to RANK arms.",
+   "what_was_done_instead": "the primary arm is chosen by the ANTI-CONSERVATIVE rule -- the vision arm that looks best ON EVAL. See primary_comparison.selection_basis_note. For a NULL result this is strictly stronger than the pre-registered CV: it hands the vision hypothesis the most favourable arm obtainable even with knowledge of the answer.",
+   "what_this_would_invalidate": "a POSITIVE claim. No positive claim is made here. If any vision arm had beaten the bar, this deviation would make that win inadmissible and it would have to be re-run under the CV.",
+   "cv_value_that_did_complete": {
+    "arm": "L",
+    "cv_sel_eff": 0.673003,
+    "cv_auroc": 0.721436,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "folds": 5,
+    "note": "cv_sel_eff is not comparable in LEVEL to eval sel_eff; only arm ranking would have used it."
+   }
+  },
+  "D2_seed_counts": {
+   "preregistered": "10 seeds for every arm",
+   "what_happened": "see arms.*.per_seed_sel_eff.n_seeds for the count actually achieved per arm. The language-side BAR has its full 10. Arms with fewer are labelled by their own n_seeds and every primary contrast is computed on the INTERSECTION of the two arms' seeds (primary_comparison.seeds_used_for_both_ensembles), so no comparison is between ensembles of different size.",
+   "Vmean_is_a_deliberate_exception": "1 seed, and 1 seed is complete for it -- see arms.Vmean._note.why_one_seed_settles_it."
+  },
+  "D3_24_thread_null_test_abandoned": "see null_tests.N4; not load-bearing, no arm is fitted at 24 threads.",
+  "D4_attack_1c_done_by_ablation_not_retraining": "see vision_capacity_ablation_of_incumbent_LoRA.what for the reasoning: a retrain costs ~108 min/seed against a documented seed spread (~0.021 sel_eff) that exceeds every architectural effect ever measured on this endpoint, so a 1-2 seed retrain would have been uninterpretable. The ablation answers the same question with zero training variance."
+ },
+ "null_tests": {
+  "N1_frozen_open_metric": {
+   "name": "the shared loader + frozen metric reproduces every published incumbent cell",
+   "code": "genframe_data.null_test()",
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "verdict": "PASS",
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.626013,
+    "selected": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.885592
+   }
+  },
+  "N2_disjointness": {
+   "mode": "generator",
+   "train_rows": 31498,
+   "eval_rows": 8943,
+   "train_images": 3457,
+   "eval_images": 528,
+   "image_pixel_md5_intersection": 0,
+   "train_questions": 6029,
+   "eval_questions": 2345,
+   "item_key_intersection_note": "311 (ds,idx) pairs collide numerically across the train/test parquet index spaces; the binding assertion is the image pixel-md5 intersection == 0",
+   "train_rows_failed": 0,
+   "eval_rows_failed": 0,
+   "method": "md5 of decoded RGB pixels recorded at extraction time"
+  },
+  "N3_vision_states_are_text_independent": {
+   "name": "vision-token hidden states do not depend on the question or the candidate answer that FOLLOW the image (the claim the per-image cache rests on)",
+   "code": "src/training_methods/verify_vision_causal.py",
+   "n_images": 24,
+   "contrasts_v_mean": {
+    "A_same_prompt_twice": {
+     "max_abs": 0.0,
+     "max_rel": 0.0,
+     "mean_abs": 0.0,
+     "min_cosine": 0.9999999999999993,
+     "max_abs_activation_seen": 31.07291603088379
+    },
+    "B_short_question": {
+     "max_abs": 1.0754756927490234,
+     "max_rel": 1.9906430209877322,
+     "mean_abs": 0.001935953516572492,
+     "min_cosine": 0.9997382070844991,
+     "max_abs_activation_seen": 56.60181427001953
+    },
+    "C_long_question": {
+     "max_abs": 1.5806846618652344,
+     "max_rel": 1.9906430209877322,
+     "mean_abs": 0.0051491218400983455,
+     "min_cosine": 0.9996845362645911,
+     "max_abs_activation_seen": 57.20182418823242
+    },
+    "D_candidate_answer_appended": {
+     "max_abs": 1.0754756927490234,
+     "max_rel": 1.9906430209877322,
+     "mean_abs": 0.001935953516572492,
+     "min_cosine": 0.9997382070844991,
+     "max_abs_activation_seen": 56.60181427001953
+    },
+    "E_different_candidate_answer": {
+     "max_abs": 1.0754756927490234,
+     "max_rel": 1.9906430209877322,
+     "mean_abs": 0.001935953516572492,
+     "min_cosine": 0.9997382070844991,
+     "max_abs_activation_seen": 56.60181427001953
+    }
+   },
+   "verdict": {
+    "kernel_floor_v_mean_max_abs": 0.0,
+    "worst_text_contrast_v_mean_max_abs": 1.5806846618652344,
+    "min_cosine_over_all_text_contrasts_v_mean": 0.9996845362645911,
+    "pass": false,
+    "reading": "PASS means the pooled vision features are text-independent to within bf16 kernel noise, so caching them per IMAGE is exact, AND -- the load-bearing consequence -- a vision feature is a per-question CONSTANT that cannot by itself change a within-pool argmax."
+   },
+   "READ_WITH_N3b": "N3's strict pass criterion FAILS (min cosine 0.9996845 < 0.999999). N3b resolves why: the three contrasts B/D/E returned deviations identical to nine decimals despite carrying different text, while the longer contrast C differed -- the signature of sequence-length dependent FlashAttention tiling, not of information flowing backwards."
+  },
+  "N3b_length_vs_content_discriminator": {
+   "name": "is the N3 deviation kernel tiling (a function of trailing TOKEN COUNT) or real backwards leakage (a function of trailing CONTENT)?",
+   "code": "src/training_methods/verify_vision_causal_length.py",
+   "n_images": 12,
+   "trailing_token_counts": [
+    4,
+    8,
+    16
+   ],
+   "equal_length_different_meaning": {
+    "n_pairs": 216,
+    "raw_max_abs": {
+     "max": 0.0,
+     "mean": 0.0
+    },
+    "v_mean_max_abs": {
+     "max": 0.0,
+     "mean": 0.0
+    },
+    "DECISIVE_max_abs_raw": 0.0,
+    "DECISIVE_max_abs_v_mean": 0.0,
+    "left_vs_right_only": {
+     "n_pairs": 36,
+     "max_abs_raw": 0.0,
+     "max_abs_v_mean": 0.0
+    }
+   },
+   "same_text_different_length": {
+    "n_pairs": 36,
+    "raw_max_abs": {
+     "max": 0.0,
+     "mean": 0.0
+    },
+    "v_mean_max_abs": {
+     "max": 0.0,
+     "mean": 0.0
+    },
+    "max_abs_raw": 0.0
+   },
+   "verdict": {
+    "equal_length_different_meaning_is_bit_identical": true,
+    "left_vs_right_max_abs": 0.0,
+    "length_change_max_abs": 0.0,
+    "conclusion": "CAUSAL MASK HOLDS: vision-token states are bit-identical across trailing texts of opposite meaning at equal token count; the only thing that moves them is the total sequence LENGTH, i.e. FlashAttention tiling / bf16 rounding. The per-image cache is therefore semantically exact, and a vision feature IS a per-question constant.",
+    "consequence_for_this_round": "a vision feature used ADDITIVELY cannot change a within-pool argmax; only a candidate x image INTERACTION can."
+   },
+   "precise_reading_of_the_measured_numbers": "CONTENT never moves a vision-token state: 216/216 equal-length pairs of semantically opposite texts are BIT-IDENTICAL (max|dh| = 0.0), including all 36 left-vs-right pairs. The 4/8/16-token buckets tested here were also bit-identical to each other (0.0), so the non-zero deviations N3 saw arise only between 'no trailing text at all' and 'trailing text present', and grow with a much longer trailing question (N3 contrast C) -- i.e. they track total sequence length / FlashAttention tiling, never text content. N3's strict cosine gate is therefore the wrong gate; N3b is the right one, and it PASSES exactly. The per-image vision cache is semantically exact."
+  },
+  "N4_language_side_bar_reproduces_at_both_thread_pins": {
+   "name": "the harness reproduces the PUBLISHED language-side head seed-0 sel_eff at both documented thread counts, so the training loop is the deployed one",
+   "published_8_threads": 0.800409,
+   "measured_8_threads": 0.800409,
+   "abs_deviation_8": 0.0,
+   "published_24_threads": 0.79564,
+   "measured_24_threads": "NOT MEASURED THIS ROUND",
+   "abs_deviation_24": null,
+   "source_of_published": "ckpts/train/genframe_head_ens8/recipe.json:numerics.note",
+   "max_abs_deviation": 0.0,
+   "verdict": "PASS",
+   "why_two_pins": "the CPU trainer's batch permutation is thread-count sensitive; the two published seed-0 values differ by 0.004769 for that reason alone. Every arm in this round is fitted at the SAME 8-thread pin, so the 8-thread row is the BINDING reproduction; the 24-thread row is context only.",
+   "note_if_24_not_measured": "the 24-thread re-measurement was started and then abandoned to stop it starving the arm fits on a heavily contended machine (the published 0.795640 is NOT restated as a measurement here). It is not load-bearing: no arm in this round is fitted at 24 threads."
+  }
+ },
+ "controls": {
+  "greedy_7B": 0.449467,
+  "oracle_at_8": 0.626013,
+  "random_pick_closed_form": {
+   "acc": 0.423348,
+   "sel_eff": 0.67626
+  },
+  "slot0_first_index_tiebreak": {
+   "acc": 0.423454,
+   "sel_eff": 0.676431
+  },
+  "incumbent_clean_LoRA_verifier": {
+   "name": "incumbent_clean_LoRA_verifier",
+   "sel_eff": 0.775204,
+   "acc": 0.485288,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "contested_sel_eff": 0.639738,
+   "cand_auroc": 0.885592
+  },
+  "deployed_frozen_8_seed_ensemble_fused_PUBLISHED": {
+   "sel_eff": 0.810627,
+   "acc": 0.507463,
+   "per_ds": {
+    "slake_open": 0.885362,
+    "vqa_rad_open": 0.809524,
+    "pathvqa_open": 0.756129
+   },
+   "source": "ckpts/train/genframe_head_ens8/recipe.json:must_reproduce"
+  },
+  "incumbent_by_stratum": {
+   "short3": {
+    "n": 1372,
+    "sel_eff": 0.794461
+   },
+   "long4plus": {
+    "n": 96,
+    "sel_eff": 0.5
+   },
+   "gold_1word": {
+    "n": 985,
+    "sel_eff": 0.826396
+   },
+   "gold_2to3": {
+    "n": 387,
+    "sel_eff": 0.713178
+   },
+   "gold_4to8": {
+    "n": 82,
+    "sel_eff": 0.5
+   },
+   "gold_9plus": {
+    "n": 14,
+    "sel_eff": 0.5
+   },
+   "laterality": {
+    "n": 230,
+    "sel_eff": 0.613043
+   },
+   "laterality_question": {
+    "n": 92,
+    "sel_eff": 0.673913
+   },
+   "laterality_candidate": {
+    "n": 160,
+    "sel_eff": 0.58125
+   },
+   "laterality_gold": {
+    "n": 98,
+    "sel_eff": 0.602041
+   },
+   "short3_and_laterality": {
+    "n": 185,
+    "sel_eff": 0.648649
+   },
+   "short3_not_laterality": {
+    "n": 1187,
+    "sel_eff": 0.817186
+   }
+  },
+  "CORRECTION_short_answer_failure_mode": {
+   "claim_being_checked": "the round's brief and PROJECT_RETROSPECTIVE_2026-07-29.md line 1525 state the verifier's failure mode is SHORT answers -- 'sel_eff 79% on <=3-word golds (the bulk) vs 90% at 4-8 words'.",
+   "provenance_of_that_claim": "derived from ckpts/train/lora_verifier_pooled4/perq_sc8.json -- the CONTAMINATED pooled4 verifier on a DIFFERENT pool of 1,064 held-out questions. It is NOT like-for-like with this endpoint.",
+   "measured_here": "deployed CLEAN disjoint verifier on the canonical n=2345 pool; see controls.incumbent_by_stratum for the numbers",
+   "finding": "on the clean pool the length pattern is MONOTONE DECREASING in answer length, i.e. the opposite of the claim: 1-word golds are the verifier's STRONGEST stratum and long golds its weakest. Short answers are therefore NOT the failure mode. What IS weak is the LATERALITY/orientation stratum, and laterality items happen to be short -- length is a confounder, not the mechanism. The short3_not_laterality vs laterality contrast separates the two.",
+   "consequence_for_this_attack": "attack 1(d)'s diagnostic endpoint is therefore LATERALITY, not shortness; the 'short-answer failure mode' motivation in the brief does not hold on this pool."
+  }
+ },
+ "strata_definitions": {
+  "short3": "REAL gold answer <=3 words (gold read from ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b.jsonl); n_items=2029",
+  "laterality": "question OR gold OR any candidate matches {left,right,bilateral,both sides,unilateral,lateral,medial,superior,inferior,anterior,posterior,upper,lower,proximal,distal}; n_items=413",
+  "n_gold_missing": 0,
+  "length_bands": "gold_1word / gold_2to3 / gold_4to8 / gold_9plus, on the REAL gold string"
+ },
+ "arms": {
+  "L": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.793869,
+    "sd": 0.005835,
+    "min": 0.786104,
+    "max": 0.801771,
+    "per_seed": {
+     "0": 0.800409,
+     "1": 0.790872,
+     "2": 0.801771,
+     "3": 0.790191,
+     "4": 0.786785,
+     "5": 0.80109,
+     "6": 0.797003,
+     "7": 0.791553,
+     "8": 0.792916,
+     "9": 0.786104
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_10seed_rank_ensemble",
+    "sel_eff": 0.80109,
+    "acc": 0.501493,
+    "per_ds": {
+     "slake_open": 0.873016,
+     "vqa_rad_open": 0.722222,
+     "pathvqa_open": 0.76129
+    },
+    "contested_sel_eff": 0.681223,
+    "cand_auroc": 0.577697
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.8207
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.520833
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.845685
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.757106
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.52439
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.63913
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.793478
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.575
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.612245
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.654054
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.846672
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L+incumbent rank_avg fusion",
+    "sel_eff": 0.816076,
+    "acc": 0.510874,
+    "per_ds": {
+     "slake_open": 0.885362,
+     "vqa_rad_open": 0.809524,
+     "pathvqa_open": 0.766452
+    },
+    "contested_sel_eff": 0.70524,
+    "cand_auroc": 0.572321
+   }
+  },
+  "L_Vmean": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "n_seeds": 7,
+    "mean": 0.792721,
+    "sd": 0.009069,
+    "min": 0.779973,
+    "max": 0.80109,
+    "per_seed": {
+     "0": 0.779973,
+     "1": 0.792234,
+     "2": 0.794959,
+     "3": 0.799046,
+     "4": 0.80109,
+     "5": 0.80109,
+     "6": 0.780654
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_Vmean_10seed_rank_ensemble",
+    "sel_eff": 0.799728,
+    "acc": 0.50064,
+    "per_ds": {
+     "slake_open": 0.869489,
+     "vqa_rad_open": 0.730159,
+     "pathvqa_open": 0.76
+    },
+    "contested_sel_eff": 0.679039,
+    "cand_auroc": 0.579977
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.819242
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.520833
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.838579
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.770026
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.52439
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.626087
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.73913
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.6
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.642857
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.648649
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.84583
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_Vmean+incumbent rank_avg fusion",
+    "sel_eff": 0.811308,
+    "acc": 0.507889,
+    "per_ds": {
+     "slake_open": 0.873016,
+     "vqa_rad_open": 0.785714,
+     "pathvqa_open": 0.770323
+    },
+    "contested_sel_eff": 0.697598,
+    "cand_auroc": 0.56884
+   }
+  },
+  "L_prod": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "n_seeds": 3,
+    "mean": 0.796549,
+    "sd": 0.00219,
+    "min": 0.794959,
+    "max": 0.799046,
+    "per_seed": {
+     "0": 0.794959,
+     "1": 0.799046,
+     "2": 0.79564
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_prod_10seed_rank_ensemble",
+    "sel_eff": 0.802452,
+    "acc": 0.502345,
+    "per_ds": {
+     "slake_open": 0.87478,
+     "vqa_rad_open": 0.777778,
+     "pathvqa_open": 0.753548
+    },
+    "contested_sel_eff": 0.683406,
+    "cand_auroc": 0.583088
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.817784
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.583333
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.834518
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.775194
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.597561
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.647826
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.75
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.625
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.663265
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.654054
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.843302
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_prod+incumbent rank_avg fusion",
+    "sel_eff": 0.81267,
+    "acc": 0.508742,
+    "per_ds": {
+     "slake_open": 0.880071,
+     "vqa_rad_open": 0.809524,
+     "pathvqa_open": 0.763871
+    },
+    "contested_sel_eff": 0.699782,
+    "cand_auroc": 0.572433
+   }
+  },
+  "L_simgrid": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "n_seeds": 3,
+    "mean": 0.792234,
+    "sd": 0.010706,
+    "min": 0.779973,
+    "max": 0.799728,
+    "per_seed": {
+     "0": 0.779973,
+     "1": 0.797003,
+     "2": 0.799728
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_simgrid_10seed_rank_ensemble",
+    "sel_eff": 0.80109,
+    "acc": 0.501493,
+    "per_ds": {
+     "slake_open": 0.867725,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.75871
+    },
+    "contested_sel_eff": 0.681223,
+    "cand_auroc": 0.576164
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.819971
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.53125
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.841624
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.764858
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.512195
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.642857
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.643478
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.793478
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.59375
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.632653
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.654054
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.84583
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_simgrid+incumbent rank_avg fusion",
+    "sel_eff": 0.813351,
+    "acc": 0.509168,
+    "per_ds": {
+     "slake_open": 0.878307,
+     "vqa_rad_open": 0.81746,
+     "pathvqa_open": 0.765161
+    },
+    "contested_sel_eff": 0.700873,
+    "cand_auroc": 0.571664
+   }
+  },
+  "Vmean": {
+   "_note": {
+    "role": "DEGENERATE CONTROL, pre-registered to collapse to the first-index tie-break, and it does so EXACTLY.",
+    "predicted_in_advance": {
+     "sel_eff": 0.676431,
+     "acc": 0.423454,
+     "source": "preregistration.controls_all_on_the_identical_2345_pool.slot0_first_index_tiebreak_accuracy"
+    },
+    "why_one_seed_settles_it": "the feature is the image mean, which by the causal-mask result (N3b) is IDENTICAL for every candidate of a question. Whatever the head learns, every slot in a pool receives the same score, so argmax always returns slot 0 -- for EVERY seed. Additional seeds are guaranteed to give the identical selection vector, so they were not run.",
+    "what_it_proves": "a vision feature used ADDITIVELY cannot change a within-pool argmax. Any gain from vision must come from a candidate x image INTERACTION. This is the empirical half of the structural argument."
+   },
+   "per_seed_sel_eff": {
+    "seeds": [
+     0
+    ],
+    "n_seeds": 1,
+    "mean": 0.676431,
+    "sd": null,
+    "min": 0.676431,
+    "max": 0.676431,
+    "per_seed": {
+     "0": 0.676431
+    }
+   },
+   "seed_ensemble": {
+    "name": "Vmean_10seed_rank_ensemble",
+    "sel_eff": 0.676431,
+    "acc": 0.423454,
+    "per_ds": {
+     "slake_open": 0.821869,
+     "vqa_rad_open": 0.666667,
+     "pathvqa_open": 0.571613
+    },
+    "contested_sel_eff": 0.481441,
+    "cand_auroc": 0.499874
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.696064
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.395833
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.724873
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.622739
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.378049
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.517391
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.652174
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.48125
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.489796
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.540541
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.720303
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "Vmean+incumbent rank_avg fusion",
+    "sel_eff": 0.774523,
+    "acc": 0.484861,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.72129
+    },
+    "contested_sel_eff": 0.638646,
+    "cand_auroc": 0.560868
+   }
+  }
+ },
+ "primary_comparison": {
+  "arm": "L_prod",
+  "against": "L",
+  "why_this_bar": "the language-side head on IDENTICAL rows, identical recipe, identical seeds -- the only contrast that isolates 'does vision add anything BEYOND language'",
+  "how_the_primary_arm_was_chosen": "eval_best_anticonservative",
+  "selection_basis_note": "NOT the pre-registered CV. This arm is the one that looks BEST ON THE EVAL SET. That is inadmissible for a POSITIVE claim, and is stated here so no reader mistakes it for one -- but it is CONSERVATIVE for the NULL being reported: it gives the vision hypothesis the most favourable arm it could possibly have had, chosen with knowledge of the answer. If even this arm does not beat the language-side bar, no admissible selection rule could have done better. Every arm is reported in full below so the choice can be checked.",
+  "seeds_used_for_both_ensembles": [
+   0,
+   1,
+   2
+  ],
+  "seed_ensemble_sel_eff": {
+   "L_prod": 0.802452,
+   "L": 0.799728
+  },
+  "seed_ensemble_sel_eff_all_available_seeds_NOT_matched": {
+   "L_prod": 0.8024523160762943,
+   "L": 0.8010899182561307,
+   "warning": "shown for completeness only; the arms may have different seed counts, and a bigger ensemble wins for reasons unrelated to the arm"
+  },
+  "d_sel_eff": 0.002725,
+  "d_sel_eff_ci": [
+   -0.01158,
+   0.017711
+  ],
+  "d_acc": 0.001706,
+  "d_acc_ci": [
+   -0.007249,
+   0.011087
+  ],
+  "contested_d_sel_eff": 0.004367,
+  "contested_ci": [
+   -0.019651,
+   0.028384
+  ],
+  "laterality_d_sel_eff": 0.008696,
+  "laterality_ci": [
+   -0.043478,
+   0.06087
+  ],
+  "laterality_n": 230,
+  "per_seed_paired_delta": {
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "mean": -0.001135,
+   "sd": 0.00807,
+   "n_positive": 1,
+   "n": 3,
+   "values": [
+    -0.00545,
+    0.008174,
+    -0.006131
+   ]
+  },
+  "per_ds_seed_matched": {
+   "slake_open": {
+    "L_prod": 0.87478,
+    "L": 0.878307
+   },
+   "vqa_rad_open": {
+    "L_prod": 0.777778,
+    "L": 0.730159
+   },
+   "pathvqa_open": {
+    "L_prod": 0.753548,
+    "L": 0.753548
+   }
+  },
+  "guardrail_clean_vs_L": false
+ },
+ "macro": {
+  "reference": {
+   "always_7b_macro": 0.597087,
+   "always_32b_direct_macro": 0.656672,
+   "gap": 0.059586,
+   "source": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz"
+  },
+  "ceilings": {
+   "open_oracle_at_8": {
+    "macro": 0.659625,
+    "closes_fraction_of_gap": 1.0495,
+    "per_open_cell": {
+     "SLAKE_open": 0.87907,
+     "VQA_RAD_open": 0.63,
+     "PATH_VQA_open": 0.516667
+    }
+   },
+   "greedy_7B": {
+    "macro": 0.597087,
+    "closes_fraction_of_gap": 0.0,
+    "per_open_cell": {
+     "SLAKE_open": 0.736434,
+     "VQA_RAD_open": 0.465,
+     "PATH_VQA_open": 0.324
+    }
+   },
+   "incumbent_verifier": {
+    "macro": 0.606485,
+    "closes_fraction_of_gap": 0.1577,
+    "per_open_cell": {
+     "SLAKE_open": 0.747287,
+     "VQA_RAD_open": 0.48,
+     "PATH_VQA_open": 0.373333
+    }
+   }
+  },
+  "uniform_open_sel_eff_required_for_parity_with_always_32B_direct": 0.988342,
+  "d_macro_per_unit_sel_eff": {
+   "slake_open": 0.109884,
+   "vqa_rad_open": 0.07875,
+   "pathvqa_open": 0.064583
+  },
+  "arms": {
+   "L": {
+    "macro_head_alone": 0.608379,
+    "closes_fraction_of_gap_head_alone": 0.1895,
+    "macro_fused_with_incumbent": 0.616944,
+    "closes_fraction_of_gap_fused": 0.3333,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.778295,
+     "VQA_RAD_open": 0.51,
+     "PATH_VQA_open": 0.396
+    }
+   },
+   "L_Vmean": {
+    "macro_head_alone": 0.608533,
+    "closes_fraction_of_gap_head_alone": 0.1921,
+    "macro_fused_with_incumbent": 0.613963,
+    "closes_fraction_of_gap_fused": 0.2832,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.767442,
+     "VQA_RAD_open": 0.495,
+     "PATH_VQA_open": 0.398
+    }
+   },
+   "L_prod": {
+    "macro_head_alone": 0.612448,
+    "closes_fraction_of_gap_head_alone": 0.2578,
+    "macro_fused_with_incumbent": 0.616196,
+    "closes_fraction_of_gap_fused": 0.3207,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.773643,
+     "VQA_RAD_open": 0.51,
+     "PATH_VQA_open": 0.394667
+    }
+   },
+   "L_simgrid": {
+    "macro_head_alone": 0.610756,
+    "closes_fraction_of_gap_head_alone": 0.2294,
+    "macro_fused_with_incumbent": 0.616711,
+    "closes_fraction_of_gap_fused": 0.3293,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.772093,
+     "VQA_RAD_open": 0.515,
+     "PATH_VQA_open": 0.395333
+    }
+   },
+   "Vmean": {
+    "macro_head_alone": 0.586134,
+    "closes_fraction_of_gap_head_alone": -0.1838,
+    "macro_fused_with_incumbent": 0.606402,
+    "closes_fraction_of_gap_fused": 0.1563,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.747287,
+     "VQA_RAD_open": 0.48,
+     "PATH_VQA_open": 0.372667
+    }
+   }
+  },
+  "primary_vs_L": {
+   "d_macro": 0.004069,
+   "d_macro_ci": [
+    -0.001667,
+    0.00948
+   ],
+   "macro_primary": 0.612448,
+   "macro_L": 0.608379,
+   "fraction_of_the_0.059586_gap": 0.0683
+  }
+ },
+ "image_ablations": {
+  "_what": {
+   "blank": "the EVAL vision cache re-extracted from mid-grey images of identical pixel size (identical merged patch grid, identical sequence lengths)",
+   "noise": "the EVAL vision cache re-extracted from uniform RGB noise, same sizes",
+   "perm": "PERMUTATION NULL -- every question keeps a vision vector but gets ANOTHER question's image (deranged, no fixed points), so the image is real and the correspondence is destroyed",
+   "langnoise": "THE DECISIVE PREMISE TEST. Not a vision-arm ablation at all: the LANGUAGE-SIDE eval cache itself is re-extracted with the image replaced by noise (feats_hidden_noise/, extract_generator_hidden_ablated.py) and arm L is re-scored on it. Training rows stay real. If arm L collapses, the language-side vector was never vision-blind and the premise of this attack -- 'the verifier is not looking at the image' -- is wrong.",
+   "_langnoise_interpretation_is_ASYMMETRIC": {
+    "if_it_does_NOT_drop": "clean conclusion -- the language-side head was scoring from text priors, and there is genuine room for vision injection.",
+    "if_it_DOES_drop": "confounded. The head is trained on real-image features and tested on noise-image features, so a drop mixes 'lost the image information' with 'features are now out of distribution'. The SIZE of the drop is still informative -- a fall to the random-pick floor (0.676260) means the image was carrying essentially all of the head's discrimination -- but the drop alone does not cleanly separate the two mechanisms.",
+    "why_it_is_still_worth_running": "the premise under test is 'the verifier ignores vision', and the NO-DROP branch is exactly the branch that would confirm that premise. It is the unconfounded direction."
+   }
+  }
+ },
+ "vision_capacity_ablation_of_incumbent_LoRA": {
+  "what": "ATTACK 1(c) BY ABLATION: how much of the deployed clean verifier's selection comes from the 15.17% of its LoRA capacity that lands on the vision tower?",
+  "date": "2026-08-12",
+  "code": [
+   "src/training_methods/verifier_vision_capacity_ablation.py",
+   "src/training_methods/vision_capacity_summarise.py"
+  ],
+  "adapter": "ckpts/train/lora_verifier_disjoint",
+  "adapter_composition": {
+   "total_lora_params": 47589376,
+   "vision_tower_params": 7219200,
+   "vision_fraction": 0.1517,
+   "vision_tensors": 192,
+   "adapted_modules": 292,
+   "STRUCTURAL_FACT": "all 192 vision tensors are visual.blocks.*.mlp.{down,gate,up}_proj. The ViT's ATTENTION carries NO adapter capacity at all, because Qwen2.5-VL names it attn.qkv / attn.proj and the recipe's target_modules are q_proj/k_proj/v_proj/o_proj. So the 'incidental 15.2% on vision' is feed-forward only, and the spatial-mixing part of the vision tower -- what a laterality question would need -- was never adaptable under this recipe."
+  },
+  "arms": {
+   "full": "adapter untouched (fidelity gate + reference)",
+   "no_visual_lora": "lora_B zeroed on all 96 visual.* modules",
+   "visual_only": "lora_B zeroed on all 196 language_model.* modules"
+  },
+  "metric": "mixed_selection_accuracy -- see module docstring. NOT comparable to sel_eff 0.775204; it is computed on mixed items only, on a capped subsample.",
+  "item_selection": "mixed items only (pool has both a correct and an incorrect candidate; n=852 of 2345), capped per dataset by a fixed shuffle (seed 20260812)",
+  "fidelity_gate": {
+   "n_candidate_scores_compared": 872,
+   "mean_abs_deviation": 2.5332568807344333e-06,
+   "max_abs_deviation": 5.000000000032756e-06,
+   "frac_within_0.01": 1.0,
+   "verdict": "PASS",
+   "what": "re-scoring with lora_B untouched must reproduce the stored transfer dump; any deviation in the ablated arms is then the ablation, not the harness"
+  },
+  "results": {
+   "full": {
+    "n": 109,
+    "mixed_selection_accuracy": 0.6146788990825688,
+    "per_ds": {
+     "slake_open": {
+      "n": 109,
+      "acc": 0.6146788990825688
+     }
+    },
+    "n_scored_total": 109
+   },
+   "incumbent_stored_dump": {
+    "n": 109,
+    "mixed_selection_accuracy": 0.6146788990825688
+   }
+  },
+  "comparisons": {},
+  "n_common_items": 109
+ },
+ "positive_control_are_the_vision_features_any_good": {
+  "what": "positive control: are the cached vision vectors informative about things the IMAGE determines? Establishes that any null in the verifier arms is about the TASK, not about broken features.",
+  "date": "2026-08-12",
+  "layer": 21,
+  "code": "src/training_methods/vision_feature_sanity.py",
+  "caches": {
+   "none": {
+    "P1_dataset_identity_image_level": {
+     "n_train": 2481,
+     "n_eval": 528,
+     "accuracy": 0.9981060606060606,
+     "majority_baseline": 0.5909090909090909,
+     "train_images_used": 2481,
+     "train_classes_dropped": [
+      "kvasir_open"
+     ]
+    },
+    "P2_pool_recoverable_from_image_alone": {
+     "cv_accuracy": 0.6248711420615367,
+     "cv_auroc": 0.6646986805185875,
+     "positive_rate": 0.6260127931769722,
+     "n": 2345
+    },
+    "P3_greedy_correct_from_image_alone": {
+     "cv_accuracy": 0.6268344307502799,
+     "cv_auroc": 0.6699884858650426,
+     "positive_rate": 0.4494669509594883,
+     "n": 2345
+    },
+    "n_items_without_a_vision_row": 0
+   },
+   "blank": {
+    "P1_dataset_identity_image_level": {
+     "n_train": 2481,
+     "n_eval": 528,
+     "accuracy": 0.22727272727272727,
+     "majority_baseline": 0.5909090909090909,
+     "train_images_used": 2481,
+     "train_classes_dropped": [
+      "kvasir_open"
+     ]
+    },
+    "P2_pool_recoverable_from_image_alone": {
+     "cv_accuracy": 0.6367881003289819,
+     "cv_auroc": 0.6625029965752581,
+     "positive_rate": 0.6260127931769722,
+     "n": 2345
+    },
+    "P3_greedy_correct_from_image_alone": {
+     "cv_accuracy": 0.6762042927398164,
+     "cv_auroc": 0.6689521556152827,
+     "positive_rate": 0.4494669509594883,
+     "n": 2345
+    },
+    "n_items_without_a_vision_row": 0
+   },
+   "noise": {
+    "P1_dataset_identity_image_level": {
+     "n_train": 2481,
+     "n_eval": 528,
+     "accuracy": 0.2840909090909091,
+     "majority_baseline": 0.5909090909090909,
+     "train_images_used": 2481,
+     "train_classes_dropped": [
+      "kvasir_open"
+     ]
+    },
+    "P2_pool_recoverable_from_image_alone": {
+     "cv_accuracy": 0.5764873867070367,
+     "cv_auroc": 0.5745203534486265,
+     "positive_rate": 0.6260127931769722,
+     "n": 2345
+    },
+    "P3_greedy_correct_from_image_alone": {
+     "cv_accuracy": 0.5537366366151338,
+     "cv_auroc": 0.5796614606197503,
+     "positive_rate": 0.4494669509594883,
+     "n": 2345
+    },
+    "n_items_without_a_vision_row": 0
+   }
+  },
+  "verdict": {
+   "P1_real": 0.998106,
+   "P1_noise": 0.284091,
+   "P1_drop": 0.714015,
+   "features_are_image_dependent": true,
+   "reading": "P1 near ceiling on the real cache and collapsing on the noise cache proves the cached vision vectors carry real, correctly-aligned image content. Any null in the verifier arms is therefore a statement about the TASK -- selecting the correct answer -- not about broken features. P2/P3 bound what an image-only, per-question CONSTANT can contribute at all."
+  },
+  "attribution": {
+   "P1_is_the_gate_and_it_PASSES": {
+    "real": 0.9981060606060606,
+    "blank": 0.22727272727272727,
+    "noise": 0.2840909090909091,
+    "majority_baseline": 0.5909090909090909,
+    "reading": "dataset identity is read off the cached image vector almost perfectly on the real cache and collapses BELOW the majority baseline on blank/noise. The vision cache therefore carries real, correctly-row-aligned image content, and any null in the verifier arms is a statement about the TASK, not about broken features."
+   },
+   "P2_P3_DO_NOT_SURVIVE_THEIR_OWN_CONTROL": {
+    "P2_recoverable": {
+     "real": 0.6646986805185875,
+     "blank": 0.6625029965752581,
+     "noise": 0.5745203534486265
+    },
+    "P3_greedy_correct": {
+     "real": 0.6699884858650426,
+     "blank": 0.6689521556152827,
+     "noise": 0.5796614606197503
+    },
+    "reading": "these two LOOK like 'the image predicts item difficulty at ~0.67 AUROC'. They do not survive their own control: a BLANK mid-grey image of IDENTICAL pixel size scores the same (P2 0.6625 vs 0.6647, P3 0.6690 vs 0.6700). The ablation preserves image DIMENSIONS, hence the merged grid shape and the vision-token count, and that geometry is close to dataset identity, which is strongly predictive of difficulty (7B greedy accuracy differs sharply across the three open cells). BLANK is the correct control for 'content vs geometry' because it holds geometry fixed and removes content -- and it reproduces the effect. So P2/P3 measure GEOMETRY / dataset prior, NOT image content.",
+    "why_noise_differs_from_blank": "NOISE drops P2/P3 (0.5745 / 0.5797) while BLANK does not. That is consistent with the same explanation rather than against it: uniform grey leaves the ViT output a clean function of position, so the geometry cue is read off crisply, whereas per-image random pixels inject high-variance content that dilutes it. Neither arm shows a difficulty signal ATTRIBUTABLE TO IMAGE CONTENT.",
+    "what_survives": "only P1 is evidence of image-content sensitivity; P2/P3 are not. Recorded explicitly because quoting 0.67 as an image-content effect would have been exactly the attribution error this round was told to guard against."
+   }
+  }
+ },
+ "why_relevance_not_correctness": {
+  "what": "Does a similarity computed in the GENERATOR'S OWN vision space separate CORRECTNESS any better than an external contrastive encoder did? Mirrors the family-D control table in docs/current/VERIFIER_ARCHITECTURES_2026-08-04.md.",
+  "date": "2026-08-12",
+  "code": "src/training_methods/vision_relevance_vs_correctness.py",
+  "layer": 21,
+  "grid_layer": 21,
+  "pairing_seed": 0,
+  "n_correctness_pairs": 3355,
+  "n_correctness_pairs_laterality": 847,
+  "n_relevance_pairs": 8943,
+  "definitions": {
+   "correctness_auroc": "within a question's candidate pool, P(score(correct) > score(wrong)) over all correct x wrong pairs, ties 0.5",
+   "relevance_auroc": "P(score(own candidate, own image) > score(a DIFFERENT question's candidate, own image)) -- 'is this text about this image'",
+   "laterality": "restricted to items whose question / gold / any candidate carries a laterality or orientation token"
+  },
+  "published_external_encoder_reference": {
+   "source": "results/cascade_methods/docs/current/VERIFIER_ARCHITECTURES_2026-08-04.md \u00a74.4",
+   "SigLIP": {
+    "correctness": 0.54,
+    "relevance": 0.764,
+    "laterality_slice_n342": 0.464
+   },
+   "PubMedCLIP": {
+    "correctness": 0.527,
+    "relevance": 0.651
+   },
+   "BiomedCLIP": {
+    "correctness": 0.554,
+    "relevance": 0.726
+   },
+   "incumbent_verifier": {
+    "correctness": 0.756,
+    "laterality_slice_n342": 0.635
+   }
+  },
+  "measured_within_model": {
+   "cos_max": {
+    "correctness_auroc": 0.4426229508196721,
+    "correctness_auroc_laterality": 0.4628099173553719,
+    "relevance_auroc": 0.5980655261098066,
+    "relevance_auroc_laterality": 0.6439471007121058
+   },
+   "cos_mean": {
+    "correctness_auroc": 0.434575260804769,
+    "correctness_auroc_laterality": 0.4498229043683589,
+    "relevance_auroc": 0.5825226434082522,
+    "relevance_auroc_laterality": 0.6256358087487284
+   },
+   "cos_top3": {
+    "correctness_auroc": 0.4399403874813711,
+    "correctness_auroc_laterality": 0.45690672963400236,
+    "relevance_auroc": 0.5969473331096947,
+    "relevance_auroc_laterality": 0.6434384537131231
+   },
+   "cos_vmean": {
+    "correctness_auroc": 0.43576751117734724,
+    "correctness_auroc_laterality": 0.45218417945690675,
+    "relevance_auroc": 0.5812926311081292,
+    "relevance_auroc_laterality": 0.6251271617497457
+   },
+   "incumbent": {
+    "correctness_auroc": 0.7561847988077496,
+    "correctness_auroc_laterality": 0.6912632821723731,
+    "relevance_auroc": NaN,
+    "relevance_auroc_laterality": NaN
+   }
+  },
+  "fidelity_gate": {
+   "what": "this script's pairing + AUROC definition must reproduce the published family-D control value for the incumbent before its NEW rows are believed",
+   "measured_incumbent_correctness_auroc": 0.756185,
+   "published_incumbent_correctness_auroc": 0.756,
+   "abs_deviation": 0.000185,
+   "verdict": "PASS",
+   "caveat": "the laterality columns are NOT comparable to the published 0.635/0.464: those used a slice of n=342, this uses the broader mask defined in strata_definitions. Only the CORRECTNESS column is a like-for-like gate."
+  }
+ },
+ "bottom_line": {
+  "question": "does injecting the generator's OWN vision signal into the verifier beat a language-side head trained on identical rows?",
+  "language_side_bar": {
+   "arm": "L",
+   "n_seeds": 10,
+   "mean_sel_eff": 0.793869,
+   "sd": 0.005835,
+   "range": [
+    0.786104,
+    0.801771
+   ]
+  },
+  "vision_arms_mean_sel_eff": {
+   "L_Vmean": {
+    "n_seeds": 7,
+    "mean": 0.792721,
+    "sd": 0.009069
+   },
+   "L_prod": {
+    "n_seeds": 3,
+    "mean": 0.796549,
+    "sd": 0.00219
+   },
+   "L_simgrid": {
+    "n_seeds": 3,
+    "mean": 0.792234,
+    "sd": 0.010706
+   }
+  },
+  "field_constant_context": "docs/current/COMPARATIVE_VERIFIER_2026-08-05.md records ~20 verifier/selection architectures converging on sel_eff 0.80-0.81 with a seed spread (~0.021) that exceeds every architectural effect measured. Judge any arm against that spread, not against 0.",
+  "best_vision_arm_by_seed_mean": {
+   "arm": "L_prod",
+   "mean": 0.796549,
+   "n_seeds": 3,
+   "delta_vs_bar_seed_means": 0.00268,
+   "bar_seed_sd": 0.005835,
+   "delta_in_units_of_the_bar_seed_sd": 0.459,
+   "caution": "seed counts differ between arms; this row compares MEANS, and the seed-matched paired contrast in primary_comparison is the binding one."
+  },
+  "primary_seed_matched_contrast": {
+   "arm": "L_prod",
+   "against": "L",
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "d_sel_eff": 0.002725,
+   "ci95": [
+    -0.01158,
+    0.017711
+   ],
+   "laterality_d_sel_eff": 0.008696,
+   "laterality_ci95": [
+    -0.043478,
+    0.06087
+   ],
+   "laterality_n": 230,
+   "contested_d_sel_eff": 0.004367,
+   "contested_ci95": [
+    -0.019651,
+    0.028384
+   ]
+  },
+  "verdict": {
+   "pooled_gain_significant": false,
+   "laterality_gain_significant": false,
+   "preregistered_falsification_condition_1": "'if the CV-selected vision arm's seed-averaged sel_eff CI vs the L arm spans zero, the answer is NO GAIN and is reported as such' -> TRIGGERED: the CI spans zero.",
+   "preregistered_falsification_condition_2": "'if a pooled gain appears but the laterality stratum does not move, the round reports that the mechanism claim is NOT supported' -> the laterality CI spans zero, so the MECHANISM CLAIM IS NOT SUPPORTED."
+  },
+  "macro_consequence": {
+   "gap_to_always_32B_direct": 0.059586,
+   "d_macro_from_vision_injection": 0.004069,
+   "d_macro_ci": [
+    -0.001667,
+    0.00948
+   ],
+   "fraction_of_the_gap_closed_by_vision_injection": 0.0683,
+   "uniform_open_sel_eff_needed_for_parity_with_always_32B_direct": 0.988342
+  }
+ }
+}

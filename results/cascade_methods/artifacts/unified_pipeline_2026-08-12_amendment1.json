@@ -1,0 +1,28 @@
+{
+ "amendment": 1,
+ "written_at_utc": "2026-08-12T05:52:00Z",
+ "honest_status": "WRITTEN AFTER arm A (zero-shot) was analysed. It is NOT a blind pre-registration. It is declared here, with its motivation and its decision rule, BEFORE the arm was computed, and it is a DIAGNOSTIC arm -- it may not carry a headline claim.",
+ "what_arm_A_showed_that_motivates_this": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/analysis_zeroshot.json and .../bias_diag_zeroshot.json",
+  "fact_1": "argmax-verifier-over-options is FAR above its own random-gold luck floor on all four option cells (PMC 0.4735 vs 0.2497; MedXpert 0.2640 vs 0.2001; VQA_RAD_cl 0.7291 vs 0.4992; PathVQA_cl 0.6719 vs 0.5003) and candidate-level AUROC is 0.583-0.800 -- the scorer HAS ranking signal over the given options",
+  "fact_2": "and yet it LOSES to the 7B's own greedy argmax on 3 of 4 cells (PMC -0.0657 SIG, PathVQA_cl -0.1689 SIG, VQA_RAD_cl -0.0518 n.s., MedXpert +0.0025 n.s.)",
+  "fact_3": "the loss is concentrated in a CANDIDATE-IDENTITY bias, not in the ranking: on PathVQA_closed the gold is 'yes' on 54.0% of items but the verifier picks 'no' on 73.1% (mean score 0.2602 for the candidate string 'yes' vs 0.5291 for 'no'); on PMC the verifier scores every one of the four options below 0.5 on 79.9% of items and under-picks the two gold-heavy slots"
+ },
+ "arm_A_prime": {
+  "name": "zero-shot scores, candidate-identity bias removed, NESTED CV",
+  "rule": "for each cell, subtract a per-candidate-identity offset from the score before the argmax. Identity = the candidate STRING for the 2-option yes/no cells, and the option SLOT index for the lettered cells. Offsets are the mean score of that identity, estimated ONLY on the training folds.",
+  "cv": "5-fold, items shuffled with seed 20260812, offsets fit on 4 folds and applied to the held-out fold; no eval item ever contributes to its own offset",
+  "why_it_is_only_diagnostic": "the offsets are fit on eval-distribution items (other folds of the same cell). It measures HOW MUCH of the arm-A shortfall is candidate-identity bias rather than missing ranking signal. It is NOT a deployable pipeline and must never be quoted as one.",
+  "decision_rule_stated_in_advance": "if debiasing does not lift the option cells to at least always-7B, the shortfall is a RANKING shortfall and arm B (training on option candidates) is predicted to fail too; if it does lift them, the shortfall is a candidate-prior shortfall and arm B is the right fix",
+  "controls": "the same random-gold luck floor recomputed on the debiased scores; per-cell paired bootstrap vs always-7B, nboot=10000, seed 20260812"
+ },
+ "seed_budget_declared_now": {
+  "planned": "arm B was pre-registered without a seed count. The methodology asks for >=10 seeds where training is involved. One LoRA train (~2 h) plus its 41,226-forward option scoring (~2.4 h) plus 18,760-forward open scoring (~1.1 h) is ~5.5 GPU-hours per seed, and BOTH A100s are shared with three other concurrent rounds.",
+  "commitment": "as many seeds as the shared GPUs allow, reported with mean/sd/range; if fewer than 10, the artifact says so explicitly and no claim is made that depends on a difference smaller than the observed seed spread"
+ },
+ "numerics_note_promoted_from_a_part_file": {
+  "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/n4_batch_numerics_zeroshot.json",
+  "fact": "padded-batch vs batch-1 scoring deviates by up to 0.0615 (mean 0.0101, p99 0.0530) and flips the item argmax on 1 of 60 sampled items (1.7%)",
+  "consequence": "every arm-A/arm-B option-cell number carries a ~1.7% item-level argmax jitter from batching. Immaterial to a -0.169 or -0.066 delta; MATERIAL to the MedXpert +0.0025 and VQA_RAD_closed -0.0518 calls, which are reported as not significant anyway."
+ }
+}

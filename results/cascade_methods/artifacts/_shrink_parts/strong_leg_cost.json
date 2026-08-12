@@ -1,0 +1,316 @@
+{
+ "title": "ATTACK 3 part 4 -- macro FLOP-eq when the STRONG LEG is swapped, both R32 conventions.  The PRIMARY objective of the round.",
+ "date": "2026-08-12",
+ "cpu_only": true,
+ "method": "shrink_strong_leg_cost.py -- ATTACK 3 part 4: what does SHRINKING THE STRONG LEG do to the\nPRIMARY objective, macro FLOP-eq as a ratio of one always-32B-direct pass?\n\nMethod.  artifacts/cost_floor_2026-08-10.json decomposes every published arm, per cell, into\n(n_gen7, n_ver7, n_32b) -- the expected number of 7B generation passes, 7B verifier passes and\nSTRONG-LEG passes per query.  That decomposition was asserted there to reproduce every published\nper-cell cost to 4.71e-4.  So the as-charged cost of a cell is\n\n    cost_cell(R_S) = n_gen7 * 1.0 + n_ver7 * 1.0 + n_32b * R_S\n\nand its ratio to always-32B-direct (which costs exactly R32) is cost_cell(R_S) / R32.  Swapping\nthe strong leg changes R_S and NOTHING ELSE in that expression -- the escalation rates, the\nverifier and the cheap leg are untouched.  That makes the compute consequence of a smaller\nstrong leg exact arithmetic on published quantities, not a new estimate.\n\nNULL TEST: with R_S = R32 the table must reproduce the published macro costs (accuracy-max\n1.740x, compute-lean 1.46x).  Asserted, not assumed.\n\n    python3 src/cascade_methods/shrink_strong_leg_cost.py",
+ "decomposition_source": "artifacts/cost_floor_2026-08-10.json:arm_decomposition (max_abs_dev_vs_published_per_cell_flops = 0.000471)",
+ "strong_leg_ratios_used": {
+  "as_charged_R32_4p57": {
+   "R32": 4.57,
+   "legs": {
+    "lingshu_32b": 4.57,
+    "lingshu_32b_nf4": 4.57,
+    "qwen25vl_32b_awq": 4.57,
+    "lingshu_i8b": 0.8179,
+    "lingshu_7b": 1.0
+   }
+  },
+  "derived_R32_3p816": {
+   "R32": 3.816,
+   "legs": {
+    "lingshu_32b": 3.816,
+    "lingshu_32b_nf4": 3.816,
+    "qwen25vl_32b_awq": 3.816,
+    "lingshu_i8b": 0.8179,
+    "lingshu_7b": 1.0
+   }
+  }
+ },
+ "null_test_N5_reproduces_published_costs": {
+  "per_arm": {
+   "method_accuracy_max_veto": {
+    "rebuilt": 1.7398,
+    "published": 1.74,
+    "abs_dev": 0.0002
+   },
+   "method_compute_lean": {
+    "rebuilt": 1.4603,
+    "published": 1.46,
+    "abs_dev": 0.0003
+   },
+   "always_32b_direct": {
+    "rebuilt": 1.0,
+    "published": 1.0,
+    "abs_dev": 0.0
+   },
+   "always_7b": {
+    "rebuilt": 0.2188,
+    "published": 0.219,
+    "abs_dev": 0.0002
+   }
+  },
+  "max_abs_dev": 0.0003,
+  "threshold": 0.005,
+  "verdict": "PASS",
+  "note": "the published values are quoted to 3-4 significant figures, so a deviation at the 1e-3 level is rounding, not disagreement."
+ },
+ "macro_cost_when_strong_leg_is_swapped": {
+  "as_charged_R32_4p57": {
+   "lingshu_32b": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.7398,
+     "per_cell": {
+      "PMC_VQA": 0.8186,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.0572,
+      "VQA_RAD_open": 3.7865,
+      "PATH_VQA_open": 2.2563
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.4603,
+     "per_cell": {
+      "PMC_VQA": 0.3033,
+      "SLAKE_closed": 0.4233,
+      "VQA_RAD_closed": 0.7885,
+      "PATH_VQA_closed": 0.676,
+      "MedXpertQA-MM": 1.1148,
+      "SLAKE_open": 2.8618,
+      "VQA_RAD_open": 3.4415,
+      "PATH_VQA_open": 2.073
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "lingshu_32b_nf4": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.7398,
+     "per_cell": {
+      "PMC_VQA": 0.8186,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.0572,
+      "VQA_RAD_open": 3.7865,
+      "PATH_VQA_open": 2.2563
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.4603,
+     "per_cell": {
+      "PMC_VQA": 0.3033,
+      "SLAKE_closed": 0.4233,
+      "VQA_RAD_closed": 0.7885,
+      "PATH_VQA_closed": 0.676,
+      "MedXpertQA-MM": 1.1148,
+      "SLAKE_open": 2.8618,
+      "VQA_RAD_open": 3.4415,
+      "PATH_VQA_open": 2.073
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "qwen25vl_32b_awq": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.7398,
+     "per_cell": {
+      "PMC_VQA": 0.8186,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.0572,
+      "VQA_RAD_open": 3.7865,
+      "PATH_VQA_open": 2.2563
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.4603,
+     "per_cell": {
+      "PMC_VQA": 0.3033,
+      "SLAKE_closed": 0.4233,
+      "VQA_RAD_closed": 0.7885,
+      "PATH_VQA_closed": 0.676,
+      "MedXpertQA-MM": 1.1148,
+      "SLAKE_open": 2.8618,
+      "VQA_RAD_open": 3.4415,
+      "PATH_VQA_open": 2.073
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "lingshu_i8b": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.0771,
+     "per_cell": {
+      "PMC_VQA": 0.3262,
+      "SLAKE_closed": 0.179,
+      "VQA_RAD_closed": 0.179,
+      "PATH_VQA_closed": 0.179,
+      "MedXpertQA-MM": 0.179,
+      "SLAKE_open": 2.5404,
+      "VQA_RAD_open": 3.0599,
+      "PATH_VQA_open": 1.9745
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.1169,
+     "per_cell": {
+      "PMC_VQA": 0.2339,
+      "SLAKE_closed": 0.2554,
+      "VQA_RAD_closed": 0.3208,
+      "PATH_VQA_closed": 0.3006,
+      "MedXpertQA-MM": 0.3792,
+      "SLAKE_open": 2.5054,
+      "VQA_RAD_open": 2.9982,
+      "PATH_VQA_open": 1.9417
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 0.179
+    }
+   }
+  },
+  "derived_R32_3p816": {
+   "lingshu_32b": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.9241,
+     "per_cell": {
+      "PMC_VQA": 0.8619,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.5369,
+      "VQA_RAD_open": 4.3598,
+      "PATH_VQA_open": 2.6343
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.6662,
+     "per_cell": {
+      "PMC_VQA": 0.3466,
+      "SLAKE_closed": 0.4666,
+      "VQA_RAD_closed": 0.8318,
+      "PATH_VQA_closed": 0.7193,
+      "MedXpertQA-MM": 1.1581,
+      "SLAKE_open": 3.3415,
+      "VQA_RAD_open": 4.0148,
+      "PATH_VQA_open": 2.451
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "lingshu_32b_nf4": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.9241,
+     "per_cell": {
+      "PMC_VQA": 0.8619,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.5369,
+      "VQA_RAD_open": 4.3598,
+      "PATH_VQA_open": 2.6343
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.6662,
+     "per_cell": {
+      "PMC_VQA": 0.3466,
+      "SLAKE_closed": 0.4666,
+      "VQA_RAD_closed": 0.8318,
+      "PATH_VQA_closed": 0.7193,
+      "MedXpertQA-MM": 1.1581,
+      "SLAKE_open": 3.3415,
+      "VQA_RAD_open": 4.0148,
+      "PATH_VQA_open": 2.451
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "qwen25vl_32b_awq": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.9241,
+     "per_cell": {
+      "PMC_VQA": 0.8619,
+      "SLAKE_closed": 1.0,
+      "VQA_RAD_closed": 1.0,
+      "PATH_VQA_closed": 1.0,
+      "MedXpertQA-MM": 1.0,
+      "SLAKE_open": 3.5369,
+      "VQA_RAD_open": 4.3598,
+      "PATH_VQA_open": 2.6343
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.6662,
+     "per_cell": {
+      "PMC_VQA": 0.3466,
+      "SLAKE_closed": 0.4666,
+      "VQA_RAD_closed": 0.8318,
+      "PATH_VQA_closed": 0.7193,
+      "MedXpertQA-MM": 1.1581,
+      "SLAKE_open": 3.3415,
+      "VQA_RAD_open": 4.0148,
+      "PATH_VQA_open": 2.451
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 1.0
+    }
+   },
+   "lingshu_i8b": {
+    "method_accuracy_max_veto": {
+     "macro_x_of_always_32b_direct": 1.2899,
+     "per_cell": {
+      "PMC_VQA": 0.3906,
+      "SLAKE_closed": 0.2143,
+      "VQA_RAD_closed": 0.2143,
+      "PATH_VQA_closed": 0.2143,
+      "MedXpertQA-MM": 0.2143,
+      "SLAKE_open": 3.0423,
+      "VQA_RAD_open": 3.6645,
+      "PATH_VQA_open": 2.3646
+     }
+    },
+    "method_compute_lean": {
+     "macro_x_of_always_32b_direct": 1.3376,
+     "per_cell": {
+      "PMC_VQA": 0.2802,
+      "SLAKE_closed": 0.3059,
+      "VQA_RAD_closed": 0.3842,
+      "PATH_VQA_closed": 0.36,
+      "MedXpertQA-MM": 0.4541,
+      "SLAKE_open": 3.0004,
+      "VQA_RAD_open": 3.5906,
+      "PATH_VQA_open": 2.3253
+     }
+    },
+    "always_this_leg_alone": {
+     "macro_x_of_always_32b_direct": 0.2143
+    }
+   }
+  }
+ },
+ "headline": {
+  "quantised_32b": "NO CHANGE, EXACTLY.  An NF4 or AWQ Lingshu-32B has the identical logical parameter count (33,452,718,336, read from both checkpoints' safetensors headers) and therefore the identical MAC count, so R_S is unchanged and accuracy-max stays at 1.7398x (as-charged) / 1.9241x (derived).  Quantisation moves the SECONDARY objective (footprint) and nothing else.",
+  "i8b_strong_leg": "accuracy-max with a Lingshu-I-8B strong leg would cost 1.0771x (as-charged) / 1.2899x (derived) instead of 1.7398x / 1.9241x -- BELOW the baseline on both conventions.  always-Lingshu-I-8B alone costs 0.1790x / 0.2143x.  These are COST figures only; whether either holds the accuracy constraint is a separate question and is answered in quant_acc_paired.json (it does not, on the evidence available).",
+  "caveat": "Macro-weighted COST must never be paired with a sample-weighted accuracy, and these are macro costs.  They also inherit the arm_decomposition's own caveat: it is DERIVED from published per-cell costs, not re-measured from a run."
+ }
+}

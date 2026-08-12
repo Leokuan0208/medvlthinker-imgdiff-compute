@@ -110,6 +110,9 @@ def main():
     ap.add_argument("--wait_s", type=float, default=0.0,
                     help=">0: poll until a GPU has --min_free_gib free, up to this many seconds")
     ap.add_argument("--deadline_s", type=float, default=0.0)
+    ap.add_argument("--vram_probe", type=int, default=0,
+                    help=">0: measure peak VRAM of the OPTION BRANCH on this many items per cell "
+                         "(batch=1, the deployed serving shape) and write a part file; score nothing")
     A = ap.parse_args()
 
     os.makedirs(CKPT, exist_ok=True)
@@ -174,6 +177,61 @@ def main():
         return [float(x) for x in s.cpu().numpy()]
 
     work = U.build_worklist()
+
+    # ---- VRAM probe: what does the OPTION BRANCH actually cost to serve? -----------------------
+    # Convention identical to artifacts/vram_testtime_2026-08-11.json: (b) torch peak allocated,
+    # (c) torch peak reserved, (d) NVML board used.  batch=1, one process, base + LoRA adapter,
+    # i.e. the deployed shape -- generator and verifier SHARE the one copy of the 7B weights.
+    if A.vram_probe > 0:
+        import subprocess
+        def board_gib():
+            q = subprocess.run(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
+                               capture_output=True, text=True)
+            vals = [int(x.strip()) for x in q.stdout.strip().splitlines()]
+            vis = os.environ.get("CUDA_VISIBLE_DEVICES")
+            k = int(vis.split(",")[0]) if vis else 0
+            return vals[k] / 1024.0
+        w_alloc = torch.cuda.memory_allocated() / 2**30
+        rows_out, rng = [], np.random.default_rng(U.SEED_BOOT)
+        for cell in A.cells.split(","):
+            rows = work[cell]
+            ids = rng.choice(len(rows), size=min(len(rows), A.vram_probe), replace=False)
+            for j in ids:
+                r = rows[int(j)]
+                torch.cuda.empty_cache(); torch.cuda.reset_peak_memory_stats()
+                b0 = board_gib()
+                try:
+                    for c in range(len(r["cands"])):        # batch=1, one candidate at a time
+                        score_batch([(r, r["cands"][c])])
+                except Exception as e:
+                    rows_out.append({"cell": cell, "i": r["i"], "err": str(e)[:160]}); continue
+                rows_out.append({
+                    "cell": cell, "i": r["i"], "k_candidates": len(r["cands"]),
+                    "est_vision_tokens": est_vis_tokens(r),
+                    "b_peak_allocated_gib": round(torch.cuda.max_memory_allocated() / 2**30, 4),
+                    "c_peak_reserved_gib": round(torch.cuda.max_memory_reserved() / 2**30, 4),
+                    "d_board_used_gib_after": round(board_gib(), 4),
+                    "d_board_used_gib_before": round(b0, 4)})
+        ok = [r for r in rows_out if "err" not in r]
+        out = {"scenario": "unified option branch, batch=1, Lingshu-7B + LoRA verifier, "
+                           f"max_pixels={U.MAXPX} min_pixels={U.MINPX}",
+               "adapter": A.adapter, "n": len(ok), "n_failed": len(rows_out) - len(ok),
+               "a_weights_resident_gib": round(w_alloc, 4),
+               "b_peak_allocated_gib": {"mean": float(np.mean([r["b_peak_allocated_gib"] for r in ok])),
+                                        "peak": float(np.max([r["b_peak_allocated_gib"] for r in ok]))},
+               "c_peak_reserved_gib": {"mean": float(np.mean([r["c_peak_reserved_gib"] for r in ok])),
+                                       "peak": float(np.max([r["c_peak_reserved_gib"] for r in ok]))},
+               "d_board_used_gib": {"mean": float(np.mean([r["d_board_used_gib_after"] for r in ok])),
+                                    "peak": float(np.max([r["d_board_used_gib_after"] for r in ok]))},
+               "caveat": "d (board) includes any OTHER process sharing the card; b and c are this "
+                         "process only. Three other rounds shared these GPUs during this measurement, "
+                         "so read b/c, not d, unless d_board_used_gib_before is ~0.",
+               "rows": rows_out}
+        os.makedirs(U.PARTS, exist_ok=True)
+        p = os.path.join(U.PARTS, f"vram_option_branch_{A.tag}.json")
+        json.dump(out, open(p, "w"), indent=1)
+        print(json.dumps({k: v for k, v in out.items() if k != "rows"}, indent=1), flush=True)
+        return
 
     # ---- N4: batch-vs-batch1 numerics ---------------------------------------------------------
     if A.nulltest_batch > 0:

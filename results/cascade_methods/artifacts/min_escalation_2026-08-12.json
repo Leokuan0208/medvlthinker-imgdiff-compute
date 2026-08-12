@@ -19940,5 +19940,123 @@
   "what_is_new_here": "the per-item gate features are now extracted and cached at results/cascade_methods/artifacts/_min_escalation_parts/features.npz, so any future attack can sweep a threshold without touching a GPU.",
   "next_lever": "a within-cell PRE-GENERATION router.  Every cell where the Lagrangian picks p32 (MedXpert, VQA-RAD-open, and VQA-RAD-closed at low lambda) is a cell where the 7B forward is pure waste, and the cascade pays it anyway on the cells it does keep.  Extracting a cheap pre-generation feature (image/question embedding) is the one structural change this analysis cannot evaluate and the literature says matters most."
  },
- "runtime_s": 487.1
+ "runtime_s": 1129.7,
+ "certified_veto_n_needed_CORRECTION": {
+  "pointer": "results/cascade_methods/artifacts/_min_escalation_parts/veto_n_needed_wilson_correction_2026-08-12.json",
+  "code": "src/cascade_methods/min_escalation_veto_ncorrection.py",
+  "what": "the `n_needed_for_lb_to_reach_acc32` column in certified_veto is the WALD approximation and is NOT the inverse of the Wilson firing rule; it understates the requirement (median Wilson/Wald ratio per cell in the addendum) and ignores the n>=30 floor.  Use the addendum's n_needed_BINDING_with_n30_floor instead.  No other number in this artifact is affected -- the column is diagnostic only and never feeds a policy.",
+  "null_test_max_abs_dev": 0.00011042007613670801,
+  "summary": {
+   "PMC_VQA": {
+    "fires_today_at_3_bins": true,
+    "veto_rate_3bins": 0.4006,
+    "veto_rate_10bins": 0.32,
+    "easiest_config_to_make_it_fire": {
+     "n_bins": "5",
+     "calibration_data_multiplier_needed": 1.19,
+     "median_items_per_bin_today": 5349,
+     "cheapest_near_miss_bin": {
+      "fold": 2,
+      "bin": 2,
+      "n_train": 5348,
+      "p7_train": 0.5264,
+      "acc32_train": 0.5161,
+      "fires": false,
+      "n_needed_STORED_wald": 6379,
+      "n_needed_WILSON": 6371,
+      "n_needed_BINDING_with_n30_floor": 6371,
+      "data_multiplier_over_actual": 1.19
+     }
+    }
+   },
+   "SLAKE_closed": {
+    "fires_today_at_3_bins": false,
+    "veto_rate_3bins": 0.0,
+    "veto_rate_10bins": 0.0801,
+    "easiest_config_to_make_it_fire": {
+     "n_bins": "3",
+     "calibration_data_multiplier_needed": 1.08,
+     "median_items_per_bin_today": 223,
+     "cheapest_near_miss_bin": {
+      "fold": 3,
+      "bin": 1,
+      "n_train": 223,
+      "p7_train": 0.8655,
+      "acc32_train": 0.8251,
+      "fires": false,
+      "n_needed_STORED_wald": 194,
+      "n_needed_WILSON": 240,
+      "n_needed_BINDING_with_n30_floor": 240,
+      "data_multiplier_over_actual": 1.08
+     }
+    }
+   },
+   "VQA_RAD_closed": {
+    "fires_today_at_3_bins": false,
+    "veto_rate_3bins": 0.0,
+    "veto_rate_10bins": 0.0,
+    "easiest_config_to_make_it_fire": {
+     "n_bins": "10",
+     "calibration_data_multiplier_needed": 1.5,
+     "median_items_per_bin_today": 20,
+     "cheapest_near_miss_bin": {
+      "fold": 3,
+      "bin": 3,
+      "n_train": 20,
+      "p7_train": 0.9,
+      "acc32_train": 0.75,
+      "fires": false,
+      "n_needed_STORED_wald": 11,
+      "n_needed_WILSON": 23,
+      "n_needed_BINDING_with_n30_floor": 30,
+      "data_multiplier_over_actual": 1.5
+     }
+    }
+   },
+   "PATH_VQA_closed": {
+    "fires_today_at_3_bins": false,
+    "veto_rate_3bins": 0.0,
+    "veto_rate_10bins": 0.0,
+    "easiest_config_to_make_it_fire": {
+     "n_bins": "10",
+     "calibration_data_multiplier_needed": 3.87,
+     "median_items_per_bin_today": 269,
+     "cheapest_near_miss_bin": {
+      "fold": 3,
+      "bin": 5,
+      "n_train": 269,
+      "p7_train": 0.9219,
+      "acc32_train": 0.9071,
+      "fires": false,
+      "n_needed_STORED_wald": 881,
+      "n_needed_WILSON": 1042,
+      "n_needed_BINDING_with_n30_floor": 1042,
+      "data_multiplier_over_actual": 3.87
+     }
+    }
+   },
+   "MedXpertQA-MM": {
+    "fires_today_at_3_bins": false,
+    "veto_rate_3bins": 0.0,
+    "veto_rate_10bins": 0.0,
+    "easiest_config_to_make_it_fire": {
+     "n_bins": "10",
+     "calibration_data_multiplier_needed": 2.28,
+     "median_items_per_bin_today": 160,
+     "cheapest_near_miss_bin": {
+      "fold": 4,
+      "bin": 3,
+      "n_train": 160,
+      "p7_train": 0.2938,
+      "acc32_train": 0.2562,
+      "fires": false,
+      "n_needed_STORED_wald": 400,
+      "n_needed_WILSON": 365,
+      "n_needed_BINDING_with_n30_floor": 365,
+      "data_multiplier_over_actual": 2.28
+     }
+    }
+   }
+  }
+ }
 }

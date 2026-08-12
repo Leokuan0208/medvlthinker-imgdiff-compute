@@ -1,0 +1,68 @@
+{
+ "what": "Does a similarity computed in the GENERATOR'S OWN vision space separate CORRECTNESS any better than an external contrastive encoder did? Mirrors the family-D control table in docs/current/VERIFIER_ARCHITECTURES_2026-08-04.md.",
+ "date": "2026-08-12",
+ "code": "src/training_methods/vision_relevance_vs_correctness.py",
+ "layer": 21,
+ "grid_layer": 21,
+ "pairing_seed": 0,
+ "n_correctness_pairs": 3355,
+ "n_correctness_pairs_laterality": 847,
+ "n_relevance_pairs": 8943,
+ "definitions": {
+  "correctness_auroc": "within a question's candidate pool, P(score(correct) > score(wrong)) over all correct x wrong pairs, ties 0.5",
+  "relevance_auroc": "P(score(own candidate, own image) > score(a DIFFERENT question's candidate, own image)) -- 'is this text about this image'",
+  "laterality": "restricted to items whose question / gold / any candidate carries a laterality or orientation token"
+ },
+ "published_external_encoder_reference": {
+  "source": "results/cascade_methods/docs/current/VERIFIER_ARCHITECTURES_2026-08-04.md \u00a74.4",
+  "SigLIP": {
+   "correctness": 0.54,
+   "relevance": 0.764,
+   "laterality_slice_n342": 0.464
+  },
+  "PubMedCLIP": {
+   "correctness": 0.527,
+   "relevance": 0.651
+  },
+  "BiomedCLIP": {
+   "correctness": 0.554,
+   "relevance": 0.726
+  },
+  "incumbent_verifier": {
+   "correctness": 0.756,
+   "laterality_slice_n342": 0.635
+  }
+ },
+ "measured_within_model": {
+  "cos_max": {
+   "correctness_auroc": 0.4426229508196721,
+   "correctness_auroc_laterality": 0.4628099173553719,
+   "relevance_auroc": 0.5980655261098066,
+   "relevance_auroc_laterality": 0.6439471007121058
+  },
+  "cos_mean": {
+   "correctness_auroc": 0.434575260804769,
+   "correctness_auroc_laterality": 0.4498229043683589,
+   "relevance_auroc": 0.5825226434082522,
+   "relevance_auroc_laterality": 0.6256358087487284
+  },
+  "cos_top3": {
+   "correctness_auroc": 0.4399403874813711,
+   "correctness_auroc_laterality": 0.45690672963400236,
+   "relevance_auroc": 0.5969473331096947,
+   "relevance_auroc_laterality": 0.6434384537131231
+  },
+  "cos_vmean": {
+   "correctness_auroc": 0.43576751117734724,
+   "correctness_auroc_laterality": 0.45218417945690675,
+   "relevance_auroc": 0.5812926311081292,
+   "relevance_auroc_laterality": 0.6251271617497457
+  },
+  "incumbent": {
+   "correctness_auroc": 0.7561847988077496,
+   "correctness_auroc_laterality": 0.6912632821723731,
+   "relevance_auroc": NaN,
+   "relevance_auroc_laterality": NaN
+  }
+ }
+}

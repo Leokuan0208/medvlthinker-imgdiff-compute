@@ -1,0 +1,93 @@
+{
+ "what": "does the xattn head's learned attention localise, and does it move between 'left'- and 'right'-bearing candidates on the same image?",
+ "date": "2026-08-12",
+ "code": "src/training_methods/xattn_localisation.py",
+ "grid": "6x6 adaptively pooled patch grid",
+ "sign_convention_caveat": "in radiology 'left' usually means the PATIENT's left, which is on the VIEWER's right. A grounded head may show either sign; the test is whether the shift is non-zero and consistent.",
+ "per_seed": [
+  {
+   "seed": 0,
+   "n_rows": 8943,
+   "entropy_mean": 0.008321448369068804,
+   "entropy_uniform": 3.58351893845611,
+   "entropy_frac_of_uniform": 0.0023221443815374223,
+   "peak_mass_mean": 0.9963453111854461,
+   "peak_mass_uniform": 0.027777777777777776,
+   "xcom_mean": 0.36780161681780554,
+   "xcom_sd": 0.36558143681725175,
+   "ycom_sd": 0.3997861839288126,
+   "n_items_with_left_and_right_candidates": 114,
+   "paired_xcom_right_minus_left": {
+    "mean": -0.0020135773534941687,
+    "sd": 0.07852456896733981,
+    "n_items": 114,
+    "perm_p_two_sided": 0.7972,
+    "ci95_from_perm_null": [
+     -0.013989231266535555,
+     0.013988683059033837
+    ]
+   }
+  },
+  {
+   "seed": 1,
+   "n_rows": 8943,
+   "entropy_mean": 0.00793754157764669,
+   "entropy_uniform": 3.58351893845611,
+   "entropy_frac_of_uniform": 0.002215013151588485,
+   "peak_mass_mean": 0.9967575423082613,
+   "peak_mass_uniform": 0.027777777777777776,
+   "xcom_mean": 0.5690391350461727,
+   "xcom_sd": 0.32963603931541274,
+   "ycom_sd": 0.38311835774687936,
+   "n_items_with_left_and_right_candidates": 114,
+   "paired_xcom_right_minus_left": {
+    "mean": 0.01946993825625534,
+    "sd": 0.1372038511272485,
+    "n_items": 114,
+    "perm_p_two_sided": 0.1338,
+    "ci95_from_perm_null": [
+     -0.025169541199047928,
+     0.02499342882451684
+    ]
+   }
+  },
+  {
+   "seed": 2,
+   "n_rows": 8943,
+   "entropy_mean": 0.004728351636294097,
+   "entropy_uniform": 3.58351893845611,
+   "entropy_frac_of_uniform": 0.0013194716471433567,
+   "peak_mass_mean": 0.9980115466951394,
+   "peak_mass_uniform": 0.027777777777777776,
+   "xcom_mean": 0.42872049947069296,
+   "xcom_sd": 0.35117124706782155,
+   "ycom_sd": 0.36151946925206346,
+   "n_items_with_left_and_right_candidates": 114,
+   "paired_xcom_right_minus_left": {
+    "mean": 0.0035938977021580313,
+    "sd": 0.050363906788414674,
+    "n_items": 114,
+    "perm_p_two_sided": 0.4396,
+    "ci95_from_perm_null": [
+     -0.009728457323032638,
+     0.009728456718962764
+    ]
+   }
+  }
+ ],
+ "summary": {
+  "n_seeds": 3,
+  "entropy_frac_of_uniform_mean": 0.0019522097267564212,
+  "paired_dx_mean_over_seeds": 0.0070167528683064,
+  "paired_dx_range": [
+   -0.0020135773534941687,
+   0.01946993825625534
+  ],
+  "n_seeds_with_perm_p_below_0.05": 0,
+  "n_seeds_tested": 3
+ },
+ "verdict": {
+  "attention_is_essentially_uniform": false,
+  "reading": "the attention does concentrate (entropy 0.2% of uniform). Whether it concentrates MEANINGFULLY is decided by the paired left/right shift, not by concentration alone."
+ }
+}

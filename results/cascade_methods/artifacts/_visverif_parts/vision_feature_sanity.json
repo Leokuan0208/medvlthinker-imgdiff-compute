@@ -1,0 +1,90 @@
+{
+ "what": "positive control: are the cached vision vectors informative about things the IMAGE determines? Establishes that any null in the verifier arms is about the TASK, not about broken features.",
+ "date": "2026-08-12",
+ "layer": 21,
+ "code": "src/training_methods/vision_feature_sanity.py",
+ "caches": {
+  "none": {
+   "P1_dataset_identity_image_level": {
+    "n_train": 2481,
+    "n_eval": 528,
+    "accuracy": 0.9981060606060606,
+    "majority_baseline": 0.5909090909090909,
+    "train_images_used": 2481,
+    "train_classes_dropped": [
+     "kvasir_open"
+    ]
+   },
+   "P2_pool_recoverable_from_image_alone": {
+    "cv_accuracy": 0.6248711420615367,
+    "cv_auroc": 0.6646986805185875,
+    "positive_rate": 0.6260127931769722,
+    "n": 2345
+   },
+   "P3_greedy_correct_from_image_alone": {
+    "cv_accuracy": 0.6268344307502799,
+    "cv_auroc": 0.6699884858650426,
+    "positive_rate": 0.4494669509594883,
+    "n": 2345
+   },
+   "n_items_without_a_vision_row": 0
+  },
+  "blank": {
+   "P1_dataset_identity_image_level": {
+    "n_train": 2481,
+    "n_eval": 528,
+    "accuracy": 0.22727272727272727,
+    "majority_baseline": 0.5909090909090909,
+    "train_images_used": 2481,
+    "train_classes_dropped": [
+     "kvasir_open"
+    ]
+   },
+   "P2_pool_recoverable_from_image_alone": {
+    "cv_accuracy": 0.6367881003289819,
+    "cv_auroc": 0.6625029965752581,
+    "positive_rate": 0.6260127931769722,
+    "n": 2345
+   },
+   "P3_greedy_correct_from_image_alone": {
+    "cv_accuracy": 0.6762042927398164,
+    "cv_auroc": 0.6689521556152827,
+    "positive_rate": 0.4494669509594883,
+    "n": 2345
+   },
+   "n_items_without_a_vision_row": 0
+  },
+  "noise": {
+   "P1_dataset_identity_image_level": {
+    "n_train": 2481,
+    "n_eval": 528,
+    "accuracy": 0.2840909090909091,
+    "majority_baseline": 0.5909090909090909,
+    "train_images_used": 2481,
+    "train_classes_dropped": [
+     "kvasir_open"
+    ]
+   },
+   "P2_pool_recoverable_from_image_alone": {
+    "cv_accuracy": 0.5764873867070367,
+    "cv_auroc": 0.5745203534486265,
+    "positive_rate": 0.6260127931769722,
+    "n": 2345
+   },
+   "P3_greedy_correct_from_image_alone": {
+    "cv_accuracy": 0.5537366366151338,
+    "cv_auroc": 0.5796614606197503,
+    "positive_rate": 0.4494669509594883,
+    "n": 2345
+   },
+   "n_items_without_a_vision_row": 0
+  }
+ },
+ "verdict": {
+  "P1_real": 0.998106,
+  "P1_noise": 0.284091,
+  "P1_drop": 0.714015,
+  "features_are_image_dependent": true,
+  "reading": "P1 near ceiling on the real cache and collapsing on the noise cache proves the cached vision vectors carry real, correctly-aligned image content. Any null in the verifier arms is therefore a statement about the TASK -- selecting the correct answer -- not about broken features. P2/P3 bound what an image-only, per-question CONSTANT can contribute at all."
+ }
+}
