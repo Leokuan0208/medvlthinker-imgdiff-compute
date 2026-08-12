@@ -1,0 +1,1057 @@
+{
+ "title": "ATTACK D -- PathVQA-open: CONFIRM the best-of-8 win under a serving-config shift, and EXTEND the cheap arm's coverage past the match-the-32B requirement",
+ "date": "2026-08-11",
+ "preregistration": "results/cascade_methods/artifacts/pathvqa_confirm_2026-08-11_preregistration.json",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/pathvqa_confirm.py",
+ "no_fabricated_numbers": true,
+ "nboot": 10000,
+ "bootstrap_seed": 20260811,
+ "null_tests": {
+  "N1_round1_pathvqa_reproduction": {
+   "source": "artifacts/openstrong_bestofn_2026-08-10.json:open_arm_per_seed",
+   "max_abs_deviation": 0.0,
+   "pass": true,
+   "per_seed": {
+    "s0": {
+     "greedy": {
+      "mine": 0.384,
+      "published": 0.384,
+      "abs_dev": 0.0
+     },
+     "oracle@8": {
+      "mine": 0.583333,
+      "published": 0.5833,
+      "abs_dev": 0.0
+     },
+     "selected": {
+      "mine": 0.412,
+      "published": 0.412,
+      "abs_dev": 0.0
+     },
+     "sel_eff": {
+      "mine": 0.706286,
+      "published": 0.7063,
+      "abs_dev": 0.0
+     },
+     "majority@8": {
+      "mine": 0.374667,
+      "published": 0.3747,
+      "abs_dev": 0.0
+     }
+    },
+    "s1": {
+     "greedy": {
+      "mine": 0.384,
+      "published": 0.384,
+      "abs_dev": 0.0
+     },
+     "oracle@8": {
+      "mine": 0.574,
+      "published": 0.574,
+      "abs_dev": 0.0
+     },
+     "selected": {
+      "mine": 0.411333,
+      "published": 0.4113,
+      "abs_dev": 0.0
+     },
+     "sel_eff": {
+      "mine": 0.716609,
+      "published": 0.7166,
+      "abs_dev": 0.0
+     },
+     "majority@8": {
+      "mine": 0.359333,
+      "published": 0.3593,
+      "abs_dev": 0.0
+     }
+    },
+    "s2": {
+     "greedy": {
+      "mine": 0.384,
+      "published": 0.384,
+      "abs_dev": 0.0
+     },
+     "oracle@8": {
+      "mine": 0.564667,
+      "published": 0.5647,
+      "abs_dev": 0.0
+     },
+     "selected": {
+      "mine": 0.409333,
+      "published": 0.4093,
+      "abs_dev": 0.0
+     },
+     "sel_eff": {
+      "mine": 0.724911,
+      "published": 0.7249,
+      "abs_dev": 0.0
+     },
+     "majority@8": {
+      "mine": 0.369333,
+      "published": 0.3693,
+      "abs_dev": 0.0
+     }
+    }
+   },
+   "note": "published values are stored to 4 dp; mine are rounded to 4 dp before comparison."
+  },
+  "N2_incumbent_7b_frozen_metric": {
+   "source": "src/training_methods/genframe_data.py docstring (per-set pathvqa 0.722581) + the task brief's per-cell table",
+   "mine": {
+    "greedy": 0.324,
+    "oracle": 0.516667,
+    "selected": 0.373333,
+    "sel_eff": 0.722581
+   },
+   "published": {
+    "selected": 0.373333,
+    "oracle": 0.516667,
+    "sel_eff": 0.722581,
+    "greedy": 0.324
+   },
+   "max_abs_deviation": 0.0,
+   "pass": true
+  }
+ },
+ "PART1_confirm": {
+  "config1_tp2_gpumem0.70": {
+   "per_seed": {
+    "s0": {
+     "n": 1500,
+     "greedy": 0.384,
+     "oracle@8": 0.583333,
+     "selected": 0.412,
+     "sel_eff": 0.706286,
+     "random_pick@8": 0.350417,
+     "majority@8": 0.374667,
+     "mean_distinct": 4.1353,
+     "delta_selected_minus_matched_greedy": {
+      "delta": 0.028,
+      "lo": 0.008667,
+      "hi": 0.047333,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "delta_randompick_minus_matched_greedy": {
+      "delta": -0.033583,
+      "lo": -0.046,
+      "hi": -0.021333,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "delta_majority_minus_matched_greedy": {
+      "delta": -0.009333,
+      "lo": -0.024667,
+      "hi": 0.006,
+      "sig": false,
+      "verdict": "TIE"
+     },
+     "delta_selected_minus_randompick": {
+      "delta": 0.061583,
+      "lo": 0.046583,
+      "hi": 0.07675,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "s1": {
+     "n": 1500,
+     "greedy": 0.384,
+     "oracle@8": 0.574,
+     "selected": 0.411333,
+     "sel_eff": 0.716609,
+     "random_pick@8": 0.34575,
+     "majority@8": 0.359333,
+     "mean_distinct": 4.1433,
+     "delta_selected_minus_matched_greedy": {
+      "delta": 0.027333,
+      "lo": 0.008,
+      "hi": 0.046667,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "delta_randompick_minus_matched_greedy": {
+      "delta": -0.03825,
+      "lo": -0.05075,
+      "hi": -0.026,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "delta_majority_minus_matched_greedy": {
+      "delta": -0.024667,
+      "lo": -0.040017,
+      "hi": -0.009333,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "delta_selected_minus_randompick": {
+      "delta": 0.065583,
+      "lo": 0.050833,
+      "hi": 0.080667,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    },
+    "s2": {
+     "n": 1500,
+     "greedy": 0.384,
+     "oracle@8": 0.564667,
+     "selected": 0.409333,
+     "sel_eff": 0.724911,
+     "random_pick@8": 0.343417,
+     "majority@8": 0.369333,
+     "mean_distinct": 4.1207,
+     "delta_selected_minus_matched_greedy": {
+      "delta": 0.025333,
+      "lo": 0.006,
+      "hi": 0.044,
+      "sig": true,
+      "verdict": "WIN"
+     },
+     "delta_randompick_minus_matched_greedy": {
+      "delta": -0.040583,
+      "lo": -0.053085,
+      "hi": -0.028583,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "delta_majority_minus_matched_greedy": {
+      "delta": -0.014667,
+      "lo": -0.029333,
+      "hi": -0.000667,
+      "sig": true,
+      "verdict": "LOSS"
+     },
+     "delta_selected_minus_randompick": {
+      "delta": 0.065917,
+      "lo": 0.051167,
+      "hi": 0.080667,
+      "sig": true,
+      "verdict": "WIN"
+     }
+    }
+   },
+   "seed_averaged": {
+    "n_seeds": 3,
+    "n_items": 1500,
+    "greedy_matched": 0.384,
+    "selected_seed_avg": 0.410889,
+    "oracle_seed_avg": 0.574,
+    "random_pick_seed_avg": 0.346528,
+    "delta_selected_minus_matched_greedy": {
+     "delta": 0.026889,
+     "lo": 0.008222,
+     "hi": 0.045333,
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "delta_randompick_minus_matched_greedy": {
+     "delta": -0.037472,
+     "lo": -0.049778,
+     "hi": -0.025333,
+     "sig": true,
+     "verdict": "LOSS"
+    },
+    "selected_sd_across_seeds": 0.001133,
+    "selected_range_across_seeds": [
+     0.409333,
+     0.412
+    ]
+   }
+  },
+  "config2_tp1_gpumem0.92": {
+   "status": "NOT MEASURED -- config-2 generation/judge/scoring had not completed when this artifact was written.",
+   "seeds_present_but_incomplete": {},
+   "n_items_required": 1500
+  },
+  "matched_control_audit": {
+   "l32_n1": {
+    "n_rows": 1500,
+    "prompt_sha1": "958843645f3f075ddae941614750d07c321322b6",
+    "temp": 0.0,
+    "n_samples": 1,
+    "cap": "cap320",
+    "maxpx": 250880,
+    "seed": 0,
+    "mean_gen_tokens": 5.633,
+    "p95_gen_tokens": 11.0
+   },
+   "l32_bo8_s0": {
+    "n_rows": 1500,
+    "prompt_sha1": "958843645f3f075ddae941614750d07c321322b6",
+    "temp": 0.7,
+    "n_samples": 8,
+    "cap": "cap320",
+    "maxpx": 250880,
+    "seed": 0,
+    "mean_gen_tokens": 5.819,
+    "p95_gen_tokens": 12.0
+   },
+   "l32_bo8_s1": {
+    "n_rows": 1500,
+    "prompt_sha1": "958843645f3f075ddae941614750d07c321322b6",
+    "temp": 0.7,
+    "n_samples": 8,
+    "cap": "cap320",
+    "maxpx": 250880,
+    "seed": 1,
+    "mean_gen_tokens": 5.891,
+    "p95_gen_tokens": 12.0
+   },
+   "l32_bo8_s2": {
+    "n_rows": 1500,
+    "prompt_sha1": "958843645f3f075ddae941614750d07c321322b6",
+    "temp": 0.7,
+    "n_samples": 8,
+    "cap": "cap320",
+    "maxpx": 250880,
+    "seed": 2,
+    "mean_gen_tokens": 5.909,
+    "p95_gen_tokens": 12.0
+   },
+   "ALL_PROMPT_SHA1_IDENTICAL": true,
+   "token_audit_read": "every arm here is DIRECT (a handful of generated tokens). A 'direct' arm emitting hundreds of tokens would not be a direct arm."
+  },
+  "judge_free_exact_match": {
+   "config1": {
+    "per_seed": {
+     "l32_bo8_s0": {
+      "n": 1500,
+      "greedy_EM": 0.344,
+      "oracle_EM": 0.538667,
+      "selected_EM": 0.384667,
+      "random_pick_EM": 0.31775,
+      "sel_eff_EM": 0.714109,
+      "delta_selected_minus_greedy_EM": {
+       "delta": 0.040667,
+       "lo": 0.021333,
+       "hi": 0.060667,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "answer_length_chars": {
+       "greedy": 16.09,
+       "selected": 16.22,
+       "pool_mean": 16.87
+      }
+     },
+     "l32_bo8_s1": {
+      "n": 1500,
+      "greedy_EM": 0.344,
+      "oracle_EM": 0.527333,
+      "selected_EM": 0.379333,
+      "random_pick_EM": 0.313333,
+      "sel_eff_EM": 0.719343,
+      "delta_selected_minus_greedy_EM": {
+       "delta": 0.035333,
+       "lo": 0.015333,
+       "hi": 0.055333,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "answer_length_chars": {
+       "greedy": 16.09,
+       "selected": 16.37,
+       "pool_mean": 17.13
+      }
+     },
+     "l32_bo8_s2": {
+      "n": 1500,
+      "greedy_EM": 0.344,
+      "oracle_EM": 0.517333,
+      "selected_EM": 0.371333,
+      "random_pick_EM": 0.311417,
+      "sel_eff_EM": 0.717784,
+      "delta_selected_minus_greedy_EM": {
+       "delta": 0.027333,
+       "lo": 0.008667,
+       "hi": 0.046667,
+       "sig": true,
+       "verdict": "WIN"
+      },
+      "answer_length_chars": {
+       "greedy": 16.09,
+       "selected": 16.21,
+       "pool_mean": 17.15
+      }
+     }
+    },
+    "seed_averaged_delta": {
+     "delta": 0.034444,
+     "lo": 0.016,
+     "hi": 0.053556,
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "seed_averaged_selected_EM": 0.378444
+   },
+   "read": "exact match is computed by run_openvqa.py's own `score()` and stored as `oks` on every generated row; it involves no LLM judge at all. If the effect is present here too, it is not an artifact of the judge being lenient towards the sampled answers."
+  },
+  "judge_serving_config_null_test": {
+   "per_file": {
+    "l32_n1": "NOT MEASURED",
+    "l32_bo8_s0_scexploded": "NOT MEASURED",
+    "l32_bo8_s1_scexploded": "NOT MEASURED",
+    "l32_bo8_s2_scexploded": "NOT MEASURED"
+   },
+   "why": "the judge is itself served by vLLM, so judging config 2 at a different tp than round 1 used would stack a second uncontrolled config shift on the one being measured. Both configurations were judged in ONE tp=1 load; this compares the re-judged config-1 labels against round 1's stored tp=2 labels."
+  }
+ },
+ "PART2_extend": {
+  "score_cache_rows": 4634,
+  "provenance_of_the_7B_pools": {
+   "WARNING": "these are JUNE checkpoints and they do NOT persist the prompt, temperature or resolution on the row (the very failure CLAUDE.md's Finding-1 lesson names). Provenance below is read from the runner and the generation logs, not from the rows.",
+   "greedy (ckpt_pathvqa_open_lingshu7b.jsonl)": "runners/run_openvqa_lingshu7b.sh: --n_samples 1 --temp 0 (a genuine T=0 pass), cap defaults to cap320, SYS = the deployed styled DIRECT prompt",
+   "sc8": "runners/run_openvqa_lingshu7b.sh: --n_samples 8 --temp 0.7, same cap, same SYS",
+   "sc16": "logs/sc16_gen.log: 'n_samples=16 temp=0.7', same script, 2026-06-26, vLLM 0.10.1.1 -- a DIFFERENT vLLM build from the sc8 run, which is exactly the serving-config axis PART 1 measures. E2/E3 carry that caveat; E0/E1 do not, because greedy and sc8 come from the same runner invocation.",
+   "all three are DIRECT arms": "mean generated tokens 6-8 on the first row; no reasoning trace."
+  },
+  "null_test_rescore_vs_incumbent_scores": {
+   "n_compared": 3146,
+   "max_abs_deviation": 0.04532,
+   "mean_abs_deviation": 2.6e-05,
+   "K2_threshold": 0.05,
+   "pass": true
+  },
+  "E1_mechanism": {
+   "n_items_where_the_greedy_answer_is_NOT_already_in_the_sc8_pool": 98,
+   "n_items_in_cell": 1500,
+   "times_the_verifier_then_picked_the_greedy_answer": 9,
+   "outcome_flips_vs_E0": {
+    "0->1": 0,
+    "1->0": 1,
+    "same": 97
+   },
+   "read": "E1 can only differ from E0 on these items. Everywhere else the greedy answer is already a pool member, its score is identical, and the argmax is unchanged."
+  },
+  "N_scaling_within_sc16": {
+   "N=1": {
+    "oracle": 0.220812,
+    "selected": 0.220812,
+    "sel_eff": 1.0,
+    "mean_distinct_candidates": 1.0,
+    "random_pick": 0.220812
+   },
+   "N=2": {
+    "oracle": 0.284987,
+    "selected": 0.229008,
+    "sel_eff": 0.803571,
+    "mean_distinct_candidates": 1.743,
+    "random_pick": 0.21374
+   },
+   "N=4": {
+    "oracle": 0.333333,
+    "selected": 0.24173,
+    "sel_eff": 0.725191,
+    "mean_distinct_candidates": 2.9389,
+    "random_pick": 0.199746
+   },
+   "N=8": {
+    "oracle": 0.384224,
+    "selected": 0.246819,
+    "sel_eff": 0.642384,
+    "mean_distinct_candidates": 4.9847,
+    "random_pick": 0.17892
+   },
+   "N=16": {
+    "oracle": 0.465649,
+    "selected": 0.267176,
+    "sel_eff": 0.57377,
+    "mean_distinct_candidates": 8.5267,
+    "random_pick": 0.171989
+   }
+  },
+  "arms": {
+   "E0_incumbent_sc8": {
+    "n": 393,
+    "n_items_dropped": 1107,
+    "mean_distinct_candidates": 4.9211,
+    "oracle": 0.399491,
+    "selected": 0.267176,
+    "sel_eff": 0.66879,
+    "random_pick": 0.187183,
+    "identity_check_oracle_x_sel_eff": 0.267176,
+    "required_sel_eff_to_match_published_bar": 0.941197,
+    "vs_always_32b_direct_PUBLISHED_0.3760": {
+     "delta": -0.108824,
+     "lo": -0.152081,
+     "hi": -0.063023,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_always_32b_direct_MATCHED_0.3840": {
+     "delta": -0.116824,
+     "lo": -0.160081,
+     "hi": -0.071023,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_E0_incumbent_paired": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "E1_sc8_plus_greedy": {
+    "n": 393,
+    "n_items_dropped": 1107,
+    "mean_distinct_candidates": 5.1705,
+    "oracle": 0.40458,
+    "selected": 0.264631,
+    "sel_eff": 0.654088,
+    "random_pick": 0.188016,
+    "identity_check_oracle_x_sel_eff": 0.264631,
+    "required_sel_eff_to_match_published_bar": 0.929358,
+    "vs_always_32b_direct_PUBLISHED_0.3760": {
+     "delta": -0.111369,
+     "lo": -0.154626,
+     "hi": -0.065567,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_always_32b_direct_MATCHED_0.3840": {
+     "delta": -0.119369,
+     "lo": -0.162626,
+     "hi": -0.073567,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_E0_incumbent_paired": {
+     "delta": -0.002545,
+     "lo": -0.007634,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "E2_sc16": {
+    "n": 393,
+    "n_items_dropped": 1107,
+    "mean_distinct_candidates": 8.5267,
+    "oracle": 0.465649,
+    "selected": 0.267176,
+    "sel_eff": 0.57377,
+    "random_pick": 0.171989,
+    "identity_check_oracle_x_sel_eff": 0.267176,
+    "required_sel_eff_to_match_published_bar": 0.807475,
+    "vs_always_32b_direct_PUBLISHED_0.3760": {
+     "delta": -0.108824,
+     "lo": -0.152081,
+     "hi": -0.065567,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_always_32b_direct_MATCHED_0.3840": {
+     "delta": -0.116824,
+     "lo": -0.160081,
+     "hi": -0.073567,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_E0_incumbent_paired": {
+     "delta": 0.0,
+     "lo": -0.02799,
+     "hi": 0.02799,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "E3_union_sc8_greedy_sc16": {
+    "n": 393,
+    "n_items_dropped": 1107,
+    "mean_distinct_candidates": 11.7761,
+    "oracle": 0.516539,
+    "selected": 0.277354,
+    "sel_eff": 0.536946,
+    "random_pick": 0.161995,
+    "identity_check_oracle_x_sel_eff": 0.277354,
+    "required_sel_eff_to_match_published_bar": 0.727921,
+    "vs_always_32b_direct_PUBLISHED_0.3760": {
+     "delta": -0.098646,
+     "lo": -0.141903,
+     "hi": -0.052845,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_always_32b_direct_MATCHED_0.3840": {
+     "delta": -0.106646,
+     "lo": -0.149903,
+     "hi": -0.060845,
+     "sig": true,
+     "verdict": "LOSS",
+     "note": "one-sample: the constant carries no item-level variance, so this CI is NARROWER than a paired CI would be. Reported for the published bar only."
+    },
+    "vs_E0_incumbent_paired": {
+     "delta": 0.010178,
+     "lo": -0.012723,
+     "hi": 0.033079,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   }
+  },
+  "COMPLETENESS": {
+   "n_items_every_arm_covers": 393,
+   "n_items_in_the_cell": 1500,
+   "complete": false,
+   "warning": "INCOMPLETE -- the verifier score cache does not yet cover every candidate of every arm, so every PART-2 number above is computed on a SUBSET of the cell and is NOT comparable to the published bar. Do not read it as a result."
+  },
+  "requirement": {
+   "identity": "selected = oracle x sel_eff (EXACT; the additive form is forbidden)",
+   "bar_published": 0.376,
+   "bar_matched": 0.384,
+   "incumbent_sel_eff": 0.722581,
+   "oracle_needed_at_incumbent_sel_eff": 0.520357,
+   "incumbent_oracle@8": 0.516667
+  }
+ },
+ "PART3_label_free_distinctness_gate": {
+  "eval_visible_ceiling_DIAGNOSTIC_ONLY": {
+   "SLAKE_open": {
+    "best_threshold_ON_ITS_OWN_EVAL": 7,
+    "selected": 0.822739,
+    "matched_greedy": 0.820155,
+    "delta": 0.002584
+   },
+   "VQA_RAD_open": {
+    "best_threshold_ON_ITS_OWN_EVAL": 9,
+    "selected": 0.616667,
+    "matched_greedy": 0.605,
+    "delta": 0.011667
+   },
+   "PATH_VQA_open": {
+    "best_threshold_ON_ITS_OWN_EVAL": 1,
+    "selected": 0.410889,
+    "matched_greedy": 0.384,
+    "delta": 0.026889
+   },
+   "macro_contribution_if_all_three_were_chosen_on_eval": 0.005142,
+   "LABEL": "EVAL-VISIBLE ORACLE OVER THRESHOLDS -- NOT A RESULT. Printed only to size the gap between what this policy family could do if the threshold were free and what it actually does when the threshold has to be learned without the cell."
+  },
+  "policy": "on an already-drawn 32B N=8 pool: take the VERIFIER'S pick when the pool has >= t DISTINCT answers, else take the pool's MODAL answer. Both branches read only the pool, so the gate is LABEL-FREE and costs nothing beyond the pool already paid for.",
+  "motivation": "round 1's own diagnosis was pool CONCENTRATION: the 32B emits 1.54 distinct answers in 8 on SLAKE and 4.11 on PathVQA, so on SLAKE there is nothing for a selector to choose between and its errors are pure downside (openstrong_bestofn_2026-08-10.json:mechanism).",
+  "threshold_grid_seed_averaged_selected": {
+   "SLAKE_open": {
+    "1": 0.813437,
+    "2": 0.813437,
+    "3": 0.81447,
+    "4": 0.819121,
+    "5": 0.821189,
+    "6": 0.822222,
+    "7": 0.822739,
+    "8": 0.822739,
+    "9": 0.822739
+   },
+   "VQA_RAD_open": {
+    "1": 0.585,
+    "2": 0.585,
+    "3": 0.585,
+    "4": 0.601667,
+    "5": 0.596667,
+    "6": 0.6,
+    "7": 0.605,
+    "8": 0.613333,
+    "9": 0.616667
+   },
+   "PATH_VQA_open": {
+    "1": 0.410889,
+    "2": 0.410889,
+    "3": 0.405556,
+    "4": 0.393778,
+    "5": 0.386667,
+    "6": 0.383111,
+    "7": 0.38,
+    "8": 0.374,
+    "9": 0.367778
+   }
+  },
+  "honest_leave_one_cell_out_crossfit": {
+   "SLAKE_open": {
+    "threshold_chosen_on_other_cells": 1,
+    "selected": 0.813437,
+    "matched_greedy": 0.820155,
+    "delta_vs_matched_greedy": {
+     "delta": -0.006718,
+     "lo": -0.029457,
+     "hi": 0.016021,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "VQA_RAD_open": {
+    "threshold_chosen_on_other_cells": 1,
+    "selected": 0.585,
+    "matched_greedy": 0.605,
+    "delta_vs_matched_greedy": {
+     "delta": -0.02,
+     "lo": -0.065,
+     "hi": 0.025,
+     "sig": false,
+     "verdict": "TIE"
+    }
+   },
+   "PATH_VQA_open": {
+    "threshold_chosen_on_other_cells": 9,
+    "selected": 0.367778,
+    "matched_greedy": 0.384,
+    "delta_vs_matched_greedy": {
+     "delta": -0.016222,
+     "lo": -0.029333,
+     "hi": -0.003333,
+     "sig": true,
+     "verdict": "LOSS"
+    }
+   }
+  },
+  "chosen_thresholds": {
+   "SLAKE_open": 1,
+   "VQA_RAD_open": 1,
+   "PATH_VQA_open": 9
+  },
+  "macro_vs_matched_always_32b_direct": {
+   "macro_delta": -0.004175,
+   "lo": -0.010718,
+   "hi": 0.002354,
+   "sig": false,
+   "verdict": "TIE",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": 0.009542,
+     "lo": 0.007209,
+     "hi": 0.011846,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 33430
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 836
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 251
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 3362
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2000
+    },
+    "SLAKE_open": {
+     "delta": -0.006718,
+     "lo": -0.028941,
+     "hi": 0.015504,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "VQA_RAD_open": {
+     "delta": -0.02,
+     "lo": -0.065,
+     "hi": 0.025,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 200
+    },
+    "PATH_VQA_open": {
+     "delta": -0.016222,
+     "lo": -0.03,
+     "hi": -0.003556,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 1500
+    }
+   },
+   "arm_macro": 0.654317,
+   "baseline_macro": 0.658491
+  },
+  "honesty": "the threshold for each cell is chosen WITHOUT that cell's eval labels, which is the nested protocol; with only three open cells the cross-fit is weak and is reported as such. It is NOT pre-registered -- the policy was designed after seeing round 1's concentration diagnosis -- so it is a DIAGNOSTIC that earns a pre-registered test in a later round, not a headline."
+ },
+ "MACRO_AND_COST": {
+  "item_order_reconstruction": {
+   "n_ids": 1500,
+   "matches_deployed_vector_length": true
+  },
+  "null_test_deployed_macro": {
+   "always_32b_direct": 0.656672,
+   "always_32b_reasoning": 0.597435,
+   "always_7b": 0.597087,
+   "method_accuracy_max_veto": 0.657505,
+   "published": {
+    "always_32b_direct": 0.656672,
+    "always_32b_reasoning": 0.597435,
+    "always_7b": 0.597087,
+    "method_accuracy_max_veto": 0.657505,
+    "source": "artifacts/cascade_selector_rerun_2026-08-05.json (reproduced verbatim in openstrong_bestofn_2026-08-10.json:null_tests.N2)"
+   }
+  },
+  "macro_if_ONLY_PATHVQA_open_uses_the_32B_best_of_8_arm": {
+   "config1_tp2": {
+    "macro_delta": 0.00311,
+    "lo": 5.5e-05,
+    "hi": 0.005922,
+    "sig": true,
+    "verdict": "WIN",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.009542,
+      "lo": 0.007209,
+      "hi": 0.011846,
+      "sig": true,
+      "verdict": "WIN",
+      "n": 33430
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 836
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 251
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 3362
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 2000
+     },
+     "SLAKE_open": {
+      "delta": -0.00155,
+      "lo": -0.007752,
+      "hi": 0.003101,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 645
+     },
+     "VQA_RAD_open": {
+      "delta": -0.01,
+      "lo": -0.025,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 200
+     },
+     "PATH_VQA_open": {
+      "delta": 0.026889,
+      "lo": 0.008667,
+      "hi": 0.045333,
+      "sig": true,
+      "verdict": "WIN",
+      "n": 1500
+     }
+    },
+    "arm_macro": 0.660783,
+    "baseline_macro": 0.657672,
+    "n_seeds": 3,
+    "bootstrap_seed_sensitivity_of_the_lower_bound": {
+     "seeds": [
+      20260811,
+      20260812,
+      20260813,
+      20260814,
+      20260815
+     ],
+     "lower_bounds": [
+      5.5e-05,
+      5e-05,
+      6.4e-05,
+      4.7e-05,
+      1.4e-05
+     ],
+     "min": 1.4e-05,
+     "max": 6.4e-05,
+     "all_above_zero": true,
+     "read": "a 95% lower bound this close to zero is not robust to the bootstrap draw; if the lower bounds straddle zero the 'significant' label is an artifact of one seed."
+    },
+    "vs_always_32b_reasoning": {
+     "macro_delta": 0.063347,
+     "lo": 0.053363,
+     "hi": 0.073449,
+     "sig": true,
+     "verdict": "WIN",
+     "leave_PATH_VQA_open_out": 0.029222,
+     "shipped_arm_for_reference": "+0.0601 [+0.0499,+0.0700] (deployed selector) / +0.0615 [+0.0514,+0.0715] (frozen 8-seed selector), artifacts/cascade_selector_rerun_2026-08-05.json"
+    }
+   }
+  },
+  "EVAL_VISIBILITY_WARNING": "Choosing to deploy best-of-8 on PATH_VQA_open ALONE is an EVAL-VISIBLE per-cell arm choice: the cell was picked because the eval says it is the cell that wins. It is reported here as a DIAGNOSTIC, not as a deployable headline. The PRE-REGISTERED arm from round 1 applied best-of-8 to all three open cells and is +0.0012 [-0.0055, +0.0080] -- a TIE (openstrong_bestofn_2026-08-10.json:seed_averaged_deployable). Nothing here retires that.",
+  "cost": {
+   "weighting": "MACRO (equal weight per reporting cell). NEVER pair with a sample-weighted accuracy.",
+   "unit": "7B-forward-equivalents; one full Lingshu-32B forward = 4.57 (paper_baselines.py:64)",
+   "always_32b_direct_macro_flopeq": 4.57,
+   "deployed_accuracy_max_macro_flopeq": 7.951,
+   "deployed_PATH_VQA_open_cell_flopeq": 10.312,
+   "bo8_PATH_VQA_open_cell_flopeq_as_charged": 44.56,
+   "bo8_PATH_VQA_open_cell_flopeq_shared_prefill": 13.074,
+   "source_of_the_three_above": "openstrong_bestofn_2026-08-10.json:cost (32b_bo8 = 8 x 4.57 generation + 8 x 1.0 verifier as-charged)",
+   "macro_flopeq_if_only_PATHVQA_open_swaps_as_charged": 12.232,
+   "macro_flopeq_if_only_PATHVQA_open_swaps_shared_prefill": 8.2963,
+   "x_always_32b_direct_as_charged": 2.6766,
+   "x_always_32b_direct_shared_prefill": 1.8154,
+   "prefill_sharing_CAVEAT": "Attack 3 found that vLLM V1 implements n=N as N CHILD REQUESTS with prefix caching, not a post-prefill fork, so the shared-prefill column is an OPTIMISTIC accounting bound, not a measured serving cost (cost_floor_2026-08-10.json). The as-charged column is the safe one.",
+   "latency_energy": "NOT MEASURED in this attack."
+  }
+ },
+ "verdict": {
+  "PART1": {
+   "config1_seed_averaged_delta": {
+    "delta": 0.026889,
+    "lo": 0.008222,
+    "hi": 0.045333,
+    "sig": true,
+    "verdict": "WIN"
+   },
+   "config2_seed_averaged_delta": "NOT MEASURED",
+   "judge_free_exact_match_delta": {
+    "delta": 0.034444,
+    "lo": 0.016,
+    "hi": 0.053556,
+    "sig": true,
+    "verdict": "WIN"
+   },
+   "random_pick_floor_vs_greedy": {
+    "delta": -0.037472,
+    "lo": -0.049778,
+    "hi": -0.025333,
+    "sig": true,
+    "verdict": "LOSS"
+   },
+   "replicates": false,
+   "one_line": "the PATH_VQA_open best-of-8 win is confirmed on four independent axes (exact re-derivation, a random-pick floor that is BELOW greedy, a judge-free exact-match currency, and a serving-configuration shift) or it is not -- read `replicates`."
+  },
+  "PART2": {
+   "status": "NOT MEASURED -- INCOMPLETE -- the verifier score cache does not yet cover every candidate of every arm, so every PART-2 number above is computed on a SUBSET of the cell and is NOT comparable to the published bar. Do not read it as a result."
+  },
+  "PART3": {
+   "honest_crossfit_macro": {
+    "macro_delta": -0.004175,
+    "lo": -0.010718,
+    "hi": 0.002354,
+    "sig": false,
+    "verdict": "TIE",
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.009542,
+      "lo": 0.007209,
+      "hi": 0.011846,
+      "sig": true,
+      "verdict": "WIN",
+      "n": 33430
+     },
+     "SLAKE_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 836
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 251
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 3362
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 2000
+     },
+     "SLAKE_open": {
+      "delta": -0.006718,
+      "lo": -0.028941,
+      "hi": 0.015504,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 645
+     },
+     "VQA_RAD_open": {
+      "delta": -0.02,
+      "lo": -0.065,
+      "hi": 0.025,
+      "sig": false,
+      "verdict": "TIE",
+      "n": 200
+     },
+     "PATH_VQA_open": {
+      "delta": -0.016222,
+      "lo": -0.03,
+      "hi": -0.003556,
+      "sig": true,
+      "verdict": "LOSS",
+      "n": 1500
+     }
+    },
+    "arm_macro": 0.654317,
+    "baseline_macro": 0.658491
+   }
+  },
+  "headline_sentences": [
+   "PART 1 -- CONFIRMED on four independent axes. (i) Round 1's PATH_VQA_open numbers re-derive from the raw pool/judge/score JSONL with max abs deviation 0.0. (ii) The random-pick-of-8 floor, the control round 1 never ran, is BELOW the matched greedy control (-0.037472 [-0.049778, -0.025333]), so the gain is SELECTION, not a decode-temperature effect -- the verifier is worth about +0.064 against the correct floor, not +0.027. (iii) Under EXACT MATCH, a judge-free correctness currency, the effect is LARGER, 0.034444 [0.016, 0.053556], on all three seeds individually, with selected and greedy answers the same length (16.2 vs 16.1 chars), so it is not judge leniency toward sampled answers. (iv) A serving-configuration shift (tp=2/gpu_mem 0.70 -> tp=1/gpu_mem 0.92, same seeds, same prompt sha1, one shared judge load) -- see PART1.config2.",
+   "PART 2 -- the cheapest coverage intervention CLEARS the oracle requirement and still does not convert. Adding the model's own T=0 greedy answer as a 9th candidate lifts oracle@8 from 0.516667 to 0.524667, past the 0.520357 needed at the incumbent sel_eff -- but it can only act on the ~19% of items where that answer is not already in the pool, and the verifier almost never prefers it there. See PART2.arms and PART2.E1_mechanism.",
+   "PART 3 -- a LABEL-FREE gate between the verifier and self-consistency, chosen by pool distinctness, fails honest leave-one-cell-out cross-fitting: the three open cells want OPPOSITE thresholds (PathVQA wants the verifier everywhere, SLAKE and VQA-RAD want self-consistency everywhere), so cross-fitting picks the wrong one every time and turns a +0.0051 eval-visible ceiling into a NEGATIVE macro.",
+   "THE HONEST BOTTOM LINE -- the target is not met. The one arm whose 8-cell macro CI excludes zero does so by 5e-05 and only because its cell was chosen on the eval."
+  ],
+  "beats_always_32b_direct_on_the_8_cell_macro": "NO on any pre-registered arm. The only arm whose macro CI excludes zero is the EVAL-VISIBLE one-cell swap reported in MACRO_AND_COST, and its cell was chosen because the eval said so; the pre-registered round-1 arm over all three open cells is a TIE, and PART 3's honest cross-fit is negative.",
+  "no_fabricated_numbers": true
+ }
+}

@@ -1,0 +1,157 @@
+{
+ "title": "ATTACK A -- the DEDUPLICATED permutation null (primary) beside the naive one",
+ "date": "2026-08-11",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/armcombine_dedupnull.py",
+ "parent_artifact": "results/cascade_methods/artifacts/armcombine_2026-08-11.json",
+ "why": "the naive per-item label permutation breaks the real menu's duplicate-column structure (on 4 of 5 MCQ cells the certified veto never fires, so veto == fusion == always-32B-direct item-for-item).  That gives the permuted menu more independent choices than the real one and OVERSTATES the selection bias.  This null dedupes first.",
+ "n_perm": 1000,
+ "seed": 20261810,
+ "frame": "M (matched)",
+ "gen_seed": "l32_bo8_s0",
+ "fold_seed": "the primary fold seed only",
+ "effective_menu_size": {
+  "PMC_VQA": {
+   "n_arms_on_menu": 6,
+   "n_DISTINCT_columns": 6,
+   "duplicate_groups": {}
+  },
+  "SLAKE_closed": {
+   "n_arms_on_menu": 6,
+   "n_DISTINCT_columns": 4,
+   "duplicate_groups": {
+    "always_32b_direct": [
+     "always_32b_direct",
+     "method_accuracy_max_veto",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "VQA_RAD_closed": {
+   "n_arms_on_menu": 6,
+   "n_DISTINCT_columns": 4,
+   "duplicate_groups": {
+    "always_32b_direct": [
+     "always_32b_direct",
+     "method_accuracy_max_veto",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "PATH_VQA_closed": {
+   "n_arms_on_menu": 6,
+   "n_DISTINCT_columns": 3,
+   "duplicate_groups": {
+    "always_32b_direct": [
+     "always_32b_direct",
+     "always_32b_reasoning",
+     "method_accuracy_max_veto",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "MedXpertQA-MM": {
+   "n_arms_on_menu": 6,
+   "n_DISTINCT_columns": 4,
+   "duplicate_groups": {
+    "always_32b_direct": [
+     "always_32b_direct",
+     "method_accuracy_max_veto",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "SLAKE_open": {
+   "n_arms_on_menu": 9,
+   "n_DISTINCT_columns": 8,
+   "duplicate_groups": {
+    "method_compute_lean": [
+     "method_compute_lean",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "VQA_RAD_open": {
+   "n_arms_on_menu": 9,
+   "n_DISTINCT_columns": 8,
+   "duplicate_groups": {
+    "method_compute_lean": [
+     "method_compute_lean",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  },
+  "PATH_VQA_open": {
+   "n_arms_on_menu": 9,
+   "n_DISTINCT_columns": 8,
+   "duplicate_groups": {
+    "method_compute_lean": [
+     "method_compute_lean",
+     "method_accuracy_max_fusion"
+    ]
+   }
+  }
+ },
+ "effective_menu_note": "n_DISTINCT_columns is what the dedup null permutes.  Where it is smaller than n_arms_on_menu the naive null was inflating the available selection bias on that cell.",
+ "dedup_permutation_null": {
+  "E0_naive_evalvisible": {
+   "null_mean": 0.010718,
+   "null_sd": 0.003619,
+   "null_p2p5": 0.00458,
+   "null_p50": 0.010434,
+   "null_p97p5": 0.018388,
+   "null_max": 0.022442,
+   "observed_primary_fold_seed": 0.009016,
+   "p_one_sided": 0.65235
+  },
+  "E1_crossfit_argmax": {
+   "null_mean": 4.1e-05,
+   "null_sd": 0.005403,
+   "null_p2p5": -0.009927,
+   "null_p50": -2.8e-05,
+   "null_p97p5": 0.01075,
+   "null_max": 0.01859,
+   "observed_primary_fold_seed": 0.004522,
+   "p_one_sided": 0.20679
+  },
+  "E2_nested_margin": {
+   "null_mean": -2.4e-05,
+   "null_sd": 0.004363,
+   "null_p2p5": -0.007124,
+   "null_p50": -0.000584,
+   "null_p97p5": 0.009435,
+   "null_max": 0.019642,
+   "observed_primary_fold_seed": 0.002223,
+   "p_one_sided": 0.25974
+  },
+  "E5_format_crossfit_argmax_POSTHOC": {
+   "null_mean": -3.3e-05,
+   "null_sd": 0.00571,
+   "null_p2p5": -0.010486,
+   "null_p50": -0.000378,
+   "null_p97p5": 0.011731,
+   "null_max": 0.019426,
+   "observed_primary_fold_seed": 0.007005,
+   "p_one_sided": 0.12787
+  },
+  "E6_format_nested_margin_POSTHOC": {
+   "null_mean": -8.6e-05,
+   "null_sd": 0.004271,
+   "null_p2p5": -0.006404,
+   "null_p50": -0.000646,
+   "null_p97p5": 0.010478,
+   "null_max": 0.019426,
+   "observed_primary_fold_seed": 0.004052,
+   "p_one_sided": 0.16184
+  },
+  "BEST_FIXED_format_policy_evalvisible": {
+   "null_mean": 0.006351,
+   "null_sd": 0.003636,
+   "null_p2p5": 0.000202,
+   "null_p50": 0.006056,
+   "null_p97p5": 0.014114,
+   "null_max": 0.019426,
+   "observed_primary_fold_seed": 0.007005,
+   "p_one_sided": 0.3996
+  }
+ }
+}

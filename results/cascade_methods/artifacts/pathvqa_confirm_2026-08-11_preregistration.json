@@ -1,0 +1,51 @@
+{
+ "title": "ATTACK D PRE-REGISTRATION -- PathVQA-open: CONFIRM the +0.0269 win, and EXTEND the cheap arm past the oracle requirement",
+ "written_at": "2026-08-11T14:39:36",
+ "written_before": "any config-2 generation finished and any PART-2 verifier score existed. The PART-2 candidate pools and their JUDGE labels already existed on disk (June/July), so ORACLE (a verifier-free quantity) was computable in advance and IS stated below; SELECTED and SEL_EFF were not, and are what the predictions are about.",
+ "git_head": "0183dd75273f7ebb224c79a378b4a5cf45d7d565",
+ "PART1_confirm": {
+  "claim_under_test": "Lingshu-32B best-of-8 + the frozen clean disjoint verifier beats a MATCHED always-32B-direct control on PATH_VQA_open by +0.0269 [+0.0089,+0.0456] (seed-averaged over 3 generation seeds). Source: artifacts/openstrong_bestofn_2026-08-10.json:seed_averaged_deployable.by_arm.A5_formataware...PATH_VQA_open",
+  "why_it_needs_confirming": "round 1's own null test N3 FAILED on this exact cell (0.0080 absolute drift when the 32B greedy arm is regenerated under a different serving configuration). The effect is only ~3.4x that drift, and PATH_VQA_open is the load-bearing cell of the project's vs-reasoning claim (dropping it takes accuracy-max vs reasoning from +0.0720 to +0.0318).",
+  "new_evidence_1_config_shift": {
+   "design": "regenerate BOTH the matched greedy control (N=1,T=0) AND the three N=8,T=0.7 pools at generation seeds 0/1/2 under tensor_parallel_size=1, gpu_memory_utilization=0.92 (round 1: tp=2, gpu_mem=0.70). Same script, same prompt sha1, same cap320, same max_tokens, same item universe, same judge, same frozen verifier. Config is the only thing that moves.",
+   "runner": "runners/run_pathvqa_confirm_gen.sh",
+   "primary_endpoint": "delta = selected(best-of-8, frozen verifier) - greedy(matched N=1 T=0 control), on the 1500 PATH_VQA_open items, config 2, seed-averaged over seeds 0/1/2, paired item-level bootstrap nboot=10000 seed 20260811.",
+   "SUCCESS": "delta > 0 with a 95% CI excluding zero, in config 2.",
+   "FAILURE": "CI includes zero => the round-1 win is a serving-configuration artifact and must be reported as such, loudly.",
+   "prediction": "REPLICATES. The effect is driven by which candidate the verifier picks, not by the absolute accuracy level, and config drift moves the level of both arms together. Predicted config-2 delta +0.020 to +0.032."
+  },
+  "new_evidence_2_random_pick_floor": {
+   "design": "the control round 1 never ran. Expected accuracy of a UNIFORMLY RANDOM pick from the same 8-sample pool = mean over items of the per-item candidate correctness rate. If random-pick already beats the T=0 greedy control, then '+0.0269' is a DECODE-TEMPERATURE effect (sampling happens to be better than greedy on this cell), not a selection effect, and the attribution to the verifier is wrong.",
+   "PASS": "random-pick <= greedy, so that all of the gain is attributable to selection.",
+   "prediction": "random-pick is BELOW greedy (sampling at T=0.7 costs accuracy), so the verifier is doing MORE than +0.0269 of work relative to the correct floor."
+  },
+  "new_evidence_3_reanalysis": "independent re-derivation of round 1's PATH_VQA_open numbers straight from the raw pool/judge/scorecache JSONL, reported as max abs deviation against artifacts/openstrong_bestofn_2026-08-10.json."
+ },
+ "PART2_extend": {
+  "requirement": "the CHEAP (Lingshu-7B) best-of-N arm matches always-32B-direct on PATH_VQA_open iff selected = oracle@N x sel_eff >= 0.3760. With the incumbent sel_eff 0.722581 that is oracle >= 0.520357; measured incumbent oracle@8 = 0.516667. Gap 0.003690. (EXACT identity selected = oracle x sel_eff; the additive form is forbidden.)",
+  "bar_source": "PATH_VQA_open always-32B-direct = 0.3760, artifacts/cascade_selector_rerun_2026-08-05.json / _selector_rerun_parts/vec_*.npz. Also reported against the MATCHED regenerated control 0.3840 (openstrong_bestofn_2026-08-10.json:null_tests.N3_identity_control), because the 7B pools are June generations and CANNOT be serving-config-matched to any 2026-08 32B run. Both are reported; neither is quietly preferred.",
+  "arms": {
+   "E0_incumbent_sc8": "N=8, the bar. selected 0.373333, oracle@8 0.516667, sel_eff 0.722581 (transfer_dump_pathvqa_open_lingshu7b.json).",
+   "E1_sc8_plus_greedy": "THE CHEAPEST INTERVENTION: add the model's own T=0 N=1 answer to the pool as a 9th candidate. Cost = 1 extra cheap 7B pass + 1 extra verifier call, and the answer is ALREADY in the pool on 1218/1500 items, so it is a new candidate on only 282 items. ORACLE ALREADY MEASURED (verifier-free): 0.524667, which CLEARS 0.520357 by +0.004310.",
+   "E2_sc16": "an independent N=16 pool that already exists (ckpt_pathvqa_open_lingshu7b_sc16.jsonl, judged). ORACLE 0.570667.",
+   "E3_union": "sc8 u greedy u sc16 = up to 25 draws, 10.57 distinct candidates/item. ORACLE 0.616667.",
+   "N_scaling": "N=2,4,8 truncations inside sc16, to re-measure the sel_eff decay law on this cell."
+  },
+  "why_this_is_NOT_the_killed_DPP_direction": "round 1 killed DPP/diverse SUBSET SELECTION at FIXED N (choosing which 8 of a larger pool to keep). None of E1/E2/E3 chooses a subset: E1 adds one deterministic decode of the SAME prompt, E2 is plain iid sampling at larger N, E3 is the union of two iid pools. No diversity objective, no kernel, no MMR anywhere.",
+  "predictions_registered_now": {
+   "E1": "GENUINELY UNCERTAIN, ~50/50. Oracle clears by +0.0043 but sel_eff must hold >= 0.716647 (= 0.3760/0.524667) against the incumbent 0.722581, i.e. it may absorb at most -0.0059 of sel_eff. Predicted selected 0.374-0.381.",
+   "E2": "PREDICTED FAIL. The published law is sel_eff -0.0761 per doubling of N (artifacts/verifier_n_scaling_2026-08-03.json; round 1 re-measured -0.082 on the 32B PathVQA pool). Predicted sel_eff(16) ~ 0.6465 => predicted selected ~ 0.5707 x 0.6465 = 0.369 < 0.376.",
+   "E3": "PREDICTED FAIL. Predicted sel_eff(25) ~ 0.598 => predicted selected ~ 0.6167 x 0.598 = 0.369 < 0.376.",
+   "note": "if E2/E3 fail as predicted while E1 passes, the finding is that COVERAGE BOUGHT BY MORE SAMPLING is not convertible but coverage bought by ADDING THE MODE is, because the mode costs the selector almost nothing."
+  },
+  "transfer_check": "apply whichever arm passes to SLAKE_open (needs oracle >= 0.9630 from 0.8791) and VQA_RAD_open (needs 0.7875 from 0.6300). Registered in advance as EXPECTED TO FAIL -- those gaps are 0.084 and 0.158, 20-40x PathVQA's 0.0037.",
+  "kill_criteria": {
+   "K1": "no arm's selected exceeds 0.3760 => PART 2 is a negative and is reported as one.",
+   "K2": "the rescore null test (my one-scale rescore of the sc8 slots vs the incumbent dump's stored scores) has max abs deviation > 0.05 => the score scale is not the incumbent's and every PART-2 number is reported as scale-shifted, not as a comparison to the published bar."
+  },
+  "guardrail": "an arm that raises oracle but lowers selected below the incumbent 0.373333 is a LOSS on the cell and is reported as one."
+ },
+ "statistics": "paired item-level bootstrap, nboot=10000, bootstrap seed 20260811, resampling the 1500 PATH_VQA_open items. Macro effect of a per-cell change = cell_delta / 8.",
+ "no_fabricated_numbers": true,
+ "abstention": "nothing in this attack defers, rejects, or declines to answer. Every arm returns an answer for every item."
+}

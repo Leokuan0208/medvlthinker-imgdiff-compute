@@ -1,0 +1,115 @@
+{
+ "title": "Image-disjoint TRAIN split for GENERATOR (cheap-leg) adaptation of Lingshu-7B (Attack B).",
+ "date": "2026-08-11",
+ "seed": 0,
+ "reproduce": "python3 src/training_methods/build_cheapleg_train_split.py",
+ "discipline": "md5 of DECODED RGB pixels (WxH header + raw bytes); item identity = (dataset family, normalized question text, image pixel hash). Same method as src/training_methods/build_disjoint_verifier_split.py, which proved the clean verifier's split. The build ASSERTS both intersections are empty and fails otherwise.",
+ "pmc_vqa_split_landmine": "EVAL = /data/dan/dataset/medevalkit/PMC-VQA/test_2.csv (v2, 33,430 rows, the MedEvalKit/Lingshu track). TRAIN = train_2.csv (v2, 152,603 rows) from the same directory. test_clean.csv (v1, 2,000 rows) is NOT involved.",
+ "eval_sets": {
+  "PMC_VQA": {
+   "file": "/data/dan/dataset/medevalkit/PMC-VQA/test_2.csv",
+   "n_rows": 33430,
+   "n_unique_figures": 29021,
+   "n_unhashable": 0
+  },
+  "SLAKE": {
+   "file": "/data/dan/dataset/medevalkit/SLAKE/test.json",
+   "n_rows": 2094,
+   "n_rows_en": 1061,
+   "n_unique_images": 180
+  },
+  "VQA_RAD": {
+   "file": "/data/dan/dataset/vqa_rad/data/test-*.parquet",
+   "n_rows": 451,
+   "n_unique_images": 203
+  },
+  "PATH_VQA": {
+   "file": "/data/dan/dataset/path_vqa/data/test-*.parquet",
+   "n_rows": 6719,
+   "n_unique_images": 858
+  },
+  "MedXpertQA-MM": {
+   "dir": "/data/dan/dataset/medevalkit/MedXpertQA/images",
+   "n_files": 2858,
+   "n_unique_images": 2817
+  }
+ },
+ "eval_total_distinct_images": 33079,
+ "eval_total_items": 41758,
+ "train_sources": {
+  "pmc_vqa_train_mcq": {
+   "kept": 14000,
+   "frame": "medeval",
+   "dropped": {
+    "eval_image": 0,
+    "eval_item": 0,
+    "unhashable": 0,
+    "candidates": 14000,
+    "total_pool": 152603
+   }
+  },
+  "slake_train_closed": {
+   "kept": 3284,
+   "frame": "medeval",
+   "dropped": {
+    "eval_image": 597,
+    "eval_item": 0
+   }
+  },
+  "slake_train_open": {
+   "kept": 2511,
+   "frame": "openvqa",
+   "dropped": {
+    "eval_image": 949,
+    "eval_item": 0
+   }
+  },
+  "vqa_rad_train_closed": {
+   "kept": 400,
+   "frame": "medeval",
+   "dropped": {
+    "eval_image": 540,
+    "eval_item": 0
+   }
+  },
+  "vqa_rad_train_open": {
+   "kept": 334,
+   "frame": "openvqa",
+   "dropped": {
+    "eval_image": 519,
+    "eval_item": 0
+   }
+  },
+  "pathvqa_train_closed": {
+   "kept": 9751,
+   "frame": "medeval",
+   "dropped": {
+    "eval_image": 0,
+    "eval_item": 0
+   }
+  },
+  "pathvqa_train_open": {
+   "kept": 9903,
+   "frame": "openvqa",
+   "dropped": {
+    "eval_image": 0,
+    "eval_item": 0
+   }
+  }
+ },
+ "train_total_items": 40183,
+ "train_total_distinct_images": 17011,
+ "disjointness_assertion": {
+  "image_pixel_hash_intersection": 0,
+  "question_item_intersection": 0,
+  "asserted_in_code": [
+   "assert not inter",
+   "assert not inter_i"
+  ]
+ },
+ "prompt_frames": {
+  "medeval": "MedEvalKit's own prompt, FULL resolution (CAP_MAX_PIXELS unset at eval) -- serves PMC_VQA, SLAKE_closed, VQA_RAD_closed, PATH_VQA_closed, MedXpertQA-MM",
+  "openvqa": "run_openvqa.py SYS prompt, cap320 (1280*28*28//4 px) -- serves the 3 open cells"
+ },
+ "manifest": "data/cheapleg_split/train_manifest.json"
+}

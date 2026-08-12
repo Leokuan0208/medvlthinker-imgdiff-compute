@@ -1,0 +1,943 @@
+{
+ "title": "ATTACK A follow-up E7 -- multiple-choice half only, open half frozen at the baseline",
+ "date": "2026-08-11",
+ "status": "POST-HOC / EXPLORATORY -- see the header of src/cascade_methods/armcombine_mcqonly.py",
+ "reproduce": "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/armcombine_mcqonly.py",
+ "parent": "results/cascade_methods/artifacts/armcombine_2026-08-11.json",
+ "no_gpu": true,
+ "no_fabricated_numbers": true,
+ "seed": 20260811,
+ "nboot": 10000,
+ "n_permutations": 2000,
+ "motivation": "the parent artifact's per-cell SE decomposition: the 3 open cells supply 99.6% of the 8-cell macro's standard error and VQA_RAD_open (n=200) alone supplies 71%.  Freezing the open half at always-32B-direct removes that variance entirely -- and also removes all serving-config exposure, because the open cells then cancel exactly between policy and baseline.",
+ "bar_macro_always_32b_direct": 0.656672,
+ "frame_independence": "this policy never changes an open cell, so its macro delta is IDENTICAL in frame M (matched serving run) and frame P (published bar): the open-cell terms cancel exactly between policy and baseline.  The +/-0.008 serving-config caveat does not touch it.",
+ "E7_crossfit": {
+  "n_fold_seeds": 12,
+  "delta_mean": 0.001686,
+  "delta_sd": 0.0,
+  "delta_range": [
+   0.001686,
+   0.001686
+  ],
+  "arm_picks_over_60_fold_decisions": {
+   "method_accuracy_max_fusion": 60
+  },
+  "x_direct_as_charged": 1.0274
+ },
+ "E7_crossfit_CI_foldseed_averaged": {
+  "delta": 0.00169,
+  "lo": 0.00126,
+  "hi": 0.00212,
+  "sig": true,
+  "verdict": "WIN",
+  "macro_acc": 0.658359,
+  "label": "cross-fit choice of the MCQ arm",
+  "per_cell": {
+   "PMC_VQA": {
+    "delta": 0.01349,
+    "lo": 0.01005,
+    "hi": 0.01696,
+    "sig": true,
+    "verdict": "WIN",
+    "acc": 0.56527
+   },
+   "SLAKE_closed": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.85885
+   },
+   "VQA_RAD_closed": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.85259
+   },
+   "PATH_VQA_closed": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.88905
+   },
+   "MedXpertQA-MM": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.3065
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.8186
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.6
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "sig": false,
+    "verdict": "TIE",
+    "acc": 0.376
+   }
+  },
+  "guardrail_flags": [],
+  "macro_leave_one_out": {
+   "per_dropped_cell": {
+    "PMC_VQA": 0.0,
+    "SLAKE_closed": 0.001927,
+    "VQA_RAD_closed": 0.001927,
+    "PATH_VQA_closed": 0.001927,
+    "MedXpertQA-MM": 0.001927,
+    "SLAKE_open": 0.001927,
+    "VQA_RAD_open": 0.001927,
+    "PATH_VQA_open": 0.001927
+   },
+   "range": [
+    0.0,
+    0.001927
+   ],
+   "cell_carrying_the_claim": "PMC_VQA"
+  }
+ },
+ "fixed_mcq_arm_policies": {
+  "always_7b": {
+   "delta": -0.02594,
+   "lo": -0.03351,
+   "hi": -0.01864,
+   "sig": true,
+   "verdict": "LOSS",
+   "macro_acc": 0.630733,
+   "label": "MCQ=always_7b, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": -0.00912,
+     "lo": -0.01442,
+     "hi": -0.00392,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.54266
+    },
+    "SLAKE_closed": {
+     "delta": -0.03349,
+     "lo": -0.05861,
+     "hi": -0.00957,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.82536
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.07171,
+     "lo": -0.11952,
+     "hi": -0.02789,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.78088
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.04819,
+     "lo": -0.06038,
+     "hi": -0.03598,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.84087
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.045,
+     "lo": -0.068,
+     "hi": -0.022,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.2615
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA",
+    "SLAKE_closed",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed",
+    "MedXpertQA-MM"
+   ],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": -0.028341,
+     "SLAKE_closed": -0.02486,
+     "VQA_RAD_closed": -0.0194,
+     "PATH_VQA_closed": -0.02276,
+     "MedXpertQA-MM": -0.023216,
+     "SLAKE_open": -0.029644,
+     "VQA_RAD_open": -0.029644,
+     "PATH_VQA_open": -0.029644
+    },
+    "range": [
+     -0.029644,
+     -0.0194
+    ],
+    "cell_carrying_the_claim": "SLAKE_open"
+   },
+   "x_direct_as_charged": 0.5118,
+   "macro_flopeq_as_charged": 2.3388,
+   "x_direct_R32_3.816": 0.5388
+  },
+  "always_32b_direct": {
+   "delta": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "sig": false,
+   "verdict": "TIE",
+   "macro_acc": 0.656672,
+   "label": "MCQ=always_32b_direct, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.55178
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85885
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85259
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.88905
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.3065
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": 0.0,
+     "SLAKE_closed": 0.0,
+     "VQA_RAD_closed": 0.0,
+     "PATH_VQA_closed": 0.0,
+     "MedXpertQA-MM": 0.0,
+     "SLAKE_open": 0.0,
+     "VQA_RAD_open": 0.0,
+     "PATH_VQA_open": 0.0
+    },
+    "range": [
+     0.0,
+     0.0
+    ],
+    "cell_carrying_the_claim": "PMC_VQA"
+   },
+   "x_direct_as_charged": 1.0,
+   "macro_flopeq_as_charged": 4.57,
+   "x_direct_R32_3.816": 1.0
+  },
+  "always_32b_reasoning": {
+   "delta": -0.0015,
+   "lo": -0.00549,
+   "hi": 0.00223,
+   "sig": false,
+   "verdict": "TIE",
+   "macro_acc": 0.655169,
+   "label": "MCQ=always_32b_reasoning, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": -0.00236,
+     "lo": -0.00467,
+     "hi": -3e-05,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.54942
+    },
+    "SLAKE_closed": {
+     "delta": 0.00478,
+     "lo": -0.00239,
+     "hi": 0.01196,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.86364
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.01195,
+     "lo": -0.03187,
+     "hi": 0.00797,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.84064
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.88905
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.0025,
+     "lo": -0.024,
+     "hi": 0.019,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.304
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [
+    "PMC_VQA"
+   ],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": -0.001381,
+     "SLAKE_closed": -0.002401,
+     "VQA_RAD_closed": -1.1e-05,
+     "PATH_VQA_closed": -0.001719,
+     "MedXpertQA-MM": -0.001361,
+     "SLAKE_open": -0.001719,
+     "VQA_RAD_open": -0.001719,
+     "PATH_VQA_open": -0.001719
+    },
+    "range": [
+     -0.002401,
+     -1.1e-05
+    ],
+    "cell_carrying_the_claim": "SLAKE_closed"
+   },
+   "x_direct_as_charged": 1.0,
+   "macro_flopeq_as_charged": 4.57,
+   "x_direct_R32_3.816": 1.0
+  },
+  "method_compute_lean": {
+   "delta": -0.00437,
+   "lo": -0.00803,
+   "hi": -0.00104,
+   "sig": true,
+   "verdict": "LOSS",
+   "macro_acc": 0.6523,
+   "label": "MCQ=method_compute_lean, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": -0.00099,
+     "lo": -0.00592,
+     "hi": 0.00383,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.55079
+    },
+    "SLAKE_closed": {
+     "delta": -0.00718,
+     "lo": -0.02392,
+     "hi": 0.00837,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85167
+    },
+    "VQA_RAD_closed": {
+     "delta": -0.01992,
+     "lo": -0.04382,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.83267
+    },
+    "PATH_VQA_closed": {
+     "delta": -0.00089,
+     "lo": -0.00416,
+     "hi": 0.00238,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.88816
+    },
+    "MedXpertQA-MM": {
+     "delta": -0.006,
+     "lo": -0.012,
+     "hi": -0.0005,
+     "sig": true,
+     "verdict": "LOSS",
+     "acc": 0.3005
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [
+    "MedXpertQA-MM"
+   ],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": -0.004856,
+     "SLAKE_closed": -0.003971,
+     "VQA_RAD_closed": -0.002151,
+     "PATH_VQA_closed": -0.00487,
+     "MedXpertQA-MM": -0.00414,
+     "SLAKE_open": -0.004997,
+     "VQA_RAD_open": -0.004997,
+     "PATH_VQA_open": -0.004997
+    },
+    "range": [
+     -0.004997,
+     -0.002151
+    ],
+    "cell_carrying_the_claim": "SLAKE_open"
+   },
+   "x_direct_as_charged": 0.7882,
+   "macro_flopeq_as_charged": 3.6023,
+   "x_direct_R32_3.816": 0.8153
+  },
+  "method_accuracy_max_veto": {
+   "delta": 0.00119,
+   "lo": 0.0009,
+   "hi": 0.00148,
+   "sig": true,
+   "verdict": "WIN",
+   "macro_acc": 0.657865,
+   "label": "MCQ=method_accuracy_max_veto, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": 0.00954,
+     "lo": 0.00724,
+     "hi": 0.01185,
+     "sig": true,
+     "verdict": "WIN",
+     "acc": 0.56132
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85885
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85259
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.88905
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.3065
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": 0.0,
+     "SLAKE_closed": 0.001363,
+     "VQA_RAD_closed": 0.001363,
+     "PATH_VQA_closed": 0.001363,
+     "MedXpertQA-MM": 0.001363,
+     "SLAKE_open": 0.001363,
+     "VQA_RAD_open": 0.001363,
+     "PATH_VQA_open": 0.001363
+    },
+    "range": [
+     0.0,
+     0.001363
+    ],
+    "cell_carrying_the_claim": "PMC_VQA"
+   },
+   "x_direct_as_charged": 0.9773,
+   "macro_flopeq_as_charged": 4.4664,
+   "x_direct_R32_3.816": 0.9827
+  },
+  "method_accuracy_max_fusion": {
+   "delta": 0.00169,
+   "lo": 0.00126,
+   "hi": 0.00212,
+   "sig": true,
+   "verdict": "WIN",
+   "macro_acc": 0.658359,
+   "label": "MCQ=method_accuracy_max_fusion, OPEN=always_32b_direct (FIXED)",
+   "per_cell": {
+    "PMC_VQA": {
+     "delta": 0.01349,
+     "lo": 0.01005,
+     "hi": 0.01696,
+     "sig": true,
+     "verdict": "WIN",
+     "acc": 0.56527
+    },
+    "SLAKE_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85885
+    },
+    "VQA_RAD_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.85259
+    },
+    "PATH_VQA_closed": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.88905
+    },
+    "MedXpertQA-MM": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.3065
+    },
+    "SLAKE_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.8186
+    },
+    "VQA_RAD_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.6
+    },
+    "PATH_VQA_open": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "acc": 0.376
+    }
+   },
+   "guardrail_flags": [],
+   "macro_leave_one_out": {
+    "per_dropped_cell": {
+     "PMC_VQA": 0.0,
+     "SLAKE_closed": 0.001927,
+     "VQA_RAD_closed": 0.001927,
+     "PATH_VQA_closed": 0.001927,
+     "MedXpertQA-MM": 0.001927,
+     "SLAKE_open": 0.001927,
+     "VQA_RAD_open": 0.001927,
+     "PATH_VQA_open": 0.001927
+    },
+    "range": [
+     0.0,
+     0.001927
+    ],
+    "cell_carrying_the_claim": "PMC_VQA"
+   },
+   "x_direct_as_charged": 1.0274,
+   "macro_flopeq_as_charged": 4.695,
+   "x_direct_R32_3.816": 1.0328
+  }
+ },
+ "cost": {
+  "A_as_charged|R32_4.57": {
+   "macro_flopeq": 4.695,
+   "x_direct": 1.0274
+  },
+  "A_as_charged|R32_3.816": {
+   "macro_flopeq": 3.941,
+   "x_direct": 1.0328
+  },
+  "B_recost_gen|R32_4.57": {
+   "macro_flopeq": 4.695,
+   "x_direct": 1.0274
+  },
+  "B_recost_gen|R32_3.816": {
+   "macro_flopeq": 3.941,
+   "x_direct": 1.0328
+  },
+  "C_recost_full|R32_4.57": {
+   "macro_flopeq": 4.695,
+   "x_direct": 1.0274
+  },
+  "C_recost_full|R32_3.816": {
+   "macro_flopeq": 3.941,
+   "x_direct": 1.0328
+  },
+  "_note": "conventions B and C are UNCORROBORATED (cost_floor_2026-08-10.json:VERDICT.kill_criteria.i).  A is the primary.  This policy runs one 7B forward plus one 32B forward on PMC_VQA and a single 32B forward everywhere else, so B and C barely move it."
+ },
+ "effective_menu_size_MCQ": {
+  "PMC_VQA": {
+   "n_arms": 6,
+   "n_distinct": 6
+  },
+  "SLAKE_closed": {
+   "n_arms": 6,
+   "n_distinct": 4
+  },
+  "VQA_RAD_closed": {
+   "n_arms": 6,
+   "n_distinct": 4
+  },
+  "PATH_VQA_closed": {
+   "n_arms": 6,
+   "n_distinct": 3
+  },
+  "MedXpertQA-MM": {
+   "n_arms": 6,
+   "n_distinct": 4
+  }
+ },
+ "permutation_null_dedup": {
+  "E7_crossfit": {
+   "n_perm": 2000,
+   "null_mean": 1e-06,
+   "null_sd": 0.00317,
+   "null_p2p5": -0.005194,
+   "null_p97p5": 0.006853,
+   "null_max": 0.010699,
+   "observed": 0.001686,
+   "p_one_sided": 0.29335
+  },
+  "best_fixed_MCQ_arm_evalvisible": {
+   "n_perm": 2000,
+   "null_mean": 0.002211,
+   "null_sd": 0.002074,
+   "null_p2p5": 0.0,
+   "null_p97p5": 0.007238,
+   "null_max": 0.010699,
+   "observed": 0.001686,
+   "p_one_sided": 0.51224
+  }
+ },
+ "cross_check_vs_published": {
+  "published_mcq_half_delta": {
+   "delta": 0.0027,
+   "lo": 0.002,
+   "hi": 0.0034,
+   "sig": true,
+   "verdict": "WIN",
+   "n_units": 5
+  },
+  "published_is": "cascade_selector_rerun_2026-08-05.json:per_arm.disjoint.deltas_mcq.method_accuracy_max_fusion.always_32b_direct -- a 5-cell MCQ-macro delta that the project ALREADY reports as a significant WIN",
+  "implied_8cell_delta_by_scaling": 0.001688,
+  "implied_8cell_ci_by_scaling": [
+   0.00125,
+   0.002125
+  ],
+  "measured_here_8cell_delta": 0.00169,
+  "measured_here_8cell_ci": [
+   0.00126,
+   0.00212
+  ],
+  "max_abs_dev": 2e-06,
+  "reading": "the 8-cell macro number is the published MCQ-half number times 5/8, as it must be, because this policy changes nothing outside the MCQ half.  E7 is therefore NOT a new measurement -- it is an already-published significant result re-expressed on the 8-cell macro, which is the axis the project's target is stated on."
+ },
+ "cost_measured_all_axes": {
+  "weighting": "MACRO (8 cells, 1/8 each).  Pairs ONLY with the MACRO accuracies in this file.",
+  "provenance": "every constant read verbatim from results/cascade_methods/artifacts/_selector_rerun_parts/macro_disjoint.json:cost.per_cell_as_charged -- the same file the published per-cell costs come from.  No constant is modelled here, and no best-of-N arm is involved, so nothing in this block is 'not measured'.",
+  "baseline_always_32b_direct": {
+   "flops": 4.57,
+   "lat_par_ms": 665.0,
+   "lat_seq_ms": 665.0,
+   "energy_j": 127.0
+  },
+  "rows": {
+   "MCQ=method_accuracy_max_veto / OPEN=always_32b_direct": {
+    "macro": {
+     "flops": 4.466,
+     "lat_par_ms": 675.11,
+     "lat_seq_ms": 675.11,
+     "energy_j": 126.372
+    },
+    "vs_always_32b_direct": {
+     "flops": 0.9773,
+     "lat_par_ms": 1.0152,
+     "lat_seq_ms": 1.0152,
+     "energy_j": 0.9951
+    },
+    "pct_change": {
+     "flops": -2.27,
+     "lat_par_ms": 1.52,
+     "lat_seq_ms": 1.52,
+     "energy_j": -0.49
+    },
+    "per_cell_PMC_VQA": {
+     "flops": 3.741,
+     "lat_par_ms": 745.881,
+     "lat_seq_ms": 745.881,
+     "energy_j": 121.977
+    }
+   },
+   "MCQ=method_accuracy_max_fusion / OPEN=always_32b_direct": {
+    "macro": {
+     "flops": 4.695,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 708.375,
+     "energy_j": 132.725
+    },
+    "vs_always_32b_direct": {
+     "flops": 1.0274,
+     "lat_par_ms": 1.0,
+     "lat_seq_ms": 1.0652,
+     "energy_j": 1.0451
+    },
+    "pct_change": {
+     "flops": 2.74,
+     "lat_par_ms": 0.0,
+     "lat_seq_ms": 6.52,
+     "energy_j": 4.51
+    },
+    "per_cell_PMC_VQA": {
+     "flops": 5.57,
+     "lat_par_ms": 665.0,
+     "lat_seq_ms": 1012.0,
+     "energy_j": 172.8
+    }
+   },
+   "MCQ=method_compute_lean / OPEN=always_32b_direct": {
+    "macro": {
+     "flops": 3.602,
+     "lat_par_ms": 650.12,
+     "lat_seq_ms": 650.12,
+     "energy_j": 111.365
+    },
+    "vs_always_32b_direct": {
+     "flops": 0.7883,
+     "lat_par_ms": 0.9776,
+     "lat_seq_ms": 0.9776,
+     "energy_j": 0.8769
+    },
+    "pct_change": {
+     "flops": -21.17,
+     "lat_par_ms": -2.24,
+     "lat_seq_ms": -2.24,
+     "energy_j": -12.31
+    },
+    "per_cell_PMC_VQA": {
+     "flops": 1.386,
+     "lat_par_ms": 403.216,
+     "lat_seq_ms": 403.216,
+     "energy_j": 56.536
+    }
+   }
+  },
+  "R32_note": "the FLOP-eq column is as-charged at R32 = 4.57.  At the derived R32 = 3.816 the ratios are in fixed_mcq_arm_policies[*]['x_direct_R32_3.816']."
+ },
+ "VERDICT": {
+  "what_is_positive": "TWO FORMAT-AWARE FIXED POLICIES BEAT always-32B-direct ON THE 8-CELL MACRO WITH A CI THAT EXCLUDES ZERO, and one of them is cheaper on FLOP-eq and energy as well.  Both are 'apply the shipped arm to the multiple-choice half, leave the open-text half at always-32B-direct'.",
+  "rows": [
+   {
+    "policy": "MCQ = certified veto (accuracy-max), OPEN = always-32B-direct",
+    "macro": 0.657865,
+    "delta": 0.00119,
+    "ci": [
+     0.0009,
+     0.00148
+    ],
+    "verdict": "WIN",
+    "guardrail_flags": [],
+    "flopeq_x": 0.9773,
+    "lat_par_pct": 1.52,
+    "energy_pct": -0.49
+   },
+   {
+    "policy": "MCQ = fusion (accuracy-max+), OPEN = always-32B-direct",
+    "macro": 0.658359,
+    "delta": 0.00169,
+    "ci": [
+     0.00126,
+     0.00212
+    ],
+    "verdict": "WIN",
+    "guardrail_flags": [],
+    "flopeq_x": 1.0274,
+    "lat_par_pct": 0.0,
+    "energy_pct": 4.51
+   }
+  ],
+  "THE_CAVEATS_THAT_MUST_TRAVEL_WITH_IT": [
+   "IT IS 100% ONE CELL.  The policy is byte-identical to always-32B-direct on 7 of the 8 cells, by construction.  Leave-one-out: dropping PMC_VQA takes the delta to exactly 0.000. This is the most concentrated claim the project has ever made -- more concentrated than hole 2 ever was.",
+   "PMC_VQA HERE IS test_2.csv -- 33,430 items, 79.2% of the Variant-B pool, and the split with ZERO published verification (CLAUDE.md two-split landmine; docs/current/PMCVQA_PROVENANCE_2026-07-30.md).  A claim carried entirely by that cell inherits that cell's provenance risk entirely.",
+   "IT IS NOT A NEW MEASUREMENT.  cascade_selector_rerun_2026-08-05.json already reports the MCQ-half delta of the fusion arm as +0.0027 [+0.0020, +0.0034], a significant WIN.  The 8-cell macro number is that number times 5/8 and reproduces it to 2e-06.  What is new is only the OBSERVATION that restricting the shipped arm to the multiple-choice half turns a macro LOSS (the full fusion arm is 0.6503, -0.0064 vs direct) into a macro WIN.",
+   "THE EFFECT IS +0.0017, not +0.0029.  It clears zero, it does not clear the scale the project has been aiming at.  Calling it 'beating always-32B-direct' is literally true on the stated axis and would be misleading without the size attached.",
+   "IF THE MCQ ARM IS *SELECTED* ON THIS EVAL RATHER THAN DEPLOYED FROM THE PUBLISHED RESULT, the gain does not survive: cross-fit selection of the MCQ arm gives p = 0.29335 against its own exchangeability null (null sd 0.00317), and eval-visible selection gives p = 0.51224.  The claim rests on the policy being PRE-SPECIFIED from the 2026-08-05 artifact, not on it being discovered here.",
+   "THE PERMUTATION NULL IS CONSERVATIVE HERE AND SHOULD NOT BE OVER-READ.  The exchangeability null forces always_7b -- an arm that is genuinely ~6 macro points worse -- to be exchangeable with always-32B-direct, so a permuted 'selection' can land on what is effectively a random column and the null's variance balloons.  That null is the right test for 'is any arm better than the others'; it is NOT the right test for a pre-specified policy, for which the paired bootstrap CI is.  Both are reported so the reader can judge.",
+   "The open-text half is UNTOUCHED, so this claim carries no serving-config exposure at all -- the open cells cancel exactly between policy and baseline in every frame.",
+   "The veto row is cheaper on FLOP-eq (0.977x) and energy (-0.5%) but SLIGHTLY WORSE on parallel latency (+1.5%), because the 7B pass runs before the 32B one.  It is therefore a Pareto improvement on accuracy+FLOPs+energy, NOT on latency.  Do not write 'Pareto dominates' -- that phrasing is already retired in this project (retrospective C26)."
+  ],
+  "honest_sentence": "Restricting the shipped multiple-choice policy to the multiple-choice half and leaving the open-text half at always-32B-direct beats always-32B-direct on the 8-cell macro by +0.0012 [+0.0009, +0.0015] at 0.977x its FLOP-eq and -0.5% its energy (certified-veto variant), or by +0.0017 [+0.0013, +0.0021] at 1.027x its FLOP-eq (fusion variant) -- but the entire effect is PMC-VQA, the policy is identical to the baseline on the other seven cells by construction, and the underlying MCQ-half result was already published on 2026-08-05.  It is a real, CI-clean, guardrail-clean win of +0.0012 to +0.0017 macro; it is not the +0.0029-scale win the round was chasing, and it comes entirely from the one cell whose split has no published verification.",
+  "what_it_does_NOT_show": [
+   "it does NOT show the open-text machinery helps -- the policy wins BY SWITCHING THE OPEN MACHINERY OFF.  Everything the shipped method does on the three open cells is what turned this into a tie in the 2026-08-05 headline.",
+   "it does NOT rehabilitate the full accuracy-max arm (0.6575, +0.0008 [-0.0022,+0.0037], TIE) or the full fusion arm (0.6503, a LOSS).",
+   "it does NOT beat always-32B-direct on latency."
+  ]
+ }
+}
