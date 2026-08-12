@@ -141,40 +141,43 @@ def main():
         "_why_this_section_is_first": "the pre-registration is in the repo and can be diffed against "
                                       "this file; every departure from it is listed here rather than "
                                       "left for a reader to notice.",
-        "D1_train_only_CV_did_not_complete": {
+        "D1_train_only_CV_RESOLVED_it_did_complete": {
+            "_status": "RESOLVED. An earlier assembly of this artifact (06:54) recorded this as an "
+                       "unresolved deviation because the CV sweep had not finished at that time. It "
+                       "finished afterwards, at 08:33 (logs/visverif_cv_concat.log), and this "
+                       "artifact is assembled from the COMPLETED CV. The deviation is retained here "
+                       "rather than deleted so the earlier statement is visibly superseded.",
             "preregistered": "arm selection by 5-fold image-grouped CV inside the TRAIN pool, "
                              "3 seeds, over all 8 declared arms; the CV-selected arm is the primary.",
-            "what_happened": "the CV was launched twice (3 seeds, then 1 seed for affordability) on "
-                             "a machine shared with several other concurrent research rounds. Load "
-                             "average ran 50-100 on 48 cores with ~0.9M context switches/s; the "
-                             "first arm alone took 11.2 min and the full sweep did not complete "
-                             "inside this round's compute window. Both runs were stopped. Only one "
-                             "arm ever finished: L, cv_sel_eff 0.673003, cv_auroc 0.721436 "
-                             "(logs/visverif_cv_concat.log), which is not enough to RANK arms.",
-            "what_was_done_instead": "the primary arm is chosen by the ANTI-CONSERVATIVE rule -- the "
-                                     "vision arm that looks best ON EVAL. See "
-                                     "primary_comparison.selection_basis_note. For a NULL result "
-                                     "this is strictly stronger than the pre-registered CV: it hands "
-                                     "the vision hypothesis the most favourable arm obtainable even "
-                                     "with knowledge of the answer.",
-            "what_this_would_invalidate": "a POSITIVE claim. No positive claim is made here. If any "
-                                          "vision arm had beaten the bar, this deviation would make "
-                                          "that win inadmissible and it would have to be re-run "
-                                          "under the CV.",
-            "cv_value_that_did_complete": {"arm": "L", "cv_sel_eff": 0.673003, "cv_auroc": 0.721436,
-                                           "seeds": [0, 1, 2], "folds": 5,
-                                           "note": "cv_sel_eff is not comparable in LEVEL to eval "
-                                                   "sel_eff; only arm ranking would have used it."}},
+            "what_happened": "the CV was launched three times on a machine shared with several other "
+                             "concurrent research rounds (load average 20-100 on 48 cores). The "
+                             "first two attempts were stopped; the third completed all 7 concat arms "
+                             "at 3 seeds x 5 folds -- see train_only_cv_arm_selection for the full "
+                             "table. The CV names L_Vmean (cv_sel_eff 0.675016), and THAT arm is the "
+                             "primary comparison in this artifact. Eval was never consulted to "
+                             "choose it.",
+            "the_one_remaining_shortfall": "the pre-registration declared 8 arms; the CV ranked the 7 "
+                                           "CONCAT arms. xattn is a differently-shaped model (a "
+                                           "learned cross-attention module, not a concat feature) "
+                                           "and was not run through the same CV. It is reported as a "
+                                           "SECONDARY arm on its own, and it sits BELOW the bar, so "
+                                           "its omission from the CV cannot have hidden a win.",
+            "anti_conservative_second_contrast_also_reported": "because a null is being reported, the "
+                             "arm that looks BEST ON EVAL (L_prod_sim) is ALSO contrasted against the "
+                             "bar, in second_contrast_other_selection_rule. That rule is inadmissible "
+                             "for a positive claim but is the strongest possible test of a null: if "
+                             "even the arm chosen with knowledge of the answer cannot beat the bar, "
+                             "no admissible rule could have."},
         "D2_seed_counts": {
             "preregistered": "10 seeds for every arm",
-            "what_happened": "see arms.*.per_seed_sel_eff.n_seeds for the count actually achieved "
-                             "per arm. The language-side BAR has its full 10. Arms with fewer are "
-                             "labelled by their own n_seeds and every primary contrast is computed "
-                             "on the INTERSECTION of the two arms' seeds "
-                             "(primary_comparison.seeds_used_for_both_ensembles), so no comparison "
-                             "is between ensembles of different size.",
-            "Vmean_is_a_deliberate_exception": "1 seed, and 1 seed is complete for it -- see "
-                                               "arms.Vmean._note.why_one_seed_settles_it."},
+            "what_happened": "ACHIEVED for all 6 concat arms (L, Vmean-degenerate aside) and for the "
+                             "primary contrast. See arms.*.per_seed_sel_eff.n_seeds for the count "
+                             "per arm. Every primary contrast is computed on the INTERSECTION of the "
+                             "two arms' seeds (primary_comparison.seeds_used_for_both_ensembles), so "
+                             "no comparison is between ensembles of different size.",
+            "Vmean_is_a_deliberate_exception": "see arms.Vmean._note.why_one_seed_settles_it -- every "
+                                               "seed returns the identical selection vector by "
+                                               "construction, which the seeds run confirm exactly."},
         "D3_24_thread_null_test_abandoned": "see null_tests.N4; not load-bearing, no arm is fitted "
                                             "at 24 threads.",
         "D4_attack_1c_done_by_ablation_not_retraining": "see "
@@ -340,8 +343,10 @@ def main():
                 "why_one_seed_settles_it": "the feature is the image mean, which by the causal-mask "
                         "result (N3b) is IDENTICAL for every candidate of a question. Whatever the "
                         "head learns, every slot in a pool receives the same score, so argmax always "
-                        "returns slot 0 -- for EVERY seed. Additional seeds are guaranteed to give "
-                        "the identical selection vector, so they were not run.",
+                        "returns slot 0 -- for EVERY seed. The prediction is that additional seeds "
+                        "give a bit-identical selection vector, and the seeds actually run CONFIRM "
+                        "it: see per_seed_sel_eff, where every seed returns exactly 0.676431 "
+                        "(sd = 0.000000) and matches the pre-registered slot-0 value.",
                 "what_it_proves": "a vision feature used ADDITIVELY cannot change a within-pool "
                         "argmax. Any gain from vision must come from a candidate x image "
                         "INTERACTION. This is the empirical half of the structural argument."}
@@ -590,19 +595,37 @@ def main():
                                "(entropy %.1f%% of uniform). That is not 'looking where the evidence "
                                "is'; it is a collapse onto a near-constant lookup. The decisive "
                                "check is whether the chosen patch MOVES between a 'left'-bearing and "
-                               "a 'right'-bearing candidate on the SAME image, and it does not: the "
-                               "paired shift is %.4f (range %.4f to %.4f) with %d of %d seeds "
-                               "reaching p<0.05 under a within-item sign-flip permutation test."
+                               "a 'right'-bearing candidate on the SAME image: the paired shift is "
+                               "%.4f (range %.4f to %.4f) with %d of %d seeds reaching p<0.05 under "
+                               "a within-item sign-flip permutation test."
                                % (100 * pk, 100 * ef,
                                   x["summary"]["paired_dx_mean_over_seeds"],
                                   x["summary"]["paired_dx_range"][0],
                                   x["summary"]["paired_dx_range"][1],
                                   x["summary"]["n_seeds_with_perm_p_below_0.05"],
                                   x["summary"]["n_seeds_tested"]),
+            "per_seed_signs_of_the_nominally_significant_seeds": [
+                {"seed": r["seed"],
+                 "dx": round(r["paired_xcom_right_minus_left"]["mean"], 6),
+                 "p": r["paired_xcom_right_minus_left"]["perm_p_two_sided"]}
+                for r in x["per_seed"]
+                if r["paired_xcom_right_minus_left"]["perm_p_two_sided"] < 0.05],
+            "why_the_nominal_hits_are_NOT_evidence_of_grounding": (
+                "%d of %d seeds cross p<0.05, but the effect is not CONSISTENT: the seed-mean shift "
+                "is %.5f with a range of %.5f to %.5f that straddles zero, and the seeds with the "
+                "largest positive and largest negative point estimates disagree in SIGN. A head that "
+                "had genuinely learned where 'left' and 'right' live in the image would move the "
+                "same way on every seed (the radiological sign convention is fixed for a given "
+                "dataset). Scattered nominal hits of opposing sign across 10 tests are what an "
+                "unstable near-one-hot lookup produces, not what grounding produces."
+                % (x["summary"]["n_seeds_with_perm_p_below_0.05"], x["summary"]["n_seeds_tested"],
+                   x["summary"]["paired_dx_mean_over_seeds"],
+                   x["summary"]["paired_dx_range"][0], x["summary"]["paired_dx_range"][1])),
             "answers_the_brief_question": "the brief asked whether the learned attention localises "
                                           "sensibly on laterality items. Measured answer: it "
-                                          "localises HARD but not SENSIBLY -- position is essentially "
-                                          "independent of what the candidate says."}
+                                          "localises HARD but not SENSIBLY -- the attended position "
+                                          "carries no sign-consistent dependence on what the "
+                                          "candidate says."}
         rep["xattn_attention_localisation"] = x
 
     # ---------------- POSITIVE CONTROL: are the vision features any good at all? ---------------
@@ -674,6 +697,47 @@ def main():
                       "those used a slice of n=342, this uses the broader mask defined in "
                       "strata_definitions. Only the CORRECTNESS column is a like-for-like gate."}
         rep["why_relevance_not_correctness"] = r
+
+    # ---------- THE PREMISE TEST, WITH THE OOD CONFOUND REMOVED (the round's mechanism claim) ----
+    lid = os.path.join(PARTS, "langside_image_dependence.json")
+    if os.path.exists(lid):
+        z = json.load(open(lid))
+        c = z["contrast_real_minus_noise"]
+        z["reading_of_the_measured_numbers"] = {
+            "the_premise_of_this_ATTACK_is_FALSE": True,
+            "language_side_head_cv_sel_eff_real_images": z["arms"]["real"]["cv_sel_eff_mean"],
+            "language_side_head_cv_sel_eff_noise_images": z["arms"]["noise"]["cv_sel_eff_mean"],
+            "d_cv_sel_eff": c["d_cv_sel_eff_mean"],
+            "d_cv_auroc": c["d_cv_auroc_mean"],
+            "seeds_positive": "%d/%d on sel_eff, %d/%d on AUROC" % (
+                c["n_positive"], c["n_seeds"],
+                sum(1 for x in c["d_cv_auroc_per_seed"] if x > 0), c["n_seeds"]),
+            "what_that_means": (
+                "the language-side representation the verifier reads is NOT vision-blind. With the "
+                "out-of-distribution confound removed -- both arms trained AND tested on their own "
+                "cache, identical folds, identical seeds, identical trainer -- destroying the image "
+                "still costs the language-side head %.6f cv_sel_eff and %.6f cv_AUROC. The image "
+                "signal is ALREADY inside the language-side vector, which is exactly what a causal "
+                "LM that attends over vision tokens produces."
+                % (c["d_cv_sel_eff_mean"], c["d_cv_auroc_mean"])),
+            "why_this_EXPLAINS_the_null": (
+                "this attack's hypothesis was 'the verifier is not really looking at the image, so "
+                "inject the vision signal'. The verifier IS looking at the image. Explicit vision "
+                "features are therefore largely REDUNDANT with the language-side vector, and a null "
+                "on every injection arm is the predicted consequence, not a failure of the "
+                "particular injection mechanisms tried."),
+            "what_it_does_NOT_say": (
+                "it does not say the image information is used WELL. The laterality stratum is the "
+                "incumbent's weakest (sel_eff 0.613043 vs 0.817186 on short non-laterality items) "
+                "and no arm in this round moved it. 'Already present' and 'fully exploited' are "
+                "different claims; only the first is supported."),
+            "relation_to_the_confounded_langnoise_number": (
+                "image_ablations.L.langnoise measures the SAME premise by transfer (train real, "
+                "test noise) and reports a larger drop, -0.081063 [-0.102861, -0.059928]. That "
+                "number is inflated by the distribution shift. This one is the clean version and it "
+                "is smaller but the same sign, so the conclusion is robust to the confound.")}
+        rep["premise_test_is_the_language_side_head_vision_blind"] = z
+
     # ---------------- BOTTOM LINE, computed from the measured values above ----------------
     bar = rep["arms"].get(base, {}).get("per_seed_sel_eff")
     vis = {a: v["per_seed_sel_eff"] for a, v in rep["arms"].items()
@@ -724,6 +788,49 @@ def main():
                 + ("the laterality CI spans zero, so the MECHANISM CLAIM IS NOT SUPPORTED."
                    if llo <= 0 <= lhi else "the laterality stratum did move.")),
         }
+    # WHY the null happened -- assembled from the measured rows above, nothing new computed.
+    why = {"_what": "the four measurements that, together, say the attack's PREMISE was wrong "
+                    "rather than its injection mechanisms being badly chosen."}
+    lidr = rep.get("premise_test_is_the_language_side_head_vision_blind", {})
+    if lidr:
+        c = lidr["contrast_real_minus_noise"]
+        why["1_the_language_side_vector_is_ALREADY_vision_aware"] = {
+            "cv_sel_eff_real_vs_noise_images": [lidr["arms"]["real"]["cv_sel_eff_mean"],
+                                                lidr["arms"]["noise"]["cv_sel_eff_mean"]],
+            "d_cv_sel_eff": c["d_cv_sel_eff_mean"], "d_cv_auroc": c["d_cv_auroc_mean"],
+            "confound_removed": "both arms trained AND tested in-distribution, identical folds",
+            "so": "there is no vision blindness to fix; explicit vision features are redundant."}
+    ia = rep.get("image_ablations", {})
+    perms = {a: ia[a]["perm"] for a in ia if a != "_what" and "perm" in ia[a]}
+    if perms:
+        why["2_destroying_the_image_QUESTION_correspondence_is_not_significant_on_the_arm_it_was_run_on"] = {
+            a: {"sel_eff": v["sel_eff"], "delta_vs_real_image": v["delta_vs_real_image"],
+                "ci": (v.get("paired_ci_vs_real_image") or {}).get("d_sel_eff_ci")}
+            for a, v in perms.items()}
+    vc = rep.get("vision_capacity_ablation_of_incumbent_LoRA", {}).get("comparisons", {})
+    if vc:
+        why["3_the_incumbent_LoRAs_incidental_15.2pct_vision_capacity_contributes_nothing"] = {
+            k: {"delta": round(v["delta"], 6), "ci95": [round(x, 6) for x in v["ci95"]],
+                "n_paired_items": v["n_paired_items"]} for k, v in vc.items()}
+    xa = rep.get("xattn_attention_localisation", {}).get("summary")
+    if xa:
+        why["4_the_learned_cross_attention_localises_HARD_but_not_MEANINGFULLY"] = {
+            "entropy_frac_of_uniform": round(xa["entropy_frac_of_uniform_mean"], 6),
+            "paired_left_vs_right_shift_mean": round(xa["paired_dx_mean_over_seeds"], 6),
+            "n_seeds_with_perm_p_below_0.05": xa["n_seeds_with_perm_p_below_0.05"],
+            "n_seeds_tested": xa["n_seeds_tested"]}
+    rvc2 = rep.get("why_relevance_not_correctness", {}).get("measured_within_model", {})
+    if rvc2:
+        why["5_similarity_in_the_generators_OWN_vision_space_is_BELOW_chance_for_correctness"] = {
+            k: {"correctness_auroc": round(v["correctness_auroc"], 6),
+                "relevance_auroc": (round(v["relevance_auroc"], 6)
+                                    if v["relevance_auroc"] == v["relevance_auroc"] else None)}
+            for k, v in rvc2.items()}
+        why["5_note"] = ("this reproduces, INSIDE the generator's own representation space, the "
+                         "family-D result that external contrastive encoders (SigLIP / PubMedCLIP / "
+                         "BiomedCLIP) score image-text RELEVANCE well and answer CORRECTNESS at or "
+                         "below chance. Using the generator's own vision tower does not escape it.")
+    bl["why_the_null_happened"] = why
     if "macro" in rep and "primary_vs_L" in rep["macro"]:
         bl["macro_consequence"] = {
             "gap_to_always_32B_direct": rep["macro"]["reference"]["gap"],

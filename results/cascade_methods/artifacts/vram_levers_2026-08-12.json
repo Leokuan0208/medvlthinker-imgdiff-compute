@@ -41,15 +41,42 @@
   "reading_order": [
    "headline",
    "null_test",
+   "null_test_round2",
    "retracted",
    "resolution_frontier",
+   "open_half_levers",
+   "strong_leg_by_cap",
    "flops_by_cap",
    "quantised_cheap_side",
    "quantised_accuracy",
+   "bnb_quantised_unified_arm",
    "coresidency",
+   "coresidency_direct",
    "smallest_card",
    "not_measured"
-  ]
+  ],
+  "extended_2026_08_12_round2": {
+   "what": "second pass at ATTACK 4. Closes four holes the first pass named: the open half under both levers, the 32B's own resolution curve, the co-residency verdict across resolution, and the bitsandbytes footprint of the unified arm.",
+   "code": {
+    "vram": "src/cascade/vram_levers.py",
+    "open_half": "src/cascade/vram_verifier_grid.py",
+    "open_half_report": "src/cascade/vram_verifier_grid_report.py",
+    "extender": "src/cascade/vram_levers_extend.py",
+    "quant_runner": "runners/run_vram_levers_quant.sh"
+   },
+   "logs": [
+    "logs/vram_levers_null_2026-08-12.log",
+    "logs/vram_levers_res32b_2026-08-12.log",
+    "logs/vram_vgrid_nulltest2_2026-08-12.log",
+    "logs/vram_vgrid_nf4_1280_2026-08-12.log",
+    "logs/vram_vgrid_bf16_320_2026-08-12.log",
+    "logs/vram_levers_cores_2026-08-12.log",
+    "logs/vram_levers_quant_driver_2026-08-12.log"
+   ],
+   "quantiser": "bitsandbytes 0.50.0 (round 1 used torchao weight-only); both are reported, neither replaces the other",
+   "machine_state": "four other rounds' jobs held both A100s for the whole session: load average 41, a 403-token 7B forward measured at 397 ms against ~40 ms on an idle card. Every accuracy number is unaffected by this; every directly-measured (d) on a shared card is not, and is flagged where it appears.",
+   "invariant": "no pre-existing key was modified except _meta and not_measured (asserted in code)"
+  }
  },
  "null_test": {
   "resolution": {
@@ -9295,12 +9322,1759 @@
  "not_measured": {
   "accuracy at the MedEvalKit default resolution (12,845,056 px)": "the accuracy sweep's own top point is 1,003,520 px ('fullres' on the internal harness). VRAM IS measured at 12,845,056 px, accuracy is NOT. Every accuracy delta quoted here is therefore relative to 1,003,520 px, and the extra VRAM of the MedEvalKit default is reported as a footprint fact with NO accuracy number attached to it.",
   "accuracy of the resolution lever on the MACRO-8 cells": "the resolution accuracy sweep is the INTERNAL harness (7 cells, PMC-VQA test_clean.csv n=2,000). The paper's macro-8 uses MedEvalKit (PMC-VQA test_2.csv n=33,430) and the two splits share 6 items. The deltas are matched-arm and valid on their own track; they have NOT been re-measured on the macro-8 cells.",
-  "ACCURACY of the resolution lever on the OPEN-TEXT arm": "R2 sweeps the unified open-text arm's VRAM across six caps, but the accuracy sweep covers only MCQ/closed cells (the internal harness's 7 cells). NOTHING here measures what lowering the generator's or the verifier's max_pixels does to open-text accuracy or to the verifier's sel_eff. The open arm's VRAM-vs-cap curve must therefore be read as a cost curve with NO accuracy axis. This matters more than usual: the project's own diagnosis is that the verifier's failures are VISUAL GROUNDING failures on short answers, which is exactly where cutting image resolution would be expected to hurt first.",
-  "quantisation accuracy on the 3 OPEN cells": "the quantised-accuracy stage covers the 5 MCQ/closed cells only (62.5% of the macro weight). The open half is measured by the verifier, and a quantised-verifier sel_eff run is NOT in this artifact.",
+  "ACCURACY of the resolution lever on the OPEN-TEXT arm": "[CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (verifier max_pixels arm). Read the CI, and note the subsample.  (was: [CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (verifier max_pixels arm). Read the CI, and note the subsample.  (was: [CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (verifier max_pixels arm). Read the CI, and note the subsample.  (was: R2 sweeps the unified open-text arm's VRAM across six caps, but the accuracy sweep covers only MCQ/closed cells (the internal harness's 7 cells). NOTHING here measures what lowering the generator's or the verifier's max_pixels does to open-text accuracy or to the verifier's sel_eff. The open arm's VRAM-vs-cap curve must therefore be read as a cost curve with NO accuracy axis. This matters more than usual: the project's own diagnosis is that the verifier's failures are VISUAL GROUNDING failures on short answers, which is exactly where cutting image resolution would be expected to hurt first.)))",
+  "quantisation accuracy on the 3 OPEN cells": "[CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (weight-precision arms), via bitsandbytes + PEFT.  (was: [CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (weight-precision arms), via bitsandbytes + PEFT.  (was: [CLOSED 2026-08-12 round 2] CLOSED by open_half_levers (weight-precision arms), via bitsandbytes + PEFT.  (was: the quantised-accuracy stage covers the 5 MCQ/closed cells only (62.5% of the macro weight). The open half is measured by the verifier, and a quantised-verifier sel_eff run is NOT in this artifact.)))",
   "quantised VRAM at caps other than {medevalkit_default, cap320}": "the quantised footprint was measured at two caps, not the full six-point grid.",
-  "a direct 7B+32B co-load": "attempted and not completed under card contention -- see coresidency.direct_attempt. The verdict is derived from exclusive-card component measurements and is decisive without it.",
+  "a direct 7B+32B co-load": "[CLOSED 2026-08-12 round 2] CLOSED for the quantised pair: coresidency_direct.measured_quantised_coload is a real single-process co-load of 7B-bf16 + 32B-nf4 with BOTH legs run while co-resident. The bf16+bf16 pair was correctly SKIPPED rather than OOM-ed on a shared card, and is settled instead by arithmetic that the nf4 co-load validates to 0.0004 GiB (coresidency_direct.additive_model_validation).  (was: [CLOSED 2026-08-12 round 2] SUPERSEDED by coresidency_direct: the 32B resolution sweep shows bf16 co-residency fails at EVERY cap, so no co-load attempt can change the verdict. Direct attempts are logged there.  (was: [CLOSED 2026-08-12 round 2] SUPERSEDED by coresidency_direct: the 32B resolution sweep shows bf16 co-residency fails at EVERY cap, so no co-load attempt can change the verdict. Direct attempts are logged there.  (was: attempted and not completed under card contention -- see coresidency.direct_attempt. The verdict is derived from exclusive-card component measurements and is decisive without it.)))",
   "INT4/INT8 latency as a deployment claim": "wall-clock per item IS recorded per row, but batch-1 wall clock on a SHARED card is not a clean latency measurement and is reported as context only, never as a latency result.",
   "energy": "no NVML power integration was run in this artifact.",
-  "quantised footprint of the UNIFIED open-text arm": "measured for ['bf16'] scheme(s); missing ['int4wo', 'int8wo']. Until all three exist, do NOT infer the unified arm's quantised footprint from the MCQ-leg rows: the arm also holds 8 sampled sequences and runs the verifier at a higher max_pixels."
+  "quantised footprint of the UNIFIED open-text arm": "[CLOSED 2026-08-12 round 2] CLOSED by bnb_quantised_unified_arm (bitsandbytes; the torchao rows remain as measured).  (was: [CLOSED 2026-08-12 round 2] CLOSED by bnb_quantised_unified_arm (bitsandbytes; the torchao rows remain as measured).  (was: [CLOSED 2026-08-12 round 2] CLOSED by bnb_quantised_unified_arm (bitsandbytes; the torchao rows remain as measured).  (was: measured for ['bf16'] scheme(s); missing ['int4wo', 'int8wo']. Until all three exist, do NOT infer the unified arm's quantised footprint from the MCQ-leg rows: the arm also holds 8 sampled sequences and runs the verifier at a higher max_pixels.)))",
+  "open-text GENERATOR accuracy vs resolution": "STILL OPEN. open_half_levers moves the VERIFIER's max_pixels only; the 8 candidates it ranks were generated once, at the deployed cap320. What a lower GENERATOR resolution does to the candidate pool (and hence to coverage, the 4.5x-larger wall) is not measured here -- it would need fresh generation plus a judge pass, in a matched serving config.",
+  "full-pool open-half arms": "open_half_levers is a seeded 200-per-set subsample, not the 2,345-question pool, because four other rounds shared the machine (load average 41). The control is exact on those same items, so the comparison is sound, but the CIs are wider than a full-pool run would give.",
+  "accuracy of any lever on the MACRO-8 cells": "STILL OPEN and inherited from round 1: the MCQ accuracy sweep is the internal 7-cell track and the open half is the 3-cell transfer pool. Neither is the paper's MedEvalKit macro-8."
+ },
+ "headline_round2": {
+  "the_unified_pipeline_on_one_consumer_board": {
+   "statement": "The ENTIRE unified 7B pipeline -- 8-sample generation plus the LoRA verifier, one shared set of 4-bit base weights, no 32B anywhere -- holds 5.5258 GiB of weights, peaks at 6.7134 GiB of live tensors and 7.207 GiB reserved, i.e. a whole-process footprint of 8.5905 GiB on the conservative overhead convention (7.6929 GiB on today's). Against 72.6023 GiB for always-32B-direct on the same instrument that is 8.45x less VRAM, and it lands on a RTX3060 12GB board. (a)/(b)/(c) are direct measurements; the (d) figure is RECONSTRUCTED as (c) + the CUDA-context offset because the card was shared, and the fit verdict holds on both overhead conventions.",
+   "a_weights_resident_gib": 5.5258,
+   "adapter_marginal_resident_gib": 0.1941,
+   "b_peak_allocated_gib": 6.7134,
+   "c_peak_reserved_gib": 7.207,
+   "d_conservative_gib": 8.5905,
+   "d_today_gib": 7.6929,
+   "always_32b_direct_d_gib": 72.6023,
+   "ratio_vs_32b_direct": 8.45,
+   "fits": {
+    "A100_80GB": true,
+    "L40S_48GB": true,
+    "RTX4090_24GB": true,
+    "RTX4080_16GB": true,
+    "RTX3060_12GB": true
+   },
+   "smallest_board": "RTX3060_12GB",
+   "verdict_is_robust_to_overhead_convention": true,
+   "batch_size": 1,
+   "n_items": 12,
+   "peak_driver": {
+    "source": "vqa_rad_open",
+    "idx": 395,
+    "image_pixels": 1341440,
+    "n_images": 1,
+    "input_tokens": 346,
+    "vision_tokens": 1200,
+    "gen_tokens": 3,
+    "b_peak_allocated_gib": 6.7134
+   },
+   "round1_comparison": "round 1's headline for the same pipeline was 17.9859 GiB (bf16, 4.04x). This is the same arm at 4-bit weights; round 1 could not quantise it because its quantiser would not take the adapter.",
+   "caveat": "(d) is a RECONSTRUCTION, (c) + the CUDA-context offset, because the card was shared. (a)/(b)/(c) are torch-internal and are direct measurements. Note also that (c) barely moves with the cap at these sizes, so the reconstruction is conservative at the small caps."
+  },
+  "quantising_the_verifier_is_free": {
+   "statement": "4-bit weights cost the open half NOTHING measurable: selection efficiency 0.818402 -> 0.815981, delta -0.002421 [-0.021792, 0.016949], and selected accuracy delta -0.001667 [-0.013333, 0.011667] -- on n=600 questions, with the control exact by construction. It is not that the verifier is unmoved: 63 of 600 picks change. They cancel.",
+   "n_items": 600,
+   "sel_eff_control": 0.818402,
+   "sel_eff_arm": 0.815981,
+   "d_sel_eff": -0.002421,
+   "d_sel_eff_ci95": [
+    -0.021792,
+    0.016949
+   ],
+   "sel_eff_significant": false,
+   "d_selected_acc": -0.001667,
+   "d_selected_acc_ci95": [
+    -0.013333,
+    0.011667
+   ],
+   "n_picks_changed": 63,
+   "cand_auroc_control": 0.876769,
+   "cand_auroc_arm": 0.876579,
+   "guardrail_cells_worse": [
+    "pathvqa_open"
+   ]
+  },
+  "resolution_is_the_lever_that_costs_on_the_open_half": {
+   "statement": "NEITHER lever costs anything measurable at the moderate setting, and the resolution lever is the one that breaks first at the aggressive setting. Cutting the VERIFIER's max_pixels moves selection efficiency monotonically down -- 0.818402 @ 1003520px -> 0.803874 @ 250880px -> 0.791768 @ 62720px -- taking candidate-level AUROC with it (0.876769 -> 0.871792 -> 0.864212), while every weight-quantisation arm sits on zero (nf4_cap1280 -0.002421, nf4_cap320 -0.004843, nf4_skipvisual_cap1280 +0.002421). At 250,880 px the resolution delta is -0.014528 [-0.03632, 0.007264] -- point-negative but the CI contains zero, so it is NOT a demonstrated loss, and the nf4 arm at that same cap gives [-0.004843], which does not reproduce the bf16 point estimate. What IS demonstrated is at 62,720 px: the guardrail goes dirty on all three cells, AUROC has fallen 0.012557, and the <=3-word-gold stratum -- the project's own named weak point for this verifier -- goes SIGNIFICANTLY worse. Read this as 'resolution is the lever with a floor and quantisation is not', not as 'cap320 costs accuracy'.",
+   "honest_reading": "at n=600 the two resolution rungs are not separable from zero individually; the evidence that resolution is the binding lever is the CONJUNCTION of four things that all point the same way -- monotone sel_eff, monotone AUROC, guardrail dirty on 3/3 cells at cap80, and a significant loss in the stratum theory predicts -- not any one CI. The quantisation arms show no such pattern on any of the four.",
+   "counter_evidence": "nf4_cap320 cuts resolution by the same 4x and lands at [-0.004843] rather than -0.014528. Either the cap320 resolution effect is smaller than the bf16 arm's point estimate, or quantisation noise happens to offset it. This round cannot tell which, and the artifact should not pretend otherwise.",
+   "dose_response": [
+    {
+     "max_pixels": 1003520,
+     "cap_patches": 1280,
+     "label": "DEPLOYED (control)",
+     "sel_eff": 0.818402,
+     "d_sel_eff": 0.0,
+     "d_ci95": [
+      0.0,
+      0.0
+     ],
+     "cand_auroc": 0.876769,
+     "n_picks_changed": 0,
+     "guardrail_cells_worse": []
+    },
+    {
+     "max_pixels": 250880,
+     "cap_patches": 320,
+     "label": "cap320",
+     "sel_eff": 0.803874,
+     "d_sel_eff": -0.014528,
+     "d_ci95": [
+      -0.03632,
+      0.007264
+     ],
+     "cand_auroc": 0.871792,
+     "n_picks_changed": 57,
+     "guardrail_cells_worse": [
+      "slake_open",
+      "vqa_rad_open"
+     ],
+     "strata": {
+      "gold_le_3_words": {
+       "n_recoverable": 383,
+       "sel_eff_arm": 0.830287,
+       "sel_eff_control": 0.843342,
+       "d": -0.013055,
+       "ci95": [
+        -0.036554,
+        0.010444
+       ],
+       "significant": false
+      },
+      "gold_gt_3_words": {
+       "n_recoverable": 30,
+       "sel_eff_arm": 0.466667,
+       "sel_eff_control": 0.5,
+       "d": -0.033333,
+       "ci95": [
+        -0.1,
+        0.0
+       ],
+       "significant": false
+      },
+      "gold_is_laterality": {
+       "n_recoverable": 25,
+       "sel_eff_arm": 0.76,
+       "sel_eff_control": 0.76,
+       "d": 0.0,
+       "ci95": [
+        -0.12,
+        0.12
+       ],
+       "significant": false
+      }
+     },
+     "contested": {
+      "n": 243,
+      "sel_eff_arm": 0.666667,
+      "sel_eff_control": 0.691358,
+      "d": -0.024691,
+      "ci95": [
+       -0.061728,
+       0.012346
+      ],
+      "significant": false
+     },
+     "per_ds": {
+      "slake_open": {
+       "n": 200,
+       "sel_eff_arm": 0.862857,
+       "sel_eff_control": 0.874286,
+       "delta": -0.011429,
+       "acc_arm": 0.755,
+       "acc_control": 0.765
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "sel_eff_arm": 0.730159,
+       "sel_eff_control": 0.761905,
+       "delta": -0.031746,
+       "acc_arm": 0.46,
+       "acc_control": 0.48
+      },
+      "pathvqa_open": {
+       "n": 200,
+       "sel_eff_arm": 0.794643,
+       "sel_eff_control": 0.794643,
+       "delta": 0.0,
+       "acc_arm": 0.445,
+       "acc_control": 0.445
+      }
+     }
+    },
+    {
+     "max_pixels": 62720,
+     "cap_patches": 80,
+     "label": "cap80",
+     "sel_eff": 0.791768,
+     "d_sel_eff": -0.026634,
+     "d_ci95": [
+      -0.05569,
+      0.0
+     ],
+     "cand_auroc": 0.864212,
+     "n_picks_changed": 100,
+     "guardrail_cells_worse": [
+      "slake_open",
+      "vqa_rad_open",
+      "pathvqa_open"
+     ],
+     "strata": {
+      "gold_le_3_words": {
+       "n_recoverable": 383,
+       "sel_eff_arm": 0.809399,
+       "sel_eff_control": 0.843342,
+       "d": -0.033943,
+       "ci95": [
+        -0.062663,
+        -0.005222
+       ],
+       "significant": true
+      },
+      "gold_gt_3_words": {
+       "n_recoverable": 30,
+       "sel_eff_arm": 0.566667,
+       "sel_eff_control": 0.5,
+       "d": 0.066667,
+       "ci95": [
+        -0.066667,
+        0.2
+       ],
+       "significant": false
+      },
+      "gold_is_laterality": {
+       "n_recoverable": 25,
+       "sel_eff_arm": 0.64,
+       "sel_eff_control": 0.76,
+       "d": -0.12,
+       "ci95": [
+        -0.28,
+        0.04
+       ],
+       "significant": false
+      }
+     },
+     "contested": {
+      "n": 243,
+      "sel_eff_arm": 0.646091,
+      "sel_eff_control": 0.691358,
+      "d": -0.045267,
+      "ci95": [
+       -0.09465,
+       0.0
+      ],
+      "significant": false
+     },
+     "per_ds": {
+      "slake_open": {
+       "n": 200,
+       "sel_eff_arm": 0.862857,
+       "sel_eff_control": 0.874286,
+       "delta": -0.011429,
+       "acc_arm": 0.755,
+       "acc_control": 0.765
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "sel_eff_arm": 0.714286,
+       "sel_eff_control": 0.761905,
+       "delta": -0.047619,
+       "acc_arm": 0.45,
+       "acc_control": 0.48
+      },
+      "pathvqa_open": {
+       "n": 200,
+       "sel_eff_arm": 0.767857,
+       "sel_eff_control": 0.794643,
+       "delta": -0.026786,
+       "acc_arm": 0.43,
+       "acc_control": 0.445
+      }
+     }
+    }
+   ],
+   "where_the_damage_lands": {
+    "claim": "the damage is concentrated in the stratum the project had already named as this verifier's weak point. docs: sel_eff 79% on <=3-word golds (n=1,928, the bulk) vs 90% at 4-8 words, with the named cases laterality one-liners -- i.e. a VISUAL GROUNDING failure. At the deepest resolution cut the <=3-word stratum is the one that goes significantly worse.",
+    "arm": "bf16_cap80",
+    "stratum": "gold_le_3_words",
+    "d": -0.033943,
+    "ci95": [
+     -0.062663,
+     -0.005222
+    ],
+    "significant": true,
+    "n_recoverable": 383,
+    "laterality_substratum": {
+     "n_recoverable": 25,
+     "sel_eff_arm": 0.64,
+     "sel_eff_control": 0.76,
+     "d": -0.12,
+     "ci95": [
+      -0.28,
+      0.04
+     ],
+     "significant": false
+    },
+    "longer_golds": {
+     "n_recoverable": 30,
+     "sel_eff_arm": 0.566667,
+     "sel_eff_control": 0.5,
+     "d": 0.066667,
+     "ci95": [
+      -0.066667,
+      0.2
+     ],
+     "significant": false
+    },
+    "reading": "this is evidence that the verifier DOES use the image, and that what it uses is resolution-limited exactly where its known failures are. It is a cost-side measurement, but it points the same way as the vision-aware verifier hypothesis."
+   },
+   "guardrail": {
+    "note": "a lever that is free must not be worse on any single eval set",
+    "per_arm": {
+     "bf16_cap320": [
+      "slake_open",
+      "vqa_rad_open"
+     ],
+     "bf16_cap80": [
+      "slake_open",
+      "vqa_rad_open",
+      "pathvqa_open"
+     ],
+     "nf4_cap1280": [
+      "pathvqa_open"
+     ],
+     "nf4_cap320": [
+      "vqa_rad_open"
+     ],
+     "nf4_skipvisual_cap1280": [
+      "vqa_rad_open"
+     ]
+    }
+   },
+   "n_items": 600,
+   "sel_eff_control": 0.818402,
+   "sel_eff_arm": 0.803874,
+   "d_sel_eff": -0.014528,
+   "d_sel_eff_ci95": [
+    -0.03632,
+    0.007264
+   ],
+   "sel_eff_significant": false,
+   "d_selected_acc": -0.01,
+   "d_selected_acc_ci95": [
+    -0.025,
+    0.005
+   ],
+   "n_picks_changed": 57
+  },
+  "the_coresidency_wall_is_a_weights_wall": {
+   "statement": "resolution moves the 32B's peak by only 5.3489 GiB (67.868 -> 62.5191) across a 819x cut in the pixel cap, because 62.3125 GiB of it is WEIGHTS. Resolution is a lever on the cheap leg's footprint; on the strong leg it is nearly inert. Only quantisation moves the 32B."
+  },
+  "_scope": "ROUND 2 ONLY. These sit alongside, and do not replace, the round-1 headline block: round 1 owns the MCQ/closed half and the torchao rows, round 2 owns the open half, the 32B's own resolution curve and the bitsandbytes rows.",
+  "_what_this_does_NOT_do": "nothing here closes any part of the 0.0596 macro accuracy gap between always-7B (0.5971) and always-32B-direct (0.6567). This is a COST-side attack: every lever it measures can only leave accuracy alone or reduce it. The result is the size of the VRAM reduction available at no measured accuracy cost, and which lever stops being free first."
+ },
+ "open_half_levers": {
+  "_what": "what the two VRAM levers cost the OPEN half (37.5% of the 8-cell macro weight): the frozen best-of-8 selection metric under (weight precision x verifier max_pixels).",
+  "_why_this_was_reachable_now": "the first round recorded 'the verifier would not load on a quantised base'. That is true of torchao weight-only, which replaces the weight TENSOR; bitsandbytes replaces the MODULE with a Linear4bit/Linear8bitLt, so PeftModel.from_pretrained attaches the frozen adapter normally. Every arm here asserts n_lora_tensors_on_visual == 192 at load, so an adapter that silently failed to attach cannot be reported as a result.",
+  "_design": "NO new generation and NO judge call. The 2,345-question pool, its 8 candidates per question and their per-candidate judge labels are frozen; only the VERIFIER's score changes when its precision or max_pixels changes. So each arm re-scores the FROZEN candidate set and the control is the stored transfer dump restricted to the same item ids -- exact pairing by construction, not by assumption.",
+  "_control": "bf16 @ max_pixels 1,003,520 = the DEPLOYED verifier = the stored dumps themselves",
+  "_metric": "src/training_methods/genframe_data.py (the project's single sel_eff definition)",
+  "_stats": {
+   "nboot": 10000,
+   "seed": 20260812,
+   "note": "paired item bootstrap; sel_eff resampled inside the recoverable stratum, selected-accuracy over all items, exactly as genframe_data draws them"
+  },
+  "_published_bar_full_pool": {
+   "n": 2345,
+   "sel_eff": 0.775204,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "oracle8": 0.626013,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "source": "ckpts/train/lora_verifier_disjoint/transfer_dump_*_lingshu7b.json"
+  },
+  "_subsample": "arms are a SEEDED 200-questions-per-set subsample (seed 42, identical items in every arm; vqa_rad_open is 200/200, i.e. complete). The machine carried four other rounds' jobs throughout -- load average 41, a 403-token 7B forward taking 397 ms against ~40 ms unloaded -- so the full 2,345-question pool was not affordable. n and the CI width are reported per arm; read the CIs, not the point estimates.",
+  "arms": [
+   {
+    "arm": "bf16_cap320",
+    "scheme": "none",
+    "max_pixels": 250880,
+    "cap_patches": 320,
+    "n_items": 600,
+    "n_recoverable": 413,
+    "sel_eff_control": 0.818402,
+    "sel_eff_arm": 0.803874,
+    "d_sel_eff": -0.014528,
+    "d_sel_eff_ci95": [
+     -0.03632,
+     0.007264
+    ],
+    "sel_eff_significant": false,
+    "selected_acc_control": 0.563333,
+    "selected_acc_arm": 0.553333,
+    "d_selected_acc": -0.01,
+    "d_selected_acc_ci95": [
+     -0.025,
+     0.005
+    ],
+    "selected_acc_significant": false,
+    "n_picks_changed": 57,
+    "pick_change_rate": 0.095,
+    "cand_auroc_control": 0.876769,
+    "cand_auroc_arm": 0.871792,
+    "contested": {
+     "n": 243,
+     "sel_eff_arm": 0.666667,
+     "sel_eff_control": 0.691358,
+     "d": -0.024691,
+     "ci95": [
+      -0.061728,
+      0.012346
+     ],
+     "significant": false
+    },
+    "per_ds": {
+     "slake_open": {
+      "n": 200,
+      "sel_eff_arm": 0.862857,
+      "sel_eff_control": 0.874286,
+      "delta": -0.011429,
+      "acc_arm": 0.755,
+      "acc_control": 0.765
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "sel_eff_arm": 0.730159,
+      "sel_eff_control": 0.761905,
+      "delta": -0.031746,
+      "acc_arm": 0.46,
+      "acc_control": 0.48
+     },
+     "pathvqa_open": {
+      "n": 200,
+      "sel_eff_arm": 0.794643,
+      "sel_eff_control": 0.794643,
+      "delta": 0.0,
+      "acc_arm": 0.445,
+      "acc_control": 0.445
+     }
+    },
+    "strata": {
+     "gold_le_3_words": {
+      "n_recoverable": 383,
+      "sel_eff_arm": 0.830287,
+      "sel_eff_control": 0.843342,
+      "d": -0.013055,
+      "ci95": [
+       -0.036554,
+       0.010444
+      ],
+      "significant": false
+     },
+     "gold_gt_3_words": {
+      "n_recoverable": 30,
+      "sel_eff_arm": 0.466667,
+      "sel_eff_control": 0.5,
+      "d": -0.033333,
+      "ci95": [
+       -0.1,
+       0.0
+      ],
+      "significant": false
+     },
+     "gold_is_laterality": {
+      "n_recoverable": 25,
+      "sel_eff_arm": 0.76,
+      "sel_eff_control": 0.76,
+      "d": 0.0,
+      "ci95": [
+       -0.12,
+       0.12
+      ],
+      "significant": false
+     }
+    },
+    "guardrail_cells_worse": [
+     "slake_open",
+     "vqa_rad_open"
+    ]
+   },
+   {
+    "arm": "bf16_cap80",
+    "scheme": "none",
+    "max_pixels": 62720,
+    "cap_patches": 80,
+    "n_items": 600,
+    "n_recoverable": 413,
+    "sel_eff_control": 0.818402,
+    "sel_eff_arm": 0.791768,
+    "d_sel_eff": -0.026634,
+    "d_sel_eff_ci95": [
+     -0.05569,
+     0.0
+    ],
+    "sel_eff_significant": false,
+    "selected_acc_control": 0.563333,
+    "selected_acc_arm": 0.545,
+    "d_selected_acc": -0.018333,
+    "d_selected_acc_ci95": [
+     -0.038333,
+     0.001667
+    ],
+    "selected_acc_significant": false,
+    "n_picks_changed": 100,
+    "pick_change_rate": 0.166667,
+    "cand_auroc_control": 0.876769,
+    "cand_auroc_arm": 0.864212,
+    "contested": {
+     "n": 243,
+     "sel_eff_arm": 0.646091,
+     "sel_eff_control": 0.691358,
+     "d": -0.045267,
+     "ci95": [
+      -0.09465,
+      0.0
+     ],
+     "significant": false
+    },
+    "per_ds": {
+     "slake_open": {
+      "n": 200,
+      "sel_eff_arm": 0.862857,
+      "sel_eff_control": 0.874286,
+      "delta": -0.011429,
+      "acc_arm": 0.755,
+      "acc_control": 0.765
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "sel_eff_arm": 0.714286,
+      "sel_eff_control": 0.761905,
+      "delta": -0.047619,
+      "acc_arm": 0.45,
+      "acc_control": 0.48
+     },
+     "pathvqa_open": {
+      "n": 200,
+      "sel_eff_arm": 0.767857,
+      "sel_eff_control": 0.794643,
+      "delta": -0.026786,
+      "acc_arm": 0.43,
+      "acc_control": 0.445
+     }
+    },
+    "strata": {
+     "gold_le_3_words": {
+      "n_recoverable": 383,
+      "sel_eff_arm": 0.809399,
+      "sel_eff_control": 0.843342,
+      "d": -0.033943,
+      "ci95": [
+       -0.062663,
+       -0.005222
+      ],
+      "significant": true
+     },
+     "gold_gt_3_words": {
+      "n_recoverable": 30,
+      "sel_eff_arm": 0.566667,
+      "sel_eff_control": 0.5,
+      "d": 0.066667,
+      "ci95": [
+       -0.066667,
+       0.2
+      ],
+      "significant": false
+     },
+     "gold_is_laterality": {
+      "n_recoverable": 25,
+      "sel_eff_arm": 0.64,
+      "sel_eff_control": 0.76,
+      "d": -0.12,
+      "ci95": [
+       -0.28,
+       0.04
+      ],
+      "significant": false
+     }
+    },
+    "guardrail_cells_worse": [
+     "slake_open",
+     "vqa_rad_open",
+     "pathvqa_open"
+    ]
+   },
+   {
+    "arm": "nf4_cap1280",
+    "scheme": "nf4",
+    "max_pixels": 1003520,
+    "cap_patches": 1280,
+    "n_items": 600,
+    "n_recoverable": 413,
+    "sel_eff_control": 0.818402,
+    "sel_eff_arm": 0.815981,
+    "d_sel_eff": -0.002421,
+    "d_sel_eff_ci95": [
+     -0.021792,
+     0.016949
+    ],
+    "sel_eff_significant": false,
+    "selected_acc_control": 0.563333,
+    "selected_acc_arm": 0.561667,
+    "d_selected_acc": -0.001667,
+    "d_selected_acc_ci95": [
+     -0.013333,
+     0.011667
+    ],
+    "selected_acc_significant": false,
+    "n_picks_changed": 63,
+    "pick_change_rate": 0.105,
+    "cand_auroc_control": 0.876769,
+    "cand_auroc_arm": 0.876579,
+    "contested": {
+     "n": 243,
+     "sel_eff_arm": 0.687243,
+     "sel_eff_control": 0.691358,
+     "d": -0.004115,
+     "ci95": [
+      -0.032922,
+      0.028807
+     ],
+     "significant": false
+    },
+    "per_ds": {
+     "slake_open": {
+      "n": 200,
+      "sel_eff_arm": 0.874286,
+      "sel_eff_control": 0.874286,
+      "delta": 0.0,
+      "acc_arm": 0.765,
+      "acc_control": 0.765
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "sel_eff_arm": 0.761905,
+      "sel_eff_control": 0.761905,
+      "delta": 0.0,
+      "acc_arm": 0.48,
+      "acc_control": 0.48
+     },
+     "pathvqa_open": {
+      "n": 200,
+      "sel_eff_arm": 0.785714,
+      "sel_eff_control": 0.794643,
+      "delta": -0.008929,
+      "acc_arm": 0.44,
+      "acc_control": 0.445
+     }
+    },
+    "strata": {
+     "gold_le_3_words": {
+      "n_recoverable": 383,
+      "sel_eff_arm": 0.832898,
+      "sel_eff_control": 0.843342,
+      "d": -0.010444,
+      "ci95": [
+       -0.028721,
+       0.007833
+      ],
+      "significant": false
+     },
+     "gold_gt_3_words": {
+      "n_recoverable": 30,
+      "sel_eff_arm": 0.6,
+      "sel_eff_control": 0.5,
+      "d": 0.1,
+      "ci95": [
+       0.0,
+       0.233333
+      ],
+      "significant": false
+     },
+     "gold_is_laterality": {
+      "n_recoverable": 25,
+      "sel_eff_arm": 0.76,
+      "sel_eff_control": 0.76,
+      "d": 0.0,
+      "ci95": [
+       -0.12,
+       0.12
+      ],
+      "significant": false
+     }
+    },
+    "guardrail_cells_worse": [
+     "pathvqa_open"
+    ]
+   },
+   {
+    "arm": "nf4_cap320",
+    "scheme": "nf4",
+    "max_pixels": 250880,
+    "cap_patches": 320,
+    "n_items": 600,
+    "n_recoverable": 413,
+    "sel_eff_control": 0.818402,
+    "sel_eff_arm": 0.813559,
+    "d_sel_eff": -0.004843,
+    "d_sel_eff_ci95": [
+     -0.029056,
+     0.01937
+    ],
+    "sel_eff_significant": false,
+    "selected_acc_control": 0.563333,
+    "selected_acc_arm": 0.56,
+    "d_selected_acc": -0.003333,
+    "d_selected_acc_ci95": [
+     -0.02,
+     0.013333
+    ],
+    "selected_acc_significant": false,
+    "n_picks_changed": 80,
+    "pick_change_rate": 0.133333,
+    "cand_auroc_control": 0.876769,
+    "cand_auroc_arm": 0.871217,
+    "contested": {
+     "n": 243,
+     "sel_eff_arm": 0.683128,
+     "sel_eff_control": 0.691358,
+     "d": -0.00823,
+     "ci95": [
+      -0.049383,
+      0.032922
+     ],
+     "significant": false
+    },
+    "per_ds": {
+     "slake_open": {
+      "n": 200,
+      "sel_eff_arm": 0.874286,
+      "sel_eff_control": 0.874286,
+      "delta": 0.0,
+      "acc_arm": 0.765,
+      "acc_control": 0.765
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "sel_eff_arm": 0.730159,
+      "sel_eff_control": 0.761905,
+      "delta": -0.031746,
+      "acc_arm": 0.46,
+      "acc_control": 0.48
+     },
+     "pathvqa_open": {
+      "n": 200,
+      "sel_eff_arm": 0.8125,
+      "sel_eff_control": 0.794643,
+      "delta": 0.017857,
+      "acc_arm": 0.455,
+      "acc_control": 0.445
+     }
+    },
+    "strata": {
+     "gold_le_3_words": {
+      "n_recoverable": 383,
+      "sel_eff_arm": 0.827676,
+      "sel_eff_control": 0.843342,
+      "d": -0.015666,
+      "ci95": [
+       -0.039164,
+       0.007833
+      ],
+      "significant": false
+     },
+     "gold_gt_3_words": {
+      "n_recoverable": 30,
+      "sel_eff_arm": 0.633333,
+      "sel_eff_control": 0.5,
+      "d": 0.133333,
+      "ci95": [
+       0.0,
+       0.3
+      ],
+      "significant": false
+     },
+     "gold_is_laterality": {
+      "n_recoverable": 25,
+      "sel_eff_arm": 0.72,
+      "sel_eff_control": 0.76,
+      "d": -0.04,
+      "ci95": [
+       -0.16,
+       0.08
+      ],
+      "significant": false
+     }
+    },
+    "guardrail_cells_worse": [
+     "vqa_rad_open"
+    ]
+   },
+   {
+    "arm": "nf4_skipvisual_cap1280",
+    "scheme": "nf4",
+    "max_pixels": 1003520,
+    "cap_patches": 1280,
+    "n_items": 600,
+    "n_recoverable": 413,
+    "sel_eff_control": 0.818402,
+    "sel_eff_arm": 0.820823,
+    "d_sel_eff": 0.002421,
+    "d_sel_eff_ci95": [
+     -0.009685,
+     0.014528
+    ],
+    "sel_eff_significant": false,
+    "selected_acc_control": 0.563333,
+    "selected_acc_arm": 0.565,
+    "d_selected_acc": 0.001667,
+    "d_selected_acc_ci95": [
+     -0.006667,
+     0.01
+    ],
+    "selected_acc_significant": false,
+    "n_picks_changed": 48,
+    "pick_change_rate": 0.08,
+    "cand_auroc_control": 0.876769,
+    "cand_auroc_arm": 0.877861,
+    "contested": {
+     "n": 243,
+     "sel_eff_arm": 0.695473,
+     "sel_eff_control": 0.691358,
+     "d": 0.004115,
+     "ci95": [
+      -0.016461,
+      0.024691
+     ],
+     "significant": false
+    },
+    "per_ds": {
+     "slake_open": {
+      "n": 200,
+      "sel_eff_arm": 0.874286,
+      "sel_eff_control": 0.874286,
+      "delta": 0.0,
+      "acc_arm": 0.765,
+      "acc_control": 0.765
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "sel_eff_arm": 0.753968,
+      "sel_eff_control": 0.761905,
+      "delta": -0.007937,
+      "acc_arm": 0.475,
+      "acc_control": 0.48
+     },
+     "pathvqa_open": {
+      "n": 200,
+      "sel_eff_arm": 0.8125,
+      "sel_eff_control": 0.794643,
+      "delta": 0.017857,
+      "acc_arm": 0.455,
+      "acc_control": 0.445
+     }
+    },
+    "strata": {
+     "gold_le_3_words": {
+      "n_recoverable": 383,
+      "sel_eff_arm": 0.83812,
+      "sel_eff_control": 0.843342,
+      "d": -0.005222,
+      "ci95": [
+       -0.015666,
+       0.005222
+      ],
+      "significant": false
+     },
+     "gold_gt_3_words": {
+      "n_recoverable": 30,
+      "sel_eff_arm": 0.6,
+      "sel_eff_control": 0.5,
+      "d": 0.1,
+      "ci95": [
+       0.0,
+       0.233333
+      ],
+      "significant": false
+     },
+     "gold_is_laterality": {
+      "n_recoverable": 25,
+      "sel_eff_arm": 0.72,
+      "sel_eff_control": 0.76,
+      "d": -0.04,
+      "ci95": [
+       -0.12,
+       0.0
+      ],
+      "significant": false
+     }
+    },
+    "guardrail_cells_worse": [
+     "vqa_rad_open"
+    ]
+   }
+  ],
+  "code": "src/cascade/vram_verifier_grid.py + src/cascade/vram_verifier_grid_report.py"
+ },
+ "strong_leg_by_cap": {
+  "_what": "Lingshu-32B direct MCQ across the SAME six-cap ladder the 7B legs were swept on, same 15-item pool, same instrument. The first round swept only the 7B legs.",
+  "_card_state": "EXCLUSIVE: board used before load = 0.8750 GiB (logs/vram_levers_res32b_2026-08-12.log)",
+  "a_weights_resident_gib": 62.3125,
+  "n_params": 33452718336,
+  "by_cap": [
+   {
+    "cap_patches": 16384,
+    "max_pixels": 12845056,
+    "n": 15,
+    "b_peak_allocated_gib": 67.868,
+    "c_peak_reserved_gib": 71.2188,
+    "d_process_footprint_gib": 71.7273,
+    "vision_tokens_peak": 46816.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-1561",
+     "image_pixels": 9107712,
+     "n_images": 1,
+     "input_tokens": 11931,
+     "vision_tokens": 46816,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 67.868
+    }
+   },
+   {
+    "cap_patches": 4096,
+    "max_pixels": 3211264,
+    "n": 15,
+    "b_peak_allocated_gib": 67.6937,
+    "c_peak_reserved_gib": 68.5586,
+    "d_process_footprint_gib": 69.0671,
+    "vision_tokens_peak": 45360.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11555,
+     "vision_tokens": 45360,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 67.6937
+    }
+   },
+   {
+    "cap_patches": 1280,
+    "max_pixels": 1003520,
+    "n": 15,
+    "b_peak_allocated_gib": 65.8617,
+    "c_peak_reserved_gib": 66.6836,
+    "d_process_footprint_gib": 67.1921,
+    "vision_tokens_peak": 29568.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 7607,
+     "vision_tokens": 29568,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 65.8617
+    }
+   },
+   {
+    "cap_patches": 320,
+    "max_pixels": 250880,
+    "n": 15,
+    "b_peak_allocated_gib": 63.2782,
+    "c_peak_reserved_gib": 63.6445,
+    "d_process_footprint_gib": 64.1531,
+    "vision_tokens_peak": 7392.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 2063,
+     "vision_tokens": 7392,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 63.2782
+    }
+   },
+   {
+    "cap_patches": 80,
+    "max_pixels": 62720,
+    "n": 15,
+    "b_peak_allocated_gib": 62.6631,
+    "c_peak_reserved_gib": 62.8672,
+    "d_process_footprint_gib": 63.3757,
+    "vision_tokens_peak": 1848.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 677,
+     "vision_tokens": 1848,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 62.6631
+    }
+   },
+   {
+    "cap_patches": 20,
+    "max_pixels": 15680,
+    "n": 15,
+    "b_peak_allocated_gib": 62.5191,
+    "c_peak_reserved_gib": 62.748,
+    "d_process_footprint_gib": 63.2566,
+    "vision_tokens_peak": 360.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-1955",
+     "image_pixels": 8069653,
+     "n_images": 1,
+     "input_tokens": 447,
+     "vision_tokens": 64,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 62.5191
+    }
+   }
+  ],
+  "finding": "resolution moves the 32B's peak by only 5.3489 GiB (67.868 -> 62.5191) across a 819x cut in the pixel cap, because 62.3125 GiB of it is WEIGHTS. Resolution is a lever on the cheap leg's footprint; on the strong leg it is nearly inert. Only quantisation moves the 32B."
+ },
+ "coresidency_direct": {
+  "_what": "does an escalating 7B->32B policy fit on ONE 80 GB card? The first round answered NO from arithmetic at the default resolution and could not complete a direct co-load under card contention. This round adds the resolution axis, which is the obvious escape route, and closes it.",
+  "board_usable_gib": 79.1384,
+  "board_usable_source": "MEASURED on this host: torch.cuda.get_device_properties(0).total_memory = 84,974,239,744 B = 79.1384 GiB; the gap to the 80.0 GiB nameplate is the ECC reserve",
+  "cuda_context_gib": 1.3835,
+  "bf16_at_every_resolution": {
+   "_claim": "bf16 co-residency fails at EVERY point on the ladder, including the smallest cap that still renders an image (cap20 = 15,680 px, 360 vision tokens).",
+   "a_7b_weights_gib": 15.4937,
+   "b_32b_peak_at_default_cap_gib": 67.868,
+   "b_32b_peak_at_smallest_cap_gib": 62.5191,
+   "required_at_default_gib": 84.7452,
+   "required_at_smallest_cap_gib": 79.3963,
+   "deficit_at_default_gib": 5.6068,
+   "deficit_at_smallest_cap_gib": 0.2579,
+   "reading": "even after cutting the image to 360 vision tokens -- a 819x cut that no one would deploy -- the pair is still over the card. The co-residency wall is a WEIGHTS wall; resolution cannot reach it."
+  },
+  "direct_attempts": [
+   {
+    "variant": "both_bf16",
+    "status": "NOT ATTEMPTED -- insufficient free VRAM on a SHARED card",
+    "free_gib_at_check": 63.1813,
+    "needed_gib": 82.0
+   },
+   {
+    "variant": "32b_nf4",
+    "status": "COMPLETED",
+    "a_7b_only_resident_gib": 15.4937,
+    "a_both_resident_gib": 33.7431,
+    "cheap_leg_b_peak_gib": 36.2733,
+    "strong_leg_b_peak_gib": 39.2986,
+    "board_after_both_gib": 55.9432,
+    "gpu_total_gib": 80.0
+   },
+   {
+    "variant": "32b_int8",
+    "status": "NOT ATTEMPTED -- insufficient free VRAM on a SHARED card",
+    "free_gib_at_check": 38.879,
+    "needed_gib": 55.0
+   }
+  ],
+  "measured_quantised_coload": {
+   "variant": "32b_nf4",
+   "status": "DIRECT CO-LOAD, MEASURED -- both models in ONE process, ONE interpreter, and BOTH legs actually run on the 15-item pool while co-resident. This REPLACES the round-1 estimate, which composed two components measured in different interpreters and was conservative by ~14 GiB.",
+   "a_7b_bf16_resident_gib": 15.4937,
+   "a_both_resident_gib": 33.7431,
+   "a_32b_nf4_alone_gib": 18.2494,
+   "b_peak_running_cheap_leg_gib": 36.2733,
+   "b_peak_running_strong_leg_gib": 39.2986,
+   "c_peak_reserved_gib": 40.4004,
+   "d_conservative_gib": 41.7839,
+   "headroom_on_A100_80GB_gib": 37.3545,
+   "fits": {
+    "A100_80GB": true,
+    "L40S_48GB": true,
+    "RTX4090_24GB": false,
+    "RTX4080_16GB": false,
+    "RTX3060_12GB": false
+   },
+   "verdict": "an escalating 7B->32B policy DOES fit on one 80 GB card when the strong leg is 4-bit: 41.7839 GiB against 79.1384 GiB usable, 37.3545 GiB spare. Round 1 could only say this by arithmetic across interpreters; it is now a direct measurement.",
+   "what_this_does_NOT_say": "nothing here measures the 4-bit 32B's ACCURACY. It is a memory fact only. Round 1's quantised-accuracy stage covers the 7B, not the 32B, and this round did not extend it -- so 'the escalating policy fits' must never be quoted as 'the escalating policy works at 4-bit'.",
+   "card_state": "the card carried a co-tenant throughout (board_after_both 55.9432 GiB includes it), so (a)/(b)/(c) are the measurements and the board reading is not.",
+   "n_items": 15,
+   "batch_size": 1,
+   "max_pixels": 12845056
+  },
+  "additive_model_validation": {
+   "why": "the bf16 co-residency verdict is arithmetic -- 7B weights + 32B peak + context -- so it is only as good as the assumption that a co-resident pair costs the sum of its parts. The nf4 co-load is the experiment that tests that assumption, because for THAT pair the prediction and the measurement both exist.",
+   "predicted_b_peak_gib": 39.2986,
+   "predicted_from": "a_both_resident 33.7431 + the 32B's OWN activation cost at this cap 5.5555 (= its exclusive-card peak 67.868 minus its weights 62.3125)",
+   "measured_b_peak_gib": 39.2986,
+   "abs_error_gib": 0.0,
+   "verdict": "the additive model predicts the co-resident peak to within 0.0 GiB, so the bf16 arithmetic is a validated prediction rather than an untested assumption."
+  }
+ },
+ "bnb_quantised_unified_arm": {
+  "_what": "bitsandbytes footprints, ONE MODEL PER PROCESS, of the 7B MCQ leg, the verifier pass and the UNIFIED best-of-8 open-text arm. Closes the first round's 'quantised footprint of the UNIFIED open-text arm' hole and cross-checks its torchao rows with a different quantiser.",
+  "_d_convention": "these arms ran on SHARED cards, so the directly-measured (d) is contaminated by co-tenants and is reported alongside a reconstruction (c) + the 08-11 clean CUDA-context offset of 1.3835 GiB. (a), (b) and (c) are torch-internal and are NOT affected by co-tenancy. Quote the reconstruction.",
+  "arms": {
+   "bf16_control": {
+    "scheme": "bf16_control",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B[bf16_control]",
+     "load_s": 10.3,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "quantization": null,
+     "n_quantized_linear": 0,
+     "n_bf16_linear": 359,
+     "a_weights_resident_gib": 15.4937,
+     "weights_reserved_after_load_gib": 15.6875,
+     "nvml_board_after_load_gib": 61.5589,
+     "nvml_board_before_load_gib": 45.4597,
+     "n_params": 8292166656,
+     "adapter_marginal_resident_gib": 0.205,
+     "co_resident_total_resident_gib": 15.6987
+    },
+    "mcq_by_cap": {
+     "cap16384": {
+      "n": 15,
+      "max_pixels": 12845056,
+      "b_peak_allocated_gib": 18.0232,
+      "c_peak_reserved_gib": 22.0371,
+      "d_process_footprint_measured_gib": 22.5425,
+      "d_reconstructed_from_c_plus_context_gib": 23.4206,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-1561",
+       "image_pixels": 9107712,
+       "n_images": 1,
+       "input_tokens": 11931,
+       "vision_tokens": 46816,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 18.0232
+      }
+     },
+     "cap1280": {
+      "n": 15,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 17.1086,
+      "c_peak_reserved_gib": 18.9609,
+      "d_process_footprint_measured_gib": 19.4664,
+      "d_reconstructed_from_c_plus_context_gib": 20.3444,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 7607,
+       "vision_tokens": 29568,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 17.1086
+      }
+     },
+     "cap320": {
+      "n": 15,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 15.9492,
+      "c_peak_reserved_gib": 16.7109,
+      "d_process_footprint_measured_gib": 17.2496,
+      "d_reconstructed_from_c_plus_context_gib": 18.0944,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 2063,
+       "vision_tokens": 7392,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 15.9492
+      }
+     }
+    },
+    "verifier_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 16.4764,
+      "c_peak_reserved_gib": 17.6055,
+      "d_process_footprint_measured_gib": 18.1441,
+      "d_reconstructed_from_c_plus_context_gib": 18.989,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 1318,
+       "vision_tokens": 4960,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 16.4764
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 16.0088,
+      "c_peak_reserved_gib": 16.168,
+      "d_process_footprint_measured_gib": 16.7066,
+      "d_reconstructed_from_c_plus_context_gib": 17.5515,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 161,
+       "vision_tokens": 324,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 16.0088
+      }
+     }
+    },
+    "openarm_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 16.6598,
+      "c_peak_reserved_gib": 17.8418,
+      "d_process_footprint_measured_gib": 18.3804,
+      "d_reconstructed_from_c_plus_context_gib": 19.2253,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 346,
+       "vision_tokens": 1200,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 16.6598
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 16.1374,
+      "c_peak_reserved_gib": 16.2812,
+      "d_process_footprint_measured_gib": 16.8199,
+      "d_reconstructed_from_c_plus_context_gib": 17.6647,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 110,
+       "vision_tokens": 256,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 16.1374
+      }
+     }
+    }
+   },
+   "int8": {
+    "scheme": "int8",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B[int8]",
+     "load_s": 77.9,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "quantization": {
+      "scheme": "int8",
+      "skip_modules": [
+       "lm_head"
+      ],
+      "double_quant": false,
+      "compute_dtype": "bfloat16",
+      "library": "bitsandbytes 0.50.0"
+     },
+     "n_quantized_linear": 358,
+     "n_bf16_linear": 1,
+     "a_weights_resident_gib": 8.7572,
+     "weights_reserved_after_load_gib": 9.1426,
+     "nvml_board_after_load_gib": 43.0209,
+     "nvml_board_before_load_gib": 33.2577,
+     "n_params": 8292166656,
+     "adapter_marginal_resident_gib": 0.1893,
+     "co_resident_total_resident_gib": 8.9465
+    },
+    "mcq_by_cap": {
+     "cap16384": {
+      "n": 15,
+      "max_pixels": 12845056,
+      "b_peak_allocated_gib": 12.2074,
+      "c_peak_reserved_gib": 15.6191,
+      "d_process_footprint_measured_gib": 24.1222,
+      "d_reconstructed_from_c_plus_context_gib": 17.0026,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-1561",
+       "image_pixels": 9107712,
+       "n_images": 1,
+       "input_tokens": 11931,
+       "vision_tokens": 46816,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 12.2074
+      }
+     },
+     "cap1280": {
+      "n": 15,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 10.9627,
+      "c_peak_reserved_gib": 12.6953,
+      "d_process_footprint_measured_gib": 21.1984,
+      "d_reconstructed_from_c_plus_context_gib": 14.0788,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 7607,
+       "vision_tokens": 29568,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 10.9627
+      }
+     },
+     "cap320": {
+      "n": 15,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 9.5139,
+      "c_peak_reserved_gib": 10.5098,
+      "d_process_footprint_measured_gib": 19.0128,
+      "d_reconstructed_from_c_plus_context_gib": 11.8933,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 2063,
+       "vision_tokens": 7392,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 9.5139
+      }
+     }
+    },
+    "verifier_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 9.7892,
+      "c_peak_reserved_gib": 10.9863,
+      "d_process_footprint_measured_gib": 19.4894,
+      "d_reconstructed_from_c_plus_context_gib": 12.3698,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 1318,
+       "vision_tokens": 4960,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 9.7892
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 9.3377,
+      "c_peak_reserved_gib": 9.4824,
+      "d_process_footprint_measured_gib": 17.9855,
+      "d_reconstructed_from_c_plus_context_gib": 10.8659,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 161,
+       "vision_tokens": 324,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 9.3377
+      }
+     }
+    },
+    "openarm_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 10.1147,
+      "c_peak_reserved_gib": 10.9727,
+      "d_process_footprint_measured_gib": 37.4499,
+      "d_reconstructed_from_c_plus_context_gib": 12.3562,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 346,
+       "vision_tokens": 1200,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 10.1147
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 9.4536,
+      "c_peak_reserved_gib": 9.5586,
+      "d_process_footprint_measured_gib": 18.1183,
+      "d_reconstructed_from_c_plus_context_gib": 10.9421,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 110,
+       "vision_tokens": 256,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 9.4536
+      }
+     }
+    }
+   },
+   "nf4": {
+    "scheme": "nf4",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B[nf4]",
+     "load_s": 58.6,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "quantization": {
+      "scheme": "nf4",
+      "skip_modules": [
+       "lm_head"
+      ],
+      "double_quant": true,
+      "compute_dtype": "bfloat16",
+      "library": "bitsandbytes 0.50.0"
+     },
+     "n_quantized_linear": 358,
+     "n_bf16_linear": 1,
+     "a_weights_resident_gib": 5.5258,
+     "weights_reserved_after_load_gib": 7.0664,
+     "nvml_board_after_load_gib": 72.0135,
+     "nvml_board_before_load_gib": 64.4612,
+     "n_params": 4692257792,
+     "adapter_marginal_resident_gib": 0.1941,
+     "co_resident_total_resident_gib": 5.7199
+    },
+    "mcq_by_cap": {
+     "cap16384": {
+      "n": 15,
+      "max_pixels": 12845056,
+      "b_peak_allocated_gib": 8.0563,
+      "c_peak_reserved_gib": 9.5957,
+      "d_process_footprint_measured_gib": 9.023,
+      "d_reconstructed_from_c_plus_context_gib": 10.9792,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-1561",
+       "image_pixels": 9107712,
+       "n_images": 1,
+       "input_tokens": 11931,
+       "vision_tokens": 46816,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 8.0563
+      }
+     },
+     "cap1280": {
+      "n": 15,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 7.1405,
+      "c_peak_reserved_gib": 7.7051,
+      "d_process_footprint_measured_gib": 0.0,
+      "d_reconstructed_from_c_plus_context_gib": 9.0886,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 7607,
+       "vision_tokens": 29568,
+       "gen_tokens": 2,
+       "b_peak_allocated_gib": 7.1405
+      }
+     },
+     "cap320": {
+      "n": 15,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 6.033,
+      "c_peak_reserved_gib": 7.1484,
+      "d_process_footprint_measured_gib": 0.0,
+      "d_reconstructed_from_c_plus_context_gib": 8.5319,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 2063,
+       "vision_tokens": 7392,
+       "gen_tokens": 2,
+       "b_peak_allocated_gib": 6.033
+      }
+     }
+    },
+    "verifier_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 6.4986,
+      "c_peak_reserved_gib": 7.1543,
+      "d_process_footprint_measured_gib": 0.0,
+      "d_reconstructed_from_c_plus_context_gib": 8.5378,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 1318,
+       "vision_tokens": 4960,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 6.4986
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 6.1333,
+      "c_peak_reserved_gib": 7.1543,
+      "d_process_footprint_measured_gib": 0.0,
+      "d_reconstructed_from_c_plus_context_gib": 8.5378,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 161,
+       "vision_tokens": 324,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 6.1333
+      }
+     }
+    },
+    "openarm_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 6.7134,
+      "c_peak_reserved_gib": 7.207,
+      "d_process_footprint_measured_gib": 5.939,
+      "d_reconstructed_from_c_plus_context_gib": 8.5905,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 346,
+       "vision_tokens": 1200,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 6.7134
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 6.262,
+      "c_peak_reserved_gib": 7.209,
+      "d_process_footprint_measured_gib": 5.9898,
+      "d_reconstructed_from_c_plus_context_gib": 8.5925,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 110,
+       "vision_tokens": 256,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 6.262
+      }
+     }
+    }
+   },
+   "nf4_skipvisual": {
+    "scheme": "nf4_skipvisual",
+    "load": {
+     "model": "lingshu-medical-mllm/Lingshu-7B",
+     "tag": "Lingshu-7B[nf4_skipvisual]",
+     "load_s": 22.2,
+     "dtype": "bfloat16",
+     "attn_implementation": "flash_attention_2",
+     "quantization": {
+      "scheme": "nf4",
+      "skip_modules": [
+       "lm_head",
+       "visual"
+      ],
+      "double_quant": true,
+      "compute_dtype": "bfloat16",
+      "library": "bitsandbytes 0.50.0"
+     },
+     "n_quantized_linear": 196,
+     "n_bf16_linear": 163,
+     "a_weights_resident_gib": 6.4383,
+     "weights_reserved_after_load_gib": 7.2832,
+     "nvml_board_after_load_gib": 53.2288,
+     "nvml_board_before_load_gib": 45.4597,
+     "n_params": 5029522432,
+     "adapter_marginal_resident_gib": 0.1891,
+     "co_resident_total_resident_gib": 6.6274
+    },
+    "mcq_by_cap": {
+     "cap16384": {
+      "n": 15,
+      "max_pixels": 12845056,
+      "b_peak_allocated_gib": 8.967,
+      "c_peak_reserved_gib": 12.0215,
+      "d_process_footprint_measured_gib": 12.5289,
+      "d_reconstructed_from_c_plus_context_gib": 13.405,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-1561",
+       "image_pixels": 9107712,
+       "n_images": 1,
+       "input_tokens": 11931,
+       "vision_tokens": 46816,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 8.967
+      }
+     },
+     "cap1280": {
+      "n": 15,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 8.052,
+      "c_peak_reserved_gib": 9.1699,
+      "d_process_footprint_measured_gib": 9.6773,
+      "d_reconstructed_from_c_plus_context_gib": 10.5534,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 7607,
+       "vision_tokens": 29568,
+       "gen_tokens": 2,
+       "b_peak_allocated_gib": 8.052
+      }
+     },
+     "cap320": {
+      "n": 15,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 6.9429,
+      "c_peak_reserved_gib": 7.3418,
+      "d_process_footprint_measured_gib": 7.8492,
+      "d_reconstructed_from_c_plus_context_gib": 8.7253,
+      "peak_driver": {
+       "source": "medxpert_mm_test",
+       "idx": "MM-282",
+       "image_pixels": 8766000,
+       "n_images": 6,
+       "input_tokens": 2063,
+       "vision_tokens": 7392,
+       "gen_tokens": 2,
+       "b_peak_allocated_gib": 6.9429
+      }
+     }
+    },
+    "verifier_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 7.4051,
+      "c_peak_reserved_gib": 8.2109,
+      "d_process_footprint_measured_gib": 8.7183,
+      "d_reconstructed_from_c_plus_context_gib": 9.5944,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 1318,
+       "vision_tokens": 4960,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 7.4051
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 7.0408,
+      "c_peak_reserved_gib": 7.7461,
+      "d_process_footprint_measured_gib": 8.2535,
+      "d_reconstructed_from_c_plus_context_gib": 9.1296,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 161,
+       "vision_tokens": 324,
+       "gen_tokens": 0,
+       "b_peak_allocated_gib": 7.0408
+      }
+     }
+    },
+    "openarm_by_cap": {
+     "cap1280": {
+      "n": 12,
+      "max_pixels": 1003520,
+      "b_peak_allocated_gib": 7.6226,
+      "c_peak_reserved_gib": 7.9219,
+      "d_process_footprint_measured_gib": 8.4293,
+      "d_reconstructed_from_c_plus_context_gib": 9.3054,
+      "peak_driver": {
+       "source": "vqa_rad_open",
+       "idx": 395,
+       "image_pixels": 1341440,
+       "n_images": 1,
+       "input_tokens": 346,
+       "vision_tokens": 1200,
+       "gen_tokens": 3,
+       "b_peak_allocated_gib": 7.6226
+      }
+     },
+     "cap320": {
+      "n": 12,
+      "max_pixels": 250880,
+      "b_peak_allocated_gib": 7.1697,
+      "c_peak_reserved_gib": 7.4492,
+      "d_process_footprint_measured_gib": 7.9566,
+      "d_reconstructed_from_c_plus_context_gib": 8.8327,
+      "peak_driver": {
+       "source": "slake_open",
+       "idx": 12615,
+       "image_pixels": 57600,
+       "n_images": 1,
+       "input_tokens": 110,
+       "vision_tokens": 256,
+       "gen_tokens": 5,
+       "b_peak_allocated_gib": 7.1697
+      }
+     }
+    }
+   }
+  }
+ },
+ "null_test_round2": {
+  "vram_instrument": {
+   "what": "this round's VRAM harness re-ran the 08-11 S1 scenario (Lingshu-7B direct MCQ, MedEvalKit default cap, same 15 items) and must reproduce it",
+   "b_peak_allocated_gib_2026_08_11": 18.0232,
+   "b_peak_allocated_gib_this_round": 18.0232,
+   "a_weights_resident_gib_2026_08_11": 15.4937,
+   "a_weights_resident_gib_this_round": 15.4937,
+   "verdict": "PASS -- exact reproduction of (a) and (b)",
+   "log": "logs/vram_levers_null_2026-08-12.log"
+  },
+  "open_half_instrument": {
+   "what": "re-score 60 questions per set at the DEPLOYED verifier configuration and compare to the stored transfer dumps candidate-score by candidate-score",
+   "max_abs_deviation": 0.0,
+   "per_ds": {
+    "slake_open": 0.0,
+    "vqa_rad_open": 0.0,
+    "pathvqa_open": 0.0
+   },
+   "n_scores": 1440,
+   "verdict": "PASS -- 0.000e+00 on every set",
+   "a_bug_this_caught": "the first version of the scorer cached candidate scores keyed on norm(answer). The frozen scorer scores the RAW string, so 'Right' and 'right' are two different prompts with two different scores. slake_open (no case-variant duplicates in its pools) reproduced at 0.000e+00 while vqa_rad_open deviated by 9.240e-03 -- which is how the bug was found. The cache is now keyed on the raw string and every set reproduces exactly.",
+   "log": "logs/vram_vgrid_nulltest2_2026-08-12.log"
+  }
  }
 }

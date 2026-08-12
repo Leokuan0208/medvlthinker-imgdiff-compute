@@ -35,6 +35,155 @@ def cellrow(a, cell):
             if k in c}
 
 
+def fmt(d):
+    """'+0.0123 [-0.0004, +0.0250] n.s.' from a {delta, lo, hi, sig} block -- never hand-typed."""
+    if not isinstance(d, dict) or "delta" not in d:
+        return "not measured"
+    return (f"{d['delta']:+.4f} [{d['lo']:+.4f}, {d['hi']:+.4f}] "
+            f"{'SIG' if d.get('sig') else 'n.s.'}")
+
+
+DEPLOYED = "results/cascade_methods/artifacts/cascade_selector_rerun_2026-08-05.json"
+
+
+def deployed_block(az):
+    """Comparison (i) of the round brief: the CURRENT two-arm method, per cell.  Read verbatim from
+    the deployed method's own artifact -- nothing recomputed, nothing retyped.  It is not a 7B-only
+    system: it reaches its number by sending 41.83% of the macro-weighted stream to the 32B."""
+    p = os.path.join(U.ROOT, DEPLOYED)
+    if not os.path.exists(p):
+        return {"status": "not available on disk", "expected": DEPLOYED}
+    d = json.load(open(p))["per_arm"]["disjoint"]
+    uni = (az or {}).get("cells", {})
+    off = (az or {}).get("option_branch_off_control", {}).get("per_cell", {})
+    rows = {}
+    for c in U.MACRO8:
+        r = {"two_arm_compute_lean": d["per_cell_acc"][c]["method_compute_lean"],
+             "two_arm_accuracy_max_veto": d["per_cell_acc"][c]["method_accuracy_max_veto"],
+             "two_arm_escalation_to_32B": d["escalation"]["per_cell"][c],
+             "always_7b": d["per_cell_acc"][c]["always_7b"],
+             "always_32b_direct": d["per_cell_acc"][c]["always_32b_direct"]}
+        if c in uni and "acc_unified_pick" in uni[c]:
+            r["unified_rule_7b_only"] = uni[c]["acc_unified_pick"]
+        if c in off:
+            r["option_branch_off_7b_only"] = off[c]
+        rows[c] = r
+    return {
+        "source": DEPLOYED + " (per_arm.disjoint -- the clean, decontaminated deployed method)",
+        "why_it_is_here": "the round brief asks for comparison (i), the current two-arm method per "
+                          "cell. It is NOT a 7B-only system and is not a like-for-like bar: it "
+                          "reaches its macro by sending part of the stream to the 32B.",
+        "macro": {"two_arm_compute_lean": d["macro_acc"]["method_compute_lean"],
+                  "two_arm_accuracy_max_veto": d["macro_acc"]["method_accuracy_max_veto"],
+                  "always_7b": d["macro_acc"]["always_7b"],
+                  "always_32b_direct": d["macro_acc"]["always_32b_direct"]},
+        "escalation_to_the_32B_macro_weighted": d["escalation"]["compute_lean_all8"]["macro_cells"],
+        "escalation_to_the_32B_sample_weighted": d["escalation"]["compute_lean_all8"]["sample_weighted"],
+        "the_honest_reading": "the deployed two-arm method's macro 0.6575 is a TIE with "
+                              "always-32B-direct bought with 41.83% macro-weighted 32B usage and a "
+                              "72.60 GiB VRAM class. This round's question is what is left when that "
+                              "32B is removed entirely, and the answer is the 7B-only rows below it.",
+        "per_cell": rows}
+
+
+def transfer_2x2(az, trained, oh):
+    """The 2x2 CROSS-FORMAT TRANSFER MATRIX (amendment 6): each format-specific scorer on its own
+    format and on the other one.  It is what answers 'can ONE scorer serve both formats' without
+    training a unified adapter -- and it is an ARGUMENT about a unified scorer's ceiling, never a
+    measurement of one.  Every number is copied from a part file."""
+    def opt_row(a):
+        if not a or not a.get("cells"):
+            return "not measured"
+        return {c: {"acc": a["cells"][c]["acc_unified_pick"],
+                    "always_7b": a["cells"][c]["acc_7b_greedy_same_items"],
+                    "vs_always_7b": fmt(a["cells"][c].get("delta_vs_7b"))}
+                for c in U.OPTION_CELLS
+                if c in a["cells"] and "acc_unified_pick" in a["cells"][c]}
+    b0 = (trained.get("optiononly_s0") or {}).get("cells")
+    b0a = loadp("analysis_optiononly_s0.json")
+    arms = (oh or {}).get("arms", {})
+    return {
+        "what": "rows = which format the scorer was TRAINED on; columns = which format's candidate "
+                "set it is scored over. One scorer can serve both formats only if both off-diagonal "
+                "cells are good.",
+        "source": [rel("analysis_zeroshot.json"), rel("analysis_optiononly_s0.json"),
+                   rel("open_half_trained.json")],
+        "row_open_trained_scorer_ckpts_train_lora_verifier_disjoint": {
+            "on_OPEN_candidates_its_own_format": ((oh or {}).get("incumbent_bar") or "not measured"),
+            "on_OPTION_candidates_the_other_format": opt_row(az)},
+        "row_option_trained_scorer_ckpts_train_lora_verifier_optiononly_s0": {
+            "on_OPTION_candidates_its_own_format": opt_row(b0a) if b0 else "not measured",
+            "on_OPEN_candidates_the_other_format": arms.get("optiononly_s0", "not measured")},
+        "reading": "filled in by the numbers above; the licensing argument and its limits are stated "
+                   "verbatim in unified_pipeline_2026-08-12_amendment6.json under "
+                   "the_2x2_that_replaces_arm_B_as_the_answer_to_Q2",
+        "it_is_not_a_substitute_for_arm_B": "arm B, an actual adapter trained on both candidate sets, "
+                                            "remains NOT MEASURED. The 2x2 bounds what such an "
+                                            "adapter could be; it does not measure one."}
+
+
+def trained_verdict(trained, az, oh):
+    """Build the trained-arm verdict from the part files. Every string is formatted from a
+    measured value; nothing here is typed in by hand, and a missing arm says 'not measured'."""
+    v = {}
+    for tag, label in (("optiononly_s0", "arm B0 -- option-only verifier (the format-specific "
+                                         "option verifier, i.e. the UPPER BOUND on what the "
+                                         "unified scorer can do over the given options)"),
+                       ("unified_s0", "arm B -- the UNIFIED verifier, one adapter trained on "
+                                      "BOTH branches' candidate sets")):
+        t = trained.get(tag)
+        if not t or not t.get("cells"):
+            v[tag] = {"what_it_is": label, "status": "NOT MEASURED"}
+            if tag == "unified_s0":
+                v[tag]["why"] = (
+                    "STOPPED at step ~1,200/20,728 with no adapter and no score of any kind, by "
+                    "amendment 6, written before the stop. Measured step rate 37.4 examples/min "
+                    "put it 8.71 h from finishing against its own 25,200 s deadline, i.e. what it "
+                    "would have produced is an adapter early-stopped at ~70% of one epoch. The "
+                    "second card went to finishing the DECISIVE arm (B0) and to the cross-format "
+                    "transfer matrix instead.")
+                v[tag]["what_survives_on_disk"] = (
+                    "ckpts/train/lora_verifier_unified_s0/unified_manifest.json -- the built, "
+                    "leakage-checked 20,728-example training set")
+                v[tag]["to_finish_it"] = ("runners/run_unified_armB_finish.sh, gpu1 branch only, "
+                                          "budgeting ~9 h train + ~3.4 h scoring on an idle card")
+            continue
+        cells = t["cells"]
+        rows = {c: {"acc": cells[c]["acc_unified_pick"],
+                    "always_7b": cells[c]["acc_7b_greedy_same_items"],
+                    "vs_always_7b": fmt(cells[c].get("delta_vs_7b")),
+                    "vs_always_32b_direct": fmt(cells[c].get("delta_vs_32b_direct")),
+                    "luck_floor_F1_1_over_K":
+                        (cells[c].get("luck_floor_random_gold") or {}).get("analytic_1_over_K"),
+                    "luck_floor_permutation_p95":
+                        (cells[c].get("luck_floor_random_gold") or {}).get("permutation_p95"),
+                    "candidate_auroc": cells[c].get("candidate_auroc_gold_vs_distractor")}
+                for c in cells}
+        beat = [c for c in cells
+                if (cells[c].get("delta_vs_7b") or {}).get("delta", -1) > 0
+                and (cells[c].get("delta_vs_7b") or {}).get("sig")]
+        lost = [c for c in cells
+                if (cells[c].get("delta_vs_7b") or {}).get("delta", 1) < 0
+                and (cells[c].get("delta_vs_7b") or {}).get("sig")]
+        v[tag] = {"what_it_is": label,
+                  "seeds": 1,
+                  "seed_caveat": "ONE seed (seed 0). The methodology asks for >=10 wherever "
+                                 "training is involved; amendment 5 declared the budget before "
+                                 "the run. A single seed is decisive in the NEGATIVE direction "
+                                 "against a -0.17 / -0.08 gap and is NOT decisive for any near-tie.",
+                  "per_cell": rows,
+                  "cells_that_BEAT_always_7b_significantly": beat,
+                  "cells_that_LOSE_to_always_7b_significantly": lost,
+                  "falsification_test_from_amendment_2":
+                      ("amendment 2 predicted B0/B fall short of always-7B on the option cells; "
+                       "the stated falsifier was B0 reaching or exceeding always-7B on "
+                       "PATH_VQA_closed (0.8409) or PMC_VQA (0.5392). "
+                       + ("FALSIFIED" if beat else "NOT FALSIFIED -- the prediction held")),
+                  "macro": t.get("macro"),
+                  "open_half": (oh or {}).get("arms", {}).get(tag, "not measured")}
+    return v
+
+
 def main():
     nul = loadp("nulltests.json")
     dis = loadp("disjointness.json")
@@ -43,7 +192,9 @@ def main():
     deb = loadp("arm_a_prime_debias.json")
     bias = loadp("bias_diag_zeroshot.json")
     az = loadp("analysis_zeroshot.json")
-    vram = loadp("vram_option_branch_zeroshot.json")
+    vram = (loadp("vram_option_branch_zeroshot.json")
+            or loadp("vram_option_branch_unified_s0.json")
+            or loadp("vram_option_branch_optiononly_s0.json"))
     two = loadp("rescue_break_2x2_zeroshot.json")
     gat = loadp("gate_zeroshot.json")
     fus = loadp("fusion_zeroshot.json")
@@ -51,6 +202,7 @@ def main():
     n5a = loadp("n5_parse_audit.json")
     wwt = loadp("what_would_have_to_be_true.json")
     ob2 = loadp("open_branch_2x2.json")
+    oh = loadp("open_half_trained.json")
     trained = {}
     for tag in ("optiononly_s0", "unified_s0"):
         a = loadp(f"analysis_{tag}.json")
@@ -72,15 +224,36 @@ def main():
                             "repaired_grader": (rg or {}).get("cells"),
                             "repaired_grader_four_cell_macro":
                                 (rg or {}).get("four_cell_macro_option_branch_only"),
-                            "rescues_and_breaks": (tw or {}).get("cells")}
+                            "rescues_and_breaks": (tw or {}).get("cells"),
+                            "QUESTION_TEXT_LEAKAGE_CONTROL": {
+                                "source": rel(f"textleak_{tag}.json"),
+                                "why": "an image-disjoint split is NOT a text-disjoint split on a "
+                                       "yes/no cell -- PathVQA and VQA-RAD reuse question wording "
+                                       "across their own splits, so a trained scorer can carry a "
+                                       "question-text -> answer prior into eval without ever seeing "
+                                       "the eval image. TEXT_UNSEEN uses the WHOLE training pool as "
+                                       "the possibly-seen set and is therefore conservatively clean "
+                                       "under any draw.",
+                                **((loadp(f"textleak_{tag}.json") or {}))},
+                            "GENERATOR_PRIOR_FUSION_one_global_knob": {
+                                "source": rel(f"fusion_{tag}.json"),
+                                "rule": "s'(c) = s(c) + lambda * 1[c == the 7B's own answer]; lambda "
+                                        "cross-fit 5-fold over 10 fold-split seeds, per cell AND "
+                                        "globally. The GLOBAL lambda is the only deployable version "
+                                        "-- a per-cell lambda is four knobs chosen on eval.",
+                                "per_cell": (loadp(f"fusion_{tag}.json") or {}).get("cells",
+                                                                                   "not measured"),
+                                "global_lambda": (loadp(f"fusion_{tag}.json") or {}).get(
+                                    "global_lambda", "not measured")}}
+    tv = trained_verdict(trained, az, oh)
 
     out = {
         "title": "ATTACK 2 -- ONE PIPELINE FOR BOTH ANSWER FORMATS: the candidate set is read off the "
                  "prompt, the scorer is the same in both branches, and there is no 32B at test time.",
         "date": U.DATE,
         "preregistration": "results/cascade_methods/artifacts/unified_pipeline_2026-08-12_preregistration.json",
-        "amendments": ["results/cascade_methods/artifacts/unified_pipeline_2026-08-12_amendment1.json",
-                       "results/cascade_methods/artifacts/unified_pipeline_2026-08-12_amendment2.json"],
+        "amendments": [f"results/cascade_methods/artifacts/unified_pipeline_2026-08-12_amendment{k}.json"
+                       for k in (1, 2, 3, 4, 5, 6)],
         "reproduce": {
             "null tests + disjointness": "python3 src/cascade_methods/unified_pipeline.py --nulltest --disjoint",
             "score the option branch": "python3 src/cascade_methods/unified_pipeline_score.py --adapter <A> --tag <T>",
@@ -144,17 +317,51 @@ def main():
                                             "0.6518 against the 0.6567 target. The per-cell-subset "
                                             "version of this question is answered exactly in the "
                                             "sibling round's PART3."},
+            "Q4_does_TRAINING_the_scorer_on_the_option_candidates_rescue_it": {
+                "pre_registered_prediction": "amendment 2, written before any training run: B0 and B "
+                                             "FALL SHORT of always-7B on the option cells",
+                "arms": tv,
+                "note": "arm B0 is the format-specific option verifier and therefore an UPPER BOUND "
+                        "on what the unified scorer can do over the given options -- the unified "
+                        "scorer spends half its capacity on open text."},
+            "Q5_does_unifying_COST_anything_on_the_open_branch_MEASURED": {
+                "why_this_is_new": "the 07:18 artifact could only answer this trivially ('the "
+                                   "sampled branch is the incumbent arm unchanged'), because no "
+                                   "unified adapter existed. Arm B's open half is example-for-example "
+                                   "the incumbent's 10,364, so movement on the frozen 2,345-item pool "
+                                   "is INTERFERENCE from the 10,364 option examples.",
+                "stated_confound_not_removed": "total training size 20,728 vs the incumbent's 10,364",
+                "source": rel("open_half_trained.json"),
+                "bar": (oh or {}).get("incumbent_bar", "not measured"),
+                "arms": (oh or {}).get("arms", "not measured"),
+                "what_actually_answers_it_in_this_session": transfer_2x2(az, trained, oh)},
             "what_the_user_asked_for": {
                 "one_pipeline_for_both_formats": "ACHIEVED as a rule -- one scorer, one decision "
                                                  "rule, no format branch anywhere except the "
                                                  "candidate-set constructor, which reads the deployed "
                                                  "prompt",
                 "no_32B_at_test_time": "ACHIEVED",
-                "less_VRAM_than_the_32B": "ACHIEVED and measured: one 7B-class process (generator and "
-                                          "verifier share one copy of the weights, +0.1961 GiB for "
-                                          "the adapter) at 18.76-23.42 GiB board peak against 72.60 "
-                                          "GiB for always-32B-direct, i.e. 3.1-3.9x less "
-                                          "[artifacts/vram_testtime_2026-08-11.json]",
+                "less_VRAM_than_the_32B": (
+                    ("ACHIEVED and measured DIRECTLY on the option branch this session "
+                     f"({rel('vram_option_branch_zeroshot.json')}, n={vram['n']} items, "
+                     f"{vram['n_failed']} failed, batch=1, the deployed serving shape, HF with all "
+                     f"192 vision-tower LoRA tensors loaded): weights resident "
+                     f"{vram['a_weights_resident_gib']} GiB, peak ALLOCATED "
+                     f"{vram['b_peak_allocated_gib']['peak']} GiB, peak RESERVED "
+                     f"{vram['c_peak_reserved_gib']['peak']} GiB -- this process only, which is the "
+                     "figure to read because foreign jobs shared the card (board-used before the "
+                     "probe was ~60.4 GiB and is NOT this pipeline). Against 72.60 GiB for "
+                     "always-32B-direct that is "
+                     f"{72.6023 / vram['c_peak_reserved_gib']['peak']:.1f}x less on peak reserved. "
+                     "Generator and verifier share ONE copy of the 7B weights -- the verifier is a "
+                     "LoRA on the generator's own base -- so the whole pipeline is one 7B-class "
+                     "process. [artifacts/vram_testtime_2026-08-11.json puts the same pipeline at "
+                     "18.76-23.42 GiB whole-process board peak on an otherwise empty card.]")
+                    if vram else
+                    "ACHIEVED and measured: one 7B-class process (generator and verifier share one "
+                    "copy of the weights, +0.1961 GiB for the adapter) at 18.76-23.42 GiB board peak "
+                    "against 72.60 GiB for always-32B-direct, i.e. 3.1-3.9x less "
+                    "[artifacts/vram_testtime_2026-08-11.json]"),
                 "match_always_32B_direct": "NOT ACHIEVED, and this round makes the shortfall larger, "
                                            "not smaller"},
             "the_finding_worth_keeping": "one adapter, one scoring function, one argmax rule, two "
@@ -182,9 +389,20 @@ def main():
             "arm A' (the debias diagnostic) used ONE 5-fold split (seed 20260812), not 10 fold-split "
             "seeds. The fusion arm and the gate arm both used 10. A' is diagnostic only and no claim "
             "rests on it.",
-            "arms B0/B involve training and therefore owe >=10 seeds. They did not finish at all "
-            "under this round's shared-GPU contention, so the seed question is moot but unresolved: "
-            "if they are ever run, they need the seed spread reported.",
+            ("arms B0/B involve training and therefore owe >=10 seeds. ONE seed (seed 0) was run "
+             "for each, on 2026-08-12T11:36Z when both A100s came free; amendment 5 declared that "
+             "budget before the run. A single seed is decisive against the -0.1689 / -0.0758 gaps "
+             "arm A left and is NOT decisive for any near-tie, and it is read that way here."
+             if trained else
+             "arms B0/B involve training and therefore owe >=10 seeds. They did not finish at all "
+             "under this round's shared-GPU contention, so the seed question is moot but "
+             "unresolved: if they are ever run, they need the seed spread reported."),
+            ("arm B0's and arm B's option-branch training rows are drawn from the same pools with "
+             "the same quota rule and the same 33,079-image eval ban list, but NOT from the same "
+             "RNG state (build_open_examples consumes the shared stream only when max_open > 0). "
+             "The two arms are therefore not a clean ablation of 'add open data' -- they are two "
+             "draws. Stated, not hidden." if trained else
+             "arm B0 and arm B were not built, so their RNG relationship is moot."),
             "padded-batch scoring jitters the item argmax on ~1.7% of items (N4). Every option-branch "
             "number carries that jitter. It cannot explain -0.169 or -0.076; it is comparable to the "
             "MedXpert +0.0025 and to the repaired-grader PMC fusion +0.0030, both of which are "
@@ -192,6 +410,26 @@ def main():
             "VQA_RAD_closed is image-contaminated for the zero-shot arm (64/135 eval images are in "
             "the verifier's vqa_rad_open_train pool). The arm loses on that cell, so contamination "
             "cannot be what produced the loss.",
+            ("the trained arms' manifest records hp `identical_to "
+             "src/training_methods/run_lora_verifier_disjoint.py`, and the LoRA config, lr, epochs, "
+             "pixel budget and example count ARE identical -- but the EFFECTIVE BATCH is not. The "
+             "incumbent takes one optimiser step per bs(2) x accum(8) = 16 examples with loss/16 "
+             "(run_lora_verifier_disjoint.py:212-223); train_unified_verifier.py increments its step "
+             "counter per EXAMPLE and steps every accum(8), i.e. 8 examples with loss/8 "
+             "(train_unified_verifier.py:541-559). Same LR, half the effective batch, twice the "
+             "optimiser steps. Found by reading both loops; stated because the manifest's "
+             "'identical_to' would otherwise overclaim." if trained else
+             "arm B0/B were not trained, so their recipe is moot."),
+            "THE SCORER IS POINTWISE. It sees (image, question, ONE candidate) and never the other "
+            "options, so on the option branch the comparison happens only in the argmax. That is "
+            "forced by the unification -- the same scorer must work when the candidates are 8 "
+            "sampled strings -- and it is the most obvious thing to blame for the shortfall. It is "
+            "bounded by prior art rather than re-tested here: giving the scorer the full option "
+            "context as (choice)(why) is a MEASURED SIGNIFICANT LOSS of -0.0226 sel_eff "
+            "[artifacts/choicewhy_measure_2026-08-03.json], and listwise (twice), pairwise "
+            "(simulated and real) and set-aware scorers all land in the same 0.80-0.81 sel_eff band "
+            "[docs/current/COMPARATIVE_VERIFIER_2026-08-05.md]. So 'make it listwise' is not an "
+            "untried fix, it is a tried one.",
             "the option branch costs K verifier forwards per query and needs NO generation, so its "
             "FLOP-eq is exactly K (4.0 / 5.0 / 2.0 / 2.0 per cell in units of one 7B forward) against "
             "4.57 for one 32B-direct pass. It is not cheap, and it buys nothing.",
@@ -236,10 +474,33 @@ def main():
                        "inflate an arm, so the loss stands a fortiori. Dropping the cell leaves the "
                        "unified pipeline at -0.0808 vs always-32B-direct instead of -0.0862 "
                        "(leave_one_cell_out_vs_32b_direct in the arm-A macro block).",
-            "trained_arms": "arms B0/B ban every eval image of every cell by decoded-RGB md5 BEFORE "
-                            "training (33,079 hashes), and PMC additionally by shared PMC article id "
-                            "because the v2 test figures are sub-figure CROPS that cannot md5-match a "
-                            "v1 train full figure",
+            "trained_arms": {
+                "option_branch_of_BOTH_arms": "every option-branch training image is checked against "
+                                              "a 33,079-hash ban list built from the WHOLE test split "
+                                              "of all five families (PMC-VQA test_2 29,021 / "
+                                              "MedXpertQA 2,817 / SLAKE test 180 / VQA-RAD test 203 / "
+                                              "PathVQA test 858) BEFORE training, and PMC "
+                                              "additionally by shared PMC article id because the v2 "
+                                              "test figures are sub-figure CROPS that cannot "
+                                              "md5-match a v1 train full figure "
+                                              "(train_unified_verifier.py:279-408). Measured drops: "
+                                              "VQA-RAD 540 of 940 train images, PathVQA 0 of 5,182, "
+                                              "PMC 0 of 2,591 by hash and 0 by article id.",
+                "open_branch_of_arm_B_is_NOT_filtered_by_that_list": {
+                    "fact": "build_open_examples() never receives the ban list "
+                            "(train_unified_verifier.py:143, called at :423 with rng only). Arm B's "
+                            "open half is the incumbent's own disjoint split verbatim, so it carries "
+                            "the incumbent's contamination exactly -- which this round already "
+                            "measured: 64 of VQA_RAD_closed's 135 eval images (47.4%) are in "
+                            "vqa_rad_open_train; PMC_VQA, MedXpertQA-MM and PATH_VQA_closed are 0.",
+                    "consequence": "arm B is CONTAMINATED on VQA_RAD_closed (through its open half) "
+                                   "and clean on the other three option cells. Arm B0 is option-only "
+                                   "and therefore clean on all four. Contamination can only inflate "
+                                   "an arm, so any VQA_RAD_closed LOSS by arm B stands a fortiori "
+                                   "and any WIN there must be discounted.",
+                    "found_by": "reading both builders in this session; it was not stated in the "
+                                "2026-08-12 07:18 artifact, which said the trained arms ban every "
+                                "eval image. That sentence was true of the option branch only."}},
             **(dis or {"status": "not measured"})},
         "numerics": {
             "tf32": False, "OMP_NUM_THREADS": 1, "PYTHONHASHSEED": 0,
@@ -307,6 +568,9 @@ def main():
                 "dropped when their PMC ARTICLE ID appears in test_2. Measured: 11,112 banned article "
                 "ids, 0 training rows dropped by them (the two splits share no article), 540 of 940 "
                 "VQA-RAD train images dropped as eval images.",
+            "runner_that_finished_them": "runners/run_unified_armB_finish.sh (2026-08-12T11:36Z, both "
+                                         "A100s idle at 13 MiB; one arm per card, each pinned with "
+                                         "CUDA_VISIBLE_DEVICES)",
             "results": (trained if trained else {
                 "status": "NOT MEASURED -- no adapter exists. Reported as not measured rather than "
                           "as a weak result, because a half-trained adapter would look like a "
@@ -406,6 +670,8 @@ def main():
             "four_cell_macro": (rep or {}).get("four_cell_macro_option_branch_only", "not measured")},
 
         "CONTROL_option_branch_off": ((az or {}).get("option_branch_off_control", "not measured")),
+
+        "COMPARISON_i_THE_CURRENT_TWO_ARM_METHOD_WHICH_DOES_USE_THE_32B": deployed_block(az),
 
         "VRAM": ({"source": rel("vram_option_branch_zeroshot.json"), **vram}
                  if vram else

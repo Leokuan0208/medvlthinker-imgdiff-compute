@@ -1,0 +1,39 @@
+{
+ "amendment": 5,
+ "written_at_utc": "2026-08-12T11:45:00Z",
+ "honest_status": "Written while arm B0's training was in its FIRST optimiser steps and arm B's was still queued behind a foreign 72 GiB process. NO adapter, NO score file and NO trained-arm number existed when this was written. It records the resumption, the seed budget actually available, and one diagnostic arm that amendment 2 did not name.",
+ "why_there_is_a_resumption": {
+  "what_the_07:18_artifact_says": "ARMS_B0_AND_B_trained_on_the_option_candidates.results.status = 'NOT MEASURED -- no adapter exists', because both A100s were held by three concurrent rounds and the trainer OOMed on 409 consecutive examples with 0 optimiser steps completed",
+  "what_changed": "both A100s read 13 MiB used at 2026-08-12T11:36Z, so the two pre-registered trained arms were launched, one per card, each pinned with CUDA_VISIBLE_DEVICES so they cannot collide",
+  "runner": "runners/run_unified_armB_finish.sh",
+  "nothing_about_the_design_changed": "same script (src/training_methods/train_unified_verifier.py), same hyperparameters, same seed 0, same 33,079-image eval ban list, same cheapest-decisive-cell-first scoring order"
+ },
+ "the_decision_rule_was_already_fixed_and_is_NOT_being_changed": {
+  "from_amendment_2": "arm B0 and arm B are predicted to FALL SHORT of always-7B on the option cells",
+  "what_would_falsify_it": "arm B0 reaching or exceeding always-7B on PATH_VQA_closed (0.8409) or PMC_VQA (0.5392)",
+  "this_amendment_does_not_touch_it": true
+ },
+ "seed_budget_declared_before_the_results": {
+  "requirement": "the round's methodology asks for >=10 seeds wherever training is involved",
+  "cost_per_seed": "~1 h train + ~2.5 h option scoring (41,226 forwards) + ~1.1 h open scoring (18,760 forwards) = ~4.6 GPU-hours",
+  "commitment": "seed 0 is run for both arms. Additional seeds only if the shared cards stay free. Whatever the count is, the artifact states it, and NO claim is made that rests on a difference smaller than the seed spread. A single-seed number is reported as a single-seed number.",
+  "what_makes_a_single_seed_admissible_here_and_only_here": "the effect arm B0 must overturn is -0.1689 (PATH_VQA_closed) and -0.0758 (PMC_VQA) against always-7B. LoRA-verifier seed spread on this project's own measurements is ~0.021 sel_eff. A single seed is therefore decisive in the NEGATIVE direction and NOT decisive for any near-tie, which is exactly how it will be read."
+ },
+ "one_diagnostic_arm_amendment_2_did_not_name": {
+  "name": "arm B0 scored on the OPEN branch (the option-only verifier evaluated on the format it was NOT trained for)",
+  "why": "the pre-registration's secondary endpoint asks whether the UNIFIED scorer loses to the format-specific open-text verifier on open text. B0-on-open is the mirror of that question and it costs nothing extra to state: it bounds how much of any unified-arm open-text movement is 'the option data helped/hurt' versus 'the open data is what carries the open branch'.",
+  "status": "DIAGNOSTIC. It is a transfer control, not a deployable pipeline, and it carries no headline claim.",
+  "decision_rule": "reported as a number with its paired CI against the incumbent bar 0.775204; no threshold, because no claim depends on it."
+ },
+ "endpoint_that_this_run_finally_makes_measurable": {
+  "name": "does unifying COST anything on the open branch",
+  "why_it_was_trivial_before": "with no unified adapter, the 07:18 artifact could only say 'the sampled branch is the incumbent arm unchanged'. That is true of the RULE but says nothing about a scorer trained on both formats.",
+  "now": "arm B's open half is example-for-example the incumbent's 10,364 (measured: slake 894 / vqa_rad 522 / pathvqa 4973 / kvasir 3975, identical to the incumbent quota), so any movement on the frozen 2,345-item pool is attributable to INTERFERENCE from the 10,364 option examples -- with one stated confound that is NOT removed: total training size is 20,728 versus 10,364.",
+  "metric": "the single frozen definition in src/training_methods/genframe_data.py; its null test must pass (max abs deviation <= 1e-6) before any arm is read",
+  "code": "src/cascade_methods/unified_pipeline_openhalf.py"
+ },
+ "known_confound_stated_now_not_later": {
+  "arm_B0_and_arm_B_do_not_share_the_same_option_examples": "build_open_examples() consumes the shared random.Random(seed) stream when max_open > 0 and returns immediately when it is 0, so arm B's option draw starts from a different RNG state than arm B0's. Both draw from the same pools with the same quota rule and the same eval-image ban list; the individual rows differ. This is inherent to the existing script and is reported, not hidden."
+ },
+ "not_abstention": "both arms answer every item by argmax over the item's own candidate set. CRITICAL RULE 6 respected."
+}

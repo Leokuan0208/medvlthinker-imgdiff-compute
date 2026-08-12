@@ -1,0 +1,39 @@
+{
+ "amendment": 6,
+ "written_at_utc": "2026-08-12T12:20:00Z",
+ "honest_status": "Written BEFORE arm B was stopped and BEFORE any trained-arm number of any kind existed. At the time of writing: arm B0 was at step 1,600/10,364 and arm B at step 1,200/20,728; NEITHER had an adapter on disk, NEITHER had scored a single eval item. This amendment changes what gets the second GPU. It changes NO endpoint, NO metric and NO decision rule.",
+ "the_measurement_that_forced_it": {
+  "measured_step_rate_2026-08-12T12:18Z": "37.4 examples/min on BOTH cards (the two trainers contend for the same 48 CPU cores on image decode; load average 34-43)",
+  "arm_B0_remaining": "3.91 h -> adapter ~16:12Z, then ~2.3 h of option-cell scoring",
+  "arm_B_remaining": "8.71 h -> ~21:00Z, but its own --deadline_s 25200 fires at 18:38Z, so what it would actually produce is an adapter EARLY-STOPPED at roughly 70% of its single epoch",
+  "conclusion": "the pre-registered arm B cannot be delivered as specified in this session. Continuing it would spend the second card for 6 more hours and yield a 70%-trained adapter -- a thing that LOOKS like a trained arm and is not one. The previous session refused exactly that, and so does this one."
+ },
+ "what_is_being_stopped": {
+  "arm": "arm B, the UNIFIED verifier at 10,364 open + 10,364 option = 20,728 examples",
+  "state_at_stop": "step ~1,200/20,728, no adapter_model.safetensors, no transfer dump, no option score file",
+  "what_survives_on_disk": "ckpts/train/lora_verifier_unified_s0/unified_manifest.json -- the built, leakage-checked training set (open per_source slake 894 / vqa_rad 522 / pathvqa 4973 / kvasir 3975, identical to the incumbent quota)",
+  "how_to_finish_it_later": "runners/run_unified_armB_finish.sh with the gpu1 branch alone, on an idle card, budgeting ~9 h train + ~3.4 h scoring"
+ },
+ "what_the_second_GPU_does_instead": {
+  "1_arm_B0_finishes_alone": "killing arm B removes the CPU contention, so arm B0 -- the DECISIVE arm, the format-specific option verifier that upper-bounds the unified scorer on the option branch -- finishes sooner and with the whole machine",
+  "2_the_option_cells_are_scored_across_BOTH_cards": "41,226 forwards split by cell instead of run serially",
+  "3_arm_B0_is_then_scored_on_the_OPEN_pool": "this completes a 2x2 CROSS-FORMAT TRANSFER MATRIX, which is what actually answers 'does one scorer serve both formats', and it needs no new training and introduces no new confound"
+ },
+ "the_2x2_that_replaces_arm_B_as_the_answer_to_Q2": {
+  "matrix": {
+   "open-trained scorer, OPEN candidates": "the incumbent bar, sel_eff 0.775204 (already measured)",
+   "open-trained scorer, OPTION candidates": "arm A (already measured: loses to the 7B's own argmax on 3 of 4 cells, below the 1/K floor where the 7B is wrong on 3 of 4)",
+   "option-trained scorer, OPTION candidates": "arm B0 (this session)",
+   "option-trained scorer, OPEN candidates": "arm B0 on the open pool (this session)"
+  },
+  "the_inference_it_licenses": "if EACH format-specific scorer is good on its own format and bad on the other, then one scorer must trade off between them, and a unified scorer's ceiling is bounded by that trade-off. That is an argument, not a direct measurement of an actual unified adapter, and it will be labelled as such -- the direct measurement remains arm B, and arm B remains NOT MEASURED.",
+  "what_it_cannot_do": "it cannot say how large the trade-off is for a real unified adapter, only that a trade-off must exist if both off-diagonal cells are bad. If either off-diagonal cell is GOOD, the argument collapses and the honest report is that unification may be free -- unmeasured either way."
+ },
+ "rejected_alternatives_and_why": {
+  "a_budget_matched_unified_arm_5182_open_plus_5182_option": "it would finish (~2.8 h) and it would remove the pre-registration's stated size confound (20,728 vs 10,364), but it HALVES the open half, so any open-text drop would confound interference with less open data -- and this project has no measured verifier training-data-size curve to subtract it with (ckpts/train/lora_verifier_ds500 and ds1500 are empty directories). Trading a stated confound for an unquantifiable one is not an improvement.",
+  "a_second_seed_of_arm_B0": "it would give a 2-seed spread on the decisive arm, but the effect arm B0 has to overturn is -0.1689 / -0.0758 against a ~0.021 seed spread. A second seed cannot change that verdict, and it costs the same 2.8 h as the cross-transfer arm, which answers a question nothing else answers.",
+  "letting_arm_B_run_to_its_deadline": "produces a 70%-trained adapter. Rejected on the same grounds the previous session rejected an OOM-skipped adapter."
+ },
+ "seed_budget_unchanged_and_still_honest": "one seed for arm B0. Amendment 5 declared it. It is decisive in the negative direction and not decisive for a near-tie, and it is read that way.",
+ "not_abstention": "unchanged; every arm answers every item by argmax over its candidate set."
+}

@@ -1,0 +1,155 @@
+{
+ "what": "CONFOUND-FREE premise test: how much of the LANGUAGE-SIDE verifier's selection power is image-derived? Both arms are trained AND tested in-distribution on their own cache, by identical image-grouped 5-fold CV inside the eval pool.",
+ "date": "2026-08-12",
+ "code": "src/training_methods/langside_image_dependence_cv.py",
+ "why_this_exists": "the langnoise ablation (image_ablations.L.langnoise) trains on real features and tests on noise features, so its drop mixes lost image information with an out-of-distribution shift. This one does not.",
+ "IS_A_DIAGNOSTIC_NOT_A_HEADLINE": "fitted on eval rows (fold-held-out, grouped by image md5). Its LEVEL is not comparable to the deployed sel_eff figures, which are fitted on the disjoint TRAIN pool. Only the real-minus-noise contrast is used.",
+ "grouping": "5-fold on md5(img_md5) % 5 -- no image and therefore no question straddles a fold boundary. The folds are computed ONCE from the REAL cache and reused verbatim for the noise arm, because the noise cache records the md5 of the NOISE image; recomputing per cache would hand the two arms different splits.",
+ "numerics": {
+  "layer": 21,
+  "pooling": "span",
+  "threads": 8,
+  "trainer": "visverif_lib.train_cv_sel_eff (deployed language-side recipe)"
+ },
+ "arms": {
+  "real": {
+   "featdir": "feats_hidden",
+   "n_rows": 8943,
+   "d": 3584,
+   "n_folds": 5,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "cv_sel_eff_mean": 0.804084,
+   "cv_sel_eff_sd": 0.005545,
+   "cv_sel_eff_per_seed": [
+    0.800356,
+    0.803142,
+    0.805195,
+    0.794441,
+    0.811267,
+    0.803203,
+    0.804995,
+    0.814094,
+    0.803835,
+    0.800316
+   ],
+   "cv_auroc_mean": 0.773203,
+   "cv_auroc_per_seed": [
+    0.769686,
+    0.770086,
+    0.774696,
+    0.768567,
+    0.763666,
+    0.778631,
+    0.755386,
+    0.794384,
+    0.778252,
+    0.778681
+   ],
+   "fold_counts": [
+    1090,
+    1534,
+    1920,
+    2259,
+    2140
+   ]
+  },
+  "noise": {
+   "featdir": "feats_hidden_noise",
+   "n_rows": 8943,
+   "d": 3584,
+   "n_folds": 5,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "cv_sel_eff_mean": 0.78005,
+   "cv_sel_eff_sd": 0.008283,
+   "cv_sel_eff_per_seed": [
+    0.769409,
+    0.791455,
+    0.793033,
+    0.781564,
+    0.773539,
+    0.7715,
+    0.780653,
+    0.786958,
+    0.778431,
+    0.773955
+   ],
+   "cv_auroc_mean": 0.745898,
+   "cv_auroc_per_seed": [
+    0.739062,
+    0.737074,
+    0.752279,
+    0.745922,
+    0.748476,
+    0.749482,
+    0.736461,
+    0.749582,
+    0.744797,
+    0.755846
+   ],
+   "fold_counts": [
+    1090,
+    1534,
+    1920,
+    2259,
+    2140
+   ]
+  }
+ },
+ "contrast_real_minus_noise": {
+  "d_cv_sel_eff_mean": 0.024035,
+  "d_cv_sel_eff_per_seed": [
+   0.030947,
+   0.011687,
+   0.012162,
+   0.012877,
+   0.037728,
+   0.031703,
+   0.024342,
+   0.027136,
+   0.025404,
+   0.026361
+  ],
+  "d_cv_sel_eff_sd": 0.009,
+  "n_positive": 10,
+  "n_seeds": 10,
+  "d_cv_auroc_mean": 0.027305,
+  "d_cv_auroc_per_seed": [
+   0.030624,
+   0.033012,
+   0.022417,
+   0.022645,
+   0.01519,
+   0.029149,
+   0.018925,
+   0.044802,
+   0.033455,
+   0.022835
+  ]
+ },
+ "how_to_read": {
+  "if_the_contrast_is_LARGE": "the language-side representation already carries substantial image information, and the round's premise -- 'the verifier is not looking at the image' -- is FALSE. That would explain the null on every vision-injection arm: there is no vision blindness left to fix.",
+  "if_the_contrast_is_~ZERO": "the language-side head really is scoring from text priors alone, the premise holds, and the vision-injection null would then be a statement about the INJECTION MECHANISMS tried rather than about the information being redundant."
+ }
+}

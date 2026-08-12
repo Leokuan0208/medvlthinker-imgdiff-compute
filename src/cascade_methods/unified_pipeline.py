@@ -515,10 +515,19 @@ def cost_flopeq(cell, k_mean, esc=0.0):
     return k_mean * 1.0 + esc * 4.57
 
 
-def analyse(tag="zeroshot"):
+def analyse(tag="zeroshot", open_dump_dir=None):
+    """open_dump_dir: which adapter's open-text transfer dumps feed the SAMPLED branch.
+    Default = the incumbent clean verifier (what arm A used).  A trained arm that also scored the
+    open pool passes its OWN dump dir, so the whole 8-cell macro is produced by ONE adapter -- which
+    is the only version of the unified claim worth reporting for that arm.  The choice is recorded
+    in the artifact as `open_branch_dump_dir`, never left implicit."""
     z = np.load(VEC_NPZ, allow_pickle=True)
     work = build_worklist()
-    res = {"tag": tag, "date": DATE, "cells": {}}
+    odir = open_dump_dir or DUMP_DIR_CLEAN
+    res = {"tag": tag, "date": DATE, "cells": {},
+           "open_branch_dump_dir": os.path.relpath(odir, ROOT),
+           "open_branch_is_the_same_adapter_as_the_option_branch":
+               (tag != "zeroshot" and open_dump_dir is not None)}
 
     macro_pipe, macro_7b, macro_32d = {}, {}, {}
     gate_conf, gate_ok, gate_32 = {}, {}, {}
@@ -587,7 +596,7 @@ def analyse(tag="zeroshot"):
                     "cell is carried at the 7B floor.")
             cf = sevenb_margin(cell)          # gate it with the 7B's own deployed margin
         else:
-            dp = os.path.join(DUMP_DIR_CLEAN,
+            dp = os.path.join(odir,
                               f"transfer_dump_{ {'SLAKE_open':'slake','VQA_RAD_open':'vqa_rad','PATH_VQA_open':'pathvqa'}[cell] }_open_lingshu7b.json")
             rows_o = json.load(open(dp))
             ok_o, cf_o = [], []
@@ -794,6 +803,9 @@ def main():
     ap.add_argument("--worklist", action="store_true")
     ap.add_argument("--analyse", action="store_true")
     ap.add_argument("--tag", default="zeroshot")
+    ap.add_argument("--open_dump_dir", default="",
+                    help="adapter dir whose transfer_dump_*_open_lingshu7b.json feed the SAMPLED "
+                         "branch; empty = the incumbent clean verifier (arm A's choice)")
     a = ap.parse_args()
     os.makedirs(PARTS, exist_ok=True)
     if a.prereg:
@@ -812,7 +824,8 @@ def main():
         json.dump(rep, open(os.path.join(PARTS, "disjointness.json"), "w"), indent=1)
         print(json.dumps(rep, indent=1))
     if a.analyse:
-        r = analyse(a.tag)
+        odir = os.path.join(ROOT, a.open_dump_dir) if a.open_dump_dir else None
+        r = analyse(a.tag, open_dump_dir=odir)
         p = os.path.join(PARTS, f"analysis_{a.tag}.json")
         json.dump(r, open(p, "w"), indent=1)
         print(json.dumps(r, indent=1))

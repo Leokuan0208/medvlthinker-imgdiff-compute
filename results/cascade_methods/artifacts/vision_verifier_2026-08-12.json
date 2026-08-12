@@ -17,32 +17,118 @@
   "ranker": "rank_avg",
   "device_heads": "cpu",
   "device_extraction": "cuda, HF transformers bf16 flash_attention_2, tp=1",
-  "nboot": 2000
+  "nboot": 10000
+ },
+ "train_only_cv_arm_selection": {
+  "what": "PRE-REGISTERED arm selection, TRAIN-ONLY 5-fold image-grouped CV. Eval never touched.",
+  "date": "2026-08-12",
+  "folds": 5,
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "layer": 21,
+  "grid_layer": 21,
+  "threads": 8,
+  "endpoint": "within-question argmax hit rate on the held-out fold (identical to fit_hidden_head.cv)",
+  "table": {
+   "L": {
+    "cv_sel_eff": 0.6730034570792295,
+    "cv_auroc": 0.7214363833073817,
+    "per_seed": [
+     0.674481,
+     0.67092,
+     0.673608
+    ],
+    "d": 3584,
+    "minutes": 31.75
+   },
+   "Vmean": {
+    "cv_sel_eff": 0.46337765280302384,
+    "cv_auroc": 0.5022922980778332,
+    "per_seed": [
+     0.463825,
+     0.463479,
+     0.462829
+    ],
+    "d": 3584,
+    "minutes": 3.85
+   },
+   "L_Vmean": {
+    "cv_sel_eff": 0.6750161364339039,
+    "cv_auroc": 0.6705254710419611,
+    "per_seed": [
+     0.66693,
+     0.677496,
+     0.680623
+    ],
+    "d": 7168,
+    "minutes": 4.84
+   },
+   "L_prod": {
+    "cv_sel_eff": 0.6697544360386672,
+    "cv_auroc": 0.7216127977726036,
+    "per_seed": [
+     0.668808,
+     0.665969,
+     0.674486
+    ],
+    "d": 7168,
+    "minutes": 4.82
+   },
+   "L_simgrid": {
+    "cv_sel_eff": 0.6707457479547522,
+    "cv_auroc": 0.7076161868931751,
+    "per_seed": [
+     0.676984,
+     0.66461,
+     0.670643
+    ],
+    "d": 3620,
+    "minutes": 3.32
+   },
+   "L_maxsim": {
+    "cv_sel_eff": 0.6722116252200226,
+    "cv_auroc": 0.7206172265405808,
+    "per_seed": [
+     0.672239,
+     0.674919,
+     0.669477
+    ],
+    "d": 3590,
+    "minutes": 3.3
+   },
+   "L_prod_sim": {
+    "cv_sel_eff": 0.6724776368700273,
+    "cv_auroc": 0.7166931198912471,
+    "per_seed": [
+     0.678196,
+     0.67481,
+     0.664427
+    ],
+    "d": 7204,
+    "minutes": 5.46
+   }
+  },
+  "cv_selected_overall": "L_Vmean",
+  "cv_selected_vision_arm": "L_Vmean",
+  "note": "cv_sel_eff is NOT comparable in level to eval sel_eff: the train pool has no 8-slot sampling structure and a different candidate-count distribution. Only the RANKING of arms is used.",
+  "HOW_TO_READ": "cv_sel_eff is NOT comparable in LEVEL to eval sel_eff -- the train pool has no 8-slot sampling structure and a different candidate-count distribution. Only the RANKING is used, and only to name the primary arm without consulting eval."
  },
  "protocol_deviations_from_the_preregistration": {
   "_why_this_section_is_first": "the pre-registration is in the repo and can be diffed against this file; every departure from it is listed here rather than left for a reader to notice.",
-  "D1_train_only_CV_did_not_complete": {
+  "D1_train_only_CV_RESOLVED_it_did_complete": {
+   "_status": "RESOLVED. An earlier assembly of this artifact (06:54) recorded this as an unresolved deviation because the CV sweep had not finished at that time. It finished afterwards, at 08:33 (logs/visverif_cv_concat.log), and this artifact is assembled from the COMPLETED CV. The deviation is retained here rather than deleted so the earlier statement is visibly superseded.",
    "preregistered": "arm selection by 5-fold image-grouped CV inside the TRAIN pool, 3 seeds, over all 8 declared arms; the CV-selected arm is the primary.",
-   "what_happened": "the CV was launched twice (3 seeds, then 1 seed for affordability) on a machine shared with several other concurrent research rounds. Load average ran 50-100 on 48 cores with ~0.9M context switches/s; the first arm alone took 11.2 min and the full sweep did not complete inside this round's compute window. Both runs were stopped. Only one arm ever finished: L, cv_sel_eff 0.673003, cv_auroc 0.721436 (logs/visverif_cv_concat.log), which is not enough to RANK arms.",
-   "what_was_done_instead": "the primary arm is chosen by the ANTI-CONSERVATIVE rule -- the vision arm that looks best ON EVAL. See primary_comparison.selection_basis_note. For a NULL result this is strictly stronger than the pre-registered CV: it hands the vision hypothesis the most favourable arm obtainable even with knowledge of the answer.",
-   "what_this_would_invalidate": "a POSITIVE claim. No positive claim is made here. If any vision arm had beaten the bar, this deviation would make that win inadmissible and it would have to be re-run under the CV.",
-   "cv_value_that_did_complete": {
-    "arm": "L",
-    "cv_sel_eff": 0.673003,
-    "cv_auroc": 0.721436,
-    "seeds": [
-     0,
-     1,
-     2
-    ],
-    "folds": 5,
-    "note": "cv_sel_eff is not comparable in LEVEL to eval sel_eff; only arm ranking would have used it."
-   }
+   "what_happened": "the CV was launched three times on a machine shared with several other concurrent research rounds (load average 20-100 on 48 cores). The first two attempts were stopped; the third completed all 7 concat arms at 3 seeds x 5 folds -- see train_only_cv_arm_selection for the full table. The CV names L_Vmean (cv_sel_eff 0.675016), and THAT arm is the primary comparison in this artifact. Eval was never consulted to choose it.",
+   "the_one_remaining_shortfall": "the pre-registration declared 8 arms; the CV ranked the 7 CONCAT arms. xattn is a differently-shaped model (a learned cross-attention module, not a concat feature) and was not run through the same CV. It is reported as a SECONDARY arm on its own, and it sits BELOW the bar, so its omission from the CV cannot have hidden a win.",
+   "anti_conservative_second_contrast_also_reported": "because a null is being reported, the arm that looks BEST ON EVAL (L_prod_sim) is ALSO contrasted against the bar, in second_contrast_other_selection_rule. That rule is inadmissible for a positive claim but is the strongest possible test of a null: if even the arm chosen with knowledge of the answer cannot beat the bar, no admissible rule could have."
   },
   "D2_seed_counts": {
    "preregistered": "10 seeds for every arm",
-   "what_happened": "see arms.*.per_seed_sel_eff.n_seeds for the count actually achieved per arm. The language-side BAR has its full 10. Arms with fewer are labelled by their own n_seeds and every primary contrast is computed on the INTERSECTION of the two arms' seeds (primary_comparison.seeds_used_for_both_ensembles), so no comparison is between ensembles of different size.",
-   "Vmean_is_a_deliberate_exception": "1 seed, and 1 seed is complete for it -- see arms.Vmean._note.why_one_seed_settles_it."
+   "what_happened": "ACHIEVED for all 6 concat arms (L, Vmean-degenerate aside) and for the primary contrast. See arms.*.per_seed_sel_eff.n_seeds for the count per arm. Every primary contrast is computed on the INTERSECTION of the two arms' seeds (primary_comparison.seeds_used_for_both_ensembles), so no comparison is between ensembles of different size.",
+   "Vmean_is_a_deliberate_exception": "see arms.Vmean._note.why_one_seed_settles_it -- every seed returns the identical selection vector by construction, which the seeds run confirm exactly."
   },
   "D3_24_thread_null_test_abandoned": "see null_tests.N4; not load-bearing, no arm is fitted at 24 threads.",
   "D4_attack_1c_done_by_ablation_not_retraining": "see vision_capacity_ablation_of_incumbent_LoRA.what for the reasoning: a retrain costs ~108 min/seed against a documented seed spread (~0.021 sel_eff) that exceeds every architectural effect ever measured on this endpoint, so a 1-2 seed retrain would have been uninterpretable. The ablation answers the same question with zero training variance."
@@ -188,6 +274,14 @@
    "verdict": "PASS",
    "why_two_pins": "the CPU trainer's batch permutation is thread-count sensitive; the two published seed-0 values differ by 0.004769 for that reason alone. Every arm in this round is fitted at the SAME 8-thread pin, so the 8-thread row is the BINDING reproduction; the 24-thread row is context only.",
    "note_if_24_not_measured": "the 24-thread re-measurement was started and then abandoned to stop it starving the arm fits on a heavily contended machine (the published 0.795640 is NOT restated as a measurement here). It is not load-bearing: no arm in this round is fitted at 24 threads."
+  },
+  "N5_language_ablation_plumbing_is_inert": {
+   "name": "pointing --lang_eval_featdir at the REAL cache must reproduce the ordinary L arm bit-exact, so that anything the noise arm shows is the PIXELS and not the alternate load path",
+   "code": "src/training_methods/vision_verifier_fit.py --lang_eval_featdir feats_hidden",
+   "L_seed0_normal_path": 0.800409,
+   "L_seed0_via_featdir_argument": 0.800409,
+   "abs_deviation": 0.0,
+   "verdict": "PASS"
   }
  },
  "controls": {
@@ -396,296 +490,6 @@
     "cand_auroc": 0.572321
    }
   },
-  "L_Vmean": {
-   "_note": null,
-   "per_seed_sel_eff": {
-    "seeds": [
-     0,
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
-    ],
-    "n_seeds": 7,
-    "mean": 0.792721,
-    "sd": 0.009069,
-    "min": 0.779973,
-    "max": 0.80109,
-    "per_seed": {
-     "0": 0.779973,
-     "1": 0.792234,
-     "2": 0.794959,
-     "3": 0.799046,
-     "4": 0.80109,
-     "5": 0.80109,
-     "6": 0.780654
-    }
-   },
-   "seed_ensemble": {
-    "name": "L_Vmean_10seed_rank_ensemble",
-    "sel_eff": 0.799728,
-    "acc": 0.50064,
-    "per_ds": {
-     "slake_open": 0.869489,
-     "vqa_rad_open": 0.730159,
-     "pathvqa_open": 0.76
-    },
-    "contested_sel_eff": 0.679039,
-    "cand_auroc": 0.579977
-   },
-   "seed_ensemble_by_stratum": {
-    "short3": {
-     "n": 1372,
-     "sel_eff": 0.819242
-    },
-    "long4plus": {
-     "n": 96,
-     "sel_eff": 0.520833
-    },
-    "gold_1word": {
-     "n": 985,
-     "sel_eff": 0.838579
-    },
-    "gold_2to3": {
-     "n": 387,
-     "sel_eff": 0.770026
-    },
-    "gold_4to8": {
-     "n": 82,
-     "sel_eff": 0.52439
-    },
-    "gold_9plus": {
-     "n": 14,
-     "sel_eff": 0.5
-    },
-    "laterality": {
-     "n": 230,
-     "sel_eff": 0.626087
-    },
-    "laterality_question": {
-     "n": 92,
-     "sel_eff": 0.73913
-    },
-    "laterality_candidate": {
-     "n": 160,
-     "sel_eff": 0.6
-    },
-    "laterality_gold": {
-     "n": 98,
-     "sel_eff": 0.642857
-    },
-    "short3_and_laterality": {
-     "n": 185,
-     "sel_eff": 0.648649
-    },
-    "short3_not_laterality": {
-     "n": 1187,
-     "sel_eff": 0.84583
-    }
-   },
-   "fused_with_incumbent": {
-    "name": "L_Vmean+incumbent rank_avg fusion",
-    "sel_eff": 0.811308,
-    "acc": 0.507889,
-    "per_ds": {
-     "slake_open": 0.873016,
-     "vqa_rad_open": 0.785714,
-     "pathvqa_open": 0.770323
-    },
-    "contested_sel_eff": 0.697598,
-    "cand_auroc": 0.56884
-   }
-  },
-  "L_prod": {
-   "_note": null,
-   "per_seed_sel_eff": {
-    "seeds": [
-     0,
-     1,
-     2
-    ],
-    "n_seeds": 3,
-    "mean": 0.796549,
-    "sd": 0.00219,
-    "min": 0.794959,
-    "max": 0.799046,
-    "per_seed": {
-     "0": 0.794959,
-     "1": 0.799046,
-     "2": 0.79564
-    }
-   },
-   "seed_ensemble": {
-    "name": "L_prod_10seed_rank_ensemble",
-    "sel_eff": 0.802452,
-    "acc": 0.502345,
-    "per_ds": {
-     "slake_open": 0.87478,
-     "vqa_rad_open": 0.777778,
-     "pathvqa_open": 0.753548
-    },
-    "contested_sel_eff": 0.683406,
-    "cand_auroc": 0.583088
-   },
-   "seed_ensemble_by_stratum": {
-    "short3": {
-     "n": 1372,
-     "sel_eff": 0.817784
-    },
-    "long4plus": {
-     "n": 96,
-     "sel_eff": 0.583333
-    },
-    "gold_1word": {
-     "n": 985,
-     "sel_eff": 0.834518
-    },
-    "gold_2to3": {
-     "n": 387,
-     "sel_eff": 0.775194
-    },
-    "gold_4to8": {
-     "n": 82,
-     "sel_eff": 0.597561
-    },
-    "gold_9plus": {
-     "n": 14,
-     "sel_eff": 0.5
-    },
-    "laterality": {
-     "n": 230,
-     "sel_eff": 0.647826
-    },
-    "laterality_question": {
-     "n": 92,
-     "sel_eff": 0.75
-    },
-    "laterality_candidate": {
-     "n": 160,
-     "sel_eff": 0.625
-    },
-    "laterality_gold": {
-     "n": 98,
-     "sel_eff": 0.663265
-    },
-    "short3_and_laterality": {
-     "n": 185,
-     "sel_eff": 0.654054
-    },
-    "short3_not_laterality": {
-     "n": 1187,
-     "sel_eff": 0.843302
-    }
-   },
-   "fused_with_incumbent": {
-    "name": "L_prod+incumbent rank_avg fusion",
-    "sel_eff": 0.81267,
-    "acc": 0.508742,
-    "per_ds": {
-     "slake_open": 0.880071,
-     "vqa_rad_open": 0.809524,
-     "pathvqa_open": 0.763871
-    },
-    "contested_sel_eff": 0.699782,
-    "cand_auroc": 0.572433
-   }
-  },
-  "L_simgrid": {
-   "_note": null,
-   "per_seed_sel_eff": {
-    "seeds": [
-     0,
-     1,
-     2
-    ],
-    "n_seeds": 3,
-    "mean": 0.792234,
-    "sd": 0.010706,
-    "min": 0.779973,
-    "max": 0.799728,
-    "per_seed": {
-     "0": 0.779973,
-     "1": 0.797003,
-     "2": 0.799728
-    }
-   },
-   "seed_ensemble": {
-    "name": "L_simgrid_10seed_rank_ensemble",
-    "sel_eff": 0.80109,
-    "acc": 0.501493,
-    "per_ds": {
-     "slake_open": 0.867725,
-     "vqa_rad_open": 0.761905,
-     "pathvqa_open": 0.75871
-    },
-    "contested_sel_eff": 0.681223,
-    "cand_auroc": 0.576164
-   },
-   "seed_ensemble_by_stratum": {
-    "short3": {
-     "n": 1372,
-     "sel_eff": 0.819971
-    },
-    "long4plus": {
-     "n": 96,
-     "sel_eff": 0.53125
-    },
-    "gold_1word": {
-     "n": 985,
-     "sel_eff": 0.841624
-    },
-    "gold_2to3": {
-     "n": 387,
-     "sel_eff": 0.764858
-    },
-    "gold_4to8": {
-     "n": 82,
-     "sel_eff": 0.512195
-    },
-    "gold_9plus": {
-     "n": 14,
-     "sel_eff": 0.642857
-    },
-    "laterality": {
-     "n": 230,
-     "sel_eff": 0.643478
-    },
-    "laterality_question": {
-     "n": 92,
-     "sel_eff": 0.793478
-    },
-    "laterality_candidate": {
-     "n": 160,
-     "sel_eff": 0.59375
-    },
-    "laterality_gold": {
-     "n": 98,
-     "sel_eff": 0.632653
-    },
-    "short3_and_laterality": {
-     "n": 185,
-     "sel_eff": 0.654054
-    },
-    "short3_not_laterality": {
-     "n": 1187,
-     "sel_eff": 0.84583
-    }
-   },
-   "fused_with_incumbent": {
-    "name": "L_simgrid+incumbent rank_avg fusion",
-    "sel_eff": 0.813351,
-    "acc": 0.509168,
-    "per_ds": {
-     "slake_open": 0.878307,
-     "vqa_rad_open": 0.81746,
-     "pathvqa_open": 0.765161
-    },
-    "contested_sel_eff": 0.700873,
-    "cand_auroc": 0.571664
-   }
-  },
   "Vmean": {
    "_note": {
     "role": "DEGENERATE CONTROL, pre-registered to collapse to the first-index tie-break, and it does so EXACTLY.",
@@ -694,20 +498,24 @@
      "acc": 0.423454,
      "source": "preregistration.controls_all_on_the_identical_2345_pool.slot0_first_index_tiebreak_accuracy"
     },
-    "why_one_seed_settles_it": "the feature is the image mean, which by the causal-mask result (N3b) is IDENTICAL for every candidate of a question. Whatever the head learns, every slot in a pool receives the same score, so argmax always returns slot 0 -- for EVERY seed. Additional seeds are guaranteed to give the identical selection vector, so they were not run.",
+    "why_one_seed_settles_it": "the feature is the image mean, which by the causal-mask result (N3b) is IDENTICAL for every candidate of a question. Whatever the head learns, every slot in a pool receives the same score, so argmax always returns slot 0 -- for EVERY seed. The prediction is that additional seeds give a bit-identical selection vector, and the seeds actually run CONFIRM it: see per_seed_sel_eff, where every seed returns exactly 0.676431 (sd = 0.000000) and matches the pre-registered slot-0 value.",
     "what_it_proves": "a vision feature used ADDITIVELY cannot change a within-pool argmax. Any gain from vision must come from a candidate x image INTERACTION. This is the empirical half of the structural argument."
    },
    "per_seed_sel_eff": {
     "seeds": [
-     0
+     0,
+     1,
+     2
     ],
-    "n_seeds": 1,
+    "n_seeds": 3,
     "mean": 0.676431,
-    "sd": null,
+    "sd": 0.0,
     "min": 0.676431,
     "max": 0.676431,
     "per_seed": {
-     "0": 0.676431
+     "0": 0.676431,
+     "1": 0.676431,
+     "2": 0.676431
     }
    },
    "seed_ensemble": {
@@ -784,80 +592,804 @@
     "contested_sel_eff": 0.638646,
     "cand_auroc": 0.560868
    }
+  },
+  "L_Vmean": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.792098,
+    "sd": 0.007772,
+    "min": 0.779973,
+    "max": 0.80109,
+    "per_seed": {
+     "0": 0.779973,
+     "1": 0.792234,
+     "2": 0.794959,
+     "3": 0.799046,
+     "4": 0.80109,
+     "5": 0.80109,
+     "6": 0.780654,
+     "7": 0.792916,
+     "8": 0.785422,
+     "9": 0.793597
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_Vmean_10seed_rank_ensemble",
+    "sel_eff": 0.803134,
+    "acc": 0.502772,
+    "per_ds": {
+     "slake_open": 0.871252,
+     "vqa_rad_open": 0.730159,
+     "pathvqa_open": 0.765161
+    },
+    "contested_sel_eff": 0.684498,
+    "cand_auroc": 0.579442
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.822157
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.53125
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.843655
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.767442
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.536585
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.626087
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.75
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.59375
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.632653
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.643243
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.850042
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_Vmean+incumbent rank_avg fusion",
+    "sel_eff": 0.811308,
+    "acc": 0.507889,
+    "per_ds": {
+     "slake_open": 0.871252,
+     "vqa_rad_open": 0.793651,
+     "pathvqa_open": 0.770323
+    },
+    "contested_sel_eff": 0.697598,
+    "cand_auroc": 0.568467
+   }
+  },
+  "L_prod": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.797956,
+    "sd": 0.00617,
+    "min": 0.78951,
+    "max": 0.809946,
+    "per_seed": {
+     "0": 0.794959,
+     "1": 0.799046,
+     "2": 0.79564,
+     "3": 0.809946,
+     "4": 0.804496,
+     "5": 0.802452,
+     "6": 0.79564,
+     "7": 0.791553,
+     "8": 0.78951,
+     "9": 0.796322
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_prod_10seed_rank_ensemble",
+    "sel_eff": 0.799046,
+    "acc": 0.500213,
+    "per_ds": {
+     "slake_open": 0.873016,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.750968
+    },
+    "contested_sel_eff": 0.677948,
+    "cand_auroc": 0.58448
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.815598
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.5625
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.833503
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.770026
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.573171
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.626087
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.75
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.6
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.632653
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.632432
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.844145
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_prod+incumbent rank_avg fusion",
+    "sel_eff": 0.807902,
+    "acc": 0.505757,
+    "per_ds": {
+     "slake_open": 0.883598,
+     "vqa_rad_open": 0.785714,
+     "pathvqa_open": 0.756129
+    },
+    "contested_sel_eff": 0.69214,
+    "cand_auroc": 0.571421
+   }
+  },
+  "L_simgrid": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.792711,
+    "sd": 0.009362,
+    "min": 0.775886,
+    "max": 0.805858,
+    "per_seed": {
+     "0": 0.779973,
+     "1": 0.797003,
+     "2": 0.799728,
+     "3": 0.790191,
+     "4": 0.797684,
+     "5": 0.775886,
+     "6": 0.797003,
+     "7": 0.805858,
+     "8": 0.797003,
+     "9": 0.786785
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_simgrid_10seed_rank_ensemble",
+    "sel_eff": 0.808583,
+    "acc": 0.506183,
+    "per_ds": {
+     "slake_open": 0.87478,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.769032
+    },
+    "contested_sel_eff": 0.693231,
+    "cand_auroc": 0.578884
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.826531
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.552083
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.84264
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.78553
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.560976
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.5
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.656522
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.815217
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.6
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.622449
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.659459
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.85257
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_simgrid+incumbent rank_avg fusion",
+    "sel_eff": 0.81267,
+    "acc": 0.508742,
+    "per_ds": {
+     "slake_open": 0.885362,
+     "vqa_rad_open": 0.81746,
+     "pathvqa_open": 0.75871
+    },
+    "contested_sel_eff": 0.699782,
+    "cand_auroc": 0.575845
+   }
+  },
+  "L_maxsim": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.798501,
+    "sd": 0.005971,
+    "min": 0.78951,
+    "max": 0.809264,
+    "per_seed": {
+     "0": 0.796322,
+     "1": 0.805858,
+     "2": 0.794959,
+     "3": 0.797003,
+     "4": 0.78951,
+     "5": 0.792916,
+     "6": 0.799728,
+     "7": 0.802452,
+     "8": 0.809264,
+     "9": 0.797003
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_maxsim_10seed_rank_ensemble",
+    "sel_eff": 0.805858,
+    "acc": 0.504478,
+    "per_ds": {
+     "slake_open": 0.873016,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.765161
+    },
+    "contested_sel_eff": 0.688865,
+    "cand_auroc": 0.580323
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.824344
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.541667
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.840609
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.782946
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.536585
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.571429
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.647826
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.782609
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.59375
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.642857
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.659459
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.850042
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_maxsim+incumbent rank_avg fusion",
+    "sel_eff": 0.81267,
+    "acc": 0.508742,
+    "per_ds": {
+     "slake_open": 0.881834,
+     "vqa_rad_open": 0.81746,
+     "pathvqa_open": 0.76129
+    },
+    "contested_sel_eff": 0.699782,
+    "cand_auroc": 0.574271
+   }
+  },
+  "L_prod_sim": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.801975,
+    "sd": 0.00655,
+    "min": 0.793597,
+    "max": 0.814714,
+    "per_seed": {
+     "0": 0.79564,
+     "1": 0.800409,
+     "2": 0.804496,
+     "3": 0.814714,
+     "4": 0.809264,
+     "5": 0.799728,
+     "6": 0.801771,
+     "7": 0.804496,
+     "8": 0.793597,
+     "9": 0.79564
+    }
+   },
+   "seed_ensemble": {
+    "name": "L_prod_sim_10seed_rank_ensemble",
+    "sel_eff": 0.804496,
+    "acc": 0.503625,
+    "per_ds": {
+     "slake_open": 0.883598,
+     "vqa_rad_open": 0.730159,
+     "pathvqa_open": 0.75871
+    },
+    "contested_sel_eff": 0.686681,
+    "cand_auroc": 0.583076
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.822157
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.552083
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.840609
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.775194
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.54878
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.571429
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.63913
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.73913
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.61875
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.642857
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.654054
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.848357
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "L_prod_sim+incumbent rank_avg fusion",
+    "sel_eff": 0.805858,
+    "acc": 0.504478,
+    "per_ds": {
+     "slake_open": 0.880071,
+     "vqa_rad_open": 0.793651,
+     "pathvqa_open": 0.753548
+    },
+    "contested_sel_eff": 0.688865,
+    "cand_auroc": 0.574408
+   }
+  },
+  "xattn": {
+   "_note": null,
+   "per_seed_sel_eff": {
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "n_seeds": 10,
+    "mean": 0.783106,
+    "sd": 0.009704,
+    "min": 0.769755,
+    "max": 0.799728,
+    "per_seed": {
+     "0": 0.790191,
+     "1": 0.779973,
+     "2": 0.790191,
+     "3": 0.773161,
+     "4": 0.786104,
+     "5": 0.785422,
+     "6": 0.770436,
+     "7": 0.769755,
+     "8": 0.799728,
+     "9": 0.786104
+    }
+   },
+   "seed_ensemble": {
+    "name": "xattn_10seed_rank_ensemble",
+    "sel_eff": 0.803815,
+    "acc": 0.503198,
+    "per_ds": {
+     "slake_open": 0.869489,
+     "vqa_rad_open": 0.714286,
+     "pathvqa_open": 0.770323
+    },
+    "contested_sel_eff": 0.68559,
+    "cand_auroc": 0.578177
+   },
+   "seed_ensemble_by_stratum": {
+    "short3": {
+     "n": 1372,
+     "sel_eff": 0.818513
+    },
+    "long4plus": {
+     "n": 96,
+     "sel_eff": 0.59375
+    },
+    "gold_1word": {
+     "n": 985,
+     "sel_eff": 0.834518
+    },
+    "gold_2to3": {
+     "n": 387,
+     "sel_eff": 0.777778
+    },
+    "gold_4to8": {
+     "n": 82,
+     "sel_eff": 0.585366
+    },
+    "gold_9plus": {
+     "n": 14,
+     "sel_eff": 0.642857
+    },
+    "laterality": {
+     "n": 230,
+     "sel_eff": 0.643478
+    },
+    "laterality_question": {
+     "n": 92,
+     "sel_eff": 0.793478
+    },
+    "laterality_candidate": {
+     "n": 160,
+     "sel_eff": 0.60625
+    },
+    "laterality_gold": {
+     "n": 98,
+     "sel_eff": 0.612245
+    },
+    "short3_and_laterality": {
+     "n": 185,
+     "sel_eff": 0.637838
+    },
+    "short3_not_laterality": {
+     "n": 1187,
+     "sel_eff": 0.846672
+    }
+   },
+   "fused_with_incumbent": {
+    "name": "xattn+incumbent rank_avg fusion",
+    "sel_eff": 0.809946,
+    "acc": 0.507036,
+    "per_ds": {
+     "slake_open": 0.885362,
+     "vqa_rad_open": 0.777778,
+     "pathvqa_open": 0.76
+    },
+    "contested_sel_eff": 0.695415,
+    "cand_auroc": 0.572827
+   }
   }
  },
  "primary_comparison": {
-  "arm": "L_prod",
+  "arm": "L_Vmean",
   "against": "L",
   "why_this_bar": "the language-side head on IDENTICAL rows, identical recipe, identical seeds -- the only contrast that isolates 'does vision add anything BEYOND language'",
-  "how_the_primary_arm_was_chosen": "eval_best_anticonservative",
-  "selection_basis_note": "NOT the pre-registered CV. This arm is the one that looks BEST ON THE EVAL SET. That is inadmissible for a POSITIVE claim, and is stated here so no reader mistakes it for one -- but it is CONSERVATIVE for the NULL being reported: it gives the vision hypothesis the most favourable arm it could possibly have had, chosen with knowledge of the answer. If even this arm does not beat the language-side bar, no admissible selection rule could have done better. Every arm is reported in full below so the choice can be checked.",
+  "how_the_primary_arm_was_chosen": "cv",
+  "selection_basis_note": "PRE-REGISTERED train-only 5-fold image-grouped CV; eval was never consulted.",
   "seeds_used_for_both_ensembles": [
    0,
    1,
-   2
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
   ],
   "seed_ensemble_sel_eff": {
-   "L_prod": 0.802452,
-   "L": 0.799728
+   "L_Vmean": 0.803134,
+   "L": 0.80109
   },
   "seed_ensemble_sel_eff_all_available_seeds_NOT_matched": {
-   "L_prod": 0.8024523160762943,
+   "L_Vmean": 0.803133514986376,
    "L": 0.8010899182561307,
    "warning": "shown for completeness only; the arms may have different seed counts, and a bigger ensemble wins for reasons unrelated to the arm"
   },
-  "d_sel_eff": 0.002725,
+  "d_sel_eff": 0.002044,
   "d_sel_eff_ci": [
    -0.01158,
-   0.017711
+   0.015668
   ],
-  "d_acc": 0.001706,
+  "d_acc": 0.001279,
   "d_acc_ci": [
    -0.007249,
-   0.011087
+   0.009808
   ],
-  "contested_d_sel_eff": 0.004367,
+  "contested_d_sel_eff": 0.003275,
   "contested_ci": [
-   -0.019651,
-   0.028384
+   -0.018559,
+   0.026201
   ],
-  "laterality_d_sel_eff": 0.008696,
+  "laterality_d_sel_eff": -0.013043,
   "laterality_ci": [
-   -0.043478,
-   0.06087
+   -0.052174,
+   0.026087
   ],
   "laterality_n": 230,
   "per_seed_paired_delta": {
+   "what": "arm minus bar at the SAME seed on the SAME items, so the seed's common variance cancels. This is the TRAINING-variance test; the item bootstrap above is the SAMPLING-variance test. Both must be reported.",
    "seeds": [
     0,
     1,
-    2
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
    ],
-   "mean": -0.001135,
-   "sd": 0.00807,
-   "n_positive": 1,
-   "n": 3,
+   "mean": -0.001771,
+   "sd": 0.01105,
+   "n_positive": 5,
+   "n": 10,
    "values": [
-    -0.00545,
-    0.008174,
-    -0.006131
-   ]
+    -0.020436,
+    0.001362,
+    -0.006812,
+    0.008856,
+    0.014305,
+    0.0,
+    -0.016349,
+    0.001362,
+    -0.007493,
+    0.007493
+   ],
+   "ci95_over_seeds": [
+    -0.008515,
+    0.004632
+   ],
+   "sign_test_p_two_sided": 0.8,
+   "multiplicity_note": "7 concat arms were declared in the pre-registration. If the primary arm was chosen by looking at eval (see how_the_primary_arm_was_chosen), any nominal significance here must be discounted for selection over those 7."
   },
   "per_ds_seed_matched": {
    "slake_open": {
-    "L_prod": 0.87478,
-    "L": 0.878307
+    "L_Vmean": 0.871252,
+    "L": 0.873016
    },
    "vqa_rad_open": {
-    "L_prod": 0.777778,
-    "L": 0.730159
+    "L_Vmean": 0.730159,
+    "L": 0.722222
    },
    "pathvqa_open": {
-    "L_prod": 0.753548,
-    "L": 0.753548
+    "L_Vmean": 0.765161,
+    "L": 0.76129
    }
   },
   "guardrail_clean_vs_L": false
+ },
+ "second_contrast_other_selection_rule": {
+  "arm": "L_prod_sim",
+  "against": "L",
+  "why": "the pre-registered train-only CV and the anti-conservative eval-best rule name DIFFERENT arms. Both are reported; the conclusion must not depend on the rule.",
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "seed_ensemble_sel_eff": {
+   "L_prod_sim": 0.804496,
+   "L": 0.80109
+  },
+  "d_sel_eff": 0.003406,
+  "d_sel_eff_ci": [
+   -0.009537,
+   0.016349
+  ],
+  "laterality_d_sel_eff": 0.0,
+  "laterality_ci": [
+   -0.043478,
+   0.043478
+  ],
+  "per_seed_paired_delta": {
+   "mean": 0.008106,
+   "n_positive": 8,
+   "n": 10,
+   "values": [
+    -0.004768,
+    0.009537,
+    0.002725,
+    0.024523,
+    0.02248,
+    -0.001362,
+    0.004768,
+    0.012943,
+    0.000681,
+    0.009537
+   ]
+  }
  },
  "macro": {
   "reference": {
@@ -913,39 +1445,6 @@
      "PATH_VQA_open": 0.396
     }
    },
-   "L_Vmean": {
-    "macro_head_alone": 0.608533,
-    "closes_fraction_of_gap_head_alone": 0.1921,
-    "macro_fused_with_incumbent": 0.613963,
-    "closes_fraction_of_gap_fused": 0.2832,
-    "per_open_cell_fused": {
-     "SLAKE_open": 0.767442,
-     "VQA_RAD_open": 0.495,
-     "PATH_VQA_open": 0.398
-    }
-   },
-   "L_prod": {
-    "macro_head_alone": 0.612448,
-    "closes_fraction_of_gap_head_alone": 0.2578,
-    "macro_fused_with_incumbent": 0.616196,
-    "closes_fraction_of_gap_fused": 0.3207,
-    "per_open_cell_fused": {
-     "SLAKE_open": 0.773643,
-     "VQA_RAD_open": 0.51,
-     "PATH_VQA_open": 0.394667
-    }
-   },
-   "L_simgrid": {
-    "macro_head_alone": 0.610756,
-    "closes_fraction_of_gap_head_alone": 0.2294,
-    "macro_fused_with_incumbent": 0.616711,
-    "closes_fraction_of_gap_fused": 0.3293,
-    "per_open_cell_fused": {
-     "SLAKE_open": 0.772093,
-     "VQA_RAD_open": 0.515,
-     "PATH_VQA_open": 0.395333
-    }
-   },
    "Vmean": {
     "macro_head_alone": 0.586134,
     "closes_fraction_of_gap_head_alone": -0.1838,
@@ -956,17 +1455,83 @@
      "VQA_RAD_open": 0.48,
      "PATH_VQA_open": 0.372667
     }
+   },
+   "L_Vmean": {
+    "macro_head_alone": 0.609061,
+    "closes_fraction_of_gap_head_alone": 0.201,
+    "macro_fused_with_incumbent": 0.614394,
+    "closes_fraction_of_gap_fused": 0.2905,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.765891,
+     "VQA_RAD_open": 0.5,
+     "PATH_VQA_open": 0.398
+    }
+   },
+   "L_prod": {
+    "macro_head_alone": 0.610838,
+    "closes_fraction_of_gap_head_alone": 0.2308,
+    "macro_fused_with_incumbent": 0.614209,
+    "closes_fraction_of_gap_fused": 0.2874,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.776744,
+     "VQA_RAD_open": 0.495,
+     "PATH_VQA_open": 0.390667
+    }
+   },
+   "L_simgrid": {
+    "macro_head_alone": 0.611573,
+    "closes_fraction_of_gap_head_alone": 0.2431,
+    "macro_fused_with_incumbent": 0.617069,
+    "closes_fraction_of_gap_fused": 0.3354,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.778295,
+     "VQA_RAD_open": 0.515,
+     "PATH_VQA_open": 0.392
+    }
+   },
+   "L_maxsim": {
+    "macro_head_alone": 0.611129,
+    "closes_fraction_of_gap_head_alone": 0.2357,
+    "macro_fused_with_incumbent": 0.616848,
+    "closes_fraction_of_gap_fused": 0.3317,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.775194,
+     "VQA_RAD_open": 0.515,
+     "PATH_VQA_open": 0.393333
+    }
+   },
+   "L_prod_sim": {
+    "macro_head_alone": 0.610001,
+    "closes_fraction_of_gap_head_alone": 0.2167,
+    "macro_fused_with_incumbent": 0.61428,
+    "closes_fraction_of_gap_fused": 0.2885,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.773643,
+     "VQA_RAD_open": 0.5,
+     "PATH_VQA_open": 0.389333
+    }
+   },
+   "xattn": {
+    "macro_head_alone": 0.60795,
+    "closes_fraction_of_gap_head_alone": 0.1823,
+    "macro_fused_with_incumbent": 0.614028,
+    "closes_fraction_of_gap_fused": 0.2843,
+    "per_open_cell_fused": {
+     "SLAKE_open": 0.778295,
+     "VQA_RAD_open": 0.49,
+     "PATH_VQA_open": 0.392667
+    }
    }
   },
   "primary_vs_L": {
-   "d_macro": 0.004069,
+   "d_macro": 0.000681,
    "d_macro_ci": [
-    -0.001667,
-    0.00948
+    -0.003831,
+    0.005217
    ],
-   "macro_primary": 0.612448,
+   "macro_primary": 0.609061,
    "macro_L": 0.608379,
-   "fraction_of_the_0.059586_gap": 0.0683
+   "fraction_of_the_0.059586_gap": 0.0114
   }
  },
  "image_ablations": {
@@ -979,6 +1544,719 @@
     "if_it_does_NOT_drop": "clean conclusion -- the language-side head was scoring from text priors, and there is genuine room for vision injection.",
     "if_it_DOES_drop": "confounded. The head is trained on real-image features and tested on noise-image features, so a drop mixes 'lost the image information' with 'features are now out of distribution'. The SIZE of the drop is still informative -- a fall to the random-pick floor (0.676260) means the image was carrying essentially all of the head's discrimination -- but the drop alone does not cleanly separate the two mechanisms.",
     "why_it_is_still_worth_running": "the premise under test is 'the verifier ignores vision', and the NO-DROP branch is exactly the branch that would confirm that premise. It is the unconfounded direction."
+   }
+  },
+  "L_prod": {
+   "blank": {
+    "name": "L_prod[blank]",
+    "sel_eff": 0.617847,
+    "acc": 0.38678,
+    "per_ds": {
+     "slake_open": 0.797178,
+     "vqa_rad_open": 0.769841,
+     "pathvqa_open": 0.461935
+    },
+    "contested_sel_eff": 0.387555,
+    "cand_auroc": 0.501558,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.634111
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.385417
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.658883
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.571059
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.378049
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.428571
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.508696
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.565217
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.48125
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.530612
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.535135
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.649537
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "sel_eff": 0.802452,
+     "acc": 0.502345
+    },
+    "delta_vs_real_image": -0.184605,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.184605,
+     "d_sel_eff_ci": [
+      -0.209809,
+      -0.158719
+     ],
+     "d_acc": -0.115565,
+     "d_acc_ci": [
+      -0.132196,
+      -0.098934
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": -0.058413,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   },
+   "noise": {
+    "name": "L_prod[noise]",
+    "sel_eff": 0.749319,
+    "acc": 0.469083,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.746032,
+     "pathvqa_open": 0.676129
+    },
+    "contested_sel_eff": 0.598253,
+    "cand_auroc": 0.571539,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.765306
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.520833
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.784772
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.715762
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.54878
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.357143
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.617391
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.706522
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.6125
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.632653
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.632432
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.786015
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "sel_eff": 0.802452,
+     "acc": 0.502345
+    },
+    "delta_vs_real_image": -0.053133,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.053134,
+     "d_sel_eff_ci": [
+      -0.071526,
+      -0.034741
+     ],
+     "d_acc": -0.033262,
+     "d_acc_ci": [
+      -0.044776,
+      -0.021748
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": 0.073059,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   },
+   "perm": {
+    "name": "L_prod[perm]",
+    "sel_eff": 0.791553,
+    "acc": 0.495522,
+    "per_ds": {
+     "slake_open": 0.864198,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.744516
+    },
+    "contested_sel_eff": 0.665939,
+    "cand_auroc": 0.578138,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.804665
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.604167
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.826396
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.749354
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.621951
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.5
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.621739
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.728261
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.58125
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.612245
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.616216
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.834035
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "sel_eff": 0.802452,
+     "acc": 0.502345
+    },
+    "delta_vs_real_image": -0.010899,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.010899,
+     "d_sel_eff_ci": [
+      -0.029292,
+      0.007493
+     ],
+     "d_acc": -0.006823,
+     "d_acc_ci": [
+      -0.018337,
+      0.004691
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": 0.115293,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   }
+  },
+  "L_prod_sim": {
+   "blank": {
+    "name": "L_prod_sim[blank]",
+    "sel_eff": 0.614441,
+    "acc": 0.384648,
+    "per_ds": {
+     "slake_open": 0.80776,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.450323
+    },
+    "contested_sel_eff": 0.382096,
+    "cand_auroc": 0.500945,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.632653
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.354167
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.660914
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.560724
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.353659
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.357143
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.504348
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.543478
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.4875
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.530612
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.535135
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.647852
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "sel_eff": 0.804496,
+     "acc": 0.503625
+    },
+    "delta_vs_real_image": -0.190055,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.190054,
+     "d_sel_eff_ci": [
+      -0.215259,
+      -0.164169
+     ],
+     "d_acc": -0.118977,
+     "d_acc_ci": [
+      -0.135181,
+      -0.101919
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": -0.061819,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   },
+   "noise": {
+    "name": "L_prod_sim[noise]",
+    "sel_eff": 0.764986,
+    "acc": 0.478891,
+    "per_ds": {
+     "slake_open": 0.853616,
+     "vqa_rad_open": 0.753968,
+     "pathvqa_open": 0.701935
+    },
+    "contested_sel_eff": 0.623362,
+    "cand_auroc": 0.574177,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.78207
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.520833
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.806091
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.72093
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.52439
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.5
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.626087
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.706522
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.6
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.591837
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.632432
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.805392
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "sel_eff": 0.804496,
+     "acc": 0.503625
+    },
+    "delta_vs_real_image": -0.03951,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.03951,
+     "d_sel_eff_ci": [
+      -0.057221,
+      -0.021798
+     ],
+     "d_acc": -0.024733,
+     "d_acc_ci": [
+      -0.035821,
+      -0.013646
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": 0.088726,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   },
+   "perm": {
+    "name": "L_prod_sim[perm]",
+    "sel_eff": 0.786104,
+    "acc": 0.492111,
+    "per_ds": {
+     "slake_open": 0.857143,
+     "vqa_rad_open": 0.769841,
+     "pathvqa_open": 0.736774
+    },
+    "contested_sel_eff": 0.657205,
+    "cand_auroc": 0.578214,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.800292
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.583333
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.82132
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.74677
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.597561
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.5
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.613043
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.684783
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.58125
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.581633
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.605405
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.830666
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "sel_eff": 0.804496,
+     "acc": 0.503625
+    },
+    "delta_vs_real_image": -0.018392,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.018392,
+     "d_sel_eff_ci": [
+      -0.036785,
+      0.0
+     ],
+     "d_acc": -0.011514,
+     "d_acc_ci": [
+      -0.022601,
+      0.0
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": 0.109844,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
+   }
+  },
+  "L": {
+   "langnoise": {
+    "name": "L[langnoise]",
+    "sel_eff": 0.718665,
+    "acc": 0.449893,
+    "per_ds": {
+     "slake_open": 0.830688,
+     "vqa_rad_open": 0.722222,
+     "pathvqa_open": 0.636129
+    },
+    "contested_sel_eff": 0.549127,
+    "cand_auroc": 0.547443,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "by_stratum": {
+     "short3": {
+      "n": 1372,
+      "sel_eff": 0.733965
+     },
+     "long4plus": {
+      "n": 96,
+      "sel_eff": 0.5
+     },
+     "gold_1word": {
+      "n": 985,
+      "sel_eff": 0.749239
+     },
+     "gold_2to3": {
+      "n": 387,
+      "sel_eff": 0.69509
+     },
+     "gold_4to8": {
+      "n": 82,
+      "sel_eff": 0.52439
+     },
+     "gold_9plus": {
+      "n": 14,
+      "sel_eff": 0.357143
+     },
+     "laterality": {
+      "n": 230,
+      "sel_eff": 0.608696
+     },
+     "laterality_question": {
+      "n": 92,
+      "sel_eff": 0.73913
+     },
+     "laterality_candidate": {
+      "n": 160,
+      "sel_eff": 0.55
+     },
+     "laterality_gold": {
+      "n": 98,
+      "sel_eff": 0.571429
+     },
+     "short3_and_laterality": {
+      "n": 185,
+      "sel_eff": 0.616216
+     },
+     "short3_not_laterality": {
+      "n": 1187,
+      "sel_eff": 0.752317
+     }
+    },
+    "real_image_reference_same_seeds": {
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "sel_eff": 0.799728,
+     "acc": 0.50064
+    },
+    "delta_vs_real_image": -0.081063,
+    "paired_ci_vs_real_image": {
+     "d_sel_eff": -0.081063,
+     "d_sel_eff_ci": [
+      -0.102861,
+      -0.059928
+     ],
+     "d_acc": -0.050746,
+     "d_acc_ci": [
+      -0.064392,
+      -0.0371
+     ],
+     "nboot": 10000,
+     "seed": 0,
+     "n_items": 2345,
+     "n_stratum": 1468
+    },
+    "distance_to_random_pick_floor": 0.042405,
+    "_floor_note": "random-pick closed form is 0.676260; an ablated arm falling to it has lost all of its discrimination."
    }
   }
  },
@@ -1006,8 +2284,8 @@
   "metric": "mixed_selection_accuracy -- see module docstring. NOT comparable to sel_eff 0.775204; it is computed on mixed items only, on a capped subsample.",
   "item_selection": "mixed items only (pool has both a correct and an incorrect candidate; n=852 of 2345), capped per dataset by a fixed shuffle (seed 20260812)",
   "fidelity_gate": {
-   "n_candidate_scores_compared": 872,
-   "mean_abs_deviation": 2.5332568807344333e-06,
+   "n_candidate_scores_compared": 2192,
+   "mean_abs_deviation": 2.6496350364973448e-06,
    "max_abs_deviation": 5.000000000032756e-06,
    "frac_within_0.01": 1.0,
    "verdict": "PASS",
@@ -1015,23 +2293,377 @@
   },
   "results": {
    "full": {
-    "n": 109,
-    "mixed_selection_accuracy": 0.6146788990825688,
+    "n": 253,
+    "mixed_selection_accuracy": 0.5928853754940712,
     "per_ds": {
+     "pathvqa_open": {
+      "n": 90,
+      "acc": 0.5888888888888889
+     },
      "slake_open": {
-      "n": 109,
-      "acc": 0.6146788990825688
+      "n": 90,
+      "acc": 0.6
+     },
+     "vqa_rad_open": {
+      "n": 73,
+      "acc": 0.589041095890411
      }
     },
-    "n_scored_total": 109
+    "n_scored_total": 274
+   },
+   "no_visual_lora": {
+    "n": 253,
+    "mixed_selection_accuracy": 0.6086956521739131,
+    "per_ds": {
+     "pathvqa_open": {
+      "n": 90,
+      "acc": 0.6222222222222222
+     },
+     "slake_open": {
+      "n": 90,
+      "acc": 0.6111111111111112
+     },
+     "vqa_rad_open": {
+      "n": 73,
+      "acc": 0.589041095890411
+     }
+    },
+    "n_scored_total": 253
+   },
+   "visual_only": {
+    "n": 253,
+    "mixed_selection_accuracy": 0.5138339920948617,
+    "per_ds": {
+     "pathvqa_open": {
+      "n": 90,
+      "acc": 0.5111111111111111
+     },
+     "slake_open": {
+      "n": 90,
+      "acc": 0.5111111111111111
+     },
+     "vqa_rad_open": {
+      "n": 73,
+      "acc": 0.5205479452054794
+     }
+    },
+    "n_scored_total": 253
    },
    "incumbent_stored_dump": {
-    "n": 109,
-    "mixed_selection_accuracy": 0.6146788990825688
+    "n": 253,
+    "mixed_selection_accuracy": 0.5928853754940712
    }
   },
-  "comparisons": {},
-  "n_common_items": 109
+  "comparisons": {
+   "no_visual_lora_minus_full": {
+    "delta": 0.015810276679841917,
+    "ci95": [
+     -0.01976284584980237,
+     0.05533596837944654
+    ],
+    "n_paired_items": 253,
+    "arm_accuracy": 0.6086956521739131,
+    "full_accuracy": 0.5928853754940712,
+    "incumbent_dump_on_same_items": 0.5928853754940712,
+    "per_ds_n": {
+     "pathvqa_open": 90,
+     "slake_open": 90,
+     "vqa_rad_open": 73
+    }
+   },
+   "visual_only_minus_full": {
+    "delta": -0.07905138339920947,
+    "ci95": [
+     -0.14229249011857703,
+     -0.01976284584980237
+    ],
+    "n_paired_items": 253,
+    "arm_accuracy": 0.5138339920948617,
+    "full_accuracy": 0.5928853754940712,
+    "incumbent_dump_on_same_items": 0.5928853754940712,
+    "per_ds_n": {
+     "pathvqa_open": 90,
+     "slake_open": 90,
+     "vqa_rad_open": 73
+    }
+   }
+  },
+  "n_common_items": 253
+ },
+ "xattn_attention_localisation": {
+  "what": "does the xattn head's learned attention localise, and does it move between 'left'- and 'right'-bearing candidates on the same image?",
+  "date": "2026-08-12",
+  "code": "src/training_methods/xattn_localisation.py",
+  "grid": "6x6 adaptively pooled patch grid",
+  "sign_convention_caveat": "in radiology 'left' usually means the PATIENT's left, which is on the VIEWER's right. A grounded head may show either sign; the test is whether the shift is non-zero and consistent.",
+  "per_seed": [
+   {
+    "seed": 0,
+    "n_rows": 8943,
+    "entropy_mean": 0.008321448369068804,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0023221443815374223,
+    "peak_mass_mean": 0.9963453111854461,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.36780161681780554,
+    "xcom_sd": 0.36558143681725175,
+    "ycom_sd": 0.3997861839288126,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": -0.0020135773534941687,
+     "sd": 0.07852456896733981,
+     "n_items": 114,
+     "perm_p_two_sided": 0.7972,
+     "ci95_from_perm_null": [
+      -0.013989231266535555,
+      0.013988683059033837
+     ]
+    }
+   },
+   {
+    "seed": 1,
+    "n_rows": 8943,
+    "entropy_mean": 0.00793754157764669,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.002215013151588485,
+    "peak_mass_mean": 0.9967575423082613,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.5690391350461727,
+    "xcom_sd": 0.32963603931541274,
+    "ycom_sd": 0.38311835774687936,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": 0.01946993825625534,
+     "sd": 0.1372038511272485,
+     "n_items": 114,
+     "perm_p_two_sided": 0.1338,
+     "ci95_from_perm_null": [
+      -0.025169541199047928,
+      0.02499342882451684
+     ]
+    }
+   },
+   {
+    "seed": 2,
+    "n_rows": 8943,
+    "entropy_mean": 0.004728351636294097,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0013194716471433567,
+    "peak_mass_mean": 0.9980115466951394,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.42872049947069296,
+    "xcom_sd": 0.35117124706782155,
+    "ycom_sd": 0.36151946925206346,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": 0.0035938977021580313,
+     "sd": 0.050363906788414674,
+     "n_items": 114,
+     "perm_p_two_sided": 0.4396,
+     "ci95_from_perm_null": [
+      -0.009728457323032638,
+      0.009728456718962764
+     ]
+    }
+   },
+   {
+    "seed": 3,
+    "n_rows": 8943,
+    "entropy_mean": 0.005202908363573955,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0014518992233414922,
+    "peak_mass_mean": 0.9978851257620519,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.31937962894052147,
+    "xcom_sd": 0.36991541606483336,
+    "ycom_sd": 0.44646862664513803,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": -0.030567271681782564,
+     "sd": 0.17854096662763175,
+     "n_items": 114,
+     "perm_p_two_sided": 0.067,
+     "ci95_from_perm_null": [
+      -0.032605997977159365,
+      0.03233096835717641
+     ]
+    }
+   },
+   {
+    "seed": 4,
+    "n_rows": 8943,
+    "entropy_mean": 0.005852711374898548,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0016332302062341203,
+    "peak_mass_mean": 0.9975040911764347,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.44095618878652193,
+    "xcom_sd": 0.348223923851713,
+    "ycom_sd": 0.44761003188754406,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": 0.002168321723489484,
+     "sd": 0.08548403735372251,
+     "n_items": 114,
+     "perm_p_two_sided": 0.8927,
+     "ci95_from_perm_null": [
+      -0.013495903669433347,
+      0.013495903669433347
+     ]
+    }
+   },
+   {
+    "seed": 5,
+    "n_rows": 8943,
+    "entropy_mean": 0.006811775466833132,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.001900862136860327,
+    "peak_mass_mean": 0.9970169317871788,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.5572907515419229,
+    "xcom_sd": 0.29793424458827217,
+    "ycom_sd": 0.4229181968276808,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": 0.012273854631545301,
+     "sd": 0.12439323617627597,
+     "n_items": 114,
+     "perm_p_two_sided": 0.3434,
+     "ci95_from_perm_null": [
+      -0.02144019984845618,
+      0.02142161878108779
+     ]
+    }
+   },
+   {
+    "seed": 6,
+    "n_rows": 8943,
+    "entropy_mean": 0.004793702686306696,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0013377082048775136,
+    "peak_mass_mean": 0.9979334967225387,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.41238117720147366,
+    "xcom_sd": 0.32845741057875616,
+    "ycom_sd": 0.44491622416298315,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": -0.028905606522041577,
+     "sd": 0.12720041319317907,
+     "n_items": 114,
+     "perm_p_two_sided": 0.0041,
+     "ci95_from_perm_null": [
+      -0.023642008070437027,
+      0.022849278650788184
+     ]
+    }
+   },
+   {
+    "seed": 7,
+    "n_rows": 8943,
+    "entropy_mean": 0.004311750004487892,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0012032167482685405,
+    "peak_mass_mean": 0.9981155350301366,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.2999055024175761,
+    "xcom_sd": 0.33858946515075,
+    "ycom_sd": 0.3043137338118552,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": -0.0023062575353342426,
+     "sd": 0.14793960549355026,
+     "n_items": 114,
+     "perm_p_two_sided": 0.8795,
+     "ci95_from_perm_null": [
+      -0.02624037969029869,
+      0.02682432686152529
+     ]
+    }
+   },
+   {
+    "seed": 8,
+    "n_rows": 8943,
+    "entropy_mean": 0.006918041308163311,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.0019305161845032178,
+    "peak_mass_mean": 0.9971539692352108,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.33756949068229075,
+    "xcom_sd": 0.30990797006664766,
+    "ycom_sd": 0.3642791024022653,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": 0.016657242591738435,
+     "sd": 0.10514729572130979,
+     "n_items": 114,
+     "perm_p_two_sided": 0.0932,
+     "ci95_from_perm_null": [
+      -0.018960619447825056,
+      0.018965743772779486
+     ]
+    }
+   },
+   {
+    "seed": 9,
+    "n_rows": 8943,
+    "entropy_mean": 0.008023027223246057,
+    "entropy_uniform": 3.58351893845611,
+    "entropy_frac_of_uniform": 0.002238868375201785,
+    "peak_mass_mean": 0.9965851752114575,
+    "peak_mass_uniform": 0.027777777777777776,
+    "xcom_mean": 0.2640278994301408,
+    "xcom_sd": 0.3292222269482113,
+    "ycom_sd": 0.42626659044342063,
+    "n_items_with_left_and_right_candidates": 114,
+    "paired_xcom_right_minus_left": {
+     "mean": -0.010143177868073394,
+     "sd": 0.05103725128680006,
+     "n_items": 114,
+     "perm_p_two_sided": 0.0311,
+     "ci95_from_perm_null": [
+      -0.009558383075639961,
+      0.009025608686219504
+     ]
+    }
+   }
+  ],
+  "summary": {
+   "n_seeds": 10,
+   "entropy_frac_of_uniform_mean": 0.0017552930259556259,
+   "paired_dx_mean_over_seeds": -0.0019772636055539355,
+   "paired_dx_range": [
+    -0.030567271681782564,
+    0.01946993825625534
+   ],
+   "n_seeds_with_perm_p_below_0.05": 2,
+   "n_seeds_tested": 10
+  },
+  "verdict": {
+   "attention_is_essentially_uniform": false,
+   "reading": "the attention does concentrate (entropy 0.2% of uniform). Whether it concentrates MEANINGFULLY is decided by the paired left/right shift, not by concentration alone."
+  },
+  "reading_of_the_measured_numbers": {
+   "the_attention_is_DEGENERATE_not_grounded": true,
+   "mean_peak_patch_mass": 0.997331,
+   "uniform_peak_mass": 0.027778,
+   "entropy_as_fraction_of_uniform": 0.001755,
+   "what_that_means": "the head puts ~99.7% of its attention on ONE of the 36 patches (entropy 0.2% of uniform). That is not 'looking where the evidence is'; it is a collapse onto a near-constant lookup. The decisive check is whether the chosen patch MOVES between a 'left'-bearing and a 'right'-bearing candidate on the SAME image: the paired shift is -0.0020 (range -0.0306 to 0.0195) with 2 of 10 seeds reaching p<0.05 under a within-item sign-flip permutation test.",
+   "per_seed_signs_of_the_nominally_significant_seeds": [
+    {
+     "seed": 6,
+     "dx": -0.028906,
+     "p": 0.0041
+    },
+    {
+     "seed": 9,
+     "dx": -0.010143,
+     "p": 0.0311
+    }
+   ],
+   "why_the_nominal_hits_are_NOT_evidence_of_grounding": "2 of 10 seeds cross p<0.05, but the effect is not CONSISTENT: the seed-mean shift is -0.00198 with a range of -0.03057 to 0.01947 that straddles zero, and the seeds with the largest positive and largest negative point estimates disagree in SIGN. A head that had genuinely learned where 'left' and 'right' live in the image would move the same way on every seed (the radiological sign convention is fixed for a given dataset). Scattered nominal hits of opposing sign across 10 tests are what an unstable near-one-hot lookup produces, not what grounding produces.",
+   "answers_the_brief_question": "the brief asked whether the learned attention localises sensibly on laterality items. Measured answer: it localises HARD but not SENSIBLY -- the attended position carries no sign-consistent dependence on what the candidate says."
+  }
  },
  "positive_control_are_the_vision_features_any_good": {
   "what": "positive control: are the cached vision vectors informative about things the IMAGE determines? Establishes that any null in the verifier arms is about the TASK, not about broken features.",
@@ -1223,6 +2855,173 @@
    "caveat": "the laterality columns are NOT comparable to the published 0.635/0.464: those used a slice of n=342, this uses the broader mask defined in strata_definitions. Only the CORRECTNESS column is a like-for-like gate."
   }
  },
+ "premise_test_is_the_language_side_head_vision_blind": {
+  "what": "CONFOUND-FREE premise test: how much of the LANGUAGE-SIDE verifier's selection power is image-derived? Both arms are trained AND tested in-distribution on their own cache, by identical image-grouped 5-fold CV inside the eval pool.",
+  "date": "2026-08-12",
+  "code": "src/training_methods/langside_image_dependence_cv.py",
+  "why_this_exists": "the langnoise ablation (image_ablations.L.langnoise) trains on real features and tests on noise features, so its drop mixes lost image information with an out-of-distribution shift. This one does not.",
+  "IS_A_DIAGNOSTIC_NOT_A_HEADLINE": "fitted on eval rows (fold-held-out, grouped by image md5). Its LEVEL is not comparable to the deployed sel_eff figures, which are fitted on the disjoint TRAIN pool. Only the real-minus-noise contrast is used.",
+  "grouping": "5-fold on md5(img_md5) % 5 -- no image and therefore no question straddles a fold boundary. The folds are computed ONCE from the REAL cache and reused verbatim for the noise arm, because the noise cache records the md5 of the NOISE image; recomputing per cache would hand the two arms different splits.",
+  "numerics": {
+   "layer": 21,
+   "pooling": "span",
+   "threads": 8,
+   "trainer": "visverif_lib.train_cv_sel_eff (deployed language-side recipe)"
+  },
+  "arms": {
+   "real": {
+    "featdir": "feats_hidden",
+    "n_rows": 8943,
+    "d": 3584,
+    "n_folds": 5,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "cv_sel_eff_mean": 0.804084,
+    "cv_sel_eff_sd": 0.005545,
+    "cv_sel_eff_per_seed": [
+     0.800356,
+     0.803142,
+     0.805195,
+     0.794441,
+     0.811267,
+     0.803203,
+     0.804995,
+     0.814094,
+     0.803835,
+     0.800316
+    ],
+    "cv_auroc_mean": 0.773203,
+    "cv_auroc_per_seed": [
+     0.769686,
+     0.770086,
+     0.774696,
+     0.768567,
+     0.763666,
+     0.778631,
+     0.755386,
+     0.794384,
+     0.778252,
+     0.778681
+    ],
+    "fold_counts": [
+     1090,
+     1534,
+     1920,
+     2259,
+     2140
+    ]
+   },
+   "noise": {
+    "featdir": "feats_hidden_noise",
+    "n_rows": 8943,
+    "d": 3584,
+    "n_folds": 5,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "cv_sel_eff_mean": 0.78005,
+    "cv_sel_eff_sd": 0.008283,
+    "cv_sel_eff_per_seed": [
+     0.769409,
+     0.791455,
+     0.793033,
+     0.781564,
+     0.773539,
+     0.7715,
+     0.780653,
+     0.786958,
+     0.778431,
+     0.773955
+    ],
+    "cv_auroc_mean": 0.745898,
+    "cv_auroc_per_seed": [
+     0.739062,
+     0.737074,
+     0.752279,
+     0.745922,
+     0.748476,
+     0.749482,
+     0.736461,
+     0.749582,
+     0.744797,
+     0.755846
+    ],
+    "fold_counts": [
+     1090,
+     1534,
+     1920,
+     2259,
+     2140
+    ]
+   }
+  },
+  "contrast_real_minus_noise": {
+   "d_cv_sel_eff_mean": 0.024035,
+   "d_cv_sel_eff_per_seed": [
+    0.030947,
+    0.011687,
+    0.012162,
+    0.012877,
+    0.037728,
+    0.031703,
+    0.024342,
+    0.027136,
+    0.025404,
+    0.026361
+   ],
+   "d_cv_sel_eff_sd": 0.009,
+   "n_positive": 10,
+   "n_seeds": 10,
+   "d_cv_auroc_mean": 0.027305,
+   "d_cv_auroc_per_seed": [
+    0.030624,
+    0.033012,
+    0.022417,
+    0.022645,
+    0.01519,
+    0.029149,
+    0.018925,
+    0.044802,
+    0.033455,
+    0.022835
+   ]
+  },
+  "how_to_read": {
+   "if_the_contrast_is_LARGE": "the language-side representation already carries substantial image information, and the round's premise -- 'the verifier is not looking at the image' -- is FALSE. That would explain the null on every vision-injection arm: there is no vision blindness left to fix.",
+   "if_the_contrast_is_~ZERO": "the language-side head really is scoring from text priors alone, the premise holds, and the vision-injection null would then be a statement about the INJECTION MECHANISMS tried rather than about the information being redundant."
+  },
+  "reading_of_the_measured_numbers": {
+   "the_premise_of_this_ATTACK_is_FALSE": true,
+   "language_side_head_cv_sel_eff_real_images": 0.804084,
+   "language_side_head_cv_sel_eff_noise_images": 0.78005,
+   "d_cv_sel_eff": 0.024035,
+   "d_cv_auroc": 0.027305,
+   "seeds_positive": "10/10 on sel_eff, 10/10 on AUROC",
+   "what_that_means": "the language-side representation the verifier reads is NOT vision-blind. With the out-of-distribution confound removed -- both arms trained AND tested on their own cache, identical folds, identical seeds, identical trainer -- destroying the image still costs the language-side head 0.024035 cv_sel_eff and 0.027305 cv_AUROC. The image signal is ALREADY inside the language-side vector, which is exactly what a causal LM that attends over vision tokens produces.",
+   "why_this_EXPLAINS_the_null": "this attack's hypothesis was 'the verifier is not really looking at the image, so inject the vision signal'. The verifier IS looking at the image. Explicit vision features are therefore largely REDUNDANT with the language-side vector, and a null on every injection arm is the predicted consequence, not a failure of the particular injection mechanisms tried.",
+   "what_it_does_NOT_say": "it does not say the image information is used WELL. The laterality stratum is the incumbent's weakest (sel_eff 0.613043 vs 0.817186 on short non-laterality items) and no arm in this round moved it. 'Already present' and 'fully exploited' are different claims; only the first is supported.",
+   "relation_to_the_confounded_langnoise_number": "image_ablations.L.langnoise measures the SAME premise by transfer (train real, test noise) and reports a larger drop, -0.081063 [-0.102861, -0.059928]. That number is inflated by the distribution shift. This one is the clean version and it is smaller but the same sign, so the conclusion is robust to the confound."
+  }
+ },
  "bottom_line": {
   "question": "does injecting the generator's OWN vision signal into the verifier beat a language-side head trained on identical rows?",
   "language_side_bar": {
@@ -1237,54 +3036,76 @@
   },
   "vision_arms_mean_sel_eff": {
    "L_Vmean": {
-    "n_seeds": 7,
-    "mean": 0.792721,
-    "sd": 0.009069
+    "n_seeds": 10,
+    "mean": 0.792098,
+    "sd": 0.007772
    },
    "L_prod": {
-    "n_seeds": 3,
-    "mean": 0.796549,
-    "sd": 0.00219
+    "n_seeds": 10,
+    "mean": 0.797956,
+    "sd": 0.00617
    },
    "L_simgrid": {
-    "n_seeds": 3,
-    "mean": 0.792234,
-    "sd": 0.010706
+    "n_seeds": 10,
+    "mean": 0.792711,
+    "sd": 0.009362
+   },
+   "L_maxsim": {
+    "n_seeds": 10,
+    "mean": 0.798501,
+    "sd": 0.005971
+   },
+   "L_prod_sim": {
+    "n_seeds": 10,
+    "mean": 0.801975,
+    "sd": 0.00655
+   },
+   "xattn": {
+    "n_seeds": 10,
+    "mean": 0.783106,
+    "sd": 0.009704
    }
   },
   "field_constant_context": "docs/current/COMPARATIVE_VERIFIER_2026-08-05.md records ~20 verifier/selection architectures converging on sel_eff 0.80-0.81 with a seed spread (~0.021) that exceeds every architectural effect measured. Judge any arm against that spread, not against 0.",
   "best_vision_arm_by_seed_mean": {
-   "arm": "L_prod",
-   "mean": 0.796549,
-   "n_seeds": 3,
-   "delta_vs_bar_seed_means": 0.00268,
+   "arm": "L_prod_sim",
+   "mean": 0.801975,
+   "n_seeds": 10,
+   "delta_vs_bar_seed_means": 0.008106,
    "bar_seed_sd": 0.005835,
-   "delta_in_units_of_the_bar_seed_sd": 0.459,
+   "delta_in_units_of_the_bar_seed_sd": 1.389,
    "caution": "seed counts differ between arms; this row compares MEANS, and the seed-matched paired contrast in primary_comparison is the binding one."
   },
   "primary_seed_matched_contrast": {
-   "arm": "L_prod",
+   "arm": "L_Vmean",
    "against": "L",
    "seeds": [
     0,
     1,
-    2
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
    ],
-   "d_sel_eff": 0.002725,
+   "d_sel_eff": 0.002044,
    "ci95": [
     -0.01158,
-    0.017711
+    0.015668
    ],
-   "laterality_d_sel_eff": 0.008696,
+   "laterality_d_sel_eff": -0.013043,
    "laterality_ci95": [
-    -0.043478,
-    0.06087
+    -0.052174,
+    0.026087
    ],
    "laterality_n": 230,
-   "contested_d_sel_eff": 0.004367,
+   "contested_d_sel_eff": 0.003275,
    "contested_ci95": [
-    -0.019651,
-    0.028384
+    -0.018559,
+    0.026201
    ]
   },
   "verdict": {
@@ -1293,14 +3114,92 @@
    "preregistered_falsification_condition_1": "'if the CV-selected vision arm's seed-averaged sel_eff CI vs the L arm spans zero, the answer is NO GAIN and is reported as such' -> TRIGGERED: the CI spans zero.",
    "preregistered_falsification_condition_2": "'if a pooled gain appears but the laterality stratum does not move, the round reports that the mechanism claim is NOT supported' -> the laterality CI spans zero, so the MECHANISM CLAIM IS NOT SUPPORTED."
   },
+  "why_the_null_happened": {
+   "_what": "the four measurements that, together, say the attack's PREMISE was wrong rather than its injection mechanisms being badly chosen.",
+   "1_the_language_side_vector_is_ALREADY_vision_aware": {
+    "cv_sel_eff_real_vs_noise_images": [
+     0.804084,
+     0.78005
+    ],
+    "d_cv_sel_eff": 0.024035,
+    "d_cv_auroc": 0.027305,
+    "confound_removed": "both arms trained AND tested in-distribution, identical folds",
+    "so": "there is no vision blindness to fix; explicit vision features are redundant."
+   },
+   "2_destroying_the_image_QUESTION_correspondence_is_not_significant_on_the_arm_it_was_run_on": {
+    "L_prod": {
+     "sel_eff": 0.791553,
+     "delta_vs_real_image": -0.010899,
+     "ci": [
+      -0.029292,
+      0.007493
+     ]
+    },
+    "L_prod_sim": {
+     "sel_eff": 0.786104,
+     "delta_vs_real_image": -0.018392,
+     "ci": [
+      -0.036785,
+      0.0
+     ]
+    }
+   },
+   "3_the_incumbent_LoRAs_incidental_15.2pct_vision_capacity_contributes_nothing": {
+    "no_visual_lora_minus_full": {
+     "delta": 0.01581,
+     "ci95": [
+      -0.019763,
+      0.055336
+     ],
+     "n_paired_items": 253
+    },
+    "visual_only_minus_full": {
+     "delta": -0.079051,
+     "ci95": [
+      -0.142292,
+      -0.019763
+     ],
+     "n_paired_items": 253
+    }
+   },
+   "4_the_learned_cross_attention_localises_HARD_but_not_MEANINGFULLY": {
+    "entropy_frac_of_uniform": 0.001755,
+    "paired_left_vs_right_shift_mean": -0.001977,
+    "n_seeds_with_perm_p_below_0.05": 2,
+    "n_seeds_tested": 10
+   },
+   "5_similarity_in_the_generators_OWN_vision_space_is_BELOW_chance_for_correctness": {
+    "cos_max": {
+     "correctness_auroc": 0.442623,
+     "relevance_auroc": 0.598066
+    },
+    "cos_mean": {
+     "correctness_auroc": 0.434575,
+     "relevance_auroc": 0.582523
+    },
+    "cos_top3": {
+     "correctness_auroc": 0.43994,
+     "relevance_auroc": 0.596947
+    },
+    "cos_vmean": {
+     "correctness_auroc": 0.435768,
+     "relevance_auroc": 0.581293
+    },
+    "incumbent": {
+     "correctness_auroc": 0.756185,
+     "relevance_auroc": null
+    }
+   },
+   "5_note": "this reproduces, INSIDE the generator's own representation space, the family-D result that external contrastive encoders (SigLIP / PubMedCLIP / BiomedCLIP) score image-text RELEVANCE well and answer CORRECTNESS at or below chance. Using the generator's own vision tower does not escape it."
+  },
   "macro_consequence": {
    "gap_to_always_32B_direct": 0.059586,
-   "d_macro_from_vision_injection": 0.004069,
+   "d_macro_from_vision_injection": 0.000681,
    "d_macro_ci": [
-    -0.001667,
-    0.00948
+    -0.003831,
+    0.005217
    ],
-   "fraction_of_the_gap_closed_by_vision_injection": 0.0683,
+   "fraction_of_the_gap_closed_by_vision_injection": 0.0114,
    "uniform_open_sel_eff_needed_for_parity_with_always_32B_direct": 0.988342
   }
  }

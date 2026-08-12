@@ -5,8 +5,22 @@
  "seed": 20260812,
  "scoring": "MedEvalKit's own unmodified cal_metrics; per-item out_sample['correct'].  The three OPEN cells are scored WITHOUT the LLM judge (use_llm_judge=False), so their 'correct' is exact-match and is NOT comparable to the project's published open-cell accuracies, which used the Claude judge.  Open-cell rows are emitted for completeness and must not be read as accuracy.",
  "cells_available_per_arm": {
-  "bf16": [],
-  "nf4": [],
+  "bf16": [
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ],
+  "nf4": [
+   "PATH_VQA_closed",
+   "PATH_VQA_open",
+   "SLAKE_closed",
+   "SLAKE_open",
+   "VQA_RAD_closed",
+   "VQA_RAD_open"
+  ],
   "stored_vllm_32b": [
    "MedXpertQA-MM",
    "PATH_VQA_closed",
@@ -54,11 +68,169 @@
  "N4_serving_stack_null_test": {
   "what": "my bf16 Lingshu-32B (HF driver) vs the STORED vLLM Lingshu-32B that every published cell came from (MedEvalKit/eval_results_lingshu32b_full).  Identical weights, items, prompts, greedy decoding.  Any difference is the serving stack.",
   "why_it_matters": "it bounds how much of the I-8B-vs-32B comparison (B) is artifact.  It does NOT affect (A), where the deviation cancels.",
-  "per_cell": "not measured"
+  "per_cell": {
+   "PATH_VQA_closed": {
+    "delta": -0.000297441998810232,
+    "lo": -0.00297441998810232,
+    "hi": 0.002379535990481856,
+    "n": 3362,
+    "n_discordant": 23,
+    "a_acc": 0.8887566924449732,
+    "b_acc": 0.8890541344437835,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 3357,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   },
+   "SLAKE_closed": {
+    "delta": -0.007177033492822967,
+    "lo": -0.017942583732057416,
+    "hi": 0.0035885167464114833,
+    "n": 836,
+    "n_discordant": 20,
+    "a_acc": 0.8516746411483254,
+    "b_acc": 0.8588516746411483,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 1258,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   },
+   "VQA_RAD_closed": {
+    "delta": 0.0,
+    "lo": -0.01195219123505976,
+    "hi": 0.01195219123505976,
+    "n": 251,
+    "n_discordant": 2,
+    "a_acc": 0.852589641434263,
+    "b_acc": 0.852589641434263,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 200,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "bf16_hf",
+    "arm_b": "stored_vllm"
+   }
+  }
  },
  "A_quantisation_delta_PRIMARY": {
   "what": "NF4 minus bf16, same driver, same items, same batch size, same greedy decoding.  Attributable to weight quantisation alone.",
-  "per_cell": "not measured"
+  "per_cell": {
+   "PATH_VQA_closed": {
+    "delta": 0.001189767995240928,
+    "lo": -0.003866745984533016,
+    "hi": 0.006246281975014872,
+    "n": 3362,
+    "n_discordant": 74,
+    "a_acc": 0.8899464604402142,
+    "b_acc": 0.8887566924449732,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 3357,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   },
+   "SLAKE_closed": {
+    "delta": -0.02033492822966507,
+    "lo": -0.03349282296650718,
+    "hi": -0.008373205741626795,
+    "n": 836,
+    "n_discordant": 29,
+    "a_acc": 0.8313397129186603,
+    "b_acc": 0.8516746411483254,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 1258,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   },
+   "VQA_RAD_closed": {
+    "delta": 0.00796812749003984,
+    "lo": -0.01593625498007968,
+    "hi": 0.03187250996015936,
+    "n": 251,
+    "n_discordant": 10,
+    "a_acc": 0.8605577689243028,
+    "b_acc": 0.852589641434263,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 200,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "nf4",
+    "arm_b": "bf16"
+   }
+  }
  },
  "N4b_serving_stack_measured_on_lingshu_7b": {
   "what": "Lingshu-7B under the HF driver (ckpts/i8b_cheapleg/base7b) minus Lingshu-7B under vLLM 0.9.0.1 (MedEvalKit/eval_results_cheapleg_base7b).  IDENTICAL weights, items, prompts and greedy decoding -- the ONLY difference is the serving stack.",
@@ -67,8 +239,8 @@
   "per_cell": {
    "MedXpertQA-MM": {
     "delta": 0.0015,
-    "lo": -0.0075,
-    "hi": 0.0105,
+    "lo": -0.008,
+    "hi": 0.011,
     "n": 2000,
     "n_discordant": 91,
     "a_acc": 0.2655,
@@ -80,8 +252,8 @@
    },
    "PATH_VQA_closed": {
     "delta": -0.07079119571683522,
-    "lo": -0.08298631766805473,
-    "hi": -0.05889351576442594,
+    "lo": -0.08328375966686496,
+    "hi": -0.05859607376561571,
     "n": 3362,
     "n_discordant": 452,
     "a_acc": 0.7662105889351577,
@@ -106,8 +278,8 @@
    },
    "PMC_VQA": {
     "delta": -0.4113969488483398,
-    "lo": -0.41833682321268323,
-    "hi": -0.40460664074184866,
+    "lo": -0.4180975172001197,
+    "hi": -0.4047262937481304,
     "n": 33430,
     "n_discordant": 18815,
     "a_acc": 0.13230631169608137,
@@ -119,7 +291,7 @@
    },
    "VQA_RAD_closed": {
     "delta": -0.00398406374501992,
-    "lo": -0.0199203187250996,
+    "lo": -0.02390438247011952,
     "hi": 0.01195219123505976,
     "n": 251,
     "n_discordant": 5,
@@ -151,7 +323,7 @@
   "per_cell": {
    "MedXpertQA-MM": {
     "delta": -0.019,
-    "lo": -0.0425,
+    "lo": -0.042,
     "hi": 0.0045,
     "n": 2000,
     "n_discordant": 570,
@@ -190,7 +362,7 @@
    },
    "PMC_VQA": {
     "delta": -0.41947352677236016,
-    "lo": -0.4260245288662878,
+    "lo": -0.4260551899491475,
     "hi": -0.4127430451690099,
     "n": 33430,
     "n_discordant": 18571,
@@ -230,7 +402,7 @@
    "VQA_RAD_closed": {
     "delta": -0.04780876494023904,
     "lo": -0.099601593625498,
-    "hi": 0.00398406374501992,
+    "hi": 0.0,
     "n": 251,
     "n_discordant": 42,
     "a_acc": 0.8047808764940239,
@@ -272,7 +444,86 @@
  "B_i8b_vs_matched_32b": {
   "what": "Lingshu-I-8B (concurrent round ATTACK A, arm i8b_1tile) minus my bf16 Lingshu-32B, both under the SAME HF driver.",
   "caveat": "NOT fully matched: the I-8B arm used AutoProcessor(use_fast=True) at batch_size=32, my 32B arm the checkpoint's default slow processor at batch_size=4.  Both are HF transformers, bf16, greedy, and both go through MedEvalKit's own items/prompts/metrics.  Treat as a strong indication, not a certified contrast.",
-  "per_cell": "not measured"
+  "per_cell": {
+   "PATH_VQA_closed": {
+    "delta": 0.04283164782867341,
+    "lo": 0.03301606186793575,
+    "hi": 0.0529446757882213,
+    "n": 3362,
+    "n_discordant": 306,
+    "a_acc": 0.9315883402736467,
+    "b_acc": 0.8887566924449732,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   },
+   "PATH_VQA_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 3357,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   },
+   "SLAKE_closed": {
+    "delta": 0.0729665071770335,
+    "lo": 0.050239234449760764,
+    "hi": 0.09569377990430622,
+    "n": 836,
+    "n_discordant": 97,
+    "a_acc": 0.9246411483253588,
+    "b_acc": 0.8516746411483254,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   },
+   "SLAKE_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 1258,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   },
+   "VQA_RAD_closed": {
+    "delta": -0.04780876494023904,
+    "lo": -0.09561752988047809,
+    "hi": 0.0,
+    "n": 251,
+    "n_discordant": 42,
+    "a_acc": 0.8047808764940239,
+    "b_acc": 0.852589641434263,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   },
+   "VQA_RAD_open": {
+    "delta": 0.0,
+    "lo": 0.0,
+    "hi": 0.0,
+    "n": 200,
+    "n_discordant": 0,
+    "a_acc": 0.0,
+    "b_acc": 0.0,
+    "alignment_key_mismatches": 0,
+    "alignment_verdict": "PASS (item order identical)",
+    "arm_a": "i8b_1tile",
+    "arm_b": "bf16_32b"
+   }
+  }
  },
  "C_partial_macro_i8b_vs_32b": {
   "what": "equal-weight macro over the 4 of 8 reporting cells that are usable here.",
@@ -315,8 +566,8 @@
    "macro_a": 0.7371275912732573,
    "macro_b": 0.7267488626297987,
    "delta": 0.010378728643458665,
-   "lo": -0.004777054932259555,
-   "hi": 0.02512784172014752
+   "lo": -0.004776867804556049,
+   "hi": 0.02575485157538514
   },
   "requirement": {
    "eight_cell_bar_correlated": 0.655746,

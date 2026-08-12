@@ -1,1127 +1,1354 @@
 {
-  "title": "ATTACK 3 -- THE 7B-ONLY FRONTIER: how close does a 7B+verifier pipeline with NO 32B at test time get to always-32B-direct, what limits it, and what is the minimum 32B usage (and VRAM class) that closes the rest?",
-  "date": "2026-08-12",
-  "reproduce": "python3 src/cascade_methods/sevenb_only_frontier.py",
-  "no_gpu": true,
-  "no_new_inference": true,
-  "no_fabricated_numbers": true,
-  "not_abstention": "every policy here returns an answer on every item.  No reject option, no defer-to-human, no selective prediction.  CRITICAL RULE 6 respected.",
-  "convention": "MACRO, equal weight per reporting cell, Variant B (MMMU excluded), 8 cells, 1/8 each, n=42,224.  CLEAN disjoint open-text verifier (ckpts/train/lora_verifier_disjoint).",
-  "numerics": {
-    "OMP_NUM_THREADS": 1,
-    "tf32": "not applicable -- pure numpy/CPU on stored vectors",
-    "row_order": "the stored dump order, unchanged (genframe_data canonical item order)",
-    "bootstrap": "one shared item-resample stream per cell, drawn once, reused by every policy",
-    "nboot": 10000,
-    "seed": 20260812,
-    "n_fold_seeds": 12,
-    "n_folds": 5
+ "title": "ATTACK 3 -- THE 7B-ONLY FRONTIER: how close does a 7B+verifier pipeline with NO 32B at test time get to always-32B-direct, what limits it, and what is the minimum 32B usage (and VRAM class) that closes the rest?",
+ "date": "2026-08-12",
+ "reproduce": "python3 src/cascade_methods/sevenb_only_frontier.py",
+ "no_gpu": true,
+ "no_new_inference": true,
+ "no_fabricated_numbers": true,
+ "not_abstention": "every policy here returns an answer on every item.  No reject option, no defer-to-human, no selective prediction.  CRITICAL RULE 6 respected.",
+ "convention": "MACRO, equal weight per reporting cell, Variant B (MMMU excluded), 8 cells, 1/8 each, n=42,224.  CLEAN disjoint open-text verifier (ckpts/train/lora_verifier_disjoint).",
+ "numerics": {
+  "OMP_NUM_THREADS": 1,
+  "tf32": "not applicable -- pure numpy/CPU on stored vectors",
+  "row_order": "the stored dump order, unchanged (genframe_data canonical item order)",
+  "bootstrap": "one shared item-resample stream per cell, drawn once, reused by every policy",
+  "nboot": 10000,
+  "seed": 20260812,
+  "n_fold_seeds": 12,
+  "n_folds": 5
+ },
+ "sources": {
+  "per_item_correctness": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz (cascade_selector_rerun_2026-08-05.json, arm 'disjoint')",
+  "open_pool": "src/training_methods/genframe_data.py FROZEN block -> ckpts/train/lora_verifier_disjoint/transfer_dump_*.json",
+  "frozen_selector": "ckpts/train/genframe_head_ens8 via src/training_methods/genframe_selector.py (READ ONLY -- freeze_selector.py was NOT run)",
+  "mcq_gate_features": "MedEvalKit/eval_results_lingshu7b_full via src/cascade_methods/integrated_method.py mcq_closed/mcq_medxpert",
+  "coverage_ceilings": "results/cascade_methods/artifacts/coverage_diagnosis_2026-08-10.json (SCOUT B) -- reused verbatim, not recomputed",
+  "mcq_7b_only_tta": "results/cascade_methods/artifacts/mcq_tta_2026-08-10.json -- reused verbatim",
+  "vram": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json",
+  "cost_frontier_sibling": "results/cascade_methods/artifacts/cost_floor_2026-08-10.json and min_escalation_2026-08-12*.json (ATTACK 4, same round)"
+ },
+ "null_tests": {
+  "N1_published_macro_baselines": {
+   "always_7b_recomputed": 0.597087,
+   "always_7b_published": 0.5971,
+   "always_32b_direct_recomputed": 0.656672,
+   "always_32b_direct_published": 0.6567,
+   "max_abs_deviation": 2.751e-05,
+   "passed": true,
+   "note": "published values are rounded to 4 dp in the source artifact; tolerance is 5e-5."
   },
-  "sources": {
-    "per_item_correctness": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz (cascade_selector_rerun_2026-08-05.json, arm 'disjoint')",
-    "open_pool": "src/training_methods/genframe_data.py FROZEN block -> ckpts/train/lora_verifier_disjoint/transfer_dump_*.json",
-    "frozen_selector": "ckpts/train/genframe_head_ens8 via src/training_methods/genframe_selector.py (READ ONLY -- freeze_selector.py was NOT run)",
-    "mcq_gate_features": "MedEvalKit/eval_results_lingshu7b_full via src/cascade_methods/integrated_method.py mcq_closed/mcq_medxpert",
-    "coverage_ceilings": "results/cascade_methods/artifacts/coverage_diagnosis_2026-08-10.json (SCOUT B) -- reused verbatim, not recomputed",
-    "mcq_7b_only_tta": "results/cascade_methods/artifacts/mcq_tta_2026-08-10.json -- reused verbatim",
-    "vram": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json",
-    "cost_frontier_sibling": "results/cascade_methods/artifacts/cost_floor_2026-08-10.json and min_escalation_2026-08-12*.json (ATTACK 4, same round)"
+  "N2_frozen_opentext_bar": {
+   "n": 2345,
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "per_ds_sel_eff": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   },
+   "max_abs_deviation": 3.6e-07,
+   "passed": true
   },
-  "null_tests": {
-    "N1_published_macro_baselines": {
-      "always_7b_recomputed": 0.597087,
-      "always_7b_published": 0.5971,
-      "always_32b_direct_recomputed": 0.656672,
-      "always_32b_direct_published": 0.6567,
-      "max_abs_deviation": 2.751e-05,
-      "passed": true,
-      "note": "published values are rounded to 4 dp in the source artifact; tolerance is 5e-5."
-    },
-    "N2_frozen_opentext_bar": {
-      "n": 2345,
-      "oracle@8": 0.626013,
-      "selected": 0.485288,
-      "greedy": 0.449467,
-      "sel_eff": 0.775204,
-      "per_ds_sel_eff": {
-        "slake_open": 0.850088,
-        "vqa_rad_open": 0.761905,
-        "pathvqa_open": 0.722581
-      },
-      "max_abs_deviation": 3.6e-07,
-      "passed": true
-    },
-    "N3_multiplicative_identity": {
-      "identity": "selected = oracle@8 x sel_eff, with sel_eff the CONDITIONAL mean P(pick correct | pool recoverable)",
-      "max_abs_deviation": 5.551115123125783e-17,
-      "passed": true,
-      "corroborates": "coverage_diagnosis_2026-08-10.json HEADLINE.1 (max |err| 5.6e-17)",
-      "never_use": "the additive form selected ~= greedy + sel_eff*(oracle-greedy); it over-predicts by +0.090 to +0.111 per cell"
-    },
-    "N4_independent_mcq_reload": {
-      "what": "the 5 MCQ cells were re-loaded from MedEvalKit/eval_results_lingshu7b_full and eval_results_lingshu32b_full through integrated_method's own loaders and compared element-wise to _selector_rerun_parts/vec_disjoint.npz.  This validates that the gate scalar (7B margin) I attach is in the SAME item order as the correctness vectors.",
-      "per_cell_max_abs_deviation": {
-        "PMC_VQA": {
-          "ok7": 0.0,
-          "ok32": 0.0
-        },
-        "SLAKE_closed": {
-          "ok7": 0.0,
-          "ok32": 0.0
-        },
-        "VQA_RAD_closed": {
-          "ok7": 0.0,
-          "ok32": 0.0
-        },
-        "PATH_VQA_closed": {
-          "ok7": 0.0,
-          "ok32": 0.0
-        },
-        "MedXpertQA-MM": {
-          "ok7": 0.0,
-          "ok32": 0.0
-        }
-      },
-      "max_abs_deviation": 0.0,
-      "passed": true
-    },
-    "N5_frozen_ens8_selector": {
-      "max_abs_deviation": 4.47971781336598e-07,
-      "passed": true,
-      "measured_sel_eff": 0.8106267029972752,
-      "note": "READ ONLY.  src/training_methods/freeze_selector.py was NOT run -- it REWRITES the frozen artifact."
-    },
-    "ALL_PASSED": true
+  "N3_multiplicative_identity": {
+   "identity": "selected = oracle@8 x sel_eff, with sel_eff the CONDITIONAL mean P(pick correct | pool recoverable)",
+   "max_abs_deviation": 5.551115123125783e-17,
+   "passed": true,
+   "corroborates": "coverage_diagnosis_2026-08-10.json HEADLINE.1 (max |err| 5.6e-17)",
+   "never_use": "the additive form selected ~= greedy + sel_eff*(oracle-greedy); it over-predicts by +0.090 to +0.111 per cell"
   },
-  "PART1_7B_only_frontier": {
-    "question": "best achievable 8-cell macro with NO 32B at test time",
-    "menu_per_cell_accuracy_EVAL_VISIBLE": {
-      "PMC_VQA": {
-        "greedy_7b": 0.542656
-      },
-      "SLAKE_closed": {
-        "greedy_7b": 0.825359
-      },
-      "VQA_RAD_closed": {
-        "greedy_7b": 0.780876
-      },
-      "PATH_VQA_closed": {
-        "greedy_7b": 0.840869
-      },
-      "MedXpertQA-MM": {
-        "greedy_7b": 0.2615
-      },
-      "SLAKE_open": {
-        "greedy_7b": 0.736434,
-        "bo1_incumbent_verifier": 0.722481,
-        "bo2_incumbent_verifier": 0.730233,
-        "bo3_incumbent_verifier": 0.733333,
-        "bo4_incumbent_verifier": 0.741085,
-        "bo5_incumbent_verifier": 0.741085,
-        "bo6_incumbent_verifier": 0.745736,
-        "bo7_incumbent_verifier": 0.745736,
-        "bo8_incumbent_verifier": 0.747287,
-        "bo8_frozen_ens8_selector": 0.778295
-      },
-      "VQA_RAD_open": {
-        "greedy_7b": 0.465,
-        "bo1_incumbent_verifier": 0.42,
-        "bo2_incumbent_verifier": 0.43,
-        "bo3_incumbent_verifier": 0.46,
-        "bo4_incumbent_verifier": 0.45,
-        "bo5_incumbent_verifier": 0.46,
-        "bo6_incumbent_verifier": 0.48,
-        "bo7_incumbent_verifier": 0.48,
-        "bo8_incumbent_verifier": 0.48,
-        "bo8_frozen_ens8_selector": 0.51
-      },
-      "PATH_VQA_open": {
-        "greedy_7b": 0.324,
-        "bo1_incumbent_verifier": 0.295333,
-        "bo2_incumbent_verifier": 0.336,
-        "bo3_incumbent_verifier": 0.354667,
-        "bo4_incumbent_verifier": 0.364667,
-        "bo5_incumbent_verifier": 0.369333,
-        "bo6_incumbent_verifier": 0.369333,
-        "bo7_incumbent_verifier": 0.368,
-        "bo8_incumbent_verifier": 0.373333,
-        "bo8_frozen_ens8_selector": 0.390667
-      }
+  "N4_independent_mcq_reload": {
+   "what": "the 5 MCQ cells were re-loaded from MedEvalKit/eval_results_lingshu7b_full and eval_results_lingshu32b_full through integrated_method's own loaders and compared element-wise to _selector_rerun_parts/vec_disjoint.npz.  This validates that the gate scalar (7B margin) I attach is in the SAME item order as the correctness vectors.",
+   "per_cell_max_abs_deviation": {
+    "PMC_VQA": {
+     "ok7": 0.0,
+     "ok32": 0.0
     },
-    "menu_note": "MCQ cells carry ONE 7B-only entry because no other 7B-only MCQ mechanism has ever measured positive on this pool: MCQ test-time augmentation is measured NEGATIVE (always-K summed MCQ gain -0.0078; gated cross-fit +0.0000062) in mcq_tta_2026-08-10.json, and sampling-based best-of-N is structurally dead on MCQ (PMC verifier pick 0.4325 BELOW greedy 0.5060; MedXpert oracle@8 0.5365 BELOW its own luck floor 0.6808).",
-    "honest_crossfit": {
-      "protocol": "5-fold cross-fit arm choice per cell, 12 fold-split seeds; the arm is chosen on the 4 training folds and applied to the held-out fold",
-      "macro_seed_mean": 0.616278,
-      "macro_seed_sd": 0.0,
-      "macro_seed_min": 0.616278,
-      "macro_seed_max": 0.616278,
-      "median_seed_macro": 0.616278,
-      "arms_chosen": {
-        "PMC_VQA": [
-          "greedy_7b"
-        ],
-        "SLAKE_closed": [
-          "greedy_7b"
-        ],
-        "VQA_RAD_closed": [
-          "greedy_7b"
-        ],
-        "PATH_VQA_closed": [
-          "greedy_7b"
-        ],
-        "MedXpertQA-MM": [
-          "greedy_7b"
-        ],
-        "SLAKE_open": [
-          "bo8_frozen_ens8_selector"
-        ],
-        "VQA_RAD_open": [
-          "bo8_frozen_ens8_selector"
-        ],
-        "PATH_VQA_open": [
-          "bo8_frozen_ens8_selector"
-        ]
-      },
-      "vs_always_32b_direct": {
-        "delta": -0.040395,
-        "lo": -0.052275,
-        "hi": -0.028427,
-        "sig": true,
-        "ties_at_tol": false
-      },
-      "vs_always_7b_greedy": {
-        "delta": 0.019191,
-        "lo": 0.012003,
-        "hi": 0.026682,
-        "sig": true,
-        "ties_at_tol": true
-      }
+    "SLAKE_closed": {
+     "ok7": 0.0,
+     "ok32": 0.0
     },
-    "baselines": {
-      "always_7b_macro": 0.597087,
-      "always_32b_direct_macro": 0.656672,
-      "gap_to_close": 0.059586
+    "VQA_RAD_closed": {
+     "ok7": 0.0,
+     "ok32": 0.0
     },
-    "eval_visible_upper_bounds_UNREACHABLE": {
-      "perfect_selector_over_the_current_8_pool": {
-        "macro": 0.659625,
-        "per_cell": {
-          "PMC_VQA": 0.542656,
-          "SLAKE_closed": 0.825359,
-          "VQA_RAD_closed": 0.780876,
-          "PATH_VQA_closed": 0.840869,
-          "MedXpertQA-MM": 0.2615,
-          "SLAKE_open": 0.87907,
-          "VQA_RAD_open": 0.63,
-          "PATH_VQA_open": 0.516667
-        },
-        "what": "MCQ cells held at 7B greedy (a perfect selector over the OPTION set is trivially 1.0 and carries no information); open cells at oracle@8.  UPPER BOUND."
-      }
+    "PATH_VQA_closed": {
+     "ok7": 0.0,
+     "ok32": 0.0
     },
-    "MCQ_MENU_UPDATE_2026-08-12_verifier_over_options": {
-      "mechanism": "the unified candidate-set rule: for an MCQ item the candidates are the GIVEN OPTIONS (a fixed, complete, non-lucky set -- gold present on 100% of items, so coverage carries no information and the luck floor is exactly 1/K), scored by the same trained verifier that serves the open-text arm, argmax wins.  This is the mechanism the round's brief singled out as never tried.",
-      "provenance": "scores generated by ATTACK 2 (src/cascade_methods/unified_pipeline_score.py, zero-shot tag) into ckpts/unified_pipeline/zeroshot_*.jsonl; assembled by `python3 src/cascade_methods/unified_pipeline.py --analyse --tag zeroshot` -> results/cascade_methods/artifacts/_unified_pipeline_parts/analysis_zeroshot.json.  HF transformers, never vLLM (a visual LoRA under vLLM drops all 192 visual.* modules).",
-      "per_cell": {
-        "PMC_VQA": {
-          "n_scored": 6000,
-          "scored_is_full_cell": false,
-          "k_options": 4.0,
-          "acc_verifier_over_options": 0.4735,
-          "acc_7b_greedy_same_items": 0.539167,
-          "acc_32b_direct_same_items": 0.552333,
-          "delta_vs_7b_greedy": {
-            "delta": -0.06566666666666666,
-            "lo": -0.07966666666666666,
-            "hi": -0.052,
-            "sig": true
-          },
-          "candidate_auroc_gold_vs_distractor": 0.671,
-          "agreement_with_7b_greedy": 0.6063,
-          "luck_floor_random_gold_permutation_mean": 0.2497
-        },
-        "MedXpertQA-MM": {
-          "n_scored": 2000,
-          "scored_is_full_cell": true,
-          "k_options": 5.0,
-          "acc_verifier_over_options": 0.264,
-          "acc_7b_greedy_same_items": 0.2615,
-          "acc_32b_direct_same_items": 0.3065,
-          "delta_vs_7b_greedy": {
-            "delta": 0.0025,
-            "lo": -0.016,
-            "hi": 0.0215,
-            "sig": false
-          },
-          "candidate_auroc_gold_vs_distractor": 0.5826,
-          "agreement_with_7b_greedy": 0.621,
-          "luck_floor_random_gold_permutation_mean": 0.2001
-        },
-        "VQA_RAD_closed": {
-          "n_scored": 251,
-          "scored_is_full_cell": true,
-          "k_options": 2.0,
-          "acc_verifier_over_options": 0.729084,
-          "acc_7b_greedy_same_items": 0.780876,
-          "acc_32b_direct_same_items": 0.85259,
-          "delta_vs_7b_greedy": {
-            "delta": -0.05179282868525897,
-            "lo": -0.11155378486055777,
-            "hi": 0.00796812749003984,
-            "sig": false
-          },
-          "candidate_auroc_gold_vs_distractor": 0.7998,
-          "agreement_with_7b_greedy": 0.7729,
-          "luck_floor_random_gold_permutation_mean": 0.4992
-        },
-        "PATH_VQA_closed": {
-          "n_scored": 3362,
-          "scored_is_full_cell": true,
-          "k_options": 2.0,
-          "acc_verifier_over_options": 0.671921,
-          "acc_7b_greedy_same_items": 0.840869,
-          "acc_32b_direct_same_items": 0.889054,
-          "delta_vs_7b_greedy": {
-            "delta": -0.16894705532421178,
-            "lo": -0.1885782272456871,
-            "hi": -0.14991076740035694,
-            "sig": true
-          },
-          "candidate_auroc_gold_vs_distractor": 0.725,
-          "agreement_with_7b_greedy": 0.6466,
-          "luck_floor_random_gold_permutation_mean": 0.5003
-        }
-      },
-      "cells_significantly_WORSE_than_7B_greedy": [
-        "PMC_VQA",
-        "PATH_VQA_closed"
-      ],
-      "SLAKE_closed": "not scored -- its deployed prompt supplies no explicit answer space, so no option set could be built without changing the prompt",
-      "VERDICT": "MEASURED NEGATIVE, and decisively so.  Verifier-over-options vs taking the 7B's greedy answer, per cell: PMC_VQA -0.0657 [-0.0797, -0.0520] SIG; MedXpertQA-MM +0.0025 [-0.0160, +0.0215] n.s.; VQA_RAD_closed -0.0518 [-0.1116, +0.0080] n.s.; PATH_VQA_closed -0.1689 [-0.1886, -0.1499] SIG.  The MCQ menu in this artifact therefore stands at greedy_7b, now on a MEASUREMENT rather than on the absence of one.  MedXpert's positive point estimate is not a win: its CI spans zero and both models sit near chance on that cell.",
-      "why_it_fails_is_informative": "the verifier is NOT at chance -- its candidate-level AUROC for gold-vs-distractor is 0.67 (PMC_VQA), 0.58 (MedXpertQA-MM), 0.80 (VQA_RAD_closed), 0.72 (PATH_VQA_closed), all above 0.5.  It ranks gold above distractors better than coin-flipping and STILL loses, because the bar is not chance, it is the generator's own next-token distribution over the option letters, which is a strictly better-calibrated read of the same evidence.  This is Finding 2 in its sharpest form: on discrete option sets an external scorer has nothing to add to the generator's own posterior.  It also independently reproduces the (choice)(why) result [choicewhy_measure_2026-08-03.json] by a different route.",
-      "consequence_for_the_direction": "the brief's proposed unification -- one scorer, candidate set defined per format -- is now MEASURED on its MCQ half and it does not work.  Since MCQ carries 62.5% of the macro weight and all five MCQ cells are capability-limited (PART2), the unified pipeline cannot be the route to closing the 0.0596 gap.",
-      "does_a_candidate_identity_DEBIAS_rescue_it": {
-        "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/arm_a_prime_debias.json (ATTACK 2, amendment 1) -- DIAGNOSTIC ONLY, never a deployable policy",
-        "per_cell": {
-          "PMC_VQA": {
-            "acc_raw_argmax": 0.4735,
-            "acc_debiased_argmax": 0.4085,
-            "acc_7b_greedy": 0.539167,
-            "delta_debiased_vs_raw": {
-              "delta": -0.065,
-              "lo": -0.07416666666666667,
-              "hi": -0.0559958333333334,
-              "sig": true
-            },
-            "delta_debiased_vs_7b": {
-              "delta": -0.13066666666666665,
-              "lo": -0.145,
-              "hi": -0.11666666666666667,
-              "sig": true
-            }
-          },
-          "MedXpertQA-MM": {
-            "acc_raw_argmax": 0.264,
-            "acc_debiased_argmax": 0.265,
-            "acc_7b_greedy": 0.2615,
-            "delta_debiased_vs_raw": {
-              "delta": 0.001,
-              "lo": -0.0035,
-              "hi": 0.006,
-              "sig": false
-            },
-            "delta_debiased_vs_7b": {
-              "delta": 0.0035,
-              "lo": -0.015,
-              "hi": 0.0225,
-              "sig": false
-            }
-          },
-          "VQA_RAD_closed": {
-            "acc_raw_argmax": 0.729084,
-            "acc_debiased_argmax": 0.741036,
-            "acc_7b_greedy": 0.780876,
-            "delta_debiased_vs_raw": {
-              "delta": 0.01195219123505976,
-              "lo": -0.0199203187250996,
-              "hi": 0.043824701195219126,
-              "sig": false
-            },
-            "delta_debiased_vs_7b": {
-              "delta": -0.0398406374501992,
-              "lo": -0.099601593625498,
-              "hi": 0.01593625498007968,
-              "sig": false
-            }
-          },
-          "PATH_VQA_closed": {
-            "acc_raw_argmax": 0.671921,
-            "acc_debiased_argmax": 0.71743,
-            "acc_7b_greedy": 0.840869,
-            "delta_debiased_vs_raw": {
-              "delta": 0.0455086258179655,
-              "lo": 0.031826293872694825,
-              "hi": 0.05919095776323617,
-              "sig": true
-            },
-            "delta_debiased_vs_7b": {
-              "delta": -0.12343842950624628,
-              "lo": -0.1403926234384295,
-              "hi": -0.10707911957168352,
-              "sig": true
-            }
-          }
-        },
-        "ANSWER": "NO.  De-biasing does not rescue the mechanism, and on the largest cell it makes it WORSE: PMC_VQA -0.0650 vs raw SIG; MedXpertQA-MM +0.0010 vs raw n.s.; VQA_RAD_closed +0.0120 vs raw n.s.; PATH_VQA_closed +0.0455 vs raw SIG.  After de-biasing the arm is still significantly below 7B greedy wherever it was before.  So the shortfall is NOT an artifact of the verifier preferring particular candidate strings or slots -- the ranking signal genuinely is not competitive with the generator's own posterior over the options.  This is the stronger, and more useful, form of the negative result."
-      },
-      "WHAT_COULD_STILL_CHANGE_THIS": "this is the ZERO-SHOT arm: the incumbent open-text verifier applied to option sets it was never trained on.  ATTACK 2 has a TRAINED option-branch verifier in flight at the time of writing (ckpts/train/lora_verifier_optiononly_s0, its amendment 2), which is the honest upper bound on the option branch under that recipe.  If it lands positive, this artifact's MCQ menu -- and therefore the 7B-only frontier value 0.616278 -- must be recomputed.  The frontier reported here is CONDITIONAL ON THE MENU, and the menu is stated in full so the recomputation is mechanical.  Nothing else in this artifact depends on it: PART2's capability floors, PART3's minimum-32B frontier and PART4's VRAM cliff are all unaffected by the MCQ arm choice."
+    "MedXpertQA-MM": {
+     "ok7": 0.0,
+     "ok32": 0.0
     }
+   },
+   "max_abs_deviation": 0.0,
+   "passed": true
   },
-  "PART2_capability_floor": {
-    "question": "for each cell, P(no correct answer is available to the 7B under ANY selection), and which cells are capability-limited rather than selection-limited",
-    "mcq_coverage_note": "On all 5 MCQ cells the candidate set is COMPLETE BY CONSTRUCTION -- the gold answer is always one of the presented options (PMC-VQA 4 options, MedXpert 5 options) or one of {yes, no} (SLAKE-closed / VQA-RAD-closed / PathVQA-closed, which are free-form yes/no, verified in MedEvalKit/eval_results_lingshu7b_full/*/results.json: choices==None and answer in {yes,no}).  So the coverage wall is 0 and the oracle-over-candidates is trivially 1.0.  That upper bound is VACUOUS: it says only 'if the 7B could tell which option is right, it would be right'.  The honest MCQ ceiling is therefore the best MEASURED 7B-only mechanism, and every one tried is <= greedy.  MCQ cells are entered here with selection headroom 0, which is a MEASUREMENT, not an assumption -- see mcq_tta_2026-08-10.json and the luck-floor result in the round brief.",
+  "N5_frozen_ens8_selector": {
+   "max_abs_deviation": 4.47971781336598e-07,
+   "passed": true,
+   "measured_sel_eff": 0.8106267029972752,
+   "note": "READ ONLY.  src/training_methods/freeze_selector.py was NOT run -- it REWRITES the frozen artifact."
+  },
+  "ALL_PASSED": true
+ },
+ "PART1_7B_only_frontier": {
+  "question": "best achievable 8-cell macro with NO 32B at test time",
+  "menu_per_cell_accuracy_EVAL_VISIBLE": {
+   "PMC_VQA": {
+    "greedy_7b": 0.542656
+   },
+   "SLAKE_closed": {
+    "greedy_7b": 0.825359
+   },
+   "VQA_RAD_closed": {
+    "greedy_7b": 0.780876
+   },
+   "PATH_VQA_closed": {
+    "greedy_7b": 0.840869
+   },
+   "MedXpertQA-MM": {
+    "greedy_7b": 0.2615
+   },
+   "SLAKE_open": {
+    "greedy_7b": 0.736434,
+    "bo1_incumbent_verifier": 0.722481,
+    "bo2_incumbent_verifier": 0.730233,
+    "bo3_incumbent_verifier": 0.733333,
+    "bo4_incumbent_verifier": 0.741085,
+    "bo5_incumbent_verifier": 0.741085,
+    "bo6_incumbent_verifier": 0.745736,
+    "bo7_incumbent_verifier": 0.745736,
+    "bo8_incumbent_verifier": 0.747287,
+    "bo8_frozen_ens8_selector": 0.778295
+   },
+   "VQA_RAD_open": {
+    "greedy_7b": 0.465,
+    "bo1_incumbent_verifier": 0.42,
+    "bo2_incumbent_verifier": 0.43,
+    "bo3_incumbent_verifier": 0.46,
+    "bo4_incumbent_verifier": 0.45,
+    "bo5_incumbent_verifier": 0.46,
+    "bo6_incumbent_verifier": 0.48,
+    "bo7_incumbent_verifier": 0.48,
+    "bo8_incumbent_verifier": 0.48,
+    "bo8_frozen_ens8_selector": 0.51
+   },
+   "PATH_VQA_open": {
+    "greedy_7b": 0.324,
+    "bo1_incumbent_verifier": 0.295333,
+    "bo2_incumbent_verifier": 0.336,
+    "bo3_incumbent_verifier": 0.354667,
+    "bo4_incumbent_verifier": 0.364667,
+    "bo5_incumbent_verifier": 0.369333,
+    "bo6_incumbent_verifier": 0.369333,
+    "bo7_incumbent_verifier": 0.368,
+    "bo8_incumbent_verifier": 0.373333,
+    "bo8_frozen_ens8_selector": 0.390667
+   }
+  },
+  "menu_note": "MCQ cells carry ONE 7B-only entry because no other 7B-only MCQ mechanism has ever measured positive on this pool: MCQ test-time augmentation is measured NEGATIVE (always-K summed MCQ gain -0.0078; gated cross-fit +0.0000062) in mcq_tta_2026-08-10.json, and sampling-based best-of-N is structurally dead on MCQ (PMC verifier pick 0.4325 BELOW greedy 0.5060; MedXpert oracle@8 0.5365 BELOW its own luck floor 0.6808).",
+  "honest_crossfit": {
+   "protocol": "5-fold cross-fit arm choice per cell, 12 fold-split seeds; the arm is chosen on the 4 training folds and applied to the held-out fold",
+   "macro_seed_mean": 0.616278,
+   "macro_seed_sd": 0.0,
+   "macro_seed_min": 0.616278,
+   "macro_seed_max": 0.616278,
+   "median_seed_macro": 0.616278,
+   "arms_chosen": {
+    "PMC_VQA": [
+     "greedy_7b"
+    ],
+    "SLAKE_closed": [
+     "greedy_7b"
+    ],
+    "VQA_RAD_closed": [
+     "greedy_7b"
+    ],
+    "PATH_VQA_closed": [
+     "greedy_7b"
+    ],
+    "MedXpertQA-MM": [
+     "greedy_7b"
+    ],
+    "SLAKE_open": [
+     "bo8_frozen_ens8_selector"
+    ],
+    "VQA_RAD_open": [
+     "bo8_frozen_ens8_selector"
+    ],
+    "PATH_VQA_open": [
+     "bo8_frozen_ens8_selector"
+    ]
+   },
+   "vs_always_32b_direct": {
+    "delta": -0.040395,
+    "lo": -0.052275,
+    "hi": -0.028427,
+    "sig": true,
+    "ties_at_tol": false
+   },
+   "vs_always_7b_greedy": {
+    "delta": 0.019191,
+    "lo": 0.012003,
+    "hi": 0.026682,
+    "sig": true,
+    "ties_at_tol": true
+   }
+  },
+  "baselines": {
+   "always_7b_macro": 0.597087,
+   "always_32b_direct_macro": 0.656672,
+   "gap_to_close": 0.059586
+  },
+  "eval_visible_upper_bounds_UNREACHABLE": {
+   "perfect_selector_over_the_current_8_pool": {
+    "macro": 0.659625,
     "per_cell": {
-      "PMC_VQA": {
-        "n": 33430,
-        "format": "MCQ",
-        "acc_7b_only_best": 0.542656,
-        "acc_always_32b_direct": 0.55178,
-        "gap": 0.009124,
-        "macro_share_of_the_gap": 0.00114,
-        "oracle@8": null,
-        "coverage_wall_P_no_correct_answer_available": 0.0,
-        "iid_sampling_ceiling_LP_N_infinity": null,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.009124,
-        "verdict": "CAPABILITY-LIMITED"
-      },
-      "SLAKE_closed": {
-        "n": 836,
-        "format": "MCQ",
-        "acc_7b_only_best": 0.825359,
-        "acc_always_32b_direct": 0.858852,
-        "gap": 0.033493,
-        "macro_share_of_the_gap": 0.004187,
-        "oracle@8": null,
-        "coverage_wall_P_no_correct_answer_available": 0.0,
-        "iid_sampling_ceiling_LP_N_infinity": null,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.033493,
-        "verdict": "CAPABILITY-LIMITED"
-      },
-      "VQA_RAD_closed": {
-        "n": 251,
-        "format": "MCQ",
-        "acc_7b_only_best": 0.780876,
-        "acc_always_32b_direct": 0.85259,
-        "gap": 0.071713,
-        "macro_share_of_the_gap": 0.008964,
-        "oracle@8": null,
-        "coverage_wall_P_no_correct_answer_available": 0.0,
-        "iid_sampling_ceiling_LP_N_infinity": null,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.071713,
-        "verdict": "CAPABILITY-LIMITED"
-      },
-      "PATH_VQA_closed": {
-        "n": 3362,
-        "format": "MCQ",
-        "acc_7b_only_best": 0.840869,
-        "acc_always_32b_direct": 0.889054,
-        "gap": 0.048186,
-        "macro_share_of_the_gap": 0.006023,
-        "oracle@8": null,
-        "coverage_wall_P_no_correct_answer_available": 0.0,
-        "iid_sampling_ceiling_LP_N_infinity": null,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.048186,
-        "verdict": "CAPABILITY-LIMITED"
-      },
-      "MedXpertQA-MM": {
-        "n": 2000,
-        "format": "MCQ",
-        "acc_7b_only_best": 0.2615,
-        "acc_always_32b_direct": 0.3065,
-        "gap": 0.045,
-        "macro_share_of_the_gap": 0.005625,
-        "oracle@8": null,
-        "coverage_wall_P_no_correct_answer_available": 0.0,
-        "iid_sampling_ceiling_LP_N_infinity": null,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.045,
-        "verdict": "CAPABILITY-LIMITED"
-      },
-      "SLAKE_open": {
-        "n": 645,
-        "format": "open-text",
-        "acc_7b_only_best": 0.778295,
-        "acc_always_32b_direct": 0.818605,
-        "gap": 0.04031,
-        "macro_share_of_the_gap": 0.005039,
-        "oracle@8": 0.87907,
-        "coverage_wall_P_no_correct_answer_available": 0.12093,
-        "iid_sampling_ceiling_LP_N_infinity": 0.916947,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.100775,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.037877,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.04031,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.0,
-        "verdict": "selection-limited"
-      },
-      "VQA_RAD_open": {
-        "n": 200,
-        "format": "open-text",
-        "acc_7b_only_best": 0.51,
-        "acc_always_32b_direct": 0.6,
-        "gap": 0.09,
-        "macro_share_of_the_gap": 0.01125,
-        "oracle@8": 0.63,
-        "coverage_wall_P_no_correct_answer_available": 0.37,
-        "iid_sampling_ceiling_LP_N_infinity": 0.692479,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.12,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.062479,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.09,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.0,
-        "verdict": "selection-limited"
-      },
-      "PATH_VQA_open": {
-        "n": 1500,
-        "format": "open-text",
-        "acc_7b_only_best": 0.390667,
-        "acc_always_32b_direct": 0.376,
-        "gap": -0.014667,
-        "macro_share_of_the_gap": -0.001833,
-        "oracle@8": 0.516667,
-        "coverage_wall_P_no_correct_answer_available": 0.483333,
-        "iid_sampling_ceiling_LP_N_infinity": 0.62644,
-        "headroom_from_better_SELECTION_over_the_current_pool": 0.126,
-        "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.109773,
-        "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
-        "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
-        "residual_pure_capability": 0.0,
-        "verdict": "selection-limited"
-      }
+     "PMC_VQA": 0.542656,
+     "SLAKE_closed": 0.825359,
+     "VQA_RAD_closed": 0.780876,
+     "PATH_VQA_closed": 0.840869,
+     "MedXpertQA-MM": 0.2615,
+     "SLAKE_open": 0.87907,
+     "VQA_RAD_open": 0.63,
+     "PATH_VQA_open": 0.516667
     },
-    "capability_limited_cells": [
+    "what": "MCQ cells held at 7B greedy (a perfect selector over the OPTION set is trivially 1.0 and carries no information); open cells at oracle@8.  UPPER BOUND."
+   }
+  },
+  "MCQ_MENU_UPDATE_2026-08-12_verifier_over_options": {
+   "mechanism": "the unified candidate-set rule: for an MCQ item the candidates are the GIVEN OPTIONS (a fixed, complete, non-lucky set -- gold present on 100% of items, so coverage carries no information and the luck floor is exactly 1/K), scored by the same trained verifier that serves the open-text arm, argmax wins.  This is the mechanism the round's brief singled out as never tried.",
+   "provenance": "scores generated by ATTACK 2 (src/cascade_methods/unified_pipeline_score.py, zero-shot tag) into ckpts/unified_pipeline/zeroshot_*.jsonl; assembled by `python3 src/cascade_methods/unified_pipeline.py --analyse --tag zeroshot` -> results/cascade_methods/artifacts/_unified_pipeline_parts/analysis_zeroshot.json.  HF transformers, never vLLM (a visual LoRA under vLLM drops all 192 visual.* modules).",
+   "per_cell": {
+    "PMC_VQA": {
+     "n_scored": 6000,
+     "scored_is_full_cell": false,
+     "k_options": 4.0,
+     "acc_verifier_over_options": 0.4735,
+     "acc_7b_greedy_same_items": 0.539167,
+     "acc_32b_direct_same_items": 0.552333,
+     "delta_vs_7b_greedy": {
+      "delta": -0.06566666666666666,
+      "lo": -0.07966666666666666,
+      "hi": -0.052,
+      "sig": true
+     },
+     "candidate_auroc_gold_vs_distractor": 0.671,
+     "agreement_with_7b_greedy": 0.6063,
+     "luck_floor_random_gold_permutation_mean": 0.2497
+    },
+    "MedXpertQA-MM": {
+     "n_scored": 2000,
+     "scored_is_full_cell": true,
+     "k_options": 5.0,
+     "acc_verifier_over_options": 0.264,
+     "acc_7b_greedy_same_items": 0.2615,
+     "acc_32b_direct_same_items": 0.3065,
+     "delta_vs_7b_greedy": {
+      "delta": 0.0025,
+      "lo": -0.016,
+      "hi": 0.0215,
+      "sig": false
+     },
+     "candidate_auroc_gold_vs_distractor": 0.5826,
+     "agreement_with_7b_greedy": 0.621,
+     "luck_floor_random_gold_permutation_mean": 0.2001
+    },
+    "VQA_RAD_closed": {
+     "n_scored": 251,
+     "scored_is_full_cell": true,
+     "k_options": 2.0,
+     "acc_verifier_over_options": 0.729084,
+     "acc_7b_greedy_same_items": 0.780876,
+     "acc_32b_direct_same_items": 0.85259,
+     "delta_vs_7b_greedy": {
+      "delta": -0.05179282868525897,
+      "lo": -0.11155378486055777,
+      "hi": 0.00796812749003984,
+      "sig": false
+     },
+     "candidate_auroc_gold_vs_distractor": 0.7998,
+     "agreement_with_7b_greedy": 0.7729,
+     "luck_floor_random_gold_permutation_mean": 0.4992
+    },
+    "PATH_VQA_closed": {
+     "n_scored": 3362,
+     "scored_is_full_cell": true,
+     "k_options": 2.0,
+     "acc_verifier_over_options": 0.671921,
+     "acc_7b_greedy_same_items": 0.840869,
+     "acc_32b_direct_same_items": 0.889054,
+     "delta_vs_7b_greedy": {
+      "delta": -0.16894705532421178,
+      "lo": -0.1885782272456871,
+      "hi": -0.14991076740035694,
+      "sig": true
+     },
+     "candidate_auroc_gold_vs_distractor": 0.725,
+     "agreement_with_7b_greedy": 0.6466,
+     "luck_floor_random_gold_permutation_mean": 0.5003
+    }
+   },
+   "cells_significantly_WORSE_than_7B_greedy": [
+    "PMC_VQA",
+    "PATH_VQA_closed"
+   ],
+   "SLAKE_closed": "not scored -- its deployed prompt supplies no explicit answer space, so no option set could be built without changing the prompt",
+   "VERDICT": "MEASURED NEGATIVE, and decisively so.  Verifier-over-options vs taking the 7B's greedy answer, per cell: PMC_VQA -0.0657 [-0.0797, -0.0520] SIG; MedXpertQA-MM +0.0025 [-0.0160, +0.0215] n.s.; VQA_RAD_closed -0.0518 [-0.1116, +0.0080] n.s.; PATH_VQA_closed -0.1689 [-0.1886, -0.1499] SIG.  The MCQ menu in this artifact therefore stands at greedy_7b, now on a MEASUREMENT rather than on the absence of one.  MedXpert's positive point estimate is not a win: its CI spans zero and both models sit near chance on that cell.",
+   "why_it_fails_is_informative": "the verifier is NOT at chance -- its candidate-level AUROC for gold-vs-distractor is 0.67 (PMC_VQA), 0.58 (MedXpertQA-MM), 0.80 (VQA_RAD_closed), 0.72 (PATH_VQA_closed), all above 0.5.  It ranks gold above distractors better than coin-flipping and STILL loses, because the bar is not chance, it is the generator's own next-token distribution over the option letters, which is a strictly better-calibrated read of the same evidence.  This is Finding 2 in its sharpest form: on discrete option sets an external scorer has nothing to add to the generator's own posterior.  It also independently reproduces the (choice)(why) result [choicewhy_measure_2026-08-03.json] by a different route.",
+   "consequence_for_the_direction": "the brief's proposed unification -- one scorer, candidate set defined per format -- is now MEASURED on its MCQ half and it does not work.  Since MCQ carries 62.5% of the macro weight and all five MCQ cells are capability-limited (PART2), the unified pipeline cannot be the route to closing the 0.0596 gap.",
+   "does_a_candidate_identity_DEBIAS_rescue_it": {
+    "source": "results/cascade_methods/artifacts/_unified_pipeline_parts/arm_a_prime_debias.json (ATTACK 2, amendment 1) -- DIAGNOSTIC ONLY, never a deployable policy",
+    "per_cell": {
+     "PMC_VQA": {
+      "acc_raw_argmax": 0.4735,
+      "acc_debiased_argmax": 0.4085,
+      "acc_7b_greedy": 0.539167,
+      "delta_debiased_vs_raw": {
+       "delta": -0.065,
+       "lo": -0.07416666666666667,
+       "hi": -0.0559958333333334,
+       "sig": true
+      },
+      "delta_debiased_vs_7b": {
+       "delta": -0.13066666666666665,
+       "lo": -0.145,
+       "hi": -0.11666666666666667,
+       "sig": true
+      }
+     },
+     "MedXpertQA-MM": {
+      "acc_raw_argmax": 0.264,
+      "acc_debiased_argmax": 0.265,
+      "acc_7b_greedy": 0.2615,
+      "delta_debiased_vs_raw": {
+       "delta": 0.001,
+       "lo": -0.0035,
+       "hi": 0.006,
+       "sig": false
+      },
+      "delta_debiased_vs_7b": {
+       "delta": 0.0035,
+       "lo": -0.015,
+       "hi": 0.0225,
+       "sig": false
+      }
+     },
+     "VQA_RAD_closed": {
+      "acc_raw_argmax": 0.729084,
+      "acc_debiased_argmax": 0.741036,
+      "acc_7b_greedy": 0.780876,
+      "delta_debiased_vs_raw": {
+       "delta": 0.01195219123505976,
+       "lo": -0.0199203187250996,
+       "hi": 0.043824701195219126,
+       "sig": false
+      },
+      "delta_debiased_vs_7b": {
+       "delta": -0.0398406374501992,
+       "lo": -0.099601593625498,
+       "hi": 0.01593625498007968,
+       "sig": false
+      }
+     },
+     "PATH_VQA_closed": {
+      "acc_raw_argmax": 0.671921,
+      "acc_debiased_argmax": 0.71743,
+      "acc_7b_greedy": 0.840869,
+      "delta_debiased_vs_raw": {
+       "delta": 0.0455086258179655,
+       "lo": 0.031826293872694825,
+       "hi": 0.05919095776323617,
+       "sig": true
+      },
+      "delta_debiased_vs_7b": {
+       "delta": -0.12343842950624628,
+       "lo": -0.1403926234384295,
+       "hi": -0.10707911957168352,
+       "sig": true
+      }
+     }
+    },
+    "ANSWER": "NO.  De-biasing does not rescue the mechanism, and on the largest cell it makes it WORSE: PMC_VQA -0.0650 vs raw SIG; MedXpertQA-MM +0.0010 vs raw n.s.; VQA_RAD_closed +0.0120 vs raw n.s.; PATH_VQA_closed +0.0455 vs raw SIG.  After de-biasing the arm is still significantly below 7B greedy wherever it was before.  So the shortfall is NOT an artifact of the verifier preferring particular candidate strings or slots -- the ranking signal genuinely is not competitive with the generator's own posterior over the options.  This is the stronger, and more useful, form of the negative result."
+   },
+   "WHAT_COULD_STILL_CHANGE_THIS": "this is the ZERO-SHOT arm: the incumbent open-text verifier applied to option sets it was never trained on.  ATTACK 2 has a TRAINED option-branch verifier in flight at the time of writing (ckpts/train/lora_verifier_optiononly_s0, its amendment 2), which is the honest upper bound on the option branch under that recipe.  If it lands positive, this artifact's MCQ menu -- and therefore the 7B-only frontier value 0.616278 -- must be recomputed.  The frontier reported here is CONDITIONAL ON THE MENU, and the menu is stated in full so the recomputation is mechanical.  Nothing else in this artifact depends on it: PART2's capability floors, PART3's minimum-32B frontier and PART4's VRAM cliff are all unaffected by the MCQ arm choice."
+  }
+ },
+ "PART2_capability_floor": {
+  "question": "for each cell, P(no correct answer is available to the 7B under ANY selection), and which cells are capability-limited rather than selection-limited",
+  "mcq_coverage_note": "On all 5 MCQ cells the candidate set is COMPLETE BY CONSTRUCTION -- the gold answer is always one of the presented options (PMC-VQA 4 options, MedXpert 5 options) or one of {yes, no} (SLAKE-closed / VQA-RAD-closed / PathVQA-closed, which are free-form yes/no, verified in MedEvalKit/eval_results_lingshu7b_full/*/results.json: choices==None and answer in {yes,no}).  So the coverage wall is 0 and the oracle-over-candidates is trivially 1.0.  That upper bound is VACUOUS: it says only 'if the 7B could tell which option is right, it would be right'.  The honest MCQ ceiling is therefore the best MEASURED 7B-only mechanism, and every one tried is <= greedy.  MCQ cells are entered here with selection headroom 0, which is a MEASUREMENT, not an assumption -- see mcq_tta_2026-08-10.json and the luck-floor result in the round brief.",
+  "per_cell": {
+   "PMC_VQA": {
+    "n": 33430,
+    "format": "MCQ",
+    "acc_7b_only_best": 0.542656,
+    "acc_always_32b_direct": 0.55178,
+    "gap": 0.009124,
+    "macro_share_of_the_gap": 0.00114,
+    "oracle@8": null,
+    "coverage_wall_P_no_correct_answer_available": 0.0,
+    "iid_sampling_ceiling_LP_N_infinity": null,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.009124,
+    "verdict": "CAPABILITY-LIMITED"
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "format": "MCQ",
+    "acc_7b_only_best": 0.825359,
+    "acc_always_32b_direct": 0.858852,
+    "gap": 0.033493,
+    "macro_share_of_the_gap": 0.004187,
+    "oracle@8": null,
+    "coverage_wall_P_no_correct_answer_available": 0.0,
+    "iid_sampling_ceiling_LP_N_infinity": null,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.033493,
+    "verdict": "CAPABILITY-LIMITED"
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "format": "MCQ",
+    "acc_7b_only_best": 0.780876,
+    "acc_always_32b_direct": 0.85259,
+    "gap": 0.071713,
+    "macro_share_of_the_gap": 0.008964,
+    "oracle@8": null,
+    "coverage_wall_P_no_correct_answer_available": 0.0,
+    "iid_sampling_ceiling_LP_N_infinity": null,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.071713,
+    "verdict": "CAPABILITY-LIMITED"
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "format": "MCQ",
+    "acc_7b_only_best": 0.840869,
+    "acc_always_32b_direct": 0.889054,
+    "gap": 0.048186,
+    "macro_share_of_the_gap": 0.006023,
+    "oracle@8": null,
+    "coverage_wall_P_no_correct_answer_available": 0.0,
+    "iid_sampling_ceiling_LP_N_infinity": null,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.048186,
+    "verdict": "CAPABILITY-LIMITED"
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "format": "MCQ",
+    "acc_7b_only_best": 0.2615,
+    "acc_always_32b_direct": 0.3065,
+    "gap": 0.045,
+    "macro_share_of_the_gap": 0.005625,
+    "oracle@8": null,
+    "coverage_wall_P_no_correct_answer_available": 0.0,
+    "iid_sampling_ceiling_LP_N_infinity": null,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.0,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.0,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.045,
+    "verdict": "CAPABILITY-LIMITED"
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "format": "open-text",
+    "acc_7b_only_best": 0.778295,
+    "acc_always_32b_direct": 0.818605,
+    "gap": 0.04031,
+    "macro_share_of_the_gap": 0.005039,
+    "oracle@8": 0.87907,
+    "coverage_wall_P_no_correct_answer_available": 0.12093,
+    "iid_sampling_ceiling_LP_N_infinity": 0.916947,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.100775,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.037877,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.04031,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.0,
+    "verdict": "selection-limited"
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "format": "open-text",
+    "acc_7b_only_best": 0.51,
+    "acc_always_32b_direct": 0.6,
+    "gap": 0.09,
+    "macro_share_of_the_gap": 0.01125,
+    "oracle@8": 0.63,
+    "coverage_wall_P_no_correct_answer_available": 0.37,
+    "iid_sampling_ceiling_LP_N_infinity": 0.692479,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.12,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.062479,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.09,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.0,
+    "verdict": "selection-limited"
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "format": "open-text",
+    "acc_7b_only_best": 0.390667,
+    "acc_always_32b_direct": 0.376,
+    "gap": -0.014667,
+    "macro_share_of_the_gap": -0.001833,
+    "oracle@8": 0.516667,
+    "coverage_wall_P_no_correct_answer_available": 0.483333,
+    "iid_sampling_ceiling_LP_N_infinity": 0.62644,
+    "headroom_from_better_SELECTION_over_the_current_pool": 0.126,
+    "headroom_from_better_COVERAGE_up_to_the_iid_ceiling": 0.109773,
+    "gap_closable_by_SELECTION_capped_at_the_gap": 0.0,
+    "gap_closable_by_COVERAGE_capped_at_the_gap": 0.0,
+    "residual_pure_capability": 0.0,
+    "verdict": "selection-limited"
+   }
+  },
+  "capability_limited_cells": [
+   "PMC_VQA",
+   "SLAKE_closed",
+   "VQA_RAD_closed",
+   "PATH_VQA_closed",
+   "MedXpertQA-MM"
+  ],
+  "cells_where_the_7B_already_matches_or_beats_the_32B": [
+   "PATH_VQA_open"
+  ],
+  "macro_decomposition_of_the_gap": {
+   "total_gap_best7Bonly_to_direct": 0.040395,
+   "closable_by_SELECTION_over_the_current_pool": 0.016289,
+   "closable_by_COVERAGE_up_to_the_iid_sampling_ceiling": 0.0,
+   "residual_PURE_CAPABILITY": 0.025939,
+   "caveat": "each lever is CAPPED at the cell's own gap, in the order selection -> coverage -> residual, before averaging.  The UNCAPPED headroom is reported per cell alongside.",
+   "CORRECTED_2026-08-12_the_three_parts_do_NOT_sum_to_the_total_gap": {
+    "what_an_earlier_build_claimed": "that the three parts sum EXACTLY to the total gap",
+    "sum_of_the_three_parts": 0.042228,
+    "total_gap": 0.040395,
+    "difference": 0.001833,
+    "why": "the per-cell capping clamps at zero, so a cell where the 7B pipeline BEATS the 32B contributes 0 to the decomposition but its NEGATIVE gap still lowers the total.  Exactly one cell does this -- PATH_VQA_open, where the 7B-only arm is +0.014667 AHEAD of always-32B-direct -- and 0.014667/8 = 0.001833 is the entire discrepancy.",
+    "how_to_read_it": "the decomposition partitions the POSITIVE-PART gap (the sum of the deficits on the cells that have one).  That is the right object for 'what would we have to fix', because a surplus on one cell cannot be spent to repair a deficit on another under macro averaging."
+   },
+   "uncapped_headroom_for_reference": {
+    "SELECTION": 0.043347,
+    "COVERAGE": 0.026266
+   }
+  },
+  "reused_verbatim_from": "coverage_diagnosis_2026-08-10.json part2_ceiling (Lincoln-Petersen / Chao two-sample, endpoint-8 vs independent-16, judge-labelled; a LOWER bound on the reachable share, so an UPPER bound on the coverage headroom)."
+ },
+ "PART3_minimum_32B_frontier": {
+  "question": "the minimum fraction of questions that must go to the 32B to restore the tie with always-32B-direct, and what it costs in compute and in VRAM CLASS",
+  "tie_definition": "paired item bootstrap, nboot=10000; 95% CI lower bound of (policy - always-32B-direct) >= -0.0029 (the round's pre-registered tolerance, = the published CI half-width)",
+  "a_exact_cell_subset_enumeration": {
+   "what": "all 2^8 = 256 subsets of cells routed WHOLESALE to always-32B-direct, the rest on the best 7B-only policy.  Exact, no per-item fitting, but the subset is chosen on eval -> DIAGNOSTIC (an eval-visible lower bound on the escalation needed).",
+   "pareto_frontier": [
+    {
+     "cells_to_32B": [],
+     "macro_acc": 0.616278,
+     "macro_escalation_fraction": 0.0,
+     "sample_weighted_escalation_fraction": 0.0
+    },
+    {
+     "cells_to_32B": [
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.627528,
+     "macro_escalation_fraction": 0.125,
+     "sample_weighted_escalation_fraction": 0.004737
+    },
+    {
+     "cells_to_32B": [
+      "VQA_RAD_closed",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.636492,
+     "macro_escalation_fraction": 0.25,
+     "sample_weighted_escalation_fraction": 0.010681
+    },
+    {
+     "cells_to_32B": [
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.642515,
+     "macro_escalation_fraction": 0.375,
+     "sample_weighted_escalation_fraction": 0.090304
+    },
+    {
+     "cells_to_32B": [
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "MedXpertQA-MM",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.64814,
+     "macro_escalation_fraction": 0.5,
+     "sample_weighted_escalation_fraction": 0.137671
+    },
+    {
+     "cells_to_32B": [
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.653179,
+     "macro_escalation_fraction": 0.625,
+     "sample_weighted_escalation_fraction": 0.152946
+    },
+    {
+     "cells_to_32B": [
+      "SLAKE_closed",
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.657365,
+     "macro_escalation_fraction": 0.75,
+     "sample_weighted_escalation_fraction": 0.172745
+    },
+    {
+     "cells_to_32B": [
       "PMC_VQA",
       "SLAKE_closed",
       "VQA_RAD_closed",
       "PATH_VQA_closed",
-      "MedXpertQA-MM"
-    ],
-    "cells_where_the_7B_already_matches_or_beats_the_32B": [
-      "PATH_VQA_open"
-    ],
-    "macro_decomposition_of_the_gap": {
-      "total_gap_best7Bonly_to_direct": 0.040395,
-      "closable_by_SELECTION_over_the_current_pool": 0.016289,
-      "closable_by_COVERAGE_up_to_the_iid_sampling_ceiling": 0.0,
-      "residual_PURE_CAPABILITY": 0.025939,
-      "caveat": "each lever is CAPPED at the cell's own gap, in the order selection -> coverage -> residual, before averaging.  The UNCAPPED headroom is reported per cell alongside.",
-      "CORRECTED_2026-08-12_the_three_parts_do_NOT_sum_to_the_total_gap": {
-        "what_an_earlier_build_claimed": "that the three parts sum EXACTLY to the total gap",
-        "sum_of_the_three_parts": 0.042228,
-        "total_gap": 0.040395,
-        "difference": 0.001833,
-        "why": "the per-cell capping clamps at zero, so a cell where the 7B pipeline BEATS the 32B contributes 0 to the decomposition but its NEGATIVE gap still lowers the total.  Exactly one cell does this -- PATH_VQA_open, where the 7B-only arm is +0.014667 AHEAD of always-32B-direct -- and 0.014667/8 = 0.001833 is the entire discrepancy.",
-        "how_to_read_it": "the decomposition partitions the POSITIVE-PART gap (the sum of the deficits on the cells that have one).  That is the right object for 'what would we have to fix', because a surplus on one cell cannot be spent to repair a deficit on another under macro averaging."
-      },
-      "uncapped_headroom_for_reference": {
-        "SELECTION": 0.043347,
-        "COVERAGE": 0.026266
-      }
-    },
-    "reused_verbatim_from": "coverage_diagnosis_2026-08-10.json part2_ceiling (Lincoln-Petersen / Chao two-sample, endpoint-8 vs independent-16, judge-labelled; a LOWER bound on the reachable share, so an UPPER bound on the coverage headroom)."
-  },
-  "PART3_minimum_32B_frontier": {
-    "question": "the minimum fraction of questions that must go to the 32B to restore the tie with always-32B-direct, and what it costs in compute and in VRAM CLASS",
-    "tie_definition": "paired item bootstrap, nboot=10000; 95% CI lower bound of (policy - always-32B-direct) >= -0.0029 (the round's pre-registered tolerance, = the published CI half-width)",
-    "a_exact_cell_subset_enumeration": {
-      "what": "all 2^8 = 256 subsets of cells routed WHOLESALE to always-32B-direct, the rest on the best 7B-only policy.  Exact, no per-item fitting, but the subset is chosen on eval -> DIAGNOSTIC (an eval-visible lower bound on the escalation needed).",
-      "pareto_frontier": [
-        {
-          "cells_to_32B": [],
-          "macro_acc": 0.616278,
-          "macro_escalation_fraction": 0.0,
-          "sample_weighted_escalation_fraction": 0.0
-        },
-        {
-          "cells_to_32B": [
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.627528,
-          "macro_escalation_fraction": 0.125,
-          "sample_weighted_escalation_fraction": 0.004737
-        },
-        {
-          "cells_to_32B": [
-            "VQA_RAD_closed",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.636492,
-          "macro_escalation_fraction": 0.25,
-          "sample_weighted_escalation_fraction": 0.010681
-        },
-        {
-          "cells_to_32B": [
-            "VQA_RAD_closed",
-            "PATH_VQA_closed",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.642515,
-          "macro_escalation_fraction": 0.375,
-          "sample_weighted_escalation_fraction": 0.090304
-        },
-        {
-          "cells_to_32B": [
-            "VQA_RAD_closed",
-            "PATH_VQA_closed",
-            "MedXpertQA-MM",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.64814,
-          "macro_escalation_fraction": 0.5,
-          "sample_weighted_escalation_fraction": 0.137671
-        },
-        {
-          "cells_to_32B": [
-            "VQA_RAD_closed",
-            "PATH_VQA_closed",
-            "MedXpertQA-MM",
-            "SLAKE_open",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.653179,
-          "macro_escalation_fraction": 0.625,
-          "sample_weighted_escalation_fraction": 0.152946
-        },
-        {
-          "cells_to_32B": [
-            "SLAKE_closed",
-            "VQA_RAD_closed",
-            "PATH_VQA_closed",
-            "MedXpertQA-MM",
-            "SLAKE_open",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.657365,
-          "macro_escalation_fraction": 0.75,
-          "sample_weighted_escalation_fraction": 0.172745
-        },
-        {
-          "cells_to_32B": [
-            "PMC_VQA",
-            "SLAKE_closed",
-            "VQA_RAD_closed",
-            "PATH_VQA_closed",
-            "MedXpertQA-MM",
-            "SLAKE_open",
-            "VQA_RAD_open"
-          ],
-          "macro_acc": 0.658506,
-          "macro_escalation_fraction": 0.875,
-          "sample_weighted_escalation_fraction": 0.964475
-        }
-      ],
-      "minimum_escalation_that_ties": {
-        "cells_to_32B": [
-          "SLAKE_closed",
-          "VQA_RAD_closed",
-          "PATH_VQA_closed",
-          "MedXpertQA-MM",
-          "SLAKE_open",
-          "VQA_RAD_open"
-        ],
-        "macro_acc": 0.657365,
-        "macro_escalation_fraction": 0.75,
-        "sample_weighted_escalation_fraction": 0.172745
-      }
-    },
-    "b_item_level_crossfit_budget_sweep": {
-      "what": "per-cell escalation of the lowest-gate fraction B; gate = 7B answer margin (MCQ) or max incumbent verifier score over the 8 candidates (open).  Threshold is a TRAIN-fold quantile (label-free), 5-fold cross-fit, 12 fold seeds.  The 7B-only fallback is PART1's cross-fit policy.",
-      "sweep": [
-        {
-          "budget": 0.0,
-          "macro_escalation_realised": 0.0,
-          "macro_acc_seed_mean": 0.616278,
-          "macro_acc_seed_sd": 0.0,
-          "delta_vs_direct": -0.040395,
-          "lo": -0.052275,
-          "hi": -0.028427,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.02,
-          "macro_escalation_realised": 0.0269,
-          "macro_acc_seed_mean": 0.621342,
-          "macro_acc_seed_sd": 0.000356,
-          "delta_vs_direct": -0.035345,
-          "lo": -0.046954,
-          "hi": -0.023678,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.05,
-          "macro_escalation_realised": 0.0553,
-          "macro_acc_seed_mean": 0.622147,
-          "macro_acc_seed_sd": 0.00058,
-          "delta_vs_direct": -0.034457,
-          "lo": -0.045719,
-          "hi": -0.023286,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.075,
-          "macro_escalation_realised": 0.0803,
-          "macro_acc_seed_mean": 0.624823,
-          "macro_acc_seed_sd": 0.000315,
-          "delta_vs_direct": -0.031808,
-          "lo": -0.042817,
-          "hi": -0.020791,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.1,
-          "macro_escalation_realised": 0.1065,
-          "macro_acc_seed_mean": 0.628096,
-          "macro_acc_seed_sd": 0.000609,
-          "delta_vs_direct": -0.028497,
-          "lo": -0.039244,
-          "hi": -0.017674,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.125,
-          "macro_escalation_realised": 0.1282,
-          "macro_acc_seed_mean": 0.630443,
-          "macro_acc_seed_sd": 0.000583,
-          "delta_vs_direct": -0.026327,
-          "lo": -0.036667,
-          "hi": -0.015878,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.15,
-          "macro_escalation_realised": 0.1544,
-          "macro_acc_seed_mean": 0.632849,
-          "macro_acc_seed_sd": 0.000207,
-          "delta_vs_direct": -0.02376,
-          "lo": -0.033963,
-          "hi": -0.013337,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.2,
-          "macro_escalation_realised": 0.2037,
-          "macro_acc_seed_mean": 0.636383,
-          "macro_acc_seed_sd": 0.000704,
-          "delta_vs_direct": -0.020203,
-          "lo": -0.030037,
-          "hi": -0.010457,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.25,
-          "macro_escalation_realised": 0.2521,
-          "macro_acc_seed_mean": 0.640081,
-          "macro_acc_seed_sd": 0.000787,
-          "delta_vs_direct": -0.016803,
-          "lo": -0.026323,
-          "hi": -0.007442,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.3,
-          "macro_escalation_realised": 0.3036,
-          "macro_acc_seed_mean": 0.643889,
-          "macro_acc_seed_sd": 0.001034,
-          "delta_vs_direct": -0.012204,
-          "lo": -0.020561,
-          "hi": -0.004103,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.4,
-          "macro_escalation_realised": 0.4062,
-          "macro_acc_seed_mean": 0.648408,
-          "macro_acc_seed_sd": 0.000613,
-          "delta_vs_direct": -0.008238,
-          "lo": -0.015523,
-          "hi": -0.001212,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 0.5,
-          "macro_escalation_realised": 0.503,
-          "macro_acc_seed_mean": 0.650977,
-          "macro_acc_seed_sd": 0.000818,
-          "delta_vs_direct": -0.00561,
-          "lo": -0.0115,
-          "hi": 0.000171,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": true
-        },
-        {
-          "budget": 0.7,
-          "macro_escalation_realised": 0.7052,
-          "macro_acc_seed_mean": 0.653059,
-          "macro_acc_seed_sd": 0.000333,
-          "delta_vs_direct": -0.003467,
-          "lo": -0.007164,
-          "hi": -7e-05,
-          "ties_at_pre_registered_tol": false,
-          "not_significantly_worse": false
-        },
-        {
-          "budget": 1.0,
-          "macro_escalation_realised": 1.0,
-          "macro_acc_seed_mean": 0.65661,
-          "macro_acc_seed_sd": 0.0,
-          "delta_vs_direct": -6.3e-05,
-          "lo": -0.000188,
-          "hi": 0.0,
-          "ties_at_pre_registered_tol": true,
-          "not_significantly_worse": true
-        }
-      ],
-      "first_budget_that_ties_at_pre_registered_tol": {
-        "budget": 1.0,
-        "macro_escalation_realised": 1.0,
-        "macro_acc_seed_mean": 0.65661,
-        "macro_acc_seed_sd": 0.0,
-        "delta_vs_direct": -6.3e-05,
-        "lo": -0.000188,
-        "hi": 0.0,
-        "ties_at_pre_registered_tol": true,
-        "not_significantly_worse": true
-      },
-      "first_budget_not_significantly_worse": {
-        "budget": 0.5,
-        "macro_escalation_realised": 0.503,
-        "macro_acc_seed_mean": 0.650977,
-        "macro_acc_seed_sd": 0.000818,
-        "delta_vs_direct": -0.00561,
-        "lo": -0.0115,
-        "hi": 0.000171,
-        "ties_at_pre_registered_tol": false,
-        "not_significantly_worse": true
-      },
-      "permutation_null_on_the_gate": {
-        "protocol": "the per-item gate scalar is permuted within each cell; correctness vectors untouched",
-        "rows": [
-          {
-            "budget": 0.2,
-            "macro_acc_permuted_gate": 0.622311,
-            "macro_acc_real_gate": 0.636383
-          },
-          {
-            "budget": 0.4,
-            "macro_acc_permuted_gate": 0.627286,
-            "macro_acc_real_gate": 0.648408
-          }
-        ],
-        "reading": "if the permuted gate matches the real gate the frontier is manufactured by the escalation RATE alone and the gate carries nothing."
-      },
-      "cost_SIMPLE_CONVENTION": {
-        "definition": "(one 7B pass + escalation x R32 7B-equivalents) / R32, i.e. in units of one always-32B-direct forward pass.  A COUNT OF FORWARD PASSES, deliberately simpler than cost_floor_2026-08-10.json's prefill-inclusive as-charged convention; do not mix the two.  Open-cell best-of-k generation is NOT charged here -- see cost_floor for that.",
-        "rows": [
-          {
-            "escalation": 0.0,
-            "x_direct|R32=paper_4.57": 0.2188,
-            "x_direct|R32=derived_3.816": 0.2621
-          },
-          {
-            "escalation": 0.2037,
-            "x_direct|R32=paper_4.57": 0.4225,
-            "x_direct|R32=derived_3.816": 0.4658
-          },
-          {
-            "escalation": 0.4062,
-            "x_direct|R32=paper_4.57": 0.625,
-            "x_direct|R32=derived_3.816": 0.6683
-          },
-          {
-            "escalation": 1.0,
-            "x_direct|R32=paper_4.57": 1.2188,
-            "x_direct|R32=derived_3.816": 1.2621
-          }
-        ]
-      }
-    },
-    "cross_reference": "ATTACK 4 of this same round (min_escalation_2026-08-12*.json) sweeps the same question with a richer per-cell policy menu and a nested-CV lambda.  Where the two disagree, prefer ATTACK 4 for the COST endpoint and this file for the VRAM consequence.  cost_floor_2026-08-10.json is the prior art on the cost side: its verdict is that the pre-registered tie survives only at 1.029x-1.118x always-32B-direct compute across 12 seeds, i.e. NOT cheaper."
-  },
-  "PART1b_what_would_have_to_be_true": {
-    "framing": "Hold the 5 MCQ cells at 7B greedy -- measured, and with no 7B-only lever that improves them.  Then the whole tie rests on the 3 open cells, where the EXACT identity selected = oracle@8 x sel_eff applies per cell.  Solve for the sel_eff that ties.",
-    "mcq_five_cell_sum_at_7B_greedy": 3.25126,
-    "open_three_cell_sum_required_to_tie": 2.00212,
-    "oracle@8_per_open_cell": {
-      "SLAKE_open": 0.87907,
-      "VQA_RAD_open": 0.63,
-      "PATH_VQA_open": 0.516667
-    },
-    "iid_sampling_ceiling_per_open_cell": {
-      "SLAKE_open": 0.916947,
-      "VQA_RAD_open": 0.692479,
-      "PATH_VQA_open": 0.62644
-    },
-    "REQUIRED_sel_eff_over_the_CURRENT_8_sample_pool": 0.988342,
-    "REQUIRED_sel_eff_if_coverage_is_ALSO_pushed_to_the_iid_ceiling": 0.895456,
-    "sel_eff_ACHIEVED_today_per_open_cell": {
-      "SLAKE_open": 0.885362,
-      "VQA_RAD_open": 0.809524,
-      "PATH_VQA_open": 0.756129
-    },
-    "field_constant": "~20 independent verifier/selection architectures converge on sel_eff 0.80-0.81 (docs/current/COMPARATIVE_VERIFIER_2026-08-05.md); the incumbent clean verifier is 0.775204 and the frozen 8-seed ensemble 0.810627 (genframe_data.py FROZEN block / frozen_selector_ens8_2026-08-05.json).  The seed spread alone (~0.021) exceeds every architectural effect measured.",
-    "reading": "the required sel_eff is the number to compare against 0.81.  If it exceeds 1.0 the tie is IMPOSSIBLE from selection alone at the current coverage; if it exceeds 0.81 by more than the seed spread, no measured architecture reaches it.",
-    "perfect_selector_at_the_iid_ceiling_macro": 0.685891
-  },
-  "PART4_the_VRAM_cliff_and_load_on_demand": {
-    "why_this_is_the_decisive_section": "the user's goal is 'match the 32B with LESS VRAM than the 32B'.  Accuracy and compute are continuous in the escalation rate; VRAM is NOT.  A policy that escalates 0% of queries and a policy that escalates 0.1% are in DIFFERENT HARDWARE CLASSES, because the second one has to have the 32B somewhere.",
-    "measured_inputs": {
-      "source": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json (HF transformers, bf16, FA2, tp=1, batch 1, one A100 80GB)",
-      "lingshu7b_weights_resident_gib": 15.4937,
-      "lingshu32b_weights_resident_gib": 62.3125,
-      "lingshu7b_peak_allocated_gib": 18.0232,
-      "lingshu32b_peak_allocated_gib": 67.868,
-      "lingshu32b_peak_activations_gib_DERIVED": 5.5555,
-      "cuda_context_offset_gib": 1.3835,
-      "lingshu7b_mcq_process_footprint_peak_gib": 23.4206,
-      "lingshu7b_opentext_bestof8_arm_process_footprint_peak_gib": 18.7644,
-      "lingshu32b_process_footprint_peak_gib": 72.6023,
-      "card_capacity_gib": 80.0,
-      "independent_corroboration_of_w32": {
-        "on_disk_bf16_safetensors_gib": 62.3107,
-        "vram_a_weights_resident_gib": 62.3125,
-        "abs_difference_gib": 0.0018,
-        "reading": "the 14 safetensors shards on disk and the CUDA allocation after from_pretrained agree to 0.002 GiB.  Two independent instruments, same number."
-      }
-    },
-    "arithmetic_verification_requested_by_the_brief": {
-      "brief_claim": "7B+32B weights alone are 15.49+62.31 = 77.80 GiB, and with the 32B's measured +5.6 GiB of peak activations that is ~83 GiB, i.e. it does NOT fit on one 80 GB card",
-      "weights_only_sum_gib": 77.8062,
-      "thirtytwob_peak_activations_gib": 5.5555,
-      "weights_plus_32b_activations_gib": 83.3617,
-      "VERDICT": "CONFIRMED.  Both addends are MEASURED (a_weights_resident_gib); the 5.5555 GiB activation term is DERIVED as (b_peak_allocated peak - a_weights_resident) on the 32B's own worst item, MedXpert MM-1561 (46,816 vision tokens).  The sum is 83.36 GiB against an 80.0 GiB card.",
-      "the_arithmetic_is_conservative_in_TWO_ways": [
-        "it omits the CUDA context (measured 1.3835 GiB per process), which every real process pays",
-        "it omits caching-allocator fragmentation (c_peak_reserved exceeds b_peak_allocated by up to 3.35 GiB on the 32B)"
-      ],
-      "with_the_cuda_context_gib": 84.7452,
-      "cleanest_measured_only_statement": {
-        "expression": "the 7B open-text best-of-8 arm's MEASURED process footprint + the 32B's MEASURED resident weights",
-        "gib": 81.0769,
-        "over_capacity_by_gib": 1.0769,
-        "reading": "both terms measured, the only operation is addition, and it ALREADY exceeds the card before the 32B executes a single forward pass."
-      },
-      "even_the_most_favourable_arithmetic_fails": {
-        "weights_only_plus_one_shared_context_gib": 79.1897,
-        "headroom_left_on_an_80_GiB_card_gib": 0.8103,
-        "reading": "0.81 GiB of headroom is not enough for a single 32B prefill (measured 5.56 GiB) nor for a single 7B prefill (measured 2.53 GiB).  The most generous accounting still does not run."
-      }
-    },
-    "the_two_deployment_REGIMES": {
-      "A_never_loads_the_32B": {
-        "policies": "escalation rate exactly 0",
-        "measured_footprint_gib": 18.7644,
-        "smallest_card": "24 GB (RTX 4090 / L4) -- vram_testtime_2026-08-11.json deployer_guidance",
-        "pct_of_one_A100_80GB": 23.5,
-        "best_macro_accuracy_ATTAINABLE": 0.616278,
-        "delta_vs_always_32b_direct": {
-          "delta": -0.040395,
-          "lo": -0.052275,
-          "hi": -0.028427,
-          "sig": true,
-          "ties_at_tol": false
-        }
-      },
-      "B_needs_the_32B_resident": {
-        "policies": "ANY escalation rate > 0, however small, on a single-card deployment",
-        "single_card_one_process_gib_DERIVED": 84.7452,
-        "fits_on_one_80_GiB_card": false,
-        "two_process_additive_footprint_gib": 96.0229,
-        "minimum_hardware": "TWO 80 GB cards (or one >= 96 GB card, e.g. H100 NVL / H200); the deployment is no longer 'a 7B box'",
-        "note": "vram_testtime_2026-08-11.json lists co-residency explicitly under not_measured ('cut for time.  Additive from (d)').  This section supplies it, as DERIVED arithmetic over that file's measurements -- not as a new measurement."
-      },
-      "C_load_on_demand": {
-        "idea": "keep only the 7B resident and page the 32B in from disk when a query escalates",
-        "measured": {
-          "model_bytes_on_disk_gib": 62.3107,
-          "cold_sequential_read_s": 410.222,
-          "cold_read_gib_per_s": 0.1519,
-          "page_cache_warm_read_gib_per_s": 0.9892,
-          "host_to_device_gib_per_s": 22.912,
-          "composed_cold_swap_in_s": 412.942,
-          "composed_warm_swap_in_s": 65.711
-        },
-        "measurement_caveat": "measured on 2026-08-12 on a SHARED /data mount while two sibling GPU jobs of this same round were running (both A100s at 59-100% util).  0.152 GiB/s is therefore a CONTENDED-STORAGE figure, and per-shard throughput drifts downward across the run (0.210 -> 0.098 GiB/s), which is the signature of growing contention.  On idle NVMe this would be far faster.  It is reported as measured, under the conditions stated, and must not be quoted as an idle-system number.  The H2D leg (22.9 GiB/s) is healthy and is NOT the bottleneck -- the 32B's weights cross PCIe in 2.72 s.",
-        "VERDICT": "NOT DEPLOYABLE as an on-demand swap in this environment.  A cold swap-in is 413 s (~6.9 min) against a 32B forward pass of 1.88 s mean / 6.01 s max (vram_testtime S2 wall_s).  Even the page-cache-warm path is 66 s -- and 'warm' means 62.31 GiB of HOST RAM is dedicated to holding the model, which is a larger, not smaller, resource commitment than keeping it on a second card.",
-        "which_regime_are_we_in": "Regime B.  The measured minimum escalation that ties (PART3) is 75% of macro weight / 17.3% of items -- not 5% -- so the 32B is not a rare guest but a co-equal tier, and load-on-demand is not even a candidate.  The honest options are: (i) accept regime A and its measured accuracy shortfall, or (ii) accept a two-card deployment.",
-        "INDEPENDENT_CORROBORATION_2026-08-12": {
-          "what": "the sibling SHRINK attack timed a real HuggingFace from_pretrained load of the SAME 32B checkpoint on a GPU, which is a second instrument on the same quantity as the composed swap-in estimate above.",
-          "source": "results/cascade_methods/artifacts/_shrink_parts/vram_bf16.json:load_seconds",
-          "hf_from_pretrained_load_s_32b_bf16": 139.8,
-          "hf_from_pretrained_load_s_7b_bf16": 21.5,
-          "composed_cold_swap_in_s_this_artifact": 412.942,
-          "reading": "140 s measured end-to-end (weights already in page cache from the probe's own earlier passes) against this artifact's 413 s cold / 66 s warm composed estimate.  The two instruments BRACKET the truth rather than agreeing: 140 s sits between them, which is what a partially warm cache should give.  THE VERDICT IS UNCHANGED AND IS NOW ROBUST TO THE INSTRUMENT: even the most favourable measured load, 140 s, is ~74x a single 32B forward pass (1.88 s mean).  A policy that escalates even 1% of queries would pay this on every cold escalation.",
-          "AMORTISED_COST_PER_QUERY": {
-            "policy_being_costed": "load-on-demand: only the 7B stays resident; the 32B is paged in from the HF cache on each escalation and its VRAM released afterwards.  If it is NOT released the deployment is regime B and already needs the 32B's VRAM, which defeats the purpose.",
-            "the_measured_swap_in_seconds": {
-              "hf_from_pretrained_end_to_end_MEASURED": 139.8,
-              "composed_cold_disk_to_gpu": 412.942,
-              "composed_warm_page_cache_hot": 65.711
-            },
-            "a_32b_forward_pass_s": {
-              "mean": 1.88,
-              "max": 6.01,
-              "source": "vram_testtime_2026-08-11.json S2 wall_s"
-            },
-            "slowdown_factor_swap_in_vs_one_forward_pass": {
-              "hf_from_pretrained_end_to_end_MEASURED": 74.4,
-              "composed_cold_disk_to_gpu": 219.7,
-              "composed_warm_page_cache_hot": 35.0
-            },
-            "expected_added_latency_per_query": [
-              {
-                "escalation_fraction_of_items": 0.01,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 1.398,
-                "added_s_per_query|composed_cold_disk_to_gpu": 4.129,
-                "added_s_per_query|composed_warm_page_cache_hot": 0.657,
-                "added_s_per_query|second_card_32B_resident": 0.019
-              },
-              {
-                "escalation_fraction_of_items": 0.05,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 6.99,
-                "added_s_per_query|composed_cold_disk_to_gpu": 20.647,
-                "added_s_per_query|composed_warm_page_cache_hot": 3.286,
-                "added_s_per_query|second_card_32B_resident": 0.094
-              },
-              {
-                "escalation_fraction_of_items": 0.1,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 13.98,
-                "added_s_per_query|composed_cold_disk_to_gpu": 41.294,
-                "added_s_per_query|composed_warm_page_cache_hot": 6.571,
-                "added_s_per_query|second_card_32B_resident": 0.188
-              },
-              {
-                "escalation_fraction_of_items": 0.172745,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 24.15,
-                "added_s_per_query|composed_cold_disk_to_gpu": 71.334,
-                "added_s_per_query|composed_warm_page_cache_hot": 11.351,
-                "added_s_per_query|second_card_32B_resident": 0.325
-              },
-              {
-                "escalation_fraction_of_items": 0.5,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 69.9,
-                "added_s_per_query|composed_cold_disk_to_gpu": 206.471,
-                "added_s_per_query|composed_warm_page_cache_hot": 32.855,
-                "added_s_per_query|second_card_32B_resident": 0.94
-              },
-              {
-                "escalation_fraction_of_items": 1.0,
-                "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 139.8,
-                "added_s_per_query|composed_cold_disk_to_gpu": 412.942,
-                "added_s_per_query|composed_warm_page_cache_hot": 65.711,
-                "added_s_per_query|second_card_32B_resident": 1.88
-              }
-            ],
-            "at_THIS_ROUNDS_measured_tie_escalation": {
-              "escalation_fraction_of_items": 0.172745,
-              "source": "PART3 a_exact_cell_subset_enumeration.minimum_escalation_that_ties",
-              "added_s_per_query_best_case_measured_load": 24.15,
-              "added_s_per_query_second_card": 0.325,
-              "ratio": 74.4
-            },
-            "VERDICT": "the brief's own deployability test -- '5% escalation with a 30 s model load is not deployable' -- is FAILED by a wide margin on both terms.  The measured load is 140 s end-to-end (not 30 s), the measured tie escalation is 17.3% of items (not 5%), and the product is 24 s of added latency PER QUERY averaged over all traffic, against 0.32 s for the same policy with the 32B resident on a second card.  Load-on-demand is not a marginal call here; it is worse than the thing it is trying to avoid by roughly two orders of magnitude."
-          },
-          "measurement_note": "the same probe read the 32B's post-load allocation as 62.3186 GiB, against vram_testtime's 62.3125 GiB -- a THIRD independent instrument on the 32B weight footprint, agreeing to 0.0061 GiB."
-        }
-      }
-    },
-    "quantised_strong_leg_UPDATE_2026-08-12": {
-      "why_this_is_here": "this artifact's original conclusion was 'ANY escalation, however rare, changes the hardware class'.  That is a statement about a bf16 strong leg.  Between that run and this one the sibling SHRINK attack MEASURED the VRAM of a 4-bit and an 8-bit 32B, which is the one lever that could put a strong leg back on a single card.  The claim is therefore NARROWED here, and the narrowing is stated rather than buried.",
-      "source": "results/cascade_methods/artifacts/_shrink_parts/vram_{bf16,nf4,int8}.json (MEASURED: torch allocator, 25 synthetic 320x320 images, batch 1, greedy, warmup excluded)",
-      "measured_resident_gib": {
-        "bf16": 62.4062,
-        "nf4": 19.5315,
-        "int8": 33.5591
-      },
-      "measured_latency_ms_batch1_mean": {
-        "bf16": 411.9,
-        "nf4": 936.4,
-        "int8": 11241.9
-      },
-      "co_residency_with_the_7B_cheap_leg": {
-        "note": "uses this artifact's vram_testtime 7B weight figure (15.4937 GiB), NOT the SHRINK probe's 7B reading of 30.50 GiB, which that artifact itself flags as an unexplained ~2x inflation (bf16_resident_anomaly, status OPEN).  The 32B bf16 reading in the SAME probe agrees with vram_testtime to 0.006 GiB, so the anomaly is confined to its 7B row.",
-        "sum_7b_plus_strong_leg_weights_gib": {
-          "bf16": 77.9,
-          "nf4": 35.0252,
-          "int8": 49.0528
-        },
-        "WEIGHTS_ONLY_IS_THE_WRONG_TEST": "a weights-only comparison says bf16 'fits' (77.90 < 80.0) and that is exactly the error this artifact exists to prevent.  The deployed peak is weights + the 32B's MEASURED peak activations (5.5555 GiB on its worst item) + the CUDA context (1.3835 GiB).  Both columns are given; only the second one is a deployability test.",
-        "realistic_peak_gib_weights_plus_32b_activations_plus_context": {
-          "bf16": 84.8389,
-          "nf4": 41.9642,
-          "int8": 55.9918
-        },
-        "FITS_ON_ONE_80_GIB_CARD": {
-          "bf16": false,
-          "nf4": true,
-          "int8": true
-        },
-        "activation_caveat": "the 5.5555 GiB activation term is the bf16 32B's, measured on MedXpert MM-1561 (46,816 vision tokens).  Applying it unchanged to the quantised rows is CONSERVATIVE for weights but NOT necessarily right for activations: bitsandbytes dequantises to bf16 for compute, so activation memory should be similar, but it was not measured at 4-bit (the probe used one 320x320 image, ~121 vision tokens, which exercises almost no activation memory).  Treat the quantised peak as INFERRED, not measured."
-      },
-      "accuracy_of_the_quantised_strong_leg": "NOT MEASURED -- the run CRASHED before writing any cell.  logs/shrink_quant_acc_2026-08-12.log ends in MedEvalKit utils.py:190 judge_open_end_vqa -> rouge() ValueError('Hypothesis is empty.'), i.e. the quantised model emitted an empty string on an open-text item and the vendor judge raised instead of scoring it.  The results dict is {}.",
-      "VERDICT": "THE VRAM CLIFF IS REAL AT bf16 AND ONLY AT bf16.  A 4-bit 32B is measured at 19.53 GiB resident, so 7B + NF4-32B = 35.03 GiB of weights, which fits on ONE 80 GB card with room to spare -- and even on a 48 GB card.  THIS IS NOT YET AN OPERATING POINT, because the quantised model's ACCURACY IS NOT MEASURED: the accuracy run crashed with an empty results dict (see accuracy_of_the_quantised_strong_leg).  Quoting the 4-bit VRAM as if it were a working cascade tier would be exactly the estimate-relabelled-as-measurement failure CRITICAL RULE 7 forbids.  What is honestly established: (i) at bf16 the cliff stands and any escalation forces a second card; (ii) 4-bit removes the VRAM obstacle and costs 2.27x latency per strong-leg call (measured); (iii) whether it keeps the 32B's accuracy -- the entire reason to escalate -- is OPEN and is the single highest-value follow-up this round produced.  int8 is measured SLOWER than bf16 by 27.3x and is not a candidate."
-    },
-    "reconciliation_with_ATTACK4": {
-      "why": "two artifacts of the SAME round report a 'best zero-32B macro' and they differ.  Naming which is which prevents the repo's documented failure mode -- a correction made in a new file and never propagated.",
-      "this_artifact": {
-        "value": 0.616278,
-        "menu": "greedy_7b, bo1..bo8 incumbent verifier, AND bo8 frozen 8-seed ens8 selector",
-        "arm_chosen_on_all_three_open_cells": "bo8_frozen_ens8_selector",
-        "selector_sel_eff": 0.810627
-      },
-      "attack4_min_escalation": {
-        "value": 0.60532,
-        "source": "results/cascade_methods/artifacts/min_escalation_2026-08-12.json:PART2_zero_32b.macro_best_no32b",
-        "menu": "greedy_7b and incumbent-verifier best-of-k with cross-fit k only",
-        "selector_sel_eff": 0.775204
-      },
-      "difference": 0.010958,
-      "which_to_quote": "quote THIS artifact's value for 'the best a 7B-only pipeline can do', because its menu is a strict superset and the extra arm is a frozen, deployable, already-measured artifact.  Quote ATTACK 4's value when the question is specifically about the INCUMBENT deployed verifier.  BOTH lose to always-32B-direct significantly, so the qualitative verdict is identical either way and no conclusion in either artifact turns on the difference.",
-      "cost_hazard": "this artifact's cost_SIMPLE_CONVENTION row at escalation 0 reads 0.2188x always-32B-direct and DELIBERATELY does not charge the 8 open-cell generations (it says so inline).  ATTACK 4 does charge them and gets 1.3403x.  The zero-32B arm is CHEAP IN VRAM AND EXPENSIVE IN FLOPs -- 8 x 7B forward passes exceed one 32B pass.  Never pair the 0.2188x with the best-of-8 accuracy; that pairing would overstate the arm on both axes at once."
-    },
-    "consequence_for_the_users_goal": "'less VRAM than the 32B' is achievable ONLY in regime A -- 18.76 GiB measured, 3.9x smaller than always-32B-direct's 72.60 GiB, on a 24 GB card instead of an 80 GB card.  But regime A's best measured accuracy is 0.616278 macro against the 32B's 0.656672, a SIGNIFICANT shortfall of -0.0404 [-0.0523, -0.0284].  Every policy that recovers that accuracy is in regime B, where the footprint is not 'less than the 32B' -- it is the 32B PLUS the 7B, on more hardware than always-32B-direct needs.  There is no measured operating point in between AT bf16.  The one lever that could create one is a QUANTISED strong leg, whose VRAM is now measured and whose accuracy is NOT -- see quantised_strong_leg_UPDATE_2026-08-12.",
-    "CORRECTION_2026-08-12": {
-      "what": "an earlier build of this artifact carried a HARD-CODED consequence sentence quoting '0.6030 macro' and '-0.0528 [-0.0646, -0.0408]' for regime A, while the computed value in the SAME block (the_two_deployment_REGIMES.A.best_macro_accuracy_ATTAINABLE) was 0.616278 / -0.040395 [-0.052275, -0.028427].  The sentence is now an f-string over the computed variables and cannot drift again.",
-      "why_the_two_numbers_differ": "0.6030 was never produced by this script; 0.60532 IS the sibling ATTACK 4 value (min_escalation_2026-08-12.json PART2_zero_32b.macro_best_no32b), which searched a STRICTLY SMALLER arm menu -- incumbent-verifier best-of-k only.  This script's menu also contains the FROZEN 8-seed ens8 selector (ckpts/train/genframe_head_ens8, measured sel_eff 0.810627 vs the incumbent's 0.775204), which is a real deployable artifact, and the cross-fit picks it on all three open cells.  Both numbers are correct for their own menu; the larger menu gives the honest answer to 'best achievable with no 32B'.",
-      "reconciliation": "see reconciliation_with_ATTACK4 below"
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.658506,
+     "macro_escalation_fraction": 0.875,
+     "sample_weighted_escalation_fraction": 0.964475
     }
+   ],
+   "minimum_escalation_that_ties": {
+    "cells_to_32B": [
+     "SLAKE_closed",
+     "VQA_RAD_closed",
+     "PATH_VQA_closed",
+     "MedXpertQA-MM",
+     "SLAKE_open",
+     "VQA_RAD_open"
+    ],
+    "macro_acc": 0.657365,
+    "macro_escalation_fraction": 0.75,
+    "sample_weighted_escalation_fraction": 0.172745
+   }
+  },
+  "b_item_level_crossfit_budget_sweep": {
+   "what": "per-cell escalation of the lowest-gate fraction B; gate = 7B answer margin (MCQ) or max incumbent verifier score over the 8 candidates (open).  Threshold is a TRAIN-fold quantile (label-free), 5-fold cross-fit, 12 fold seeds.  The 7B-only fallback is PART1's cross-fit policy.",
+   "sweep": [
+    {
+     "budget": 0.0,
+     "macro_escalation_realised": 0.0,
+     "macro_acc_seed_mean": 0.616278,
+     "macro_acc_seed_sd": 0.0,
+     "delta_vs_direct": -0.040395,
+     "lo": -0.052275,
+     "hi": -0.028427,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.02,
+     "macro_escalation_realised": 0.0269,
+     "macro_acc_seed_mean": 0.621342,
+     "macro_acc_seed_sd": 0.000356,
+     "delta_vs_direct": -0.035345,
+     "lo": -0.046954,
+     "hi": -0.023678,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.05,
+     "macro_escalation_realised": 0.0553,
+     "macro_acc_seed_mean": 0.622147,
+     "macro_acc_seed_sd": 0.00058,
+     "delta_vs_direct": -0.034457,
+     "lo": -0.045719,
+     "hi": -0.023286,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.075,
+     "macro_escalation_realised": 0.0803,
+     "macro_acc_seed_mean": 0.624823,
+     "macro_acc_seed_sd": 0.000315,
+     "delta_vs_direct": -0.031808,
+     "lo": -0.042817,
+     "hi": -0.020791,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.1,
+     "macro_escalation_realised": 0.1065,
+     "macro_acc_seed_mean": 0.628096,
+     "macro_acc_seed_sd": 0.000609,
+     "delta_vs_direct": -0.028497,
+     "lo": -0.039244,
+     "hi": -0.017674,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.125,
+     "macro_escalation_realised": 0.1282,
+     "macro_acc_seed_mean": 0.630443,
+     "macro_acc_seed_sd": 0.000583,
+     "delta_vs_direct": -0.026327,
+     "lo": -0.036667,
+     "hi": -0.015878,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.15,
+     "macro_escalation_realised": 0.1544,
+     "macro_acc_seed_mean": 0.632849,
+     "macro_acc_seed_sd": 0.000207,
+     "delta_vs_direct": -0.02376,
+     "lo": -0.033963,
+     "hi": -0.013337,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.2,
+     "macro_escalation_realised": 0.2037,
+     "macro_acc_seed_mean": 0.636383,
+     "macro_acc_seed_sd": 0.000704,
+     "delta_vs_direct": -0.020203,
+     "lo": -0.030037,
+     "hi": -0.010457,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.25,
+     "macro_escalation_realised": 0.2521,
+     "macro_acc_seed_mean": 0.640081,
+     "macro_acc_seed_sd": 0.000787,
+     "delta_vs_direct": -0.016803,
+     "lo": -0.026323,
+     "hi": -0.007442,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.3,
+     "macro_escalation_realised": 0.3036,
+     "macro_acc_seed_mean": 0.643889,
+     "macro_acc_seed_sd": 0.001034,
+     "delta_vs_direct": -0.012204,
+     "lo": -0.020561,
+     "hi": -0.004103,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.4,
+     "macro_escalation_realised": 0.4062,
+     "macro_acc_seed_mean": 0.648408,
+     "macro_acc_seed_sd": 0.000613,
+     "delta_vs_direct": -0.008238,
+     "lo": -0.015523,
+     "hi": -0.001212,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 0.5,
+     "macro_escalation_realised": 0.503,
+     "macro_acc_seed_mean": 0.650977,
+     "macro_acc_seed_sd": 0.000818,
+     "delta_vs_direct": -0.00561,
+     "lo": -0.0115,
+     "hi": 0.000171,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": true
+    },
+    {
+     "budget": 0.7,
+     "macro_escalation_realised": 0.7052,
+     "macro_acc_seed_mean": 0.653059,
+     "macro_acc_seed_sd": 0.000333,
+     "delta_vs_direct": -0.003467,
+     "lo": -0.007164,
+     "hi": -7e-05,
+     "ties_at_pre_registered_tol": false,
+     "not_significantly_worse": false
+    },
+    {
+     "budget": 1.0,
+     "macro_escalation_realised": 1.0,
+     "macro_acc_seed_mean": 0.65661,
+     "macro_acc_seed_sd": 0.0,
+     "delta_vs_direct": -6.3e-05,
+     "lo": -0.000188,
+     "hi": 0.0,
+     "ties_at_pre_registered_tol": true,
+     "not_significantly_worse": true
+    }
+   ],
+   "first_budget_that_ties_at_pre_registered_tol": {
+    "budget": 1.0,
+    "macro_escalation_realised": 1.0,
+    "macro_acc_seed_mean": 0.65661,
+    "macro_acc_seed_sd": 0.0,
+    "delta_vs_direct": -6.3e-05,
+    "lo": -0.000188,
+    "hi": 0.0,
+    "ties_at_pre_registered_tol": true,
+    "not_significantly_worse": true
+   },
+   "first_budget_not_significantly_worse": {
+    "budget": 0.5,
+    "macro_escalation_realised": 0.503,
+    "macro_acc_seed_mean": 0.650977,
+    "macro_acc_seed_sd": 0.000818,
+    "delta_vs_direct": -0.00561,
+    "lo": -0.0115,
+    "hi": 0.000171,
+    "ties_at_pre_registered_tol": false,
+    "not_significantly_worse": true
+   },
+   "permutation_null_on_the_gate": {
+    "protocol": "the per-item gate scalar is permuted within each cell; correctness vectors untouched",
+    "rows": [
+     {
+      "budget": 0.2,
+      "macro_acc_permuted_gate": 0.622311,
+      "macro_acc_real_gate": 0.636383
+     },
+     {
+      "budget": 0.4,
+      "macro_acc_permuted_gate": 0.627286,
+      "macro_acc_real_gate": 0.648408
+     }
+    ],
+    "reading": "if the permuted gate matches the real gate the frontier is manufactured by the escalation RATE alone and the gate carries nothing."
+   },
+   "cost_SIMPLE_CONVENTION": {
+    "definition": "(one 7B pass + escalation x R32 7B-equivalents) / R32, i.e. in units of one always-32B-direct forward pass.  A COUNT OF FORWARD PASSES, deliberately simpler than cost_floor_2026-08-10.json's prefill-inclusive as-charged convention; do not mix the two.  Open-cell best-of-k generation is NOT charged here -- see cost_floor for that.",
+    "rows": [
+     {
+      "escalation": 0.0,
+      "x_direct|R32=paper_4.57": 0.2188,
+      "x_direct|R32=derived_3.816": 0.2621
+     },
+     {
+      "escalation": 0.2037,
+      "x_direct|R32=paper_4.57": 0.4225,
+      "x_direct|R32=derived_3.816": 0.4658
+     },
+     {
+      "escalation": 0.4062,
+      "x_direct|R32=paper_4.57": 0.625,
+      "x_direct|R32=derived_3.816": 0.6683
+     },
+     {
+      "escalation": 1.0,
+      "x_direct|R32=paper_4.57": 1.2188,
+      "x_direct|R32=derived_3.816": 1.2621
+     }
+    ]
+   }
+  },
+  "cross_reference": "ATTACK 4 of this same round (min_escalation_2026-08-12*.json) sweeps the same question with a richer per-cell policy menu and a nested-CV lambda.  Where the two disagree, prefer ATTACK 4 for the COST endpoint and this file for the VRAM consequence.  cost_floor_2026-08-10.json is the prior art on the cost side: its verdict is that the pre-registered tie survives only at 1.029x-1.118x always-32B-direct compute across 12 seeds, i.e. NOT cheaper."
+ },
+ "PART1b_what_would_have_to_be_true": {
+  "framing": "Hold the 5 MCQ cells at 7B greedy -- measured, and with no 7B-only lever that improves them.  Then the whole tie rests on the 3 open cells, where the EXACT identity selected = oracle@8 x sel_eff applies per cell.  Solve for the sel_eff that ties.",
+  "mcq_five_cell_sum_at_7B_greedy": 3.25126,
+  "open_three_cell_sum_required_to_tie": 2.00212,
+  "oracle@8_per_open_cell": {
+   "SLAKE_open": 0.87907,
+   "VQA_RAD_open": 0.63,
+   "PATH_VQA_open": 0.516667
+  },
+  "iid_sampling_ceiling_per_open_cell": {
+   "SLAKE_open": 0.916947,
+   "VQA_RAD_open": 0.692479,
+   "PATH_VQA_open": 0.62644
+  },
+  "REQUIRED_sel_eff_over_the_CURRENT_8_sample_pool": 0.988342,
+  "REQUIRED_sel_eff_if_coverage_is_ALSO_pushed_to_the_iid_ceiling": 0.895456,
+  "sel_eff_ACHIEVED_today_per_open_cell": {
+   "SLAKE_open": 0.885362,
+   "VQA_RAD_open": 0.809524,
+   "PATH_VQA_open": 0.756129
+  },
+  "field_constant": "~20 independent verifier/selection architectures converge on sel_eff 0.80-0.81 (docs/current/COMPARATIVE_VERIFIER_2026-08-05.md); the incumbent clean verifier is 0.775204 and the frozen 8-seed ensemble 0.810627 (genframe_data.py FROZEN block / frozen_selector_ens8_2026-08-05.json).  The seed spread alone (~0.021) exceeds every architectural effect measured.",
+  "reading": "the required sel_eff is the number to compare against 0.81.  If it exceeds 1.0 the tie is IMPOSSIBLE from selection alone at the current coverage; if it exceeds 0.81 by more than the seed spread, no measured architecture reaches it.",
+  "perfect_selector_at_the_iid_ceiling_macro": 0.685891
+ },
+ "PART4_the_VRAM_cliff_and_load_on_demand": {
+  "why_this_is_the_decisive_section": "the user's goal is 'match the 32B with LESS VRAM than the 32B'.  Accuracy and compute are continuous in the escalation rate; VRAM is NOT.  A policy that escalates 0% of queries and a policy that escalates 0.1% are in DIFFERENT HARDWARE CLASSES, because the second one has to have the 32B somewhere.",
+  "measured_inputs": {
+   "source": "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json (HF transformers, bf16, FA2, tp=1, batch 1, one A100 80GB)",
+   "lingshu7b_weights_resident_gib": 15.4937,
+   "lingshu32b_weights_resident_gib": 62.3125,
+   "lingshu7b_peak_allocated_gib": 18.0232,
+   "lingshu32b_peak_allocated_gib": 67.868,
+   "lingshu32b_peak_activations_gib_DERIVED": 5.5555,
+   "cuda_context_offset_gib": 1.3835,
+   "lingshu7b_mcq_process_footprint_peak_gib": 23.4206,
+   "lingshu7b_opentext_bestof8_arm_process_footprint_peak_gib": 18.7644,
+   "lingshu32b_process_footprint_peak_gib": 72.6023,
+   "card_capacity_gib": 80.0,
+   "independent_corroboration_of_w32": {
+    "on_disk_bf16_safetensors_gib": 62.3107,
+    "vram_a_weights_resident_gib": 62.3125,
+    "abs_difference_gib": 0.0018,
+    "reading": "the 14 safetensors shards on disk and the CUDA allocation after from_pretrained agree to 0.002 GiB.  Two independent instruments, same number."
+   }
+  },
+  "arithmetic_verification_requested_by_the_brief": {
+   "brief_claim": "7B+32B weights alone are 15.49+62.31 = 77.80 GiB, and with the 32B's measured +5.6 GiB of peak activations that is ~83 GiB, i.e. it does NOT fit on one 80 GB card",
+   "weights_only_sum_gib": 77.8062,
+   "thirtytwob_peak_activations_gib": 5.5555,
+   "weights_plus_32b_activations_gib": 83.3617,
+   "VERDICT": "CONFIRMED.  Both addends are MEASURED (a_weights_resident_gib); the 5.5555 GiB activation term is DERIVED as (b_peak_allocated peak - a_weights_resident) on the 32B's own worst item, MedXpert MM-1561 (46,816 vision tokens).  The sum is 83.36 GiB against an 80.0 GiB card.",
+   "the_arithmetic_is_conservative_in_TWO_ways": [
+    "it omits the CUDA context (measured 1.3835 GiB per process), which every real process pays",
+    "it omits caching-allocator fragmentation (c_peak_reserved exceeds b_peak_allocated by up to 3.35 GiB on the 32B)"
+   ],
+   "with_the_cuda_context_gib": 84.7452,
+   "cleanest_measured_only_statement": {
+    "expression": "the 7B open-text best-of-8 arm's MEASURED process footprint + the 32B's MEASURED resident weights",
+    "gib": 81.0769,
+    "over_capacity_by_gib": 1.0769,
+    "reading": "both terms measured, the only operation is addition, and it ALREADY exceeds the card before the 32B executes a single forward pass."
+   },
+   "even_the_most_favourable_arithmetic_fails": {
+    "weights_only_plus_one_shared_context_gib": 79.1897,
+    "headroom_left_on_an_80_GiB_card_gib": 0.8103,
+    "reading": "0.81 GiB of headroom is not enough for a single 32B prefill (measured 5.56 GiB) nor for a single 7B prefill (measured 2.53 GiB).  The most generous accounting still does not run."
+   }
+  },
+  "the_two_deployment_REGIMES": {
+   "A_never_loads_the_32B": {
+    "policies": "escalation rate exactly 0",
+    "measured_footprint_gib": 18.7644,
+    "smallest_card": "24 GB (RTX 4090 / L4) -- vram_testtime_2026-08-11.json deployer_guidance",
+    "pct_of_one_A100_80GB": 23.5,
+    "best_macro_accuracy_ATTAINABLE": 0.616278,
+    "delta_vs_always_32b_direct": {
+     "delta": -0.040395,
+     "lo": -0.052275,
+     "hi": -0.028427,
+     "sig": true,
+     "ties_at_tol": false
+    }
+   },
+   "B_needs_the_32B_resident": {
+    "policies": "ANY escalation rate > 0, however small, on a single-card deployment",
+    "single_card_one_process_gib_DERIVED": 84.7452,
+    "fits_on_one_80_GiB_card": false,
+    "two_process_additive_footprint_gib": 96.0229,
+    "minimum_hardware": "TWO 80 GB cards (or one >= 96 GB card, e.g. H100 NVL / H200); the deployment is no longer 'a 7B box'",
+    "note": "vram_testtime_2026-08-11.json lists co-residency explicitly under not_measured ('cut for time.  Additive from (d)').  This section supplies it, as DERIVED arithmetic over that file's measurements -- not as a new measurement."
+   },
+   "C_load_on_demand": {
+    "idea": "keep only the 7B resident and page the 32B in from disk when a query escalates",
+    "measured": {
+     "model_bytes_on_disk_gib": 62.3107,
+     "cold_sequential_read_s": 410.222,
+     "cold_read_gib_per_s": 0.1519,
+     "page_cache_warm_read_gib_per_s": 0.9892,
+     "host_to_device_gib_per_s": 22.912,
+     "composed_cold_swap_in_s": 412.942,
+     "composed_warm_swap_in_s": 65.711
+    },
+    "measurement_caveat": "measured on 2026-08-12 on a SHARED /data mount while two sibling GPU jobs of this same round were running (both A100s at 59-100% util).  0.152 GiB/s is therefore a CONTENDED-STORAGE figure, and per-shard throughput drifts downward across the run (0.210 -> 0.098 GiB/s), which is the signature of growing contention.  On idle NVMe this would be far faster.  It is reported as measured, under the conditions stated, and must not be quoted as an idle-system number.  The H2D leg (22.9 GiB/s) is healthy and is NOT the bottleneck -- the 32B's weights cross PCIe in 2.72 s.",
+    "VERDICT": "NOT DEPLOYABLE as an on-demand swap in this environment.  A cold swap-in is 413 s (~6.9 min) against a 32B forward pass of 1.88 s mean / 6.01 s max (vram_testtime S2 wall_s).  Even the page-cache-warm path is 66 s -- and 'warm' means 62.31 GiB of HOST RAM is dedicated to holding the model, which is a larger, not smaller, resource commitment than keeping it on a second card.",
+    "which_regime_are_we_in": "Regime B.  The measured minimum escalation that ties (PART3) is 75% of macro weight / 17.3% of items -- not 5% -- so the 32B is not a rare guest but a co-equal tier, and load-on-demand is not even a candidate.  The honest options are: (i) accept regime A and its measured accuracy shortfall, or (ii) accept a two-card deployment.",
+    "INDEPENDENT_CORROBORATION_2026-08-12": {
+     "what": "the sibling SHRINK attack timed a real HuggingFace from_pretrained load of the SAME 32B checkpoint on a GPU, which is a second instrument on the same quantity as the composed swap-in estimate above.",
+     "source": "results/cascade_methods/artifacts/_shrink_parts/vram_bf16.json:load_seconds",
+     "hf_from_pretrained_load_s_32b_bf16": 139.8,
+     "hf_from_pretrained_load_s_7b_bf16": 21.5,
+     "composed_cold_swap_in_s_this_artifact": 412.942,
+     "reading": "140 s measured end-to-end (weights already in page cache from the probe's own earlier passes) against this artifact's 413 s cold / 66 s warm composed estimate.  The two instruments BRACKET the truth rather than agreeing: 140 s sits between them, which is what a partially warm cache should give.  THE VERDICT IS UNCHANGED AND IS NOW ROBUST TO THE INSTRUMENT: even the most favourable measured load, 140 s, is ~74x a single 32B forward pass (1.88 s mean).  A policy that escalates even 1% of queries would pay this on every cold escalation.",
+     "AMORTISED_COST_PER_QUERY": {
+      "policy_being_costed": "load-on-demand: only the 7B stays resident; the 32B is paged in from the HF cache on each escalation and its VRAM released afterwards.  If it is NOT released the deployment is regime B and already needs the 32B's VRAM, which defeats the purpose.",
+      "the_measured_swap_in_seconds": {
+       "hf_from_pretrained_end_to_end_MEASURED": 139.8,
+       "composed_cold_disk_to_gpu": 412.942,
+       "composed_warm_page_cache_hot": 65.711
+      },
+      "a_32b_forward_pass_s": {
+       "mean": 1.88,
+       "max": 6.01,
+       "source": "vram_testtime_2026-08-11.json S2 wall_s"
+      },
+      "slowdown_factor_swap_in_vs_one_forward_pass": {
+       "hf_from_pretrained_end_to_end_MEASURED": 74.4,
+       "composed_cold_disk_to_gpu": 219.7,
+       "composed_warm_page_cache_hot": 35.0
+      },
+      "expected_added_latency_per_query": [
+       {
+        "escalation_fraction_of_items": 0.01,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 1.398,
+        "added_s_per_query|composed_cold_disk_to_gpu": 4.129,
+        "added_s_per_query|composed_warm_page_cache_hot": 0.657,
+        "added_s_per_query|second_card_32B_resident": 0.019
+       },
+       {
+        "escalation_fraction_of_items": 0.05,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 6.99,
+        "added_s_per_query|composed_cold_disk_to_gpu": 20.647,
+        "added_s_per_query|composed_warm_page_cache_hot": 3.286,
+        "added_s_per_query|second_card_32B_resident": 0.094
+       },
+       {
+        "escalation_fraction_of_items": 0.1,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 13.98,
+        "added_s_per_query|composed_cold_disk_to_gpu": 41.294,
+        "added_s_per_query|composed_warm_page_cache_hot": 6.571,
+        "added_s_per_query|second_card_32B_resident": 0.188
+       },
+       {
+        "escalation_fraction_of_items": 0.172745,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 24.15,
+        "added_s_per_query|composed_cold_disk_to_gpu": 71.334,
+        "added_s_per_query|composed_warm_page_cache_hot": 11.351,
+        "added_s_per_query|second_card_32B_resident": 0.325
+       },
+       {
+        "escalation_fraction_of_items": 0.5,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 69.9,
+        "added_s_per_query|composed_cold_disk_to_gpu": 206.471,
+        "added_s_per_query|composed_warm_page_cache_hot": 32.855,
+        "added_s_per_query|second_card_32B_resident": 0.94
+       },
+       {
+        "escalation_fraction_of_items": 1.0,
+        "added_s_per_query|hf_from_pretrained_end_to_end_MEASURED": 139.8,
+        "added_s_per_query|composed_cold_disk_to_gpu": 412.942,
+        "added_s_per_query|composed_warm_page_cache_hot": 65.711,
+        "added_s_per_query|second_card_32B_resident": 1.88
+       }
+      ],
+      "at_THIS_ROUNDS_measured_tie_escalation": {
+       "escalation_fraction_of_items": 0.172745,
+       "source": "PART3 a_exact_cell_subset_enumeration.minimum_escalation_that_ties",
+       "added_s_per_query_best_case_measured_load": 24.15,
+       "added_s_per_query_second_card": 0.325,
+       "ratio": 74.4
+      },
+      "VERDICT": "the brief's own deployability test -- '5% escalation with a 30 s model load is not deployable' -- is FAILED by a wide margin on both terms.  The measured load is 140 s end-to-end (not 30 s), the measured tie escalation is 17.3% of items (not 5%), and the product is 24 s of added latency PER QUERY averaged over all traffic, against 0.32 s for the same policy with the 32B resident on a second card.  Load-on-demand is not a marginal call here; it is worse than the thing it is trying to avoid by roughly two orders of magnitude."
+     },
+     "measurement_note": "the same probe read the 32B's post-load allocation as 62.3186 GiB, against vram_testtime's 62.3125 GiB -- a THIRD independent instrument on the 32B weight footprint, agreeing to 0.0061 GiB."
+    }
+   }
+  },
+  "quantised_strong_leg_UPDATE_2026-08-12": {
+   "why_this_is_here": "this artifact's original conclusion was 'ANY escalation, however rare, changes the hardware class'.  That is a statement about a bf16 strong leg.  Between that run and this one the sibling SHRINK attack MEASURED the VRAM of a 4-bit and an 8-bit 32B, which is the one lever that could put a strong leg back on a single card.  The claim is therefore NARROWED here, and the narrowing is stated rather than buried.",
+   "source": "results/cascade_methods/artifacts/_shrink_parts/vram_{bf16,nf4,int8}.json (MEASURED: torch allocator, 25 synthetic 320x320 images, batch 1, greedy, warmup excluded)",
+   "measured_resident_gib": {
+    "bf16": 62.4062,
+    "nf4": 19.5315,
+    "int8": 33.5591
+   },
+   "measured_latency_ms_batch1_mean": {
+    "bf16": 411.9,
+    "nf4": 936.4,
+    "int8": 11241.9
+   },
+   "co_residency_with_the_7B_cheap_leg": {
+    "note": "uses this artifact's vram_testtime 7B weight figure (15.4937 GiB), NOT the SHRINK probe's 7B reading of 30.50 GiB, which that artifact itself flags as an unexplained ~2x inflation (bf16_resident_anomaly, status OPEN).  The 32B bf16 reading in the SAME probe agrees with vram_testtime to 0.006 GiB, so the anomaly is confined to its 7B row.",
+    "sum_7b_plus_strong_leg_weights_gib": {
+     "bf16": 77.9,
+     "nf4": 35.0252,
+     "int8": 49.0528
+    },
+    "WEIGHTS_ONLY_IS_THE_WRONG_TEST": "a weights-only comparison says bf16 'fits' (77.90 < 80.0) and that is exactly the error this artifact exists to prevent.  The deployed peak is weights + the 32B's MEASURED peak activations (5.5555 GiB on its worst item) + the CUDA context (1.3835 GiB).  Both columns are given; only the second one is a deployability test.",
+    "realistic_peak_gib_weights_plus_32b_activations_plus_context": {
+     "bf16": 84.8389,
+     "nf4": 41.9642,
+     "int8": 55.9918
+    },
+    "FITS_ON_ONE_80_GIB_CARD": {
+     "bf16": false,
+     "nf4": true,
+     "int8": true
+    },
+    "activation_caveat": "the 5.5555 GiB activation term is the bf16 32B's, measured on MedXpert MM-1561 (46,816 vision tokens).  Applying it unchanged to the quantised rows is CONSERVATIVE for weights but NOT necessarily right for activations: bitsandbytes dequantises to bf16 for compute, so activation memory should be similar, but it was not measured at 4-bit (the probe used one 320x320 image, ~121 vision tokens, which exercises almost no activation memory).  Treat the quantised peak as INFERRED, not measured."
+   },
+   "accuracy_of_the_quantised_strong_leg": "NOT MEASURED -- the run CRASHED before writing any cell.  logs/shrink_quant_acc_2026-08-12.log ends in MedEvalKit utils.py:190 judge_open_end_vqa -> rouge() ValueError('Hypothesis is empty.'), i.e. the quantised model emitted an empty string on an open-text item and the vendor judge raised instead of scoring it.  The results dict is {}.",
+   "VERDICT": "THE VRAM CLIFF IS REAL AT bf16 AND ONLY AT bf16.  A 4-bit 32B is measured at 19.53 GiB resident, so 7B + NF4-32B = 35.03 GiB of weights, which fits on ONE 80 GB card with room to spare -- and even on a 48 GB card.  THIS IS NOT YET AN OPERATING POINT, because the quantised model's ACCURACY IS NOT MEASURED: the accuracy run crashed with an empty results dict (see accuracy_of_the_quantised_strong_leg).  Quoting the 4-bit VRAM as if it were a working cascade tier would be exactly the estimate-relabelled-as-measurement failure CRITICAL RULE 7 forbids.  What is honestly established: (i) at bf16 the cliff stands and any escalation forces a second card; (ii) 4-bit removes the VRAM obstacle and costs 2.27x latency per strong-leg call (measured); (iii) whether it keeps the 32B's accuracy -- the entire reason to escalate -- is OPEN and is the single highest-value follow-up this round produced.  int8 is measured SLOWER than bf16 by 27.3x and is not a candidate.",
+   "accuracy_of_the_quantised_strong_leg_SUPERSEDED_2026-08-12": {
+    "what_this_section_used_to_say": "NOT MEASURED -- the run CRASHED before writing any cell ... the results dict is {}.",
+    "status_now": "MEASURED on 3 of the 8 cells.  The re-launched run completed 2026-08-12 09:20 (NF4) and 09:38 (bf16 control).",
+    "source": "_shrink_parts/acc_{nf4,bf16}.json, paired per item by _shrink_parts/quant_acc_paired.json (src/cascade_methods/shrink_quant_acc_analyze.py, re-run once the arms finished; it had been run at 06:16 while both arms were still empty)",
+    "control_is_MATCHED": "the bf16 arm is the same driver, items, batch size and greedy decoding as the NF4 arm, so the NF4-minus-bf16 delta is attributable to weight quantisation alone.  The round's +/-0.008 matched-control caveat is satisfied.",
+    "serving_stack_null_test": "PASSES.  The HF bf16 control reproduces the published vLLM always-32B-direct cells to within 0.0072 (SLAKE_closed -0.0072, VQA_RAD_closed 0.0000, PATH_VQA_closed -0.0003), all three CIs spanning zero.",
+    "per_cell_NF4_minus_bf16": {
+     "SLAKE_closed": {
+      "nf4_acc": 0.83134,
+      "bf16_control_acc": 0.851675,
+      "delta_nf4_minus_bf16": -0.020335,
+      "lo": -0.033493,
+      "hi": -0.008373,
+      "n": 836,
+      "n_discordant": 29,
+      "significant": true,
+      "serving_stack_deviation_bf16_minus_published": -0.007177,
+      "serving_stack_significant": false
+     },
+     "VQA_RAD_closed": {
+      "nf4_acc": 0.860558,
+      "bf16_control_acc": 0.85259,
+      "delta_nf4_minus_bf16": 0.007968,
+      "lo": -0.015936,
+      "hi": 0.031873,
+      "n": 251,
+      "n_discordant": 10,
+      "significant": false,
+      "serving_stack_deviation_bf16_minus_published": 0.0,
+      "serving_stack_significant": false
+     },
+     "PATH_VQA_closed": {
+      "nf4_acc": 0.889946,
+      "bf16_control_acc": 0.888757,
+      "delta_nf4_minus_bf16": 0.00119,
+      "lo": -0.003867,
+      "hi": 0.006246,
+      "n": 3362,
+      "n_discordant": 74,
+      "significant": false,
+      "serving_stack_deviation_bf16_minus_published": -0.000297,
+      "serving_stack_significant": false
+     }
+    },
+    "mean_over_the_3_measured_closed_cells": -0.003726,
+    "cells_still_UNMEASURED": [
+     "PMC_VQA",
+     "MedXpertQA-MM",
+     "SLAKE_open",
+     "VQA_RAD_open",
+     "PATH_VQA_open"
+    ],
+    "why_the_open_cells_are_unusable": "both arms were scored with use_llm_judge=False, so every open cell's 'correct' is exact-match and reads 0.000 for BOTH arms. Those rows are NOT accuracy and must not be quoted as such.",
+    "HEADLINE": "4-bit is NOT accuracy-free.  On the 3 cells that could be measured it is +0.0012 [-0.0039,+0.0062] on PATH_VQA_closed (n.s.), +0.0080 [-0.0159,+0.0319] on VQA_RAD_closed (n.s.), and -0.0203 [-0.0335,-0.0084] on SLAKE_closed, which is a SIGNIFICANT LOSS.  Mean over the three: -0.0037."
+   },
+   "does_the_VRAM_escape_hatch_SURVIVE_its_own_accuracy_measurement": {
+    "question": "take PART3's minimum-escalation-that-ties policy and swap the bf16 strong leg for the NF4 strong leg on the cells where NF4 accuracy is MEASURED.  Does it still tie with always-32B-direct?",
+    "code": "src/cascade_methods/frontier_nf4_tie.py",
+    "detail": "_frontier_verify_parts/nf4_tie.json",
+    "cells_swapped_to_NF4": [
+     "SLAKE_closed",
+     "VQA_RAD_closed",
+     "PATH_VQA_closed"
+    ],
+    "cells_left_on_bf16_because_NF4_is_unmeasured": [
+     "MedXpertQA-MM",
+     "SLAKE_open",
+     "VQA_RAD_open"
+    ],
+    "arm1_bf16": {
+     "macro_acc": 0.657365,
+     "vs_always_32b_direct": {
+      "delta": 0.000693,
+      "lo": -0.002214,
+      "hi": 0.003646,
+      "ties_at_tol": true
+     }
+    },
+    "arm2_NF4": {
+     "macro_acc": 0.655034,
+     "vs_always_32b_direct": {
+      "delta": -0.001639,
+      "lo": -0.006266,
+      "hi": 0.003049,
+      "ties_at_tol": false
+     }
+    },
+    "paired_delta": {
+     "delta": -0.002331,
+     "lo": -0.006028,
+     "hi": 0.001417,
+     "ties_at_tol": false
+    },
+    "VERDICT": "the bf16 policy ties (lo=-0.002214 >= -0.0029); swapping in the NF4 strong leg on the 3 cells where NF4 accuracy is MEASURED moves the macro by -0.002331 and takes the CI lower bound to -0.006266, which BREAKS the pre-registered tie tolerance.",
+    "arm2_is_an_UPPER_BOUND": "the 5 cells without a measured NF4 accuracy are held at their bf16 values, so a fully-NF4 strong leg can only do WORSE than arm 2, not better -- unless NF4 happens to beat bf16 on those cells, which is unmeasured either way.",
+    "what_this_does_NOT_settle": "5 of 8 cells have no measured NF4 accuracy -- PMC_VQA, MedXpertQA-MM and all three OPEN cells, which together carry 5/8 of the macro weight.  The open cells are the ones the whole direction rests on and they were scored without the LLM judge, so no open-cell NF4 accuracy exists at any quality.",
+    "HOW_TO_READ_THIS_the_break_is_a_NON_INFERIORITY_effect_not_a_significant_degradation": "READ THE TWO TESTS SEPARATELY.  (1) The PAIRED delta arm2-minus-arm1 is -0.002331 [-0.006028, +0.001417] -- it SPANS ZERO, so the NF4 swap is NOT a statistically significant degradation of the policy.  (2) The TIE test is a NON-INFERIORITY test against a pre-registered margin of -0.0029, and the bf16 policy passes it only marginally (lo = -0.002214, i.e. 0.000686 of slack).  A shift of -0.0023 with its own sampling error is more than enough to consume that slack, and it does: lo goes to -0.006266.  So the honest statement is 'the tie was marginal and NF4 is not certified to preserve it', NOT 'NF4 significantly damages accuracy'.  Both readings are in the numbers above; do not quote either one alone.",
+    "ASYMMETRY_that_makes_this_conservative_ANYWAY": "arm2 holds the 5 unmeasured cells at their bf16 values, so it is an UPPER BOUND on a genuinely all-NF4 strong leg.  A real NF4 deployment would also quantise MedXpertQA-MM and the three open cells.  The upper bound already fails the tie."
+   },
+   "VERDICT_SUPERSEDED_2026-08-12": "the original VERDICT said '(iii) whether it keeps the 32B's accuracy ... is OPEN and is the single highest-value follow-up this round produced.'  It is no longer fully open.  Measured on 3 of 8 cells, NF4 costs -0.0203 [-0.0335,-0.0084] on SLAKE_closed -- a SIGNIFICANT loss -- and is within noise on the other two.  So the 4-bit escape hatch is real on VRAM (19.53 GiB measured) and NOT free on accuracy.  Whether it still ties end-to-end is answered, for the measurable part, in does_the_VRAM_escape_hatch_SURVIVE_its_own_accuracy_measurement.  The five unmeasured cells -- PMC_VQA, MedXpertQA-MM and all three OPEN cells, 5/8 of the macro weight -- remain the open item, and the open cells have no NF4 accuracy at any quality because both arms were scored with use_llm_judge=False."
+  },
+  "reconciliation_with_ATTACK4": {
+   "why": "two artifacts of the SAME round report a 'best zero-32B macro' and they differ.  Naming which is which prevents the repo's documented failure mode -- a correction made in a new file and never propagated.",
+   "this_artifact": {
+    "value": 0.616278,
+    "menu": "greedy_7b, bo1..bo8 incumbent verifier, AND bo8 frozen 8-seed ens8 selector",
+    "arm_chosen_on_all_three_open_cells": "bo8_frozen_ens8_selector",
+    "selector_sel_eff": 0.810627
+   },
+   "attack4_min_escalation": {
+    "value": 0.60532,
+    "source": "results/cascade_methods/artifacts/min_escalation_2026-08-12.json:PART2_zero_32b.macro_best_no32b",
+    "menu": "greedy_7b and incumbent-verifier best-of-k with cross-fit k only",
+    "selector_sel_eff": 0.775204
+   },
+   "difference": 0.010958,
+   "which_to_quote": "quote THIS artifact's value for 'the best a 7B-only pipeline can do', because its menu is a strict superset and the extra arm is a frozen, deployable, already-measured artifact.  Quote ATTACK 4's value when the question is specifically about the INCUMBENT deployed verifier.  BOTH lose to always-32B-direct significantly, so the qualitative verdict is identical either way and no conclusion in either artifact turns on the difference.",
+   "cost_hazard": "this artifact's cost_SIMPLE_CONVENTION row at escalation 0 reads 0.2188x always-32B-direct and DELIBERATELY does not charge the 8 open-cell generations (it says so inline).  ATTACK 4 does charge them and gets 1.3403x.  The zero-32B arm is CHEAP IN VRAM AND EXPENSIVE IN FLOPs -- 8 x 7B forward passes exceed one 32B pass.  Never pair the 0.2188x with the best-of-8 accuracy; that pairing would overstate the arm on both axes at once."
+  },
+  "consequence_for_the_users_goal": "'less VRAM than the 32B' is achievable ONLY in regime A -- 18.76 GiB measured, 3.9x smaller than always-32B-direct's 72.60 GiB, on a 24 GB card instead of an 80 GB card.  But regime A's best measured accuracy is 0.616278 macro against the 32B's 0.656672, a SIGNIFICANT shortfall of -0.0404 [-0.0523, -0.0284].  Every policy that recovers that accuracy is in regime B, where the footprint is not 'less than the 32B' -- it is the 32B PLUS the 7B, on more hardware than always-32B-direct needs.  There is no measured operating point in between AT bf16.  UPDATED 2026-08-12: the one lever that could create one is a QUANTISED strong leg, and its accuracy is now MEASURED on 3 of 8 cells (it was 'not measured' when this sentence was first written).  NF4 removes the VRAM obstacle -- 19.53 GiB resident, so 7B + NF4-32B = 35.03 GiB of weights, one 80 GB card with room to spare -- but it is not accuracy-free: -0.0203 [-0.0335,-0.0084] on SLAKE_closed is a significant loss, and with that swapped into the minimum-escalation policy the tie with always-32B-direct no longer ties.  Five cells, including all three open ones, are still unmeasured at 4-bit.",
+  "CORRECTION_2026-08-12": {
+   "what": "an earlier build of this artifact carried a HARD-CODED consequence sentence quoting '0.6030 macro' and '-0.0528 [-0.0646, -0.0408]' for regime A, while the computed value in the SAME block (the_two_deployment_REGIMES.A.best_macro_accuracy_ATTAINABLE) was 0.616278 / -0.040395 [-0.052275, -0.028427].  The sentence is now an f-string over the computed variables and cannot drift again.",
+   "why_the_two_numbers_differ": "0.6030 was never produced by this script; 0.60532 IS the sibling ATTACK 4 value (min_escalation_2026-08-12.json PART2_zero_32b.macro_best_no32b), which searched a STRICTLY SMALLER arm menu -- incumbent-verifier best-of-k only.  This script's menu also contains the FROZEN 8-seed ens8 selector (ckpts/train/genframe_head_ens8, measured sel_eff 0.810627 vs the incumbent's 0.775204), which is a real deployable artifact, and the cross-fit picks it on all three open cells.  Both numbers are correct for their own menu; the larger menu gives the honest answer to 'best achievable with no 32B'.",
+   "reconciliation": "see reconciliation_with_ATTACK4 below"
+  },
+  "consequence_for_the_users_goal_SUPERSEDED_2026-08-12": "'less VRAM than the 32B' is achievable ONLY in regime A -- 18.76 GiB measured, 3.9x smaller than always-32B-direct's 72.60 GiB, on a 24 GB card instead of an 80 GB card.  But regime A's best measured accuracy is 0.616278 macro against the 32B's 0.656672, a SIGNIFICANT shortfall of -0.0404 [-0.0523, -0.0284].  Every policy that recovers that accuracy is in regime B, where the footprint is not 'less than the 32B' -- it is the 32B PLUS the 7B, on more hardware than always-32B-direct needs.  There is no measured operating point in between AT bf16.  The one lever that could create one is a QUANTISED strong leg, whose VRAM is now measured and whose accuracy is NOT -- see quantised_strong_leg_UPDATE_2026-08-12."
+ },
+ "VERIFICATION_2026-08-12": {
+  "what": "an adversarial re-derivation of every headline in this artifact, written in a LATER session and deliberately NOT importing sevenb_only_frontier.py, so a bug in that module could not reproduce itself.",
+  "code": "src/cascade_methods/frontier_verify2.py",
+  "detail": "results/cascade_methods/artifacts/_frontier_verify_parts/verify2.json",
+  "ALL_PASSED": true,
+  "results": {
+   "N1_published_macro_baselines": {
+    "max_abs_deviation": 0.0,
+    "PASSED": true
+   },
+   "V1_frontier_headline_0.616278": {
+    "macro_recomputed": 0.616278,
+    "macro_published": 0.616278,
+    "abs_deviation": 3.2e-07,
+    "vs_direct_recomputed": {
+     "delta": -0.040395,
+     "lo": -0.052275,
+     "hi": -0.028427,
+     "sig": true,
+     "ties_at_tol": false
+    },
+    "ci_lo_abs_dev": 0.0,
+    "PASSED": true,
+    "identity": "cross-fit arm choice was a singleton in every fold/seed (arms_chosen singletons=True, published seed sd=0.0), so the delivered vector is exactly greedy_7b on the 5 MCQ cells and bo8_frozen_ens8_selector on the 3 open cells"
+   },
+   "V2_capability_floor": {
+    "max_abs_deviation": 4.6e-07,
+    "PASSED": true
+   },
+   "V3_min_escalation_that_ties": {
+    "recomputed": {
+     "cells_to_32B": [
+      "SLAKE_closed",
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.657365,
+     "macro_escalation_fraction": 0.75,
+     "sample_weighted_escalation_fraction": 0.172745,
+     "delta_vs_direct": 0.000693,
+     "lo": -0.002214,
+     "ties_at_tol": true
+    },
+    "published": {
+     "cells_to_32B": [
+      "SLAKE_closed",
+      "VQA_RAD_closed",
+      "PATH_VQA_closed",
+      "MedXpertQA-MM",
+      "SLAKE_open",
+      "VQA_RAD_open"
+     ],
+     "macro_acc": 0.657365,
+     "macro_escalation_fraction": 0.75,
+     "sample_weighted_escalation_fraction": 0.172745
+    },
+    "PASSED": true
+   },
+   "V4_vram_cliff_arithmetic": "CONFIRMED. 15.4937+62.3125 = 77.8062 GiB (both MEASURED). Adding the DERIVED 5.5555 GiB of 32B peak activations gives 83.3617 GiB against an 80.0 GiB card. Even the measured-only statement (7B open-text arm's measured process peak 18.7644 + 32B measured resident weights 62.3125 = 81.0769 GiB) already exceeds capacity by 1.0769 GiB before the 32B runs a single forward pass.",
+   "V5_load_on_demand": "FAILED ON BOTH TERMS. The best measured load is 139.8 s (not 30 s) and the measured tie escalation is 17.3% of items (not 5%). Regime B."
+  },
+  "one_line": "every headline in this artifact reproduces EXACTLY from an independent re-implementation: macro 0.616278 to 6 decimals, the vs-direct delta -0.040395 [-0.052275, -0.028427] to 6 decimals, and the same minimum escalation subset.  The VRAM cliff arithmetic is confirmed.",
+  "GUARDRAIL_never_worse_than_always_cheap_on_any_single_cell": {
+   "rule": "the project's standing guardrail: no policy may be worse than always-7B on any single reporting cell.  Pooled wins routinely hide per-cell damage.",
+   "per_cell": {
+    "PMC_VQA": {
+     "arm": "greedy_7b",
+     "delta_vs_always_7b": 0.0,
+     "identical_element_wise_to_always_7b": true,
+     "damaged": false
+    },
+    "SLAKE_closed": {
+     "arm": "greedy_7b",
+     "delta_vs_always_7b": 0.0,
+     "identical_element_wise_to_always_7b": true,
+     "damaged": false
+    },
+    "VQA_RAD_closed": {
+     "arm": "greedy_7b",
+     "delta_vs_always_7b": 0.0,
+     "identical_element_wise_to_always_7b": true,
+     "damaged": false
+    },
+    "PATH_VQA_closed": {
+     "arm": "greedy_7b",
+     "delta_vs_always_7b": 0.0,
+     "identical_element_wise_to_always_7b": true,
+     "damaged": false
+    },
+    "MedXpertQA-MM": {
+     "arm": "greedy_7b",
+     "delta_vs_always_7b": 0.0,
+     "identical_element_wise_to_always_7b": true,
+     "damaged": false
+    },
+    "SLAKE_open": {
+     "arm": "bo8_frozen_ens8_selector",
+     "acc": 0.778295,
+     "always_7b": 0.736434,
+     "delta_vs_always_7b": 0.04186,
+     "damaged": false
+    },
+    "VQA_RAD_open": {
+     "arm": "bo8_frozen_ens8_selector",
+     "acc": 0.51,
+     "always_7b": 0.465,
+     "delta_vs_always_7b": 0.045,
+     "damaged": false
+    },
+    "PATH_VQA_open": {
+     "arm": "bo8_frozen_ens8_selector",
+     "acc": 0.390667,
+     "always_7b": 0.324,
+     "delta_vs_always_7b": 0.066667,
+     "damaged": false
+    }
+   },
+   "cells_damaged": 0,
+   "PASSED": true,
+   "why_it_is_exact_not_within_noise": "on the 5 MCQ cells the chosen arm IS the always-7B vector element-wise (max abs deviation 0), so the guardrail holds by construction rather than by measurement.  On the 3 open cells the frozen selector strictly improves on 7B greedy (+0.0419 / +0.0450 / +0.0667).  0 of 8 cells damaged.",
+   "the_guardrail_that_DOES_bind": "against always-32B-direct, not always-7B: 7 of 8 cells are BELOW it, and only PATH_VQA_open is above (+0.0147).  That is the shortfall this attack exists to quantify."
   }
+ }
 }
