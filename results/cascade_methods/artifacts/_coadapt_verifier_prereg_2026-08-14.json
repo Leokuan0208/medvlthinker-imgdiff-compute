@@ -1,0 +1,64 @@
+{
+  "title": "PRE-REGISTRATION — verifier co-adaptation to the generator's sampling temperature",
+  "written": "2026-08-14, BEFORE the cold temperature ladder (decoding_ladder_cold_2026-08-14) reported. Written blind to which temperature wins, so the design cannot be tuned to the outcome.",
+  "status": "NOT YET RUN — queued behind the cold ladder, which must name the peak first",
+
+  "the_question": "Every verifier this project has trained (~27 architectures) used candidate pools generated at temperature 0.7. The 2026-08-13 sweep then evaluated those frozen verifiers on pools generated at other temperatures. That is an uncontrolled train/inference distribution mismatch. How large is it, and how much accuracy is left on the table by not co-adapting the verifier to the generator?",
+
+  "why_this_is_not_a_rediscovery": "All ~27 exhausted verifier approaches varied the ARCHITECTURE or the OBJECTIVE while holding the training DATA fixed. None changed the training distribution to match the inference distribution. This is a distribution-match question, not an architecture question, and it is untested.",
+
+  "established_facts_this_rests_on": {
+    "verifier_training_pools": "ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b_sc8.jsonl -- self-consistency, n_samples 8, temp 0.7 (src/training_methods/build_disjoint_verifier_split.py:110; runners/run_openvqa_all.sh)",
+    "verifier_recipe": "lora_r 16, alpha 32, dropout 0.05, target q/k/v/o_proj + gate/up/down_proj, base lingshu-medical-mllm/Lingshu-7B, max_pixels 1003520, lr 1e-4, bs 2 x accum 8, 1 epoch, 5182 steps, seed 0, 107.7 train-minutes, pos_rate 0.199, n_train_examples 10364 (ckpts/train/lora_verifier_disjoint/train_config.json)",
+    "frozen_verifier_at_T05": "SELECTED +0.00569 [+0.00100,+0.01038] judge / +0.00796 [+0.00341,+0.01265] EM vs an in-session T=0.7 control (decoding_sweep_2026-08-13.json)",
+    "direction_of_the_existing_bias": "The frozen verifier is best matched to T=0.7, which is the CONTROL, and out-of-distribution at colder T. The measured T=0.5 win is therefore CONSERVATIVE."
+  },
+
+  "design": {
+    "target_temperature": "T* = whichever temperature the cold ladder crowns as the peak. NOT assumed to be 0.5. If the ladder's peak is not CI-clean in both currencies, use T=0.5 (the established both-currency winner) and say so.",
+    "arms": [
+      "A. frozen verifier (trained at T=0.7) scoring T=0.7 pools  -- the deployed baseline, in-session",
+      "B. frozen verifier (trained at T=0.7) scoring T* pools     -- the current result; measures the TRANSFER PENALTY against A",
+      "C. co-adapted verifier (retrained on T* pools) scoring T* pools -- measures the CO-ADAPTATION GAIN against B",
+      "D. co-adapted verifier (retrained on T* pools) scoring T=0.7 pools -- the reverse-transfer control; if C beats B only because retraining helps everywhere, D will beat A by a similar margin and the effect is NOT about distribution match"
+    ],
+    "arm_D_is_the_load_bearing_control": "Without D, a gain in C is uninterpretable -- it could be a better verifier rather than a better-matched one. D separates them.",
+    "training_discipline": "Identical recipe to the incumbent in every respect except the temperature of the candidate pools: same seed, same steps, same composition quotas, same pos_rate target, same max_pixels, same disjoint split asserted on md5 of DECODED RGB pixels (train images only). Composition matching is mandatory -- the incumbent's taken_examples_per_source must be reproduced so provenance is the only variable.",
+    "seeds": ">=10 for anything trained; report mean, sd, range and the seed-averaged deployable number. A prior 'win' in this project was the top of its own 10-seed range.",
+    "currencies": "BOTH the 32B judge and normalised exact match, on identical verifier picks. The judge's prompt instructs leniency about phrasing and synonyms, and repetition_penalty 1.10 has already been caught winning under the judge purely by harvesting that leniency."
+  },
+
+  "endpoints": {
+    "primary": "SELECTED accuracy, C vs B, paired item bootstrap nboot=10000, n=2345",
+    "transfer_penalty": "B vs A -- how much the frozen verifier loses by being off-distribution",
+    "coadaptation_gain": "C vs B",
+    "specificity_check": "D vs A -- must be materially SMALLER than C vs B for the effect to be about distribution match",
+    "secondary": "sel_eff, oracle@8 (unchanged by construction within a temperature), contested stratum (n~845), laterality stratum, per-cell guardrail"
+  },
+
+  "predictions_registered_in_advance": {
+    "transfer_penalty_B_vs_A": "expected to be SMALL -- the T=0.5 win was obtained despite it",
+    "coadaptation_gain_C_vs_B": "predicted +0.000 to +0.010 SELECTED; the project's prior is that verifier changes move less than the ~0.021 seed spread, but this changes the DATA rather than the architecture, which is untested",
+    "most_likely_outcome": "C vs B not significant, in which case the finding is that the frozen verifier transfers across temperature -- which STRENGTHENS the free-knob claim rather than weakening it"
+  },
+
+  "success_and_kill": {
+    "success": "C vs B CI-clean positive in BOTH currencies, guardrail-clean, AND D vs A materially smaller than C vs B",
+    "kill_1": "C vs B CI covers zero in either currency -> report that the frozen verifier transfers, and close the co-adaptation lever",
+    "kill_2": "D vs A is comparable to C vs B -> the gain is generic retraining, not distribution match; report as such and do not claim co-adaptation",
+    "kill_3": "the co-adapted verifier's own null test fails to reproduce the frozen metric -> stop and report"
+  },
+
+  "interpretation_committed_in_advance": {
+    "if_gain_is_small": "The generator and verifier are separable; a sampling knob can be turned without retraining. This makes the T* result a genuinely free deployment change.",
+    "if_gain_is_large": "Generator and verifier must be tuned JOINTLY, and every past verifier experiment in this project was handicapped by a train/inference mismatch nobody controlled for. That would be a significant methodological finding about the ~27 prior negatives and must be reported as such, including the possibility that some of them would look different under co-adaptation."
+  },
+
+  "cost": "One LoRA retrain per arm at ~108 GPU-minutes (train_config train_minutes 107.7), plus verifier re-scoring of the eval pools under HF transformers (NEVER vLLM -- it silently drops all 192 visual.* modules, 0.775204 HF vs 0.702997 vLLM).",
+
+  "standing_caveats_that_apply": [
+    "+-0.008 open-text reproducibility: every arm needs an in-session matched control; the stored-vs-in-session nuisance shift was measured at 1.184x the effect being tested",
+    "numerics must be pinned and stated (TF32, CPU thread count, feature row order, ranker choice)",
+    "freeze_selector.py REWRITES ckpts/train/genframe_head_ens8/ -- do not re-run it casually"
+  ]
+}
