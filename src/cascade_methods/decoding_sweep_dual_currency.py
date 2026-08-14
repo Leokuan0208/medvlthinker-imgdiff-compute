@@ -69,7 +69,10 @@ def one_seed(tag):
                       "greedy_ok": int(lab.get((it["ds"], it["idx"], G.norm(r["modal_pred"])), 0)),
                       "gen_tokens_all": r.get("gen_tokens_all", [])})
         em_sl.append(list(r["oks_em"]))
-    if miss_v:                       # SELECTED is undefined without a complete verifier pass
+    # SELECTED needs a complete verifier pass AND a complete judge pass. Defaulting a missing judge
+    # label to 0 (an earlier version did) silently deflates the judge currency; skipping unlabelled
+    # slots instead biases toward duplicated/short candidates. Refuse the pool outright.
+    if miss_v or miss_j:
         return {"incomplete_verifier": miss_v, "missing_judge": miss_j}
     res = G.sel_eff({(it["ds"], it["idx"]): it["scores"] for it in items}, items=items)
     picks = np.asarray(res["picks"], int)
@@ -92,6 +95,9 @@ for st in A.settings.split(","):
     for tag in seed_tags(st):
         r = one_seed(tag)
         if r is None or "incomplete_verifier" in r:
+            if isinstance(r, dict):
+                print(f"  [incomplete, excluded] {tag}: "
+                      f"{r['missing_judge']} unjudged / {r['incomplete_verifier']} unscored slots")
             continue
         seeds[tag] = r
     if seeds:

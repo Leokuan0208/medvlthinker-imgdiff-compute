@@ -1,0 +1,117 @@
+{
+ "title": "Pre-registered predictions vs what was measured",
+ "registered_at": "2026-08-13, BEFORE any SELECTED or sel_eff number for any swept setting existed",
+ "registered_text": {
+  "temperature": "oracle@8 and distinct-candidate count increase monotonically with temperature; SELECTED does NOT, because sel_eff falls with pool noise. Basis: the project's measured marginal conversion of newly-covered questions is 0.447 [0.368, 0.526], well under 1.",
+  "repetition_penalty": "rp > 1.0 LOWERS SELECTED, with the damage concentrated on the laterality stratum, because vLLM penalises prompt tokens.",
+  "min_p": "min_p truncates the tail, so distinct-candidate count and oracle@8 fall slightly while sel_eff rises slightly; net SELECTED approximately flat.",
+  "overall": "no single-variable decoding change beats the deployed T=0.7 default on SELECTED accuracy."
+ },
+ "outcomes": {
+  "temperature": {
+   "registered": "oracle@8 and distinct-candidate count increase monotonically with temperature; SELECTED does NOT, because sel_eff falls with pool noise. Basis: the project's measured marginal conversion of newly-covered questions is 0.447 [0.368, 0.526], well under 1.",
+   "measured_ladder": [
+    {
+     "setting": "T03",
+     "temp": 0.3,
+     "oracle@8": 0.5587775408670931,
+     "mean_distinct": 2.1820895522388057,
+     "SELECTED": 0.4862828713574982
+    },
+    {
+     "setting": "T05",
+     "temp": 0.5,
+     "oracle@8": 0.6012793176972282,
+     "mean_distinct": 2.954513148542999,
+     "SELECTED": 0.4865671641791045
+    },
+    {
+     "setting": "T07",
+     "temp": 0.7,
+     "oracle@8": 0.6285714285714286,
+     "mean_distinct": 3.6652452025586357,
+     "SELECTED": 0.4808813077469794
+    },
+    {
+     "setting": "T10",
+     "temp": 1.0,
+     "oracle@8": 0.6261549395877753,
+     "mean_distinct": 4.6415067519545135,
+     "SELECTED": 0.46439232409381664
+    },
+    {
+     "setting": "T13",
+     "temp": 1.3,
+     "oracle@8": 0.5769722814498933,
+     "mean_distinct": 5.476190476190475,
+     "SELECTED": 0.43525230987917557
+    }
+   ],
+   "distinct_increases_monotonically_with_T": true,
+   "oracle@8_increases_monotonically_with_T": false,
+   "argmax_oracle@8_over_measured_temps": "T07",
+   "argmax_SELECTED_over_measured_temps": "T05",
+   "VERDICT": "PARTLY REFUTED: distinct-candidate count does rise monotonically with temperature, but oracle@8 does NOT -- it PEAKS at the deployed T=0.7 and falls on both sides. More diversity stops buying coverage past 0.7 because per-sample accuracy falls faster than diversity helps. The SELECTED half of the prediction (that it does not rise WITH temperature) held -- but the fuller ladder shows SELECTED peaks at T05, i.e. BELOW the deployed 0.7, so 'no temperature change helps' would be the wrong lesson."
+  },
+  "repetition_penalty": {
+   "registered": "rp > 1.0 LOWERS SELECTED, with the damage concentrated on the laterality stratum, because vLLM penalises prompt tokens.",
+   "measured_SELECTED_judge_delta": {
+    "delta": 0.004832977967306307,
+    "lo": 0.0009914712153516836,
+    "hi": 0.008813077469793928,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "measured_SELECTED_em_delta": {
+    "delta": -0.007675906183368886,
+    "lo": -0.011513859275053329,
+    "hi": -0.003837953091684443,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "measured_LATERALITY_delta_judge": {
+    "delta": -0.004016064257028051,
+    "lo": -0.024096385542168697,
+    "hi": 0.016064257028112428,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 166
+   },
+   "deployed_value": 1.0,
+   "is_the_deployed_system_harmed_today": false,
+   "why_not": "run_openvqa.py never sets repetition_penalty, so vLLM's default 1.0 applies and NO penalty is computed. Verified by resolving SamplingParams(temperature=0.7, max_tokens=64, n=8, logprobs=5) -> repetition_penalty=1.0.",
+   "VERDICT": "REFUTED IN THE REGISTERED DIRECTION, AND NOT A WIN EITHER. rp=1.10 did not lower SELECTED and did not damage the laterality stratum (TIE). It RAISED judge-currency SELECTED by +0.00483 (WIN) while LOWERING exact-match SELECTED by -0.00768 (LOSS). The registered harm mechanism (vLLM penalising prompt tokens) is real -- rp11 measurably quotes the question less -- but it did not produce the registered harm."
+  },
+  "min_p": {
+   "registered": "min_p truncates the tail, so distinct-candidate count and oracle@8 fall slightly while sel_eff rises slightly; net SELECTED approximately flat.",
+   "measured": {
+    "oracle@8": 0.6059701492537314,
+    "sel_eff": 0.8002050887421343,
+    "SELECTED": 0.48486140724946697,
+    "mean_distinct": 2.979815209665956,
+    "control_oracle@8": 0.6285714285714286,
+    "control_sel_eff": 0.7651737169450522,
+    "control_SELECTED": 0.4808813077469794,
+    "control_mean_distinct": 3.6652452025586357
+   },
+   "SELECTED_delta": {
+    "delta": 0.003980099502487566,
+    "lo": -0.0009950248756219748,
+    "hi": 0.008955223880597052,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "VERDICT": "CONFIRMED. min_p=0.10 cut oracle@8 (0.6060 vs 0.6286) and distinct candidates (2.98 vs 3.67) while RAISING sel_eff (0.8002 vs 0.7652), leaving SELECTED at +0.00398 (TIE) in the judge currency. Exactly the registered trade."
+  },
+  "overall": {
+   "registered": "no single-variable decoding change beats the deployed T=0.7 default on SELECTED accuracy.",
+   "settings_beating_the_deployed_default_in_BOTH_currencies": [
+    "T05"
+   ],
+   "VERDICT": "REFUTED. T05 beat(s) the deployed T=0.7 default on SELECTED accuracy CI-cleanly in BOTH grading currencies. The registered prediction was right about the MECHANISM it had in mind (extra diversity does not pay) but wrong about the conclusion, because it only considered making the pool RICHER. Moving the other way -- a COLDER, less diverse pool -- raises sel_eff more than it costs coverage, and that is where the win is. Magnitude is modest and its 8-cell macro share leans on vqa_rad_open (n=200): see HEADLINE_2026_08_14..HOW_BIG_IS_THE_WIN in the primary artifact."
+  }
+ }
+}

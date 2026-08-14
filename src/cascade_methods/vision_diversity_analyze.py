@@ -471,7 +471,9 @@ def main():
             for s in range(K):
                 a = arms[f"{p}_s{s}"]["per_ds"][ds]; b = arms[f"iid8_s{s}"]["per_ds"][ds]
                 ga = arms[f"{p}_s{s}"]["_got"][lo:hi]; gb = arms[f"iid8_s{s}"]["_got"][lo:hi]
+                ra = arms[f"{p}_s{s}"]["_rec"][lo:hi]; rb = arms[f"iid8_s{s}"]["_rec"][lo:hi]
                 ci = boot_delta_paired(ga, gb, nboot=NBOOT, seed=SEED)
+                cio = boot_delta_paired(ra, rb, nboot=NBOOT, seed=SEED)
                 # draw-to-draw sd of each arm ON THIS CELL: the seed-noise band the delta must clear
                 sd_p = float(np.std([arms[f"{p}_s{t}"]["per_ds"][ds]["selected"]
                                      for t in range(K)], ddof=1))
@@ -486,6 +488,8 @@ def main():
                              "within_seed_noise": bool(abs(a["selected"] - b["selected"])
                                                        < max(sd_p, sd_i)),
                              "d_oracle": round(a["oracle@8"] - b["oracle@8"], 6),
+                             "d_oracle_ci95": [round(cio[1], 6), round(cio[2], 6)],
+                             "oracle_significant": bool(cio[1] > 0 or cio[2] < 0),
                              "d_sel_eff": round(a["sel_eff"] - b["sel_eff"], 6)})
         res["guardrail_per_cell"][p] = {
             "rows": rows,
@@ -620,6 +624,51 @@ def cost(DATA, IDX, arms, res):
     out["caveat"] = ("this counts the GENERATOR only. It excludes the verifier pass, which is "
                      "unchanged across arms (the scorer always sees the original image at fullres) "
                      "and therefore cancels in every ratio reported here.")
+
+    # ---- PREFILL-SHARING CORRECTION -------------------------------------------------------
+    # The per-candidate charge above OVERSTATES the iid arm and therefore UNDERSTATES the
+    # portfolio's true cost. vLLM is given ONE request per (item, view) with SamplingParams(n=k)
+    # (vision_diversity_gen.py:247,265), so the prefill -- vision tower + LM prefill of the image
+    # tokens -- is computed ONCE and k sequences are forked from it. The iid arm therefore pays
+    # ONE prefill for all 8 of its candidates. A view portfolio cannot share anything across
+    # distinct views: it pays one prefill PER DISTINCT VIEW. On a workload measured to be 82.1%
+    # LM prefill + 16.7% vision tower and only 1.2% decode (2026-08-11), that is the dominant term.
+    vt_by_view = {}
+    for v in ALL_VIEWS:
+        tot = n = 0
+        for ds in EVAL_DS:
+            for idx in IDX[ds]:
+                tot += DATA[ds]["vt"][idx][v]; n += 1
+        vt_by_view[v] = tot / n
+    base_prefill = vt_by_view["r320"]          # the iid control's rendering
+    corr = {"iid8": {"n_prefills_per_question": 1,
+                     "prefill_vision_tokens_per_question": round(base_prefill, 1),
+                     "x_vs_iid8": 1.0,
+                     "views": ["r320 (identity, = the iid control's rendering)"]}}
+    for p, views in PORTFOLIOS.items():
+        dv = sorted(set(views))
+        tot = sum(vt_by_view[v] for v in dv)
+        corr[p] = {"n_prefills_per_question": len(dv),
+                   "prefill_vision_tokens_per_question": round(tot, 1),
+                   "x_vs_iid8": round(tot / base_prefill, 3),
+                   "views": dv}
+    out["prefill_sharing_correction"] = {
+        "why": "SamplingParams(n=8) on one request = ONE prefill for 8 candidates; 8 distinct "
+               "views = 8 prefills for 8 candidates. The per-candidate charge in "
+               "cost.per_arm bills the iid arm 8x for a prefill it computes once, so it "
+               "flatters the portfolio. This row is the honest generator cost.",
+        "per_arm": corr,
+        "read": "under prefill-shared accounting the primary portfolio costs "
+                f"{corr[PRIMARY]['x_vs_iid8']}x the iid control's generator vision-token work, not "
+                f"{out['per_arm'][PRIMARY + '_s0']['x_vs_iid8']}x. NO arm in this sweep is "
+                "cost-matched to the incumbent under this accounting -- the 'cost_matched_arms' "
+                "list above holds only under the per-candidate charge.",
+        "what_is_still_not_charged": "decode (measured at 1.2% of compute), the verifier pass "
+                                     "(identical across arms), and the CPU-side image transforms "
+                                     "(crop/resize/gamma), which were not profiled.",
+        "not_measured": "wall-clock latency, energy and test-time VRAM were NOT measured in this "
+                        "session for any arm. This is an arithmetic re-charge of measured vision-"
+                        "token counts, not a timing run."}
     return out
 
 
@@ -720,6 +769,41 @@ def macro_translation(arms, IDX):
         bs.append(V.macro_bootstrap(ga, gb, nboot=NBOOT, seed=SEED, items=items, mt=mt))
     out["portfolio_minus_iid_per_draw"] = bs
     return out
+
+
+def matched_control_caveat(res):
+    """Quantify, on this sweep's own numbers, why the in-session iid control is not optional.
+
+    The STORED deployed 8-sample pool and this session's iid8 control are the SAME distribution --
+    same model, same prompt, same temperature, same cap320 rendering, 8 samples -- differing only
+    in serving config and sampling seed. Whatever separates them is pure nuisance. If the portfolio
+    had been differenced against the stored number instead of the in-session control, that nuisance
+    would have been read as an experimental effect.
+    """
+    pub = res["null_tests"]["N1_frozen_metric"]["published"]
+    ctl = res["arms_across_draws"]["iid8"]
+    prt = res["arms_across_draws"][PRIMARY]
+    d_nuis = ctl["selected"]["mean"] - pub["selected"]
+    return {
+        "stored_deployed_pool (ckpts/train/lora_verifier_disjoint/transfer_dump_*.json)": {
+            "oracle@8": pub["oracle@8"], "selected": pub["selected"], "sel_eff": pub["sel_eff"]},
+        "this_session_iid8_control (same distribution, 3 disjoint draws)": {
+            "oracle@8": ctl["oracle@8"]["mean"], "oracle@8_sd": ctl["oracle@8"]["sd"],
+            "selected": ctl["selected"]["mean"], "selected_sd": ctl["selected"]["sd"],
+            "sel_eff": ctl["sel_eff"]["mean"]},
+        "nuisance_shift_selected": round(d_nuis, 6),
+        "nuisance_shift_oracle@8": round(ctl["oracle@8"]["mean"] - pub["oracle@8"], 6),
+        "the_effect_being_measured_selected": round(
+            prt["selected"]["mean"] - ctl["selected"]["mean"], 6),
+        "ratio_nuisance_to_effect": round(abs(d_nuis) / abs(prt["selected"]["mean"]
+                                                            - ctl["selected"]["mean"]), 3),
+        "read": "the nuisance shift between two runs of the SAME distribution is larger than the "
+                "entire effect this sweep is testing. Differenced against the stored pool the "
+                "portfolio would read as a LOSS; differenced against the in-session control it "
+                "reads as a small non-significant GAIN. Only the second is an experiment. This is "
+                "the +-0.008 open-text reproducibility caveat (CLAUDE.md) measured on this sweep's "
+                "own arms, and it is why no number in this file is differenced against a stored "
+                "value from another serving config."}
 
 
 NOT_MEASURED = {
@@ -884,6 +968,7 @@ if __name__ == "__main__":
                                                 ST["short3"], "gold_<=3_words") for s in range(K)]}
     res["published_resolution_provenance"] = resolution_provenance(DATA, IDX)
     res["macro_translation"] = macro_translation(arms, IDX)
+    res["why_the_matched_control_was_mandatory"] = matched_control_caveat(res)
     res["mechanism"] = mechanism(res)
     res["not_measured"] = NOT_MEASURED
     res["verdict"] = verdict(res)

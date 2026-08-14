@@ -1,0 +1,610 @@
+{
+ "title": "Does repetition_penalty win under the judge by PARAPHRASING instead of quoting?",
+ "mechanism": "vLLM applies repetition_penalty to tokens present in the PROMPT as well as the\noutput (vllm/model_executor/layers/utils.py: apply_penalties -> apply_repetition_penalties(logits,\nprompt_mask, output_mask, ...)). The prompt contains the question. In these three open VQA sets the gold\nanswer very often REUSES a word of the question ('Which lung is affected?' -> 'right lung'). So\nrepetition_penalty > 1 should push the model away from quoting the question and toward SYNONYMS.\n\nThat predicts exactly the observed sign flip:\n  * normalised exact match is LEXICAL -- a synonym scores 0                      -> EM falls\n  * the 32B judge is SEMANTIC -- a synonym scores 1                             -> judge holds/rises\nso the setting looks like a coverage WIN under the judge and a LOSS under EM without the model having\nbecome any better at the task.",
+ "stratifier": "GOLD shares >=1 content word with the QUESTION (stopword-filtered, computed once on the control pool T07_s0 so it is identical across settings)",
+ "n_gold_shares_question_word": 92,
+ "POWER_WARNING_P3": "the gold-shares-a-question-word stratum holds only 92 of 2345 items, so each item moves the EM-oracle by 1/92 = 0.0109 and the P3 contrast is UNDERPOWERED. P3 is reported but is NOT evidence either way.",
+ "n_gold_shares_no_question_word": 2253,
+ "per_setting": {
+  "T03": {
+   "pred_question_overlap": 0.005871295943175492,
+   "pred_gold_overlap": 0.07074763940270795,
+   "pred_gold_jaccard": 0.04851587277741041,
+   "judge_oracle@8": 0.5587775408670931,
+   "em_oracle@8": 0.5471215351812366,
+   "judge_only_coverage": 0.011656005685856433,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.34114367667356793,
+     "judge_oracle@8": 0.7644927536231884,
+     "em_oracle@8": 0.7608695652173914,
+     "judge_only_coverage": 0.0036231884057970993
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.05970616784082641,
+     "judge_oracle@8": 0.5503772747447847,
+     "em_oracle@8": 0.538393253439858,
+     "judge_only_coverage": 0.011984021304926762
+    }
+   }
+  },
+  "T05": {
+   "pred_question_overlap": 0.005441577031719507,
+   "pred_gold_overlap": 0.06917906756632769,
+   "pred_gold_jaccard": 0.04745770354534803,
+   "judge_oracle@8": 0.6012793176972282,
+   "em_oracle@8": 0.5822316986496091,
+   "judge_only_coverage": 0.019047619047619042,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.3353210547504026,
+     "judge_oracle@8": 0.8079710144927538,
+     "em_oracle@8": 0.7862318840579711,
+     "judge_only_coverage": 0.021739130434782615
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.058311307770084954,
+     "judge_oracle@8": 0.5928391773931055,
+     "em_oracle@8": 0.5739014647137151,
+     "judge_only_coverage": 0.018937712679390442
+    }
+   }
+  },
+  "T07": {
+   "pred_question_overlap": 0.0051418800030846494,
+   "pred_gold_overlap": 0.06628331774909582,
+   "pred_gold_jaccard": 0.04545933902195388,
+   "judge_oracle@8": 0.6285714285714286,
+   "em_oracle@8": 0.6039800995024877,
+   "judge_only_coverage": 0.02459132906894101,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.32255975581383195,
+     "judge_oracle@8": 0.8297101449275364,
+     "em_oracle@8": 0.786231884057971,
+     "judge_only_coverage": 0.04347826086956521
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.055818412155684505,
+     "judge_oracle@8": 0.6203580411303447,
+     "em_oracle@8": 0.596537949400799,
+     "judge_only_coverage": 0.023820091729545786
+    }
+   }
+  },
+  "T10": {
+   "pred_question_overlap": 0.004723734243848628,
+   "pred_gold_overlap": 0.0598726701396632,
+   "pred_gold_jaccard": 0.04137005067163926,
+   "judge_oracle@8": 0.6261549395877753,
+   "em_oracle@8": 0.5944562899786779,
+   "judge_only_coverage": 0.031698649609097365,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.3057150666865341,
+     "judge_oracle@8": 0.8369565217391305,
+     "em_oracle@8": 0.8007246376811596,
+     "judge_only_coverage": 0.036231884057971016
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.049833832819506915,
+     "judge_oracle@8": 0.6175469744044978,
+     "em_oracle@8": 0.5860334368989495,
+     "judge_only_coverage": 0.03151353750554816
+    }
+   }
+  },
+  "T13": {
+   "pred_question_overlap": 0.0037127536611051195,
+   "pred_gold_overlap": 0.05031286738845554,
+   "pred_gold_jaccard": 0.03501842008663115,
+   "judge_oracle@8": 0.5769722814498934,
+   "em_oracle@8": 0.5555081734186211,
+   "judge_only_coverage": 0.02146410803127221,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.28152958826019303,
+     "judge_oracle@8": 0.7789855072463767,
+     "em_oracle@8": 0.7826086956521737,
+     "judge_only_coverage": -0.003623188405797098
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.04087126138747913,
+     "judge_oracle@8": 0.5687231839029443,
+     "em_oracle@8": 0.546234650096168,
+     "judge_only_coverage": 0.022488533806776147
+    }
+   }
+  },
+  "minp01": {
+   "pred_question_overlap": 0.0053831996853757795,
+   "pred_gold_overlap": 0.06933175898772584,
+   "pred_gold_jaccard": 0.0475497384802722,
+   "judge_oracle@8": 0.6059701492537314,
+   "em_oracle@8": 0.5923240938166311,
+   "judge_only_coverage": 0.013646055437100211,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.3312708477110651,
+     "judge_oracle@8": 0.8007246376811594,
+     "em_oracle@8": 0.7789855072463768,
+     "judge_only_coverage": 0.021739130434782608
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.05863562220896542,
+     "judge_oracle@8": 0.5980174582038762,
+     "em_oracle@8": 0.58470187897618,
+     "judge_only_coverage": 0.013315579227696401
+    }
+   }
+  },
+  "rp105": {
+   "pred_question_overlap": 0.004458029827320672,
+   "pred_gold_overlap": 0.06854477730371218,
+   "pred_gold_jaccard": 0.04742263452979703,
+   "judge_oracle@8": 0.6304193319118692,
+   "em_oracle@8": 0.5975835110163469,
+   "judge_only_coverage": 0.03283582089552239,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.32306250261413305,
+     "judge_oracle@8": 0.8405797101449275,
+     "em_oracle@8": 0.7717391304347826,
+     "judge_only_coverage": 0.06884057971014493
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.05815168776595865,
+     "judge_oracle@8": 0.6218375499334221,
+     "em_oracle@8": 0.5904719633081816,
+     "judge_only_coverage": 0.031365586625240416
+    }
+   }
+  },
+  "rp11": {
+   "pred_question_overlap": 0.00396071186688062,
+   "pred_gold_overlap": 0.07090117735900497,
+   "pred_gold_jaccard": 0.04972531126579583,
+   "judge_oracle@8": 0.6343994314143567,
+   "em_oracle@8": 0.5913290689410092,
+   "judge_only_coverage": 0.04307036247334755,
+   "by_stratum": {
+    "gold_shares_question_word": {
+     "n": 92,
+     "pred_gold_overlap": 0.3219160841568593,
+     "judge_oracle@8": 0.8442028985507245,
+     "em_oracle@8": 0.7644927536231884,
+     "judge_only_coverage": 0.07971014492753623
+    },
+    "gold_shares_none": {
+     "n": 2253,
+     "pred_gold_overlap": 0.06065112346401935,
+     "judge_oracle@8": 0.625832223701731,
+     "em_oracle@8": 0.5842580263352567,
+     "judge_only_coverage": 0.04157419736647432
+    }
+   }
+  }
+ },
+ "deltas_vs_control": {
+  "T03": {
+   "P1_pred_question_overlap_delta": {
+    "delta": 0.0007294159400908426,
+    "lo": -1.2643105223741062e-05,
+    "hi": 0.0015292070383517893,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": 0.00446432165361213,
+    "lo": 0.002930810696527345,
+    "hi": 0.006067828896125055,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": 0.003056533755456531,
+    "lo": 0.0019109397098738283,
+    "hi": 0.004284591993934098,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": -0.0253623188405796,
+    "lo": -0.061594202898550554,
+    "hi": 0.0036231884057971175,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.05814469596094096,
+    "lo": -0.06583814173694347,
+    "hi": -0.05044755141293082,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": -0.03985507246376811,
+    "lo": -0.07971014492753623,
+    "hi": -0.0036231884057971037,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": -0.011836070424619025,
+    "lo": -0.018789761799082698,
+    "hi": -0.004882379050155344,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   }
+  },
+  "T05": {
+   "P1_pred_question_overlap_delta": {
+    "delta": 0.0002996970286348573,
+    "lo": -0.00013704308917524103,
+    "hi": 0.0007687406920953092,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": 0.0028957498172318685,
+    "lo": 0.0020343230488799996,
+    "hi": 0.003788739005150969,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": 0.00199836452339415,
+    "lo": 0.0013523042368046565,
+    "hi": 0.0026852056621293405,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": 1.1102230246251565e-16,
+    "lo": -0.021739130434782594,
+    "hi": 0.018115942028985588,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.022636484687083902,
+    "lo": -0.028110667258470334,
+    "hi": -0.017162302115697692,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": -0.021739130434782594,
+    "lo": -0.05434782608695651,
+    "hi": 0.010869565217391297,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": -0.004882379050155344,
+    "lo": -0.010208610741233911,
+    "hi": 0.00044385264092321533,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2253
+   }
+  },
+  "T10": {
+   "P1_pred_question_overlap_delta": {
+    "delta": -0.00041814575923602125,
+    "lo": -0.0008972177382521235,
+    "hi": 3.5859159634392365e-05,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": -0.006410647609432621,
+    "lo": -0.007614615678597921,
+    "hi": -0.005226238019906926,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": -0.004089288350314621,
+    "lo": -0.005010194798453671,
+    "hi": -0.003216047265327084,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": 0.014492753623188692,
+    "lo": -0.007246376811594235,
+    "hi": 0.036231884057971175,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.010504512501849472,
+    "lo": -0.016870099127089925,
+    "hi": -0.0038467228880012527,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": -0.0072463768115941934,
+    "lo": -0.03623188405797102,
+    "hi": 0.021739130434782608,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": 0.007693445776002374,
+    "lo": 0.0010356561621541645,
+    "hi": 0.014351235389850569,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2253
+   }
+  },
+  "T13": {
+   "P1_pred_question_overlap_delta": {
+    "delta": -0.00142912634197953,
+    "lo": -0.0021413893330780895,
+    "hi": -0.0007650151010538222,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": -0.01597045036064028,
+    "lo": -0.018104670074269167,
+    "hi": -0.013910581740374907,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": -0.01044091893532273,
+    "lo": -0.012066323422564603,
+    "hi": -0.008896113017771703,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": -0.0036231884057972286,
+    "lo": -0.036231884057971064,
+    "hi": 0.025362318840579823,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.050303299304630955,
+    "lo": -0.05932830300340286,
+    "hi": -0.04112664595354336,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": -0.047101449275362306,
+    "lo": -0.08695652173913043,
+    "hi": -0.010869565217391304,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": -0.001331557922769639,
+    "lo": -0.010356561621541648,
+    "hi": 0.007841396656310104,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2253
+   }
+  },
+  "minp01": {
+   "P1_pred_question_overlap_delta": {
+    "delta": 0.0002413196822911301,
+    "lo": -0.00015455378645127968,
+    "hi": 0.0006760280749017398,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": 0.0030484412386300175,
+    "lo": 0.002225977392415299,
+    "hi": 0.0038816180401595704,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": 0.0020903994583183205,
+    "lo": 0.0014893790981121214,
+    "hi": 0.0027287187732070047,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": -0.007246376811594124,
+    "lo": -0.03260869565217406,
+    "hi": 0.01449275362318847,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.011836070424618983,
+    "lo": -0.017162302115697692,
+    "hi": -0.006361887853232773,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": -0.0217391304347826,
+    "lo": -0.05072463768115941,
+    "hi": 0.0072463768115942,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": -0.010504512501849386,
+    "lo": -0.016422547714158894,
+    "hi": -0.004586477289539875,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   }
+  },
+  "rp105": {
+   "P1_pred_question_overlap_delta": {
+    "delta": -0.0006838501757639778,
+    "lo": -0.001040345415041543,
+    "hi": -0.00036404153655533104,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": 0.00226145955461636,
+    "lo": 0.0016233764080396905,
+    "hi": 0.002912492338737709,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": 0.0019632955078431533,
+    "lo": 0.0014533953168450954,
+    "hi": 0.0024906116327950987,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": -0.01449275362318836,
+    "lo": -0.02898550724637694,
+    "hi": -0.0036231884057970065,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.006065986092617326,
+    "lo": -0.00961680722000302,
+    "hi": -0.0026631158455393544,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": 0.02536231884057972,
+    "lo": 0.007246376811594207,
+    "hi": 0.043478260869565244,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": 0.007545494895694629,
+    "lo": 0.0032549193667702307,
+    "hi": 0.011984021304926762,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2253
+   }
+  },
+  "rp11": {
+   "P1_pred_question_overlap_delta": {
+    "delta": -0.0011811681362040296,
+    "lo": -0.001652740213451234,
+    "hi": -0.000746354787893672,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2345
+   },
+   "P2_pred_gold_overlap_delta": {
+    "delta": 0.004617859609909153,
+    "lo": 0.0035584565379453443,
+    "hi": 0.0057623831226613475,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P2b_pred_gold_JACCARD_delta": {
+    "delta": 0.004265972243841953,
+    "lo": 0.0033851230521041676,
+    "hi": 0.005181383072241674,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_Q": {
+    "delta": -0.021739130434782594,
+    "lo": -0.05072463768115931,
+    "hi": 0.0036231884057970065,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 92
+   },
+   "P3_em_oracle_delta_GOLD_SHARES_NONE": {
+    "delta": -0.012279923065542264,
+    "lo": -0.016866400355082023,
+    "hi": -0.007989347536617838,
+    "sig": true,
+    "verdict": "LOSS",
+    "n": 2253
+   },
+   "P4_judge_only_delta_GOLD_SHARES_Q": {
+    "delta": 0.036231884057971016,
+    "lo": 0.0144927536231884,
+    "hi": 0.06521739130434781,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 92
+   },
+   "P4_judge_only_delta_GOLD_SHARES_NONE": {
+    "delta": 0.017754105636928537,
+    "lo": 0.011688119544311287,
+    "hi": 0.02411599349016126,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2253
+   }
+  }
+ }
+}

@@ -71,6 +71,31 @@ def boot(d, nboot=NBOOT, seed=BSEED):
     return float(d.mean()), [float(np.percentile(s, 2.5)), float(np.percentile(s, 97.5))]
 
 
+def _matched(cap, tag, control="cap320"):
+    """True when this cap's arm and the control's arm for the same seed were generated in the same
+    session (see resolution_arm_provenance.py). A False here means the delta carries the project's
+    +-0.008 serving-config caveat on top of its own sampling noise and must not be a headline."""
+    p = os.path.join(OUT, "arm_provenance.json")
+    if not os.path.exists(p):
+        return None
+    pr = json.load(open(p)).get("pairs", {})
+    return pr.get(f"{cap}_vs_{control}_{tag}", {}).get("WITHIN_SESSION_MATCHED")
+
+
+def _pooled_map(op_vs, cap, seeds):
+    """the POOLED (item-weighted) selected delta per seed, aligned to that cap's own seed list in
+    open_generator_resolution -- reported next to the macro figure so the two bases are visibly
+    different quantities, never silently swapped."""
+    blk = op_vs.get(cap, {})
+    order_seeds = blk.get("seeds_paired", [])
+    vals = blk.get("per_metric", {}).get("selected", {}).get("delta_per_seed", [])
+    out = {}
+    for t in seeds:
+        out[t] = vals[order_seeds.index(t)] if t in order_seeds and \
+            order_seeds.index(t) < len(vals) else None
+    return out
+
+
 def main():
     J = json.load(open(os.path.join(SWEEP, "judge_cache.json")))
     V = json.load(open(os.path.join(SWEEP, "verifier_score_cache.json")))
@@ -103,12 +128,36 @@ def main():
             gold.append(str(r["gold"])); ques.append(str(r["question"]))
         return dict(rec=np.array(rec), sel=np.array(sel), orc=np.array(orc), gold=gold, ques=ques)
 
-    arms = {}
+    # An arm whose candidates are not fully judge-labelled is biased DOWNWARD (an unlabelled
+    # candidate is excluded from oracle@8 and counts as wrong if the verifier picks it), so such an
+    # arm is DROPPED here rather than analysed. resolution_open_analyze.py reports the same arms
+    # with a RELIABLE flag; this script simply refuses them, because its outputs (the macro-8
+    # arithmetic and the laterality CIs) are quoted directly.
+    MAXMISS = 0.01
+    arms, skipped = {}, {}
     for cap, _ in CAPS:
         for tag in ["s0", "s1", "s2"]:
             A = load_arm(cap, tag)
-            if A is not None:
-                arms[(cap, tag)] = arm_stats(A)
+            if A is None:
+                continue
+            slots = miss = 0
+            for ds in DS:
+                for r in A[ds].values():
+                    for a in r["preds"]:
+                        slots += 1
+                        miss += int(f"{ds}|{r['idx']}|{norm(a)}" not in J)
+            frac = miss / max(slots, 1)
+            if frac > MAXMISS:
+                skipped[f"{cap}_{tag}"] = {
+                    "n_candidate_slots": slots, "slots_without_a_judge_label": miss,
+                    "frac_unlabelled": round(frac, 6),
+                    "_why": "dropped: >1% of this arm's candidates have no judge label, which "
+                            "biases its oracle@8 and selected DOWNWARD. Label it and re-run."}
+                continue
+            arms[(cap, tag)] = arm_stats(A)
+
+    op = json.load(open(os.path.join(OUT, "open_generator_resolution.json")))
+    op_vs = op.get("vs_control", {})
 
     ref = arms[(CONTROL, "s0")]
     goldlen = np.array([len(g.split()) for g in ref["gold"]])
@@ -127,7 +176,8 @@ def main():
                                "non-laterality items comes from the DEPLOYED transfer dump, whose "
                                "laterality mask also ORs in candidate text; these masks are "
                                "question/gold-only so the absolute levels are not identical to it.",
-    }, "per_cap": {}, "vs_control": {}}
+    }, "per_cap": {}, "vs_control": {},
+        "arms_dropped_for_incomplete_judge_labelling": skipped}
 
     for cap, px in CAPS:
         seeds = [t for t in ["s0", "s1", "s2"] if (cap, t) in arms]
@@ -185,24 +235,121 @@ def main():
             "all_seeds_ci_exclude_zero": bool(all(c[0] > 0 or c[1] < 0 for c in se_ci))}
         res["vs_control"][cap] = blk
 
-    # ---- macro-8 arithmetic for the open half ------------------------------------------------
-    op = json.load(open(os.path.join(OUT, "open_generator_resolution.json")))
+    # ---- macro-8 arithmetic for the open half, CELL-STRATIFIED --------------------------------
+    # CORRECTION (2026-08-14): an earlier version of this block multiplied the POOLED
+    # (item-weighted) delta by 3/8. That is wrong. The project's macro convention is EQUAL WEIGHT
+    # PER CELL (8 cells, 1/8 each), while the pooled delta weights items -- and the open pool is
+    # 645/200/1500, so pooling gives PathVQA 64% of the weight where the macro gives it 33%.
+    # PathVQA is the cell with the SMALLEST gain, so pooling systematically understates the macro
+    # effect here (native: pooled 0.005117 vs cell-mean 0.009623). The macro delta is therefore
+    # rebuilt as the mean of the three per-cell deltas, with a CELL-STRATIFIED bootstrap: each
+    # replicate resamples items WITHIN each cell, takes that cell's mean delta, and averages the
+    # three cells equally -- the same weighting the reported macro-8 uses.
+    dsmask = {ds: np.array([d == ds for d, _ in order]) for ds in DS}
+
+    def macro_boot(a_vec, b_vec, nboot=NBOOT, seed=BSEED):
+        rng = np.random.default_rng(seed)
+        d = np.asarray(b_vec, float) - np.asarray(a_vec, float)
+        cells = [d[dsmask[ds]] for ds in DS]
+        point = float(np.mean([c.mean() for c in cells]))
+        reps = np.zeros(nboot)
+        for ci, c in enumerate(cells):
+            idx = rng.integers(0, len(c), size=(nboot, len(c)))
+            reps += c[idx].mean(axis=1)
+        reps /= len(cells)
+        return point, [float(np.percentile(reps, 2.5)), float(np.percentile(reps, 97.5))]
+
     macro = {}
-    for cap, blk in op["vs_control"].items():
-        d = blk["per_metric"]["selected"]
+    for cap, _px in CAPS:
+        if cap == CONTROL:
+            continue
+        seeds = [t for t in ["s0", "s1", "s2"] if (cap, t) in arms and (CONTROL, t) in arms]
+        if not seeds:
+            continue
+        rows = {}
+        for t in seeds:
+            a, b = arms[(CONTROL, t)], arms[(cap, t)]
+            pt, ci = macro_boot(a["sel"], b["sel"])
+            pc = {ds: round(float(b["sel"][dsmask[ds]].mean() - a["sel"][dsmask[ds]].mean()), 6)
+                  for ds in DS}
+            rows[t] = {
+                "per_cell_delta_selected": pc,
+                "open3_equal_weight_mean_delta": round(pt, 6),
+                "open3_ci95": [round(ci[0], 6), round(ci[1], 6)],
+                "macro8_equivalent": round(pt * 0.375, 6),
+                "macro8_equivalent_ci95": [round(ci[0] * 0.375, 6), round(ci[1] * 0.375, 6)],
+                "macro8_ci_excludes_zero": bool(ci[0] > 0 or ci[1] < 0),
+                "macro8_exceeds_project_threshold": bool(abs(pt * 0.375) > 0.0029),
+                "WITHIN_SESSION_MATCHED": _matched(cap, t),
+                # the project's standard robustness check: equal cell weighting hands a 200-item
+                # cell a full third of the open weight, so a handful of items there can carry the
+                # macro. Drop each cell in turn and re-weight the survivors equally.
+                "leave_one_cell_out_open_mean_delta": {
+                    ds: round(float(np.mean([pc[o] for o in DS if o != ds])), 6) for ds in DS},
+                "leave_one_cell_out_macro8": {
+                    ds: round(float(np.mean([pc[o] for o in DS if o != ds]) * 0.375), 6)
+                    for ds in DS},
+                "n_items_behind_each_cell_delta": {
+                    ds: {"n": int(dsmask[ds].sum()),
+                         "net_items_changed": int(round(pc[ds] * int(dsmask[ds].sum())))}
+                    for ds in DS},
+            }
         macro[cap] = {
-            "max_pixels": blk["max_pixels"],
-            "delta_selected_open3_mean_over_cells": d["delta_mean_over_seeds"],
-            "ci95_per_seed": d["ci95_per_seed"],
+            "max_pixels": _px, "seeds": seeds, "per_seed": rows,
             "open_cells_weight_in_macro8": 0.375,
-            "macro8_equivalent": round(d["delta_mean_over_seeds"] * 0.375, 6),
-            "macro8_equivalent_ci95_per_seed": [[round(c[0] * 0.375, 6), round(c[1] * 0.375, 6)]
-                                                for c in d["ci95_per_seed"]],
             "project_significance_threshold_on_macro8": 0.0029,
-            "_read": "the 3 open cells are 3/8 of the macro-8 and the delta above is their MEAN, so "
-                     "the macro-8 contribution is delta x 3/8. The other 5 cells are held at zero.",
+            "_weighting": "EQUAL WEIGHT PER CELL, matching the project's macro-8 convention. The "
+                          "bootstrap is stratified by cell: each replicate resamples items within "
+                          "slake_open (645), vqa_rad_open (200) and pathvqa_open (1500) "
+                          "separately, then averages the three cell means equally.",
+            "_the_other_five_cells_are_held_at_zero": "resolution cannot move the 5 MCQ cells "
+                                                      "upward -- they already run uncapped -- so "
+                                                      "this is the whole macro-8 effect of a "
+                                                      "generator-side resolution change.",
+            "_pooled_for_contrast": _pooled_map(op_vs, cap, seeds),
+            "_why_pooled_differs": "the pooled (item-weighted) delta is also reported in "
+                                   "open_generator_resolution.vs_control. It answers a different "
+                                   "question -- the average over QUESTIONS rather than over CELLS "
+                                   "-- and it is NOT the macro-8 basis.",
         }
     res["macro8_arithmetic_open_half"] = macro
+
+    # ---- per-cell deltas with their own paired CIs, for oracle@8 / selected / sel_eff ---------
+    # open_generator_resolution reports per-cell LEVELS and a POOLED delta; this adds the per-cell
+    # DELTA with an interval, which is what a per-cell guardrail actually needs.
+    percell = {}
+    for cap, px in CAPS:
+        if cap == CONTROL:
+            continue
+        seeds = [t for t in ["s0", "s1", "s2"] if (cap, t) in arms and (CONTROL, t) in arms]
+        if not seeds:
+            continue
+        blk = {"max_pixels": px, "seeds": seeds, "per_seed": {}}
+        for t in seeds:
+            a, b = arms[(CONTROL, t)], arms[(cap, t)]
+            row = {}
+            for ds in DS:
+                m = dsmask[ds]
+                e = {}
+                for q, fld in [("oracle8", "orc"), ("selected", "sel")]:
+                    d, ci = boot(np.asarray(b[fld][m], float) - np.asarray(a[fld][m], float))
+                    e[q] = {"delta": round(d, 6), "ci95": [round(ci[0], 6), round(ci[1], 6)],
+                            "ci_excludes_zero": bool(ci[0] > 0 or ci[1] < 0)}
+                rr = (a["rec"] == 1) & (b["rec"] == 1) & m
+                d, ci = boot(np.asarray(b["sel"][rr], float) - np.asarray(a["sel"][rr], float))
+                e["sel_eff_on_jointly_recoverable"] = {
+                    "n_jointly_recoverable": int(rr.sum()),
+                    "delta": round(d, 6), "ci95": [round(ci[0], 6), round(ci[1], 6)],
+                    "ci_excludes_zero": bool(ci[0] > 0 or ci[1] < 0)}
+                row[ds] = e
+            blk["per_seed"][t] = row
+            blk["per_seed"][t]["_WITHIN_SESSION_MATCHED"] = _matched(cap, t)
+        percell[cap] = blk
+    res["per_cell_deltas_with_ci"] = percell
+    res["per_cell_deltas_with_ci"]["_read"] = (
+        "paired item bootstrap (nboot=10000) of each cell's delta against the SAME-SEED cap320 "
+        "control. sel_eff is bootstrapped inside the items recoverable in BOTH arms so the "
+        "conditioning set is identical. Check _WITHIN_SESSION_MATCHED before quoting.")
 
     os.makedirs(OUT, exist_ok=True)
     json.dump(res, open(os.path.join(OUT, "strata_ci.json"), "w"), indent=1)

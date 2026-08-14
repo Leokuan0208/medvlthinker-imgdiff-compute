@@ -1,0 +1,101 @@
+{
+ "title": "INDEPENDENT MCQ IMAGE GEOMETRY -- can raising resolution change the five multiple-choice cells at all?",
+ "date": "2026-08-14",
+ "no_fabricated_numbers": true,
+ "code_path_verified": {
+  "file": "MedEvalKit/models/Qwen2_5_VL/Qwen2_5_VL_vllm.py:51-54",
+  "logic": "_MP = int(os.environ.get(\"CAP_MAX_PIXELS\",\"0\"));  if _MP: d[\"max_pixels\"]=_MP; d[\"min_pixels\"]=4*28*28  -- unset means no cap is passed and the processor keeps its own default",
+  "lingshu_preprocessor_default_max_pixels": 12845056,
+  "preprocessor_config": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/preprocessor_config.json",
+  "runners_setting_CAP_MAX_PIXELS": [
+   "runners/run_resolution_mcq_ladder.sh",
+   "runners/run_resolution_mcq_pathvqa.sh"
+  ],
+  "conclusion": "both are resolution-sweep runners written for this round; no runner behind a PUBLISHED MCQ cell sets the variable, so the published MCQ arms ran at the 12,845,056 default."
+ },
+ "cells": {
+  "SLAKE_closed": {
+   "n_images": 1061,
+   "px_max": 1048576,
+   "px_mean": 486308.55419415643,
+   "px_median": 262144.0,
+   "px_p95": 1048576.0,
+   "frac_above_cap320": 0.7851083883129123,
+   "mean_vision_tokens_at_cap320": 244.60414703110274,
+   "frac_above_fullres": 0.3402450518378888,
+   "mean_vision_tokens_at_fullres": 578.6437323279924,
+   "frac_above_lingshu_default": 0.0,
+   "mean_vision_tokens_at_lingshu_default": 627.6390197926485,
+   "raising_the_cap_can_change_an_input": false
+  },
+  "VQA_RAD_closed": {
+   "n_images": 451,
+   "px_max": 1345536,
+   "px_mean": 679415.8536585366,
+   "px_median": 667648.0,
+   "px_p95": 1335296.0,
+   "frac_above_cap320": 0.8603104212860311,
+   "mean_vision_tokens_at_cap320": 288.0620842572062,
+   "frac_above_fullres": 0.29490022172949004,
+   "mean_vision_tokens_at_fullres": 782.1086474501109,
+   "frac_above_lingshu_default": 0.0,
+   "mean_vision_tokens_at_lingshu_default": 871.5631929046564,
+   "raising_the_cap_can_change_an_input": false
+  },
+  "PATH_VQA_closed": {
+   "n_images": 3000,
+   "px_max": 657272,
+   "px_mean": 382172.28966666665,
+   "px_median": 418176.0,
+   "px_p95": 432432.0,
+   "frac_above_cap320": 0.8563333333333333,
+   "mean_vision_tokens_at_cap320": 284.98266666666666,
+   "frac_above_fullres": 0.0,
+   "mean_vision_tokens_at_fullres": 485.259,
+   "frac_above_lingshu_default": 0.0,
+   "mean_vision_tokens_at_lingshu_default": 485.259,
+   "raising_the_cap_can_change_an_input": false
+  },
+  "MedXpertQA": {
+   "n_images": 2858,
+   "px_max": 9107712,
+   "px_mean": 654262.9587123863,
+   "px_median": 270000.0,
+   "px_p95": 2213400.0000000005,
+   "frac_above_cap320": 0.5248425472358292,
+   "mean_vision_tokens_at_cap320": 240.98635409377187,
+   "frac_above_fullres": 0.2540237928621414,
+   "mean_vision_tokens_at_fullres": 568.517144856543,
+   "frac_above_lingshu_default": 0.0,
+   "mean_vision_tokens_at_lingshu_default": 838.756123163051,
+   "raising_the_cap_can_change_an_input": false
+  },
+  "PMC_VQA": {
+   "n_images": 33430,
+   "px_max": 11684175,
+   "px_mean": 111396.24738259049,
+   "px_median": 68770.0,
+   "px_p95": 382076.69999999995,
+   "frac_above_lingshu_default": 0.0,
+   "frac_above_cap320": 0.08905174992521687,
+   "mean_vision_tokens_at_lingshu_default": 142.07182171702064,
+   "mean_vision_tokens_at_cap320": 113.08839365839067,
+   "raising_the_cap_can_change_an_input": false,
+   "_split": "test_2.csv (v2, the MedEvalKit/paper track), image path resolved figures/ then images/ per MedEvalKit/utils/PMC_VQA/PMC_VQA.py:48,60",
+   "_note": "the resolution sweep geometry_mcq.json reports px_max 8870964 for this cell; this measurement gives 11684175. Both are below the 12,845,056 cap so the conclusion is identical; the discrepancy is recorded, not resolved."
+  }
+ },
+ "verdict": {
+  "max_pixels_over_all_measured_mcq_cells": 11684175,
+  "lingshu_default_cap": 12845056,
+  "any_cell_where_raising_the_cap_changes_an_input": false,
+  "statement": "if no cell has an image above 12,845,056 resized pixels, then the published MCQ arms already see every pixel the model would ever receive, and raising max_pixels is a no-op on 62.5% of the macro weight -- not an untested hypothesis but an impossibility.",
+  "cells_measured": [
+   "MedXpertQA",
+   "PATH_VQA_closed",
+   "PMC_VQA",
+   "SLAKE_closed",
+   "VQA_RAD_closed"
+  ]
+ }
+}

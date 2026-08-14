@@ -53,19 +53,42 @@ def binof(t):
     return len(BINS) - 1
 
 
+def fully_judged(pool):
+    for it in ref:
+        r = pool[(it["ds"], it["idx"])]
+        for a in r["preds"]:
+            if lab.get((it["ds"], it["idx"], G.norm(a))) is None:
+                return False
+    return True
+
+
 def seeds_of(setting):
-    out = []
+    """Complete pools that are ALSO fully judge-labelled. A partially judged pool is refused, never
+    partially scored (see slot_stats)."""
+    out, skipped = [], []
     for s in range(8):
         tag = f"{setting}_s{s}"
         if os.path.exists(os.path.join(SWEEP, f"ckpt_{DS[0]}_{tag}.jsonl")):
             p = load_pool(tag, strict=False)
-            if p is not None:
-                out.append((tag, p))
+            if p is None:
+                continue
+            if not fully_judged(p):
+                skipped.append(tag); continue
+            out.append((tag, p))
+    if skipped:
+        print(f"  [unjudged, excluded] {skipped}")
     return out
 
 
 def slot_stats(pool):
-    """Slot-level EM vs judge confusion, plus per-length-bin rescue counts."""
+    """Slot-level EM vs judge confusion, plus per-length-bin rescue counts.
+
+    Returns None if ANY slot lacks a judge label. Skipping unlabelled slots instead (an earlier
+    version did) silently restricts the pool to strings some OTHER setting already had judged --
+    i.e. to the duplicated, shorter, easier candidates -- which biased every endpoint: adding the
+    unjudged 3rd seeds moved rp11's mean generated tokens 6.33 -> 5.83 and its slot EM rate
+    0.4143 -> 0.4465 purely through that selection. Same refusal policy as decoding_sweep_report.py.
+    """
     n = em1j1 = em1j0 = em0j1 = em0j0 = 0
     bin_tot = np.zeros(len(BINS)); bin_resc = np.zeros(len(BINS))
     bin_em0 = np.zeros(len(BINS))
@@ -76,7 +99,7 @@ def slot_stats(pool):
         for a, e, t in zip(r["preds"], r["oks_em"], gt):
             y = lab.get((it["ds"], it["idx"], G.norm(a)))
             if y is None:
-                continue
+                return None
             n += 1; toks.append(t); b = binof(t); bin_tot[b] += 1
             if e and y:
                 em1j1 += 1
@@ -102,7 +125,22 @@ def merge_bins(sts):
 
 settings = [s for s in A.settings.split(",")]
 res = {"method": __doc__.strip().split("\n\n")[0],
-       "judge": "src/labeling/run_judge.py -- MedVLThinker-32B, text-only, temp 0 (the project's own judge)",
+       "judge": "src/labeling/run_judge.py -- MedVLThinker-32B-RL_m23k (Qwen2.5-32B backbone: a NEUTRAL "
+                "grader, not the Lingshu model under test), text-only, temperature 0, Yes/No logit "
+                "comparison. The project's own judge, reused unmodified.",
+       "judge_system_prompt_verbatim":
+           "You are a strict medical exam grader. Given a question, a reference (gold) answer, and a "
+           "model answer, decide if the model answer is CORRECT: it must match the clinical meaning of "
+           "the reference. Be lenient about phrasing, synonyms, and abbreviations (e.g. 'CT' = 'computed "
+           "tomography'), but mark wrong answers, missing key findings, or different conclusions as No. "
+           "Respond with only 'Yes' or 'No'.",
+       "WHY_THE_PROMPT_MATTERS": "the judge is INSTRUCTED to 'be lenient about phrasing, synonyms and "
+                                 "abbreviations'. Judge-minus-EM disagreement is therefore by DESIGN, not "
+                                 "a defect. The consequence for this sweep is the point: a decoding change "
+                                 "that increases phrasing variation harvests more of that designed "
+                                 "leniency WITHOUT the model becoming more accurate, so a judge-only gain "
+                                 "is not evidence of better generation. That is why every headline here is "
+                                 "reported in both currencies.",
        "em": "score_em() verbatim from src/labeling/run_openvqa.py / decoding_sweep_gen.py",
        "length_bins_tokens": [f"{lo}-{hi}" for lo, hi in BINS],
        "per_setting": {}}

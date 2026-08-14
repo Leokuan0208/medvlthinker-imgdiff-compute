@@ -152,5 +152,22 @@
   },
   "_read": "this is a NAMING fact, not an error in the endpoint: sel_eff is a conditional mean over recoverable pools and does not use the greedy row at all, and selected = oracle@8 x sel_eff is unaffected. But 'greedy' in the published open cells is a best-of-8 quantity, so it must not be quoted as the model's single-decode accuracy. This round reports BOTH, under separate names (greedy_t0 and pool_modal)."
  },
- "N4_verifier_rescore": "not run yet"
+ "N4_verifier_rescore": {
+  "batch1_vs_stored": {
+   "n": 150,
+   "max_abs_dev": 0.03120937337375629,
+   "mean_abs_dev": 0.0057183067294077,
+   "n_above_1e_3": 52,
+   "_what": "batch-1 re-score of stored (item, candidate) pairs vs the score in the deployed transfer dump. Same code path as verifier_transfer_eval.py."
+  },
+  "batchN_vs_batch1": {
+   "batch": 4,
+   "n": 150,
+   "max_abs_dev": 0.05443017142098189,
+   "mean_abs_dev": 0.006262662118952416,
+   "n_above_1e_3": 58,
+   "_what": "the LEFT-padded batched scorer against the batch-1 scorer on the same pairs, in the same process. Batching is a throughput measure only and is used for production scoring only if this deviation is negligible."
+  },
+  "_what": "randomly chosen stored (item, candidate) pairs re-scored with the deployed clean disjoint LoRA at its deployed max_pixels 1,003,520, compared to the score stored in the transfer dump."
+ }
 }

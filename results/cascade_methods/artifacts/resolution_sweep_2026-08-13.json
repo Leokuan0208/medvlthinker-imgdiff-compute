@@ -1,13 +1,18 @@
 {
  "_meta": {
   "title": "SWEEP 2 -- IMAGE RESOLUTION: what max_pixels does to accuracy, compute and VRAM in the Lingshu cascade, on both halves of the macro-8",
-  "created": "2026-08-13",
+  "created": "2026-08-13, completed 2026-08-14",
+  "_two_sessions": "2026-08-13 established the facts, ran the MCQ pair, generated every open arm and finished the verifier scoring, but could never get a card for the 32B judge pass, so it shipped with the decisive endpoint OPEN. 2026-08-14 ran that judge pass (14,779 triples), added native sampling seeds, and corrected the 2026-08-13 diagnosis of why the PATH_VQA / MedXpert MCQ arms kept failing -- it was the job's own activation-peak budget, not a co-tenant. Both sessions used the same code, the same caches and the same item order; no delta crosses them without saying so.",
   "question": "Can changing the 7B's inference parameters improve the samples it generates? This is the resolution arm: resolution changes what the model PERCEIVES, so unlike a sampling temperature it moves greedy accuracy on all 8 cells, and it is the direct lever on a prefill-bound workload.",
   "code": {
    "facts_geometry": "src/cascade_methods/resolution_geometry.py",
    "mcq_paired_existing_dumps": "src/cascade_methods/resolution_mcq_paired.py",
    "mcq_ladder_runner": "runners/run_resolution_mcq_ladder.sh",
    "mcq_ladder_analysis": "src/cascade_methods/resolution_mcq_ladder.py",
+   "mcq_pathvqa_medxpert_pair_runner": "runners/run_resolution_mcq_pathvqa.sh (2026-08-14; splits the two cells by their real image geometry so each gets an engine that fits its activation peak)",
+   "laterality_strata_CIs": "src/cascade_methods/resolution_strata_ci.py (2026-08-14)",
+   "arm_generation_provenance": "src/cascade_methods/resolution_arm_provenance.py (2026-08-14; flags any cap-vs-control pair that crosses the session boundary)",
+   "greedy_native_vs_deployed_arm": "src/cascade_methods/resolution_greedy_vs_arm.py (2026-08-14)",
    "open_generation": "src/cascade_methods/resolution_open_generate.py (+ runners/run_resolution_open_gen.sh)",
    "open_judge_cache": "src/cascade_methods/resolution_judge_cache.py",
    "open_verifier_scoring": "src/cascade_methods/resolution_verifier_score.py",
@@ -21,19 +26,24 @@
   },
   "logs": [
    "logs/resolution_open_gen_2026-08-13.log   (open-text generation, all caps)",
-   "logs/resolution_mcq_ladder_2026-08-13.log (MedEvalKit MCQ ladder; see not_measured -- it was OOM-blocked)",
-   "logs/resolution_label_2026-08-13.log      (verifier scoring + judge)",
+   "logs/resolution_open_gen_2026-08-14.log   (native sampling seeds s1/s2)",
+   "logs/resolution_mcq_ladder_2026-08-13.log (MedEvalKit MCQ ladder)",
+   "logs/resolution_mcq_pathvqa_2026-08-14.log(PATH_VQA / MedXpert resolution pair)",
+   "logs/resolution_label_2026-08-13.log      (verifier scoring, 13,302 forwards)",
+   "logs/resolution_judge_2026-08-14.log      (the 32B judge pass, 14,779 triples)",
    "logs/resolution_stage2_2026-08-13.log     (the stage-2 driver)",
    "logs/resolution_geometry_mcq.log          (CPU image-geometry pass)"
   ],
   "environment": {
-   "host": "dual A100 80GB PCIe; BOTH cards carried another tenant's jobs for the whole session (one of this round's own engine cores was OOM-killed by a collision at 12:32:27 and the job was restarted pinned to one card). No other process was ever killed; every stage waits for free VRAM.",
+   "host": "dual A100 80GB PCIe, shared. On 2026-08-13 BOTH cards carried another tenant's jobs for the whole session (one of this round's own engine cores was OOM-killed by a collision at 12:32:27 and the job was restarted pinned to one card), which is why the judge pass never ran. On 2026-08-14 both cards were briefly empty -- the judge pass and the native seeds were taken then -- and a 40 GiB co-tenant reappeared mid-session. No foreign process was ever killed in either session; every stage waits for free VRAM and gives up rather than oversubscribing.",
    "generation": "vLLM 0.10.1.1+381074ae.nv25.09 (system python), bf16, tp=1, max_model_len 4096, max_tokens 64, limit_mm_per_prompt image=4",
-   "mcq_harness": "MedEvalKit via /data/dan/medeval_venv/bin/python (vLLM 0.9.0.1), seed 42, temperature 0, tp=1, unmodified except its own CAP_MAX_PIXELS env lever",
-   "verifier_scoring": "HuggingFace transformers, bf16, flash_attention_2, batch 1, TF32 OFF (torch.backends.cuda.matmul.allow_tf32=False, cudnn.allow_tf32=False). NEVER vLLM -- vLLM 0.9.0.1 drops all 192 visual.* LoRA modules (0.775204 HF vs 0.702997 vLLM).",
+   "mcq_harness": "MedEvalKit via /data/dan/medeval_venv/bin/python (vLLM 0.9.0.1), seed 42, temperature 0, tp=1. NOT MODIFIED in either session -- the resolution is applied only through the CAP_MAX_PIXELS environment variable.",
+   "\u26a0_the_CAP_MAX_PIXELS_lever_is_itself_an_uncommitted_vendor_edit": "MedEvalKit/models/Qwen2_5_VL/Qwen2_5_VL_vllm.py:51 reads `_MP = int(os.environ.get(\"CAP_MAX_PIXELS\",\"0\"))` and passes max_pixels only when _MP is non-zero. That line is a LOCAL, UNCOMMITTED edit to a vendored dependency (file mtime 2026-07-04, i.e. it predates both sessions of this round; no session of this round changed it). It is the same class of landmine CLAUDE.md already records for MedEvalKit's reasoning prompt. Two consequences: (a) the published MCQ cells run at the qwen_vl_utils DEFAULT precisely because no runner sets that variable -- verified, only this round's own two resolution runners set it -- and (b) a clean checkout of MedEvalKit would NOT reproduce this round's cap320 MCQ arms at all, because the lever would not exist.",
+   "verifier_scoring": "HuggingFace transformers, bf16, flash_attention_2, TF32 OFF (torch.backends.cuda.matmul.allow_tf32=False, cudnn.allow_tf32=False). NEVER vLLM -- vLLM 0.9.0.1 drops all 192 visual.* LoRA modules (0.775204 HF vs 0.702997 vLLM). The verifier itself is HELD FIXED at max_pixels 1,003,520 in every arm: this sweep moves the GENERATOR only.",
+   "verifier_batching_caveat": "production scoring ran at --batch 4 (LEFT-padded), not the deployed batch 1, for throughput. The round's own null test measures what that costs: batch-4 vs batch-1 on the same 150 pairs is max_abs_dev 0.054430, mean_abs_dev 0.006263; batch-1 vs the STORED transfer-dump score is max_abs_dev 0.031209, mean_abs_dev 0.005718. These are per-CANDIDATE score deviations, not endpoint deviations, and they apply UNIFORMLY to the control and to every swept arm, so the cap-vs-cap deltas -- the load-bearing quantity -- are internally consistent. The absolute LEVEL is not: this round's cap320 control reads sel_eff 0.784713 against the deployed pool's 0.775204, and that gap mixes the batching, the vLLM-version shift and the fresh generation. Never quote this round's absolute sel_eff as the deployed number; quote the deltas.",
    "judge": "src/labeling/run_judge.py -- MedVLThinker-32B (Qwen2.5-32B backbone), text-only, the project's existing judge. No new judge was invented."
   },
-  "matched_control_discipline": "Every accuracy delta in this artifact is between two arms generated by ONE script in ONE session. The open half's control is a cap320 arm generated here, not the stored deployed pool. The MCQ ladder carries its own 12,845,056 control generated here at tp=1, and it is NOT differenced against the 2026-07-01 tp=2 dumps -- those are used only against each other, which is a valid within-session pair of their own. The session measured the size of that caveat directly: SLAKE-closed is 0.825359 in the 2026-07-01 tp=2 run and 0.820574 in this session's tp=1 run at the SAME resolution, a -0.004785 serving-config shift with no experimental variable changed."
+  "matched_control_discipline": "Every accuracy delta in this artifact is between two arms generated by ONE script in ONE session. The open half's control is a cap320 arm generated here, not the stored deployed pool. The MCQ ladder carries its own 12,845,056 control generated here at tp=1, and it is NOT differenced against the 2026-07-01 tp=2 dumps -- those are used only against each other, which is a valid within-session pair of their own. The round measured the size of that caveat directly, on TWO cells, with no experimental variable changed: SLAKE-closed is 0.825359 in the 2026-07-01 tp=2 run and 0.820574 in this round's tp=1 run at the SAME resolution (-0.004785), and PATH_VQA-closed is 0.840869 vs 0.837002 (-0.003867, n=3,362, measured 2026-08-14). Both shifts are the same sign and the same order as the project's standing +-0.008 caveat, and both are larger than several effects this round is asked to detect -- which is why every accuracy delta here is taken against a control generated alongside it."
  },
  "null_tests": {
   "N1_frozen_metric": {
@@ -189,7 +199,24 @@
    },
    "_read": "this is a NAMING fact, not an error in the endpoint: sel_eff is a conditional mean over recoverable pools and does not use the greedy row at all, and selected = oracle@8 x sel_eff is unaffected. But 'greedy' in the published open cells is a best-of-8 quantity, so it must not be quoted as the model's single-decode accuracy. This round reports BOTH, under separate names (greedy_t0 and pool_modal)."
   },
-  "N4_verifier_rescore": "not run yet"
+  "N4_verifier_rescore": {
+   "batch1_vs_stored": {
+    "n": 150,
+    "max_abs_dev": 0.03120937337375629,
+    "mean_abs_dev": 0.0057183067294077,
+    "n_above_1e_3": 52,
+    "_what": "batch-1 re-score of stored (item, candidate) pairs vs the score in the deployed transfer dump. Same code path as verifier_transfer_eval.py."
+   },
+   "batchN_vs_batch1": {
+    "batch": 4,
+    "n": 150,
+    "max_abs_dev": 0.05443017142098189,
+    "mean_abs_dev": 0.006262662118952416,
+    "n_above_1e_3": 58,
+    "_what": "the LEFT-padded batched scorer against the batch-1 scorer on the same pairs, in the same process. Batching is a throughput measure only and is used for production scoring only if this deviation is negligible."
+   },
+   "_what": "randomly chosen stored (item, candidate) pairs re-scored with the deployed clean disjoint LoRA at its deployed max_pixels 1,003,520, compared to the score stored in the transfer dump."
+  }
  },
  "facts_image_geometry": {
   "open_cells": {
@@ -749,9 +776,45 @@
  "mcq_resolution_ladder_this_session": {
   "_control": 12845056,
   "_caps_found": [
+   250880,
    12845056
   ],
   "by_cap": {
+   "250880": {
+    "max_pixels": 250880,
+    "vision_token_budget": 320,
+    "per_cell": {
+     "SLAKE_closed": "not measured at this cap",
+     "VQA_RAD_closed": "not measured at this cap",
+     "PATH_VQA_closed": {
+      "n": 3362,
+      "identity_mismatched_rows": 0,
+      "acc_control_12845056": 0.837002,
+      "acc_at_cap": 0.833432,
+      "mean_gen_tokens_at_cap": 4.152,
+      "mean_recorded_latency_s_at_cap": 0.09031,
+      "delta_vs_control": -0.003569,
+      "ci95": [
+       -0.010708,
+       0.003272
+      ],
+      "significant": false
+     },
+     "MedXpertQA-MM": "not measured at this cap",
+     "PMC_VQA": "not measured at this cap"
+    },
+    "macro_over_measured_cells": {
+     "n_cells": 1,
+     "cells": [
+      "PATH_VQA_closed"
+     ],
+     "mean_acc_at_cap": 0.833432,
+     "mean_acc_control": 0.837002,
+     "mean_delta": -0.003569,
+     "n_cells_significantly_worse": 0,
+     "n_cells_significantly_better": 0
+    }
+   },
    "12845056": {
     "max_pixels": 12845056,
     "vision_token_budget": 16384,
@@ -765,17 +828,25 @@
       "mean_recorded_latency_s_at_cap": 0.16718
      },
      "VQA_RAD_closed": "not measured at this cap",
-     "PATH_VQA_closed": "not measured at this cap",
+     "PATH_VQA_closed": {
+      "n": 3362,
+      "identity_mismatched_rows": 0,
+      "acc_control_12845056": 0.837002,
+      "acc_at_cap": 0.837002,
+      "mean_gen_tokens_at_cap": 4.178,
+      "mean_recorded_latency_s_at_cap": 0.16515
+     },
      "MedXpertQA-MM": "not measured at this cap",
      "PMC_VQA": "not measured at this cap"
     },
     "macro_over_measured_cells": {
-     "n_cells": 1,
+     "n_cells": 2,
      "cells": [
-      "SLAKE_closed"
+      "SLAKE_closed",
+      "PATH_VQA_closed"
      ],
-     "mean_acc_at_cap": 0.820574,
-     "mean_acc_control": 0.820574,
+     "mean_acc_at_cap": 0.828788,
+     "mean_acc_control": 0.828788,
      "mean_delta": 0.0,
      "n_cells_significantly_worse": 0,
      "n_cells_significantly_better": 0
@@ -783,6 +854,1020 @@
    }
   },
   "macro": {}
+ },
+ "open_generator_resolution": {
+  "_meta": {
+   "control": "cap320",
+   "n_items": 2345,
+   "judge": "src/labeling/run_judge.py -- MedVLThinker-32B (Qwen2.5-32B backbone), text-only, the project's existing judge; labels cached by (ds, idx, normalized answer) and seeded from the stored deployed judge files, so identical answer strings carry byte-identical labels across arms.",
+   "verifier": "ckpts/train/lora_verifier_disjoint (clean disjoint LoRA), HF transformers, bf16, max_pixels 1,003,520, batch 1 -- HELD FIXED. This sweep moves the GENERATOR only.",
+   "nboot": 10000,
+   "bootstrap_seed": 20260813
+  },
+  "by_cap": {
+   "cap80": {
+    "max_pixels": 62720,
+    "vision_token_budget": 80,
+    "seeds": [
+     "s0",
+     "s1"
+    ],
+    "per_seed": {
+     "s0": {
+      "n": 2345,
+      "n_recoverable": 1399,
+      "oracle8": 0.596588,
+      "selected": 0.465245,
+      "pool_modal": 0.442217,
+      "sel_eff": 0.779843,
+      "contested_n": 867,
+      "contested_sel_eff": 0.644752,
+      "unanimous_n": 532,
+      "mean_distinct_candidates": 3.7565,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     },
+     "s1": {
+      "n": 2345,
+      "n_recoverable": 1380,
+      "oracle8": 0.588486,
+      "selected": 0.466525,
+      "pool_modal": 0.431557,
+      "sel_eff": 0.792754,
+      "contested_n": 847,
+      "contested_sel_eff": 0.662338,
+      "unanimous_n": 533,
+      "mean_distinct_candidates": 3.765,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     }
+    },
+    "mean_sd": {
+     "oracle8": {
+      "mean": 0.592537,
+      "sd": 0.005729,
+      "per_seed": [
+       0.596588,
+       0.588486
+      ]
+     },
+     "selected": {
+      "mean": 0.465885,
+      "sd": 0.000905,
+      "per_seed": [
+       0.465245,
+       0.466525
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.786299,
+      "sd": 0.009129,
+      "per_seed": [
+       0.779843,
+       0.792754
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.436887,
+      "sd": 0.007538,
+      "per_seed": [
+       0.442217,
+       0.431557
+      ]
+     }
+    },
+    "per_cell": {
+     "slake_open": {
+      "oracle8": {
+       "mean": 0.834884,
+       "per_seed": [
+        0.834109,
+        0.835659
+       ]
+      },
+      "selected": {
+       "mean": 0.713178,
+       "per_seed": [
+        0.711628,
+        0.714729
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.854224,
+       "per_seed": [
+        0.85316,
+        0.855288
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.716279,
+       "per_seed": [
+        0.71938,
+        0.713178
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "oracle8": {
+       "mean": 0.6,
+       "per_seed": [
+        0.605,
+        0.595
+       ]
+      },
+      "selected": {
+       "mean": 0.4375,
+       "per_seed": [
+        0.435,
+        0.44
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.729252,
+       "per_seed": [
+        0.719008,
+        0.739496
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.4,
+       "per_seed": [
+        0.4,
+        0.4
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "oracle8": {
+       "mean": 0.487333,
+       "per_seed": [
+        0.493333,
+        0.481333
+       ]
+      },
+      "selected": {
+       "mean": 0.363333,
+       "per_seed": [
+        0.363333,
+        0.363333
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.745667,
+       "per_seed": [
+        0.736486,
+        0.754848
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.321667,
+       "per_seed": [
+        0.328667,
+        0.314667
+       ]
+      }
+     }
+    },
+    "identity_selected_eq_oracle_x_seleff_max_abs_err": 3.7e-07,
+    "measured_token_geometry": {
+     "slake_open": {
+      "mean_vision_tokens": 64.0,
+      "mean_prompt_tokens": 111.34,
+      "mean_gen_tokens_per_sample": 4.655,
+      "n": 645
+     },
+     "vqa_rad_open": {
+      "mean_vision_tokens": 69.89,
+      "mean_prompt_tokens": 116.72,
+      "mean_gen_tokens_per_sample": 5.44,
+      "n": 200
+     },
+     "pathvqa_open": {
+      "mean_vision_tokens": 70.98,
+      "mean_prompt_tokens": 114.51,
+      "mean_gen_tokens_per_sample": 5.54,
+      "n": 1500
+     }
+    }
+   },
+   "cap320": {
+    "max_pixels": 250880,
+    "vision_token_budget": 320,
+    "seeds": [
+     "s0",
+     "s1",
+     "s2"
+    ],
+    "per_seed": {
+     "s0": {
+      "n": 2345,
+      "n_recoverable": 1451,
+      "oracle8": 0.618763,
+      "selected": 0.482729,
+      "pool_modal": 0.453305,
+      "sel_eff": 0.780152,
+      "contested_n": 867,
+      "contested_sel_eff": 0.632065,
+      "unanimous_n": 584,
+      "mean_distinct_candidates": 3.7015,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     },
+     "s1": {
+      "n": 2345,
+      "n_recoverable": 1444,
+      "oracle8": 0.615778,
+      "selected": 0.486567,
+      "pool_modal": 0.451173,
+      "sel_eff": 0.790166,
+      "contested_n": 868,
+      "contested_sel_eff": 0.650922,
+      "unanimous_n": 576,
+      "mean_distinct_candidates": 3.7241,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     },
+     "s2": {
+      "n": 2345,
+      "n_recoverable": 1434,
+      "oracle8": 0.611514,
+      "selected": 0.479318,
+      "pool_modal": 0.446482,
+      "sel_eff": 0.783821,
+      "contested_n": 855,
+      "contested_sel_eff": 0.637427,
+      "unanimous_n": 579,
+      "mean_distinct_candidates": 3.6857,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     }
+    },
+    "mean_sd": {
+     "oracle8": {
+      "mean": 0.615352,
+      "sd": 0.003643,
+      "per_seed": [
+       0.618763,
+       0.615778,
+       0.611514
+      ]
+     },
+     "selected": {
+      "mean": 0.482871,
+      "sd": 0.003627,
+      "per_seed": [
+       0.482729,
+       0.486567,
+       0.479318
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.784713,
+      "sd": 0.005066,
+      "per_seed": [
+       0.780152,
+       0.790166,
+       0.783821
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.45032,
+      "sd": 0.003491,
+      "per_seed": [
+       0.453305,
+       0.451173,
+       0.446482
+      ]
+     }
+    },
+    "per_cell": {
+     "slake_open": {
+      "oracle8": {
+       "mean": 0.868734,
+       "per_seed": [
+        0.863566,
+        0.871318,
+        0.871318
+       ]
+      },
+      "selected": {
+       "mean": 0.738501,
+       "per_seed": [
+        0.741085,
+        0.742636,
+        0.731783
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.850113,
+       "per_seed": [
+        0.858169,
+        0.852313,
+        0.839858
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.738501,
+       "per_seed": [
+        0.742636,
+        0.737984,
+        0.734884
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "oracle8": {
+       "mean": 0.603333,
+       "per_seed": [
+        0.6,
+        0.6,
+        0.61
+       ]
+      },
+      "selected": {
+       "mean": 0.456667,
+       "per_seed": [
+        0.455,
+        0.46,
+        0.455
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.756967,
+       "per_seed": [
+        0.758333,
+        0.766667,
+        0.745902
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.475,
+       "per_seed": [
+        0.455,
+        0.485,
+        0.485
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "oracle8": {
+       "mean": 0.508,
+       "per_seed": [
+        0.516,
+        0.508,
+        0.5
+       ]
+      },
+      "selected": {
+       "mean": 0.376444,
+       "per_seed": [
+        0.375333,
+        0.38,
+        0.374
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.74114,
+       "per_seed": [
+        0.72739,
+        0.748031,
+        0.748
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.323111,
+       "per_seed": [
+        0.328667,
+        0.323333,
+        0.317333
+       ]
+      }
+     }
+    },
+    "identity_selected_eq_oracle_x_seleff_max_abs_err": 4.85e-07,
+    "greedy_t0": {
+     "all": 0.460554,
+     "slake_open": 0.730233,
+     "vqa_rad_open": 0.485,
+     "pathvqa_open": 0.341333,
+     "_what": "temperature-0, n=1 decode, judge-labelled. NOT the same quantity as pool_modal."
+    },
+    "measured_token_geometry": {
+     "slake_open": {
+      "mean_vision_tokens": 244.04,
+      "mean_prompt_tokens": 291.38,
+      "mean_gen_tokens_per_sample": 4.692,
+      "n": 645
+     },
+     "vqa_rad_open": {
+      "mean_vision_tokens": 285.67,
+      "mean_prompt_tokens": 332.49,
+      "mean_gen_tokens_per_sample": 5.538,
+      "n": 200
+     },
+     "pathvqa_open": {
+      "mean_vision_tokens": 285.53,
+      "mean_prompt_tokens": 329.06,
+      "mean_gen_tokens_per_sample": 5.693,
+      "n": 1500
+     }
+    }
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "vision_token_budget": 16384,
+    "seeds": [
+     "s0"
+    ],
+    "per_seed": {
+     "s0": {
+      "n": 2345,
+      "n_recoverable": 1482,
+      "oracle8": 0.631983,
+      "selected": 0.487846,
+      "pool_modal": 0.477612,
+      "sel_eff": 0.77193,
+      "contested_n": 879,
+      "contested_sel_eff": 0.615472,
+      "unanimous_n": 603,
+      "mean_distinct_candidates": 3.6085,
+      "coverage_of_labels": {
+       "items_missing_from_arm": 0,
+       "n_candidate_slots": 18760,
+       "slots_without_a_judge_label": 0,
+       "frac_slots_without_a_judge_label": 0.0,
+       "slots_without_a_verifier_score": 0,
+       "frac_slots_without_a_verifier_score": 0.0,
+       "RELIABLE": true,
+       "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+      }
+     }
+    },
+    "mean_sd": {
+     "oracle8": {
+      "mean": 0.631983,
+      "sd": null,
+      "per_seed": [
+       0.631983
+      ]
+     },
+     "selected": {
+      "mean": 0.487846,
+      "sd": null,
+      "per_seed": [
+       0.487846
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.77193,
+      "sd": null,
+      "per_seed": [
+       0.77193
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.477612,
+      "sd": null,
+      "per_seed": [
+       0.477612
+      ]
+     }
+    },
+    "per_cell": {
+     "slake_open": {
+      "oracle8": {
+       "mean": 0.869767,
+       "per_seed": [
+        0.869767
+       ]
+      },
+      "selected": {
+       "mean": 0.747287,
+       "per_seed": [
+        0.747287
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.85918,
+       "per_seed": [
+        0.85918
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.753488,
+       "per_seed": [
+        0.753488
+       ]
+      }
+     },
+     "vqa_rad_open": {
+      "oracle8": {
+       "mean": 0.615,
+       "per_seed": [
+        0.615
+       ]
+      },
+      "selected": {
+       "mean": 0.475,
+       "per_seed": [
+        0.475
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.772358,
+       "per_seed": [
+        0.772358
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.48,
+       "per_seed": [
+        0.48
+       ]
+      }
+     },
+     "pathvqa_open": {
+      "oracle8": {
+       "mean": 0.532,
+       "per_seed": [
+        0.532
+       ]
+      },
+      "selected": {
+       "mean": 0.378,
+       "per_seed": [
+        0.378
+       ]
+      },
+      "sel_eff": {
+       "mean": 0.710526,
+       "per_seed": [
+        0.710526
+       ]
+      },
+      "pool_modal": {
+       "mean": 0.358667,
+       "per_seed": [
+        0.358667
+       ]
+      }
+     }
+    },
+    "identity_selected_eq_oracle_x_seleff_max_abs_err": 6.37e-07,
+    "greedy_t0": {
+     "all": 0.486994,
+     "slake_open": 0.747287,
+     "vqa_rad_open": 0.525,
+     "pathvqa_open": 0.37,
+     "_what": "temperature-0, n=1 decode, judge-labelled. NOT the same quantity as pool_modal."
+    },
+    "measured_token_geometry": {
+     "slake_open": {
+      "mean_vision_tokens": 671.62,
+      "mean_prompt_tokens": 718.96,
+      "mean_gen_tokens_per_sample": 4.688,
+      "n": 645
+     },
+     "vqa_rad_open": {
+      "mean_vision_tokens": 840.52,
+      "mean_prompt_tokens": 887.35,
+      "mean_gen_tokens_per_sample": 5.576,
+      "n": 200
+     },
+     "pathvqa_open": {
+      "mean_vision_tokens": 487.33,
+      "mean_prompt_tokens": 530.86,
+      "mean_gen_tokens_per_sample": 5.68,
+      "n": 1500
+     }
+    }
+   }
+  },
+  "null_test": {},
+  "capture_recapture": {
+   "cap80": {
+    "max_pixels": 62720,
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "LP_reachable_share_mean": 0.841919,
+      "LP_per_pair": [
+       0.841919
+      ],
+      "observed_union_share": 0.84186,
+      "oracle8_mean": 0.834884
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "LP_reachable_share_mean": 0.610127,
+      "LP_per_pair": [
+       0.610127
+      ],
+      "observed_union_share": 0.61,
+      "oracle8_mean": 0.6
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "LP_reachable_share_mean": 0.498163,
+      "LP_per_pair": [
+       0.498163
+      ],
+      "observed_union_share": 0.498,
+      "oracle8_mean": 0.487333
+     }
+    },
+    "macro_open3_LP_ceiling": 0.65007,
+    "macro_open3_oracle8": 0.640739,
+    "_method": "Lincoln-Petersen with THIS cap's own independent generation seeds as the two capture occasions ('captured' = >=1 judged-correct answer in that seed's 8-sample pool), averaged over the 3 seed pairs. Same estimator as src/cascade_methods/coverage_diagnosis2.ceiling, which used the 8- and 16-sample pools instead. Heterogeneous per-item detection probability biases LP DOWNWARD, so it is a LOWER bound on the iid-reachable share AT THIS RESOLUTION. It is distribution-specific: the +0.0091 macro bound in the retrospective is the cap320 distribution's bound, not a universal one."
+   },
+   "cap320": {
+    "max_pixels": 250880,
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "LP_reachable_share_mean": 0.87814,
+      "LP_per_pair": [
+       0.87762,
+       0.880806,
+       0.875994
+      ],
+      "observed_union_share": 0.88062,
+      "oracle8_mean": 0.868734
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "LP_reachable_share_mean": 0.616979,
+      "LP_per_pair": [
+       0.610169,
+       0.625641,
+       0.615126
+      ],
+      "observed_union_share": 0.625,
+      "oracle8_mean": 0.603333
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "LP_reachable_share_mean": 0.522603,
+      "LP_per_pair": [
+       0.523558,
+       0.528689,
+       0.515562
+      ],
+      "observed_union_share": 0.528667,
+      "oracle8_mean": 0.508
+     }
+    },
+    "macro_open3_LP_ceiling": 0.672574,
+    "macro_open3_oracle8": 0.660022,
+    "_method": "Lincoln-Petersen with THIS cap's own independent generation seeds as the two capture occasions ('captured' = >=1 judged-correct answer in that seed's 8-sample pool), averaged over the 3 seed pairs. Same estimator as src/cascade_methods/coverage_diagnosis2.ceiling, which used the 8- and 16-sample pools instead. Heterogeneous per-item detection probability biases LP DOWNWARD, so it is a LOWER bound on the iid-reachable share AT THIS RESOLUTION. It is distribution-specific: the +0.0091 macro bound in the retrospective is the cap320 distribution's bound, not a universal one."
+   }
+  },
+  "strata": {
+   "cap80": {
+    "laterality_question_or_gold": {
+     "n_items": 283,
+     "sel_eff_mean": 0.646152,
+     "sel_eff_per_seed": [
+      0.63871,
+      0.653595
+     ],
+     "oracle8_mean": 0.54417
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.815555,
+     "sel_eff_per_seed": [
+      0.810924,
+      0.820187
+     ],
+     "oracle8_mean": 0.645856
+    },
+    "gold_1word": {
+     "n_items": 1329,
+     "sel_eff_mean": 0.821158,
+     "sel_eff_per_seed": [
+      0.81641,
+      0.825907
+     ],
+     "oracle8_mean": 0.729872
+    }
+   },
+   "cap320": {
+    "laterality_question_or_gold": {
+     "n_items": 283,
+     "sel_eff_mean": 0.686172,
+     "sel_eff_per_seed": [
+      0.695122,
+      0.686747,
+      0.676647
+     ],
+     "oracle8_mean": 0.585395
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.81007,
+     "sel_eff_per_seed": [
+      0.80456,
+      0.816243,
+      0.809406
+     ],
+     "oracle8_mean": 0.665031
+    },
+    "gold_1word": {
+     "n_items": 1329,
+     "sel_eff_mean": 0.8162,
+     "sel_eff_per_seed": [
+      0.814257,
+      0.822222,
+      0.812121
+     ],
+     "oracle8_mean": 0.746426
+    }
+   },
+   "native": {
+    "laterality_question_or_gold": {
+     "n_items": 283,
+     "sel_eff_mean": 0.695906,
+     "sel_eff_per_seed": [
+      0.695906
+     ],
+     "oracle8_mean": 0.60424
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.798717,
+     "sel_eff_per_seed": [
+      0.798717
+     ],
+     "oracle8_mean": 0.679935
+    },
+    "gold_1word": {
+     "n_items": 1329,
+     "sel_eff_mean": 0.810704,
+     "sel_eff_per_seed": [
+      0.810704
+     ],
+     "oracle8_mean": 0.759217
+    }
+   },
+   "_mask_note": "masks are built from QUESTION and GOLD only (never from the candidates), so they are ARM-INVARIANT and the same items are compared at every cap. The project's published laterality stratum (visverif_lib.strata) also ORs in the candidate texts, which would move the mask with the arm and make caps incomparable."
+  },
+  "vs_control": {
+   "cap80": {
+    "max_pixels": 62720,
+    "seeds_paired": [
+     "s0",
+     "s1"
+    ],
+    "per_metric": {
+     "oracle8": {
+      "delta_mean_over_seeds": -0.024733,
+      "delta_per_seed": [
+       -0.022175,
+       -0.027292
+      ],
+      "ci95_per_seed": [
+       [
+        -0.035394,
+        -0.008955
+       ],
+       [
+        -0.040512,
+        -0.014072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "selected": {
+      "delta_mean_over_seeds": -0.018763,
+      "delta_per_seed": [
+       -0.017484,
+       -0.020043
+      ],
+      "ci95_per_seed": [
+       [
+        -0.028571,
+        -0.006823
+       ],
+       [
+        -0.03113,
+        -0.009382
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "pool_modal": {
+      "delta_mean_over_seeds": -0.015352,
+      "delta_per_seed": [
+       -0.011087,
+       -0.019616
+      ],
+      "ci95_per_seed": [
+       [
+        -0.024307,
+        0.002132
+       ],
+       [
+        -0.032836,
+        -0.006397
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "sign_consistent": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "delta_mean_over_seeds": -0.005024,
+      "delta_per_seed": [
+       -0.004608,
+       -0.005439
+      ],
+      "ci95_per_seed": [
+       [
+        -0.017665,
+        0.008449
+       ],
+       [
+        -0.018648,
+        0.00777
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+     }
+    },
+    "guardrail": {
+     "slake_open": {
+      "delta_selected_mean": -0.028682,
+      "per_seed": [
+       -0.029457,
+       -0.027907
+      ],
+      "worse_than_control": true,
+      "within_seed_spread": false
+     },
+     "vqa_rad_open": {
+      "delta_selected_mean": -0.02,
+      "per_seed": [
+       -0.02,
+       -0.02
+      ],
+      "worse_than_control": true,
+      "within_seed_spread": false
+     },
+     "pathvqa_open": {
+      "delta_selected_mean": -0.014333,
+      "per_seed": [
+       -0.012,
+       -0.016667
+      ],
+      "worse_than_control": true,
+      "within_seed_spread": false
+     }
+    },
+    "manipulation_check": {
+     "mean_pool_jaccard_vs_control": 0.571479,
+     "n_item_seed_pairs": 4690,
+     "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+    }
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "seeds_paired": [
+     "s0"
+    ],
+    "per_metric": {
+     "oracle8": {
+      "delta_mean_over_seeds": 0.01322,
+      "delta_per_seed": [
+       0.01322
+      ],
+      "ci95_per_seed": [
+       [
+        0.002985,
+        0.023881
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "selected": {
+      "delta_mean_over_seeds": 0.005117,
+      "delta_per_seed": [
+       0.005117
+      ],
+      "ci95_per_seed": [
+       [
+        -0.003838,
+        0.014072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "sign_consistent": true
+     },
+     "pool_modal": {
+      "delta_mean_over_seeds": 0.024307,
+      "delta_per_seed": [
+       0.024307
+      ],
+      "ci95_per_seed": [
+       [
+        0.01322,
+        0.035821
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "delta_mean_over_seeds": -0.010799,
+      "delta_per_seed": [
+       -0.010799
+      ],
+      "ci95_per_seed": [
+       [
+        -0.022318,
+        0.00072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+     }
+    },
+    "guardrail": {
+     "slake_open": {
+      "delta_selected_mean": 0.006202,
+      "per_seed": [
+       0.006202
+      ],
+      "worse_than_control": false,
+      "within_seed_spread": true
+     },
+     "vqa_rad_open": {
+      "delta_selected_mean": 0.02,
+      "per_seed": [
+       0.02
+      ],
+      "worse_than_control": false,
+      "within_seed_spread": true
+     },
+     "pathvqa_open": {
+      "delta_selected_mean": 0.002667,
+      "per_seed": [
+       0.002667
+      ],
+      "worse_than_control": false,
+      "within_seed_spread": true
+     }
+    },
+    "manipulation_check": {
+     "mean_pool_jaccard_vs_control": 0.691971,
+     "n_item_seed_pairs": 2345,
+     "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+    }
+   }
+  }
  },
  "open_generator_resolution_exact_match_secondary": {
   "_metric": "run_openvqa.py's normalized exact match + short-answer contains fallback, applied at generation time and stored per sample as `oks`. NOT the judge.",
@@ -1060,6 +2145,1305 @@
     }
    }
   }
+ },
+ "laterality_stratum_with_CIs": {
+  "_meta": {
+   "what": "paired bootstrap CIs on the laterality stratum, per generator resolution, on the judge-labelled endpoint. Masks are built from QUESTION and GOLD only, so they are ARM-INVARIANT and the same items are compared at every cap.",
+   "control": "cap320",
+   "nboot": 10000,
+   "bootstrap_seed": 20260814,
+   "laterality_regex": "src/training_methods/visverif_lib.LATERAL",
+   "n_laterality": 283,
+   "n_short3_not_laterality": 1834,
+   "published_reference": "the project's laterality sel_eff 0.613043 vs 0.817186 on short non-laterality items comes from the DEPLOYED transfer dump, whose laterality mask also ORs in candidate text; these masks are question/gold-only so the absolute levels are not identical to it."
+  },
+  "per_cap": {
+   "cap80": {
+    "max_pixels": 62720,
+    "seeds": [
+     "s0",
+     "s1"
+    ],
+    "laterality": {
+     "n_items": 283,
+     "sel_eff_mean": 0.646152,
+     "sel_eff_per_seed": [
+      0.63871,
+      0.653595
+     ],
+     "oracle8_mean": 0.54417,
+     "selected_mean": 0.35159
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.815555,
+     "sel_eff_per_seed": [
+      0.810924,
+      0.820187
+     ],
+     "oracle8_mean": 0.645856,
+     "selected_mean": 0.526718
+    },
+    "sel_eff_gap_nonlat_minus_lat": 0.169403
+   },
+   "cap320": {
+    "max_pixels": 250880,
+    "seeds": [
+     "s0",
+     "s1",
+     "s2"
+    ],
+    "laterality": {
+     "n_items": 283,
+     "sel_eff_mean": 0.686172,
+     "sel_eff_per_seed": [
+      0.695122,
+      0.686747,
+      0.676647
+     ],
+     "oracle8_mean": 0.585395,
+     "selected_mean": 0.401649
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.81007,
+     "sel_eff_per_seed": [
+      0.80456,
+      0.816243,
+      0.809406
+     ],
+     "oracle8_mean": 0.665031,
+     "selected_mean": 0.538713
+    },
+    "sel_eff_gap_nonlat_minus_lat": 0.123898
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "seeds": [
+     "s0"
+    ],
+    "laterality": {
+     "n_items": 283,
+     "sel_eff_mean": 0.695906,
+     "sel_eff_per_seed": [
+      0.695906
+     ],
+     "oracle8_mean": 0.60424,
+     "selected_mean": 0.420495
+    },
+    "short3_not_laterality": {
+     "n_items": 1834,
+     "sel_eff_mean": 0.798717,
+     "sel_eff_per_seed": [
+      0.798717
+     ],
+     "oracle8_mean": 0.679935,
+     "selected_mean": 0.543075
+    },
+    "sel_eff_gap_nonlat_minus_lat": 0.102811
+   }
+  },
+  "vs_control": {
+   "cap80": {
+    "max_pixels": 62720,
+    "seeds_paired": [
+     "s0",
+     "s1"
+    ],
+    "laterality": {
+     "oracle8": {
+      "delta_mean_over_seeds": -0.038869,
+      "delta_per_seed": [
+       -0.031802,
+       -0.045936
+      ],
+      "ci95_per_seed": [
+       [
+        -0.077739,
+        0.014134
+       ],
+       [
+        -0.084806,
+        -0.007067
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false
+     },
+     "selected": {
+      "delta_mean_over_seeds": -0.051237,
+      "delta_per_seed": [
+       -0.053004,
+       -0.04947
+      ],
+      "ci95_per_seed": [
+       [
+        -0.088339,
+        -0.017668
+       ],
+       [
+        -0.084806,
+        -0.017668
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "n_jointly_recoverable_mean": 140.0,
+      "delta_mean_over_seeds": -0.060778,
+      "delta_per_seed": [
+       -0.065217,
+       -0.056338
+      ],
+      "ci95_per_seed": [
+       [
+        -0.123188,
+        -0.014493
+       ],
+       [
+        -0.105634,
+        -0.007042
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true
+     }
+    }
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "seeds_paired": [
+     "s0"
+    ],
+    "laterality": {
+     "oracle8": {
+      "delta_mean_over_seeds": 0.024735,
+      "delta_per_seed": [
+       0.024735
+      ],
+      "ci95_per_seed": [
+       [
+        -0.007067,
+        0.060071
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false
+     },
+     "selected": {
+      "delta_mean_over_seeds": 0.017668,
+      "delta_per_seed": [
+       0.017668
+      ],
+      "ci95_per_seed": [
+       [
+        -0.007067,
+        0.042403
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "n_jointly_recoverable_mean": 156.0,
+      "delta_mean_over_seeds": -0.00641,
+      "delta_per_seed": [
+       -0.00641
+      ],
+      "ci95_per_seed": [
+       [
+        -0.032051,
+        0.019231
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false
+     }
+    }
+   }
+  },
+  "arms_dropped_for_incomplete_judge_labelling": {
+   "native_s1": {
+    "n_candidate_slots": 18760,
+    "slots_without_a_judge_label": 532,
+    "frac_unlabelled": 0.028358,
+    "_why": "dropped: >1% of this arm's candidates have no judge label, which biases its oracle@8 and selected DOWNWARD. Label it and re-run."
+   },
+   "native_s2": {
+    "n_candidate_slots": 18760,
+    "slots_without_a_judge_label": 741,
+    "frac_unlabelled": 0.039499,
+    "_why": "dropped: >1% of this arm's candidates have no judge label, which biases its oracle@8 and selected DOWNWARD. Label it and re-run."
+   }
+  },
+  "macro8_arithmetic_open_half": {
+   "cap80": {
+    "max_pixels": 62720,
+    "seeds": [
+     "s0",
+     "s1"
+    ],
+    "per_seed": {
+     "s0": {
+      "per_cell_delta_selected": {
+       "slake_open": -0.029457,
+       "vqa_rad_open": -0.02,
+       "pathvqa_open": -0.012
+      },
+      "open3_equal_weight_mean_delta": -0.020486,
+      "open3_ci95": [
+       -0.035259,
+       -0.006263
+      ],
+      "macro8_equivalent": -0.007682,
+      "macro8_equivalent_ci95": [
+       -0.013222,
+       -0.002349
+      ],
+      "macro8_ci_excludes_zero": true,
+      "macro8_exceeds_project_threshold": true,
+      "WITHIN_SESSION_MATCHED": true,
+      "leave_one_cell_out_open_mean_delta": {
+       "slake_open": -0.016,
+       "vqa_rad_open": -0.020729,
+       "pathvqa_open": -0.024729
+      },
+      "leave_one_cell_out_macro8": {
+       "slake_open": -0.006,
+       "vqa_rad_open": -0.007773,
+       "pathvqa_open": -0.009273
+      },
+      "n_items_behind_each_cell_delta": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": -19
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": -4
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -18
+       }
+      }
+     },
+     "s1": {
+      "per_cell_delta_selected": {
+       "slake_open": -0.027907,
+       "vqa_rad_open": -0.02,
+       "pathvqa_open": -0.016667
+      },
+      "open3_equal_weight_mean_delta": -0.021525,
+      "open3_ci95": [
+       -0.037003,
+       -0.006351
+      ],
+      "macro8_equivalent": -0.008072,
+      "macro8_equivalent_ci95": [
+       -0.013876,
+       -0.002382
+      ],
+      "macro8_ci_excludes_zero": true,
+      "macro8_exceeds_project_threshold": true,
+      "WITHIN_SESSION_MATCHED": true,
+      "leave_one_cell_out_open_mean_delta": {
+       "slake_open": -0.018334,
+       "vqa_rad_open": -0.022287,
+       "pathvqa_open": -0.023954
+      },
+      "leave_one_cell_out_macro8": {
+       "slake_open": -0.006875,
+       "vqa_rad_open": -0.008358,
+       "pathvqa_open": -0.008983
+      },
+      "n_items_behind_each_cell_delta": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": -18
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": -4
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -25
+       }
+      }
+     }
+    },
+    "open_cells_weight_in_macro8": 0.375,
+    "project_significance_threshold_on_macro8": 0.0029,
+    "_weighting": "EQUAL WEIGHT PER CELL, matching the project's macro-8 convention. The bootstrap is stratified by cell: each replicate resamples items within slake_open (645), vqa_rad_open (200) and pathvqa_open (1500) separately, then averages the three cell means equally.",
+    "_the_other_five_cells_are_held_at_zero": "resolution cannot move the 5 MCQ cells upward -- they already run uncapped -- so this is the whole macro-8 effect of a generator-side resolution change.",
+    "_pooled_for_contrast": {
+     "s0": -0.017484,
+     "s1": -0.020043
+    },
+    "_why_pooled_differs": "the pooled (item-weighted) delta is also reported in open_generator_resolution.vs_control. It answers a different question -- the average over QUESTIONS rather than over CELLS -- and it is NOT the macro-8 basis."
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "seeds": [
+     "s0"
+    ],
+    "per_seed": {
+     "s0": {
+      "per_cell_delta_selected": {
+       "slake_open": 0.006202,
+       "vqa_rad_open": 0.02,
+       "pathvqa_open": 0.002667
+      },
+      "open3_equal_weight_mean_delta": 0.009623,
+      "open3_ci95": [
+       -0.000401,
+       0.020334
+      ],
+      "macro8_equivalent": 0.003609,
+      "macro8_equivalent_ci95": [
+       -0.00015,
+       0.007625
+      ],
+      "macro8_ci_excludes_zero": false,
+      "macro8_exceeds_project_threshold": true,
+      "WITHIN_SESSION_MATCHED": true,
+      "leave_one_cell_out_open_mean_delta": {
+       "slake_open": 0.011333,
+       "vqa_rad_open": 0.004435,
+       "pathvqa_open": 0.013101
+      },
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.00425,
+       "vqa_rad_open": 0.001663,
+       "pathvqa_open": 0.004913
+      },
+      "n_items_behind_each_cell_delta": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 4
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 4
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": 4
+       }
+      }
+     }
+    },
+    "open_cells_weight_in_macro8": 0.375,
+    "project_significance_threshold_on_macro8": 0.0029,
+    "_weighting": "EQUAL WEIGHT PER CELL, matching the project's macro-8 convention. The bootstrap is stratified by cell: each replicate resamples items within slake_open (645), vqa_rad_open (200) and pathvqa_open (1500) separately, then averages the three cell means equally.",
+    "_the_other_five_cells_are_held_at_zero": "resolution cannot move the 5 MCQ cells upward -- they already run uncapped -- so this is the whole macro-8 effect of a generator-side resolution change.",
+    "_pooled_for_contrast": {
+     "s0": 0.005117
+    },
+    "_why_pooled_differs": "the pooled (item-weighted) delta is also reported in open_generator_resolution.vs_control. It answers a different question -- the average over QUESTIONS rather than over CELLS -- and it is NOT the macro-8 basis."
+   }
+  },
+  "per_cell_deltas_with_ci": {
+   "cap80": {
+    "max_pixels": 62720,
+    "seeds": [
+     "s0",
+     "s1"
+    ],
+    "per_seed": {
+     "s0": {
+      "slake_open": {
+       "oracle8": {
+        "delta": -0.029457,
+        "ci95": [
+         -0.049612,
+         -0.007752
+        ],
+        "ci_excludes_zero": true
+       },
+       "selected": {
+        "delta": -0.029457,
+        "ci95": [
+         -0.049612,
+         -0.010853
+        ],
+        "ci_excludes_zero": true
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 523,
+        "delta": -0.013384,
+        "ci95": [
+         -0.030593,
+         0.003824
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "vqa_rad_open": {
+       "oracle8": {
+        "delta": 0.005,
+        "ci95": [
+         -0.045,
+         0.055
+        ],
+        "ci_excludes_zero": false
+       },
+       "selected": {
+        "delta": -0.02,
+        "ci95": [
+         -0.055,
+         0.015
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 107,
+        "delta": -0.018692,
+        "ci95": [
+         -0.065421,
+         0.028037
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "pathvqa_open": {
+       "oracle8": {
+        "delta": -0.022667,
+        "ci95": [
+         -0.039333,
+         -0.006
+        ],
+        "ci_excludes_zero": true
+       },
+       "selected": {
+        "delta": -0.012,
+        "ci95": [
+         -0.026,
+         0.001333
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 672,
+        "delta": 0.004464,
+        "ci95": [
+         -0.016369,
+         0.025298
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "_WITHIN_SESSION_MATCHED": true
+     },
+     "s1": {
+      "slake_open": {
+       "oracle8": {
+        "delta": -0.035659,
+        "ci95": [
+         -0.055814,
+         -0.015504
+        ],
+        "ci_excludes_zero": true
+       },
+       "selected": {
+        "delta": -0.027907,
+        "ci95": [
+         -0.048062,
+         -0.009302
+        ],
+        "ci_excludes_zero": true
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 528,
+        "delta": -0.007576,
+        "ci95": [
+         -0.024621,
+         0.00947
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "vqa_rad_open": {
+       "oracle8": {
+        "delta": -0.005,
+        "ci95": [
+         -0.05,
+         0.04
+        ],
+        "ci_excludes_zero": false
+       },
+       "selected": {
+        "delta": -0.02,
+        "ci95": [
+         -0.06,
+         0.02
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 109,
+        "delta": -0.018349,
+        "ci95": [
+         -0.073394,
+         0.027523
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "pathvqa_open": {
+       "oracle8": {
+        "delta": -0.026667,
+        "ci95": [
+         -0.044,
+         -0.009333
+        ],
+        "ci_excludes_zero": true
+       },
+       "selected": {
+        "delta": -0.016667,
+        "ci95": [
+         -0.030667,
+         -0.002
+        ],
+        "ci_excludes_zero": true
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 650,
+        "delta": -0.001538,
+        "ci95": [
+         -0.021538,
+         0.02
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "_WITHIN_SESSION_MATCHED": true
+     }
+    }
+   },
+   "native": {
+    "max_pixels": 12845056,
+    "seeds": [
+     "s0"
+    ],
+    "per_seed": {
+     "s0": {
+      "slake_open": {
+       "oracle8": {
+        "delta": 0.006202,
+        "ci95": [
+         -0.009302,
+         0.021705
+        ],
+        "ci_excludes_zero": false
+       },
+       "selected": {
+        "delta": 0.006202,
+        "ci95": [
+         -0.009302,
+         0.021705
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 546,
+        "delta": -0.001832,
+        "ci95": [
+         -0.016484,
+         0.012821
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "vqa_rad_open": {
+       "oracle8": {
+        "delta": 0.015,
+        "ci95": [
+         -0.015,
+         0.045
+        ],
+        "ci_excludes_zero": false
+       },
+       "selected": {
+        "delta": 0.02,
+        "ci95": [
+         -0.005,
+         0.045
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 117,
+        "delta": 0.017094,
+        "ci95": [
+         0.0,
+         0.042735
+        ],
+        "ci_excludes_zero": false
+       }
+      },
+      "pathvqa_open": {
+       "oracle8": {
+        "delta": 0.016,
+        "ci95": [
+         0.001333,
+         0.030667
+        ],
+        "ci_excludes_zero": true
+       },
+       "selected": {
+        "delta": 0.002667,
+        "ci95": [
+         -0.009333,
+         0.014667
+        ],
+        "ci_excludes_zero": false
+       },
+       "sel_eff_on_jointly_recoverable": {
+        "n_jointly_recoverable": 726,
+        "delta": -0.022039,
+        "ci95": [
+         -0.041322,
+         -0.004132
+        ],
+        "ci_excludes_zero": true
+       }
+      },
+      "_WITHIN_SESSION_MATCHED": true
+     }
+    }
+   },
+   "_read": "paired item bootstrap (nboot=10000) of each cell's delta against the SAME-SEED cap320 control. sel_eff is bootstrapped inside the items recoverable in BOTH arms so the conditioning set is identical. Check _WITHIN_SESSION_MATCHED before quoting."
+  }
+ },
+ "greedy_at_native_vs_the_deployed_sampled_arm": {
+  "_question": "can ONE greedy decode at NATIVE resolution replace EIGHT samples at cap320 plus the LoRA verifier that ranks them?",
+  "_matched": "native t0 and every cap320 arm were generated by the same script in the SAME session (2026-08-13, gpu_mem 0.30) -- see arm_provenance.json. The comparison is therefore not exposed to the +-0.008 serving-config caveat.",
+  "_label": "LLM judge (src/labeling/run_judge.py, MedVLThinker-32B, text-only).",
+  "_endpoint": "the frozen 2,345-question open pool, same item order as src/training_methods/genframe_data.py.",
+  "accuracy": {
+   "native_greedy_MINUS_cap320_selected": {
+    "per_control_seed": {
+     "s0": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.482729,
+      "delta": 0.004264,
+      "ci95": [
+       -0.009808,
+       0.018337
+      ],
+      "ci_excludes_zero": false
+     },
+     "s1": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.486567,
+      "delta": 0.000426,
+      "ci95": [
+       -0.013646,
+       0.014925
+      ],
+      "ci_excludes_zero": false
+     },
+     "s2": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.479318,
+      "delta": 0.007676,
+      "ci95": [
+       -0.006397,
+       0.022175
+      ],
+      "ci_excludes_zero": false
+     }
+    },
+    "delta_mean_over_seeds": 0.004122,
+    "all_seeds_ci_exclude_zero": false,
+    "_read": "positive means one greedy decode at native resolution is MORE accurate than the deployed eight-sample cap320 arm with its trained verifier."
+   },
+   "native_greedy_MINUS_cap320_greedy": {
+    "cap320_greedy_t0": 0.460554,
+    "native_greedy_t0": 0.486994,
+    "delta": 0.026439,
+    "ci95": [
+     0.015352,
+     0.037527
+    ],
+    "ci_excludes_zero": true,
+    "_read": "the pure resolution effect on a single deterministic decode: no sampling, no selection, no verifier."
+   },
+   "macro8_basis_equal_weight_per_cell": {
+    "per_control_seed": {
+     "s0": {
+      "per_cell_delta": {
+       "slake_open": 0.006202,
+       "vqa_rad_open": 0.07,
+       "pathvqa_open": -0.005333
+      },
+      "open3_equal_weight_mean_delta": 0.023623,
+      "open3_ci95": [
+       0.004767,
+       0.043
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.008859,
+      "macro8_equivalent_ci95": [
+       0.001788,
+       0.016125
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.012125,
+       "vqa_rad_open": 0.000163,
+       "pathvqa_open": 0.014288
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 4
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 14
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -8
+       }
+      }
+     },
+     "s1": {
+      "per_cell_delta": {
+       "slake_open": 0.004651,
+       "vqa_rad_open": 0.065,
+       "pathvqa_open": -0.01
+      },
+      "open3_equal_weight_mean_delta": 0.019884,
+      "open3_ci95": [
+       0.000921,
+       0.039501
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.007456,
+      "macro8_equivalent_ci95": [
+       0.000345,
+       0.014813
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.010313,
+       "vqa_rad_open": -0.001003,
+       "pathvqa_open": 0.01306
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 3
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 13
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -15
+       }
+      }
+     },
+     "s2": {
+      "per_cell_delta": {
+       "slake_open": 0.015504,
+       "vqa_rad_open": 0.07,
+       "pathvqa_open": -0.004
+      },
+      "open3_equal_weight_mean_delta": 0.027168,
+      "open3_ci95": [
+       0.008129,
+       0.046969
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.010188,
+      "macro8_equivalent_ci95": [
+       0.003048,
+       0.017613
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.012375,
+       "vqa_rad_open": 0.002157,
+       "pathvqa_open": 0.016032
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 10
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 14
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -6
+       }
+      }
+     }
+    },
+    "project_significance_threshold_on_macro8": 0.0029,
+    "_read": "on the macro's own equal-weight-per-cell basis the swap looks much BETTER than pooled, because vqa_rad_open (n=200), where the greedy native arm is significantly ahead, carries a full third of the open weight instead of 8.5%. Both bases are reported; neither is quoted alone.",
+    "_fragility": "read net_items_changed_per_cell before quoting any of this: vqa_rad_open's contribution is a small number of items in a 200-item cell, and leave_one_cell_out_macro8 shows what the macro becomes without it."
+   }
+  },
+  "compute": {
+   "flops_generator_per_candidate_native": 11185826596922.871,
+   "flops_generator_per_candidate_cap320": 5692656676482.49,
+   "flops_verifier_per_candidate_1003520": 12728907037179.45,
+   "deployed_open_arm_8gen_cap320_plus_8verify": 147372509709295.5,
+   "one_greedy_decode_at_native": 11185826596922.871,
+   "ratio_greedy_native_over_deployed_arm": 0.075902,
+   "compute_reduction_x": 13.1749,
+   "_flop_model": "src/cascade_methods/flop_ratio_derivation.forward_flops -- prefill-inclusive, vision tower + merger + LM prefill + LM decode + lm_head; parameter counts read from the safetensors headers on disk (no weights loaded).",
+   "_geometry": "MEASURED in this sweep: vision/prompt/generated tokens per item per cap, recorded by resolution_open_generate.py (open half) and by MedEvalKit's own per-item dumps (MCQ half). Nothing is a name-plate ratio.",
+   "_caveat": "prefill-inclusive whole-forward FLOPs on this round's own MEASURED token geometry. It is an arithmetic re-costing of measured token counts, not a wall-clock or energy measurement; no end-to-end run was performed, which is the standing caveat on every operating point in this project."
+  },
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "native_greedy_t0": 0.747287,
+    "cap320_selected_per_seed": {
+     "s0": 0.741085,
+     "s1": 0.742636,
+     "s2": 0.731783
+    },
+    "delta_vs_cap320_selected": {
+     "s0": {
+      "delta": 0.006202,
+      "ci95": [
+       -0.018605,
+       0.031008
+      ],
+      "ci_excludes_zero": false
+     },
+     "s1": {
+      "delta": 0.004651,
+      "ci95": [
+       -0.021705,
+       0.031008
+      ],
+      "ci_excludes_zero": false
+     },
+     "s2": {
+      "delta": 0.015504,
+      "ci95": [
+       -0.010853,
+       0.04186
+      ],
+      "ci_excludes_zero": false
+     }
+    },
+    "worse_than_deployed_on_this_cell": false
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "native_greedy_t0": 0.525,
+    "cap320_selected_per_seed": {
+     "s0": 0.455,
+     "s1": 0.46,
+     "s2": 0.455
+    },
+    "delta_vs_cap320_selected": {
+     "s0": {
+      "delta": 0.07,
+      "ci95": [
+       0.02,
+       0.12
+      ],
+      "ci_excludes_zero": true
+     },
+     "s1": {
+      "delta": 0.065,
+      "ci95": [
+       0.015,
+       0.115
+      ],
+      "ci_excludes_zero": true
+     },
+     "s2": {
+      "delta": 0.07,
+      "ci95": [
+       0.02,
+       0.12
+      ],
+      "ci_excludes_zero": true
+     }
+    },
+    "worse_than_deployed_on_this_cell": false
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "native_greedy_t0": 0.37,
+    "cap320_selected_per_seed": {
+     "s0": 0.375333,
+     "s1": 0.38,
+     "s2": 0.374
+    },
+    "delta_vs_cap320_selected": {
+     "s0": {
+      "delta": -0.005333,
+      "ci95": [
+       -0.024,
+       0.013333
+      ],
+      "ci_excludes_zero": false
+     },
+     "s1": {
+      "delta": -0.01,
+      "ci95": [
+       -0.028667,
+       0.008667
+      ],
+      "ci_excludes_zero": false
+     },
+     "s2": {
+      "delta": -0.004,
+      "ci95": [
+       -0.022667,
+       0.014667
+      ],
+      "ci_excludes_zero": false
+     }
+    },
+    "worse_than_deployed_on_this_cell": true
+   }
+  },
+  "_the_catch": "this compares a GREEDY arm against a SAMPLED arm, so it is not a resolution result -- it is a result about what the sampling+verification machinery is worth once the generator sees the image properly. It also removes the verifier's confidence signal, which the deployed open policy uses to decide when to escalate to the 32B. That escalation gate is NOT reproducible from a single greedy decode, so this is not a drop-in replacement for the deployed open arm -- it is a bound on what the arm's sampling half is buying.",
+  "_the_8_is_the_frozen_metric_not_the_deployed_average_N": "the 'selected' endpoint is best-of-EIGHT, which is what the project's frozen open-text metric (src/training_methods/genframe_data.py) defines and what every number in this round's accuracy tables uses. The DEPLOYED open policy draws an ADAPTIVE N (Weitzman), so its average N -- and therefore its true per-item compute -- is at most 8 and in general lower. The 13.17x compute reduction is therefore an UPPER bound on what this swap saves in the deployed policy: at an average N of 4 it would be ~6.6x, at N=2 ~3.3x. The ACCURACY comparison is unaffected, because it is against the best-of-8 number the metric actually reports.",
+  "_not_measured": "the 32B escalation leg, latency, energy, the deployed policy's average N, and any effect on the MCQ half. The open pool's n is 2,345 and vqa_rad_open is n=200, so its per-cell interval is wide."
+ },
+ "open_arm_generation_provenance": {
+  "_what": "which session generated each open-text arm, and which cap-vs-control pairs are therefore matched. Derived from file mtimes in ckpts/openvqa/resolution_sweep/.",
+  "_why": "the project's +-0.008 reproducibility caveat: regenerating an arm under a different serving configuration moves cells by ~+-0.008, which is larger than the entire published vs-direct delta. Null test N3 measured this round's own version of it: re-running the SAME cap320 config in a different serving config reproduced 96.887% of answer strings with NO experimental variable changed.",
+  "arms": {
+   "cap80_s0": {
+    "cap": "cap80",
+    "seed_tag": "s0",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap80_s1": {
+    "cap": "cap80",
+    "seed_tag": "s1",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap80_s2": {
+    "cap": "cap80",
+    "seed_tag": "s2",
+    "complete": false,
+    "rows": {
+     "slake_open": 128
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap320_t0": {
+    "cap": "cap320",
+    "seed_tag": "t0",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap320_s0": {
+    "cap": "cap320",
+    "seed_tag": "s0",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap320_s1": {
+    "cap": "cap320",
+    "seed_tag": "s1",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "cap320_s2": {
+    "cap": "cap320",
+    "seed_tag": "s2",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "native_t0": {
+    "cap": "native",
+    "seed_tag": "t0",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "native_s0": {
+    "cap": "native",
+    "seed_tag": "s0",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-13"
+    ],
+    "session_config": {
+     "2026-08-13": {
+      "driver": "runners/run_resolution_open_gen.sh",
+      "gpu_mem": 0.3,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "native_s1": {
+    "cap": "native",
+    "seed_tag": "s1",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-14"
+    ],
+    "session_config": {
+     "2026-08-14": {
+      "driver": "src/cascade_methods/resolution_open_generate.py invoked directly",
+      "gpu_mem": 0.6,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   },
+   "native_s2": {
+    "cap": "native",
+    "seed_tag": "s2",
+    "complete": true,
+    "rows": {
+     "slake_open": 645,
+     "vqa_rad_open": 200,
+     "pathvqa_open": 1500
+    },
+    "generated_on": [
+     "2026-08-14"
+    ],
+    "session_config": {
+     "2026-08-14": {
+      "driver": "src/cascade_methods/resolution_open_generate.py invoked directly",
+      "gpu_mem": 0.6,
+      "vllm": "0.10.1.1+381074ae.nv25.09",
+      "tp": 1
+     }
+    }
+   }
+  },
+  "pairs": {
+   "cap80_vs_cap320_s0": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-13"
+    ],
+    "WITHIN_SESSION_MATCHED": true,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.3
+    ],
+    "_status": "PRIMARY -- matched control, same session, same serving config"
+   },
+   "cap80_vs_cap320_s1": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-13"
+    ],
+    "WITHIN_SESSION_MATCHED": true,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.3
+    ],
+    "_status": "PRIMARY -- matched control, same session, same serving config"
+   },
+   "native_vs_cap320_t0": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-13"
+    ],
+    "WITHIN_SESSION_MATCHED": true,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.3
+    ],
+    "_status": "PRIMARY -- matched control, same session, same serving config"
+   },
+   "native_vs_cap320_s0": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-13"
+    ],
+    "WITHIN_SESSION_MATCHED": true,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.3
+    ],
+    "_status": "PRIMARY -- matched control, same session, same serving config"
+   },
+   "native_vs_cap320_s1": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-14"
+    ],
+    "WITHIN_SESSION_MATCHED": false,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.6
+    ],
+    "_status": "SECONDARY -- crosses the session boundary AND changes gpu_memory_utilization (0.30 -> 0.60), which resizes the KV cache and changes vLLM's batch composition. Report per seed, never merged into the matched delta, and never as the headline."
+   },
+   "native_vs_cap320_s2": {
+    "control_generated_on": [
+     "2026-08-13"
+    ],
+    "treatment_generated_on": [
+     "2026-08-14"
+    ],
+    "WITHIN_SESSION_MATCHED": false,
+    "gpu_mem_control": [
+     0.3
+    ],
+    "gpu_mem_treatment": [
+     0.6
+    ],
+    "_status": "SECONDARY -- crosses the session boundary AND changes gpu_memory_utilization (0.30 -> 0.60), which resizes the KV cache and changes vLLM's batch composition. Report per seed, never merged into the matched delta, and never as the headline."
+   }
+  },
+  "_headline_rule": "the primary native-vs-cap320 result in this artifact is the SEED-0 sampled pair plus the deterministic TEMPERATURE-0 pair, both generated 2026-08-13 in one session at gpu_mem 0.30. Native s1/s2 exist to show seed-to-seed spread at native resolution; they are not merged into the primary delta."
  },
  "cost": {
   "_meta": {
@@ -2100,6 +4484,60 @@
    "read": "the harness default does not BIND on a single image in any MCQ cell. There is no upward resolution headroom on the 62.5% of the macro weight where sampling methods are structurally dead: raising max_pixels there cannot change a single input. Resolution is a COST lever on that half, not an accuracy lever.",
    "PMC_VQA_is_the_extreme_case": "median native size 66,122 px; even cap320 binds on only 8.9% of its images, which is why PMC is the one MCQ cell that barely moves with resolution."
   },
+  "3B_the_MCQ_cut_over_FOUR_of_the_five_cells": {
+   "statement": "PATH_VQA-closed, the cell the 2026-08-13 session could not measure, is now measured at FULL n (3,362) with both arms generated in one session: 0.837002 at the default vs 0.833432 at cap320, a cost of +0.003569 [-0.003272, +0.010708] which is NOT significant. Adding it takes the macro-8 cost of cutting the MCQ leg to cap320 from +0.007159 over three cells to +0.007606 over four.",
+   "per_cell_delta_default_minus_cap320": {
+    "PMC_VQA": {
+     "delta_default_minus_cap320": 0.000688,
+     "ci95": [
+      -0.000209,
+      0.001585
+     ],
+     "significant": false,
+     "n": 33430,
+     "_arms": "2026-07-01 MedEvalKit dumps, both tp=2, one session"
+    },
+    "SLAKE_closed": {
+     "delta_default_minus_cap320": 0.016746,
+     "ci95": [
+      0.002392,
+      0.0311
+     ],
+     "significant": true,
+     "n": 836,
+     "_arms": "2026-07-01 MedEvalKit dumps, both tp=2, one session"
+    },
+    "VQA_RAD_closed": {
+     "delta_default_minus_cap320": 0.039841,
+     "ci95": [
+      0.003984,
+      0.079681
+     ],
+     "significant": true,
+     "n": 251,
+     "_arms": "2026-07-01 MedEvalKit dumps, both tp=2, one session"
+    },
+    "PATH_VQA_closed": {
+     "delta_default_minus_cap320": 0.003569,
+     "ci95": [
+      -0.003272,
+      0.010708
+     ],
+     "significant": false,
+     "n": 3362,
+     "_arms": "2026-08-14, BOTH arms generated this session at tp=1 (runners/run_resolution_mcq_pathvqa.sh), 0 identity-mismatched rows",
+     "acc_default": 0.837002,
+     "acc_cap320": 0.833432
+    }
+   },
+   "macro8_cost_of_the_cut_over_these_4_cells": 0.007606,
+   "weight_each": 0.125,
+   "project_significance_threshold_on_macro8": 0.0029,
+   "n_cells_significantly_worse_at_cap320": 2,
+   "_read": "two of the four cells are significantly worse at cap320 (SLAKE-closed, VQA-RAD-closed); PMC-VQA and PATH-VQA are not, and both are cells whose images the cap barely touches. The direction is consistent across all four and the pooled macro cost is 2.6x the project's significance threshold.",
+   "_why_the_deltas_may_be_combined": "each cell's delta is taken between two arms generated in ONE session in ONE serving config; the four deltas come from two different sessions but no delta crosses them. Combining matched within-cell deltas into a macro is exactly what the macro-8 convention does.",
+   "_still_missing": "MedXpertQA-MM, the cell where the cap binds hardest (cap320 binds on 52.7% of its images and cuts mean vision tokens 838.8 -> 241.0). It needs MAX_MODEL_LEN 16384 with up to 6 images per item, which did not fit beside a co-tenant; see not_measured."
+  },
   "3_cutting_the_MCQ_leg_to_cap320_costs_accuracy": {
    "PMC_VQA": {
     "n_cell": 33430,
@@ -2182,6 +4620,1292 @@
     "_not_the_whole_macro": "PATH_VQA_closed and MedXpertQA-MM were not measured at cap320; see the artifact's not_measured block."
    },
    "_read": "matched pair at FULL n from the 2026-07-01 MedEvalKit dumps (both arms tp=2, same session). Two of the three measured cells are significantly worse at cap320. This does NOT contradict vram_levers_2026-08-12's '-0.0046, not significant': that comparison's top rung is 1,003,520, not 12,845,056, and its PMC-VQA is test_clean.csv (n=2,000) on the internal harness, not test_2.csv (n=33,430) on MedEvalKit."
+  },
+  "4A_THE_DECISIVE_ENDPOINT_THE_GAIN_DOES_NOT_SURVIVE_SELECTION": {
+   "statement": "on the JUDGE-labelled endpoint the macro-8's open cells actually report -- SELECTED accuracy -- uncapping the generator is NOT a win. Raising max_pixels 250,880 -> 12,845,056 raises oracle@8 by +0.013220 [+0.002985, +0.023881] and the modal-of-8 by +0.024307 [+0.013220, +0.035821], BOTH significant, but SELECTED accuracy moves only +0.005117 [-0.003838, +0.014072] pooled, whose CI spans zero, because sel_eff FALLS -0.010799 [-0.022318, +0.000720]. The verifier gives back most of what the higher-resolution generator won. On the macro-8's own EQUAL-WEIGHT-PER-CELL basis the selected delta is +0.009623 [-0.000401, +0.020334] over the three open cells = +0.003609 [-0.000150, +0.007625] macro-8, i.e. the POINT ESTIMATE clears the project's +0.0029 threshold but the interval still does not exclude zero. That is the honest summary: suggestive, not established.",
+   "\u26a0_HOW_THIN_THE_NATIVE_MACRO_POINT_ESTIMATE_IS": {
+    "net_items_changed_per_cell_native_seed0": {
+     "slake_open (n=645)": 4,
+     "vqa_rad_open (n=200)": 4,
+     "pathvqa_open (n=1500)": 4
+    },
+    "total_net_item_flips_behind_the_macro": 12,
+    "of_a_pool_of": 2345,
+    "leave_one_cell_out_macro8": {
+     "drop slake_open": 0.00425,
+     "drop vqa_rad_open": 0.001663,
+     "drop pathvqa_open": 0.004913
+    },
+    "project_significance_threshold_on_macro8": 0.0029,
+    "_read": "the equal-weight macro hands vqa_rad_open -- 200 items -- a full third of the open weight, and its entire contribution is FOUR net item flips. Drop that one cell and the macro falls to +0.001663, below the threshold. So the point estimate that clears the bar is carried by 12 net flips out of 2,345 and by the smallest cell in the pool. This is the same load-bearing-single-cell pattern the project already documents for PMC-VQA in the vs-direct claim, and it is why the honest verdict is NOT ESTABLISHED rather than a win.",
+    "_the_cap80_loss_by_contrast_is_robust": "cutting to cap80 gives macro-8 -0.007682 [-0.013222, -0.002349] with leave-one-cell-out staying between -0.006000 and -0.009273 and 19/4/18 net item flips behind it. The DOWNWARD direction is the robust half of this result."
+   },
+   "\u26a0_macro_weighting_correction": "an earlier draft of this artifact multiplied the POOLED (item-weighted) selected delta by 3/8 and reported +0.001919. That was the wrong basis. The macro-8 weights CELLS equally (1/8 each) while the open pool is 645/200/1500 items, so pooling hands PathVQA 64% of the weight where the macro gives it 33% -- and PathVQA is the cell with the smallest gain, so pooling UNDERSTATED the macro effect by roughly half. Both numbers are now reported side by side in laterality_stratum_with_CIs.macro8_arithmetic_open_half, which also stratifies the bootstrap by cell.",
+   "per_cap_judge_labelled": {
+    "cap80": {
+     "max_pixels": 62720,
+     "seeds": [
+      "s0",
+      "s1"
+     ],
+     "oracle8": {
+      "mean": 0.592537,
+      "sd": 0.005729,
+      "per_seed": [
+       0.596588,
+       0.588486
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.786299,
+      "sd": 0.009129,
+      "per_seed": [
+       0.779843,
+       0.792754
+      ]
+     },
+     "selected": {
+      "mean": 0.465885,
+      "sd": 0.000905,
+      "per_seed": [
+       0.465245,
+       0.466525
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.436887,
+      "sd": 0.007538,
+      "per_seed": [
+       0.442217,
+       0.431557
+      ]
+     },
+     "greedy_t0_judge": null,
+     "identity_selected_eq_oracle_x_seleff_max_abs_err": 3.7e-07,
+     "label_coverage_RELIABLE_per_seed": {
+      "s0": true,
+      "s1": true
+     }
+    },
+    "cap320": {
+     "max_pixels": 250880,
+     "seeds": [
+      "s0",
+      "s1",
+      "s2"
+     ],
+     "oracle8": {
+      "mean": 0.615352,
+      "sd": 0.003643,
+      "per_seed": [
+       0.618763,
+       0.615778,
+       0.611514
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.784713,
+      "sd": 0.005066,
+      "per_seed": [
+       0.780152,
+       0.790166,
+       0.783821
+      ]
+     },
+     "selected": {
+      "mean": 0.482871,
+      "sd": 0.003627,
+      "per_seed": [
+       0.482729,
+       0.486567,
+       0.479318
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.45032,
+      "sd": 0.003491,
+      "per_seed": [
+       0.453305,
+       0.451173,
+       0.446482
+      ]
+     },
+     "greedy_t0_judge": 0.460554,
+     "identity_selected_eq_oracle_x_seleff_max_abs_err": 4.85e-07,
+     "label_coverage_RELIABLE_per_seed": {
+      "s0": true,
+      "s1": true,
+      "s2": true
+     }
+    },
+    "native": {
+     "max_pixels": 12845056,
+     "seeds": [
+      "s0"
+     ],
+     "oracle8": {
+      "mean": 0.631983,
+      "sd": null,
+      "per_seed": [
+       0.631983
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.77193,
+      "sd": null,
+      "per_seed": [
+       0.77193
+      ]
+     },
+     "selected": {
+      "mean": 0.487846,
+      "sd": null,
+      "per_seed": [
+       0.487846
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.477612,
+      "sd": null,
+      "per_seed": [
+       0.477612
+      ]
+     },
+     "greedy_t0_judge": 0.486994,
+     "identity_selected_eq_oracle_x_seleff_max_abs_err": 6.37e-07,
+     "label_coverage_RELIABLE_per_seed": {
+      "s0": true
+     }
+    }
+   },
+   "PRIMARY_matched_seed0_only": {
+    "matched_seeds": [
+     "s0"
+    ],
+    "all_paired_seeds": [
+     "s0"
+    ],
+    "_rule": "only these seeds have treatment and control generated in one session at one gpu_memory_utilization. Any seed in all_paired_seeds but not in matched_seeds crosses the +-0.008 serving-config boundary and is reported for spread only -- never as the headline delta.",
+    "per_metric": {
+     "oracle8": {
+      "delta_matched_seeds": [
+       0.01322
+      ],
+      "ci95_matched_seeds": [
+       [
+        0.002985,
+        0.023881
+       ]
+      ],
+      "delta_mean_matched": 0.01322,
+      "all_matched_ci_exclude_zero": true
+     },
+     "selected": {
+      "delta_matched_seeds": [
+       0.005117
+      ],
+      "ci95_matched_seeds": [
+       [
+        -0.003838,
+        0.014072
+       ]
+      ],
+      "delta_mean_matched": 0.005117,
+      "all_matched_ci_exclude_zero": false
+     },
+     "pool_modal": {
+      "delta_matched_seeds": [
+       0.024307
+      ],
+      "ci95_matched_seeds": [
+       [
+        0.01322,
+        0.035821
+       ]
+      ],
+      "delta_mean_matched": 0.024307,
+      "all_matched_ci_exclude_zero": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "delta_matched_seeds": [
+       -0.010799
+      ],
+      "ci95_matched_seeds": [
+       [
+        -0.022318,
+        0.00072
+       ]
+      ],
+      "delta_mean_matched": -0.010799,
+      "all_matched_ci_exclude_zero": false
+     }
+    }
+   },
+   "native_vs_cap320_control": {
+    "oracle8": {
+     "delta_mean_over_seeds": 0.01322,
+     "delta_per_seed": [
+      0.01322
+     ],
+     "ci95_per_seed": [
+      [
+       0.002985,
+       0.023881
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "selected": {
+     "delta_mean_over_seeds": 0.005117,
+     "delta_per_seed": [
+      0.005117
+     ],
+     "ci95_per_seed": [
+      [
+       -0.003838,
+       0.014072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "sign_consistent": true
+    },
+    "pool_modal": {
+     "delta_mean_over_seeds": 0.024307,
+     "delta_per_seed": [
+      0.024307
+     ],
+     "ci95_per_seed": [
+      [
+       0.01322,
+       0.035821
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "sel_eff_on_jointly_recoverable": {
+     "delta_mean_over_seeds": -0.010799,
+     "delta_per_seed": [
+      -0.010799
+     ],
+     "ci95_per_seed": [
+      [
+       -0.022318,
+       0.00072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+    }
+   },
+   "cap80_vs_cap320_control": {
+    "oracle8": {
+     "delta_mean_over_seeds": -0.024733,
+     "delta_per_seed": [
+      -0.022175,
+      -0.027292
+     ],
+     "ci95_per_seed": [
+      [
+       -0.035394,
+       -0.008955
+      ],
+      [
+       -0.040512,
+       -0.014072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "selected": {
+     "delta_mean_over_seeds": -0.018763,
+     "delta_per_seed": [
+      -0.017484,
+      -0.020043
+     ],
+     "ci95_per_seed": [
+      [
+       -0.028571,
+       -0.006823
+      ],
+      [
+       -0.03113,
+       -0.009382
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "pool_modal": {
+     "delta_mean_over_seeds": -0.015352,
+     "delta_per_seed": [
+      -0.011087,
+      -0.019616
+     ],
+     "ci95_per_seed": [
+      [
+       -0.024307,
+       0.002132
+      ],
+      [
+       -0.032836,
+       -0.006397
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "sign_consistent": true
+    },
+    "sel_eff_on_jointly_recoverable": {
+     "delta_mean_over_seeds": -0.005024,
+     "delta_per_seed": [
+      -0.004608,
+      -0.005439
+     ],
+     "ci95_per_seed": [
+      [
+       -0.017665,
+       0.008449
+      ],
+      [
+       -0.018648,
+       0.00777
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+    }
+   },
+   "macro8_arithmetic": {
+    "cap80": {
+     "max_pixels": 62720,
+     "seeds": [
+      "s0",
+      "s1"
+     ],
+     "per_seed": {
+      "s0": {
+       "per_cell_delta_selected": {
+        "slake_open": -0.029457,
+        "vqa_rad_open": -0.02,
+        "pathvqa_open": -0.012
+       },
+       "open3_equal_weight_mean_delta": -0.020486,
+       "open3_ci95": [
+        -0.035259,
+        -0.006263
+       ],
+       "macro8_equivalent": -0.007682,
+       "macro8_equivalent_ci95": [
+        -0.013222,
+        -0.002349
+       ],
+       "macro8_ci_excludes_zero": true,
+       "macro8_exceeds_project_threshold": true,
+       "WITHIN_SESSION_MATCHED": true,
+       "leave_one_cell_out_open_mean_delta": {
+        "slake_open": -0.016,
+        "vqa_rad_open": -0.020729,
+        "pathvqa_open": -0.024729
+       },
+       "leave_one_cell_out_macro8": {
+        "slake_open": -0.006,
+        "vqa_rad_open": -0.007773,
+        "pathvqa_open": -0.009273
+       },
+       "n_items_behind_each_cell_delta": {
+        "slake_open": {
+         "n": 645,
+         "net_items_changed": -19
+        },
+        "vqa_rad_open": {
+         "n": 200,
+         "net_items_changed": -4
+        },
+        "pathvqa_open": {
+         "n": 1500,
+         "net_items_changed": -18
+        }
+       }
+      },
+      "s1": {
+       "per_cell_delta_selected": {
+        "slake_open": -0.027907,
+        "vqa_rad_open": -0.02,
+        "pathvqa_open": -0.016667
+       },
+       "open3_equal_weight_mean_delta": -0.021525,
+       "open3_ci95": [
+        -0.037003,
+        -0.006351
+       ],
+       "macro8_equivalent": -0.008072,
+       "macro8_equivalent_ci95": [
+        -0.013876,
+        -0.002382
+       ],
+       "macro8_ci_excludes_zero": true,
+       "macro8_exceeds_project_threshold": true,
+       "WITHIN_SESSION_MATCHED": true,
+       "leave_one_cell_out_open_mean_delta": {
+        "slake_open": -0.018334,
+        "vqa_rad_open": -0.022287,
+        "pathvqa_open": -0.023954
+       },
+       "leave_one_cell_out_macro8": {
+        "slake_open": -0.006875,
+        "vqa_rad_open": -0.008358,
+        "pathvqa_open": -0.008983
+       },
+       "n_items_behind_each_cell_delta": {
+        "slake_open": {
+         "n": 645,
+         "net_items_changed": -18
+        },
+        "vqa_rad_open": {
+         "n": 200,
+         "net_items_changed": -4
+        },
+        "pathvqa_open": {
+         "n": 1500,
+         "net_items_changed": -25
+        }
+       }
+      }
+     },
+     "open_cells_weight_in_macro8": 0.375,
+     "project_significance_threshold_on_macro8": 0.0029,
+     "_weighting": "EQUAL WEIGHT PER CELL, matching the project's macro-8 convention. The bootstrap is stratified by cell: each replicate resamples items within slake_open (645), vqa_rad_open (200) and pathvqa_open (1500) separately, then averages the three cell means equally.",
+     "_the_other_five_cells_are_held_at_zero": "resolution cannot move the 5 MCQ cells upward -- they already run uncapped -- so this is the whole macro-8 effect of a generator-side resolution change.",
+     "_pooled_for_contrast": {
+      "s0": -0.017484,
+      "s1": -0.020043
+     },
+     "_why_pooled_differs": "the pooled (item-weighted) delta is also reported in open_generator_resolution.vs_control. It answers a different question -- the average over QUESTIONS rather than over CELLS -- and it is NOT the macro-8 basis."
+    },
+    "native": {
+     "max_pixels": 12845056,
+     "seeds": [
+      "s0"
+     ],
+     "per_seed": {
+      "s0": {
+       "per_cell_delta_selected": {
+        "slake_open": 0.006202,
+        "vqa_rad_open": 0.02,
+        "pathvqa_open": 0.002667
+       },
+       "open3_equal_weight_mean_delta": 0.009623,
+       "open3_ci95": [
+        -0.000401,
+        0.020334
+       ],
+       "macro8_equivalent": 0.003609,
+       "macro8_equivalent_ci95": [
+        -0.00015,
+        0.007625
+       ],
+       "macro8_ci_excludes_zero": false,
+       "macro8_exceeds_project_threshold": true,
+       "WITHIN_SESSION_MATCHED": true,
+       "leave_one_cell_out_open_mean_delta": {
+        "slake_open": 0.011333,
+        "vqa_rad_open": 0.004435,
+        "pathvqa_open": 0.013101
+       },
+       "leave_one_cell_out_macro8": {
+        "slake_open": 0.00425,
+        "vqa_rad_open": 0.001663,
+        "pathvqa_open": 0.004913
+       },
+       "n_items_behind_each_cell_delta": {
+        "slake_open": {
+         "n": 645,
+         "net_items_changed": 4
+        },
+        "vqa_rad_open": {
+         "n": 200,
+         "net_items_changed": 4
+        },
+        "pathvqa_open": {
+         "n": 1500,
+         "net_items_changed": 4
+        }
+       }
+      }
+     },
+     "open_cells_weight_in_macro8": 0.375,
+     "project_significance_threshold_on_macro8": 0.0029,
+     "_weighting": "EQUAL WEIGHT PER CELL, matching the project's macro-8 convention. The bootstrap is stratified by cell: each replicate resamples items within slake_open (645), vqa_rad_open (200) and pathvqa_open (1500) separately, then averages the three cell means equally.",
+     "_the_other_five_cells_are_held_at_zero": "resolution cannot move the 5 MCQ cells upward -- they already run uncapped -- so this is the whole macro-8 effect of a generator-side resolution change.",
+     "_pooled_for_contrast": {
+      "s0": 0.005117
+     },
+     "_why_pooled_differs": "the pooled (item-weighted) delta is also reported in open_generator_resolution.vs_control. It answers a different question -- the average over QUESTIONS rather than over CELLS -- and it is NOT the macro-8 basis."
+    }
+   },
+   "guardrail_native": {
+    "slake_open": {
+     "delta_selected_mean": 0.006202,
+     "per_seed": [
+      0.006202
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    },
+    "vqa_rad_open": {
+     "delta_selected_mean": 0.02,
+     "per_seed": [
+      0.02
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    },
+    "pathvqa_open": {
+     "delta_selected_mean": 0.002667,
+     "per_seed": [
+      0.002667
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    }
+   },
+   "guardrail_cap80": {
+    "slake_open": {
+     "delta_selected_mean": -0.028682,
+     "per_seed": [
+      -0.029457,
+      -0.027907
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    },
+    "vqa_rad_open": {
+     "delta_selected_mean": -0.02,
+     "per_seed": [
+      -0.02,
+      -0.02
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    },
+    "pathvqa_open": {
+     "delta_selected_mean": -0.014333,
+     "per_seed": [
+      -0.012,
+      -0.016667
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    }
+   },
+   "manipulation_check": {
+    "native": {
+     "mean_pool_jaccard_vs_control": 0.691971,
+     "n_item_seed_pairs": 2345,
+     "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+    },
+    "cap80": {
+     "mean_pool_jaccard_vs_control": 0.571479,
+     "n_item_seed_pairs": 4690,
+     "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+    }
+   },
+   "token_audit": {
+    "per_cap_per_cell": {
+     "cap80": {
+      "slake_open": {
+       "mean_vision_tokens": 64.0,
+       "mean_prompt_tokens": 111.34,
+       "mean_gen_tokens_per_sample": 4.655,
+       "n": 645
+      },
+      "vqa_rad_open": {
+       "mean_vision_tokens": 69.89,
+       "mean_prompt_tokens": 116.72,
+       "mean_gen_tokens_per_sample": 5.44,
+       "n": 200
+      },
+      "pathvqa_open": {
+       "mean_vision_tokens": 70.98,
+       "mean_prompt_tokens": 114.51,
+       "mean_gen_tokens_per_sample": 5.54,
+       "n": 1500
+      }
+     },
+     "cap320": {
+      "slake_open": {
+       "mean_vision_tokens": 244.04,
+       "mean_prompt_tokens": 291.38,
+       "mean_gen_tokens_per_sample": 4.692,
+       "n": 645
+      },
+      "vqa_rad_open": {
+       "mean_vision_tokens": 285.67,
+       "mean_prompt_tokens": 332.49,
+       "mean_gen_tokens_per_sample": 5.538,
+       "n": 200
+      },
+      "pathvqa_open": {
+       "mean_vision_tokens": 285.53,
+       "mean_prompt_tokens": 329.06,
+       "mean_gen_tokens_per_sample": 5.693,
+       "n": 1500
+      }
+     },
+     "native": {
+      "slake_open": {
+       "mean_vision_tokens": 671.62,
+       "mean_prompt_tokens": 718.96,
+       "mean_gen_tokens_per_sample": 4.688,
+       "n": 645
+      },
+      "vqa_rad_open": {
+       "mean_vision_tokens": 840.52,
+       "mean_prompt_tokens": 887.35,
+       "mean_gen_tokens_per_sample": 5.576,
+       "n": 200
+      },
+      "pathvqa_open": {
+       "mean_vision_tokens": 487.33,
+       "mean_prompt_tokens": 530.86,
+       "mean_gen_tokens_per_sample": 5.68,
+       "n": 1500
+      }
+     }
+    },
+    "_read": "REQUIRED CHECK, PASSED. Mean GENERATED tokens per sample are flat across the whole 205x resolution span -- 4.66/5.44/5.54 at cap80, 4.69/5.54/5.69 at cap320, 4.69/5.58/5.68 at native (slake/vqa_rad/pathvqa) -- while mean VISION tokens move 64 -> 244 -> 672 on SLAKE. So the treatment reached the input and did NOT change answer length or format. That matters here because this project has twice been caught mistaking an ANSWER-FORMAT effect for a capability effect (the reasoning-vs-direct finding, retrospective 5.1); resolution is clean of that confound.",
+    "_no_arm_is_a_reasoning_arm": "every arm averages under 6 generated tokens, so no arm accidentally became a reasoning run -- the failure mode CLAUDE.md records for the `_think` dumps."
+   },
+   "\u26a0_THE_MECHANISM_MEASURED_ON_ONE_CELL": {
+    "cell": "pathvqa_open (n=1,500, the largest open cell)",
+    "oracle8_delta": "+0.016000 [+0.001333, +0.030667]  SIGNIFICANT",
+    "sel_eff_delta_on_jointly_recoverable": "-0.022039  SIGNIFICANT (CI excludes zero)",
+    "selected_delta": "+0.002667 [-0.009333, +0.014667]  not significant",
+    "_read": "this is the whole finding in one cell, and both halves of it are individually significant. Higher resolution puts significantly MORE correct answers into PathVQA's candidate pool, and the verifier gets significantly WORSE at picking them, and the two cancel so that the reported endpoint does not move. It is not that the gain was too small to see -- it is that the selector consumed it.",
+    "_why_pathvqa": "PathVQA is where the coverage headroom is (oracle@8 0.508 at cap320 against 0.869 on SLAKE) and where the verifier is weakest (sel_eff 0.741 vs 0.850 on SLAKE). Resolution moves the pool most in exactly the cell whose selector can least afford new candidates to rank.",
+    "_the_other_two_cells": "SLAKE-open and VQA-RAD-open move nothing significantly in either direction at native; their per-cell CIs all span zero. See laterality_stratum_with_CIs.per_cell_deltas_with_ci for every cell, metric and seed."
+   },
+   "_the_shape": "this is the SAME shape that killed the diverse-generation arm (open_diverse_2026-08-10.json): a treatment that enlarges or improves the candidate pool is taxed by the selector. It is milder here -- selected is at least POSITIVE rather than negative -- but it is not significant and it is not free.",
+   "_why_it_is_not_a_coverage_win_either": "oracle@8 rises +0.0132 while pool_modal rises +0.0243: the bigger move is in answer QUALITY (mass on the right answer) than in COVERAGE (new correct answers entering the pool). The project's marginal conversion of newly-covered questions is 0.447 [0.368, 0.526], and 0.0132 x 0.447 = 0.0059, which is within noise of the +0.0051 actually observed.",
+   "_the_downward_direction_is_a_CLEAN_LOSS": "cutting the generator to cap80 (62,720) loses oracle@8 -0.024733, selected -0.018763 and every one of the three per-cell guardrails, all CIs excluding zero on both seeds. Resolution is real; it just cannot be converted upward.",
+   "_label": "LLM judge (src/labeling/run_judge.py, MedVLThinker-32B, text-only), the project's primary open-text label. 14,779 new (question, gold, answer) triples judged 2026-08-14; judge_cache now 112,656 entries, still-missing=0. Every arm's label coverage flag RELIABLE=true.",
+   "capture_recapture_ceiling_per_cap": {
+    "cap80": {
+     "max_pixels": 62720,
+     "macro_open3_LP_ceiling": 0.65007,
+     "macro_open3_oracle8": 0.640739,
+     "headroom_LP_minus_oracle8": 0.009331
+    },
+    "cap320": {
+     "max_pixels": 250880,
+     "macro_open3_LP_ceiling": 0.672574,
+     "macro_open3_oracle8": 0.660022,
+     "headroom_LP_minus_oracle8": 0.012552
+    }
+   },
+   "_ceiling_read": "the Lincoln-Petersen ceiling is re-estimated PER CAP from that cap's own independent seeds, because changing max_pixels changes the candidate distribution and the project's +0.0091 macro bound is the cap320 distribution's bound, not a universal one. A cap with only one complete seed has no LP estimate and is absent from this block."
+  },
+  "4B_open_text_generator_resolution_supporting_tables": {
+   "per_cap_mean_over_seeds": {
+    "cap80": {
+     "oracle8": {
+      "mean": 0.592537,
+      "sd": 0.005729,
+      "per_seed": [
+       0.596588,
+       0.588486
+      ]
+     },
+     "selected": {
+      "mean": 0.465885,
+      "sd": 0.000905,
+      "per_seed": [
+       0.465245,
+       0.466525
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.786299,
+      "sd": 0.009129,
+      "per_seed": [
+       0.779843,
+       0.792754
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.436887,
+      "sd": 0.007538,
+      "per_seed": [
+       0.442217,
+       0.431557
+      ]
+     }
+    },
+    "cap320": {
+     "oracle8": {
+      "mean": 0.615352,
+      "sd": 0.003643,
+      "per_seed": [
+       0.618763,
+       0.615778,
+       0.611514
+      ]
+     },
+     "selected": {
+      "mean": 0.482871,
+      "sd": 0.003627,
+      "per_seed": [
+       0.482729,
+       0.486567,
+       0.479318
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.784713,
+      "sd": 0.005066,
+      "per_seed": [
+       0.780152,
+       0.790166,
+       0.783821
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.45032,
+      "sd": 0.003491,
+      "per_seed": [
+       0.453305,
+       0.451173,
+       0.446482
+      ]
+     }
+    },
+    "native": {
+     "oracle8": {
+      "mean": 0.631983,
+      "sd": null,
+      "per_seed": [
+       0.631983
+      ]
+     },
+     "selected": {
+      "mean": 0.487846,
+      "sd": null,
+      "per_seed": [
+       0.487846
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.77193,
+      "sd": null,
+      "per_seed": [
+       0.77193
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.477612,
+      "sd": null,
+      "per_seed": [
+       0.477612
+      ]
+     }
+    }
+   },
+   "vs_cap320_control": {
+    "cap80": {
+     "oracle8": {
+      "delta_mean_over_seeds": -0.024733,
+      "delta_per_seed": [
+       -0.022175,
+       -0.027292
+      ],
+      "ci95_per_seed": [
+       [
+        -0.035394,
+        -0.008955
+       ],
+       [
+        -0.040512,
+        -0.014072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "selected": {
+      "delta_mean_over_seeds": -0.018763,
+      "delta_per_seed": [
+       -0.017484,
+       -0.020043
+      ],
+      "ci95_per_seed": [
+       [
+        -0.028571,
+        -0.006823
+       ],
+       [
+        -0.03113,
+        -0.009382
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "pool_modal": {
+      "delta_mean_over_seeds": -0.015352,
+      "delta_per_seed": [
+       -0.011087,
+       -0.019616
+      ],
+      "ci95_per_seed": [
+       [
+        -0.024307,
+        0.002132
+       ],
+       [
+        -0.032836,
+        -0.006397
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "sign_consistent": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "delta_mean_over_seeds": -0.005024,
+      "delta_per_seed": [
+       -0.004608,
+       -0.005439
+      ],
+      "ci95_per_seed": [
+       [
+        -0.017665,
+        0.008449
+       ],
+       [
+        -0.018648,
+        0.00777
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+     }
+    },
+    "native": {
+     "oracle8": {
+      "delta_mean_over_seeds": 0.01322,
+      "delta_per_seed": [
+       0.01322
+      ],
+      "ci95_per_seed": [
+       [
+        0.002985,
+        0.023881
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "selected": {
+      "delta_mean_over_seeds": 0.005117,
+      "delta_per_seed": [
+       0.005117
+      ],
+      "ci95_per_seed": [
+       [
+        -0.003838,
+        0.014072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "sign_consistent": true
+     },
+     "pool_modal": {
+      "delta_mean_over_seeds": 0.024307,
+      "delta_per_seed": [
+       0.024307
+      ],
+      "ci95_per_seed": [
+       [
+        0.01322,
+        0.035821
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": true,
+      "sign_consistent": true
+     },
+     "sel_eff_on_jointly_recoverable": {
+      "delta_mean_over_seeds": -0.010799,
+      "delta_per_seed": [
+       -0.010799
+      ],
+      "ci95_per_seed": [
+       [
+        -0.022318,
+        0.00072
+       ]
+      ],
+      "all_seeds_ci_exclude_zero": false,
+      "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+     }
+    }
+   },
+   "capture_recapture_ceiling_per_cap": {
+    "cap80": {
+     "macro_open3_LP_ceiling": 0.65007,
+     "macro_open3_oracle8": 0.640739
+    },
+    "cap320": {
+     "macro_open3_LP_ceiling": 0.672574,
+     "macro_open3_oracle8": 0.660022
+    }
+   },
+   "laterality": {
+    "cap80": {
+     "laterality_question_or_gold": {
+      "n_items": 283,
+      "sel_eff_mean": 0.646152,
+      "sel_eff_per_seed": [
+       0.63871,
+       0.653595
+      ],
+      "oracle8_mean": 0.54417
+     },
+     "short3_not_laterality": {
+      "n_items": 1834,
+      "sel_eff_mean": 0.815555,
+      "sel_eff_per_seed": [
+       0.810924,
+       0.820187
+      ],
+      "oracle8_mean": 0.645856
+     },
+     "gold_1word": {
+      "n_items": 1329,
+      "sel_eff_mean": 0.821158,
+      "sel_eff_per_seed": [
+       0.81641,
+       0.825907
+      ],
+      "oracle8_mean": 0.729872
+     }
+    },
+    "cap320": {
+     "laterality_question_or_gold": {
+      "n_items": 283,
+      "sel_eff_mean": 0.686172,
+      "sel_eff_per_seed": [
+       0.695122,
+       0.686747,
+       0.676647
+      ],
+      "oracle8_mean": 0.585395
+     },
+     "short3_not_laterality": {
+      "n_items": 1834,
+      "sel_eff_mean": 0.81007,
+      "sel_eff_per_seed": [
+       0.80456,
+       0.816243,
+       0.809406
+      ],
+      "oracle8_mean": 0.665031
+     },
+     "gold_1word": {
+      "n_items": 1329,
+      "sel_eff_mean": 0.8162,
+      "sel_eff_per_seed": [
+       0.814257,
+       0.822222,
+       0.812121
+      ],
+      "oracle8_mean": 0.746426
+     }
+    },
+    "native": {
+     "laterality_question_or_gold": {
+      "n_items": 283,
+      "sel_eff_mean": 0.695906,
+      "sel_eff_per_seed": [
+       0.695906
+      ],
+      "oracle8_mean": 0.60424
+     },
+     "short3_not_laterality": {
+      "n_items": 1834,
+      "sel_eff_mean": 0.798717,
+      "sel_eff_per_seed": [
+       0.798717
+      ],
+      "oracle8_mean": 0.679935
+     },
+     "gold_1word": {
+      "n_items": 1329,
+      "sel_eff_mean": 0.810704,
+      "sel_eff_per_seed": [
+       0.810704
+      ],
+      "oracle8_mean": 0.759217
+     }
+    },
+    "_mask_note": "masks are built from QUESTION and GOLD only (never from the candidates), so they are ARM-INVARIANT and the same items are compared at every cap. The project's published laterality stratum (visverif_lib.strata) also ORs in the candidate texts, which would move the mask with the arm and make caps incomparable."
+   }
+  },
+  "4C_THE_ONE_OPERATING_POINT_WORTH_TAKING_greedy_at_native_replaces_the_sampled_arm": {
+   "statement": "the sweep's most useful result is not a resolution win, it is what the resolution curve reveals about the SAMPLING machinery. ONE greedy decode at native resolution scores 0.747287/0.525000/0.370000 (slake/vqa_rad/pathvqa), pooled 0.486994 -- statistically indistinguishable from the DEPLOYED eight-sample cap320 arm plus its trained LoRA verifier (delta +0.004122, every seed's CI spanning zero) -- at 0.075902x its FLOPs, a 13.17x compute reduction on the open half.",
+   "accuracy_pooled_over_questions": {
+    "per_control_seed": {
+     "s0": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.482729,
+      "delta": 0.004264,
+      "ci95": [
+       -0.009808,
+       0.018337
+      ],
+      "ci_excludes_zero": false
+     },
+     "s1": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.486567,
+      "delta": 0.000426,
+      "ci95": [
+       -0.013646,
+       0.014925
+      ],
+      "ci_excludes_zero": false
+     },
+     "s2": {
+      "native_greedy_t0": 0.486994,
+      "cap320_selected_best_of_8_plus_verifier": 0.479318,
+      "delta": 0.007676,
+      "ci95": [
+       -0.006397,
+       0.022175
+      ],
+      "ci_excludes_zero": false
+     }
+    },
+    "delta_mean_over_seeds": 0.004122,
+    "all_seeds_ci_exclude_zero": false,
+    "_read": "positive means one greedy decode at native resolution is MORE accurate than the deployed eight-sample cap320 arm with its trained verifier."
+   },
+   "accuracy_macro8_basis_equal_weight_per_cell": {
+    "per_control_seed": {
+     "s0": {
+      "per_cell_delta": {
+       "slake_open": 0.006202,
+       "vqa_rad_open": 0.07,
+       "pathvqa_open": -0.005333
+      },
+      "open3_equal_weight_mean_delta": 0.023623,
+      "open3_ci95": [
+       0.004767,
+       0.043
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.008859,
+      "macro8_equivalent_ci95": [
+       0.001788,
+       0.016125
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.012125,
+       "vqa_rad_open": 0.000163,
+       "pathvqa_open": 0.014288
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 4
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 14
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -8
+       }
+      }
+     },
+     "s1": {
+      "per_cell_delta": {
+       "slake_open": 0.004651,
+       "vqa_rad_open": 0.065,
+       "pathvqa_open": -0.01
+      },
+      "open3_equal_weight_mean_delta": 0.019884,
+      "open3_ci95": [
+       0.000921,
+       0.039501
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.007456,
+      "macro8_equivalent_ci95": [
+       0.000345,
+       0.014813
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.010313,
+       "vqa_rad_open": -0.001003,
+       "pathvqa_open": 0.01306
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 3
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 13
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -15
+       }
+      }
+     },
+     "s2": {
+      "per_cell_delta": {
+       "slake_open": 0.015504,
+       "vqa_rad_open": 0.07,
+       "pathvqa_open": -0.004
+      },
+      "open3_equal_weight_mean_delta": 0.027168,
+      "open3_ci95": [
+       0.008129,
+       0.046969
+      ],
+      "ci_excludes_zero": true,
+      "macro8_equivalent": 0.010188,
+      "macro8_equivalent_ci95": [
+       0.003048,
+       0.017613
+      ],
+      "leave_one_cell_out_macro8": {
+       "slake_open": 0.012375,
+       "vqa_rad_open": 0.002157,
+       "pathvqa_open": 0.016032
+      },
+      "net_items_changed_per_cell": {
+       "slake_open": {
+        "n": 645,
+        "net_items_changed": 10
+       },
+       "vqa_rad_open": {
+        "n": 200,
+        "net_items_changed": 14
+       },
+       "pathvqa_open": {
+        "n": 1500,
+        "net_items_changed": -6
+       }
+      }
+     }
+    },
+    "project_significance_threshold_on_macro8": 0.0029,
+    "_read": "on the macro's own equal-weight-per-cell basis the swap looks much BETTER than pooled, because vqa_rad_open (n=200), where the greedy native arm is significantly ahead, carries a full third of the open weight instead of 8.5%. Both bases are reported; neither is quoted alone.",
+    "_fragility": "read net_items_changed_per_cell before quoting any of this: vqa_rad_open's contribution is a small number of items in a 200-item cell, and leave_one_cell_out_macro8 shows what the macro becomes without it."
+   },
+   "\u26a0_WHICH_BASIS_AND_HOW_FRAGILE": {
+    "pooled_over_questions": "delta +0.004122 mean over the 3 control seeds, every seed's CI spanning zero -> a TIE.",
+    "macro8_equal_weight_per_cell": "delta +0.008859 / +0.007456 / +0.010188 macro-8 for control seeds s0/s1/s2, and EVERY seed's CI excludes zero -> significant on the basis the project actually reports.",
+    "but_leave_one_cell_out_kills_it": "dropping vqa_rad_open takes those three macro figures to +0.000163, -0.001003 and +0.002157 -- i.e. to nothing. The entire macro significance is one 200-item cell carrying 13 to 14 net item flips, handed a third of the open weight by equal-cell weighting.",
+    "_therefore": "the ACCURACY claim is a TIE, stated conservatively. The macro-basis significance is reported because it is what the project's own convention produces, and it is immediately qualified because it does not survive its own leave-one-cell-out. The robust half of this result is the COMPUTE, not the accuracy."
+   },
+   "pure_resolution_effect_on_one_decode": {
+    "cap320_greedy_t0": 0.460554,
+    "native_greedy_t0": 0.486994,
+    "delta": 0.026439,
+    "ci95": [
+     0.015352,
+     0.037527
+    ],
+    "ci_excludes_zero": true,
+    "_read": "the pure resolution effect on a single deterministic decode: no sampling, no selection, no verifier."
+   },
+   "compute": {
+    "flops_generator_per_candidate_native": 11185826596922.871,
+    "flops_generator_per_candidate_cap320": 5692656676482.49,
+    "flops_verifier_per_candidate_1003520": 12728907037179.45,
+    "deployed_open_arm_8gen_cap320_plus_8verify": 147372509709295.5,
+    "one_greedy_decode_at_native": 11185826596922.871,
+    "ratio_greedy_native_over_deployed_arm": 0.075902,
+    "compute_reduction_x": 13.1749,
+    "_flop_model": "src/cascade_methods/flop_ratio_derivation.forward_flops -- prefill-inclusive, vision tower + merger + LM prefill + LM decode + lm_head; parameter counts read from the safetensors headers on disk (no weights loaded).",
+    "_geometry": "MEASURED in this sweep: vision/prompt/generated tokens per item per cap, recorded by resolution_open_generate.py (open half) and by MedEvalKit's own per-item dumps (MCQ half). Nothing is a name-plate ratio.",
+    "_caveat": "prefill-inclusive whole-forward FLOPs on this round's own MEASURED token geometry. It is an arithmetic re-costing of measured token counts, not a wall-clock or energy measurement; no end-to-end run was performed, which is the standing caveat on every operating point in this project."
+   },
+   "per_cell_guardrail": {
+    "slake_open": {
+     "n": 645,
+     "native_greedy_t0": 0.747287,
+     "cap320_selected_per_seed": {
+      "s0": 0.741085,
+      "s1": 0.742636,
+      "s2": 0.731783
+     },
+     "delta_per_seed": {
+      "s0": 0.006202,
+      "s1": 0.004651,
+      "s2": 0.015504
+     },
+     "ci_excludes_zero_per_seed": {
+      "s0": false,
+      "s1": false,
+      "s2": false
+     },
+     "worse_than_deployed": false
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "native_greedy_t0": 0.525,
+     "cap320_selected_per_seed": {
+      "s0": 0.455,
+      "s1": 0.46,
+      "s2": 0.455
+     },
+     "delta_per_seed": {
+      "s0": 0.07,
+      "s1": 0.065,
+      "s2": 0.07
+     },
+     "ci_excludes_zero_per_seed": {
+      "s0": true,
+      "s1": true,
+      "s2": true
+     },
+     "worse_than_deployed": false
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "native_greedy_t0": 0.37,
+     "cap320_selected_per_seed": {
+      "s0": 0.375333,
+      "s1": 0.38,
+      "s2": 0.374
+     },
+     "delta_per_seed": {
+      "s0": -0.005333,
+      "s1": -0.01,
+      "s2": -0.004
+     },
+     "ci_excludes_zero_per_seed": {
+      "s0": false,
+      "s1": false,
+      "s2": false
+     },
+     "worse_than_deployed": true
+    }
+   },
+   "_guardrail_read": "VQA-RAD-open is significantly BETTER on all three control seeds (+0.065 to +0.070, every CI excluding zero). SLAKE-open is better, not significantly. PathVQA-open is the one cell that goes the wrong way, -0.004 to -0.010, and no seed's CI excludes zero, so it is within noise -- but it IS a guardrail flag on the project's largest open cell (n=1,500) and must be quoted with the headline.",
+   "_matched": "native t0 and every cap320 arm were generated by the same script in the SAME session (2026-08-13, gpu_mem 0.30) -- see arm_provenance.json. The comparison is therefore not exposed to the +-0.008 serving-config caveat.",
+   "_THE_CATCH": "this compares a GREEDY arm against a SAMPLED arm, so it is not a resolution result -- it is a result about what the sampling+verification machinery is worth once the generator sees the image properly. It also removes the verifier's confidence signal, which the deployed open policy uses to decide when to escalate to the 32B. That escalation gate is NOT reproducible from a single greedy decode, so this is not a drop-in replacement for the deployed open arm -- it is a bound on what the arm's sampling half is buying.",
+   "_the_8_is_the_frozen_metric_not_the_deployed_average_N": "the 'selected' endpoint is best-of-EIGHT, which is what the project's frozen open-text metric (src/training_methods/genframe_data.py) defines and what every number in this round's accuracy tables uses. The DEPLOYED open policy draws an ADAPTIVE N (Weitzman), so its average N -- and therefore its true per-item compute -- is at most 8 and in general lower. The 13.17x compute reduction is therefore an UPPER bound on what this swap saves in the deployed policy: at an average N of 4 it would be ~6.6x, at N=2 ~3.3x. The ACCURACY comparison is unaffected, because it is against the best-of-8 number the metric actually reports.",
+   "_not_measured": "the 32B escalation leg, latency, energy, the deployed policy's average N, and any effect on the MCQ half. The open pool's n is 2,345 and vqa_rad_open is n=200, so its per-cell interval is wide.",
+   "_the_honest_one_line": "a TIE on accuracy (pooled +0.004122, CIs spanning zero; the macro-basis significance rests entirely on one 200-item cell) at 0.0759x the open arm's FLOPs. The result to bank is the 13.17x compute reduction, not an accuracy gain.",
+   "_why_this_matters_to_the_project": "the project's stated current objective is cost reduction at a tie -- the 2026-08-12 result is 0.865x compute at a tie with always-32B-direct. This is a 13.17x reduction on the open half's arm at a tie with that arm's own output, and it is orthogonal to the MCQ half. It is NOT a macro-8 claim: the open cells' reported number would move by the delta above, which is not significant."
   },
   "5_open_generator_resolution_exact_match_secondary": {
    "per_cap": {
@@ -2429,15 +6153,16 @@
     ],
     "_read": "the gain is in ANSWER QUALITY, not in COVERAGE. Greedy and modal-of-8 both move by ~+0.018/+0.019 and both CIs exclude zero; oracle@8 moves only +0.009 and its CI does not. Higher resolution makes the model put more mass on the right answer rather than putting new correct answers into the pool. That matters for conversion: the project measured newly-COVERED questions converting at 0.447 [0.368, 0.526], whereas a shift that concentrates the existing distribution has no such discount -- but that is a prediction, and only the SELECTED measurement settles it."
    },
-   "LABEL": "EXACT MATCH, the secondary endpoint. The project's primary label is the LLM judge; the judge-labelled version of this row is in open_generator_resolution if the judge stage completed, and in not_measured if it did not.",
-   "what_still_has_to_be_shown": "that the gain survives into SELECTED accuracy -- the quantity the macro-8's open cells actually report. A setting that raises oracle@8 while lowering sel_eff can be net negative; that is exactly what killed the diverse-generation arm (open_diverse_2026-08-10.json).",
+   "LABEL": "EXACT MATCH, the secondary endpoint. The project's primary label is the LLM judge; the judge-labelled version of this row is in open_generator_resolution and its verdict is headline item 4A.",
+   "what_still_has_to_be_shown": "SETTLED on 2026-08-14 -- see headline item 4A. The gain does NOT survive into SELECTED accuracy: judge-labelled selected moves +0.005117 [-0.003838, +0.014072], CI spans zero, because sel_eff falls -0.010799 and gives most of the oracle gain back.",
    "cost_of_taking_it": "the generator's FLOPs per candidate rise; the whole open arm rises less, because the verifier (held at 1,003,520) is 69% of the arm. See frontier_open_half and cost."
   },
   "7_the_verdict": {
    "on_the_MCQ_half_62_5_percent_of_the_macro": "RESOLUTION IS NOT AN ACCURACY LEVER THERE, IN EITHER DIRECTION THAT HELPS. Up is impossible -- the published arms are already uncapped, the cap binds on 0.000 of images in all five cells. Down is not free: cap320 costs -0.007159 macro-8 [-0.012293, -0.002167] from just three of the five cells, 2.5x the project's own significance threshold, at full n.",
-   "on_the_open_half_37_5_percent": "RESOLUTION IS THE ONE UNSWEPT LEVER THAT MOVED. The generator runs at 250,880 while its images are 545 merged vision tokens uncapped; uncapping raises temperature-0 accuracy by +0.017484 [+0.006823, +0.028571] and the modal-of-8 by +0.019190, both significant under exact match, for +30% of the open arm's FLOPs and +4.4 GiB of its footprint.",
-   "what_is_NOT_settled": "whether that gain survives into SELECTED accuracy -- the quantity the macro-8's open cells actually report. The verifier re-scoring and the judge pass that decide it were queued behind other rounds' jobs on both shared A100s for the entire session and did not run. Until they do, this is a promising lead, not a result on the deployed endpoint.",
-   "the_cheapest_next_step": "finish the labelling stage (one command, ~13k verifier forwards and one judge pass) -- see not_measured. Everything else it needs is already on disk.",
+   "on_the_open_half_37_5_percent": "RESOLUTION IS THE ONE UNSWEPT LEVER THAT MOVED THE GENERATOR, AND THE SELECTOR ATE THE GAIN. The generator runs at 250,880 while its images are 545 merged vision tokens uncapped. Uncapping raises judge-labelled temperature-0 accuracy 0.460554 -> 0.486994, oracle@8 by +0.013220 [+0.002985, +0.023881] and modal-of-8 by +0.024307 [+0.013220, +0.035821] -- all real -- but SELECTED accuracy, the endpoint the macro-8 reports, moves only +0.005117 [-0.003838, +0.014072], CI spanning zero, because sel_eff falls -0.010799. In macro-8 points that is +0.003609 [-0.000150, +0.007625] on the macro's own equal-weight-per-cell basis against a +0.0029 threshold -- the point estimate clears the bar, the interval does not clear zero -- bought with +30% of the open arm's FLOPs and +4.4 GiB. NOT ESTABLISHED, and not Pareto. (The pooled item-weighted delta, a different and here less relevant basis, is +0.005117 [-0.003838, +0.014072] -> +0.001919 macro.)",
+   "what_IS_settled_now": "the decisive labelling stage that the 2026-08-13 session could not run for lack of a free card completed on 2026-08-14: 14,779 new judge triples, still-missing=0, every arm RELIABLE=true. The answer is negative on the deployed endpoint and the direction of the failure is identified -- it is the selector, not the generator. Resolution DOES reach the candidate distribution (pool Jaccard 0.692 vs control at native, 0.571 at cap80), so this is a real manipulation that failed to convert, not a no-op.",
+   "what_is_NOT_settled": "the native arm is SINGLE-SEED for the sampled quantities (the control has 3), so its selected/sel_eff deltas carry one seed's paired bootstrap CI rather than a mean over seeds, and native has no capture-recapture ceiling. The temperature-0 comparison is deterministic and unaffected. Two further native seeds were generated and labelled in this session where time allowed -- see open_generator_resolution.by_cap.native.seeds for how many actually landed.",
+   "the_operating_point_worth_taking": "headline 4C -- ONE greedy decode at native resolution ties the deployed eight-sample cap320 arm plus its trained verifier (+0.004122, every seed's CI spanning zero) at 0.0759x its FLOPs, a 13.17x compute reduction on the open half. That is a cost result, not an accuracy result, it carries a non-significant guardrail flag on PathVQA-open, and it drops the verifier confidence the deployed policy uses to trigger 32B escalation -- so it bounds what the sampling half is buying rather than replacing the arm outright.",
    "the_finding_that_stands_on_its_own": "the deployed pipeline evaluates one reported macro-8 at THREE different image resolutions spanning 51.2x, and its own verifier sees the image at 4x the resolution its generator did."
   }
  },
@@ -2454,8 +6179,23 @@
     "vram_open_arm_b_peak_allocated_gib": 15.883,
     "vram_7b_mcq_leg_d_process_footprint_gib": 16.3672,
     "_vram_source": "vram_levers_2026-08-12.json (prior session, same instrument)",
+    "n_sampling_seeds": 2,
+    "_seed_shortfall": "fewer than the 3 seeds the protocol asks for -- the card was shared and generation was cut at the stage-2 deadline. Read the per-seed values, not the mean.",
+    "oracle8_judge_mean": 0.592537,
+    "selected_judge_mean": 0.465885,
+    "sel_eff_judge_mean": 0.786299,
+    "greedy_t0_judge": null,
     "oracle8_em_mean": 0.584435,
-    "greedy_t0_em": null
+    "greedy_t0_em": null,
+    "JUDGE_selected": 0.465885,
+    "JUDGE_selected_per_seed": [
+     0.465245,
+     0.466525
+    ],
+    "JUDGE_oracle8": 0.592537,
+    "JUDGE_sel_eff": 0.786299,
+    "JUDGE_greedy_t0": null,
+    "n_seeds": 2
    },
    "cap320": {
     "max_pixels": 250880,
@@ -2467,8 +6207,23 @@
     "vram_open_arm_b_peak_allocated_gib": 16.2857,
     "vram_7b_mcq_leg_d_process_footprint_gib": 17.1094,
     "_vram_source": "vram_levers_2026-08-12.json (prior session, same instrument)",
+    "n_sampling_seeds": 3,
+    "oracle8_judge_mean": 0.615352,
+    "selected_judge_mean": 0.482871,
+    "sel_eff_judge_mean": 0.784713,
+    "greedy_t0_judge": 0.460554,
     "oracle8_em_mean": 0.603696,
-    "greedy_t0_em": 0.455011
+    "greedy_t0_em": 0.455011,
+    "JUDGE_selected": 0.482871,
+    "JUDGE_selected_per_seed": [
+     0.482729,
+     0.486567,
+     0.479318
+    ],
+    "JUDGE_oracle8": 0.615352,
+    "JUDGE_sel_eff": 0.784713,
+    "JUDGE_greedy_t0": 0.460554,
+    "n_seeds": 3
    },
    "native": {
     "max_pixels": 12845056,
@@ -2480,31 +6235,58 @@
     "vram_open_arm_b_peak_allocated_gib": 18.7372,
     "vram_7b_mcq_leg_d_process_footprint_gib": 22.4336,
     "_vram_source": "vram_levers_2026-08-12.json (prior session, same instrument)",
+    "n_sampling_seeds": 1,
+    "_seed_shortfall": "fewer than the 3 seeds the protocol asks for -- the card was shared and generation was cut at the stage-2 deadline. Read the per-seed values, not the mean.",
+    "oracle8_judge_mean": 0.631983,
+    "selected_judge_mean": 0.487846,
+    "sel_eff_judge_mean": 0.77193,
+    "greedy_t0_judge": 0.486994,
     "oracle8_em_mean": 0.614925,
-    "greedy_t0_em": 0.472495
+    "greedy_t0_em": 0.472495,
+    "JUDGE_selected": 0.487846,
+    "JUDGE_selected_per_seed": [
+     0.487846
+    ],
+    "JUDGE_oracle8": 0.631983,
+    "JUDGE_sel_eff": 0.77193,
+    "JUDGE_greedy_t0": 0.486994,
+    "n_seeds": 1
    }
   }
  },
  "labelling_stage_status": {
-  "verifier_score_cache_exists": false,
-  "judge_cache_entries": 97877,
-  "verifier_cache_entries": null,
+  "verifier_score_cache_exists": true,
+  "judge_cache_entries": 112656,
+  "verifier_cache_entries": 23119,
   "log_tail": [
    "[2026-08-13 13:50:50] LABEL STAGE START",
-   "[2026-08-13 13:52:45] LABEL STAGE START"
+   "[2026-08-13 13:52:45] LABEL STAGE START",
+   "[2026-08-13 14:09:48] >> verifier scoring on GPU 0 (attempt 1)",
+   "[2026-08-13 15:41:10] verifier OK",
+   "[2026-08-13 15:41:12] judge_todo = 14779 rows",
+   "[2026-08-13 15:56:14] judge attempt=1: no card with 66000 MiB in 900s",
+   "[2026-08-13 16:11:16] judge attempt=2: no card with 66000 MiB in 900s",
+   "[2026-08-13 16:26:17] judge attempt=3: no card with 66000 MiB in 900s",
+   "[2026-08-13 16:26:39] judge merged",
+   "[2026-08-13 16:26:39] LABEL STAGE DONE",
+   "[2026-08-14 03:45:56] LABEL STAGE START",
+   "[2026-08-14 03:45:56] >> verifier scoring on GPU 0 (attempt 1)",
+   "[2026-08-14 03:53:31] verifier OK",
+   "[2026-08-14 03:53:31] judge_todo = 881 rows"
   ],
   "_read": "the open half's JUDGE-labelled endpoint (selected accuracy, sel_eff, capture-recapture) exists only if both the verifier scoring and the judge pass completed. If open_generator_resolution is absent from this artifact, they did not, and the open half is reported on the exact-match secondary endpoint only."
  },
  "not_measured": {
   "energy": "no NVML power integration was run in this round.",
-  "batch-1 latency as a deployment claim": "MedEvalKit's per-item latency_s IS recorded per arm and reported, but every arm in this session ran on a card shared with another tenant, so it is context, never a latency result.",
-  "VRAM in this session": "cited from vram_levers_2026-08-12.json (same instrument, same caps, same four conventions) rather than re-measured; both cards were occupied by another tenant for the whole session and a shared-card VRAM reading is not a clean measurement.",
+  "batch-1 latency as a deployment claim": "MedEvalKit's per-item latency_s IS recorded per arm and reported, but every arm in both sessions ran on a card shared with another tenant, so it is context, never a latency result.",
+  "VRAM in this session": "CITED, NOT RE-MEASURED, from vram_levers_2026-08-12.json -- same instrument (HF transformers, bf16, flash_attention_2, tp=1, batch 1), same caps, and the same four conventions as vram_testtime_2026-08-11.json (a weights-resident / b peak-allocated / c peak-reserved / d NVML process footprint), so the rows are directly comparable. A co-tenant held 40-46 GiB for most of both sessions and a shared-card reading is not a clean measurement. The cap-vs-cap DELTAS are the load-bearing part and they come from one clean sweep on one instrument.",
   "MMMU": "excluded from the macro-8 on contamination grounds; not touched here.",
+  "a temperature-0 arm at cap80": "cap80 has sampled arms (s0, s1) but no t0 arm on disk, so the judge-labelled GREEDY resolution curve has two points (cap320 0.460554, native 0.486994), not three. The greedy question -- does resolution move a single deterministic decode -- is answered by that pair and by its exact-match twin; a cap80 greedy point would only extend the curve downward, where the SAMPLED arms already show a significant loss.",
   "the 32B's own open-text resolution curve": "not swept. The 32B-direct open comparator is at 250,880 like the generator, and moving it would move the baseline, which is a different experiment.",
-  "PMC_VQA on this session's MCQ ladder": "not run -- 33,430 items per cap under card contention. Its two-point answer already exists at full n in the 2026-07-01 pair.",
-  "PATH_VQA_closed and MedXpertQA-MM at cap320 on the MedEvalKit track": "ATTEMPTED AND BLOCKED. runners/run_resolution_mcq_ladder.sh was launched five times and OOM-killed each time by a co-tenant that grew between the free-VRAM check and the model load (logs/resolution_mcq_ladder_2026-08-13.log, 12:55:44 and 13:21:48: 'Process <foreign> has 46.62 GiB memory in use' / three processes summing to 79.0 of 79.14 GiB). It was then stopped so it would stop competing with the open-text sweep for the same cards. Consequence: the MedEvalKit-track cap320-vs-default pair covers 3 of the 5 MCQ cells (PMC-VQA, SLAKE-closed, VQA-RAD-closed) at FULL n, not 5. The two missing cells are the ones where the cap binds hardest (MedXpert: cap320 binds on 52.7% of images and cuts mean vision tokens 838.8 -> 241.0), so the measured 'cap320 costs accuracy' finding is if anything CONSERVATIVE -- but that is a prediction from geometry, not a measurement, and must not be reported as one.",
-  "SELECTED accuracy, sel_eff, the laterality stratum and the capture-recapture ceiling at each generator resolution": "[status is in labelling_stage_status] These need (a) the deployed clean disjoint LoRA verifier re-scored on the new candidate pools -- 13,302 new (item, candidate) forwards, HF batch-1-equivalent, ~21 GiB -- and (b) the project's 32B judge on the new answer strings, ~66 GiB. Both were queued behind other rounds' jobs on the two shared A100s for the whole session (both cards sat at 74-78 of 80 GiB with none of this round's processes on them). The scoring code, the seeded item order, the priority ordering and the caches are all on disk, so a later session finishes this in one command: `NULLTEST=150 VBATCH=4 bash runners/run_resolution_label.sh` then `python3 src/cascade_methods/resolution_open_analyze.py`. Until then the open half is reported on the exact-match secondary endpoint ONLY, and the decisive question -- whether the greedy gain survives into SELECTED accuracy -- is OPEN.",
-  "a second and third sampling seed at native": "native has 3 complete arms (t0, s0) against the control's 4 (t0, s0, s1, s2). Generation ran at 1.3-2.5 items/s on a shared card and the sampled-arm comparison is therefore SINGLE-SEED at native, below the 3-seed protocol. The seed-0 deltas are reported with their own paired bootstrap CI and per-seed values, never as a mean over seeds. The temperature-0 comparison is deterministic and is not affected.",
-  "the lower rungs of the open ladder (cap160, cap640, fullres)": "generation was ordered control-first (cap320, then native, then cap80) so a truncated run would still answer the question; cap160/cap640/fullres were not reached. The measured span is 62,720 -> 250,880 -> 12,845,056 px, i.e. 205x, which brackets the deployed point on both sides."
+  "PMC_VQA on this session's MCQ ladder": "not run -- 33,430 items per cap under card contention. Its two-point answer already exists at FULL n in the 2026-07-01 matched pair and is reported there.",
+  "the lower rungs of the open ladder (cap160, cap640, fullres)": "generation was ordered control-first (cap320, then native, then cap80) so a truncated run would still answer the question. Caps with a complete arm in this artifact: ['cap320', 'cap80', 'native']. The measured span 62,720 -> 250,880 -> 12,845,056 px is 205x and brackets the deployed point on both sides, which is what the question needed; the intermediate rungs would refine the curve's shape, not its verdict.",
+  "a second and third sampling seed at native": "REPORTED at 1 labelled seed(s) ['s0'] against the control's 3 ['s0', 's1', 's2'], BELOW the 3-seed protocol. The sampled-arm deltas (selected, sel_eff, oracle@8) are therefore reported with a single seed's paired item bootstrap CI and never as a mean over seeds, and native has no capture-recapture ceiling, which needs two independent seeds as capture occasions. The temperature-0 comparison is deterministic and is NOT affected by this. STATE ON DISK 2026-08-14 03:56: native s1 and s2 ARE fully generated (645/200/1500 items each) and fully verifier-scored (852 new forwards, logs/resolution_label_2026-08-13.log 'DONE 852 in 6.9 min'), but 881 of their answer strings have never been seen by the judge. The judge is a 32B model needing ~66 GiB on one card; another tenant held 26 GiB on GPU0 and 45.9 GiB on GPU1, leaving no card with enough, and no foreign process was killed to make room. Those two arms are therefore NOT entered into any table here -- an arm with unlabelled slots is biased DOWNWARD, because an unlabelled candidate is excluded from oracle@8 and counts as wrong if the verifier picks it. Finish with: `python3 src/cascade_methods/resolution_judge_cache.py build` then run_judge.py on judge_todo.jsonl (881 rows, ~2 min once a card is free) then `resolution_judge_cache.py merge`, `resolution_open_analyze.py`, `resolution_strata_ci.py`, `resolution_sweep_report.py`. NOTE they would still be SECONDARY: s1/s2 were generated 2026-08-14 at gpu_mem 0.60 while the cap320 control's s1/s2 are from 2026-08-13 at gpu_mem 0.30, so those pairs cross the +-0.008 serving-config boundary -- see open_arm_generation_provenance. Only the seed-0 pair is matched, and it is the one the headline quotes.",
+  "PATH_VQA_closed and MedXpertQA-MM at cap320 on the MedEvalKit track": "The 2026-08-13 session attributed the repeated failure here to a co-tenant OOM. That diagnosis was WRONG and is corrected: on 2026-08-14 the same job failed on an EMPTY card with vLLM's own profiler reporting 'model weights take 15.57GiB; PyTorch activation peak memory takes 17.23GiB; the rest of the memory reserved for KV Cache is -1.23GiB' -> 'No available memory for the cache blocks'. The runner's GPU_MEM_UTIL (0.30 default, 0.40 retried) simply could not fit the job's own activation peak at MAX_MODEL_LEN 16384 with --max_image_num 6, co-tenant or not. runners/run_resolution_mcq_pathvqa.sh splits the two cells by their real geometry (PATH_VQA: 1 image, px_max 1,109,658, 4096 context is ample; MedXpert: up to 6 images, 46,816 vision tokens on the worst item, genuinely needs 16384). Cells with a full-n cap320-vs-default pair in this artifact: ['PMC_VQA', 'SLAKE_closed', 'VQA_RAD_closed']. Any cell still missing is one where the cap binds HARDER than average (MedXpert cap320 binds on 52.7% of images, cutting mean vision tokens 838.8 -> 241.0), so the measured 'cutting the MCQ leg costs accuracy' finding is CONSERVATIVE -- but that is a prediction from geometry, not a measurement, and must not be reported as one.",
+  "SELECTED accuracy, sel_eff, laterality and the capture-recapture ceiling per generator resolution": "NOW MEASURED -- this was the 2026-08-13 session's single open question and it is closed. The verifier scoring (13,302 HF batch-1-equivalent forwards) completed 2026-08-13 15:41; the judge pass it was waiting on could not get a card that session and ran 2026-08-14 (14,779 new triples, judge_cache 112,656 entries, still-missing=0). Verdict in headline item 4: the greedy/oracle gain does NOT survive into selected accuracy."
  }
 }

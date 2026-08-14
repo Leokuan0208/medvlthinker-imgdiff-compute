@@ -1,0 +1,483 @@
+{
+ "title": "THE FRONTIER -- 7B inference parameters, accuracy AND cost",
+ "date": "2026-08-14",
+ "no_fabricated_numbers": true,
+ "objective": "minimum cost at parity (CLAUDE.md / current project objective), so a setting that holds accuracy and cuts compute is a WIN",
+ "cost_model": {
+  "source": "results/cascade_methods/artifacts/_resolution_parts/cost_by_resolution.json -- prefill-inclusive whole-forward FLOPs on MEASURED token geometry (src/cascade_methods/flop_ratio_derivation.forward_flops); a CPU re-costing, not a wall-clock run",
+  "flops_generator_per_candidate_cap320": 5692656676482.49,
+  "flops_generator_per_candidate_native": 11185826596922.871,
+  "flops_verifier_per_candidate_at_1003520": 12728907037179.45
+ },
+ "COST_MODEL_CORRECTION": {
+  "what_the_round_charged": "8 generator forwards + 8 VERIFIER forwards (resolution_greedy_vs_arm.py:125, arm_deployed = 8*f_gen_cap320 + 8*f_ver)",
+  "why_that_is_wrong": "the verifier scores DEDUPLICATED candidates, not slots. Evidence: feats_hidden/generator_eval_s0of2.meta.json n=4472 + generator_eval_s1of2.meta.json n=4471 = 8943 rows over 2345 questions; the frozen transfer dumps contain 18760 slots but only 8943 distinct normalized answer strings; and the sweep's own vscore cache is keyed (ds, idx, ans).",
+  "measured_distinct_per_question_deployed_pool": 3.8136460554371,
+  "overcharge_factor_on_the_deployed_arm": 1.5984728106506927,
+  "consequence": "every saving quoted against the deployed open arm is inflated, and the temperature axis moves VERIFIER cost as well as accuracy -- an effect the round did not report."
+ },
+ "settings": {
+  "T03": {
+   "params": "temperature 0.3",
+   "oracle@8": 0.5587775408670931,
+   "sel_eff": 0.8702620198422794,
+   "selected_judge": 0.4862828713574982,
+   "selected_em": 0.4771855010660981,
+   "mean_distinct_candidates": 2.182089552238806,
+   "mean_generated_tokens": 5.10136815920398,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7395348837209302,
+    "vqa_rad_open": 0.5033333333333333,
+    "pathvqa_open": 0.3751111111111111
+   },
+   "macro8_contribution": 0.004740310077519384,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 27775615057248.293,
+    "arm_flops_per_question_dedup_aware": 73316868469108.22,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.37884344540644754,
+    "arm_flops_relative_to_deployed": 0.7952298637045638
+   },
+   "d_selected_judge_seed_aware": {
+    "d": 0.0054015636105188,
+    "ci95": [
+     -0.004975124378109486,
+     0.015778251599147086
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": 0.01279317697228144,
+    "ci95": [
+     0.002985074626865647,
+     0.02260127931769723
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": -0.06979388770433548,
+    "ci95": [
+     -0.08699360341151385,
+     -0.05415422885572144
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "T05": {
+   "params": "temperature 0.5",
+   "oracle@8": 0.6012793176972282,
+   "sel_eff": 0.8092198581560284,
+   "selected_judge": 0.48656716417910445,
+   "selected_em": 0.4723525230987918,
+   "mean_distinct_candidates": 2.954513148542999,
+   "mean_generated_tokens": 5.1490227434257285,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7431524547803617,
+    "vqa_rad_open": 0.495,
+    "pathvqa_open": 0.3751111111111111
+   },
+   "macro8_contribution": 0.004150839793281659,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 37607723207928.195,
+    "arm_flops_per_question_dedup_aware": 83148976619788.12,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.45229327812289827,
+    "arm_flops_relative_to_deployed": 0.9018736168797029
+   },
+   "d_selected_judge_seed_aware": {
+    "d": 0.005685856432125047,
+    "ci95": [
+     -0.0025586353944562767,
+     0.014072494669509605
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": 0.007960199004975133,
+    "ci95": [
+     -0.0002842928216062468,
+     0.01606254442075339
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": -0.02729211087420036,
+    "ci95": [
+     -0.045344705046197586,
+     -0.010660980810234477
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "T07": {
+   "params": "temperature 0.7 (DEPLOYED)",
+   "oracle@8": 0.6285714285714286,
+   "sel_eff": 0.7650384441429218,
+   "selected_judge": 0.4808813077469794,
+   "selected_em": 0.46439232409381664,
+   "mean_distinct_candidates": 3.6652452025586353,
+   "mean_generated_tokens": 5.2693141435678745,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7385012919896641,
+    "vqa_rad_open": 0.47,
+    "pathvqa_open": 0.37155555555555553
+   },
+   "macro8_contribution": 0.0,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 46654565451836.83,
+    "arm_flops_per_question_dedup_aware": 92195818863696.75,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.5060377577513728,
+    "arm_flops_relative_to_deployed": 1.0
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "T10": {
+   "params": "temperature 1.0",
+   "oracle@8": 0.6261549395877755,
+   "sel_eff": 0.7416572077185017,
+   "selected_judge": 0.46439232409381664,
+   "selected_em": 0.4427860696517413,
+   "mean_distinct_candidates": 4.6415067519545135,
+   "mean_generated_tokens": 5.701190476190476,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7193798449612403,
+    "vqa_rad_open": 0.4666666666666667,
+    "pathvqa_open": 0.35444444444444445
+   },
+   "macro8_contribution": -0.004945736434108519,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 59081307958069.734,
+    "arm_flops_per_question_dedup_aware": 104622561369929.66,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.564709056865537,
+    "arm_flops_relative_to_deployed": 1.1347863998540404
+   },
+   "d_selected_judge_seed_aware": {
+    "d": -0.01648898365316276,
+    "ci95": [
+     -0.028571428571428525,
+     -0.005259417199715732
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": -0.021606254442075368,
+    "ci95": [
+     -0.030987917555081734,
+     -0.012508884150675192
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": -0.002416488983653098,
+    "ci95": [
+     -0.018336886993603363,
+     0.013503909026297056
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "T13": {
+   "params": "temperature 1.3",
+   "oracle@8": 0.5769722814498934,
+   "sel_eff": 0.7543729982754372,
+   "selected_judge": 0.43525230987917557,
+   "selected_em": 0.4164889836531628,
+   "mean_distinct_candidates": 5.476190476190476,
+   "mean_generated_tokens": 8.193514570007107,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7074935400516796,
+    "vqa_rad_open": 0.445,
+    "pathvqa_open": 0.3168888888888889
+   },
+   "macro8_contribution": -0.013834302325581381,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 69705919489316.03,
+    "arm_flops_per_question_dedup_aware": 115247172901175.95,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.6048384332090178,
+    "arm_flops_relative_to_deployed": 1.2500260241905174
+   },
+   "d_selected_judge_seed_aware": {
+    "d": -0.04562899786780383,
+    "ci95": [
+     -0.05899076048329782,
+     -0.032267235252309845
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": -0.04790334044065386,
+    "ci95": [
+     -0.06126865671641792,
+     -0.035110163468372424
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": -0.05159914712153513,
+    "ci95": [
+     -0.07263681592039806,
+     -0.03184079601990053
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "minp01": {
+   "params": "min_p 0.10 @ T=0.7",
+   "oracle@8": 0.6059701492537314,
+   "sel_eff": 0.8001407459535539,
+   "selected_judge": 0.48486140724946697,
+   "selected_em": 0.47405828002842926,
+   "mean_distinct_candidates": 2.979815209665956,
+   "mean_generated_tokens": 5.170593461265103,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7421188630490956,
+    "vqa_rad_open": 0.4816666666666667,
+    "pathvqa_open": 0.37466666666666665
+   },
+   "macro8_contribution": 0.002299418604651167,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 37929790791811.34,
+    "arm_flops_per_question_dedup_aware": 83471044203671.27,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.45440656881279434,
+    "arm_flops_relative_to_deployed": 0.9053669161187854
+   },
+   "d_selected_judge_seed_aware": {
+    "d": 0.003980099502487566,
+    "ci95": [
+     -0.0051172707889125535,
+     0.01321961620469081
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": 0.009665955934612613,
+    "ci95": [
+     0.0017057569296375363,
+     0.01776830135039087
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": -0.022601279317697176,
+    "ci95": [
+     -0.03638948116560048,
+     -0.010518834399431354
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "rp105": {
+   "params": "repetition_penalty 1.05 @ T=0.7",
+   "oracle@8": 0.6304193319118693,
+   "sel_eff": 0.7648252536640361,
+   "selected_judge": 0.4821606254442075,
+   "selected_em": 0.46083866382373845,
+   "mean_distinct_candidates": 3.758919687277896,
+   "mean_generated_tokens": 5.598738450604122,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7369509043927649,
+    "vqa_rad_open": 0.4766666666666667,
+    "pathvqa_open": 0.37333333333333335
+   },
+   "macro8_contribution": 0.0008617571059431686,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 47846939259583.984,
+    "arm_flops_per_question_dedup_aware": 93388192671443.9,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.5123446325588282,
+    "arm_flops_relative_to_deployed": 1.012933057295255
+   },
+   "d_selected_judge_seed_aware": {
+    "d": 0.0012793176972281106,
+    "ci95": [
+     -0.006965174129353269,
+     0.009808102345415792
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": -0.003553660270078196,
+    "ci95": [
+     -0.009808102345415792,
+     0.0025586353944563323
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": 0.0018479033404407152,
+    "ci95": [
+     -0.013788201847903303,
+     0.017626154939587746
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  },
+  "rp11": {
+   "params": "repetition_penalty 1.10 @ T=0.7",
+   "oracle@8": 0.6343994314143568,
+   "sel_eff": 0.7656285010082904,
+   "selected_judge": 0.4857142857142857,
+   "selected_em": 0.45671641791044776,
+   "mean_distinct_candidates": 3.876901208244492,
+   "mean_generated_tokens": 6.359914712153518,
+   "per_cell_selected_judge": {
+    "slake_open": 0.7348837209302326,
+    "vqa_rad_open": 0.475,
+    "pathvqa_open": 0.38
+   },
+   "macro8_contribution": 0.0012283591731266225,
+   "cost": {
+    "generator_flops_per_question": 45541253411859.92,
+    "verifier_flops_per_question_dedup_aware": 49348715072072.82,
+    "arm_flops_per_question_dedup_aware": 94889968483932.75,
+    "arm_flops_per_question_as_the_round_charged": 147372509709295.5,
+    "verifier_share_of_arm_dedup_aware": 0.5200625088249322,
+    "arm_flops_relative_to_deployed": 1.0292220368932246
+   },
+   "d_selected_judge_seed_aware": {
+    "d": 0.004832977967306307,
+    "ci95": [
+     -0.005543710021321979,
+     0.015351812366737771
+    ]
+   },
+   "d_selected_em_seed_aware": {
+    "d": -0.007675906183368886,
+    "ci95": [
+     -0.014783226723525222,
+     -0.0005685856432124936
+    ]
+   },
+   "d_oracle_seed_aware": {
+    "d": 0.0058280028429282815,
+    "ci95": [
+     -0.011656005685856452,
+     0.023880597014925398
+    ]
+   },
+   "latency_s": "NOT MEASURED -- no wall-clock instrumentation in this round",
+   "vram_gib": "NOT MEASURED for any decoding setting. Same model, same N, same max_tokens, same image cap means no mechanism for it to move, but that is an argument, not a measurement."
+  }
+ },
+ "pareto_non_dominated_on_selected_vs_arm_flops": {
+  "non_dominated": [
+   "T03",
+   "T05"
+  ],
+  "axes": "maximise SELECTED (judge, 3-seed mean); minimise dedup-aware whole-arm FLOPs per question relative to the deployed T=0.7",
+  "table": {
+   "T03": {
+    "selected_judge": 0.4862828713574982,
+    "arm_flops_rel": 0.7952298637045638
+   },
+   "T05": {
+    "selected_judge": 0.48656716417910445,
+    "arm_flops_rel": 0.9018736168797029
+   },
+   "T07": {
+    "selected_judge": 0.4808813077469794,
+    "arm_flops_rel": 1.0
+   },
+   "T10": {
+    "selected_judge": 0.46439232409381664,
+    "arm_flops_rel": 1.1347863998540404
+   },
+   "T13": {
+    "selected_judge": 0.43525230987917557,
+    "arm_flops_rel": 1.2500260241905174
+   },
+   "minp01": {
+    "selected_judge": 0.48486140724946697,
+    "arm_flops_rel": 0.9053669161187854
+   },
+   "rp105": {
+    "selected_judge": 0.4821606254442075,
+    "arm_flops_rel": 1.012933057295255
+   },
+   "rp11": {
+    "selected_judge": 0.4857142857142857,
+    "arm_flops_rel": 1.0292220368932246
+   }
+  },
+  "caveat": "dominance here is on POINT ESTIMATES. Every accuracy difference in this grid except the T>=1.0 losses has a seed-aware CI spanning zero, so the frontier's accuracy axis is not separated -- the COST axis is what actually distinguishes these points."
+ },
+ "cost_at_parity": {
+  "T03": {
+   "d_selected_judge": 0.0054015636105188,
+   "ci95": [
+    -0.004975124378109486,
+    0.015778251599147086
+   ],
+   "accuracy_verdict": "TIE (CI spans 0)",
+   "arm_flops_rel": 0.7952298637045638,
+   "compute_saving_pct": 20.477013629543617
+  },
+  "T05": {
+   "d_selected_judge": 0.005685856432125047,
+   "ci95": [
+    -0.0025586353944562767,
+    0.014072494669509605
+   ],
+   "accuracy_verdict": "TIE (CI spans 0)",
+   "arm_flops_rel": 0.9018736168797029,
+   "compute_saving_pct": 9.812638312029708
+  },
+  "T10": {
+   "d_selected_judge": -0.01648898365316276,
+   "ci95": [
+    -0.028571428571428525,
+    -0.005259417199715732
+   ],
+   "accuracy_verdict": "LOSS",
+   "arm_flops_rel": 1.1347863998540404,
+   "compute_saving_pct": -13.47863998540404
+  },
+  "T13": {
+   "d_selected_judge": -0.04562899786780383,
+   "ci95": [
+    -0.05899076048329782,
+    -0.032267235252309845
+   ],
+   "accuracy_verdict": "LOSS",
+   "arm_flops_rel": 1.2500260241905174,
+   "compute_saving_pct": -25.002602419051744
+  },
+  "minp01": {
+   "d_selected_judge": 0.003980099502487566,
+   "ci95": [
+    -0.0051172707889125535,
+    0.01321961620469081
+   ],
+   "accuracy_verdict": "TIE (CI spans 0)",
+   "arm_flops_rel": 0.9053669161187854,
+   "compute_saving_pct": 9.463308388121462
+  },
+  "rp105": {
+   "d_selected_judge": 0.0012793176972281106,
+   "ci95": [
+    -0.006965174129353269,
+    0.009808102345415792
+   ],
+   "accuracy_verdict": "TIE (CI spans 0)",
+   "arm_flops_rel": 1.012933057295255,
+   "compute_saving_pct": -1.2933057295255068
+  },
+  "rp11": {
+   "d_selected_judge": 0.004832977967306307,
+   "ci95": [
+    -0.005543710021321979,
+    0.015351812366737771
+   ],
+   "accuracy_verdict": "TIE (CI spans 0)",
+   "arm_flops_rel": 1.0292220368932246,
+   "compute_saving_pct": -2.9222036893224557
+  }
+ },
+ "cost_at_parity_note": "read this table with the objective in mind: a row that is a TIE on accuracy and below 1.0 on arm_flops_rel is a COST WIN. The saving is entirely in the verifier term -- generation cost is identical across every setting here (same N, same max_tokens, same image cap), and generated tokens are 1.2% of compute."
+}

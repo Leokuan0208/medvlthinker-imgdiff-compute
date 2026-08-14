@@ -21,6 +21,12 @@ DS = ["slake_open", "vqa_rad_open", "pathvqa_open"]
 ap = argparse.ArgumentParser()
 ap.add_argument("--include_deployed", action="store_true",
                 help="also queue the stored deployed pool (transfer-dump preds) -- NULL TEST 2")
+ap.add_argument("--judge_settings", default=None,
+                help="comma-separated setting names to queue for JUDGE labelling. Default = every "
+                     "generated pool. Scoping this matters when the grid is wide but GPU time is "
+                     "short: the judge is the expensive stage (~95k new strings for the full 14-setting "
+                     "grid), whereas EXACT-MATCH endpoints need no judge at all (oks_em is recorded at "
+                     "generation time), so an unjudged setting still reports EM coverage.")
 ap.add_argument("--verify_settings", default=None,
                 help="comma-separated setting names (e.g. T07,T13,rp11) to queue for VERIFIER scoring. "
                      "The judge always covers every generated pool, so oracle@8 / distinct / the "
@@ -35,6 +41,7 @@ A = ap.parse_args()
 pools = defaultdict(list)          # ds -> list of (idx, question, gold, [texts])  -- for the JUDGE
 vpools = defaultdict(list)         # same, restricted to --verify_settings          -- for the VERIFIER
 VS = [t.strip() for t in A.verify_settings.split(",")] if A.verify_settings else None
+JS = [t.strip() for t in A.judge_settings.split(",")] if A.judge_settings else None
 for f in sorted(glob.glob(os.path.join(SWEEP, "ckpt_*.jsonl"))):
     base = os.path.basename(f)[len("ckpt_"):-len(".jsonl")]
     ds = next((d for d in DS if base.startswith(d)), None)
@@ -47,7 +54,8 @@ for f in sorted(glob.glob(os.path.join(SWEEP, "ckpt_*.jsonl"))):
             continue
         r = json.loads(l)
         rec = (r["idx"], r["question"], r["gold"], r["preds"])
-        pools[ds].append(rec)
+        if JS is None or setting in JS:
+            pools[ds].append(rec)
         if VS is None or setting in VS:
             vpools[ds].append(rec)
 if A.include_deployed:
