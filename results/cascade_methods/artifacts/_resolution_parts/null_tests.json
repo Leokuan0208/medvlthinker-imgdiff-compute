@@ -1,0 +1,156 @@
+{
+ "N1_frozen_metric": {
+  "what": "frozen open-text endpoint recomputed from the stored deployed transfer dumps with src/training_methods/genframe_data.py",
+  "expected": {
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "n": 2345,
+   "n_recoverable": 1468,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "measured": {
+   "oracle@8": 0.6260127931769722,
+   "selected": 0.48528784648187634,
+   "greedy": 0.4494669509594883,
+   "sel_eff": 0.7752043596730245,
+   "n": 2345,
+   "n_recoverable": 1468,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "verdict": "PASS"
+ },
+ "N2_published_mcq_cells": {
+  "lingshu7b": {
+   "expected_published": {
+    "PMC_VQA": 0.5427,
+    "SLAKE_closed": 0.8254,
+    "VQA_RAD_closed": 0.7809,
+    "PATH_VQA_closed": 0.8409,
+    "MedXpertQA-MM": 0.2615
+   },
+   "measured": {
+    "PMC_VQA": {
+     "n": 33430,
+     "acc": 0.542656
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "acc": 0.825359
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "acc": 0.780876
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "acc": 0.840869
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "acc": 0.2615
+    }
+   },
+   "max_abs_deviation": 4.4e-05,
+   "verdict": "PASS"
+  },
+  "lingshu32b": {
+   "expected_published": {
+    "PMC_VQA": 0.5518,
+    "SLAKE_closed": 0.8589,
+    "VQA_RAD_closed": 0.8526,
+    "PATH_VQA_closed": 0.8891,
+    "MedXpertQA-MM": 0.3065
+   },
+   "measured": {
+    "PMC_VQA": {
+     "n": 33430,
+     "acc": 0.55178
+    },
+    "SLAKE_closed": {
+     "n": 836,
+     "acc": 0.858852
+    },
+    "VQA_RAD_closed": {
+     "n": 251,
+     "acc": 0.85259
+    },
+    "PATH_VQA_closed": {
+     "n": 3362,
+     "acc": 0.889054
+    },
+    "MedXpertQA-MM": {
+     "n": 2000,
+     "acc": 0.3065
+    }
+   },
+   "max_abs_deviation": 4.8e-05,
+   "verdict": "PASS"
+  },
+  "_what": "the 5 MCQ macro-8 cells recomputed from MedEvalKit's own per-item dumps at CAP_MAX_PIXELS unset (max_pixels 12,845,056). Reproducing the published cells to <5e-5 is what PINS the published arms to that resolution."
+ },
+ "N3_generation_path": {
+  "per_cell": {
+   "slake_open": {
+    "n_compared": 645,
+    "identical_answer_string": 637,
+    "agreement_rate": 0.987597,
+    "stored_deployed_greedy_judge_acc": 0.7302325581395349
+   },
+   "vqa_rad_open": {
+    "n_compared": 200,
+    "identical_answer_string": 195,
+    "agreement_rate": 0.975,
+    "stored_deployed_greedy_judge_acc": 0.49
+   },
+   "pathvqa_open": {
+    "n_compared": 1500,
+    "identical_answer_string": 1440,
+    "agreement_rate": 0.96,
+    "stored_deployed_greedy_judge_acc": 0.3426666666666667
+   }
+  },
+  "pooled_agreement_rate": 0.96887,
+  "_what": "this session's temperature-0 arm at the DEPLOYED cap320 against the stored deployed greedy dump. Both are run_openvqa.py's prompt, loaders and scorer at max_pixels 250,880; they differ only in vLLM version and image-processor backend (fast vs slow). The disagreement rate is the size of the serving-config shift with NO experimental variable changed, and it is why every cap-vs-cap delta in this round is taken against a control generated in THIS session."
+ },
+ "N5_what_greedy_means_in_the_published_open_pool": {
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "published_row_called_greedy_is_modal_of_8": 0.736434,
+    "true_temperature_0_decode": 0.730233,
+    "difference": -0.006202
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "published_row_called_greedy_is_modal_of_8": 0.465,
+    "true_temperature_0_decode": 0.49,
+    "difference": 0.025
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "published_row_called_greedy_is_modal_of_8": 0.324,
+    "true_temperature_0_decode": 0.342667,
+    "difference": 0.018667
+   }
+  },
+  "pooled": {
+   "n": 2345,
+   "published_row_called_greedy_is_modal_of_8": 0.449467,
+   "true_temperature_0_decode": 0.461834,
+   "difference": 0.012367
+  },
+  "_read": "this is a NAMING fact, not an error in the endpoint: sel_eff is a conditional mean over recoverable pools and does not use the greedy row at all, and selected = oracle@8 x sel_eff is unaffected. But 'greedy' in the published open cells is a best-of-8 quantity, so it must not be quoted as the model's single-decode accuracy. This round reports BOTH, under separate names (greedy_t0 and pool_modal)."
+ },
+ "N4_verifier_rescore": "not run yet"
+}

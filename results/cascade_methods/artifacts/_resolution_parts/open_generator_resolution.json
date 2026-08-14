@@ -1,0 +1,1014 @@
+{
+ "_meta": {
+  "control": "cap320",
+  "n_items": 2345,
+  "judge": "src/labeling/run_judge.py -- MedVLThinker-32B (Qwen2.5-32B backbone), text-only, the project's existing judge; labels cached by (ds, idx, normalized answer) and seeded from the stored deployed judge files, so identical answer strings carry byte-identical labels across arms.",
+  "verifier": "ckpts/train/lora_verifier_disjoint (clean disjoint LoRA), HF transformers, bf16, max_pixels 1,003,520, batch 1 -- HELD FIXED. This sweep moves the GENERATOR only.",
+  "nboot": 10000,
+  "bootstrap_seed": 20260813
+ },
+ "by_cap": {
+  "cap80": {
+   "max_pixels": 62720,
+   "vision_token_budget": 80,
+   "seeds": [
+    "s0",
+    "s1"
+   ],
+   "per_seed": {
+    "s0": {
+     "n": 2345,
+     "n_recoverable": 1399,
+     "oracle8": 0.596588,
+     "selected": 0.465245,
+     "pool_modal": 0.442217,
+     "sel_eff": 0.779843,
+     "contested_n": 867,
+     "contested_sel_eff": 0.644752,
+     "unanimous_n": 532,
+     "mean_distinct_candidates": 3.7565,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    },
+    "s1": {
+     "n": 2345,
+     "n_recoverable": 1380,
+     "oracle8": 0.588486,
+     "selected": 0.466525,
+     "pool_modal": 0.431557,
+     "sel_eff": 0.792754,
+     "contested_n": 847,
+     "contested_sel_eff": 0.662338,
+     "unanimous_n": 533,
+     "mean_distinct_candidates": 3.765,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    }
+   },
+   "mean_sd": {
+    "oracle8": {
+     "mean": 0.592537,
+     "sd": 0.005729,
+     "per_seed": [
+      0.596588,
+      0.588486
+     ]
+    },
+    "selected": {
+     "mean": 0.465885,
+     "sd": 0.000905,
+     "per_seed": [
+      0.465245,
+      0.466525
+     ]
+    },
+    "sel_eff": {
+     "mean": 0.786299,
+     "sd": 0.009129,
+     "per_seed": [
+      0.779843,
+      0.792754
+     ]
+    },
+    "pool_modal": {
+     "mean": 0.436887,
+     "sd": 0.007538,
+     "per_seed": [
+      0.442217,
+      0.431557
+     ]
+    }
+   },
+   "per_cell": {
+    "slake_open": {
+     "oracle8": {
+      "mean": 0.834884,
+      "per_seed": [
+       0.834109,
+       0.835659
+      ]
+     },
+     "selected": {
+      "mean": 0.713178,
+      "per_seed": [
+       0.711628,
+       0.714729
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.854224,
+      "per_seed": [
+       0.85316,
+       0.855288
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.716279,
+      "per_seed": [
+       0.71938,
+       0.713178
+      ]
+     }
+    },
+    "vqa_rad_open": {
+     "oracle8": {
+      "mean": 0.6,
+      "per_seed": [
+       0.605,
+       0.595
+      ]
+     },
+     "selected": {
+      "mean": 0.4375,
+      "per_seed": [
+       0.435,
+       0.44
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.729252,
+      "per_seed": [
+       0.719008,
+       0.739496
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.4,
+      "per_seed": [
+       0.4,
+       0.4
+      ]
+     }
+    },
+    "pathvqa_open": {
+     "oracle8": {
+      "mean": 0.487333,
+      "per_seed": [
+       0.493333,
+       0.481333
+      ]
+     },
+     "selected": {
+      "mean": 0.363333,
+      "per_seed": [
+       0.363333,
+       0.363333
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.745667,
+      "per_seed": [
+       0.736486,
+       0.754848
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.321667,
+      "per_seed": [
+       0.328667,
+       0.314667
+      ]
+     }
+    }
+   },
+   "identity_selected_eq_oracle_x_seleff_max_abs_err": 3.7e-07,
+   "measured_token_geometry": {
+    "slake_open": {
+     "mean_vision_tokens": 64.0,
+     "mean_prompt_tokens": 111.34,
+     "mean_gen_tokens_per_sample": 4.655,
+     "n": 645
+    },
+    "vqa_rad_open": {
+     "mean_vision_tokens": 69.89,
+     "mean_prompt_tokens": 116.72,
+     "mean_gen_tokens_per_sample": 5.44,
+     "n": 200
+    },
+    "pathvqa_open": {
+     "mean_vision_tokens": 70.98,
+     "mean_prompt_tokens": 114.51,
+     "mean_gen_tokens_per_sample": 5.54,
+     "n": 1500
+    }
+   }
+  },
+  "cap320": {
+   "max_pixels": 250880,
+   "vision_token_budget": 320,
+   "seeds": [
+    "s0",
+    "s1",
+    "s2"
+   ],
+   "per_seed": {
+    "s0": {
+     "n": 2345,
+     "n_recoverable": 1451,
+     "oracle8": 0.618763,
+     "selected": 0.482729,
+     "pool_modal": 0.453305,
+     "sel_eff": 0.780152,
+     "contested_n": 867,
+     "contested_sel_eff": 0.632065,
+     "unanimous_n": 584,
+     "mean_distinct_candidates": 3.7015,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    },
+    "s1": {
+     "n": 2345,
+     "n_recoverable": 1444,
+     "oracle8": 0.615778,
+     "selected": 0.486567,
+     "pool_modal": 0.451173,
+     "sel_eff": 0.790166,
+     "contested_n": 868,
+     "contested_sel_eff": 0.650922,
+     "unanimous_n": 576,
+     "mean_distinct_candidates": 3.7241,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    },
+    "s2": {
+     "n": 2345,
+     "n_recoverable": 1434,
+     "oracle8": 0.611514,
+     "selected": 0.479318,
+     "pool_modal": 0.446482,
+     "sel_eff": 0.783821,
+     "contested_n": 855,
+     "contested_sel_eff": 0.637427,
+     "unanimous_n": 579,
+     "mean_distinct_candidates": 3.6857,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    }
+   },
+   "mean_sd": {
+    "oracle8": {
+     "mean": 0.615352,
+     "sd": 0.003643,
+     "per_seed": [
+      0.618763,
+      0.615778,
+      0.611514
+     ]
+    },
+    "selected": {
+     "mean": 0.482871,
+     "sd": 0.003627,
+     "per_seed": [
+      0.482729,
+      0.486567,
+      0.479318
+     ]
+    },
+    "sel_eff": {
+     "mean": 0.784713,
+     "sd": 0.005066,
+     "per_seed": [
+      0.780152,
+      0.790166,
+      0.783821
+     ]
+    },
+    "pool_modal": {
+     "mean": 0.45032,
+     "sd": 0.003491,
+     "per_seed": [
+      0.453305,
+      0.451173,
+      0.446482
+     ]
+    }
+   },
+   "per_cell": {
+    "slake_open": {
+     "oracle8": {
+      "mean": 0.868734,
+      "per_seed": [
+       0.863566,
+       0.871318,
+       0.871318
+      ]
+     },
+     "selected": {
+      "mean": 0.738501,
+      "per_seed": [
+       0.741085,
+       0.742636,
+       0.731783
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.850113,
+      "per_seed": [
+       0.858169,
+       0.852313,
+       0.839858
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.738501,
+      "per_seed": [
+       0.742636,
+       0.737984,
+       0.734884
+      ]
+     }
+    },
+    "vqa_rad_open": {
+     "oracle8": {
+      "mean": 0.603333,
+      "per_seed": [
+       0.6,
+       0.6,
+       0.61
+      ]
+     },
+     "selected": {
+      "mean": 0.456667,
+      "per_seed": [
+       0.455,
+       0.46,
+       0.455
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.756967,
+      "per_seed": [
+       0.758333,
+       0.766667,
+       0.745902
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.475,
+      "per_seed": [
+       0.455,
+       0.485,
+       0.485
+      ]
+     }
+    },
+    "pathvqa_open": {
+     "oracle8": {
+      "mean": 0.508,
+      "per_seed": [
+       0.516,
+       0.508,
+       0.5
+      ]
+     },
+     "selected": {
+      "mean": 0.376444,
+      "per_seed": [
+       0.375333,
+       0.38,
+       0.374
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.74114,
+      "per_seed": [
+       0.72739,
+       0.748031,
+       0.748
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.323111,
+      "per_seed": [
+       0.328667,
+       0.323333,
+       0.317333
+      ]
+     }
+    }
+   },
+   "identity_selected_eq_oracle_x_seleff_max_abs_err": 4.85e-07,
+   "greedy_t0": {
+    "all": 0.460554,
+    "slake_open": 0.730233,
+    "vqa_rad_open": 0.485,
+    "pathvqa_open": 0.341333,
+    "_what": "temperature-0, n=1 decode, judge-labelled. NOT the same quantity as pool_modal."
+   },
+   "measured_token_geometry": {
+    "slake_open": {
+     "mean_vision_tokens": 244.04,
+     "mean_prompt_tokens": 291.38,
+     "mean_gen_tokens_per_sample": 4.692,
+     "n": 645
+    },
+    "vqa_rad_open": {
+     "mean_vision_tokens": 285.67,
+     "mean_prompt_tokens": 332.49,
+     "mean_gen_tokens_per_sample": 5.538,
+     "n": 200
+    },
+    "pathvqa_open": {
+     "mean_vision_tokens": 285.53,
+     "mean_prompt_tokens": 329.06,
+     "mean_gen_tokens_per_sample": 5.693,
+     "n": 1500
+    }
+   }
+  },
+  "native": {
+   "max_pixels": 12845056,
+   "vision_token_budget": 16384,
+   "seeds": [
+    "s0"
+   ],
+   "per_seed": {
+    "s0": {
+     "n": 2345,
+     "n_recoverable": 1482,
+     "oracle8": 0.631983,
+     "selected": 0.487846,
+     "pool_modal": 0.477612,
+     "sel_eff": 0.77193,
+     "contested_n": 879,
+     "contested_sel_eff": 0.615472,
+     "unanimous_n": 603,
+     "mean_distinct_candidates": 3.6085,
+     "coverage_of_labels": {
+      "items_missing_from_arm": 0,
+      "n_candidate_slots": 18760,
+      "slots_without_a_judge_label": 0,
+      "frac_slots_without_a_judge_label": 0.0,
+      "slots_without_a_verifier_score": 0,
+      "frac_slots_without_a_verifier_score": 0.0,
+      "RELIABLE": true,
+      "_rule": "an unlabelled slot is excluded from oracle@8 and counts as wrong if the verifier picks it, so incomplete labelling biases this arm DOWNWARD. Any arm with RELIABLE false must not be quoted as a measurement."
+     }
+    }
+   },
+   "mean_sd": {
+    "oracle8": {
+     "mean": 0.631983,
+     "sd": null,
+     "per_seed": [
+      0.631983
+     ]
+    },
+    "selected": {
+     "mean": 0.487846,
+     "sd": null,
+     "per_seed": [
+      0.487846
+     ]
+    },
+    "sel_eff": {
+     "mean": 0.77193,
+     "sd": null,
+     "per_seed": [
+      0.77193
+     ]
+    },
+    "pool_modal": {
+     "mean": 0.477612,
+     "sd": null,
+     "per_seed": [
+      0.477612
+     ]
+    }
+   },
+   "per_cell": {
+    "slake_open": {
+     "oracle8": {
+      "mean": 0.869767,
+      "per_seed": [
+       0.869767
+      ]
+     },
+     "selected": {
+      "mean": 0.747287,
+      "per_seed": [
+       0.747287
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.85918,
+      "per_seed": [
+       0.85918
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.753488,
+      "per_seed": [
+       0.753488
+      ]
+     }
+    },
+    "vqa_rad_open": {
+     "oracle8": {
+      "mean": 0.615,
+      "per_seed": [
+       0.615
+      ]
+     },
+     "selected": {
+      "mean": 0.475,
+      "per_seed": [
+       0.475
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.772358,
+      "per_seed": [
+       0.772358
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.48,
+      "per_seed": [
+       0.48
+      ]
+     }
+    },
+    "pathvqa_open": {
+     "oracle8": {
+      "mean": 0.532,
+      "per_seed": [
+       0.532
+      ]
+     },
+     "selected": {
+      "mean": 0.378,
+      "per_seed": [
+       0.378
+      ]
+     },
+     "sel_eff": {
+      "mean": 0.710526,
+      "per_seed": [
+       0.710526
+      ]
+     },
+     "pool_modal": {
+      "mean": 0.358667,
+      "per_seed": [
+       0.358667
+      ]
+     }
+    }
+   },
+   "identity_selected_eq_oracle_x_seleff_max_abs_err": 6.37e-07,
+   "greedy_t0": {
+    "all": 0.486994,
+    "slake_open": 0.747287,
+    "vqa_rad_open": 0.525,
+    "pathvqa_open": 0.37,
+    "_what": "temperature-0, n=1 decode, judge-labelled. NOT the same quantity as pool_modal."
+   },
+   "measured_token_geometry": {
+    "slake_open": {
+     "mean_vision_tokens": 671.62,
+     "mean_prompt_tokens": 718.96,
+     "mean_gen_tokens_per_sample": 4.688,
+     "n": 645
+    },
+    "vqa_rad_open": {
+     "mean_vision_tokens": 840.52,
+     "mean_prompt_tokens": 887.35,
+     "mean_gen_tokens_per_sample": 5.576,
+     "n": 200
+    },
+    "pathvqa_open": {
+     "mean_vision_tokens": 487.33,
+     "mean_prompt_tokens": 530.86,
+     "mean_gen_tokens_per_sample": 5.68,
+     "n": 1500
+    }
+   }
+  }
+ },
+ "null_test": {},
+ "capture_recapture": {
+  "cap80": {
+   "max_pixels": 62720,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "LP_reachable_share_mean": 0.841919,
+     "LP_per_pair": [
+      0.841919
+     ],
+     "observed_union_share": 0.84186,
+     "oracle8_mean": 0.834884
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "LP_reachable_share_mean": 0.610127,
+     "LP_per_pair": [
+      0.610127
+     ],
+     "observed_union_share": 0.61,
+     "oracle8_mean": 0.6
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "LP_reachable_share_mean": 0.498163,
+     "LP_per_pair": [
+      0.498163
+     ],
+     "observed_union_share": 0.498,
+     "oracle8_mean": 0.487333
+    }
+   },
+   "macro_open3_LP_ceiling": 0.65007,
+   "macro_open3_oracle8": 0.640739,
+   "_method": "Lincoln-Petersen with THIS cap's own independent generation seeds as the two capture occasions ('captured' = >=1 judged-correct answer in that seed's 8-sample pool), averaged over the 3 seed pairs. Same estimator as src/cascade_methods/coverage_diagnosis2.ceiling, which used the 8- and 16-sample pools instead. Heterogeneous per-item detection probability biases LP DOWNWARD, so it is a LOWER bound on the iid-reachable share AT THIS RESOLUTION. It is distribution-specific: the +0.0091 macro bound in the retrospective is the cap320 distribution's bound, not a universal one."
+  },
+  "cap320": {
+   "max_pixels": 250880,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "LP_reachable_share_mean": 0.87814,
+     "LP_per_pair": [
+      0.87762,
+      0.880806,
+      0.875994
+     ],
+     "observed_union_share": 0.88062,
+     "oracle8_mean": 0.868734
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "LP_reachable_share_mean": 0.616979,
+     "LP_per_pair": [
+      0.610169,
+      0.625641,
+      0.615126
+     ],
+     "observed_union_share": 0.625,
+     "oracle8_mean": 0.603333
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "LP_reachable_share_mean": 0.522603,
+     "LP_per_pair": [
+      0.523558,
+      0.528689,
+      0.515562
+     ],
+     "observed_union_share": 0.528667,
+     "oracle8_mean": 0.508
+    }
+   },
+   "macro_open3_LP_ceiling": 0.672574,
+   "macro_open3_oracle8": 0.660022,
+   "_method": "Lincoln-Petersen with THIS cap's own independent generation seeds as the two capture occasions ('captured' = >=1 judged-correct answer in that seed's 8-sample pool), averaged over the 3 seed pairs. Same estimator as src/cascade_methods/coverage_diagnosis2.ceiling, which used the 8- and 16-sample pools instead. Heterogeneous per-item detection probability biases LP DOWNWARD, so it is a LOWER bound on the iid-reachable share AT THIS RESOLUTION. It is distribution-specific: the +0.0091 macro bound in the retrospective is the cap320 distribution's bound, not a universal one."
+  }
+ },
+ "strata": {
+  "cap80": {
+   "laterality_question_or_gold": {
+    "n_items": 283,
+    "sel_eff_mean": 0.646152,
+    "sel_eff_per_seed": [
+     0.63871,
+     0.653595
+    ],
+    "oracle8_mean": 0.54417
+   },
+   "short3_not_laterality": {
+    "n_items": 1834,
+    "sel_eff_mean": 0.815555,
+    "sel_eff_per_seed": [
+     0.810924,
+     0.820187
+    ],
+    "oracle8_mean": 0.645856
+   },
+   "gold_1word": {
+    "n_items": 1329,
+    "sel_eff_mean": 0.821158,
+    "sel_eff_per_seed": [
+     0.81641,
+     0.825907
+    ],
+    "oracle8_mean": 0.729872
+   }
+  },
+  "cap320": {
+   "laterality_question_or_gold": {
+    "n_items": 283,
+    "sel_eff_mean": 0.686172,
+    "sel_eff_per_seed": [
+     0.695122,
+     0.686747,
+     0.676647
+    ],
+    "oracle8_mean": 0.585395
+   },
+   "short3_not_laterality": {
+    "n_items": 1834,
+    "sel_eff_mean": 0.81007,
+    "sel_eff_per_seed": [
+     0.80456,
+     0.816243,
+     0.809406
+    ],
+    "oracle8_mean": 0.665031
+   },
+   "gold_1word": {
+    "n_items": 1329,
+    "sel_eff_mean": 0.8162,
+    "sel_eff_per_seed": [
+     0.814257,
+     0.822222,
+     0.812121
+    ],
+    "oracle8_mean": 0.746426
+   }
+  },
+  "native": {
+   "laterality_question_or_gold": {
+    "n_items": 283,
+    "sel_eff_mean": 0.695906,
+    "sel_eff_per_seed": [
+     0.695906
+    ],
+    "oracle8_mean": 0.60424
+   },
+   "short3_not_laterality": {
+    "n_items": 1834,
+    "sel_eff_mean": 0.798717,
+    "sel_eff_per_seed": [
+     0.798717
+    ],
+    "oracle8_mean": 0.679935
+   },
+   "gold_1word": {
+    "n_items": 1329,
+    "sel_eff_mean": 0.810704,
+    "sel_eff_per_seed": [
+     0.810704
+    ],
+    "oracle8_mean": 0.759217
+   }
+  },
+  "_mask_note": "masks are built from QUESTION and GOLD only (never from the candidates), so they are ARM-INVARIANT and the same items are compared at every cap. The project's published laterality stratum (visverif_lib.strata) also ORs in the candidate texts, which would move the mask with the arm and make caps incomparable."
+ },
+ "vs_control": {
+  "cap80": {
+   "max_pixels": 62720,
+   "seeds_paired": [
+    "s0",
+    "s1"
+   ],
+   "per_metric": {
+    "oracle8": {
+     "delta_mean_over_seeds": -0.024733,
+     "delta_per_seed": [
+      -0.022175,
+      -0.027292
+     ],
+     "ci95_per_seed": [
+      [
+       -0.035394,
+       -0.008955
+      ],
+      [
+       -0.040512,
+       -0.014072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "selected": {
+     "delta_mean_over_seeds": -0.018763,
+     "delta_per_seed": [
+      -0.017484,
+      -0.020043
+     ],
+     "ci95_per_seed": [
+      [
+       -0.028571,
+       -0.006823
+      ],
+      [
+       -0.03113,
+       -0.009382
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "pool_modal": {
+     "delta_mean_over_seeds": -0.015352,
+     "delta_per_seed": [
+      -0.011087,
+      -0.019616
+     ],
+     "ci95_per_seed": [
+      [
+       -0.024307,
+       0.002132
+      ],
+      [
+       -0.032836,
+       -0.006397
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "sign_consistent": true
+    },
+    "sel_eff_on_jointly_recoverable": {
+     "delta_mean_over_seeds": -0.005024,
+     "delta_per_seed": [
+      -0.004608,
+      -0.005439
+     ],
+     "ci95_per_seed": [
+      [
+       -0.017665,
+       0.008449
+      ],
+      [
+       -0.018648,
+       0.00777
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+    }
+   },
+   "guardrail": {
+    "slake_open": {
+     "delta_selected_mean": -0.028682,
+     "per_seed": [
+      -0.029457,
+      -0.027907
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    },
+    "vqa_rad_open": {
+     "delta_selected_mean": -0.02,
+     "per_seed": [
+      -0.02,
+      -0.02
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    },
+    "pathvqa_open": {
+     "delta_selected_mean": -0.014333,
+     "per_seed": [
+      -0.012,
+      -0.016667
+     ],
+     "worse_than_control": true,
+     "within_seed_spread": false
+    }
+   },
+   "manipulation_check": {
+    "mean_pool_jaccard_vs_control": 0.571479,
+    "n_item_seed_pairs": 4690,
+    "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+   }
+  },
+  "native": {
+   "max_pixels": 12845056,
+   "seeds_paired": [
+    "s0"
+   ],
+   "per_metric": {
+    "oracle8": {
+     "delta_mean_over_seeds": 0.01322,
+     "delta_per_seed": [
+      0.01322
+     ],
+     "ci95_per_seed": [
+      [
+       0.002985,
+       0.023881
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "selected": {
+     "delta_mean_over_seeds": 0.005117,
+     "delta_per_seed": [
+      0.005117
+     ],
+     "ci95_per_seed": [
+      [
+       -0.003838,
+       0.014072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "sign_consistent": true
+    },
+    "pool_modal": {
+     "delta_mean_over_seeds": 0.024307,
+     "delta_per_seed": [
+      0.024307
+     ],
+     "ci95_per_seed": [
+      [
+       0.01322,
+       0.035821
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": true,
+     "sign_consistent": true
+    },
+    "sel_eff_on_jointly_recoverable": {
+     "delta_mean_over_seeds": -0.010799,
+     "delta_per_seed": [
+      -0.010799
+     ],
+     "ci95_per_seed": [
+      [
+       -0.022318,
+       0.00072
+      ]
+     ],
+     "all_seeds_ci_exclude_zero": false,
+     "_note": "restricted to items recoverable in BOTH arms so the conditioning set is identical; the unconditional sel_eff per arm is in by_cap."
+    }
+   },
+   "guardrail": {
+    "slake_open": {
+     "delta_selected_mean": 0.006202,
+     "per_seed": [
+      0.006202
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    },
+    "vqa_rad_open": {
+     "delta_selected_mean": 0.02,
+     "per_seed": [
+      0.02
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    },
+    "pathvqa_open": {
+     "delta_selected_mean": 0.002667,
+     "per_seed": [
+      0.002667
+     ],
+     "worse_than_control": false,
+     "within_seed_spread": true
+    }
+   },
+   "manipulation_check": {
+    "mean_pool_jaccard_vs_control": 0.691971,
+    "n_item_seed_pairs": 2345,
+    "_read": "Jaccard over the NORMALIZED answer sets of the two 8-sample pools for the same item and the same seed. 1.0 would mean the resolution change did nothing; anything well below 1.0 shows the treatment reached the candidate distribution, which is what this attack is trying to move."
+   }
+  }
+ }
+}

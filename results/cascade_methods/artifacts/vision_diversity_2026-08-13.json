@@ -1,0 +1,2975 @@
+{
+ "attack": "SWEEP 3 -- candidate diversity along the VISION axis (the varied factor is the IMAGE; prompt, temperature, top_p and max_tokens are FROZEN at the incumbent pool's values)",
+ "date": "2026-08-13",
+ "how_this_differs_from_the_killed_diverse_arm": {
+  "killed_arm": "results/cascade_methods/artifacts/open_diverse_2026-08-10.json -- a 5-PROMPT portfolio x a 3-TEMPERATURE ladder, DPP over answer strings. It varied the TEXT side and confounded prompt with temperature.",
+  "this_arm": "prompt/temperature/top_p/max_tokens held FIXED and identical to the incumbent pool (src/labeling/run_openvqa.py SYS, temp 0.7, top_p 1.0, max_tokens 64); the ONLY thing that moves is the rendered image: resolution budget, crop/tile, or a monotone intensity remap.",
+  "shared_risk": "same shape as the killed arm -- a wider pool can add confident wrong distractors that cost more sel_eff than the added coverage buys, which is exactly what killed it. That is why the within-pool control below is a pre-registered KILL CRITERION."
+ },
+ "generation_config_frozen": {
+  "system_prompt": "You are an expert medical image analyst. Answer the question with a short, specific phrase. Do not explain.",
+  "temperature": 0.7,
+  "top_p": 1.0,
+  "max_tokens": 64,
+  "k_per_view": 3,
+  "k_iid": 24,
+  "engine": "vLLM tp=1 bf16 seed 0, one session, both arms"
+ },
+ "views": {
+  "r160": {
+   "group": "resolution",
+   "max_pixels": 125440
+  },
+  "r320": {
+   "group": "base",
+   "max_pixels": 250880
+  },
+  "up640": {
+   "group": "resolution",
+   "max_pixels": 501760
+  },
+  "up1280": {
+   "group": "resolution",
+   "max_pixels": 1003520
+  },
+  "c_center": {
+   "group": "crop",
+   "max_pixels": 250880
+  },
+  "t_tl": {
+   "group": "crop",
+   "max_pixels": 250880
+  },
+  "t_tr": {
+   "group": "crop",
+   "max_pixels": 250880
+  },
+  "t_bl": {
+   "group": "crop",
+   "max_pixels": 250880
+  },
+  "t_br": {
+   "group": "crop",
+   "max_pixels": 250880
+  },
+  "p_gamma_lo": {
+   "group": "photometric",
+   "max_pixels": 250880
+  },
+  "p_gamma_hi": {
+   "group": "photometric",
+   "max_pixels": 250880
+  },
+  "p_autoc": {
+   "group": "photometric",
+   "max_pixels": 250880
+  }
+ },
+ "views_refused_and_why": {
+  "hflip": "mirroring makes 'left' the correct answer to a 'right' gold -- it manufactures confident wrong LATERALITY candidates, and laterality is the verifier's weakest stratum (0.613043). Diversity bought by destroying the label is not coverage.",
+  "vflip": "same laterality/orientation argument (superior/inferior).",
+  "rot90": "same; also changes apparent anatomy orientation in CT/MR/CXR.",
+  "hue_shift": "PathVQA is H&E histology -- stain colour IS the diagnostic signal; a hue shift is clinically meaningless. Only monotone intensity remaps (gamma/autocontrast) are kept."
+ },
+ "portfolios_preregistered": {
+  "P_mixed": [
+   "r320",
+   "up640",
+   "up1280",
+   "c_center",
+   "t_tl",
+   "t_br",
+   "p_gamma_lo",
+   "p_autoc"
+  ],
+  "P_res": [
+   "r160",
+   "r320",
+   "up640",
+   "up1280"
+  ],
+  "P_crop": [
+   "r320",
+   "c_center",
+   "t_tl",
+   "t_tr",
+   "t_bl",
+   "t_br"
+  ],
+  "P_photo": [
+   "r320",
+   "p_gamma_lo",
+   "p_gamma_hi",
+   "p_autoc"
+  ]
+ },
+ "n_items": {
+  "slake_open": 645,
+  "vqa_rad_open": 200,
+  "pathvqa_open": 1500
+ },
+ "n_total": 2345,
+ "generation_failures": {
+  "slake_open": {
+   "gen": 0,
+   "judge_unmatched": 0,
+   "score": 0
+  },
+  "vqa_rad_open": {
+   "gen": 0,
+   "judge_unmatched": 0,
+   "score": 0
+  },
+  "pathvqa_open": {
+   "gen": 0,
+   "judge_unmatched": 0,
+   "score": 0
+  }
+ },
+ "nboot": 10000,
+ "bootstrap_seed": 0,
+ "provenance": {
+  "generation_and_labelling": "2026-08-13 (runners/run_vision_diversity_2026-08-13.sh -> vision_diversity_gen.py; judge via src/labeling/run_judge.py, the project's existing MedVLThinker-32B text-only judge -- no new judge was invented; verifier scoring via vision_diversity_score.py, HF transformers, 4 shards).",
+  "analysis_rerun": "2026-08-14 03:05, OMP_NUM_THREADS=8 PYTHONHASHSEED=0, CPU only (logs/visdiv_analyze_full_2026-08-14.log).",
+  "supersedes": "an earlier write of this same path at 2026-08-13 15:04, kept verbatim at results/cascade_methods/artifacts/_visdiv_parts/vision_diversity_PARTIAL_pathvqa18_2026-08-13T1504.json. That write landed BEFORE the PathVQA verifier-scoring shard finished (17:07), so its pool was slake 645 / vqa_rad 200 / pathvqa 18 = 863 items and its PathVQA cell, its pooled numbers and its macro translation were all unusable. Every number in THIS file is on the complete 645/200/1500 = 2345 endpoint. Quote nothing from the partial.",
+  "verifier_scoring_engine": "HF transformers, bf16, flash_attention_2, batch 1, the verifier always seeing the ORIGINAL untransformed image at max_pixels 1003520. NEVER vLLM (vLLM 0.9.0.1 drops all 192 visual.* LoRA modules: 0.775204 HF vs 0.702997 vLLM).",
+  "matched_control_discipline": "the iid control and every portfolio come from ONE vLLM process, ONE serving config (tp=1, bf16, seed 0, max_model_len 4096, limit_mm_per_prompt image=1) in ONE session. No delta in this file is against a stored number from another config, so the +-0.008 open-text reproducibility caveat cannot contaminate it."
+ },
+ "null_tests": {
+  "N1_frozen_metric": {
+   "what": "reproduce every published incumbent cell from the transfer dumps with THIS session's metric code (src/training_methods/genframe_data.py)",
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7225806451612903
+    }
+   },
+   "published": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.626013,
+    "selected": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.885592,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.722581
+    }
+   },
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "verdict": "PASS",
+   "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+  },
+  "N2_base_view_equals_iid_control": {
+   "what": "view 'r320' IS the iid control's rendering (identity transform, max_pixels 250880 = the incumbent convention). Per-candidate judge accuracy must match within sampling noise.",
+   "per_ds": [
+    {
+     "ds": "slake_open",
+     "n_base_samples": 1935,
+     "n_iid_samples": 15480,
+     "base_view_percand_acc": 0.716796,
+     "iid_control_percand_acc": 0.717636,
+     "diff": -0.00084,
+     "se_of_diff": 0.010865,
+     "z": -0.077
+    },
+    {
+     "ds": "vqa_rad_open",
+     "n_base_samples": 600,
+     "n_iid_samples": 4800,
+     "base_view_percand_acc": 0.43,
+     "iid_control_percand_acc": 0.439583,
+     "diff": -0.009583,
+     "se_of_diff": 0.02146,
+     "z": -0.447
+    },
+    {
+     "ds": "pathvqa_open",
+     "n_base_samples": 4500,
+     "n_iid_samples": 36000,
+     "base_view_percand_acc": 0.295333,
+     "iid_control_percand_acc": 0.295667,
+     "diff": -0.000333,
+     "se_of_diff": 0.007214,
+     "z": -0.046
+    }
+   ],
+   "max_abs_z": 0.447,
+   "verdict": "PASS"
+  },
+  "N3_one_judge_label_per_distinct_answer": {
+   "what": "candidates are deduplicated by normalized answer across ALL views AND the iid control before judging, so a shared string carries the SAME label in both arms.",
+   "judge_rows": 41307,
+   "distinct_idx_answer_pairs": 41307,
+   "verdict": "PASS"
+  },
+  "N4_identity_selected_eq_oracle_x_sel_eff": {
+   "max_abs_error": 0.0,
+   "verdict": "PASS"
+  }
+ },
+ "arms": {
+  "iid8_s0": {
+   "name": "iid8_s0",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.875969,
+     "selected": 0.731783,
+     "sel_eff": 0.835398,
+     "mean_distinct": 2.0109,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.62,
+     "selected": 0.45,
+     "sel_eff": 0.725806,
+     "mean_distinct": 3.58,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.495333,
+     "selected": 0.366,
+     "sel_eff": 0.738896,
+     "mean_distinct": 4.6,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.610661,
+    "selected": 0.473774,
+    "sel_eff": 0.775838,
+    "mean_distinct": 3.8009,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  },
+  "iid8_s1": {
+   "name": "iid8_s1",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.874419,
+     "selected": 0.725581,
+     "sel_eff": 0.829787,
+     "mean_distinct": 2.0186,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.63,
+     "selected": 0.495,
+     "sel_eff": 0.785714,
+     "mean_distinct": 3.635,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.514667,
+     "selected": 0.37,
+     "sel_eff": 0.718912,
+     "mean_distinct": 4.592,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.623454,
+    "selected": 0.478465,
+    "sel_eff": 0.767442,
+    "mean_distinct": 3.8026,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  },
+  "iid8_s2": {
+   "name": "iid8_s2",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.886822,
+     "selected": 0.744186,
+     "sel_eff": 0.839161,
+     "mean_distinct": 2.0543,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.61,
+     "selected": 0.455,
+     "sel_eff": 0.745902,
+     "mean_distinct": 3.58,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.505333,
+     "selected": 0.376667,
+     "sel_eff": 0.745383,
+     "mean_distinct": 4.5887,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.61919,
+    "selected": 0.484435,
+    "sel_eff": 0.782369,
+    "mean_distinct": 3.8055,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  },
+  "P_mixed_s0": {
+   "name": "P_mixed_s0",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.872868,
+     "selected": 0.724031,
+     "sel_eff": 0.829485,
+     "mean_distinct": 2.5085,
+     "mean_vis_tokens": 431.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.67,
+     "selected": 0.48,
+     "sel_eff": 0.716418,
+     "mean_distinct": 4.16,
+     "mean_vis_tokens": 455.9
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.536667,
+     "selected": 0.378,
+     "sel_eff": 0.704348,
+     "mean_distinct": 5.0913,
+     "mean_vis_tokens": 455.0
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.640512,
+    "selected": 0.481876,
+    "sel_eff": 0.75233,
+    "mean_distinct": 4.3015,
+    "mean_vis_tokens_per_candidate": 448.5
+   }
+  },
+  "P_mixed_s1": {
+   "name": "P_mixed_s1",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.882171,
+     "selected": 0.717829,
+     "sel_eff": 0.813708,
+     "mean_distinct": 2.493,
+     "mean_vis_tokens": 431.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.655,
+     "selected": 0.52,
+     "sel_eff": 0.793893,
+     "mean_distinct": 4.03,
+     "mean_vis_tokens": 455.9
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.545333,
+     "selected": 0.385333,
+     "sel_eff": 0.706601,
+     "mean_distinct": 5.0853,
+     "mean_vis_tokens": 455.0
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.647335,
+    "selected": 0.488273,
+    "sel_eff": 0.754282,
+    "mean_distinct": 4.2823,
+    "mean_vis_tokens_per_candidate": 448.5
+   }
+  },
+  "P_mixed_s2": {
+   "name": "P_mixed_s2",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.882171,
+     "selected": 0.717829,
+     "sel_eff": 0.813708,
+     "mean_distinct": 2.4961,
+     "mean_vis_tokens": 431.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.665,
+     "selected": 0.47,
+     "sel_eff": 0.706767,
+     "mean_distinct": 4.09,
+     "mean_vis_tokens": 455.9
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.541333,
+     "selected": 0.383333,
+     "sel_eff": 0.708128,
+     "mean_distinct": 5.07,
+     "mean_vis_tokens": 455.0
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.645629,
+    "selected": 0.482729,
+    "sel_eff": 0.747688,
+    "mean_distinct": 4.2785,
+    "mean_vis_tokens_per_candidate": 448.5
+   }
+  },
+  "P_res_s0": {
+   "name": "P_res_s0",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.872868,
+     "selected": 0.728682,
+     "sel_eff": 0.834813,
+     "mean_distinct": 2.2543,
+     "mean_vis_tokens": 556.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.63,
+     "selected": 0.48,
+     "sel_eff": 0.761905,
+     "mean_distinct": 3.795,
+     "mean_vis_tokens": 575.0
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.534667,
+     "selected": 0.376,
+     "sel_eff": 0.703242,
+     "mean_distinct": 4.7327,
+     "mean_vis_tokens": 580.6
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.635821,
+    "selected": 0.481876,
+    "sel_eff": 0.757881,
+    "mean_distinct": 3.971,
+    "mean_vis_tokens_per_candidate": 573.4
+   }
+  },
+  "P_res_s1": {
+   "name": "P_res_s1",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.871318,
+     "selected": 0.733333,
+     "sel_eff": 0.841637,
+     "mean_distinct": 2.2636,
+     "mean_vis_tokens": 556.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.645,
+     "selected": 0.485,
+     "sel_eff": 0.751938,
+     "mean_distinct": 3.845,
+     "mean_vis_tokens": 575.0
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.544667,
+     "selected": 0.379333,
+     "sel_eff": 0.69645,
+     "mean_distinct": 4.7013,
+     "mean_vis_tokens": 580.6
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.64307,
+    "selected": 0.485714,
+    "sel_eff": 0.755305,
+    "mean_distinct": 3.9578,
+    "mean_vis_tokens_per_candidate": 573.4
+   }
+  },
+  "P_res_s2": {
+   "name": "P_res_s2",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.871318,
+     "selected": 0.72093,
+     "sel_eff": 0.827402,
+     "mean_distinct": 2.2899,
+     "mean_vis_tokens": 556.1
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.635,
+     "selected": 0.48,
+     "sel_eff": 0.755906,
+     "mean_distinct": 3.695,
+     "mean_vis_tokens": 575.0
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.538,
+     "selected": 0.381333,
+     "sel_eff": 0.708798,
+     "mean_distinct": 4.7227,
+     "mean_vis_tokens": 580.6
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.637953,
+    "selected": 0.483156,
+    "sel_eff": 0.757353,
+    "mean_distinct": 3.9659,
+    "mean_vis_tokens_per_candidate": 573.4
+   }
+  },
+  "P_crop_s0": {
+   "name": "P_crop_s0",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.874419,
+     "selected": 0.72093,
+     "sel_eff": 0.824468,
+     "mean_distinct": 2.6155,
+     "mean_vis_tokens": 277.8
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.65,
+     "selected": 0.485,
+     "sel_eff": 0.746154,
+     "mean_distinct": 4.345,
+     "mean_vis_tokens": 301.4
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.507333,
+     "selected": 0.372667,
+     "sel_eff": 0.73456,
+     "mean_distinct": 5.2633,
+     "mean_vis_tokens": 295.2
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.620469,
+    "selected": 0.478038,
+    "sel_eff": 0.770447,
+    "mean_distinct": 4.4567,
+    "mean_vis_tokens_per_candidate": 290.9
+   }
+  },
+  "P_crop_s1": {
+   "name": "P_crop_s1",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.885271,
+     "selected": 0.724031,
+     "sel_eff": 0.817863,
+     "mean_distinct": 2.6419,
+     "mean_vis_tokens": 277.8
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.645,
+     "selected": 0.47,
+     "sel_eff": 0.728682,
+     "mean_distinct": 4.33,
+     "mean_vis_tokens": 301.4
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.514,
+     "selected": 0.366667,
+     "sel_eff": 0.713359,
+     "mean_distinct": 5.2673,
+     "mean_vis_tokens": 295.2
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.627292,
+    "selected": 0.473774,
+    "sel_eff": 0.755269,
+    "mean_distinct": 4.4652,
+    "mean_vis_tokens_per_candidate": 290.9
+   }
+  },
+  "P_crop_s2": {
+   "name": "P_crop_s2",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.866667,
+     "selected": 0.725581,
+     "sel_eff": 0.837209,
+     "mean_distinct": 2.6388,
+     "mean_vis_tokens": 277.8
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.67,
+     "selected": 0.47,
+     "sel_eff": 0.701493,
+     "mean_distinct": 4.25,
+     "mean_vis_tokens": 301.4
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.521333,
+     "selected": 0.371333,
+     "sel_eff": 0.712276,
+     "mean_distinct": 5.2927,
+     "mean_vis_tokens": 295.2
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.628998,
+    "selected": 0.477186,
+    "sel_eff": 0.758644,
+    "mean_distinct": 4.4738,
+    "mean_vis_tokens_per_candidate": 290.9
+   }
+  },
+  "P_photo_s0": {
+   "name": "P_photo_s0",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.891473,
+     "selected": 0.742636,
+     "sel_eff": 0.833043,
+     "mean_distinct": 2.062,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.615,
+     "selected": 0.47,
+     "sel_eff": 0.764228,
+     "mean_distinct": 3.645,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.508667,
+     "selected": 0.372,
+     "sel_eff": 0.731324,
+     "mean_distinct": 4.7153,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.623028,
+    "selected": 0.482303,
+    "sel_eff": 0.774127,
+    "mean_distinct": 3.8942,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  },
+  "P_photo_s1": {
+   "name": "P_photo_s1",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.886822,
+     "selected": 0.734884,
+     "sel_eff": 0.828671,
+     "mean_distinct": 2.0713,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.635,
+     "selected": 0.485,
+     "sel_eff": 0.76378,
+     "mean_distinct": 3.67,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.522667,
+     "selected": 0.378,
+     "sel_eff": 0.723214,
+     "mean_distinct": 4.7013,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.632409,
+    "selected": 0.485288,
+    "sel_eff": 0.767363,
+    "mean_distinct": 3.89,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  },
+  "P_photo_s2": {
+   "name": "P_photo_s2",
+   "n": 2345,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "oracle@8": 0.87907,
+     "selected": 0.730233,
+     "sel_eff": 0.830688,
+     "mean_distinct": 2.0899,
+     "mean_vis_tokens": 244.0
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "oracle@8": 0.645,
+     "selected": 0.48,
+     "sel_eff": 0.744186,
+     "mean_distinct": 3.685,
+     "mean_vis_tokens": 285.7
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "oracle@8": 0.521333,
+     "selected": 0.376,
+     "sel_eff": 0.721228,
+     "mean_distinct": 4.6987,
+     "mean_vis_tokens": 285.5
+    }
+   },
+   "pooled": {
+    "oracle@8": 0.630277,
+    "selected": 0.482303,
+    "sel_eff": 0.765223,
+    "mean_distinct": 3.8947,
+    "mean_vis_tokens_per_candidate": 274.1
+   }
+  }
+ },
+ "arms_across_draws": {
+  "iid8": {
+   "oracle@8": {
+    "mean": 0.617768,
+    "sd": 0.006514,
+    "per_draw": [
+     0.610661,
+     0.623454,
+     0.61919
+    ]
+   },
+   "selected": {
+    "mean": 0.478891,
+    "sd": 0.005343,
+    "per_draw": [
+     0.473774,
+     0.478465,
+     0.484435
+    ]
+   },
+   "sel_eff": {
+    "mean": 0.775216,
+    "sd": 0.007483,
+    "per_draw": [
+     0.775838,
+     0.767442,
+     0.782369
+    ]
+   },
+   "mean_distinct": {
+    "mean": 3.803,
+    "sd": 0.002326,
+    "per_draw": [
+     3.8009,
+     3.8026,
+     3.8055
+    ]
+   },
+   "mean_vis_tokens_per_candidate": {
+    "mean": 274.1,
+    "sd": 0.0,
+    "per_draw": [
+     274.1,
+     274.1,
+     274.1
+    ]
+   }
+  },
+  "P_mixed": {
+   "oracle@8": {
+    "mean": 0.644492,
+    "sd": 0.003551,
+    "per_draw": [
+     0.640512,
+     0.647335,
+     0.645629
+    ]
+   },
+   "selected": {
+    "mean": 0.484293,
+    "sd": 0.003473,
+    "per_draw": [
+     0.481876,
+     0.488273,
+     0.482729
+    ]
+   },
+   "sel_eff": {
+    "mean": 0.751433,
+    "sd": 0.003387,
+    "per_draw": [
+     0.75233,
+     0.754282,
+     0.747688
+    ]
+   },
+   "mean_distinct": {
+    "mean": 4.287433,
+    "sd": 0.012329,
+    "per_draw": [
+     4.3015,
+     4.2823,
+     4.2785
+    ]
+   },
+   "mean_vis_tokens_per_candidate": {
+    "mean": 448.5,
+    "sd": 0.0,
+    "per_draw": [
+     448.5,
+     448.5,
+     448.5
+    ]
+   }
+  },
+  "P_res": {
+   "oracle@8": {
+    "mean": 0.638948,
+    "sd": 0.003726,
+    "per_draw": [
+     0.635821,
+     0.64307,
+     0.637953
+    ]
+   },
+   "selected": {
+    "mean": 0.483582,
+    "sd": 0.001954,
+    "per_draw": [
+     0.481876,
+     0.485714,
+     0.483156
+    ]
+   },
+   "sel_eff": {
+    "mean": 0.756846,
+    "sd": 0.001361,
+    "per_draw": [
+     0.757881,
+     0.755305,
+     0.757353
+    ]
+   },
+   "mean_distinct": {
+    "mean": 3.9649,
+    "sd": 0.006657,
+    "per_draw": [
+     3.971,
+     3.9578,
+     3.9659
+    ]
+   },
+   "mean_vis_tokens_per_candidate": {
+    "mean": 573.4,
+    "sd": 0.0,
+    "per_draw": [
+     573.4,
+     573.4,
+     573.4
+    ]
+   }
+  },
+  "P_crop": {
+   "oracle@8": {
+    "mean": 0.625586,
+    "sd": 0.004513,
+    "per_draw": [
+     0.620469,
+     0.627292,
+     0.628998
+    ]
+   },
+   "selected": {
+    "mean": 0.476333,
+    "sd": 0.002256,
+    "per_draw": [
+     0.478038,
+     0.473774,
+     0.477186
+    ]
+   },
+   "sel_eff": {
+    "mean": 0.761453,
+    "sd": 0.007969,
+    "per_draw": [
+     0.770447,
+     0.755269,
+     0.758644
+    ]
+   },
+   "mean_distinct": {
+    "mean": 4.465233,
+    "sd": 0.00855,
+    "per_draw": [
+     4.4567,
+     4.4652,
+     4.4738
+    ]
+   },
+   "mean_vis_tokens_per_candidate": {
+    "mean": 290.9,
+    "sd": 0.0,
+    "per_draw": [
+     290.9,
+     290.9,
+     290.9
+    ]
+   }
+  },
+  "P_photo": {
+   "oracle@8": {
+    "mean": 0.628571,
+    "sd": 0.004918,
+    "per_draw": [
+     0.623028,
+     0.632409,
+     0.630277
+    ]
+   },
+   "selected": {
+    "mean": 0.483298,
+    "sd": 0.001723,
+    "per_draw": [
+     0.482303,
+     0.485288,
+     0.482303
+    ]
+   },
+   "sel_eff": {
+    "mean": 0.768904,
+    "sd": 0.004648,
+    "per_draw": [
+     0.774127,
+     0.767363,
+     0.765223
+    ]
+   },
+   "mean_distinct": {
+    "mean": 3.892967,
+    "sd": 0.002581,
+    "per_draw": [
+     3.8942,
+     3.89,
+     3.8947
+    ]
+   },
+   "mean_vis_tokens_per_candidate": {
+    "mean": 274.1,
+    "sd": 0.0,
+    "per_draw": [
+     274.1,
+     274.1,
+     274.1
+    ]
+   }
+  }
+ },
+ "primary_contrast": {
+  "definition": "P_mixed (8 DISTINCT views x 1 sample) vs iid8 (8 samples at the BASE view), same items, same session, same serving config. Draw s is compared to iid draw s; all three draws are mutually DISJOINT in both arms.",
+  "per_draw": [
+   {
+    "contrast": "P_mixed_s0 - iid8_s0",
+    "d_oracle@8": 0.029851,
+    "d_oracle_ci95": [
+     0.015778,
+     0.044776
+    ],
+    "d_selected": 0.008102,
+    "d_selected_ci95": [
+     -0.004691,
+     0.020469
+    ],
+    "d_sel_eff": -0.023508,
+    "d_sel_eff_ci95": [
+     -0.044389,
+     -0.003177
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_mixed_s1 - iid8_s1",
+    "d_oracle@8": 0.023881,
+    "d_oracle_ci95": [
+     0.008955,
+     0.038806
+    ],
+    "d_selected": 0.009808,
+    "d_selected_ci95": [
+     -0.002132,
+     0.021748
+    ],
+    "d_sel_eff": -0.01316,
+    "d_sel_eff_ci95": [
+     -0.033185,
+     0.006899
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_mixed_s2 - iid8_s2",
+    "d_oracle@8": 0.026439,
+    "d_oracle_ci95": [
+     0.011514,
+     0.041365
+    ],
+    "d_selected": -0.001706,
+    "d_selected_ci95": [
+     -0.013646,
+     0.010661
+    ],
+    "d_sel_eff": -0.034681,
+    "d_sel_eff_ci95": [
+     -0.054555,
+     -0.014502
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   }
+  ]
+ },
+ "all_portfolios_vs_iid": {
+  "P_mixed": [
+   {
+    "contrast": "P_mixed_s0 - iid8_s0",
+    "d_oracle@8": 0.029851,
+    "d_oracle_ci95": [
+     0.015778,
+     0.044776
+    ],
+    "d_selected": 0.008102,
+    "d_selected_ci95": [
+     -0.004691,
+     0.020469
+    ],
+    "d_sel_eff": -0.023508,
+    "d_sel_eff_ci95": [
+     -0.044389,
+     -0.003177
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_mixed_s1 - iid8_s1",
+    "d_oracle@8": 0.023881,
+    "d_oracle_ci95": [
+     0.008955,
+     0.038806
+    ],
+    "d_selected": 0.009808,
+    "d_selected_ci95": [
+     -0.002132,
+     0.021748
+    ],
+    "d_sel_eff": -0.01316,
+    "d_sel_eff_ci95": [
+     -0.033185,
+     0.006899
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_mixed_s2 - iid8_s2",
+    "d_oracle@8": 0.026439,
+    "d_oracle_ci95": [
+     0.011514,
+     0.041365
+    ],
+    "d_selected": -0.001706,
+    "d_selected_ci95": [
+     -0.013646,
+     0.010661
+    ],
+    "d_sel_eff": -0.034681,
+    "d_sel_eff_ci95": [
+     -0.054555,
+     -0.014502
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   }
+  ],
+  "P_res": [
+   {
+    "contrast": "P_res_s0 - iid8_s0",
+    "d_oracle@8": 0.02516,
+    "d_oracle_ci95": [
+     0.010661,
+     0.039659
+    ],
+    "d_selected": 0.008102,
+    "d_selected_ci95": [
+     -0.003838,
+     0.020469
+    ],
+    "d_sel_eff": -0.017957,
+    "d_sel_eff_ci95": [
+     -0.038027,
+     0.001924
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_res_s1 - iid8_s1",
+    "d_oracle@8": 0.019616,
+    "d_oracle_ci95": [
+     0.004691,
+     0.034542
+    ],
+    "d_selected": 0.007249,
+    "d_selected_ci95": [
+     -0.004264,
+     0.01919
+    ],
+    "d_sel_eff": -0.012137,
+    "d_sel_eff_ci95": [
+     -0.032338,
+     0.007445
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   },
+   {
+    "contrast": "P_res_s2 - iid8_s2",
+    "d_oracle@8": 0.018763,
+    "d_oracle_ci95": [
+     0.004691,
+     0.031983
+    ],
+    "d_selected": -0.001279,
+    "d_selected_ci95": [
+     -0.012793,
+     0.010235
+    ],
+    "d_sel_eff": -0.025016,
+    "d_sel_eff_ci95": [
+     -0.044751,
+     -0.005153
+    ],
+    "selected_significant": false,
+    "oracle_significant": true
+   }
+  ],
+  "P_crop": [
+   {
+    "contrast": "P_crop_s0 - iid8_s0",
+    "d_oracle@8": 0.009808,
+    "d_oracle_ci95": [
+     -0.005544,
+     0.026013
+    ],
+    "d_selected": 0.004264,
+    "d_selected_ci95": [
+     -0.008102,
+     0.017058
+    ],
+    "d_sel_eff": -0.005391,
+    "d_sel_eff_ci95": [
+     -0.027019,
+     0.015525
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   },
+   {
+    "contrast": "P_crop_s1 - iid8_s1",
+    "d_oracle@8": 0.003838,
+    "d_oracle_ci95": [
+     -0.011514,
+     0.01919
+    ],
+    "d_selected": -0.004691,
+    "d_selected_ci95": [
+     -0.017484,
+     0.008102
+    ],
+    "d_sel_eff": -0.012173,
+    "d_sel_eff_ci95": [
+     -0.032593,
+     0.008812
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   },
+   {
+    "contrast": "P_crop_s2 - iid8_s2",
+    "d_oracle@8": 0.009808,
+    "d_oracle_ci95": [
+     -0.005117,
+     0.024733
+    ],
+    "d_selected": -0.007249,
+    "d_selected_ci95": [
+     -0.01919,
+     0.004701
+    ],
+    "d_sel_eff": -0.023725,
+    "d_sel_eff_ci95": [
+     -0.043291,
+     -0.003872
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   }
+  ],
+  "P_photo": [
+   {
+    "contrast": "P_photo_s0 - iid8_s0",
+    "d_oracle@8": 0.012367,
+    "d_oracle_ci95": [
+     -0.002132,
+     0.026866
+    ],
+    "d_selected": 0.008529,
+    "d_selected_ci95": [
+     -0.003412,
+     0.020469
+    ],
+    "d_sel_eff": -0.001711,
+    "d_sel_eff_ci95": [
+     -0.02175,
+     0.018203
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   },
+   {
+    "contrast": "P_photo_s1 - iid8_s1",
+    "d_oracle@8": 0.008955,
+    "d_oracle_ci95": [
+     -0.005544,
+     0.023028
+    ],
+    "d_selected": 0.006823,
+    "d_selected_ci95": [
+     -0.004691,
+     0.018337
+    ],
+    "d_sel_eff": -7.8e-05,
+    "d_sel_eff_ci95": [
+     -0.019929,
+     0.019743
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   },
+   {
+    "contrast": "P_photo_s2 - iid8_s2",
+    "d_oracle@8": 0.011087,
+    "d_oracle_ci95": [
+     -0.002559,
+     0.024307
+    ],
+    "d_selected": -0.002132,
+    "d_selected_ci95": [
+     -0.013646,
+     0.009382
+    ],
+    "d_sel_eff": -0.017146,
+    "d_sel_eff_ci95": [
+     -0.035828,
+     0.001867
+    ],
+    "selected_significant": false,
+    "oracle_significant": false
+   }
+  ]
+ },
+ "guardrail_per_cell": {
+  "P_mixed": {
+   "rows": [
+    {
+     "ds": "slake_open",
+     "draw": 0,
+     "n": 645,
+     "d_selected": -0.007752,
+     "d_oracle": -0.003101,
+     "d_sel_eff": -0.005913
+    },
+    {
+     "ds": "slake_open",
+     "draw": 1,
+     "n": 645,
+     "d_selected": -0.007752,
+     "d_oracle": 0.007752,
+     "d_sel_eff": -0.016079
+    },
+    {
+     "ds": "slake_open",
+     "draw": 2,
+     "n": 645,
+     "d_selected": -0.026357,
+     "d_oracle": -0.004651,
+     "d_sel_eff": -0.025453
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 0,
+     "n": 200,
+     "d_selected": 0.03,
+     "d_oracle": 0.05,
+     "d_sel_eff": -0.009388
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 1,
+     "n": 200,
+     "d_selected": 0.025,
+     "d_oracle": 0.025,
+     "d_sel_eff": 0.008179
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 2,
+     "n": 200,
+     "d_selected": 0.015,
+     "d_oracle": 0.055,
+     "d_sel_eff": -0.039135
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 0,
+     "n": 1500,
+     "d_selected": 0.012,
+     "d_oracle": 0.041334,
+     "d_sel_eff": -0.034548
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 1,
+     "n": 1500,
+     "d_selected": 0.015333,
+     "d_oracle": 0.030666,
+     "d_sel_eff": -0.012311
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 2,
+     "n": 1500,
+     "d_selected": 0.006666,
+     "d_oracle": 0.036,
+     "d_sel_eff": -0.037255
+    }
+   ],
+   "n_cell_draws_selected_negative": 3,
+   "n_cell_draws": 9
+  },
+  "P_res": {
+   "rows": [
+    {
+     "ds": "slake_open",
+     "draw": 0,
+     "n": 645,
+     "d_selected": -0.003101,
+     "d_oracle": -0.003101,
+     "d_sel_eff": -0.000585
+    },
+    {
+     "ds": "slake_open",
+     "draw": 1,
+     "n": 645,
+     "d_selected": 0.007752,
+     "d_oracle": -0.003101,
+     "d_sel_eff": 0.01185
+    },
+    {
+     "ds": "slake_open",
+     "draw": 2,
+     "n": 645,
+     "d_selected": -0.023256,
+     "d_oracle": -0.015504,
+     "d_sel_eff": -0.011759
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 0,
+     "n": 200,
+     "d_selected": 0.03,
+     "d_oracle": 0.01,
+     "d_sel_eff": 0.036099
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 1,
+     "n": 200,
+     "d_selected": -0.01,
+     "d_oracle": 0.015,
+     "d_sel_eff": -0.033776
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 2,
+     "n": 200,
+     "d_selected": 0.025,
+     "d_oracle": 0.025,
+     "d_sel_eff": 0.010004
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 0,
+     "n": 1500,
+     "d_selected": 0.01,
+     "d_oracle": 0.039334,
+     "d_sel_eff": -0.035654
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 1,
+     "n": 1500,
+     "d_selected": 0.009333,
+     "d_oracle": 0.03,
+     "d_sel_eff": -0.022462
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 2,
+     "n": 1500,
+     "d_selected": 0.004666,
+     "d_oracle": 0.032667,
+     "d_sel_eff": -0.036585
+    }
+   ],
+   "n_cell_draws_selected_negative": 3,
+   "n_cell_draws": 9
+  },
+  "P_crop": {
+   "rows": [
+    {
+     "ds": "slake_open",
+     "draw": 0,
+     "n": 645,
+     "d_selected": -0.010853,
+     "d_oracle": -0.00155,
+     "d_sel_eff": -0.01093
+    },
+    {
+     "ds": "slake_open",
+     "draw": 1,
+     "n": 645,
+     "d_selected": -0.00155,
+     "d_oracle": 0.010852,
+     "d_sel_eff": -0.011924
+    },
+    {
+     "ds": "slake_open",
+     "draw": 2,
+     "n": 645,
+     "d_selected": -0.018605,
+     "d_oracle": -0.020155,
+     "d_sel_eff": -0.001952
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 0,
+     "n": 200,
+     "d_selected": 0.035,
+     "d_oracle": 0.03,
+     "d_sel_eff": 0.020348
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 1,
+     "n": 200,
+     "d_selected": -0.025,
+     "d_oracle": 0.015,
+     "d_sel_eff": -0.057032
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 2,
+     "n": 200,
+     "d_selected": 0.015,
+     "d_oracle": 0.06,
+     "d_sel_eff": -0.044409
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 0,
+     "n": 1500,
+     "d_selected": 0.006667,
+     "d_oracle": 0.012,
+     "d_sel_eff": -0.004336
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 1,
+     "n": 1500,
+     "d_selected": -0.003333,
+     "d_oracle": -0.000667,
+     "d_sel_eff": -0.005553
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 2,
+     "n": 1500,
+     "d_selected": -0.005334,
+     "d_oracle": 0.016,
+     "d_sel_eff": -0.033107
+    }
+   ],
+   "n_cell_draws_selected_negative": 6,
+   "n_cell_draws": 9
+  },
+  "P_photo": {
+   "rows": [
+    {
+     "ds": "slake_open",
+     "draw": 0,
+     "n": 645,
+     "d_selected": 0.010853,
+     "d_oracle": 0.015504,
+     "d_sel_eff": -0.002355
+    },
+    {
+     "ds": "slake_open",
+     "draw": 1,
+     "n": 645,
+     "d_selected": 0.009303,
+     "d_oracle": 0.012403,
+     "d_sel_eff": -0.001116
+    },
+    {
+     "ds": "slake_open",
+     "draw": 2,
+     "n": 645,
+     "d_selected": -0.013953,
+     "d_oracle": -0.007752,
+     "d_sel_eff": -0.008473
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 0,
+     "n": 200,
+     "d_selected": 0.02,
+     "d_oracle": -0.005,
+     "d_sel_eff": 0.038422
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 1,
+     "n": 200,
+     "d_selected": -0.01,
+     "d_oracle": 0.005,
+     "d_sel_eff": -0.021934
+    },
+    {
+     "ds": "vqa_rad_open",
+     "draw": 2,
+     "n": 200,
+     "d_selected": 0.025,
+     "d_oracle": 0.035,
+     "d_sel_eff": -0.001716
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 0,
+     "n": 1500,
+     "d_selected": 0.006,
+     "d_oracle": 0.013334,
+     "d_sel_eff": -0.007572
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 1,
+     "n": 1500,
+     "d_selected": 0.008,
+     "d_oracle": 0.008,
+     "d_sel_eff": 0.004302
+    },
+    {
+     "ds": "pathvqa_open",
+     "draw": 2,
+     "n": 1500,
+     "d_selected": -0.000667,
+     "d_oracle": 0.016,
+     "d_sel_eff": -0.024155
+    }
+   ],
+   "n_cell_draws_selected_negative": 3,
+   "n_cell_draws": 9
+  }
+ },
+ "within_pool_control": {
+  "definition": "portfolio-8 (8 distinct views, 1 sample each) vs random-8 from the SAME 36-candidate 12-view pool, 20 seeds. Isolates the view-spread RULE from the view pool itself.",
+  "kill_rule_preregistered": "if d_selected < 0 on >= 2 of 3 cells -> report NEGATIVE and stop",
+  "per_cell": {
+   "slake_open": {
+    "n": 645,
+    "portfolio8_selected_mean": 0.719896,
+    "portfolio8_selected_sd": 0.003581,
+    "random8_from_same_viewpool_selected_mean": 0.720387,
+    "random8_selected_sd": 0.007617,
+    "d_selected": -0.000491,
+    "d_oracle": 0.004264,
+    "d_sel_eff": -0.004538,
+    "negative": true,
+    "within_seed_noise": true
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "portfolio8_selected_mean": 0.49,
+    "portfolio8_selected_sd": 0.026458,
+    "random8_from_same_viewpool_selected_mean": 0.48325,
+    "random8_selected_sd": 0.018011,
+    "d_selected": 0.00675,
+    "d_oracle": 0.010583,
+    "d_sel_eff": -0.001318,
+    "negative": false,
+    "within_seed_noise": true
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "portfolio8_selected_mean": 0.382222,
+    "portfolio8_selected_sd": 0.003791,
+    "random8_from_same_viewpool_selected_mean": 0.376967,
+    "random8_selected_sd": 0.005753,
+    "d_selected": 0.005255,
+    "d_oracle": 0.007844,
+    "d_sel_eff": -0.0006,
+    "negative": false,
+    "within_seed_noise": true
+   }
+  },
+  "n_cells_negative": 1,
+  "KILL_TRIGGERED": false,
+  "pooled": {
+   "portfolio8": {
+    "oracle@8": {
+     "mean": 0.644492,
+     "sd": 0.003551
+    },
+    "selected": {
+     "mean": 0.484293,
+     "sd": 0.003473
+    },
+    "sel_eff": {
+     "mean": 0.751433,
+     "sd": 0.003387
+    }
+   },
+   "random8_viewpool": {
+    "oracle@8": {
+     "mean": 0.637399,
+     "sd": 0.004651
+    },
+    "selected": {
+     "mean": 0.48049,
+     "sd": 0.004663
+    },
+    "sel_eff": {
+     "mean": 0.753846,
+     "sd": 0.007017
+    }
+   },
+   "random8_iidpool": {
+    "oracle@8": {
+     "mean": 0.617271,
+     "sd": 0.0039
+    },
+    "selected": {
+     "mean": 0.48177,
+     "sd": 0.003834
+    },
+    "sel_eff": {
+     "mean": 0.780494,
+     "sd": 0.005515
+    }
+   }
+  },
+  "note": "random8_iidpool is the same rule applied to the iid control pool -- it gives the seed-noise band a difference of this size has to clear."
+ },
+ "capture_recapture_ceilings": {
+  "iid_base_view (draws 0 vs 1)": {
+   "captured_A": 1432,
+   "captured_B": 1462,
+   "captured_both": 1312,
+   "captured_either": 1582,
+   "LP_reachable_share": 0.6804774039211607,
+   "observed_either_share": 0.6746268656716418
+  },
+  "P_mixed_portfolio (draws 0 vs 1)": {
+   "captured_A": 1502,
+   "captured_B": 1518,
+   "captured_both": 1362,
+   "captured_either": 1658,
+   "LP_reachable_share": 0.7138743037487203,
+   "observed_either_share": 0.7070362473347548
+  },
+  "portfolio vs iid (cross)": {
+   "captured_A": 1502,
+   "captured_B": 1432,
+   "captured_both": 1312,
+   "captured_either": 1622,
+   "LP_reachable_share": 0.6990951167507411,
+   "observed_either_share": 0.691684434968017
+  },
+  "per_cell": {
+   "slake_open": {
+    "iid": {
+     "captured_A": 565,
+     "captured_B": 564,
+     "captured_both": 541,
+     "captured_either": 588,
+     "LP_reachable_share": 0.9132098181661866,
+     "observed_either_share": 0.9116279069767442
+    },
+    "portfolio": {
+     "captured_A": 563,
+     "captured_B": 569,
+     "captured_both": 540,
+     "captured_either": 592,
+     "LP_reachable_share": 0.9197444731553258,
+     "observed_either_share": 0.9178294573643411
+    }
+   },
+   "vqa_rad_open": {
+    "iid": {
+     "captured_A": 124,
+     "captured_B": 126,
+     "captured_both": 116,
+     "captured_either": 134,
+     "LP_reachable_share": 0.6734482758620689,
+     "observed_either_share": 0.67
+    },
+    "portfolio": {
+     "captured_A": 134,
+     "captured_B": 131,
+     "captured_both": 124,
+     "captured_either": 141,
+     "LP_reachable_share": 0.7078225806451612,
+     "observed_either_share": 0.705
+    }
+   },
+   "pathvqa_open": {
+    "iid": {
+     "captured_A": 743,
+     "captured_B": 772,
+     "captured_both": 655,
+     "captured_either": 860,
+     "LP_reachable_share": 0.5838127226463105,
+     "observed_either_share": 0.5733333333333334
+    },
+    "portfolio": {
+     "captured_A": 805,
+     "captured_B": 818,
+     "captured_both": 698,
+     "captured_either": 925,
+     "LP_reachable_share": 0.6289302769818529,
+     "observed_either_share": 0.6166666666666667
+    }
+   }
+  },
+  "interpretation": "LP reachable share = the share of questions for which SOME draw of this distribution contains a correct answer, extrapolated to N=infinity. Comparing the iid row to the portfolio row answers the question the +0.0091 bound cannot: does changing the image distribution move the coverage ceiling itself?"
+ },
+ "cost": {
+  "currency": "mean vision tokens per candidate x 8 candidates; the 2026-08-11 VRAM measurement established this workload is PREFILL-BOUND and driven by vision-token count (all decode = 1.2% of compute).",
+  "per_arm": {
+   "iid8_s0": {
+    "mean_vis_tokens_per_candidate": 274.1,
+    "vis_tokens_per_question_at_N8": 2192.8,
+    "x_vs_iid8": 1.0,
+    "cost_matched_to_iid8": true
+   },
+   "P_mixed_s0": {
+    "mean_vis_tokens_per_candidate": 448.5,
+    "vis_tokens_per_question_at_N8": 3588.0,
+    "x_vs_iid8": 1.6363,
+    "cost_matched_to_iid8": false
+   },
+   "P_res_s0": {
+    "mean_vis_tokens_per_candidate": 573.4,
+    "vis_tokens_per_question_at_N8": 4587.2,
+    "x_vs_iid8": 2.0919,
+    "cost_matched_to_iid8": false
+   },
+   "P_crop_s0": {
+    "mean_vis_tokens_per_candidate": 290.9,
+    "vis_tokens_per_question_at_N8": 2327.2,
+    "x_vs_iid8": 1.0613,
+    "cost_matched_to_iid8": false
+   },
+   "P_photo_s0": {
+    "mean_vis_tokens_per_candidate": 274.1,
+    "vis_tokens_per_question_at_N8": 2192.8,
+    "x_vs_iid8": 1.0,
+    "cost_matched_to_iid8": true
+   }
+  },
+  "cost_matched_arms": [
+   "iid8_s0",
+   "P_photo_s0"
+  ],
+  "why_cost_matching_matters": "P_crop and P_photo render every view at the BASE token budget, so they are cost-matched to the iid control: a win there is attributable to DIVERSITY. P_res and P_mixed include up640/up1280 and therefore buy more vision tokens as well as more diversity -- a win there is confounded between the two, and must be read against the cost-matched arms.",
+  "caveat": "this counts the GENERATOR only. It excludes the verifier pass, which is unchanged across arms (the scorer always sees the original image at fullres) and therefore cancels in every ratio reported here."
+ },
+ "novelty_per_view": {
+  "slake_open": {
+   "iid_control_percand_acc": 0.717636,
+   "null_novelty_floor_from_base_view_r320": 0.060465,
+   "floor_note": "r320 IS the iid control's rendering; its novelty rate is what sampling noise alone produces. A view has only moved the candidate DISTRIBUTION if it clears this floor.",
+   "per_view": {
+    "r160": {
+     "group": "resolution",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.079587,
+     "acc_of_new_candidates": 0.168831,
+     "acc_of_all_candidates": 0.684238,
+     "novelty_above_sampling_floor": 0.019122,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "r320": {
+     "group": "base",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.060465,
+     "acc_of_new_candidates": 0.179487,
+     "acc_of_all_candidates": 0.716796,
+     "novelty_above_sampling_floor": 0.0,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up640": {
+     "group": "resolution",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.125581,
+     "acc_of_new_candidates": 0.304527,
+     "acc_of_all_candidates": 0.685271,
+     "novelty_above_sampling_floor": 0.065116,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up1280": {
+     "group": "resolution",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.139535,
+     "acc_of_new_candidates": 0.340741,
+     "acc_of_all_candidates": 0.689922,
+     "novelty_above_sampling_floor": 0.07907,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "c_center": {
+     "group": "crop",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.141085,
+     "acc_of_new_candidates": 0.271062,
+     "acc_of_all_candidates": 0.668734,
+     "novelty_above_sampling_floor": 0.08062,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tl": {
+     "group": "crop",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.186563,
+     "acc_of_new_candidates": 0.149584,
+     "acc_of_all_candidates": 0.628941,
+     "novelty_above_sampling_floor": 0.126098,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tr": {
+     "group": "crop",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.194315,
+     "acc_of_new_candidates": 0.148936,
+     "acc_of_all_candidates": 0.632041,
+     "novelty_above_sampling_floor": 0.13385,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_bl": {
+     "group": "crop",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.214987,
+     "acc_of_new_candidates": 0.180288,
+     "acc_of_all_candidates": 0.616021,
+     "novelty_above_sampling_floor": 0.154522,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_br": {
+     "group": "crop",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.247545,
+     "acc_of_new_candidates": 0.135699,
+     "acc_of_all_candidates": 0.578811,
+     "novelty_above_sampling_floor": 0.18708,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_lo": {
+     "group": "photometric",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.060982,
+     "acc_of_new_candidates": 0.169492,
+     "acc_of_all_candidates": 0.707494,
+     "novelty_above_sampling_floor": 0.000517,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_hi": {
+     "group": "photometric",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.062016,
+     "acc_of_new_candidates": 0.158333,
+     "acc_of_all_candidates": 0.707494,
+     "novelty_above_sampling_floor": 0.001551,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_autoc": {
+     "group": "photometric",
+     "n_candidates": 1935,
+     "share_not_in_iid24": 0.056848,
+     "acc_of_new_candidates": 0.190909,
+     "acc_of_all_candidates": 0.717313,
+     "novelty_above_sampling_floor": -0.003617,
+     "new_candidates_beat_iid_percand_acc": false
+    }
+   }
+  },
+  "vqa_rad_open": {
+   "iid_control_percand_acc": 0.439583,
+   "null_novelty_floor_from_base_view_r320": 0.17,
+   "floor_note": "r320 IS the iid control's rendering; its novelty rate is what sampling noise alone produces. A view has only moved the candidate DISTRIBUTION if it clears this floor.",
+   "per_view": {
+    "r160": {
+     "group": "resolution",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.258333,
+     "acc_of_new_candidates": 0.090323,
+     "acc_of_all_candidates": 0.376667,
+     "novelty_above_sampling_floor": 0.088333,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "r320": {
+     "group": "base",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.17,
+     "acc_of_new_candidates": 0.166667,
+     "acc_of_all_candidates": 0.43,
+     "novelty_above_sampling_floor": 0.0,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up640": {
+     "group": "resolution",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.211667,
+     "acc_of_new_candidates": 0.204724,
+     "acc_of_all_candidates": 0.465,
+     "novelty_above_sampling_floor": 0.041667,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up1280": {
+     "group": "resolution",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.216667,
+     "acc_of_new_candidates": 0.146154,
+     "acc_of_all_candidates": 0.445,
+     "novelty_above_sampling_floor": 0.046667,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "c_center": {
+     "group": "crop",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.345,
+     "acc_of_new_candidates": 0.164251,
+     "acc_of_all_candidates": 0.415,
+     "novelty_above_sampling_floor": 0.175,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tl": {
+     "group": "crop",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.44,
+     "acc_of_new_candidates": 0.087121,
+     "acc_of_all_candidates": 0.301667,
+     "novelty_above_sampling_floor": 0.27,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tr": {
+     "group": "crop",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.376667,
+     "acc_of_new_candidates": 0.066372,
+     "acc_of_all_candidates": 0.31,
+     "novelty_above_sampling_floor": 0.206667,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_bl": {
+     "group": "crop",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.353333,
+     "acc_of_new_candidates": 0.15566,
+     "acc_of_all_candidates": 0.38,
+     "novelty_above_sampling_floor": 0.183333,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_br": {
+     "group": "crop",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.365,
+     "acc_of_new_candidates": 0.105023,
+     "acc_of_all_candidates": 0.371667,
+     "novelty_above_sampling_floor": 0.195,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_lo": {
+     "group": "photometric",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.201667,
+     "acc_of_new_candidates": 0.115702,
+     "acc_of_all_candidates": 0.445,
+     "novelty_above_sampling_floor": 0.031667,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_hi": {
+     "group": "photometric",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.191667,
+     "acc_of_new_candidates": 0.165217,
+     "acc_of_all_candidates": 0.441667,
+     "novelty_above_sampling_floor": 0.021667,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_autoc": {
+     "group": "photometric",
+     "n_candidates": 600,
+     "share_not_in_iid24": 0.191667,
+     "acc_of_new_candidates": 0.156522,
+     "acc_of_all_candidates": 0.453333,
+     "novelty_above_sampling_floor": 0.021667,
+     "new_candidates_beat_iid_percand_acc": false
+    }
+   }
+  },
+  "pathvqa_open": {
+   "iid_control_percand_acc": 0.295667,
+   "null_novelty_floor_from_base_view_r320": 0.327333,
+   "floor_note": "r320 IS the iid control's rendering; its novelty rate is what sampling noise alone produces. A view has only moved the candidate DISTRIBUTION if it clears this floor.",
+   "per_view": {
+    "r160": {
+     "group": "resolution",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.365556,
+     "acc_of_new_candidates": 0.06383,
+     "acc_of_all_candidates": 0.304444,
+     "novelty_above_sampling_floor": 0.038223,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "r320": {
+     "group": "base",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.327333,
+     "acc_of_new_candidates": 0.049559,
+     "acc_of_all_candidates": 0.295333,
+     "novelty_above_sampling_floor": 0.0,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up640": {
+     "group": "resolution",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.361556,
+     "acc_of_new_candidates": 0.075599,
+     "acc_of_all_candidates": 0.312222,
+     "novelty_above_sampling_floor": 0.034223,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "up1280": {
+     "group": "resolution",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.371111,
+     "acc_of_new_candidates": 0.083234,
+     "acc_of_all_candidates": 0.313556,
+     "novelty_above_sampling_floor": 0.043778,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "c_center": {
+     "group": "crop",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.430667,
+     "acc_of_new_candidates": 0.063983,
+     "acc_of_all_candidates": 0.266,
+     "novelty_above_sampling_floor": 0.103334,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tl": {
+     "group": "crop",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.487556,
+     "acc_of_new_candidates": 0.04649,
+     "acc_of_all_candidates": 0.228889,
+     "novelty_above_sampling_floor": 0.160223,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_tr": {
+     "group": "crop",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.490222,
+     "acc_of_new_candidates": 0.05893,
+     "acc_of_all_candidates": 0.247556,
+     "novelty_above_sampling_floor": 0.162889,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_bl": {
+     "group": "crop",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.495556,
+     "acc_of_new_candidates": 0.044843,
+     "acc_of_all_candidates": 0.221778,
+     "novelty_above_sampling_floor": 0.168223,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "t_br": {
+     "group": "crop",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.502889,
+     "acc_of_new_candidates": 0.057004,
+     "acc_of_all_candidates": 0.238667,
+     "novelty_above_sampling_floor": 0.175556,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_lo": {
+     "group": "photometric",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.350889,
+     "acc_of_new_candidates": 0.065864,
+     "acc_of_all_candidates": 0.293778,
+     "novelty_above_sampling_floor": 0.023556,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_gamma_hi": {
+     "group": "photometric",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.355333,
+     "acc_of_new_candidates": 0.060663,
+     "acc_of_all_candidates": 0.289333,
+     "novelty_above_sampling_floor": 0.028,
+     "new_candidates_beat_iid_percand_acc": false
+    },
+    "p_autoc": {
+     "group": "photometric",
+     "n_candidates": 4500,
+     "share_not_in_iid24": 0.361556,
+     "acc_of_new_candidates": 0.066994,
+     "acc_of_all_candidates": 0.294,
+     "novelty_above_sampling_floor": 0.034223,
+     "new_candidates_beat_iid_percand_acc": false
+    }
+   }
+  }
+ },
+ "laterality_endpoint": {
+  "why": "the dedicated mechanism endpoint: laterality is the incumbent verifier's weakest stratum (sel_eff 0.613043 vs 0.817186 on short non-laterality items, artifacts/vision_verifier_2026-08-12.json) and it is a SPATIAL-PERCEPTION failure, so if image-side diversity works anywhere it should work here first.",
+  "mask_definition": "question OR gold OR any pooled candidate matches visverif_lib.LATERAL",
+  "per_draw": [
+   {
+    "stratum": "laterality",
+    "n": 643,
+    "n_recoverable_portfolio": 328,
+    "n_recoverable_iid": 323,
+    "portfolio_oracle": 0.510109,
+    "iid_oracle": 0.502333,
+    "portfolio_sel_eff": 0.631098,
+    "iid_sel_eff": 0.634675,
+    "portfolio_selected": 0.321928,
+    "iid_selected": 0.318818,
+    "d_sel_eff": -0.003577,
+    "d_sel_eff_ci95": [
+     -0.053429,
+     0.048023
+    ],
+    "d_selected": 0.00311,
+    "d_selected_ci95": [
+     -0.023328,
+     0.029549
+    ]
+   },
+   {
+    "stratum": "laterality",
+    "n": 643,
+    "n_recoverable_portfolio": 343,
+    "n_recoverable_iid": 336,
+    "portfolio_oracle": 0.533437,
+    "iid_oracle": 0.522551,
+    "portfolio_sel_eff": 0.64723,
+    "iid_sel_eff": 0.613095,
+    "portfolio_selected": 0.345257,
+    "iid_selected": 0.320373,
+    "d_sel_eff": 0.034135,
+    "d_sel_eff_ci95": [
+     -0.016236,
+     0.085251
+    ],
+    "d_selected": 0.024883,
+    "d_selected_ci95": [
+     -0.001555,
+     0.051322
+    ]
+   },
+   {
+    "stratum": "laterality",
+    "n": 643,
+    "n_recoverable_portfolio": 332,
+    "n_recoverable_iid": 323,
+    "portfolio_oracle": 0.51633,
+    "iid_oracle": 0.502333,
+    "portfolio_sel_eff": 0.626506,
+    "iid_sel_eff": 0.628483,
+    "portfolio_selected": 0.323484,
+    "iid_selected": 0.315708,
+    "d_sel_eff": -0.001977,
+    "d_sel_eff_ci95": [
+     -0.04863,
+     0.045362
+    ],
+    "d_selected": 0.007776,
+    "d_selected_ci95": [
+     -0.015552,
+     0.032659
+    ]
+   }
+  ],
+  "non_laterality_per_draw": [
+   {
+    "stratum": "not_laterality",
+    "n": 1702,
+    "n_recoverable_portfolio": 1174,
+    "n_recoverable_iid": 1109,
+    "portfolio_oracle": 0.689777,
+    "iid_oracle": 0.651586,
+    "portfolio_sel_eff": 0.786201,
+    "iid_sel_eff": 0.816952,
+    "portfolio_selected": 0.542303,
+    "iid_selected": 0.532315,
+    "d_sel_eff": -0.030751,
+    "d_sel_eff_ci95": [
+     -0.052698,
+     -0.009445
+    ],
+    "d_selected": 0.009988,
+    "d_selected_ci95": [
+     -0.004113,
+     0.024089
+    ]
+   },
+   {
+    "stratum": "not_laterality",
+    "n": 1702,
+    "n_recoverable_portfolio": 1175,
+    "n_recoverable_iid": 1126,
+    "portfolio_oracle": 0.690364,
+    "iid_oracle": 0.661575,
+    "portfolio_sel_eff": 0.785532,
+    "iid_sel_eff": 0.813499,
+    "portfolio_selected": 0.542303,
+    "iid_selected": 0.53819,
+    "d_sel_eff": -0.027967,
+    "d_sel_eff_ci95": [
+     -0.04917,
+     -0.007025
+    ],
+    "d_selected": 0.004113,
+    "d_selected_ci95": [
+     -0.008813,
+     0.017039
+    ]
+   },
+   {
+    "stratum": "not_laterality",
+    "n": 1702,
+    "n_recoverable_portfolio": 1182,
+    "n_recoverable_iid": 1129,
+    "portfolio_oracle": 0.694477,
+    "iid_oracle": 0.663337,
+    "portfolio_sel_eff": 0.781726,
+    "iid_sel_eff": 0.826395,
+    "portfolio_selected": 0.542891,
+    "iid_selected": 0.548179,
+    "d_sel_eff": -0.044669,
+    "d_sel_eff_ci95": [
+     -0.066381,
+     -0.022423
+    ],
+    "d_selected": -0.005288,
+    "d_selected_ci95": [
+     -0.019389,
+     0.00824
+    ]
+   }
+  ],
+  "short_gold_per_draw": [
+   {
+    "stratum": "gold_<=3_words",
+    "n": 2029,
+    "n_recoverable_portfolio": 1402,
+    "n_recoverable_iid": 1347,
+    "portfolio_oracle": 0.690981,
+    "iid_oracle": 0.663874,
+    "portfolio_sel_eff": 0.772468,
+    "iid_sel_eff": 0.793615,
+    "portfolio_selected": 0.53376,
+    "iid_selected": 0.526861,
+    "d_sel_eff": -0.021148,
+    "d_sel_eff_ci95": [
+     -0.041161,
+     -0.001348
+    ],
+    "d_selected": 0.0069,
+    "d_selected_ci95": [
+     -0.0069,
+     0.020207
+    ]
+   },
+   {
+    "stratum": "gold_<=3_words",
+    "n": 2029,
+    "n_recoverable_portfolio": 1413,
+    "n_recoverable_iid": 1368,
+    "portfolio_oracle": 0.696402,
+    "iid_oracle": 0.674224,
+    "portfolio_sel_eff": 0.772824,
+    "iid_sel_eff": 0.785088,
+    "portfolio_selected": 0.538196,
+    "iid_selected": 0.529325,
+    "d_sel_eff": -0.012264,
+    "d_sel_eff_ci95": [
+     -0.032753,
+     0.007488
+    ],
+    "d_selected": 0.008871,
+    "d_selected_ci95": [
+     -0.003943,
+     0.021686
+    ]
+   },
+   {
+    "stratum": "gold_<=3_words",
+    "n": 2029,
+    "n_recoverable_portfolio": 1410,
+    "n_recoverable_iid": 1359,
+    "portfolio_oracle": 0.694924,
+    "iid_oracle": 0.669788,
+    "portfolio_sel_eff": 0.766667,
+    "iid_sel_eff": 0.799853,
+    "portfolio_selected": 0.532775,
+    "iid_selected": 0.535732,
+    "d_sel_eff": -0.033186,
+    "d_sel_eff_ci95": [
+     -0.052917,
+     -0.013276
+    ],
+    "d_selected": -0.002957,
+    "d_selected_ci95": [
+     -0.015771,
+     0.009857
+    ]
+   }
+  ]
+ },
+ "published_resolution_provenance": {
+  "question": "what image resolution do the published cells actually use?",
+  "answer": "NOT one resolution. Three different conventions coexist, and the open-text generator is 4x LOWER than the verifier that scores its own candidates.",
+  "table": {
+   "MCQ cells (the faithful MedEvalKit numbers: PMC_VQA, SLAKE-closed, VQA_RAD-closed, PathVQA-closed, MedXpertQA-MM)": {
+    "resolution": "NATIVE / uncapped",
+    "evidence": "MedEvalKit/models/Qwen2_5_VL/Qwen2_5_VL_vllm.py:51-54 -- max_pixels is set only when the env var CAP_MAX_PIXELS is non-zero; it is unset in the faithful runs, so no cap is applied."
+   },
+   "open-text 7B greedy AND the 8-sample pool (the n=2345 endpoint)": {
+    "resolution": "cap320 (max_pixels = 1280*28*28/4 = 250880)",
+    "evidence": "src/labeling/run_openvqa.py:61 sets --cap default 'cap320'; runners/run_openvqa_lingshu7b.sh and runners/run_verifier_disjoint_retrain.sh:67 pass no --cap override."
+   },
+   "open-text 32B-direct": {
+    "resolution": "cap320 (same default)",
+    "evidence": "runners/run_openvqa_lingshu.sh -- no --cap override."
+   },
+   "MCQ-as-generation pools (ckpts/mcq_gen_verify/*)": {
+    "resolution": "cap320",
+    "evidence": "runners/run_ugv_mcq_batch.sh:12 COMMON=... --cap cap320; runners/run_ugv_experiments.sh likewise."
+   },
+   "the LoRA verifier that SCORES those candidates": {
+    "resolution": "fullres (max_pixels = 1280*28*28 = 1003520) -- 4x the generator",
+    "evidence": "src/training_methods/verifier_transfer_eval.py:20 MAXPX=1280*28*28, hardcoded, no cap flag. Same in src/cascade_methods/open_diverse_score.py:39."
+   },
+   "the hidden-state feature cache (feats_hidden/)": {
+    "resolution": "fullres",
+    "evidence": "src/training_methods/extract_generator_hidden.py:48 HIGH_PX."
+   },
+   "the 32B acc_gen arms": {
+    "resolution": "MIXED within one runner: nothink_cap320, nothink_fullres and think_fullres all exist",
+    "evidence": "runners/run_lingshu_32b_phase2.sh:7-9."
+   }
+  },
+  "measured_native_token_statistics_this_session": {
+   "slake_open": {
+    "n": 645,
+    "vis_tokens_at_cap320_median": 289.0,
+    "vis_tokens_at_cap160_median": 144.0,
+    "share_of_items_where_cap320_binds": 1.0
+   },
+   "vqa_rad_open": {
+    "n": 200,
+    "vis_tokens_at_cap320_median": 300.0,
+    "vis_tokens_at_cap160_median": 144.0,
+    "share_of_items_where_cap320_binds": 1.0
+   },
+   "pathvqa_open": {
+    "n": 1500,
+    "vis_tokens_at_cap320_median": 294.0,
+    "vis_tokens_at_cap160_median": 150.0,
+    "share_of_items_where_cap320_binds": 1.0
+   }
+  },
+  "why_it_matters": "cap320 caps the frame at 320 vision tokens. Measured native medians this session: SLAKE 334, PathVQA 533, VQA-RAD 754 -- so the cap is discarding real pixels on PathVQA and VQA-RAD in particular, and the verifier is nonetheless allowed to look at 4x more of the image than the generator that produced the answer. Nobody chose this: cap320 was chosen on COST, and the verifier scripts simply never had a cap flag.",
+  "status": "REPORTED AS A PROVENANCE FINDING. This sweep does not re-run the published arms, so it does not measure what unifying the resolution would do to them."
+ },
+ "macro_translation": {
+  "reference": {
+   "always_7b": {
+    "per_cell": {
+     "PMC_VQA": 0.5426562967394556,
+     "SLAKE_closed": 0.8253588516746412,
+     "VQA_RAD_closed": 0.7808764940239044,
+     "PATH_VQA_closed": 0.8408685306365259,
+     "MedXpertQA-MM": 0.2615,
+     "SLAKE_open": 0.7364341085271318,
+     "VQA_RAD_open": 0.465,
+     "PATH_VQA_open": 0.324
+    },
+    "macro": 0.5970867852002073
+   },
+   "always_32b_direct": {
+    "per_cell": {
+     "PMC_VQA": 0.5517798384684415,
+     "SLAKE_closed": 0.8588516746411483,
+     "VQA_RAD_closed": 0.852589641434263,
+     "PATH_VQA_closed": 0.8890541344437835,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.8186046511627907,
+     "VQA_RAD_open": 0.6,
+     "PATH_VQA_open": 0.376
+    },
+    "macro": 0.6566724925188034
+   },
+   "gap": 0.05958570731859614
+  },
+  "note": "MCQ cells are held at always-7B in this translation, so these macro values are NOT the deployed cascade's macro -- they isolate what the open-text arm contributes. Compare rows to each other, never to the 0.6567 headline.",
+  "P_mixed_s0": {
+   "macro": 0.6041613976033081,
+   "per_cell": {
+    "SLAKE_open": 0.724031007751938,
+    "VQA_RAD_open": 0.48,
+    "PATH_VQA_open": 0.378,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "P_mixed_s1": {
+   "macro": 0.6093028704715252,
+   "per_cell": {
+    "SLAKE_open": 0.7178294573643411,
+    "VQA_RAD_open": 0.52,
+    "PATH_VQA_open": 0.38533333333333336,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "P_mixed_s2": {
+   "macro": 0.6028028704715251,
+   "per_cell": {
+    "SLAKE_open": 0.7178294573643411,
+    "VQA_RAD_open": 0.47,
+    "PATH_VQA_open": 0.38333333333333336,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "iid8_s0": {
+   "macro": 0.5998803898513702,
+   "per_cell": {
+    "SLAKE_open": 0.7317829457364341,
+    "VQA_RAD_open": 0.45,
+    "PATH_VQA_open": 0.366,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "iid8_s1": {
+   "macro": 0.6052301960529205,
+   "per_cell": {
+    "SLAKE_open": 0.7255813953488373,
+    "VQA_RAD_open": 0.495,
+    "PATH_VQA_open": 0.37,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "iid8_s2": {
+   "macro": 0.6033891107816027,
+   "per_cell": {
+    "SLAKE_open": 0.7441860465116279,
+    "VQA_RAD_open": 0.455,
+    "PATH_VQA_open": 0.37666666666666665,
+    "PMC_VQA": 0.5426562967394556,
+    "SLAKE_closed": 0.8253588516746412,
+    "VQA_RAD_closed": 0.7808764940239044,
+    "PATH_VQA_closed": 0.8408685306365259,
+    "MedXpertQA-MM": 0.2615
+   }
+  },
+  "portfolio_minus_iid_per_draw": [
+   {
+    "d_macro": 0.0042810077519379805,
+    "d_macro_ci": [
+     -0.002584350775193809,
+     0.01106686046511627
+    ],
+    "nboot": 10000,
+    "seed": 0
+   },
+   {
+    "d_macro": 0.004072674418604656,
+    "d_macro_ci": [
+     -0.0028798449612403095,
+     0.010996220930232559
+    ],
+    "nboot": 10000,
+    "seed": 0
+   },
+   {
+    "d_macro": -0.000586240310077514,
+    "d_macro_ci": [
+     -0.006337257751937987,
+     0.005301768410852707
+    ],
+    "nboot": 10000,
+    "seed": 0
+   }
+  ]
+ },
+ "mechanism": {
+  "the_question": "vision-side diversity DOES move the candidate distribution and DOES raise oracle@8 significantly. Why does none of it reach SELECTED?",
+  "answer_1_every_new_candidate_stream_is_worse_than_the_base_stream": {
+   "n_view_cells_whose_NEW_candidates_beat_the_iid_per_candidate_accuracy": "0 of 33",
+   "read": "across all 11 non-base views x 3 cells, NOT ONE produced novel answers that are as accurate as the base view's own samples. Image-side diversity buys coverage by adding candidates that are individually much more likely to be wrong, which is precisely what a fixed scorer has to absorb.",
+   "per_view_cell": [
+    {
+     "ds": "slake_open",
+     "view": "r160",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.019122,
+     "acc_of_new_candidates": 0.168831,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.548805
+    },
+    {
+     "ds": "slake_open",
+     "view": "up640",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.065116,
+     "acc_of_new_candidates": 0.304527,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.413109
+    },
+    {
+     "ds": "slake_open",
+     "view": "up1280",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.07907,
+     "acc_of_new_candidates": 0.340741,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.376895
+    },
+    {
+     "ds": "slake_open",
+     "view": "c_center",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.08062,
+     "acc_of_new_candidates": 0.271062,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.446574
+    },
+    {
+     "ds": "slake_open",
+     "view": "t_tl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.126098,
+     "acc_of_new_candidates": 0.149584,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.568052
+    },
+    {
+     "ds": "slake_open",
+     "view": "t_tr",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.13385,
+     "acc_of_new_candidates": 0.148936,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.5687
+    },
+    {
+     "ds": "slake_open",
+     "view": "t_bl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.154522,
+     "acc_of_new_candidates": 0.180288,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.537348
+    },
+    {
+     "ds": "slake_open",
+     "view": "t_br",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.18708,
+     "acc_of_new_candidates": 0.135699,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.581937
+    },
+    {
+     "ds": "slake_open",
+     "view": "p_gamma_lo",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.000517,
+     "acc_of_new_candidates": 0.169492,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.548144
+    },
+    {
+     "ds": "slake_open",
+     "view": "p_gamma_hi",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.001551,
+     "acc_of_new_candidates": 0.158333,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.559303
+    },
+    {
+     "ds": "slake_open",
+     "view": "p_autoc",
+     "group": "photometric",
+     "novelty_above_sampling_floor": -0.003617,
+     "acc_of_new_candidates": 0.190909,
+     "iid_percand_acc": 0.717636,
+     "new_minus_iid_percand_acc": -0.526727
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "r160",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.088333,
+     "acc_of_new_candidates": 0.090323,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.34926
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "up640",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.041667,
+     "acc_of_new_candidates": 0.204724,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.234859
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "up1280",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.046667,
+     "acc_of_new_candidates": 0.146154,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.293429
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "c_center",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.175,
+     "acc_of_new_candidates": 0.164251,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.275332
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "t_tl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.27,
+     "acc_of_new_candidates": 0.087121,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.352462
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "t_tr",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.206667,
+     "acc_of_new_candidates": 0.066372,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.373211
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "t_bl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.183333,
+     "acc_of_new_candidates": 0.15566,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.283923
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "t_br",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.195,
+     "acc_of_new_candidates": 0.105023,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.33456
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "p_gamma_lo",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.031667,
+     "acc_of_new_candidates": 0.115702,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.323881
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "p_gamma_hi",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.021667,
+     "acc_of_new_candidates": 0.165217,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.274366
+    },
+    {
+     "ds": "vqa_rad_open",
+     "view": "p_autoc",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.021667,
+     "acc_of_new_candidates": 0.156522,
+     "iid_percand_acc": 0.439583,
+     "new_minus_iid_percand_acc": -0.283061
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "r160",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.038223,
+     "acc_of_new_candidates": 0.06383,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.231837
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "up640",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.034223,
+     "acc_of_new_candidates": 0.075599,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.220068
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "up1280",
+     "group": "resolution",
+     "novelty_above_sampling_floor": 0.043778,
+     "acc_of_new_candidates": 0.083234,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.212433
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "c_center",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.103334,
+     "acc_of_new_candidates": 0.063983,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.231684
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "t_tl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.160223,
+     "acc_of_new_candidates": 0.04649,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.249177
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "t_tr",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.162889,
+     "acc_of_new_candidates": 0.05893,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.236737
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "t_bl",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.168223,
+     "acc_of_new_candidates": 0.044843,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.250824
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "t_br",
+     "group": "crop",
+     "novelty_above_sampling_floor": 0.175556,
+     "acc_of_new_candidates": 0.057004,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.238663
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "p_gamma_lo",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.023556,
+     "acc_of_new_candidates": 0.065864,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.229803
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "p_gamma_hi",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.028,
+     "acc_of_new_candidates": 0.060663,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.235004
+    },
+    {
+     "ds": "pathvqa_open",
+     "view": "p_autoc",
+     "group": "photometric",
+     "novelty_above_sampling_floor": 0.034223,
+     "acc_of_new_candidates": 0.066994,
+     "iid_percand_acc": 0.295667,
+     "new_minus_iid_percand_acc": -0.228673
+    }
+   ]
+  },
+  "answer_2_novelty_and_quality_trade_off_by_view_group": {
+   "by_group": {
+    "resolution": {
+     "n_view_cells": 9,
+     "mean_novelty_above_sampling_floor": 0.050689,
+     "mean_acc_of_new_candidates": 0.164218,
+     "mean_new_minus_iid_percand_acc": -0.320077
+    },
+    "crop": {
+     "n_view_cells": 15,
+     "mean_novelty_above_sampling_floor": 0.165493,
+     "mean_acc_of_new_candidates": 0.115683,
+     "mean_new_minus_iid_percand_acc": -0.368612
+    },
+    "photometric": {
+     "n_view_cells": 9,
+     "mean_novelty_above_sampling_floor": 0.017692,
+     "mean_acc_of_new_candidates": 0.127744,
+     "mean_new_minus_iid_percand_acc": -0.356551
+    }
+   },
+   "read": "CROP views move the distribution most (highest novelty above the sampling floor) and produce the WORST new candidates; RESOLUTION views move it less and produce the best new candidates; PHOTOMETRIC views barely move it at all -- on SLAKE, autocontrast is BELOW the base view's own sampling-noise floor. The portfolio built purely from crops (P_crop) is the only arm with a NEGATIVE mean d_selected, and it is the most diverse arm in the sweep."
+  },
+  "answer_3_the_conversion_arithmetic": {
+   "mean_d_oracle@8_P_mixed_vs_iid8": 0.026724,
+   "mean_d_selected_P_mixed_vs_iid8": 0.005401,
+   "realised_conversion_of_the_oracle_gain": 0.2021,
+   "project_measured_marginal_conversion_of_newly_covered_questions": "0.447 [0.368, 0.526] (artifacts/coverage_diagnosis2_2026-08-10.json)",
+   "read": "the oracle gain converts at well under the project's own 0.447 marginal rate, because this coverage was not bought by resampling the same distribution -- it was bought by adding a lower-quality stream, so the sel_eff loss (-0.023783) eats it. selected = oracle@8 x sel_eff is exact, and both factors moved."
+  },
+  "answer_4_the_confound_free_control_says_the_SPREAD_RULE_is_not_the_lever": {
+   "portfolio8_minus_random8_from_the_same_12_view_pool_selected": 0.003803000000000001,
+   "random8_viewpool_minus_random8_iidpool_selected": -0.0012800000000000034,
+   "read": "deliberately spreading over views beats drawing 8 at random from the same view pool by a margin inside the seed-noise band on all 3 cells. And the view pool ITSELF, drawn at random, is no better than the iid pool on SELECTED despite carrying ~+0.02 more oracle -- the coverage is real and the conversion is not."
+  }
+ },
+ "not_measured": {
+  "the 5 MCQ cells": "this sweep touches the OPEN half only (2345 of the 8-cell macro's 37.5% weight). Vision-side portfolios were never run on PMC_VQA, SLAKE-closed, VQA_RAD-closed, PathVQA-closed or MedXpertQA-MM.",
+  "the 32B's own vision portfolio": "only the 7B generator was diversified. Whether the same views move the 32B-direct bar is unmeasured.",
+  "VRAM and wall-clock energy of the portfolio arm": "cost here is GENERATOR vision tokens only, the currency the 2026-08-11 prefill-bound measurement justifies. No test-time VRAM or joules were measured in this session.",
+  "a verifier retrained on view-diverse candidates": "the scorer is the frozen incumbent, trained on base-view candidates. Whether a verifier that has SEEN crop/upsample candidates would recover the lost sel_eff is untested -- and it would no longer be a training-free change.",
+  "learned or per-item view selection": "every portfolio here is a FIXED, pre-registered view list applied to all items. Choosing views per question was not attempted and would need its own train/eval split.",
+  "N > 8": "every arm is exactly 8 candidates, to keep the frozen endpoint comparable. The 12-view x 3-sample pool (36 candidates) is used only for the within-pool control.",
+  "seeds beyond 3": "K=3 samples per view fixes the number of disjoint draws at 3. The draw-to-draw sd of the SELECTED endpoint (iid8 0.005343, P_mixed 0.003473) is the same size as the effect being tested, which is itself part of the finding."
+ },
+ "verdict": {
+  "verdict": "NULL -- no draw moves the SELECTED endpoint significantly. Vision-side diversity behaves like the text-side diversity that preceded it: it changes the pool without changing the answer that gets returned.",
+  "kill_criterion_triggered": false,
+  "d_selected_per_draw": [
+   0.008102,
+   0.009808,
+   -0.001706
+  ],
+  "d_selected_mean": 0.005401,
+  "d_oracle_per_draw": [
+   0.029851,
+   0.023881,
+   0.026439
+  ],
+  "d_oracle_mean": 0.026724,
+  "n_draws_selected_significant_positive": 0,
+  "n_draws_selected_significant_negative": 0
+ }
+}

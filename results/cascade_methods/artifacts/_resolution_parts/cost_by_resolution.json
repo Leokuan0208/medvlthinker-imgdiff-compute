@@ -1,0 +1,413 @@
+{
+ "_meta": {
+  "flop_model": "src/cascade_methods/flop_ratio_derivation.forward_flops -- prefill-inclusive, vision tower + merger + LM prefill + LM decode + lm_head; parameter counts read from the safetensors headers on disk (no weights loaded).",
+  "geometry": "MEASURED in this sweep: vision/prompt/generated tokens per item per cap, recorded by resolution_open_generate.py (open half) and by MedEvalKit's own per-item dumps (MCQ half). Nothing is a name-plate ratio.",
+  "params_7b": 8292166656,
+  "params_32b": 33452718336
+ },
+ "open_half_per_candidate": {
+  "cap80": {
+   "max_pixels": 62720,
+   "vision_token_budget": 80,
+   "measured_mean_vision_tokens": 68.97,
+   "measured_mean_prompt_tokens": 113.83,
+   "measured_mean_gen_tokens": 5.288,
+   "geometry_read_from_arm": "s0",
+   "flops_per_candidate": 1909040722118.1863,
+   "parts": {
+    "vision_tower_dense": 348691031819.4627,
+    "vision_tower_attn": 4089810737.5659657,
+    "vision_merger": 6148462803.568444,
+    "lm_prefill_dense": 1485582142998.9255,
+    "lm_prefill_attn": 2600432484.691433,
+    "lm_decode_dense": 55965207087.76119,
+    "lm_decode_attn": 199618761.2556917,
+    "lm_head": 5764015424.955224,
+    "TOTAL": 1909040722118.1863
+   },
+   "flops_arm_8gen_plus_8verify": 117103582074381.08,
+   "flops_verifier_per_candidate_at_1003520": 12728907037179.45,
+   "verifier_measured_geometry": {
+    "vision": 626.4416666666667,
+    "prompt": 708.925,
+    "n": 120
+   },
+   "flops_rel_to_cap320_generator": 0.33535,
+   "flops_rel_to_cap320_whole_arm": 0.79461
+  },
+  "cap320": {
+   "max_pixels": 250880,
+   "vision_token_budget": 320,
+   "measured_mean_vision_tokens": 274.13,
+   "measured_mean_prompt_tokens": 318.99,
+   "measured_mean_gen_tokens": 5.404,
+   "geometry_read_from_arm": "s0",
+   "flops_per_candidate": 5692656676482.49,
+   "parts": {
+    "vision_tower_dense": 1385954736647.6418,
+    "vision_tower_attn": 34685158627.15509,
+    "vision_merger": 24438515384.931347,
+    "lm_prefill_dense": 4163213109385.5527,
+    "lm_prefill_attn": 20422529240.652763,
+    "lm_decode_dense": 57483909891.82089,
+    "lm_decode_attn": 567865070.4193183,
+    "lm_head": 5890852234.316418,
+    "TOTAL": 5692656676482.49
+   },
+   "flops_arm_8gen_plus_8verify": 147372509709295.5,
+   "flops_verifier_per_candidate_at_1003520": 12728907037179.45,
+   "verifier_measured_geometry": {
+    "vision": 626.4416666666667,
+    "prompt": 708.925,
+    "n": 120
+   },
+   "flops_rel_to_cap320_generator": 1.0,
+   "flops_rel_to_cap320_whole_arm": 1.0
+  },
+  "native": {
+   "max_pixels": 12845056,
+   "vision_token_budget": 16384,
+   "measured_mean_vision_tokens": 568.14,
+   "measured_mean_prompt_tokens": 613.0,
+   "measured_mean_gen_tokens": 5.112,
+   "geometry_read_from_arm": "t0",
+   "flops_per_candidate": 11185826596922.871,
+   "parts": {
+    "vision_tower_dense": 2872428371815.1646,
+    "vision_tower_attn": 126622248271.00888,
+    "vision_merger": 50649478731.54456,
+    "lm_prefill_dense": 8000451236695.881,
+    "lm_prefill_attn": 75419075894.51677,
+    "lm_decode_dense": 53668716956.65672,
+    "lm_decode_attn": 1015248051.9265406,
+    "lm_head": 5572220506.173135,
+    "TOTAL": 11185826596922.871
+   },
+   "flops_arm_8gen_plus_8verify": 191317869072818.56,
+   "flops_verifier_per_candidate_at_1003520": 12728907037179.45,
+   "verifier_measured_geometry": {
+    "vision": 626.4416666666667,
+    "prompt": 708.925,
+    "n": 120
+   },
+   "flops_rel_to_cap320_generator": 1.96496,
+   "flops_rel_to_cap320_whole_arm": 1.29819
+  }
+ },
+ "open_half_arm": {},
+ "mcq_half": {
+  "measured_this_session": {
+   "12845056": {
+    "SLAKE": {
+     "n": 2094,
+     "mean_gen_tokens": 3.858,
+     "mean_recorded_latency_s": 0.16718,
+     "acc": 0.331423
+    }
+   }
+  }
+ },
+ "R32_by_resolution": {
+  "_what": "the 32B/7B whole-forward FLOP ratio recomputed at each cap's MEASURED MCQ token geometry, with the project's own forward_flops and its own exact parameter counts.",
+  "_why": "flop_ratio_derivation_2026-08-03.json fixes R32 = 3.816 from cap320 geometry and gives a sensitivity band [3.734, 3.859] whose three operating points are cap320-open, cap320-MCQ and 1,003,520-MCQ. The 5 MCQ cells -- 62.5% of the macro weight, for BOTH the method's cheap leg and the always-32B-direct bar -- ran at 12,845,056, which is not among them.",
+  "by_cap": {
+   "medevalkit_default": {
+    "max_pixels": 12845056,
+    "measured_vision_tokens_mean": 3325.6,
+    "measured_input_tokens_mean": 3514.3,
+    "flops_7b": 69234148975188.375,
+    "flops_32b": 248603304233406.47,
+    "R32": 3.5908
+   },
+   "fullres": {
+    "max_pixels": 1003520,
+    "measured_vision_tokens_mean": 1500.7,
+    "measured_input_tokens_mean": 1689.4,
+    "flops_7b": 31170402794992.027,
+    "flops_32b": 116054404081731.6,
+    "R32": 3.7232
+   },
+   "cap640": {
+    "max_pixels": 501760,
+    "measured_vision_tokens_mean": 887.3,
+    "measured_input_tokens_mean": 1076.1,
+    "flops_7b": 19166693747110.297,
+    "flops_32b": 72973065755736.05,
+    "R32": 3.8073
+   },
+   "cap320": {
+    "max_pixels": 250880,
+    "measured_vision_tokens_mean": 489.2,
+    "measured_input_tokens_mean": 677.9,
+    "flops_7b": 11586765197695.385,
+    "flops_32b": 45398362032041.984,
+    "R32": 3.9181
+   },
+   "cap160": {
+    "max_pixels": 125440,
+    "measured_vision_tokens_mean": 237.1,
+    "measured_input_tokens_mean": 425.9,
+    "flops_7b": 6875501476397.466,
+    "flops_32b": 28107935744067.582,
+    "R32": 4.0881
+   },
+   "cap80": {
+    "max_pixels": 62720,
+    "measured_vision_tokens_mean": 121.1,
+    "measured_input_tokens_mean": 309.8,
+    "flops_7b": 4728315805389.21,
+    "flops_32b": 20184788011526.145,
+    "R32": 4.2689
+   }
+  },
+  "project_value": 3.816,
+  "project_band": [
+   3.734,
+   3.859
+  ],
+  "_read": "this is arithmetic on two already-measured inputs, not a new experiment, and it is reported as a flag for a re-costing, not as a re-costing."
+ },
+ "vram_cited_not_remeasured": {
+  "_source": "results/cascade_methods/artifacts/vram_levers_2026-08-12.json (resolution_frontier / strong_leg_by_cap), measured 2026-08-12 under HF transformers, bf16, flash_attention_2, tp=1, batch 1, with the four conventions of vram_testtime_2026-08-11.json. Cited, not re-measured: the instrument, the caps and the conventions are identical, and re-running it would burn GPU for a number already measured.",
+  "_caveat": "those open-arm rows were driven at max_new_tokens=512 while the deployed generator uses 64, so their KV component is an upper bound; the cap-vs-cap DELTAS are unaffected because the setting is constant across caps.",
+  "by_cap": {
+   "medevalkit_default": {
+    "max_pixels": 12845056,
+    "mcq_7b_b_peak_allocated_gib": 18.0148,
+    "mcq_7b_c_peak_reserved_gib": 21.9336,
+    "mcq_7b_d_process_footprint_gib": 22.4336,
+    "open_arm_b_peak_allocated_gib": 18.7372,
+    "open_arm_c_peak_reserved_gib": 21.666,
+    "open_arm_d_process_footprint_gib": 22.168
+   },
+   "fullres": {
+    "max_pixels": 1003520,
+    "mcq_7b_b_peak_allocated_gib": 17.1003,
+    "mcq_7b_c_peak_reserved_gib": 18.8574,
+    "mcq_7b_d_process_footprint_gib": 19.3574,
+    "open_arm_b_peak_allocated_gib": 17.885,
+    "open_arm_c_peak_reserved_gib": 20.6367,
+    "open_arm_d_process_footprint_gib": 21.1387
+   },
+   "cap640": {
+    "max_pixels": 501760,
+    "mcq_7b_b_peak_allocated_gib": 16.3265,
+    "mcq_7b_c_peak_reserved_gib": 17.2793,
+    "mcq_7b_d_process_footprint_gib": 17.7793,
+    "open_arm_b_peak_allocated_gib": 16.8455,
+    "open_arm_c_peak_reserved_gib": 17.9629,
+    "open_arm_d_process_footprint_gib": 18.4648
+   },
+   "cap320": {
+    "max_pixels": 250880,
+    "mcq_7b_b_peak_allocated_gib": 15.9313,
+    "mcq_7b_c_peak_reserved_gib": 16.6074,
+    "mcq_7b_d_process_footprint_gib": 17.1094,
+    "open_arm_b_peak_allocated_gib": 16.2857,
+    "open_arm_c_peak_reserved_gib": 17.2422,
+    "open_arm_d_process_footprint_gib": 17.7441
+   },
+   "cap160": {
+    "max_pixels": 125440,
+    "mcq_7b_b_peak_allocated_gib": 15.746,
+    "mcq_7b_c_peak_reserved_gib": 16.0352,
+    "mcq_7b_d_process_footprint_gib": 16.5371,
+    "open_arm_b_peak_allocated_gib": 16.0285,
+    "open_arm_c_peak_reserved_gib": 16.5605,
+    "open_arm_d_process_footprint_gib": 17.0625
+   },
+   "cap80": {
+    "max_pixels": 62720,
+    "mcq_7b_b_peak_allocated_gib": 15.6329,
+    "mcq_7b_c_peak_reserved_gib": 15.8652,
+    "mcq_7b_d_process_footprint_gib": 16.3672,
+    "open_arm_b_peak_allocated_gib": 15.883,
+    "open_arm_c_peak_reserved_gib": 16.1309,
+    "open_arm_d_process_footprint_gib": 16.6328
+   }
+  },
+  "a_weights_resident_gib_7b": 15.4937,
+  "strong_leg_32b_by_cap": [
+   {
+    "cap_patches": 16384,
+    "max_pixels": 12845056,
+    "n": 15,
+    "b_peak_allocated_gib": 67.868,
+    "c_peak_reserved_gib": 71.2188,
+    "d_process_footprint_gib": 71.7273,
+    "vision_tokens_peak": 46816.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-1561",
+     "image_pixels": 9107712,
+     "n_images": 1,
+     "input_tokens": 11931,
+     "vision_tokens": 46816,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 67.868
+    }
+   },
+   {
+    "cap_patches": 4096,
+    "max_pixels": 3211264,
+    "n": 15,
+    "b_peak_allocated_gib": 67.6937,
+    "c_peak_reserved_gib": 68.5586,
+    "d_process_footprint_gib": 69.0671,
+    "vision_tokens_peak": 45360.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 11555,
+     "vision_tokens": 45360,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 67.6937
+    }
+   },
+   {
+    "cap_patches": 1280,
+    "max_pixels": 1003520,
+    "n": 15,
+    "b_peak_allocated_gib": 65.8617,
+    "c_peak_reserved_gib": 66.6836,
+    "d_process_footprint_gib": 67.1921,
+    "vision_tokens_peak": 29568.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 7607,
+     "vision_tokens": 29568,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 65.8617
+    }
+   },
+   {
+    "cap_patches": 320,
+    "max_pixels": 250880,
+    "n": 15,
+    "b_peak_allocated_gib": 63.2782,
+    "c_peak_reserved_gib": 63.6445,
+    "d_process_footprint_gib": 64.1531,
+    "vision_tokens_peak": 7392.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 2063,
+     "vision_tokens": 7392,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 63.2782
+    }
+   },
+   {
+    "cap_patches": 80,
+    "max_pixels": 62720,
+    "n": 15,
+    "b_peak_allocated_gib": 62.6631,
+    "c_peak_reserved_gib": 62.8672,
+    "d_process_footprint_gib": 63.3757,
+    "vision_tokens_peak": 1848.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-282",
+     "image_pixels": 8766000,
+     "n_images": 6,
+     "input_tokens": 677,
+     "vision_tokens": 1848,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 62.6631
+    }
+   },
+   {
+    "cap_patches": 20,
+    "max_pixels": 15680,
+    "n": 15,
+    "b_peak_allocated_gib": 62.5191,
+    "c_peak_reserved_gib": 62.748,
+    "d_process_footprint_gib": 63.2566,
+    "vision_tokens_peak": 360.0,
+    "peak_driver": {
+     "source": "medxpert_mm_test",
+     "idx": "MM-1955",
+     "image_pixels": 8069653,
+     "n_images": 1,
+     "input_tokens": 447,
+     "vision_tokens": 64,
+     "gen_tokens": 3,
+     "b_peak_allocated_gib": 62.5191
+    }
+   }
+  ]
+ },
+ "where_the_open_arm_spends_its_flops": {
+  "at_the_deployed_operating_point": {
+   "generator_per_candidate_at_250880": 5692656676482.49,
+   "verifier_per_candidate_at_1003520": 12728907037179.45,
+   "verifier_over_generator": 2.236,
+   "verifier_share_of_the_8gen_plus_8verify_arm": 0.691
+  },
+  "_read": "the deployed open arm spends more compute VERIFYING than GENERATING, because the verifier runs at 4x the generator's resolution on the same image. That caps what a generator-side resolution cut can buy: taking the generator to cap80 (a 4x token cut) removes only 20.5% of the arm.",
+  "counterfactual_verifier_at_the_generators_250880": {
+   "verifier_per_candidate": 6125932803209.056,
+   "arm_flops_rel_to_deployed": 0.6416,
+   "_accuracy_already_measured_elsewhere": "results/cascade_methods/artifacts/vram_levers_2026-08-12.json open_half_levers arm bf16_cap320: d_sel_eff -0.014528 [-0.036320, +0.007264] n.s., d_selected_acc -0.010000 [-0.025000, +0.005000] n.s., on a seeded 200-per-set subsample (n=600). NOT re-measured here.",
+   "_this_is_a_cost_counterfactual": "the FLOP number is this round's arithmetic on this round's measured geometry; the accuracy number is the prior round's and carries its subsample and its CI."
+  }
+ },
+ "wall_clock_per_arm_minutes_CONTEXT_ONLY": {
+  "_what": "wall time to generate one whole arm (all 2,345 items; 8 samples each for s0/s1/s2, 1 for t0) at each cap, read from logs/resolution_open_gen_2026-08-13.log.",
+  "_why_it_is_not_a_latency_result": "vLLM, batched, tp=1, on a card that carried another tenant's jobs for the entire session (two of this round's own loads were OOM-killed by that tenant). It shows the DIRECTION and rough size of the throughput cost of resolution, nothing more. Batch-1 latency for the open arm was NOT measured this round.",
+  "by_cap": {
+   "cap80": {
+    "s0": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 2.7
+    },
+    "s1": {
+     "slake_open": 0.7,
+     "vqa_rad_open": 0.3,
+     "pathvqa_open": 2.7
+    }
+   },
+   "cap320": {
+    "s0": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    },
+    "s1": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    },
+    "s2": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    },
+    "t0": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    }
+   },
+   "native": {
+    "s0": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0
+    },
+    "t0": {
+     "slake_open": 2.1,
+     "vqa_rad_open": 1.0,
+     "pathvqa_open": 3.5
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "title": "PRE-REGISTRATION -- verifier-scoring scope for the 2026-08-13 decoding sweep",
+ "written_at": "2026-08-13, BEFORE any SELECTED or sel_eff number for any swept setting existed",
+ "why": "The frozen incumbent verifier must be run under HF transformers at batch 1 (vLLM drops visual.* LoRA modules), which measures ~1.5 candidates/s on a shared A100. Scoring all 42 pools was not affordable in the available GPU window, which was additionally contended by two sibling jobs. Rather than score whichever settings happened to look good, the scope is fixed in advance by a rule that does not depend on any selection outcome.",
+ "two_tiers": {
+  "coverage_tier": "EVERY generated setting. Needs judge labels only. Endpoints: oracle@8, distinct-candidate count, Lincoln-Petersen capture-recapture ceiling, oracle-vs-N curve, generated-token audit, per-cell oracle.",
+  "selection_tier": "A pre-specified SUBSET. Needs the frozen verifier. Endpoints: sel_eff, SELECTED accuracy, contested-stratum and laterality-stratum SELECTED, and all paired deltas vs the matched control."
+ },
+ "selection_tier_membership_rule": [
+  "1. T07 -- the matched control (the deployed setting, regenerated in this session). Mandatory.",
+  "2. The setting with the HIGHEST measured oracle@8 among all swept settings, ranked on judge labels alone. Rationale: SELECTED = oracle@8 x sel_eff exactly, so the setting with the largest coverage gain is the one with the best chance of converting into a SELECTED gain. If it does not convert, no smaller coverage gain can.",
+  "3. rp11 (repetition_penalty = 1.10). Rationale: a MECHANISTIC harm check fixed in advance, not an outcome-dependent pick. vLLM applies repetition_penalty to tokens in the PROMPT as well as the output (vllm/model_executor/layers/utils.py, apply_penalties -> apply_repetition_penalties(logits, prompt_mask, output_mask, ...)), and on medical VQA the correct short answer is frequently a word of the question ('left', 'right', 'upper', ...). The deployed value is 1.0, so the deployed system takes no harm; the pre-registered prediction is that raising it HURTS, concentrated in the laterality stratum.",
+  "4. If GPU time remains after those three, add settings in this fixed order: minp01, T13, T10, T03, T05, minp005, rp105, T13minp010, topk20, topk50, topp09, topp095."
+ ],
+ "prediction_registered_in_advance": {
+  "temperature": "oracle@8 and distinct-candidate count increase monotonically with temperature; SELECTED does NOT, because sel_eff falls with pool noise. Basis: the project's measured marginal conversion of newly-covered questions is 0.447 [0.368, 0.526], well under 1.",
+  "repetition_penalty": "rp > 1.0 LOWERS SELECTED, with the damage concentrated on the laterality stratum, because vLLM penalises prompt tokens.",
+  "min_p": "min_p truncates the tail, so distinct-candidate count and oracle@8 fall slightly while sel_eff rises slightly; net SELECTED approximately flat.",
+  "overall": "no single-variable decoding change beats the deployed T=0.7 default on SELECTED accuracy."
+ },
+ "endpoint_and_metric": "src/training_methods/genframe_data.py, unmodified. n=2345 (slake_open 645 / vqa_rad_open 200 / pathvqa_open 1500). Paired item bootstrap nboot=10000, seed 20260813.",
+ "note_on_sel_eff_deltas": "sel_eff conditions on each setting's OWN recoverable set, so a sel_eff difference between two settings is not a paired item statistic and is reported as a point estimate only. The paired stratum endpoint is SELECTED restricted to the CONTROL's recoverable set."
+}
