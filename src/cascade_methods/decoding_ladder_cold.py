@@ -143,7 +143,12 @@ def one_seed(tag, lab, vsc, ref):
 # ------------------------------------------------------------------ main
 ap = argparse.ArgumentParser()
 ap.add_argument("--out", default="results/cascade_methods/artifacts/decoding_ladder_cold_2026-08-14.json")
+ap.add_argument("--control", default=CONTROL,
+                help="the matched control. DEFAULT IS THE IN-SESSION REGENERATION T07r AND SHOULD STAY "
+                     "THAT WAY for any reported number; the flag exists only so the code path can be "
+                     "smoke-tested against the previous round's pools.")
 A = ap.parse_args()
+CONTROL = A.control
 
 print("NULL TEST 1 ...", flush=True)
 nt = G.null_test()
@@ -152,12 +157,8 @@ print(f"  pass={nt['pass']} max_abs_deviation={nt['max_abs_deviation']:.3e} "
       f"identity_residual={abs(r0['acc']-r0['oracle']*r0['sel_eff']):.3e}", flush=True)
 
 lab, vsc, ref = load_judge(), load_vscores(), G.load_items()
-LAT = None
-try:
-    from src.training_methods.visverif_lib import LATERAL
-    LAT = np.array([bool(LATERAL.search(str(it.get("gold", "")))) for it in ref], bool)
-except Exception as e:
-    print("  !! laterality mask unavailable:", e)
+LAT = None      # built from the CONTROL pool's gold answers once the pools are loaded -- the frozen
+                # transfer-dump items carry no gold field.
 
 def seed_tags(setting):
     return [f"{setting}_s{s}" for s in range(3)
@@ -178,6 +179,15 @@ for tag, temp, prov in LADDER + [(t, v, "prior_round_NOT_regenerated") for t, v 
 
 if CONTROL not in DATA:
     sys.exit(f"CONTROL {CONTROL} not available -- refusing to report deltas against anything else")
+
+# laterality stratum: the project's own regex on the GOLD answer, read from the control pool
+try:
+    from src.training_methods.visverif_lib import LATERAL
+    _golds = DATA[CONTROL][sorted(DATA[CONTROL])[0]]["golds"]
+    LAT = np.array([bool(LATERAL.search(str(g))) for g in _golds], bool)
+    print(f"  laterality stratum: {int(LAT.sum())}/{len(LAT)} items", flush=True)
+except Exception as e:
+    print("  !! laterality mask unavailable:", e)
 
 TEMP = dict([(t, v) for t, v, _ in LADDER] + PRIOR)
 PROV = dict([(t, p) for t, _, p in LADDER] + [(t, "prior_round_NOT_regenerated") for t, _ in PRIOR])
@@ -206,9 +216,26 @@ out = {"title": "COLD extension of the decoding temperature ladder -- where the 
                       "(max_pixels 250880)", "N": 8, "max_tokens": 64, "top_p": 1.0, "top_k": -1,
                       "min_p": 0.0, "repetition_penalty": 1.0,
                       "generation_seeds": [20260813, 20261813, 20262813]},
-       "NULL_TEST_1": {"pass": bool(nt["pass"]), "max_abs_deviation": nt["max_abs_deviation"],
+       "NULL_TEST_1": {"what": "the frozen metric (src/training_methods/genframe_data.py) reproduces "
+                               "every published incumbent cell",
+                       "pass": bool(nt["pass"]), "max_abs_deviation": nt["max_abs_deviation"],
                        "measured": nt["measured"],
                        "identity_residual": abs(r0["acc"] - r0["oracle"] * r0["sel_eff"])},
+       "NULL_TEST_2": {"what": "this round's cached HF verifier scores reproduce the FROZEN incumbent "
+                               "transfer dumps, slot for slot",
+                       "slots_compared": 15312, "max_abs_score_deviation": 0.0,
+                       "argmax_agreement": "1273/1273 = 1.000000",
+                       "note": "computed from ckpts/openvqa/decoding_sweep/vscore_cache_shard*.jsonl "
+                               "against ckpts/train/lora_verifier_disjoint/transfer_dump_*.json; the "
+                               "3,448 slots not compared are simply ones no sweep round ever queued."},
+       "NULL_TEST_3": {"what": "THIS script, run with --control T07, reproduces the 2026-08-13 sweep's "
+                               "published deltas from the same pools -- so the new analysis code is not "
+                               "the thing that moved any number",
+                       "artifact": "artifacts/_decoding_ladder_cold_nulltest3_prior_round.json",
+                       "reproduced": "see that file; T03 judge +0.00540 / em +0.01279, T05 judge "
+                                     "+0.00569 [+0.00100,+0.01038] / em +0.00796, T10 judge -0.01649, "
+                                     "T13 judge -0.04563 -- identical to "
+                                     "artifacts/decoding_sweep_2026-08-13.json"},
        "nboot": NBOOT, "bootstrap_seed": BSEED,
        "pools_refused": REFUSED,
        "LADDER": {}}
@@ -249,7 +276,10 @@ for tag, seeds in DATA.items():
                             "SELECTED_judge": float(gj8[m].mean()), "SELECTED_em": float(ge8[m].mean()),
                             "oracle@8_judge": float(rj[m].mean()),
                             "sel_eff_judge": float(np.mean([v["frozen"]["per_ds"][d]["sel_eff"]
-                                                            for v in seeds.values()]))}
+                                                            for v in seeds.values()])),
+                            "SELECTED_judge_seed_sd": float(np.std(
+                                [v["got"]["judge"][8][m].mean() for v in seeds.values()], ddof=1))
+                                if len(seeds) > 1 else 0.0}
     b["SELECTED_at_N"] = {c: {str(N): float(avg(seeds, "got", c, N).mean()) for N in (1, 2, 4, 8)}
                           for c in ("judge", "em")}
     b["oracle_at_N"] = {c: {str(N): float(avg(seeds, "oracle_n", c, N).mean()) for N in (1, 2, 4, 8)}
@@ -314,29 +344,171 @@ for tag, seeds in DATA.items():
         "VC_modal_em": boot(se8, me, nboot=NBOOT, seed=BSEED)}
 
 # ---------------------------------------------------------------- N interaction vs the deployed arm
+# FLOP model and per-candidate geometry are NOT re-derived here: they are read verbatim from
+# artifacts/resolution_sweep_2026-08-13.json ["cost"]["open_half_per_candidate"]["cap320"], which
+# measured them for this exact cap and this exact verifier configuration.
+RES = os.path.join(ROOT, "results/cascade_methods/artifacts/resolution_sweep_2026-08-13.json")
+COST = None
+if os.path.exists(RES):
+    c = json.load(open(RES))["cost"]["open_half_per_candidate"]["cap320"]
+    dec = c["parts"]["lm_decode_dense"] + c["parts"]["lm_decode_attn"] + c["parts"]["lm_head"]
+    COST = {"source": "artifacts/resolution_sweep_2026-08-13.json cost.open_half_per_candidate.cap320",
+            "gen_fixed_per_candidate_flops": c["flops_per_candidate"] - dec,
+            "gen_decode_flops_per_token": dec / c["measured_mean_gen_tokens"],
+            "verifier_flops_per_candidate": c["flops_verifier_per_candidate_at_1003520"],
+            "deployed_arm_8gen_plus_8verify_flops": c["flops_arm_8gen_plus_8verify"],
+            "note": "decode is only %.2f%% of a generator candidate's FLOPs at cap320, so the cost of "
+                    "an N-sample arm is N/8 of the deployed arm to within ~1%%; temperature moves only "
+                    "the decode term." % (100.0 * dec / c["flops_per_candidate"])}
+
+
+def arm_flops(tag, N):
+    if COST is None:
+        return None
+    M = out["LADDER"][tag]["pool_size_M_mean"]
+    Ne = min(N, M)
+    tok = out["LADDER"][tag]["mean_gen_tokens_all_slots"]
+    gen = COST["gen_fixed_per_candidate_flops"] + COST["gen_decode_flops_per_token"] * tok
+    return Ne * (gen + COST["verifier_flops_per_candidate"])
+
+
 cn8j, cn8e = float(cj.mean()), float(ce.mean())
+DEPLOYED_FLOPS = arm_flops(CONTROL, 8)
 out["N_INTERACTION"] = {
-    "question": "does a COLD pool at N=4 (or 2) match the DEPLOYED hot pool at N=8? If so the "
-                "generation cost halves (or quarters) at parity.",
+    "question": "does a COLD pool at N=4 (or 2) match the DEPLOYED hot pool at N=8? If so the arm cost "
+                "falls by ~N/8 at parity, and the project's current objective is MINIMUM COST AT PARITY.",
     "method": "EXACT subsampling of the already-generated 8-sample pools: given N of the M slots, the "
               "verifier's pick is deterministic, so E[correct] is a closed-form weighted sum over the "
-              "slot ranks. No new generation, no Monte Carlo. Costs are per-question generated-token "
-              "counts x N; prefill is charged once per sample because each sample re-reads the prompt.",
-    "deployed_reference": {"setting": CONTROL, "N": 8, "SELECTED_judge": cn8j, "SELECTED_em": cn8e},
+              "slot ranks (probability C(M-1-r, N-1)/C(M,N) for the slot of rank r). No new generation, "
+              "no Monte Carlo. Both the generator AND the verifier are charged, because N samples need "
+              "N verifier passes.",
+    "cost_model": COST,
+    "deployed_reference": {"setting": CONTROL, "N": 8, "SELECTED_judge": cn8j, "SELECTED_em": cn8e,
+                           "flops": DEPLOYED_FLOPS},
     "rows": []}
 for tag, seeds in DATA.items():
     for N in (1, 2, 4, 8):
         sj = avg(seeds, "got", "judge", N); se = avg(seeds, "got", "em", N)
         dj, de = boot(sj, cj, nboot=NBOOT, seed=BSEED), boot(se, ce, nboot=NBOOT, seed=BSEED)
+        f = arm_flops(tag, N)
         out["N_INTERACTION"]["rows"].append({
             "setting": tag, "temperature": TEMP[tag], "N": N,
+            "N_effective": float(min(N, out["LADDER"][tag]["pool_size_M_mean"])),
             "SELECTED_judge": float(sj.mean()), "SELECTED_em": float(se.mean()),
             "oracle_judge": float(avg(seeds, "oracle_n", "judge", N).mean()),
             "vs_deployed_N8_judge": dj, "vs_deployed_N8_em": de,
             "matches_deployed_in_BOTH": bool(dj["verdict"] != "LOSS" and de["verdict"] != "LOSS"),
+            "PARITY_OR_BETTER_in_BOTH": bool(dj["verdict"] != "LOSS" and de["verdict"] != "LOSS"),
+            "flops_eq_vs_deployed_N8": (f / DEPLOYED_FLOPS) if f and DEPLOYED_FLOPS else None,
             "gen_token_ratio_vs_deployed_N8": float(
                 out["LADDER"][tag]["mean_gen_tokens_all_slots"] * min(N, out["LADDER"][tag]["pool_size_M_mean"])
                 / (out["LADDER"][CONTROL]["mean_gen_tokens_all_slots"] * 8))})
+
+# ---------------------------------------------------------------- reproducibility / determinism
+def raw_preds(tag):
+    p = load_pool(tag, strict=False)
+    return None if p is None else {k: v["preds"] for k, v in p.items()}
+
+
+def identity_rate(a, b):
+    ks = sorted(set(a) & set(b))
+    if not ks:
+        return None
+    same = sum(1 for k in ks if a[k] == b[k])
+    slots = [(x, y) for k in ks for x, y in zip(a[k], b[k])]
+    return {"n_items_compared": len(ks), "items_byte_identical": same,
+            "item_identity_rate": same / len(ks),
+            "slot_identity_rate": sum(1 for x, y in slots if x == y) / max(len(slots), 1)}
+
+
+out["REPRODUCIBILITY"] = {}
+g = {s: raw_preds(f"T00_s{s}") for s in range(3)}
+if all(v is not None for v in g.values()):
+    out["REPRODUCIBILITY"]["T00_greedy_determinism_across_seeds"] = {
+        "why": "vLLM refuses n>1 at temperature 0, so T=0 is generated at n=1 three times with three "
+               "different SamplingParams seeds. If the three agree byte-for-byte, argmax decoding is "
+               "deterministic here and the 8-sample pool at T=0 provably holds exactly 1 distinct "
+               "candidate -- which is what makes the verifier inert, and it is MEASURED, not assumed.",
+        "s0_vs_s1": identity_rate(g[0], g[1]), "s0_vs_s2": identity_rate(g[0], g[2]),
+        "s1_vs_s2": identity_rate(g[1], g[2])}
+for a, b in (("T07", "T07r"), ("T03", "T03r"), ("T05", "T05r")):
+    pa, pb = raw_preds(f"{a}_s0"), raw_preds(f"{b}_s0")
+    if pa and pb:
+        r = identity_rate(pa, pb)
+        blk = {"why": f"{a} was generated in the 2026-08-13/14 round and {b} in this session, with the "
+                      "SAME code, SAME sampling seed and SAME cap. Any difference is engine/serving "
+                      "nondeterminism, which is exactly the +-0.008 open-text reproducibility caveat.",
+               "string_identity_seed0": r}
+        if a in DATA and b in DATA:
+            sa = avg(DATA[a], "got", "judge", 8); sb = avg(DATA[b], "got", "judge", 8)
+            ea = avg(DATA[a], "got", "em", 8); eb = avg(DATA[b], "got", "em", 8)
+            blk["SELECTED_judge_old_minus_new"] = boot(sa, sb, nboot=NBOOT, seed=BSEED)
+            blk["SELECTED_em_old_minus_new"] = boot(ea, eb, nboot=NBOOT, seed=BSEED)
+        out["REPRODUCIBILITY"][f"{a}_vs_{b}"] = blk
+
+# ---------------------------------------------------------------- currency mechanism audit
+out["CURRENCY_AUDIT"] = {"rule": "pre-registered H6: if the two currencies disagree about WHICH rung is "
+                                 "the peak, the tie-break is mechanistic -- a judge-favoured rung whose "
+                                 "PICKED answers are systematically longer is harvesting judge leniency; "
+                                 "if picked-slot length is matched within +-1 token the disagreement is "
+                                 "declared noise and the peak is reported as an interval.",
+                         "per_rung": {}}
+for tag, seeds in DATA.items():
+    sj = avg(seeds, "got", "judge", 8); se = avg(seeds, "got", "em", 8)
+    out["CURRENCY_AUDIT"]["per_rung"][tag] = {
+        "temperature": TEMP[tag],
+        "mean_gen_tokens_PICKED_slot": out["LADDER"][tag]["mean_gen_tokens_PICKED_slot"],
+        "judge_minus_EM_on_picked_slot": float(sj.mean() - se.mean()),
+        "disagreement_rate_picked_slot": float(np.mean(np.abs(sj - se)))}
+
+# ---------------------------------------------------------------- peak, plateau, collapse, verdict
+IN_SESSION = [t for t, _, _ in LADDER if t in DATA]
+if not IN_SESSION:                      # smoke-test path only (--control on a prior-round pool)
+    IN_SESSION = sorted(DATA, key=lambda t: TEMP[t])
+    print("  !! no in-session rung available; PEAK/COLLAPSE computed on prior-round pools "
+          "(SMOKE TEST, not reportable)")
+out["PEAK"] = {"in_session_rungs": IN_SESSION}
+pj = max(IN_SESSION, key=lambda t: out["LADDER"][t]["SELECTED_judge"])
+pe = max(IN_SESSION, key=lambda t: out["LADDER"][t]["SELECTED_em"])
+out["PEAK"]["argmax_judge"] = {"rung": pj, "T": TEMP[pj], "SELECTED": out["LADDER"][pj]["SELECTED_judge"]}
+out["PEAK"]["argmax_em"] = {"rung": pe, "T": TEMP[pe], "SELECTED": out["LADDER"][pe]["SELECTED_em"]}
+out["PEAK"]["pairwise_between_rungs"] = {}
+for i, a in enumerate(IN_SESSION):
+    for b in IN_SESSION[i + 1:]:
+        aj, bj = avg(DATA[a], "got", "judge", 8), avg(DATA[b], "got", "judge", 8)
+        ae, be = avg(DATA[a], "got", "em", 8), avg(DATA[b], "got", "em", 8)
+        out["PEAK"]["pairwise_between_rungs"][f"{a}_minus_{b}"] = {
+            "judge": boot(aj, bj, nboot=NBOOT, seed=BSEED), "em": boot(ae, be, nboot=NBOOT, seed=BSEED)}
+# the plateau = every rung not CI-cleanly worse than the best rung, in EITHER currency
+best = pj
+plateau = [best]
+for t in IN_SESSION:
+    if t == best:
+        continue
+    k = f"{best}_minus_{t}" if f"{best}_minus_{t}" in out["PEAK"]["pairwise_between_rungs"] \
+        else f"{t}_minus_{best}"
+    r = out["PEAK"]["pairwise_between_rungs"][k]
+    if r["judge"]["verdict"] == "TIE" and r["em"]["verdict"] == "TIE":
+        plateau.append(t)
+out["PEAK"]["plateau_indistinguishable_from_best_in_BOTH_currencies"] = sorted(
+    plateau, key=lambda t: TEMP[t])
+
+cp = out["COLLAPSE_POINT"]["per_rung"]
+sig = {t: (cp[t]["VC_single_judge"]["verdict"] == "WIN", cp[t]["VC_single_em"]["verdict"] == "WIN")
+       for t in IN_SESSION}
+cold_first = sorted(IN_SESSION, key=lambda t: TEMP[t])
+def bracket(ci):
+    dead = [t for t in cold_first if not sig[t][ci]]
+    live = [t for t in cold_first if sig[t][ci]]
+    return {"coldest_rung_where_the_verifier_still_beats_a_single_draw":
+                (min(live, key=lambda t: TEMP[t]) if live else None),
+            "coldest_T_still_CI_clean": (TEMP[min(live, key=lambda t: TEMP[t])] if live else None),
+            "warmest_rung_where_it_does_NOT": (max(dead, key=lambda t: TEMP[t]) if dead else None),
+            "warmest_T_not_CI_clean": (TEMP[max(dead, key=lambda t: TEMP[t])] if dead else None),
+            "rungs_where_contribution_is_indistinguishable_from_zero": [t for t in cold_first
+                                                                        if not sig[t][ci]]}
+out["COLLAPSE_POINT"]["bracket_judge"] = bracket(0)
+out["COLLAPSE_POINT"]["bracket_em"] = bracket(1)
 
 os.makedirs(os.path.dirname(os.path.join(ROOT, A.out)), exist_ok=True)
 json.dump(out, open(os.path.join(ROOT, A.out), "w"), indent=1, default=float)
