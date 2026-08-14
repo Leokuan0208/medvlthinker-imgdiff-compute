@@ -153,6 +153,18 @@ outranks verifier work.
   verification**). Internal/June track = **`test_clean.csv`** (v1, 2,000 items, the authors' only
   human-verified split). **Intersection = 6 items.** Always quote a PMC number with its file and row count.
   Provenance: `docs/current/PMCVQA_PROVENANCE_2026-07-30.md`.
+- **⚠️ NEWLY TRAINED VERIFIERS GET A FREE ~0.006–0.009 UNDER THE 32B JUDGE — PARAPHRASE DRIFT.**
+  Measured 2026-08-14 (`artifacts/coadapt_verifier_T04_2026-08-14.json`): a retrained verifier picks
+  judge-yes/EM-no answers **+0.00637 [+0.00307,+0.00975]** (T=0.4 pools) and **+0.00940
+  [+0.00554,+0.01336]** (T=0.7 pools) more often than the frozen one, with picked-slot length matched to
+  **0.073 tokens** — so it is **not** verbosity harvesting (that is the separate `repetition_penalty`
+  trap). Any newly trained verifier will look ~0.006–0.009 better under the judge than under exact match
+  **before doing anything useful.** ⇒ **Every verifier comparison must be reported in BOTH currencies**
+  (32B judge AND normalised exact match, on identical picks). A judge-only verifier result is not
+  interpretable.
+- **⚠️ SEED DEPTH IS LOAD-BEARING FOR VERIFIER CLAIMS.** Same artifact: the co-adaptation gain read
+  **+0.00384 at 1 seed → +0.00014 at 4 → −0.00173 at 10**, monotonically. A one-seed judge-only read
+  would have reported a win that does not exist. ≥10 training seeds, mean/sd/range, seed-averaged.
 - **⚠️ `src/training_methods/freeze_selector.py` REWRITES `ckpts/train/genframe_head_ens8/`.** A refit is a
   fresh seed draw (seed-0 sel_eff 0.795640 at the pinned thread count vs 0.800409 at 8 threads). **The
   frozen `.pt` files are the artifact of record, not the recipe.**

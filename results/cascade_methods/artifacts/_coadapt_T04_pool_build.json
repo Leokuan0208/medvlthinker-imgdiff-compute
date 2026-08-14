@@ -1,0 +1,186 @@
+{
+ "title": "T=0.4 TRAIN candidate pools for the verifier co-adaptation round -- build + disjointness proof",
+ "date": "2026-08-14",
+ "prereg": "results/cascade_methods/artifacts/_coadapt_verifier_prereg_2026-08-14.json",
+ "generator": "src/labeling/run_openvqa.py via runners/run_coadapt_T04_trainpools.sh -- --n_samples 8 --temp 0.4 --cap cap320 --max_model_len 4096, idx allowlists from data/disjoint_split/. IDENTICAL to the incumbent's generation (runners/run_verifier_disjoint_retrain.sh stage 1) except --temp 0.7 -> 0.4.",
+ "pool_dir": "ckpts/openvqa/cheap_lingshu7b_T04",
+ "assertion_method": "images: md5 of DECODED RGB pixels (WxH + raw bytes), catches re-encoded copies. items: (dataset family, normalized question text, image pixel hash). Both functions copied VERBATIM from src/training_methods/build_disjoint_verifier_split.py.",
+ "assertions": {
+  "image_pixel_md5_intersection": 0,
+  "item_identity_intersection": 0,
+  "question_id_intersection": 0,
+  "generated_idx_outside_L1_allowlist": 0,
+  "n_train_images": 5229,
+  "n_eval_images": 528,
+  "n_train_question_items": 14094,
+  "n_eval_question_items": 1803,
+  "asserted_in_code": [
+   "assert not inter_img",
+   "assert not inter_item",
+   "assert not inter_qid",
+   "assert sum(allow_violations)==0"
+  ]
+ },
+ "eval_items_per_set": {
+  "slake_open": 645,
+  "vqa_rad_open": 200,
+  "pathvqa_open": 1500
+ },
+ "per_source": {
+  "slake_open_train": {
+   "generated_questions": 2976,
+   "L1_allowlist": 2976,
+   "outside_allowlist": 0,
+   "distinct_images": 449
+  },
+  "vqa_rad_open_train": {
+   "generated_questions": 542,
+   "L1_allowlist": 542,
+   "outside_allowlist": 0,
+   "distinct_images": 155
+  },
+  "pathvqa_open_train": {
+   "generated_questions": 9903,
+   "L1_allowlist": 9903,
+   "outside_allowlist": 0,
+   "distinct_images": 2577
+  },
+  "kvasir_open": {
+   "generated_questions": 1200,
+   "L1_allowlist": 1200,
+   "outside_allowlist": 0,
+   "distinct_images": 1048
+  },
+  "radimagenet_open": {
+   "generated_questions": 2000,
+   "L1_allowlist": 2000,
+   "outside_allowlist": 0,
+   "distinct_images": 1000
+  }
+ },
+ "candidate_diversity_T07_vs_T04": {
+  "slake_open_train": {
+   "T07": {
+    "questions": 2976,
+    "mean_distinct_of_8": 1.9664,
+    "frac_unanimous": 0.5786,
+    "distinct_answer_examples_available": 5852,
+    "mean_gen_tokens": 4.591
+   },
+   "T04": {
+    "questions": 2976,
+    "mean_distinct_of_8": 1.5376,
+    "frac_unanimous": 0.6969,
+    "distinct_answer_examples_available": 4576,
+    "mean_gen_tokens": 4.569
+   }
+  },
+  "vqa_rad_open_train": {
+   "T07": {
+    "questions": 542,
+    "mean_distinct_of_8": 3.4096,
+    "frac_unanimous": 0.238,
+    "distinct_answer_examples_available": 1848,
+    "mean_gen_tokens": 5.914
+   },
+   "T04": {
+    "questions": 542,
+    "mean_distinct_of_8": 2.3561,
+    "frac_unanimous": 0.4262,
+    "distinct_answer_examples_available": 1277,
+    "mean_gen_tokens": 5.746
+   }
+  },
+  "pathvqa_open_train": {
+   "T07": {
+    "questions": 9903,
+    "mean_distinct_of_8": 4.7452,
+    "frac_unanimous": 0.1271,
+    "distinct_answer_examples_available": 46992,
+    "mean_gen_tokens": 5.907
+   },
+   "T04": {
+    "questions": 9903,
+    "mean_distinct_of_8": 3.2911,
+    "frac_unanimous": 0.2642,
+    "distinct_answer_examples_available": 32592,
+    "mean_gen_tokens": 5.527
+   }
+  },
+  "kvasir_open": {
+   "T07": {
+    "questions": 1200,
+    "mean_distinct_of_8": 4.7433,
+    "frac_unanimous": 0.2017,
+    "distinct_answer_examples_available": 5692,
+    "mean_gen_tokens": 0.0
+   },
+   "T04": {
+    "questions": 1200,
+    "mean_distinct_of_8": 3.8942,
+    "frac_unanimous": 0.3017,
+    "distinct_answer_examples_available": 4673,
+    "mean_gen_tokens": 11.048
+   }
+  },
+  "radimagenet_open": {
+   "T07": {
+    "questions": 2000,
+    "mean_distinct_of_8": 4.0775,
+    "frac_unanimous": 0.1455,
+    "distinct_answer_examples_available": 8155,
+    "mean_gen_tokens": 0.0
+   },
+   "T04": {
+    "questions": 2000,
+    "mean_distinct_of_8": 2.647,
+    "frac_unanimous": 0.307,
+    "distinct_answer_examples_available": 5294,
+    "mean_gen_tokens": 5.246
+   }
+  }
+ },
+ "judge_label_provenance": {
+  "judge": "src/labeling/run_judge.py, MedVLThinker-32B (Qwen2.5-32B backbone), text-only, temperature 0, tp=2 -- the SAME judge that labelled the incumbent's T=0.7 pools.",
+  "total_judge_rows": 48412,
+  "reused_from_the_T07_pass": 24104,
+  "judged_fresh_in_this_round": 24308,
+  "reuse_rate": 0.4979,
+  "HOLDOUT_NULL_TEST": {
+   "design": "300 preloadable rows per source were deliberately NOT preloaded, so the judge relabelled them from scratch in this round; the fresh labels are then compared against what the preload would have said.",
+   "agree": 1499,
+   "disagree": 1,
+   "agreement_rate": 0.999333,
+   "disagreement_rate_wilson95": [
+    0.00011769273167436408,
+    0.0037666654142135486
+   ],
+   "the_single_disagreement": {
+    "source": "slake_open_train",
+    "idx": "3015#1",
+    "question": "What is the function of the organ on the top of this image?",
+    "gold": "Ventilation, pronunciation",
+    "answer": "Breathe.",
+    "stored_T07_label": 1,
+    "fresh_label_this_round": 0,
+    "diagnosis": "the question, the gold and the answer string are BYTE-IDENTICAL between the two judge calls, so this is not a preload keying error -- it is the judge itself flipping on a borderline item. run_judge.py decides by comparing exp(logprob) of 'Yes' against 'No' in the top-20 logprobs; a near-tie plus batch-composition-dependent floating point in vLLM flips the sign."
+   },
+   "VERDICT": "the preload is SOUND AS A KEYING MECHANISM -- zero mis-keyed labels were found in 1,500 checks. What it measures instead is the judge's own self-consistency, and the rate agrees with the project's independent measurement: artifacts of ckpts/openvqa/decoding_sweep/judgepreload_report.json record 17 internal conflicts over 43,267 preloaded eval keys (~0.04%), and this round's kvasir_open source found 5 conflicts over 14,059 keys. So ~0.05% of judge labels are coin-flips on borderline items, in THIS round and in every earlier one. The incumbent verifier's own training labels carry the identical property, because they came from the same judge; the preload copies the judge's earlier answer, which is neither better nor worse than a fresh call.",
+   "effect_size_bound": "at the Wilson upper bound this is at most ~0.4% of the reused labels, i.e. at most a few dozen of the 10,364 training examples -- orders of magnitude below any effect this round is powered to detect. It is reported because it is real, not because it changes a conclusion."
+  },
+  "internal_conflicts_in_the_T07_sources": {
+   "slake_open_train": 0,
+   "vqa_rad_open_train": 0,
+   "pathvqa_open_train": 0,
+   "kvasir_open": 5,
+   "radimagenet_open": 0
+  },
+  "conflicted_keys_dropped_rather_than_guessed": {
+   "slake_open_train": 0,
+   "vqa_rad_open_train": 0,
+   "pathvqa_open_train": 0,
+   "kvasir_open": 5,
+   "radimagenet_open": 0
+  }
+ }
+}

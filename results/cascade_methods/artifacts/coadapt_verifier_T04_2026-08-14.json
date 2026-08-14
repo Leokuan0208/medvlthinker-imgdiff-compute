@@ -1,0 +1,1973 @@
+{
+ "title": "Verifier co-adaptation to the generator's sampling temperature -- four arms, frozen vs retrained verifier crossed with T=0.7 vs T=0.4 candidate pools",
+ "date": "2026-08-14",
+ "prereg": "results/cascade_methods/artifacts/_coadapt_verifier_prereg_2026-08-14.json (written 2026-08-14 BEFORE the cold ladder reported)",
+ "T_star": {
+  "value": 0.4,
+  "source": "artifacts/decoding_ladder_cold_2026-08-14.json -- ladder peak, argmax in BOTH currencies, +0.00938 [+0.00341,+0.01535] judge and +0.01350 [+0.00768,+0.01934] EM vs the deployed T=0.7"
+ },
+ "analysis": "src/cascade_methods/coadapt_verifier.py",
+ "pools": {
+  "T04": [
+   "T04_s0",
+   "T04_s1",
+   "T04_s2"
+  ],
+  "T07r": [
+   "T07r_s0",
+   "T07r_s1",
+   "T07r_s2"
+  ],
+  "provenance": "generated in the cold-ladder round by src/cascade_methods/decoding_sweep_gen.py over artifacts/_decoding_ladder_cold_settings.json; cap320, N=8, max_tokens 64, top_p 1.0, top_k -1, min_p 0.0, repetition_penalty 1.0, seeds [20260813, 20261813, 20262813]. REUSED, not regenerated, so the in-session matching the ladder established is preserved."
+ },
+ "endpoint": "SELECTED accuracy on the frozen 2,345-item open pool (slake_open 645 / vqa_rad_open 200 / pathvqa_open 1500), both currencies (32B judge and normalised exact match) on IDENTICAL verifier picks. Verifier scoring under HF transformers, batch 1 (NEVER vLLM: it silently drops all 192 visual.* LoRA modules, 0.775204 HF vs 0.702997 vLLM).",
+ "arms": {
+  "A": "frozen verifier (ckpts/train/lora_verifier_disjoint, trained on T=0.7 pools) x T=0.7 pools",
+  "B": "frozen verifier x T=0.4 pools",
+  "C": "co-adapted verifier (retrained on T=0.4 pools) x T=0.4 pools",
+  "D": "co-adapted verifier x T=0.7 pools (the load-bearing reverse-transfer control)"
+ },
+ "NULL_TEST_1": {
+  "what": "the frozen metric (src/training_methods/genframe_data.py) reproduces every published incumbent cell",
+  "pass": true,
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "measured": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.6260127931769722,
+   "selected": 0.48528784648187634,
+   "greedy": 0.4494669509594883,
+   "sel_eff": 0.7752043596730245,
+   "cand_auroc": 0.8855921901711237,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "identity_residual": 5.551115123125783e-17
+ },
+ "nboot": 10000,
+ "bootstrap_seed": 20260814,
+ "pools_refused": {},
+ "adapters_used": [
+  "lora_verifier_T04_s0",
+  "lora_verifier_T04_s1",
+  "lora_verifier_T04_s2",
+  "lora_verifier_T04_s3",
+  "lora_verifier_T04_s4",
+  "lora_verifier_T04_s5",
+  "lora_verifier_T04_s6",
+  "lora_verifier_T04_s7",
+  "lora_verifier_T04_s8",
+  "lora_verifier_T04_s9"
+ ],
+ "n_train_seeds_completed": 10,
+ "ARMS": {
+  "A": {
+   "n_runs_averaged": 3,
+   "SELECTED_judge": 0.4804548685145699,
+   "SELECTED_em": 0.46382373845060415,
+   "oracle@8_judge": 0.6277185501066098,
+   "oracle@8_em": 0.6038379530916844,
+   "sel_eff_judge": 0.7655456258615959,
+   "sel_eff_em": 0.7683532231943012,
+   "SELECTED_judge_run_sd": 0.005399692939082438,
+   "SELECTED_em_run_sd": 0.0006513966872716318,
+   "mean_gen_tokens_PICKED_slot": 5.197583511016346,
+   "distinct_of_8": 3.6638237384506045,
+   "identity_residual_selected_eq_oracle_x_sel_eff": 1.850371707708594e-17,
+   "judge_minus_EM": 0.01663113006396577,
+   "picked_slot_judge_yes_EM_no": 0.04804548685145701,
+   "picked_slot_judge_no_EM_yes": 0.03141435678749112,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "SELECTED_judge": 0.7385012919896641,
+     "SELECTED_em": 0.7607235142118863,
+     "sel_eff_judge": 0.8440593196671099
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "SELECTED_judge": 0.46833333333333327,
+     "SELECTED_em": 0.4,
+     "sel_eff_judge": 0.7514621241450509
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "SELECTED_judge": 0.37111111111111106,
+     "SELECTED_em": 0.3446666666666667,
+     "sel_eff_judge": 0.711332113785582
+    }
+   }
+  },
+  "B": {
+   "n_runs_averaged": 3,
+   "SELECTED_judge": 0.48983653162757634,
+   "SELECTED_em": 0.47732764747690115,
+   "oracle@8_judge": 0.5863539445628998,
+   "oracle@8_em": 0.5695806680881307,
+   "sel_eff_judge": 0.8355976928494379,
+   "sel_eff_em": 0.8382709699436858,
+   "SELECTED_judge_run_sd": 0.0014976053664325294,
+   "SELECTED_em_run_sd": 0.0021035747813715282,
+   "mean_gen_tokens_PICKED_slot": 5.157640369580668,
+   "distinct_of_8": 2.5828002842928215,
+   "identity_residual_selected_eq_oracle_x_sel_eff": 3.700743415417188e-17,
+   "judge_minus_EM": 0.012508884150675192,
+   "picked_slot_judge_yes_EM_no": 0.045202558635394456,
+   "picked_slot_judge_no_EM_yes": 0.032693674484719264,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "SELECTED_judge": 0.7467700258397932,
+     "SELECTED_em": 0.779328165374677,
+     "sel_eff_judge": 0.8936342547650336
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "SELECTED_judge": 0.5083333333333333,
+     "SELECTED_em": 0.4266666666666667,
+     "sel_eff_judge": 0.844880624426079
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "SELECTED_judge": 0.37688888888888883,
+     "SELECTED_em": 0.35422222222222216,
+     "sel_eff_judge": 0.7906001362916816
+    }
+   }
+  },
+  "C": {
+   "n_runs_averaged": 30,
+   "SELECTED_judge": 0.48810234541577824,
+   "SELECTED_em": 0.47022032693674476,
+   "oracle@8_judge": 0.5863539445628998,
+   "oracle@8_em": 0.5695806680881307,
+   "sel_eff_judge": 0.8326070444759437,
+   "sel_eff_em": 0.8257748441127438,
+   "SELECTED_judge_run_sd": 0.007063798317825903,
+   "SELECTED_em_run_sd": 0.006408178440458648,
+   "mean_gen_tokens_PICKED_slot": 5.174925373134329,
+   "distinct_of_8": 2.5828002842928215,
+   "identity_residual_selected_eq_oracle_x_sel_eff": 3.14563190310461e-17,
+   "judge_minus_EM": 0.01788201847903348,
+   "picked_slot_judge_yes_EM_no": 0.051570717839374565,
+   "picked_slot_judge_no_EM_yes": 0.03368869936034115,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "SELECTED_judge": 0.7518863049095608,
+     "SELECTED_em": 0.7827390180878553,
+     "sel_eff_judge": 0.8997679202661157
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "SELECTED_judge": 0.48633333333333334,
+     "SELECTED_em": 0.4261666666666667,
+     "sel_eff_judge": 0.8083126721763085
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "SELECTED_judge": 0.3749111111111112,
+     "SELECTED_em": 0.3417111111111111,
+     "sel_eff_judge": 0.7863815133245392
+    }
+   }
+  },
+  "D": {
+   "n_runs_averaged": 30,
+   "SELECTED_judge": 0.4810092395167022,
+   "SELECTED_em": 0.4574129353233831,
+   "oracle@8_judge": 0.6277185501066098,
+   "oracle@8_em": 0.6038379530916844,
+   "sel_eff_judge": 0.7664382619858985,
+   "sel_eff_em": 0.757731933081735,
+   "SELECTED_judge_run_sd": 0.006802302297022255,
+   "SELECTED_em_run_sd": 0.006935586646971966,
+   "mean_gen_tokens_PICKED_slot": 5.2307604832977965,
+   "distinct_of_8": 3.6638237384506036,
+   "identity_residual_selected_eq_oracle_x_sel_eff": 2.590520390792032e-17,
+   "judge_minus_EM": 0.023596304193319095,
+   "picked_slot_judge_yes_EM_no": 0.05744136460554371,
+   "picked_slot_judge_no_EM_yes": 0.03384506041222459,
+   "per_cell": {
+    "slake_open": {
+     "n": 645,
+     "SELECTED_judge": 0.7458914728682171,
+     "SELECTED_em": 0.7671834625322997,
+     "sel_eff_judge": 0.8525001692275145
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "SELECTED_judge": 0.46616666666666673,
+     "SELECTED_em": 0.4191666666666667,
+     "sel_eff_judge": 0.7478834430249065
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "SELECTED_judge": 0.3690888888888889,
+     "SELECTED_em": 0.3293111111111111,
+     "sel_eff_judge": 0.7074734998502947
+    }
+   }
+  }
+ },
+ "PER_TRAIN_SEED": {
+  "lora_verifier_T04_s0": {
+   "C_T04": {
+    "SELECTED_judge": 0.4936744847192608,
+    "SELECTED_em": 0.4673773987206823,
+    "sel_eff_judge": 0.8420644896722028
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4899786780383795,
+    "SELECTED_em": 0.4533049040511727,
+    "sel_eff_judge": 0.7806808529888944
+   },
+   "train_config": {
+    "pos_rate": 0.23108838286375916,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 0,
+    "train_minutes": 104.9,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s1": {
+   "C_T04": {
+    "SELECTED_judge": 0.4902629708599858,
+    "SELECTED_em": 0.47363184079601994,
+    "sel_eff_judge": 0.8362850240253893
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4841506751954513,
+    "SELECTED_em": 0.4599857853589196,
+    "sel_eff_judge": 0.7714790554017094
+   },
+   "train_config": {
+    "pos_rate": 0.22182554998070242,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 1,
+    "train_minutes": 103.7,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s2": {
+   "C_T04": {
+    "SELECTED_judge": 0.489410092395167,
+    "SELECTED_em": 0.46808813077469785,
+    "sel_eff_judge": 0.8348782683890063
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4861407249466951,
+    "SELECTED_em": 0.4574271499644633,
+    "sel_eff_judge": 0.7745887233155765
+   },
+   "train_config": {
+    "pos_rate": 0.22655345426476264,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 2,
+    "train_minutes": 102.4,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s3": {
+   "C_T04": {
+    "SELECTED_judge": 0.48656716417910445,
+    "SELECTED_em": 0.4743425728500355,
+    "sel_eff_judge": 0.8299617555026612
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4811656005685856,
+    "SELECTED_em": 0.46425017768301347,
+    "sel_eff_judge": 0.7666320178647793
+   },
+   "train_config": {
+    "pos_rate": 0.231184870706291,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 3,
+    "train_minutes": 103.7,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s4": {
+   "C_T04": {
+    "SELECTED_judge": 0.4878464818763326,
+    "SELECTED_em": 0.4743425728500355,
+    "sel_eff_judge": 0.8322163087373967
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.47661691542288553,
+    "SELECTED_em": 0.46211798152096656,
+    "sel_eff_judge": 0.7594412701041415
+   },
+   "train_config": {
+    "pos_rate": 0.2243342338865303,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 4,
+    "train_minutes": 103.7,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s5": {
+   "C_T04": {
+    "SELECTED_judge": 0.48514570007107316,
+    "SELECTED_em": 0.47306325515280745,
+    "sel_eff_judge": 0.827563673967889
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.47633262260127934,
+    "SELECTED_em": 0.4624022743425729,
+    "sel_eff_judge": 0.7589539261183803
+   },
+   "train_config": {
+    "pos_rate": 0.23079891933616364,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 5,
+    "train_minutes": 106.5,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s6": {
+   "C_T04": {
+    "SELECTED_judge": 0.48713574982231694,
+    "SELECTED_em": 0.46837242359630415,
+    "sel_eff_judge": 0.8308166849420093
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4814498933901919,
+    "SELECTED_em": 0.4554371002132196,
+    "sel_eff_judge": 0.7671344249381264
+   },
+   "train_config": {
+    "pos_rate": 0.22636047857969896,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 6,
+    "train_minutes": 102.3,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s7": {
+   "C_T04": {
+    "SELECTED_judge": 0.4909737029140014,
+    "SELECTED_em": 0.4695095948827292,
+    "sel_eff_judge": 0.8374760414716554
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.48244491826581376,
+    "SELECTED_em": 0.45515280739161335,
+    "sel_eff_judge": 0.7687078175388494
+   },
+   "train_config": {
+    "pos_rate": 0.2250096487842532,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 7,
+    "train_minutes": 98.9,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s8": {
+   "C_T04": {
+    "SELECTED_judge": 0.4780383795309168,
+    "SELECTED_em": 0.45884861407249466,
+    "sel_eff_judge": 0.8155491963306677
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.4695095948827292,
+    "SELECTED_em": 0.44363894811656013,
+    "sel_eff_judge": 0.7481879786661029
+   },
+   "train_config": {
+    "pos_rate": 0.22394828251640295,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 8,
+    "train_minutes": 99.5,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  },
+  "lora_verifier_T04_s9": {
+   "C_T04": {
+    "SELECTED_judge": 0.49196872778962325,
+    "SELECTED_em": 0.4746268656716418,
+    "sel_eff_judge": 0.8392590017205567
+   },
+   "D_T07": {
+    "SELECTED_judge": 0.48230277185501064,
+    "SELECTED_em": 0.460412224591329,
+    "sel_eff_judge": 0.7685765529224239
+   },
+   "train_config": {
+    "pos_rate": 0.2297375530683134,
+    "n_train_examples": 10364,
+    "taken_examples_per_source": {
+     "slake_open_train": 894,
+     "vqa_rad_open_train": 522,
+     "pathvqa_open_train": 4973,
+     "kvasir_open": 3975
+    },
+    "available_examples_per_source": {
+     "kvasir_open": 4673,
+     "pathvqa_open_train": 32592,
+     "radimagenet_open": 5294,
+     "slake_open_train": 4576,
+     "vqa_rad_open_train": 1277
+    },
+    "quota_shortfalls_topped_up_from_radimagenet": {},
+    "n_train_questions": 16621,
+    "steps": 5182,
+    "seed": 9,
+    "train_minutes": 99.1,
+    "early_stopped": false,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lr": 0.0001,
+    "bs": 2,
+    "accum": 8,
+    "epochs": 1,
+    "max_pixels": 1003520,
+    "level": "L1",
+    "cap_div": 1,
+    "base_model": "lingshu-medical-mllm/Lingshu-7B",
+    "pool_temperature": 0.4
+   }
+  }
+ },
+ "TRAINING_PROVENANCE": {
+  "recipe": "src/training_methods/run_lora_verifier_disjoint.py UNCHANGED at its incumbent defaults, pointed at the T=0.4 pools through its own VERIF_CK / VERIF_TAG environment hooks. lora_r 16, lora_alpha 32, lora_dropout 0.05, target [q,k,v,o,gate,up,down]_proj, base lingshu-medical-mllm/Lingshu-7B, max_pixels 1003520, lr 1e-4, bs 2 x accum 8, 1 epoch, cap_div 1, level L1, match_composition on, max_train 10364.",
+  "the_only_variable": "the temperature of the TRAINING candidate pools: 0.7 (incumbent) -> 0.4.",
+  "train_pools": "ckpts/openvqa/cheap_lingshu7b_T04 (build + disjointness proof: artifacts/_coadapt_T04_pool_build.json)",
+  "incumbent": {
+   "pos_rate": 0.19924739482825163,
+   "taken_examples_per_source": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "available_examples_per_source": {
+    "kvasir_open": 5692,
+    "pathvqa_open_train": 46992,
+    "radimagenet_open": 8155,
+    "slake_open_train": 5852,
+    "vqa_rad_open_train": 1848
+   },
+   "n_train_examples": 10364,
+   "steps": 5182
+  },
+  "coadapted_pos_rate": {
+   "per_seed": {
+    "lora_verifier_T04_s0": 0.23108838286375916,
+    "lora_verifier_T04_s1": 0.22182554998070242,
+    "lora_verifier_T04_s2": 0.22655345426476264,
+    "lora_verifier_T04_s3": 0.231184870706291,
+    "lora_verifier_T04_s4": 0.2243342338865303,
+    "lora_verifier_T04_s5": 0.23079891933616364,
+    "lora_verifier_T04_s6": 0.22636047857969896,
+    "lora_verifier_T04_s7": 0.2250096487842532,
+    "lora_verifier_T04_s8": 0.22394828251640295,
+    "lora_verifier_T04_s9": 0.2297375530683134
+   },
+   "mean": 0.22708413739868774,
+   "sd": 0.0033968501986941144
+  },
+  "coadapted_taken_examples_per_source": {
+   "lora_verifier_T04_s0": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s1": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s2": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s3": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s4": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s5": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s6": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s7": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s8": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   },
+   "lora_verifier_T04_s9": {
+    "slake_open_train": 894,
+    "vqa_rad_open_train": 522,
+    "pathvqa_open_train": 4973,
+    "kvasir_open": 3975
+   }
+  },
+  "coadapted_available_examples_per_source": {
+   "lora_verifier_T04_s0": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s1": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s2": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s3": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s4": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s5": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s6": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s7": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s8": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   },
+   "lora_verifier_T04_s9": {
+    "kvasir_open": 4673,
+    "pathvqa_open_train": 32592,
+    "radimagenet_open": 5294,
+    "slake_open_train": 4576,
+    "vqa_rad_open_train": 1277
+   }
+  },
+  "quota_shortfalls_topped_up_from_radimagenet": {
+   "lora_verifier_T04_s0": {},
+   "lora_verifier_T04_s1": {},
+   "lora_verifier_T04_s2": {},
+   "lora_verifier_T04_s3": {},
+   "lora_verifier_T04_s4": {},
+   "lora_verifier_T04_s5": {},
+   "lora_verifier_T04_s6": {},
+   "lora_verifier_T04_s7": {},
+   "lora_verifier_T04_s8": {},
+   "lora_verifier_T04_s9": {}
+  },
+  "POS_RATE_IS_A_CONFOUND_NOT_A_NUISANCE": {
+   "what_happened": "The per-source composition quotas were matched EXACTLY -- {slake_open_train 894, vqa_rad_open_train 522, pathvqa_open_train 4973, kvasir_open 3975} = 10,364, with NO radimagenet_open top-up, because every T=0.4 pool could still fill its quota (the tightest, kvasir_open, had 4,673 distinct-answer examples available against a quota of 3,975). The LABEL BALANCE could not be matched: pos_rate came out at the value recorded above against the incumbent's 0.19924739482825163.",
+   "why": "A colder generator concentrates its 8 samples on its own highest-probability answers, which are more often correct, so the DISTINCT candidates of a T=0.4 pool are a higher-precision set than those of a T=0.7 pool. Fewer wild wrong answers survive deduplication. The same mechanism is visible upstream in the pools themselves: distinct-of-8 falls from 4.745 to 3.291 on pathvqa_open_train and from 1.966 to 1.538 on slake_open_train (artifacts/_coadapt_T04_pool_build.json).",
+   "why_it_was_not_engineered_away": "Forcing the label balance would have required resampling the T=0.4 pool by label, which would have changed the very distribution the experiment is about. The pre-registration anticipated this and asked for the achieved rate to be reported and discussed, which is what is done here.",
+   "how_much_it_can_bite": "The endpoint is SELECTED accuracy, which depends ONLY on which slot is the argmax inside each 8-candidate pool. Any monotone recalibration of the verifier's output -- which is the first-order effect of a shifted training prior -- leaves every within-pool ranking, and therefore every pick, unchanged. The confound can only bite through a second-order effect: a changed prior altering the RELATIVE ordering of two candidates for the same question. That is possible and is not dismissed, but it is a much weaker channel than the raw pos_rate gap suggests, and it is bounded by the same specificity check as everything else -- a purely calibration-driven artefact would move arms C and D together, and D vs A would then be as large as C vs B."
+  },
+  "seed_semantics": "--seed drives the trainer's composition draw and example shuffling. The trainer does NOT seed torch, so LoRA initialisation and dropout are a fresh draw on every run regardless -- each seed is therefore a genuinely independent retrain, and even a repeated --seed would not be bit-reproducible. Stated, not hidden.",
+  "arm_seed_asymmetry": "Arms A and B are ONE frozen adapter (a single training draw, the artifact of record for every published number). Arms C and D are averaged over the completed retraining seeds. So C-B and D-A each compare a seed-averaged retrain against a single-draw incumbent. This is the pre-registered design; the specificity check (D-A vs C-B) is what separates 'better matched' from 'better verifier', and it is unaffected by the asymmetry because both contrasts carry it identically."
+ },
+ "NULL_TEST_2": {
+  "what": "arms A and B, recomputed by THIS script from the same pools and the same frozen score cache, must reproduce the cold ladder's published T07r / T04 cells exactly -- so the new analysis code is not the thing that moved any number",
+  "reference": "artifacts/decoding_ladder_cold_2026-08-14.json LADDER.{T07r,T04}",
+  "abs_deviation": {
+   "A.SELECTED_judge": 0.0,
+   "A.SELECTED_em": 0.0,
+   "A.sel_eff_judge": 0.0,
+   "A.oracle@8_judge": 0.0,
+   "B.SELECTED_judge": 0.0,
+   "B.SELECTED_em": 0.0,
+   "B.sel_eff_judge": 0.0,
+   "B.oracle@8_judge": 0.0
+  },
+  "max_abs_deviation": 0.0,
+  "pass": true
+ },
+ "TRANSFER_PENALTY_B_vs_A": {
+  "contested_mask_defined_on": "T04 pool",
+  "contested_n": 615,
+  "judge": {
+   "delta": 0.009381663113006422,
+   "lo": 0.0034115138592750727,
+   "hi": 0.015351812366737771,
+   "sig": true,
+   "verdict": "WIN",
+   "n": 2345
+  },
+  "contested_judge": {
+   "delta": 0.05691056910569092,
+   "lo": 0.04065040650406504,
+   "hi": 0.07371273712737125,
+   "sig": true,
+   "verdict": "WIN",
+   "n": 615
+  },
+  "laterality_judge": {
+   "delta": 0.022088353413654616,
+   "lo": -0.01004016064257024,
+   "hi": 0.054216867469879526,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "em": {
+   "delta": 0.013503909026297,
+   "lo": 0.00767590618336883,
+   "hi": 0.019335465529495416,
+   "sig": true,
+   "verdict": "WIN",
+   "n": 2345
+  },
+  "contested_em": {
+   "delta": 0.043902439024390116,
+   "lo": 0.028726287262872685,
+   "hi": 0.059078590785907936,
+   "sig": true,
+   "verdict": "WIN",
+   "n": 615
+  },
+  "laterality_em": {
+   "delta": 0.0321285140562248,
+   "lo": 0.0,
+   "hi": 0.06425702811244993,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "per_cell_guardrail": {
+   "slake_open": {
+    "judge": {
+     "delta": 0.008268733850129162,
+     "lo": -0.0036175710594313903,
+     "hi": 0.020155038759689825,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "em": {
+     "delta": 0.018604651162790642,
+     "lo": 0.007751937984496027,
+     "hi": 0.02997416020671828,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 645
+    }
+   },
+   "vqa_rad_open": {
+    "judge": {
+     "delta": 0.040000000000000036,
+     "lo": 0.016666666666666607,
+     "hi": 0.065,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 200
+    },
+    "em": {
+     "delta": 0.026666666666666672,
+     "lo": 0.0050000000000000044,
+     "hi": 0.04999999999999999,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 200
+    }
+   },
+   "pathvqa_open": {
+    "judge": {
+     "delta": 0.005777777777777771,
+     "lo": -0.001333333333333242,
+     "hi": 0.012888888888888894,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    },
+    "em": {
+     "delta": 0.009555555555555484,
+     "lo": 0.0022222222222222365,
+     "hi": 0.016666666666666663,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 1500
+    }
+   }
+  },
+  "guardrail_flags": [],
+  "guardrail_clean": true,
+  "CI_clean_in_BOTH": true,
+  "what_this_is_and_is_NOT": "B - A changes TWO things at once: the generator's temperature (0.7 -> 0.4) AND, as an unavoidable consequence, whether the frozen verifier is on-distribution. It is therefore the NET effect of switching the sampling knob while keeping the deployed verifier -- exactly the quantity a deployment decision turns on -- and NOT an isolated measurement of the mismatch. The mismatch cost proper is unobservable on its own: you cannot move the inference distribution without moving the generator. C - B is the quantity that isolates it: same pools, same items, same picks rule, only the verifier's TRAINING distribution differs. A positive B - A with a null C - B means the temperature is worth taking and the frozen verifier follows it for free."
+ },
+ "CURRENCY_AUDIT": {
+  "rule": "pre-registered: BOTH currencies on IDENTICAL verifier picks, because the judge is instructed to 'be lenient about phrasing, synonyms, and abbreviations' and repetition_penalty 1.10 has already been caught in this project winning under the judge purely by harvesting that leniency with verbosity. A judge-only result is not trustworthy here.",
+  "per_arm": {
+   "A": {
+    "SELECTED_judge": 0.4804548685145699,
+    "SELECTED_em": 0.46382373845060415,
+    "judge_minus_EM": 0.01663113006396577,
+    "picked_slot_judge_yes_EM_no": 0.04804548685145701,
+    "picked_slot_judge_no_EM_yes": 0.03141435678749112,
+    "mean_gen_tokens_PICKED_slot": 5.197583511016346
+   },
+   "B": {
+    "SELECTED_judge": 0.48983653162757634,
+    "SELECTED_em": 0.47732764747690115,
+    "judge_minus_EM": 0.012508884150675192,
+    "picked_slot_judge_yes_EM_no": 0.045202558635394456,
+    "picked_slot_judge_no_EM_yes": 0.032693674484719264,
+    "mean_gen_tokens_PICKED_slot": 5.157640369580668
+   },
+   "C": {
+    "SELECTED_judge": 0.48810234541577824,
+    "SELECTED_em": 0.47022032693674476,
+    "judge_minus_EM": 0.01788201847903348,
+    "picked_slot_judge_yes_EM_no": 0.051570717839374565,
+    "picked_slot_judge_no_EM_yes": 0.03368869936034115,
+    "mean_gen_tokens_PICKED_slot": 5.174925373134329
+   },
+   "D": {
+    "SELECTED_judge": 0.4810092395167022,
+    "SELECTED_em": 0.4574129353233831,
+    "judge_minus_EM": 0.023596304193319095,
+    "picked_slot_judge_yes_EM_no": 0.05744136460554371,
+    "picked_slot_judge_no_EM_yes": 0.03384506041222459,
+    "mean_gen_tokens_PICKED_slot": 5.2307604832977965
+   }
+  },
+  "verbosity_check": {
+   "what": "if a judge-favoured arm's PICKED answers were systematically longer, the judge advantage would be verbosity harvesting -- the known failure mode.",
+   "picked_slot_token_spread_across_arms": 0.07312011371712845,
+   "verdict": "picked-slot length is matched across all four arms to well within one token, so the currency disagreement is NOT verbosity harvesting."
+  },
+  "the_actual_mechanism": {
+   "what": "the retrained verifier moves picks toward answers the JUDGE accepts and exact match rejects -- paraphrases, synonyms and abbreviations, exactly the class the judge's prompt is told to forgive. The judge-yes/EM-no rate on the picked slot is the direct measurement.",
+   "judge_yes_EM_no_rate_by_arm": {
+    "A": 0.04804548685145701,
+    "B": 0.045202558635394456,
+    "C": 0.051570717839374565,
+    "D": 0.05744136460554371
+   },
+   "C_minus_B": {
+    "delta": 0.006368159203980102,
+    "lo": 0.0030703624733475557,
+    "hi": 0.009751243781094529,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "D_minus_A": {
+    "delta": 0.009395877754086714,
+    "lo": 0.0055433546552949515,
+    "hi": 0.013361762615493968,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "reading": "the shift is present on BOTH pools (C over B and D over A alike), so it is a property of RETRAINING, not of matching the pool temperature. It is why the judge currency reads a small positive for C vs B while exact match reads a small negative: the two graders are scoring the same picks and disagreeing about paraphrase. Neither direction is CI-clean, and the pre-registered rule is that a result must be clean in BOTH -- so this is reported as a null with a known mechanism, not as a judge win."
+  }
+ },
+ "COADAPTATION_GAIN_C_vs_B": {
+  "contested_mask_defined_on": "T04 pool",
+  "contested_n": 615,
+  "judge": {
+   "delta": -0.0017341862117981055,
+   "lo": -0.00796090973702909,
+   "hi": 0.004691186922530292,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 2345
+  },
+  "contested_judge": {
+   "delta": -0.01647696476964755,
+   "lo": -0.03972899728997281,
+   "hi": 0.006829268292682933,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 615
+  },
+  "laterality_judge": {
+   "delta": -0.008433734939759074,
+   "lo": -0.03714859437750995,
+   "hi": 0.020481927710843395,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "em": {
+   "delta": -0.007107320540156392,
+   "lo": -0.013603411513859298,
+   "hi": -0.0005398009950248663,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 2345
+  },
+  "contested_em": {
+   "delta": -0.029756097560975414,
+   "lo": -0.05279132791327923,
+   "hi": -0.006504065040650431,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 615
+  },
+  "laterality_em": {
+   "delta": -0.0004016064257027496,
+   "lo": -0.028714859437750928,
+   "hi": 0.028514056224899664,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "per_cell_guardrail": {
+   "slake_open": {
+    "judge": {
+     "delta": 0.0051162790697675264,
+     "lo": -0.007494832041343759,
+     "hi": 0.01824289405684743,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "em": {
+     "delta": 0.003410852713178314,
+     "lo": -0.00945736434108535,
+     "hi": 0.016537467700258435,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    }
+   },
+   "vqa_rad_open": {
+    "judge": {
+     "delta": -0.021999999999999964,
+     "lo": -0.04683333333333334,
+     "hi": -0.0001666666666666483,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 200
+    },
+    "em": {
+     "delta": -0.0005000000000000004,
+     "lo": -0.013833333333333309,
+     "hi": 0.012833333333333308,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 200
+    }
+   },
+   "pathvqa_open": {
+    "judge": {
+     "delta": -0.001977777777777634,
+     "lo": -0.009444444444444478,
+     "hi": 0.0054005555555554545,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    },
+    "em": {
+     "delta": -0.012511111111111084,
+     "lo": -0.020822222222222242,
+     "hi": -0.004444444444444471,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 1500
+    }
+   }
+  },
+  "guardrail_flags": [
+   "vqa_rad_open",
+   "pathvqa_open"
+  ],
+  "guardrail_clean": false,
+  "CI_clean_in_BOTH": false
+ },
+ "REVERSE_TRANSFER_D_vs_A": {
+  "contested_mask_defined_on": "T07r pool",
+  "contested_n": 876,
+  "judge": {
+   "delta": 0.0005543710021322923,
+   "lo": -0.006553304904051215,
+   "hi": 0.007718550106609878,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 2345
+  },
+  "contested_judge": {
+   "delta": -0.0018264840182647957,
+   "lo": -0.0200913242009132,
+   "hi": 0.016552511415525165,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 876
+  },
+  "laterality_judge": {
+   "delta": -0.0010040160642570406,
+   "lo": -0.034939759036144546,
+   "hi": 0.033333333333333326,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "em": {
+   "delta": -0.006410803127221032,
+   "lo": -0.013689054726368232,
+   "hi": 0.0008670931058991097,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 2345
+  },
+  "contested_em": {
+   "delta": -0.021803652968036602,
+   "lo": -0.040335806697108144,
+   "hi": -0.0034246575342465322,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 876
+  },
+  "laterality_em": {
+   "delta": -0.00020080321285143032,
+   "lo": -0.029518072289156594,
+   "hi": 0.02992469879518077,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "per_cell_guardrail": {
+   "slake_open": {
+    "judge": {
+     "delta": 0.007390180878553032,
+     "lo": -0.0077015503875969464,
+     "hi": 0.02273901808785528,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "em": {
+     "delta": 0.006459948320413411,
+     "lo": -0.008165374677002516,
+     "hi": 0.020931524547803698,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    }
+   },
+   "vqa_rad_open": {
+    "judge": {
+     "delta": -0.002166666666666539,
+     "lo": -0.02566666666666667,
+     "hi": 0.01916666666666661,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 200
+    },
+    "em": {
+     "delta": 0.019166666666666665,
+     "lo": 0.0018333333333332967,
+     "hi": 0.03700000000000003,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 200
+    }
+   },
+   "pathvqa_open": {
+    "judge": {
+     "delta": -0.0020222222222221475,
+     "lo": -0.010511111111111082,
+     "hi": 0.006333333333333359,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    },
+    "em": {
+     "delta": -0.015355555555555567,
+     "lo": -0.024622222222222268,
+     "hi": -0.006310555555555554,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 1500
+    }
+   }
+  },
+  "guardrail_flags": [
+   "pathvqa_open"
+  ],
+  "guardrail_clean": false,
+  "CI_clean_in_BOTH": false
+ },
+ "SPECIFICITY_CHECK": {
+  "rule": "pre-registered: D-A must be materially SMALLER than C-B for the effect to be about distribution MATCH rather than generic retraining.",
+  "C_minus_B": {
+   "judge": -0.0017341862117981055,
+   "em": -0.007107320540156392
+  },
+  "D_minus_A": {
+   "judge": 0.0005543710021322923,
+   "em": -0.006410803127221032
+  },
+  "difference_in_differences_(C-B)-(D-A)": {
+   "judge": {
+    "delta": -0.002288557213930349,
+    "lo": -0.006524875621890548,
+    "hi": 0.0018763326226012783,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   },
+   "em": {
+    "delta": -0.0006965174129353229,
+    "lo": -0.0050177683013503905,
+    "hi": 0.0035536602700781796,
+    "sig": false,
+    "verdict": "TIE",
+    "n": 2345
+   }
+  }
+ },
+ "C_vs_A_deployed_reference": {
+  "contested_mask_defined_on": "T04 pool",
+  "contested_n": 615,
+  "judge": {
+   "delta": 0.007647476901208317,
+   "lo": -0.0006823027718549382,
+   "hi": 0.015963041933191202,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 2345
+  },
+  "contested_judge": {
+   "delta": 0.04043360433604337,
+   "lo": 0.013875338753387534,
+   "hi": 0.0671002710027101,
+   "sig": true,
+   "verdict": "WIN",
+   "n": 615
+  },
+  "laterality_judge": {
+   "delta": 0.013654618473895541,
+   "lo": -0.026305220883534097,
+   "hi": 0.05461847389558239,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "em": {
+   "delta": 0.006396588486140609,
+   "lo": -0.001961620469083103,
+   "hi": 0.014868514570006933,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 2345
+  },
+  "contested_em": {
+   "delta": 0.014146341463414702,
+   "lo": -0.011601626016260231,
+   "hi": 0.04070460704607043,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 615
+  },
+  "laterality_em": {
+   "delta": 0.03172690763052205,
+   "lo": -0.0030120481927710663,
+   "hi": 0.06827309236947793,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "per_cell_guardrail": {
+   "slake_open": {
+    "judge": {
+     "delta": 0.013385012919896688,
+     "lo": -0.004341085271317713,
+     "hi": 0.03126744186046529,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "em": {
+     "delta": 0.022015503875968956,
+     "lo": 0.005116279069767415,
+     "hi": 0.03974160206718336,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 645
+    }
+   },
+   "vqa_rad_open": {
+    "judge": {
+     "delta": 0.01800000000000007,
+     "lo": -0.012500000000000011,
+     "hi": 0.04716666666666669,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 200
+    },
+    "em": {
+     "delta": 0.02616666666666667,
+     "lo": 0.003329166666666584,
+     "hi": 0.05033333333333334,
+     "sig": true,
+     "verdict": "WIN",
+     "n": 200
+    }
+   },
+   "pathvqa_open": {
+    "judge": {
+     "delta": 0.0038000000000001366,
+     "lo": -0.005799999999999974,
+     "hi": 0.013333333333333365,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    },
+    "em": {
+     "delta": -0.0029555555555556,
+     "lo": -0.01304444444444436,
+     "hi": 0.006911111111111201,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    }
+   }
+  },
+  "guardrail_flags": [],
+  "guardrail_clean": true,
+  "CI_clean_in_BOTH": false
+ },
+ "D_vs_B_offdiagonal": {
+  "contested_mask_defined_on": "T07r pool",
+  "contested_n": 876,
+  "judge": {
+   "delta": -0.00882729211087413,
+   "lo": -0.016673773987206764,
+   "hi": -0.0010092395167021733,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 2345
+  },
+  "contested_judge": {
+   "delta": -0.02808219178082194,
+   "lo": -0.04760273972602724,
+   "hi": -0.00856069254185681,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 876
+  },
+  "laterality_judge": {
+   "delta": -0.023092369477911656,
+   "lo": -0.05963855421686742,
+   "hi": 0.011847389558232837,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "em": {
+   "delta": -0.019914712153518033,
+   "lo": -0.02823063255152809,
+   "hi": -0.011840796019900453,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 2345
+  },
+  "contested_em": {
+   "delta": -0.05528919330289189,
+   "lo": -0.07526636225266359,
+   "hi": -0.03550228310502279,
+   "sig": true,
+   "verdict": "LOSS",
+   "n": 876
+  },
+  "laterality_em": {
+   "delta": -0.03232931726907623,
+   "lo": -0.06908132530120482,
+   "hi": 0.0044176706827308565,
+   "sig": false,
+   "verdict": "TIE",
+   "n": 166
+  },
+  "per_cell_guardrail": {
+   "slake_open": {
+    "judge": {
+     "delta": -0.0008785529715761298,
+     "lo": -0.015401808785529816,
+     "hi": 0.013746770025839905,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    },
+    "em": {
+     "delta": -0.01214470284237723,
+     "lo": -0.02651162790697659,
+     "hi": 0.0022222222222223476,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 645
+    }
+   },
+   "vqa_rad_open": {
+    "judge": {
+     "delta": -0.042166666666666575,
+     "lo": -0.07316666666666666,
+     "hi": -0.013333333333333308,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 200
+    },
+    "em": {
+     "delta": -0.007500000000000007,
+     "lo": -0.03199999999999992,
+     "hi": 0.01649999999999996,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 200
+    }
+   },
+   "pathvqa_open": {
+    "judge": {
+     "delta": -0.007799999999999918,
+     "lo": -0.017355555555555513,
+     "hi": 0.0016449999999999412,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 1500
+    },
+    "em": {
+     "delta": -0.02491111111111105,
+     "lo": -0.035511111111111104,
+     "hi": -0.0145994444444444,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 1500
+    }
+   }
+  },
+  "guardrail_flags": [
+   "vqa_rad_open",
+   "pathvqa_open"
+  ],
+  "guardrail_clean": false,
+  "CI_clean_in_BOTH": true
+ },
+ "NULL_TEST_3": {
+  "what": "KILL 3 -- the co-adapted verifier's own null test: the EXACT identity selected = oracle@8 x sel_eff must hold on both of its arms, and its picks must be the frozen argmax rule (asserted in arm_vectors).",
+  "C_identity_residual": 3.14563190310461e-17,
+  "D_identity_residual": 2.590520390792032e-17,
+  "pass": true
+ },
+ "HEADLINE": {
+  "primary_C_vs_B": {
+   "judge": "-0.00173 [-0.00796,+0.00469] TIE",
+   "em": "-0.00711 [-0.01360,-0.00054] LOSS"
+  },
+  "finding": "THE FROZEN VERIFIER TRANSFERS ACROSS TEMPERATURE, AND RETRAINING IT IS WORSE THAN DOING NOTHING. Co-adapting the verifier to T=0.4 candidate pools does not improve selection on T=0.4 pools: the judge currency is a TIE straddling zero and exact match is a CI-clean LOSS. This is KILL 1, and the pre-registration named it as the most likely outcome BEFORE any of it was run.",
+  "the_sharpest_statement": {
+   "what": "the frozen verifier on cold pools beats the deployed baseline CI-cleanly in BOTH currencies; the RETRAINED verifier on the same cold pools does not.",
+   "B_vs_A_frozen_verifier_on_cold_pools": {
+    "judge": "+0.00938 [+0.00341,+0.01535] WIN",
+    "em": "+0.01350 [+0.00768,+0.01934] WIN"
+   },
+   "C_vs_A_retrained_verifier_on_cold_pools": {
+    "judge": "+0.00765 [-0.00068,+0.01596] TIE",
+    "em": "+0.00640 [-0.00196,+0.01487] TIE"
+   },
+   "reading": "retraining does not merely fail to add anything -- it spends ~108 GPU-minutes per seed to convert a clean two-currency win over the deployed system into a pair of ties. The correct engineering action is to change the sampling temperature and leave the verifier alone."
+  },
+  "there_is_no_transfer_penalty_to_recover": {
+   "what": "B - A is POSITIVE in both currencies. Moving the generator to T=0.4 and keeping the DEPLOYED verifier is already a win; the frozen verifier is not merely surviving off-distribution, it is doing BETTER work there.",
+   "sel_eff_A_at_T07": 0.7655456258615959,
+   "sel_eff_B_at_T04": 0.8355976928494379,
+   "mechanism": "a colder pool has fewer distinct candidates (3.664 -> 2.583 of 8), so selection is an easier problem even though coverage falls (oracle@8 0.6277 -> 0.5864). The selection gain outweighs the coverage loss. There was no penalty for co-adaptation to recover."
+  },
+  "specificity": {
+   "difference_in_differences": {
+    "judge": "-0.00229 [-0.00652,+0.00188] TIE",
+    "em": "-0.00070 [-0.00502,+0.00355] TIE"
+   },
+   "reading": "(C-B) - (D-A) is a TIE in both currencies: retraining moves the T=0.4 pool and the T=0.7 pool by statistically indistinguishable amounts. Whatever retraining does, it is NOT specific to the pool it was trained on. Arm D was the load-bearing control and it earns its place: without it, C's +0.00213 judge point estimate could have been narrated as a co-adaptation gain."
+  },
+  "secondary_finding_RETRAINING_CAUSES_PARAPHRASE_DRIFT": {
+   "what": "a retrained verifier picks answers the 32B judge accepts and exact match rejects at a CI-cleanly higher rate than the frozen one -- on BOTH pools, with picked-slot length matched across all four arms to under a tenth of a token, so it is NOT the known verbosity-harvesting failure mode.",
+   "C_minus_B_on_T04_pools": {
+    "delta": 0.006368159203980102,
+    "lo": 0.0030703624733475557,
+    "hi": 0.009751243781094529,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "D_minus_A_on_T07_pools": {
+    "delta": 0.009395877754086714,
+    "lo": 0.0055433546552949515,
+    "hi": 0.013361762615493968,
+    "sig": true,
+    "verdict": "WIN",
+    "n": 2345
+   },
+   "picked_slot_token_spread_across_all_four_arms": 0.07312011371712845,
+   "practical_consequence": "any newly trained verifier in this project should be expected to look better under the 32B judge than under exact match, purely from paraphrase drift, before it has done anything useful. Judge-only verifier comparisons in this repo are therefore biased in favour of whichever arm was trained more recently. It is exactly what makes the dual-currency rule load-bearing here: reading only the judge, C vs B at 1 seed looked like +0.00384 and a narrative was available. See CURRENCY_AUDIT."
+  },
+  "consequence_for_the_project": "The T=0.4 decoding temperature is a GENUINELY FREE deployment change: it can be turned without retraining the verifier, and the +0.00938 [+0.00341,+0.01535] judge / +0.01350 [+0.00768,+0.01934] EM gain the cold ladder measured stands as-is. The generator and the verifier are separable on this axis. Correspondingly, the ~27 catalogued verifier negatives are NOT rescued by co-adaptation -- the train/inference temperature mismatch nobody controlled for was not costing them anything measurable."
+ },
+ "VERDICT": {
+  "SUCCESS_criteria": "C vs B CI-clean positive in BOTH currencies, guardrail-clean, AND D vs A materially smaller than C vs B",
+  "C_vs_B_CI_clean_positive_in_both": false,
+  "C_vs_B_guardrail_clean": false,
+  "D_vs_A_materially_smaller": false,
+  "SUCCESS": false,
+  "KILL_1_C_vs_B_covers_zero_in_either_currency": true,
+  "KILL_2_D_vs_A_comparable_to_C_vs_B": false,
+  "KILL_3_coadapted_null_test_failed": false
+ },
+ "SEED_DEPTH_SENSITIVITY": {
+  "why": "protocol rule: >= 10 seeds for anything trained, because a prior 'win' in this project turned out to be the top of its own 10-seed range. The cumulative curve is reported so the reader can see whether the conclusion depended on where the round stopped.",
+  "per_seed_C_SELECTED_judge": {
+   "values": [
+    0.4936744847192608,
+    0.4902629708599858,
+    0.489410092395167,
+    0.48656716417910445,
+    0.4878464818763326,
+    0.48514570007107316,
+    0.48713574982231694,
+    0.4909737029140014,
+    0.4780383795309168,
+    0.49196872778962325
+   ],
+   "mean": 0.48810234541577824,
+   "sd": 0.0043970010370785245,
+   "range": [
+    0.4780383795309168,
+    0.4936744847192608
+   ]
+  },
+  "per_seed_C_SELECTED_em": {
+   "values": [
+    0.4673773987206823,
+    0.47363184079601994,
+    0.46808813077469785,
+    0.4743425728500355,
+    0.4743425728500355,
+    0.47306325515280745,
+    0.46837242359630415,
+    0.4695095948827292,
+    0.45884861407249466,
+    0.4746268656716418
+   ],
+   "mean": 0.4702203269367448,
+   "sd": 0.00493275126752521,
+   "range": [
+    0.45884861407249466,
+    0.4746268656716418
+   ]
+  },
+  "cumulative_C_vs_B": [
+   {
+    "n_train_seeds": 1,
+    "seeds": [
+     "lora_verifier_T04_s0"
+    ],
+    "C_SELECTED_judge": 0.4936744847192608,
+    "C_SELECTED_em": 0.4673773987206823,
+    "C_vs_B_judge": {
+     "delta": 0.003837953091684443,
+     "lo": -0.00454868514570006,
+     "hi": 0.012082444918265878,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.00995024875621886,
+     "lo": -0.01862117981520961,
+     "hi": -0.001279317697228055,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 2,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1"
+    ],
+    "C_SELECTED_judge": 0.49196872778962336,
+    "C_SELECTED_em": 0.47050461975835106,
+    "C_vs_B_judge": {
+     "delta": 0.0021321961620470176,
+     "lo": -0.005330490405117183,
+     "hi": 0.009594882729211218,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.00682302771855009,
+     "lo": -0.014498933901919033,
+     "hi": 0.0008546552949538063,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 3,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2"
+    ],
+    "C_SELECTED_judge": 0.49111584932480457,
+    "C_SELECTED_em": 0.46969912343046666,
+    "C_vs_B_judge": {
+     "delta": 0.0012793176972282216,
+     "lo": -0.006017531390665631,
+     "hi": 0.008623548922056247,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.007628524046434493,
+     "lo": -0.015162283819000201,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 4,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3"
+    ],
+    "C_SELECTED_judge": 0.4899786780383795,
+    "C_SELECTED_em": 0.47085998578535887,
+    "C_vs_B_judge": {
+     "delta": 0.0001421464108031789,
+     "lo": -0.006681769722814536,
+     "hi": 0.0071428571428571175,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.006467661691542281,
+     "lo": -0.013574982231698673,
+     "hi": 0.0007462686567163979,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 5,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4"
+    ],
+    "C_SELECTED_judge": 0.48955223880597015,
+    "C_SELECTED_em": 0.47155650319829423,
+    "C_vs_B_judge": {
+     "delta": -0.0002842928216061913,
+     "lo": -0.006709310589907702,
+     "hi": 0.006282871357498332,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.005771144278606921,
+     "lo": -0.012537313432835819,
+     "hi": 0.00093816631130067,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 6,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4",
+     "lora_verifier_T04_s5"
+    ],
+    "C_SELECTED_judge": 0.48881781568348737,
+    "C_SELECTED_em": 0.47180762852404645,
+    "C_vs_B_judge": {
+     "delta": -0.001018715944088977,
+     "lo": -0.007320540156360966,
+     "hi": 0.005448945747453249,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.0055200189528546995,
+     "lo": -0.012011371712864205,
+     "hi": 0.0009482350153992511,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 7,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4",
+     "lora_verifier_T04_s5",
+     "lora_verifier_T04_s6"
+    ],
+    "C_SELECTED_judge": 0.488577520560463,
+    "C_SELECTED_em": 0.4713168849629404,
+    "C_vs_B_judge": {
+     "delta": -0.001259011067113347,
+     "lo": -0.007513453142451054,
+     "hi": 0.005157884049142136,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.006010762513960766,
+     "lo": -0.012508884150675139,
+     "hi": 0.00048735912275355285,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 8,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4",
+     "lora_verifier_T04_s5",
+     "lora_verifier_T04_s6",
+     "lora_verifier_T04_s7"
+    ],
+    "C_SELECTED_judge": 0.4888770433546553,
+    "C_SELECTED_em": 0.471090973702914,
+    "C_vs_B_judge": {
+     "delta": -0.0009594882729210275,
+     "lo": -0.007338308457711276,
+     "hi": 0.005650319829424266,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.006236673773987178,
+     "lo": -0.012953091684434873,
+     "hi": 0.00039090262970864487,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 9,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4",
+     "lora_verifier_T04_s5",
+     "lora_verifier_T04_s6",
+     "lora_verifier_T04_s7",
+     "lora_verifier_T04_s8"
+    ],
+    "C_SELECTED_judge": 0.48767274737423993,
+    "C_SELECTED_em": 0.4697307115217563,
+    "C_vs_B_judge": {
+     "delta": -0.0021637842533364093,
+     "lo": -0.008434415225459959,
+     "hi": 0.004280186369738592,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.007596935955144879,
+     "lo": -0.014072494669509607,
+     "hi": -0.0011367764352838222,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 2345
+    }
+   },
+   {
+    "n_train_seeds": 10,
+    "seeds": [
+     "lora_verifier_T04_s0",
+     "lora_verifier_T04_s1",
+     "lora_verifier_T04_s2",
+     "lora_verifier_T04_s3",
+     "lora_verifier_T04_s4",
+     "lora_verifier_T04_s5",
+     "lora_verifier_T04_s6",
+     "lora_verifier_T04_s7",
+     "lora_verifier_T04_s8",
+     "lora_verifier_T04_s9"
+    ],
+    "C_SELECTED_judge": 0.48810234541577824,
+    "C_SELECTED_em": 0.47022032693674476,
+    "C_vs_B_judge": {
+     "delta": -0.0017341862117981055,
+     "lo": -0.00796090973702909,
+     "hi": 0.004691186922530292,
+     "sig": false,
+     "verdict": "TIE",
+     "n": 2345
+    },
+    "C_vs_B_em": {
+     "delta": -0.007107320540156392,
+     "lo": -0.013603411513859298,
+     "hi": -0.0005398009950248663,
+     "sig": true,
+     "verdict": "LOSS",
+     "n": 2345
+    }
+   }
+  ],
+  "reading": "adding seeds moved the judge point estimate MONOTONICALLY toward and then past zero (+0.00384 at 1 seed -> -0.00173 at 10), never toward significance. A one-seed judge-only reading of this experiment would have reported a positive co-adaptation gain; the pre-registered depth and the second currency are what prevented that. This is the project's own standing warning -- 'a prior win was the top of its own 10-seed range' -- reproducing itself exactly."
+ },
+ "prereg_deviations": [
+  {
+   "item": "seed count",
+   "prereg": ">= 10 seeds for anything trained",
+   "what_was_done": "10 completed retraining seed(s) at the time this artifact was written; each retrain costs ~108 GPU-minutes plus ~66 GPU-minutes of adapter re-scoring, and the round was sequenced (per the pre-registration) to complete ALL FOUR ARMS at a small seed count first so a kill leaves a complete design rather than a deep partial one.",
+   "status": "SATISFIED"
+  },
+  {
+   "item": "contested stratum size",
+   "prereg": "contested stratum (n ~ 845)",
+   "what_was_done": "the contested stratum is defined on the pool each contrast is made in (recoverable AND >= 2 distinct candidate strings), so its n differs between the T=0.4 and T=0.7 pools and from the incumbent transfer dump's n = 916. Both n's are reported next to their contrast rather than a single quoted number.",
+   "status": "CLARIFICATION, not a design change"
+  },
+  {
+   "item": "training-pool composition",
+   "prereg": "reproduce taken_examples_per_source exactly and hit the same pos_rate target",
+   "what_was_done": "the per-source quotas are reproduced exactly wherever the T=0.4 pools can fill them; any shortfall is topped up from radimagenet_open by the UNCHANGED trainer and recorded. pos_rate is REPORTED, not engineered -- see TRAINING_PROVENANCE.POS_RATE_IS_A_CONFOUND_NOT_A_NUISANCE.",
+   "status": "ANTICIPATED BY THE PRE-REGISTRATION ('likely ... REPORT THE ACHIEVED pos_rate PROMINENTLY and treat it as a confound')"
+  }
+ ],
+ "interpretation_committed_in_advance": {
+  "if_gain_is_small": "The generator and verifier are separable; a sampling knob can be turned without retraining. This makes the T*=0.4 result a genuinely free deployment change.",
+  "if_gain_is_large": "Generator and verifier must be tuned JOINTLY, and every past verifier experiment in this project was handicapped by a train/inference mismatch nobody controlled for. That would be a significant methodological finding about the ~27 prior negatives and must be reported as such, including the possibility that some of them would look different under co-adaptation."
+ }
+}
