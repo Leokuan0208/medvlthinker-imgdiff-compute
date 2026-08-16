@@ -263,6 +263,12 @@ def stage_analyse(A):
             "analytic_1_over_K": round(float(np.mean([1.0 / int(g[i]["k"]) for i in idxs])), 6),
             "majority_vs_greedy": paired_boot(ml, gl),
             "oracle_vs_greedy": paired_boot(ol, gl),
+            #: THE LUCK FLOOR.  This project has retracted a claim for mistaking coverage for
+            #: signal, so a majority-vote gain must clear a RANDOM pick from the same pool, not
+            #: just greedy.  (On these cells the floor sits BELOW greedy, so it is the weaker of
+            #: the two bars -- but it is the one that proves the vote is doing work.)
+            "majority_vs_random_pick_floor": paired_boot(ml, rl),
+            "greedy_vs_random_pick_floor": paired_boot(gl, rl),
         }
         gha, mha = np.asarray(gh, float), np.asarray(mh, float)
         rows["harness_judge_multi_choice"] = {
@@ -275,6 +281,39 @@ def stage_analyse(A):
             "unparsed_letter_rate_sampled": round(unpar_s / (8 * len(idxs)), 5),
             "mean_distinct_letters_in_pool": round(float(np.mean(nd)), 4),
             "distinct_letter_hist": dict(sorted(Counter(nd).items())),
+            "contested_frac": round(float(np.mean([x >= 2 for x in nd])), 5),
+            "grader_gap_greedy_letter_em_minus_harness":
+                round(float(gl.mean() - gha.mean()), 6),
+            "grader_gap_majority_letter_em_minus_harness":
+                round(float(ml.mean() - mha.mean()), 6),
+        }
+        rows["IS_THIS_THE_OLD_PMC_GRADER_ARTIFACT"] = {
+            "why_the_question": "artifacts/unified_pipeline_2026-08-12.json reports +0.0132 SIG on "
+                                "PMC-VQA that was ENTIRELY a defect in MedEvalKit's PMC answer "
+                                "extractor ('any arm graded pick == gold collects +0.0102 of free "
+                                "grader defect on this cell'). This round's PMC number rounds to the "
+                                "same +0.0132, so the coincidence must be discharged, not ignored.",
+            "answer": "NO -- four independent reasons, all readable above:",
+            "1_zero_unparsed": f"the defect fires on responses the extractor cannot parse, and the "
+                               f"unparsed letter rate here is "
+                               f"{round(unpar_g/len(idxs),5)} (greedy) and "
+                               f"{round(unpar_s/(8*len(idxs)),5)} (sampled). The mechanism has no "
+                               f"surface to act on.",
+            "2_same_grader_both_arms": "the 2026-08-12 defect was a BETWEEN-GRADER confound -- the "
+                                       "option branch was scored pick==gold while its baseline went "
+                                       "through the defective extractor. Here BOTH arms are scored by "
+                                       "BOTH graders on REAL generated response strings; the majority "
+                                       "arm grades the raw response of the first sample carrying the "
+                                       "plurality letter, never a synthetic string.",
+            "3_both_currencies_agree": "the win is present under letter_em AND under the harness's own "
+                                       "judge_multi_choice; the 2026-08-12 positive was harness-only.",
+            "4_defect_shrinks_it": "the DEFECTIVE harness grader gives the SMALLER delta "
+                                   f"({round(float(mha.mean()-gha.mean()),6):+.4f}) than the repaired "
+                                   f"letter_em ({round(float(ml.mean()-gl.mean()),6):+.4f}), so the "
+                                   "defect is suppressing this effect, not manufacturing it.",
+            "5_different_method_entirely": "this arm is training-free MAJORITY VOTE with no verifier "
+                                           "and no 32B; the 2026-08-12 arm was a verifier fusion over "
+                                           "the prompt's given options.",
         }
         out["cells"][cell] = rows
         print(f"[{cell}] n={len(idxs)} letterEM greedy={gl.mean():.4f} maj={ml.mean():.4f} "

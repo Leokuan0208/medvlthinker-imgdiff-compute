@@ -1,0 +1,226 @@
+{
+ "title": "SECONDARY -- self-consistency (majority vote over 8 T=0.4 samples) vs 7B greedy on the two intrinsically multiple-choice cells",
+ "date": "2026-08-16",
+ "prompt": "deployed MedEvalKit get_multiple_choice_prompt (direct), fullres, no system prompt",
+ "null_tests": {
+  "G2_mcq_grader": {
+   "PMC_VQA": {
+    "n": 33430,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded_by_this_module": 0.542656,
+    "published_always_7b": 0.5427,
+    "abs_dev_vs_published": 4.4e-05
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded_by_this_module": 0.2615,
+    "published_always_7b": 0.2615,
+    "abs_dev_vs_published": 0.0
+   },
+   "max_abs_deviation": 4.4e-05,
+   "pass": true
+  }
+ },
+ "cells": {
+  "PMC_VQA": {
+   "n": 6000,
+   "n_greedy_rows": 6000,
+   "n_sampled_rows": 6000,
+   "letter_em": {
+    "greedy": 0.552167,
+    "majority_vote": 0.565333,
+    "oracle@8": 0.755,
+    "random_pick_floor": 0.537125,
+    "analytic_1_over_K": 0.25,
+    "majority_vs_greedy": {
+     "delta": 0.01316666666666666,
+     "ci": [
+      0.008000000000000007,
+      0.018166666666666664
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "oracle_vs_greedy": {
+     "delta": 0.2028333333333333,
+     "ci": [
+      0.1928333333333334,
+      0.21316666666666662
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "majority_vs_random_pick_floor": {
+     "delta": 0.02820833333333339,
+     "ci": [
+      0.023562500000000042,
+      0.03295833333333331
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "greedy_vs_random_pick_floor": {
+     "delta": 0.015041666666666731,
+     "ci": [
+      0.009875000000000078,
+      0.020437499999999997
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260816
+    }
+   },
+   "harness_judge_multi_choice": {
+    "greedy": 0.540667,
+    "majority_vote": 0.550667,
+    "majority_vs_greedy": {
+     "delta": 0.010000000000000009,
+     "ci": [
+      0.004833333333333245,
+      0.01533333333333331
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260816
+    }
+   },
+   "diagnostics": {
+    "unparsed_letter_rate_greedy": 0.0,
+    "unparsed_letter_rate_sampled": 0.0,
+    "mean_distinct_letters_in_pool": 1.8055,
+    "distinct_letter_hist": {
+     "1": 2817,
+     "2": 1815,
+     "3": 1086,
+     "4": 282
+    },
+    "contested_frac": 0.5305,
+    "grader_gap_greedy_letter_em_minus_harness": 0.0115,
+    "grader_gap_majority_letter_em_minus_harness": 0.014667
+   },
+   "IS_THIS_THE_OLD_PMC_GRADER_ARTIFACT": {
+    "why_the_question": "artifacts/unified_pipeline_2026-08-12.json reports +0.0132 SIG on PMC-VQA that was ENTIRELY a defect in MedEvalKit's PMC answer extractor ('any arm graded pick == gold collects +0.0102 of free grader defect on this cell'). This round's PMC number rounds to the same +0.0132, so the coincidence must be discharged, not ignored.",
+    "answer": "NO -- four independent reasons, all readable above:",
+    "1_zero_unparsed": "the defect fires on responses the extractor cannot parse, and the unparsed letter rate here is 0.0 (greedy) and 0.0 (sampled). The mechanism has no surface to act on.",
+    "2_same_grader_both_arms": "the 2026-08-12 defect was a BETWEEN-GRADER confound -- the option branch was scored pick==gold while its baseline went through the defective extractor. Here BOTH arms are scored by BOTH graders on REAL generated response strings; the majority arm grades the raw response of the first sample carrying the plurality letter, never a synthetic string.",
+    "3_both_currencies_agree": "the win is present under letter_em AND under the harness's own judge_multi_choice; the 2026-08-12 positive was harness-only.",
+    "4_defect_shrinks_it": "the DEFECTIVE harness grader gives the SMALLER delta (+0.0100) than the repaired letter_em (+0.0132), so the defect is suppressing this effect, not manufacturing it.",
+    "5_different_method_entirely": "this arm is training-free MAJORITY VOTE with no verifier and no 32B; the 2026-08-12 arm was a verifier fusion over the prompt's given options."
+   }
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "n_greedy_rows": 2000,
+   "n_sampled_rows": 2000,
+   "letter_em": {
+    "greedy": 0.268,
+    "majority_vote": 0.267,
+    "oracle@8": 0.4005,
+    "random_pick_floor": 0.260125,
+    "analytic_1_over_K": 0.2,
+    "majority_vs_greedy": {
+     "delta": -0.0010000000000000009,
+     "ci": [
+      -0.00799999999999998,
+      0.006000000000000005
+     ],
+     "significant": false,
+     "sign": "TIE",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "oracle_vs_greedy": {
+     "delta": 0.1325,
+     "ci": [
+      0.118,
+      0.14750000000000002
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "majority_vs_random_pick_floor": {
+     "delta": 0.00687500000000002,
+     "ci": [
+      0.0005625000000000213,
+      0.013376562500000001
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260816
+    },
+    "greedy_vs_random_pick_floor": {
+     "delta": 0.007875000000000021,
+     "ci": [
+      0.0011249999999999871,
+      0.014937499999999992
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260816
+    }
+   },
+   "harness_judge_multi_choice": {
+    "greedy": 0.268,
+    "majority_vote": 0.267,
+    "majority_vs_greedy": {
+     "delta": -0.0010000000000000009,
+     "ci": [
+      -0.00799999999999998,
+      0.006000000000000005
+     ],
+     "significant": false,
+     "sign": "TIE",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260816
+    }
+   },
+   "diagnostics": {
+    "unparsed_letter_rate_greedy": 0.0,
+    "unparsed_letter_rate_sampled": 0.0,
+    "mean_distinct_letters_in_pool": 1.621,
+    "distinct_letter_hist": {
+     "1": 1106,
+     "2": 623,
+     "3": 201,
+     "4": 63,
+     "5": 7
+    },
+    "contested_frac": 0.447,
+    "grader_gap_greedy_letter_em_minus_harness": 0.0,
+    "grader_gap_majority_letter_em_minus_harness": 0.0
+   },
+   "IS_THIS_THE_OLD_PMC_GRADER_ARTIFACT": {
+    "why_the_question": "artifacts/unified_pipeline_2026-08-12.json reports +0.0132 SIG on PMC-VQA that was ENTIRELY a defect in MedEvalKit's PMC answer extractor ('any arm graded pick == gold collects +0.0102 of free grader defect on this cell'). This round's PMC number rounds to the same +0.0132, so the coincidence must be discharged, not ignored.",
+    "answer": "NO -- four independent reasons, all readable above:",
+    "1_zero_unparsed": "the defect fires on responses the extractor cannot parse, and the unparsed letter rate here is 0.0 (greedy) and 0.0 (sampled). The mechanism has no surface to act on.",
+    "2_same_grader_both_arms": "the 2026-08-12 defect was a BETWEEN-GRADER confound -- the option branch was scored pick==gold while its baseline went through the defective extractor. Here BOTH arms are scored by BOTH graders on REAL generated response strings; the majority arm grades the raw response of the first sample carrying the plurality letter, never a synthetic string.",
+    "3_both_currencies_agree": "the win is present under letter_em AND under the harness's own judge_multi_choice; the 2026-08-12 positive was harness-only.",
+    "4_defect_shrinks_it": "the DEFECTIVE harness grader gives the SMALLER delta (-0.0010) than the repaired letter_em (-0.0010), so the defect is suppressing this effect, not manufacturing it.",
+    "5_different_method_entirely": "this arm is training-free MAJORITY VOTE with no verifier and no 32B; the 2026-08-12 arm was a verifier fusion over the prompt's given options."
+   }
+  }
+ }
+}

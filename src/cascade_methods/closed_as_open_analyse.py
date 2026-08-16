@@ -216,7 +216,8 @@ def analyse_cell(cell, jm):
             continue
         ga = out["by_currency"][cur]["greedy_arms"]
         if "closedD_g" in ga:
-            for a in ("openPRJ_g", "openMEK_g", "closedD_g_full"):
+            for a in ("openPRJ_g", "openMEK_g", "closedD_g_full",
+                      "openMEK_g_full", "openPRJ_g_full"):
                 if a in ga:
                     la = arm_labels(cell, a, jm, cur)
                     lb = arm_labels(cell, "closedD_g", jm, cur)
@@ -225,6 +226,27 @@ def analyse_cell(cell, jm):
                     vb = np.array([0 if lb[i][0] is None else lb[i][0] for i in idxs], float)
                     ref.setdefault(cur, {})[f"{a}_minus_closedD_g"] = paired_boot(va, vb)
     out["reformat_effect_greedy"] = ref
+    #: the SAME prompt contrast with RESOLUTION HELD FIXED at fullres.  Without this, "change the
+    #: prompt" is confounded with "and drop to cap320", because every pre-registered open arm ran at
+    #: cap320.  POST-HOC (L.POST_HOC_ARMS): added after the primary endpoint was read.
+    mr = {}
+    for cur in CURRENCIES:
+        if not isinstance(out["by_currency"].get(cur), dict):
+            continue
+        ga = out["by_currency"][cur]["greedy_arms"]
+        if "closedD_g_full" not in ga:
+            continue
+        for a in L.POST_HOC_ARMS:
+            if a not in ga:
+                continue
+            la = arm_labels(cell, a, jm, cur)
+            lb = arm_labels(cell, "closedD_g_full", jm, cur)
+            idxs = sorted(set(la) & set(lb))
+            va = np.array([0 if la[i][0] is None else la[i][0] for i in idxs], float)
+            vb = np.array([0 if lb[i][0] is None else lb[i][0] for i in idxs], float)
+            mr.setdefault(cur, {})[f"{a}_minus_closedD_g_full"] = paired_boot(va, vb)
+    if mr:
+        out["prompt_effect_at_matched_fullres_POST_HOC"] = mr
     out["published_always_7b_deployed_harness"] = L.PUBLISHED_ALWAYS_7B[cell]
     if cell == "SLAKE_closed":
         gen_any = gen.get("openPRJ_g") or {}
@@ -285,6 +307,81 @@ def main():
     sc = os.path.join(L.PARTS, "mcq_self_consistency.json")
     if os.path.exists(sc):
         doc["secondary_self_consistency"] = json.load(open(sc))
+    #: SKILL above the random-pick floor -- the metric that makes these cells comparable to the three
+    #: OPEN cells the verifier was built for.  sel_eff alone is misleading here: a near-unanimous
+    #: yes/no pool makes a RANDOM pick score ~0.93 of oracle by construction, so a high sel_eff on a
+    #: reformatted closed cell is COVERAGE, not signal -- exactly the trap that cost this project a
+    #: retracted claim before.  python3 src/cascade_methods/closed_as_open_skill.py
+    sk = os.path.join(L.PARTS, "skill_vs_floor.json")
+    if os.path.exists(sk):
+        doc["SKILL_above_random_pick_floor"] = json.load(open(sk))
+    #: the reformat measured against the DEPLOYED operating point (fullres closed prompt), plus the
+    #: yes-bias decomposition that explains it.  python3 src/cascade_methods/closed_as_open_reformat.py
+    rf = os.path.join(L.PARTS, "reformat_vs_deployed.json")
+    if os.path.exists(rf):
+        doc["reformat_vs_deployed_operating_point"] = json.load(open(rf))
+    #: MEASURED prefill length per arm -- the reformat is only interesting if it is not more
+    #: expensive.  python3 src/cascade_methods/closed_as_open_prefill.py
+    pf = os.path.join(L.PARTS, "prefill_cost.json")
+    if os.path.exists(pf):
+        doc["MEASURED_prefill_cost"] = json.load(open(pf))
+    #: the multiplicity guard: how big a "best of nine arms" does a SKILL-LESS verifier produce?
+    #: python3 src/cascade_methods/closed_as_open_permnull.py
+    pn = os.path.join(L.PARTS, "perm_null_multiplicity.json")
+    if os.path.exists(pn):
+        doc["PERMUTATION_NULL_arm_multiplicity"] = json.load(open(pn))
+    #: verifier forwards per question, read verbatim from the n_forward field the scorer wrote.
+    #: TWO CONVENTIONS, both reported, because the generation constant changed THIS DAY.
+    #: as_charged  -- 1 FLOP-eq per candidate, the convention every earlier number in this project
+    #:                uses (artifacts/cost_decomposition_2026-08-12.json). Kept for comparability.
+    #: measured    -- artifacts/verifier_restructure_2026-08-16.json measured, by a controlled
+    #:                prefix-cache A/B, that drawing N=8 samples costs 2.370 FLOP-eq and NOT 8.0,
+    #:                because vLLM shares the LM prefill across the N samples (the vision tower is
+    #:                not shared). A verifier forward at cap320 (max_pixels 250,880) costs 1.0809
+    #:                FLOP-eq, not 1.0. This is the honest cost and it supersedes the as-charged one.
+    GEN_N8_MEASURED = 2.369969011752281      # count|default, N=8, the config every gen here ran under
+    VER_CAP320_MEASURED = 1.0809057311756787  # per verifier forward at max_pixels 250,880
+    cost = {"unit": "Lingshu-7B forward-equivalents per question; the always-7B baseline is 1.0",
+            "always_7B_baseline": 1.0,
+            "conventions": {
+                "as_charged": "1 FLOP-eq per generated candidate + 1 per verifier forward "
+                              "(artifacts/cost_decomposition_2026-08-12.json)",
+                "measured": "generation of N=8 at cap320 = {} FLOP-eq and each verifier forward at "
+                            "cap320 = {} FLOP-eq, both from "
+                            "artifacts/verifier_restructure_2026-08-16.json (cost_constants and "
+                            "Q1_generation_cost_and_prefill_sharing.per_config['count|default'])"
+                            .format(round(GEN_N8_MEASURED, 4), round(VER_CAP320_MEASURED, 4)),
+                "which_to_quote": "the MEASURED one. The as-charged column exists only so this "
+                                  "artifact can be lined up against the project's older numbers.",
+            },
+            "verifier_forwards_are_measured_here": "read verbatim from the n_forward field "
+                                                   "src/cascade_methods/closed_as_open_score.py wrote",
+            "arms": {}}
+    for cell in A.cells:
+        for a in SAMPLED_ARMS:
+            p = L.scores_path(cell, a)
+            if not os.path.exists(p):
+                continue
+            nf = [json.loads(l)["n_forward"] for l in open(p) if l.strip()]
+            if not nf:
+                continue
+            v = float(np.mean(nf))
+            cost["arms"].setdefault(cell, {})[a] = {
+                "n": len(nf),
+                "verifier_forwards_measured": round(v, 4),
+                "as_charged_total_flopeq_per_question": round(L.N_SAMPLES + v, 4),
+                "measured_total_flopeq_per_question":
+                    round(GEN_N8_MEASURED + v * VER_CAP320_MEASURED, 4),
+                "measured_generation_flopeq": round(GEN_N8_MEASURED, 4),
+                "measured_verifier_flopeq": round(v * VER_CAP320_MEASURED, 4)}
+    cost["why_the_verifier_is_cheap_here"] = (
+        "the scorer scores each DISTINCT surface answer once, and these pools are degenerate, so the "
+        "verifier costs 1.17-1.29 forwards here against 3.823 on the three OPEN cells "
+        "(artifacts/verifarch_integrated_2026-08-04.json). That is a symptom of the failure, not a win.")
+    cost["reformat_only_arm"] = ("openMEK_g / openPRJ_g cost ONE generation forward and, measured, "
+                                 "0.38-0.60x the deployed operating point's prefill -- see "
+                                 "MEASURED_prefill_cost.")
+    doc["COST"] = cost
 
     # ---- the pre-registered decision rule, applied mechanically ---------------------------
     arm = L.PRIMARY["sampled"]
@@ -315,6 +412,30 @@ def main():
     verdict["n_cells_added_to_the_claim"] = len(verdict["cells_counting"])
     verdict["claim_scope"] = (f"3 open cells + {len(verdict['cells_counting'])} reformatted closed "
                               f"cells = {3 + len(verdict['cells_counting'])} of 8 reporting cells")
+
+    # ---- the one-line reading, assembled FROM THE COMPUTED NUMBERS, not written by hand --------
+    sk = doc.get("SKILL_above_random_pick_floor", {})
+    ref_sk = sk.get("open_cell_reference", {}).get("skill")
+    cl_sk = {c: sk.get("closed_cells", {}).get(c, {}).get("em_repaired", {}).get("skill")
+             for c in A.cells}
+    parts = ["{} {:+.1%}".format(c, v) for c, v in cl_sk.items() if v is not None]
+    verdict["one_line"] = (
+        "REFUTED. Re-asking the closed cells open-ended adds {} of {} cells to the verifier claim. "
+        "The frozen verifier converts {:.1%} of the above-random headroom on the three OPEN cells it "
+        "was built for, and {} here -- i.e. nothing.".format(
+            len(verdict["cells_counting"]), len(A.cells),
+            ref_sk if ref_sk is not None else float("nan"), "; ".join(parts)))
+    verdict["why"] = (
+        "the reformat never created the regime it was meant to test. Removing the answer space from "
+        "the prompt did NOT widen the candidate pool: see SKILL_above_random_pick_floor -> "
+        "POOL_DEGENERACY_why_the_skill_is_zero -- the model answers yes/no whether or not it is told "
+        "to, so these cells emit a handful of distinct strings cell-wide against 3,919 on the open "
+        "cells, and are contested on 16-24% of items against 73.6%. Candidate PROVENANCE was the "
+        "hypothesis; candidate DIVERSITY is the operative variable, and the prompt does not control it.")
+    verdict["the_positive_that_did_survive"] = (
+        "a PROMPT-ONLY change with no verifier and no extra forward pass: dropping MedEvalKit's "
+        "\"Please output 'yes' or 'no'\" instruction. See reformat_vs_deployed_operating_point and "
+        "MEASURED_prefill_cost. It is not a verifier result and must not be reported as one.")
     doc["VERDICT"] = verdict
 
     os.makedirs(L.ART, exist_ok=True)
