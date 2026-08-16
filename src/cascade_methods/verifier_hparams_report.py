@@ -464,9 +464,40 @@ def main():
                 (A.get(KNEE, {}).get("geometry", {}).get("mean_wall_s_batch1") or 0) * 1000,
         },
         "macro": pair(f"verifhp_px{KNEE}", f"verifhp_px{CTRL}"),
-        "honest_verdict": "a genuine but SMALL free saving: the deployed rung sits above the knee, "
-                          "so ~6% of the open arm's FLOPs and ~0.5 GiB of footprint are free. It is "
-                          "not the 4x prize the round was hunting.",
+        "guardrail_all_six_cells_at_this_rung": {
+            "n_negative_flags_of_6": 2, "n_whose_CI_excludes_0": 0,
+            "_source": "guardrail_cis.json -- 501,760 and 12,845,056 are the ONLY sub-deployed "
+                       "rungs with no CI-clean negative flag; 62,720 / 125,440 / 250,880 / 376,320 "
+                       "each have 1-2.",
+        },
+        "AND_THE_SAVING_DOES_NOT_SURVIVE_TO_THE_MACRO": {
+            "open_arm_per_question_flops_rel_to_deployed":
+                C.get(KNEE, {}).get("flops_open_arm_rel_to_deployed"),
+            "macro_flopeq_honest_rel_to_deployed": (R.get(KNEE, {}).get("vs_deployed", {})
+                                                    .get("macro_flops_honest_ratio", {})
+                                                    .get("method_accuracy_max_veto")),
+            "macro_flopeq_as_charged_rel_to_deployed": (R.get(KNEE, {}).get("vs_deployed", {})
+                                                        .get("macro_flops_as_charged_ratio", {})
+                                                        .get("method_accuracy_max_veto")),
+            "macro_flopeq_honest_at_501760": (R.get(KNEE, {}).get("macro", {})
+                                              .get("method_accuracy_max_veto", {})
+                                              .get("macro_flops_honest_verifier")),
+            "macro_flopeq_honest_at_deployed": (R.get(CTRL, {}).get("macro", {})
+                                                .get("method_accuracy_max_veto", {})
+                                                .get("macro_flops_honest_verifier")),
+            "_read": "the 6.4% is a saving on the OPEN ARM's per-question compute with escalation "
+                     "held out. At the 8-cell macro it vanishes: honest FLOP-eq 9.636 at 501,760 "
+                     "vs 9.633 deployed, a ratio of 1.0003. The open cells are 3 of 8 and the "
+                     "escalated 32B leg (4.57 flop-eq) dominates them, so run-to-run escalation "
+                     "jitter between arms is LARGER than the whole verifier saving. Anyone quoting "
+                     "'-6.4%' must say it is the open arm, not the system.",
+        },
+        "honest_verdict": "a genuine but SMALL free saving, and it is confined to the open arm: "
+                          "the deployed rung sits above its own saturation point, so ~6.4% of the "
+                          "open arm's FLOPs, 0.52 GiB of footprint and ~23% of the verifier's "
+                          "batch-1 latency are free. At the 8-cell macro the FLOP saving is 1.0003x "
+                          "-- i.e. nothing. It is not the 4x prize the round was hunting, and the "
+                          "prize was never 4x: the realised cap ratio is 1.88x in vision tokens.",
     }
     hl["5_THE_TRAP_the_macro_moves_OPPOSITE_to_the_selector"] = {
         "observation": "250,880 is the WORST-tier selector and yet has the HIGHEST macro of any "

@@ -1,0 +1,859 @@
+{
+ "title": "Q2b -- the vision tower is the last unshared term in generation",
+ "date": "2026-08-16",
+ "arms": {
+  "A_batch16_default": {
+   "meaning": "CONTROL. 16 questions submitted together, stock config -- must reproduce vrestruct_prefill.py's count|default numbers.",
+   "submission_batch": 16,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 1.4178951978683472,
+     "sd": 0.0018826154292846146,
+     "n": 2,
+     "values": [
+      1.4192264080047607,
+      1.4165639877319336
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 91.5,
+     "sd": 14.849242404917497,
+     "n": 2,
+     "values": [
+      102.0,
+      81.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 4.766226722287291,
+     "sd": 0.02470861537461128,
+     "n": 2,
+     "values": [
+      4.783698351772409,
+      4.748755092802173
+     ]
+    },
+    "wall_s": {
+     "mean": 3.1297093629837036,
+     "sd": 0.639791352031494,
+     "n": 2,
+     "values": [
+      3.5821101665496826,
+      2.6773085594177246
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 725.5,
+     "sd": 62.932503525602726,
+     "n": 2,
+     "values": [
+      770.0,
+      681.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.158131276752595,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 1.2091917194442856,
+    "decode_term": 0.092
+   }
+  },
+  "B_batch1_default": {
+   "meaning": "one question per generate() call: only 8 child requests are ever in flight, so if the cause were cache thrashing from concurrency this arm would recover.",
+   "submission_batch": 1,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 6.468906760215759,
+     "sd": 0.25285361132013506,
+     "n": 2,
+     "values": [
+      6.647701263427734,
+      6.290112257003784
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 93.5,
+     "sd": 9.192388155425117,
+     "n": 2,
+     "values": [
+      100.0,
+      87.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 4.766226722287291,
+     "sd": 0.02470861537461128,
+     "n": 2,
+     "values": [
+      4.783698351772409,
+      4.748755092802173
+     ]
+    },
+    "wall_s": {
+     "mean": 10.230829358100891,
+     "sd": 0.10875825670842161,
+     "n": 2,
+     "values": [
+      10.307733058929443,
+      10.153925657272339
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 737.5,
+     "sd": 72.8319984622144,
+     "n": 2,
+     "values": [
+      789.0,
+      686.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.158131276752595,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 1.2091917194442856,
+    "decode_term": 0.092
+   }
+  },
+  "D_batch16_maxseqs1": {
+   "meaning": "max_num_seqs=1 -- forces strictly sequential execution, so every child after the first MUST see its sibling's completed prefill.",
+   "submission_batch": 16,
+   "max_num_seqs": 1,
+   "effective_max_num_seqs": 1,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 5.953669428825378,
+     "sd": 0.6714820731890173,
+     "n": 2,
+     "values": [
+      6.428478956222534,
+      5.478859901428223
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 93.5,
+     "sd": 9.192388155425117,
+     "n": 2,
+     "values": [
+      100.0,
+      87.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 4.766226722287291,
+     "sd": 0.02470861537461128,
+     "n": 2,
+     "values": [
+      4.783698351772409,
+      4.748755092802173
+     ]
+    },
+    "wall_s": {
+     "mean": 33.00344932079315,
+     "sd": 2.5110166797997366,
+     "n": 2,
+     "values": [
+      34.779006242752075,
+      31.22789239883423
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 732.0,
+     "sd": 66.46803743153546,
+     "n": 2,
+     "values": [
+      779.0,
+      685.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.158131276752595,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 1.2091917194442856,
+    "decode_term": 0.092
+   }
+  },
+  "E_batch16_mmcache32": {
+   "meaning": "VLLM_MM_INPUT_CACHE_GIB raised 4 -> 32.",
+   "submission_batch": 16,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": 32,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 1.7312676906585693,
+     "sd": 0.1402920230020904,
+     "n": 2,
+     "values": [
+      1.8304691314697266,
+      1.632066249847412
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 91.5,
+     "sd": 14.849242404917497,
+     "n": 2,
+     "values": [
+      102.0,
+      81.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 4.766226722287291,
+     "sd": 0.02470861537461128,
+     "n": 2,
+     "values": [
+      4.783698351772409,
+      4.748755092802173
+     ]
+    },
+    "wall_s": {
+     "mean": 3.6294820308685303,
+     "sd": 0.014849514842146272,
+     "n": 2,
+     "values": [
+      3.6189818382263184,
+      3.639982223510742
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 725.5,
+     "sd": 62.932503525602726,
+     "n": 2,
+     "values": [
+      770.0,
+      681.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.158131276752595,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 1.2091917194442856,
+    "decode_term": 0.092
+   }
+  },
+  "F_batch4_default": {
+   "meaning": "4 questions per call -- an intermediate concurrency point.",
+   "submission_batch": 4,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 2.9371546506881714,
+     "sd": 0.3889805141649849,
+     "n": 2,
+     "values": [
+      2.6621038913726807,
+      3.212205410003662
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 93.5,
+     "sd": 9.192388155425117,
+     "n": 2,
+     "values": [
+      100.0,
+      87.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 4.766226722287291,
+     "sd": 0.02470861537461128,
+     "n": 2,
+     "values": [
+      4.783698351772409,
+      4.748755092802173
+     ]
+    },
+    "wall_s": {
+     "mean": 6.709960699081421,
+     "sd": 0.5742693555742759,
+     "n": 2,
+     "values": [
+      7.11603045463562,
+      6.303890943527222
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 753.0,
+     "sd": 96.16652224137046,
+     "n": 2,
+     "values": [
+      821.0,
+      685.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.158131276752595,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 1.2091917194442856,
+    "decode_term": 0.092
+   }
+  },
+  "G_prime_then_fanout_b16": {
+   "meaning": "THE CANDIDATE FIX. A 1-token n=1 request per question FIRST (its prompt blocks become computed and resident), then the n=8 request. The priming pass is real work and is counted.",
+   "submission_batch": 16,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": true,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9785478877459303,
+     "sd": 0.01047984083971677,
+     "n": 2,
+     "values": [
+      0.9711375212224108,
+      0.9859582542694497
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.5199171796761068,
+     "sd": 0.10222465342015882,
+     "n": 2,
+     "values": [
+      1.447633434038268,
+      1.5922009253139457
+     ]
+    },
+    "wall_s": {
+     "mean": 2.101043224334717,
+     "sd": 0.12734181374123904,
+     "n": 2,
+     "values": [
+      2.0109989643096924,
+      2.191087484359741
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 108.0,
+     "sd": 11.313708498984761,
+     "n": 2,
+     "values": [
+      116.0,
+      100.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1970901132674594,
+     "sd": 0.03847926915287659,
+     "n": 2,
+     "values": [
+      1.169881161114358,
+      1.2242990654205608
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 5.304259111185475,
+     "sd": 0.02823841757098513,
+     "n": 2,
+     "values": [
+      5.3242266877398965,
+      5.284291534631055
+     ]
+    },
+    "wall_s": {
+     "mean": 4.130825519561768,
+     "sd": 0.025110755168002576,
+     "n": 2,
+     "values": [
+      4.148581504821777,
+      4.113069534301758
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 748.0,
+     "sd": 60.81118318204309,
+     "n": 2,
+     "values": [
+      791.0,
+      705.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.317312351736684,
+    "lm_term": 0.8796218152289291,
+    "vision_term": 1.345690536507755,
+    "decode_term": 0.092
+   }
+  },
+  "H_prime_then_fanout_b1": {
+   "meaning": "as G, one question at a time.",
+   "submission_batch": 1,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": true,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9785478877459303,
+     "sd": 0.01047984083971677,
+     "n": 2,
+     "values": [
+      0.9711375212224108,
+      0.9859582542694497
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.5199171796761068,
+     "sd": 0.10222465342015882,
+     "n": 2,
+     "values": [
+      1.447633434038268,
+      1.5922009253139457
+     ]
+    },
+    "wall_s": {
+     "mean": 4.702277421951294,
+     "sd": 0.008019027985076742,
+     "n": 2,
+     "values": [
+      4.6966071128845215,
+      4.707947731018066
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 111.0,
+     "sd": 8.48528137423857,
+     "n": 2,
+     "values": [
+      117.0,
+      105.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1970901132674594,
+     "sd": 0.03847926915287659,
+     "n": 2,
+     "values": [
+      1.169881161114358,
+      1.2242990654205608
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 5.304259111185475,
+     "sd": 0.02823841757098513,
+     "n": 2,
+     "values": [
+      5.3242266877398965,
+      5.284291534631055
+     ]
+    },
+    "wall_s": {
+     "mean": 7.6918580532073975,
+     "sd": 1.1076748127063296,
+     "n": 2,
+     "values": [
+      8.475102424621582,
+      6.908613681793213
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 756.5,
+     "sd": 84.14570696119915,
+     "n": 2,
+     "values": [
+      816.0,
+      697.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 2.317312351736684,
+    "lm_term": 0.8796218152289291,
+    "vision_term": 1.345690536507755,
+    "decode_term": 0.092
+   }
+  },
+  "I_image_embeds_b16": {
+   "meaning": "",
+   "submission_batch": 16,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 0.9485468890442426,
+     "sd": 0.004067647118380585,
+     "n": 2,
+     "values": [
+      0.9456706281833617,
+      0.9514231499051233
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 3.235583782196045,
+     "sd": 1.1367439998864752,
+     "n": 2,
+     "values": [
+      2.4317843914031982,
+      4.039383172988892
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 90.5,
+     "sd": 14.849242404917497,
+     "n": 2,
+     "values": [
+      101.0,
+      80.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1662214987864852,
+     "sd": 0.03367193540632798,
+     "n": 2,
+     "values": [
+      1.1424118449249951,
+      1.190031152647975
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 4.445471405982971,
+     "sd": 1.3515916062682147,
+     "n": 2,
+     "values": [
+      5.401190996170044,
+      3.4897518157958984
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 738.0,
+     "sd": 94.75230867899737,
+     "n": 2,
+     "values": [
+      805.0,
+      671.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 1.2026395573083093,
+    "lm_term": 0.8569395573083093,
+    "vision_term": 0.2537,
+    "decode_term": 0.092
+   }
+  },
+  "J_pad_tail_b16": {
+   "meaning": "",
+   "submission_batch": 16,
+   "max_num_seqs": null,
+   "effective_max_num_seqs": 256,
+   "mm_input_cache_gib": null,
+   "prime": false,
+   "n_distinct_images": 16,
+   "N1": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.0225107360431438,
+     "sd": 0.0017795956142915303,
+     "n": 2,
+     "values": [
+      1.0237691001697793,
+      1.0212523719165085
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 2.3615833520889282,
+     "sd": 0.39264054648967095,
+     "n": 2,
+     "values": [
+      2.08394455909729,
+      2.6392221450805664
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 23.0,
+     "sd": 9.899494936611665,
+     "n": 2,
+     "values": [
+      16.0,
+      30.0
+     ]
+    }
+   },
+   "N8": {
+    "lm_prefill_sharing_ratio": {
+     "mean": 1.1506533680728146,
+     "sd": 0.02801874781096273,
+     "n": 2,
+     "values": [
+      1.170465614650302,
+      1.1308411214953271
+     ]
+    },
+    "vision_sharing_ratio": {
+     "mean": 1.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      1.0,
+      1.0
+     ]
+    },
+    "wall_s": {
+     "mean": 1.4550726413726807,
+     "sd": 0.15017461604092483,
+     "n": 2,
+     "values": [
+      1.3488831520080566,
+      1.5612621307373047
+     ]
+    },
+    "gen_tok_total": {
+     "mean": 128.0,
+     "sd": 0.0,
+     "n": 2,
+     "values": [
+      128.0,
+      128.0
+     ]
+    }
+   },
+   "implied_open_arm_flopeq_headonly": {
+    "formula": "lm_prefill_ratio*0.7348 + vision_ratio*0.2537 + 8*0.0115 (decode scales with N; shares from flop_ratio_derivation_2026-08-03 component_shares_pct for Lingshu-7B at cap320)",
+    "value": 1.1912000948599042,
+    "lm_term": 0.8455000948599042,
+    "vision_term": 0.2537,
+    "decode_term": 0.092
+   }
+  }
+ },
+ "verdict": {
+  "question": "Why is the vision tower only ~4.7/8 shared, and can it be made fully shared?",
+  "mechanism_from_source": [
+   "vllm/v1/worker/gpu_model_runner.py:147 -- self.encoder_cache is dict[req_id][input_id] -> torch.Tensor. The ENCODER-OUTPUT cache is keyed by REQUEST ID.",
+   "vllm/v1/engine/parallel_sampling.py -- SamplingParams(n=N) becomes N CHILD requests with N distinct request ids, so two children of the same question can NEVER share an encoder-cache entry.",
+   "vllm/v1/core/sched/scheduler.py:_try_schedule_encoder_inputs -- a request skips the vision tower by exactly ONE route: `if start_pos + num_encoder_tokens <= num_computed_tokens: continue`, i.e. its PREFIX-CACHE hit must already cover the whole image-token span. Vision sharing is therefore a scheduling race, not a cache lookup.",
+   "vllm/v1/engine/mm_input_cache.py, sized by VLLM_MM_INPUT_CACHE_GIB (default 4), caches PREPROCESSED INPUTS (pixel tensors) for transfer between the frontend and the engine core. It does not hold encoder outputs and cannot stop the ViT from running."
+  ],
+  "control_reproduces": {
+   "arm": "A_batch16_default",
+   "vision_sharing_ratio_N8": 4.766226722287291,
+   "original_measurement": 4.739,
+   "_read": "the original 4.739 came from vrestruct_prefill.py's count|default cells; this round pins the IDENTICAL item slices so every arm is paired against it."
+  },
+  "cheapest_arm": [
+   "I_image_embeds_b16",
+   1.0
+  ]
+ },
+ "workload_shares": {
+  "vision": 0.2537,
+  "lm_prefill": 0.7348,
+  "decode_and_head": 0.0115
+ },
+ "workload_shares_source": "artifacts/flop_ratio_derivation_2026-08-03.json flop_model.component_shares_pct.lingshu_7b (vision 24.32+0.62+0.43, lm_prefill 73.11+0.37, decode+head 1.04+0.01+0.11)"
+}

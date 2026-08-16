@@ -1,0 +1,698 @@
+{
+ "title": "CENTRAL TABLE -- a cheap verifier on a 7B medical VLM, adversarially re-verified",
+ "date": "2026-08-16",
+ "baseline": "ALWAYS-7B (Lingshu-7B greedy, 1.0 FLOP-eq/question)",
+ "no_fabricated_numbers": "every field is recomputed here from the raw caches; the three build artifacts were not trusted, only cross-checked.",
+ "nboot": 10000,
+ "bootstrap_seed": 20260816,
+ "numerics": {
+  "OMP_NUM_THREADS": "4",
+  "rank_convention": "rank_avg",
+  "row_order": "concat"
+ },
+ "NULL_TEST_frozen_metric": {
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "pass": true,
+  "sel_eff": 0.7752043596730245,
+  "oracle@8": 0.6260127931769722,
+  "greedy": 0.4494669509594883,
+  "n": 2345,
+  "n_recoverable": 1468
+ },
+ "ARMS_vs_always_7B": {
+  "incumbent_LoRA_deployed": {
+   "selected_judge": 0.48528784648187634,
+   "selected_em": 0.4673773987206823,
+   "sel_eff_judge": 0.7752043596730245,
+   "sel_eff_em": 0.7789623312011372,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "identity_selected_eq_oracleXseleff": 5.551115123125783e-17,
+   "vs_always_7B": {
+    "judge": {
+     "pooled_delta": 0.03582089552238804,
+     "pooled_ci": [
+      0.021321961620469065,
+      0.049893390191897646
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.025062015503875972,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7364341085271318,
+       "selector": 0.7472868217054264,
+       "delta": 0.010852713178294615,
+       "ci": [
+        -0.01705426356589157,
+        0.04031007751937976
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.465,
+       "selector": 0.48,
+       "delta": 0.014999999999999958,
+       "ci": [
+        -0.034999999999999976,
+        0.065
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.324,
+       "selector": 0.37333333333333335,
+       "delta": 0.04933333333333334,
+       "ci": [
+        0.03199999999999997,
+        0.066
+       ],
+       "verdict": "WIN"
+      }
+     }
+    },
+    "em": {
+     "pooled_delta": 0.012366737739872069,
+     "pooled_ci": [
+      -0.0017057569296375363,
+      0.026012793176972304
+     ],
+     "pooled_verdict": "TIE",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": -0.00198449612403101,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7627906976744186,
+       "selector": 0.7488372093023256,
+       "delta": -0.013953488372093092,
+       "ci": [
+        -0.041860465116279055,
+        0.012403100775193798
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.425,
+       "selector": 0.405,
+       "delta": -0.019999999999999962,
+       "ci": [
+        -0.07,
+        0.02999999999999997
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.32666666666666666,
+       "selector": 0.3546666666666667,
+       "delta": 0.028000000000000025,
+       "ci": [
+        0.011316666666666657,
+        0.04466666666666669
+       ],
+       "verdict": "WIN"
+      }
+     }
+    }
+   }
+  },
+  "prefix_shared_LoRA": {
+   "selected_judge": 0.48528784648187634,
+   "selected_em": 0.46865671641791046,
+   "sel_eff_judge": 0.7752043596730245,
+   "sel_eff_em": 0.7810945273631841,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "identity_selected_eq_oracleXseleff": 5.551115123125783e-17,
+   "vs_always_7B": {
+    "judge": {
+     "pooled_delta": 0.03582089552238804,
+     "pooled_ci": [
+      0.021748400852878436,
+      0.049893390191897646
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.025328165374676987,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7364341085271318,
+       "selector": 0.7410852713178294,
+       "delta": 0.0046511627906976605,
+       "ci": [
+        -0.023255813953488302,
+        0.032558139534883734
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.465,
+       "selector": 0.485,
+       "delta": 0.019999999999999962,
+       "ci": [
+        -0.025000000000000022,
+        0.06999999999999995
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.324,
+       "selector": 0.37533333333333335,
+       "delta": 0.05133333333333334,
+       "ci": [
+        0.033999999999999975,
+        0.06866666666666665
+       ],
+       "verdict": "WIN"
+      }
+     }
+    },
+    "em": {
+     "pooled_delta": 0.013646055437100235,
+     "pooled_ci": [
+      -0.0004264392324093702,
+      0.027292110874200415
+     ],
+     "pooled_verdict": "TIE",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.0012764857881136793,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7627906976744186,
+       "selector": 0.7472868217054264,
+       "delta": -0.015503875968992276,
+       "ci": [
+        -0.041860465116279055,
+        0.010852713178294615
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.425,
+       "selector": 0.415,
+       "delta": -0.010000000000000009,
+       "ci": [
+        -0.06,
+        0.03999999999999998
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.32666666666666666,
+       "selector": 0.356,
+       "delta": 0.029333333333333322,
+       "ci": [
+        0.01266666666666666,
+        0.045999999999999985
+       ],
+       "verdict": "WIN"
+      }
+     }
+    }
+   }
+  },
+  "head_only_captured_cap320_FREE": {
+   "selected_judge": 0.4946695095948827,
+   "selected_em": 0.44818763326226013,
+   "sel_eff_judge": 0.7901907356948229,
+   "sel_eff_em": 0.7469793887704336,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "identity_selected_eq_oracleXseleff": 0.0,
+   "vs_always_7B": {
+    "judge": {
+     "pooled_delta": 0.04520255863539441,
+     "pooled_ci": [
+      0.02942430703624732,
+      0.060554371002132235
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.02422997416020674,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7364341085271318,
+       "selector": 0.7627906976744186,
+       "delta": 0.02635658914728689,
+       "ci": [
+        -0.0015503875968992942,
+        0.054263565891472854
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.465,
+       "selector": 0.45,
+       "delta": -0.015000000000000013,
+       "ci": [
+        -0.07,
+        0.040000000000000036
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.324,
+       "selector": 0.38533333333333336,
+       "delta": 0.06133333333333335,
+       "ci": [
+        0.04133333333333333,
+        0.08133333333333331
+       ],
+       "verdict": "WIN"
+      }
+     }
+    },
+    "em": {
+     "pooled_delta": -0.00682302771855009,
+     "pooled_ci": [
+      -0.02260127931769723,
+      0.008955223880596996
+     ],
+     "pooled_verdict": "TIE",
+     "n_cells_CI_clean_win": 0,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": -0.014255813953488369,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7627906976744186,
+       "selector": 0.7596899224806202,
+       "delta": -0.0031007751937984773,
+       "ci": [
+        -0.03255813953488362,
+        0.023255813953488413
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.425,
+       "selector": 0.39,
+       "delta": -0.034999999999999976,
+       "ci": [
+        -0.08000000000000002,
+        0.010000000000000009
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.32666666666666666,
+       "selector": 0.322,
+       "delta": -0.004666666666666652,
+       "ci": [
+        -0.02466666666666667,
+        0.01533333333333331
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   }
+  },
+  "SHIPPED_fusion": {
+   "selected_judge": 0.5074626865671642,
+   "selected_em": 0.470362473347548,
+   "sel_eff_judge": 0.8106267029972752,
+   "sel_eff_em": 0.7839374555792467,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "identity_selected_eq_oracleXseleff": 0.0,
+   "vs_always_7B": {
+    "judge": {
+     "pooled_delta": 0.0579957356076759,
+     "pooled_ci": [
+      0.04392324093816624,
+      0.07206823027718551
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 2,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.05117571059431523,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7364341085271318,
+       "selector": 0.7782945736434108,
+       "delta": 0.041860465116279055,
+       "ci": [
+        0.015503875968992276,
+        0.06821705426356584
+       ],
+       "verdict": "WIN"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.465,
+       "selector": 0.51,
+       "delta": 0.044999999999999984,
+       "ci": [
+        -0.0050000000000000044,
+        0.09500000000000003
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.324,
+       "selector": 0.39066666666666666,
+       "delta": 0.06666666666666665,
+       "ci": [
+        0.04866666666666669,
+        0.08466666666666667
+       ],
+       "verdict": "WIN"
+      }
+     }
+    },
+    "em": {
+     "pooled_delta": 0.015351812366737771,
+     "pooled_ci": [
+      0.0012793176972281106,
+      0.02942430703624732
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.0060232558139534835,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7627906976744186,
+       "selector": 0.7751937984496124,
+       "delta": 0.012403100775193798,
+       "ci": [
+        -0.013953488372092981,
+        0.03875968992248058
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.425,
+       "selector": 0.41,
+       "delta": -0.015000000000000013,
+       "ci": [
+        -0.065,
+        0.034999999999999976
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.32666666666666666,
+       "selector": 0.3473333333333333,
+       "delta": 0.020666666666666667,
+       "ci": [
+        0.0026666666666666505,
+        0.03866666666666663
+       ],
+       "verdict": "WIN"
+      }
+     }
+    }
+   }
+  },
+  "DEPLOYABLE_freehead_plus_prefix": {
+   "selected_judge": 0.5057569296375266,
+   "selected_em": 0.4720682302771855,
+   "sel_eff_judge": 0.8079019073569482,
+   "sel_eff_em": 0.7867803837953091,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "identity_selected_eq_oracleXseleff": 0.0,
+   "vs_always_7B": {
+    "judge": {
+     "pooled_delta": 0.05628997867803831,
+     "pooled_ci": [
+      0.04221748400852876,
+      0.07036247334754797
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 2,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.046219638242894066,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7364341085271318,
+       "selector": 0.772093023255814,
+       "delta": 0.03565891472868221,
+       "ci": [
+        0.009302325581395432,
+        0.06046511627906981
+       ],
+       "verdict": "WIN"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.465,
+       "selector": 0.5,
+       "delta": 0.034999999999999976,
+       "ci": [
+        -0.010000000000000009,
+        0.08500000000000002
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.324,
+       "selector": 0.392,
+       "delta": 0.068,
+       "ci": [
+        0.04999999999999999,
+        0.08533333333333332
+       ],
+       "verdict": "WIN"
+      }
+     }
+    },
+    "em": {
+     "pooled_delta": 0.017057569296375252,
+     "pooled_ci": [
+      0.002985074626865647,
+      0.031130063965884858
+     ],
+     "pooled_verdict": "WIN",
+     "n_cells_CI_clean_win": 1,
+     "n_cells_CI_clean_loss": 0,
+     "macro3_delta": 0.0037286821705426187,
+     "per_cell": {
+      "slake_open": {
+       "n": 645,
+       "always_7b": 0.7627906976744186,
+       "selector": 0.7736434108527132,
+       "delta": 0.010852713178294504,
+       "ci": [
+        -0.015503875968992276,
+        0.03565891472868221
+       ],
+       "verdict": "TIE"
+      },
+      "vqa_rad_open": {
+       "n": 200,
+       "always_7b": 0.425,
+       "selector": 0.4,
+       "delta": -0.024999999999999967,
+       "ci": [
+        -0.07,
+        0.020000000000000018
+       ],
+       "verdict": "TIE"
+      },
+      "pathvqa_open": {
+       "n": 1500,
+       "always_7b": 0.32666666666666666,
+       "selector": 0.352,
+       "delta": 0.02533333333333332,
+       "ci": [
+        0.007333333333333358,
+        0.04333333333333328
+       ],
+       "verdict": "WIN"
+      }
+     }
+    }
+   }
+  }
+ },
+ "DEPLOYABLE_minus_SHIPPED": {
+  "judge": {
+   "d_selected": -0.0017057569296375918,
+   "d_selected_ci": [
+    -0.007675906183368886,
+    0.004264392324093813
+   ],
+   "d_sel_eff": -0.0027247956403270157,
+   "d_sel_eff_ci": [
+    -0.012261580381471404,
+    0.006130790190735702
+   ],
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": -0.007054673721340388,
+    "vqa_rad_open": -0.015873015873015928,
+    "pathvqa_open": 0.002580645161290307
+   },
+   "verdict": "TIE"
+  },
+  "em": {
+   "d_selected": 0.0017057569296374808,
+   "d_selected_ci": [
+    -0.004690831556503183,
+    0.008102345415778256
+   ],
+   "d_sel_eff": 0.002842928216062468,
+   "d_sel_eff_ci": [
+    -0.00781805259417201,
+    0.013503909026297056
+   ],
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": -0.0017452006980802626,
+    "vqa_rad_open": -0.018181818181818188,
+    "pathvqa_open": 0.00966850828729282
+   },
+   "verdict": "TIE"
+  },
+  "picks_changed": 216,
+  "nboot": 10000
+ },
+ "PERMUTATION_NULL_shuffled_head_features": {
+  "n_seeds": 10,
+  "mean_selected_judge": 0.45471215351812366,
+  "sd": 0.003823949814889931,
+  "real_selected_judge": 0.5057569296375266,
+  "sigma_above_null": 13.348704504604548,
+  "random_pick_floor_sel_eff": 0.6762602179836512,
+  "random_pick_floor_acc": 0.42334754797441365
+ },
+ "VERIFIER_FLOP_REDERIVATION": {
+  "unit_gflops": 5831.42,
+  "n_questions": 2345,
+  "distinct_candidates_per_question": 3.8230277185501067,
+  "deployed_flopeq_per_question": 7.4653992685576815,
+  "prefix_shared_flopeq_per_question": 2.186187155120831,
+  "PREFIX_TERM_flopeq_per_question": 1.9993390329542196,
+  "TAIL_TERM_flopeq_per_candidate": 0.04887438332188578,
+  "speedup": 3.414803371738348
+ },
+ "MACRO8": {
+  "judge": {
+   "macro8_always_7B": 0.5970867635658914,
+   "macro8_with_verifier": 0.6144191279069767,
+   "macro8_delta": 0.01733236434108526,
+   "macro3_delta": 0.046219638242894025
+  },
+  "em": {
+   "macro8_always_7B": 0.5957146705426356,
+   "macro8_with_verifier": 0.5971129263565891,
+   "macro8_delta": 0.0013982558139535028,
+   "macro3_delta": 0.0037286821705426743
+  },
+  "_note": "the judge row's macro8_always_7B reproduces the canonical always-7B 0.59708675. The EM row rescores ONLY the 3 open cells in EM; the 5 MCQ cells keep their harness grade, so the EM row is a sensitivity, not a second headline."
+ },
+ "COST_TABLE": [
+  {
+   "config": "always-7B baseline",
+   "generation": 1.0,
+   "head": 0.0,
+   "verifier": 0.0,
+   "open_question_flopeq": 1.0,
+   "macro8_flopeq": 1.0,
+   "note": "one greedy answer",
+   "provenance": "MEASURED"
+  },
+  {
+   "config": "deployed today (N=8, T=0.7)",
+   "generation": 2.369969011752281,
+   "head": 6.892620853901701,
+   "verifier": 7.4653992685576815,
+   "open_question_flopeq": 16.727989134211665,
+   "macro8_flopeq": 6.897995925329374,
+   "note": "generation charged at what it MEASURABLY costs, not the as-charged 8.0",
+   "provenance": "MEASURED gen (verifier_restructure Q1) + MODELLED head pass + re-derived verifier"
+  },
+  {
+   "config": "+ free head only",
+   "generation": 2.369969011752281,
+   "head": 2.0653223737470835e-05,
+   "verifier": 7.4653992685576815,
+   "open_question_flopeq": 9.8353889335337,
+   "macro8_flopeq": 4.3132708500751376,
+   "note": "BUILD 1 alone",
+   "provenance": "MEASURED"
+  },
+  {
+   "config": "+ prefix-shared verifier only",
+   "generation": 2.369969011752281,
+   "head": 6.892620853901701,
+   "verifier": 2.186187155120831,
+   "open_question_flopeq": 11.448777020774813,
+   "macro8_flopeq": 4.918291382790555,
+   "note": "BUILD 2 alone",
+   "provenance": "MEASURED"
+  },
+  {
+   "config": "THIS ROUND (N=8, T=0.7)",
+   "generation": 2.369969011752281,
+   "head": 2.0653223737470835e-05,
+   "verifier": 2.186187155120831,
+   "open_question_flopeq": 4.55617682009685,
+   "macro8_flopeq": 2.3335663075363184,
+   "note": "the accuracy point measured in this doc",
+   "provenance": "MEASURED"
+  },
+  {
+   "config": "+ T=0.4 at N=4",
+   "generation": 1.6645496721798492,
+   "head": 2.0653223737470835e-05,
+   "verifier": 2.1165398041601016,
+   "open_question_flopeq": 3.781110129563688,
+   "macro8_flopeq": 2.042916298586383,
+   "note": "parity-or-better in BOTH currencies vs T=0.7 N=8 (decoding_ladder_cold). COST IS PROJECTED: distinct-answer count 2.398 was measured on the T=0.7 pools, which is CONSERVATIVE at T=0.4. The free head + prefix verifier have NOT been run on T=0.4 pools.",
+   "provenance": "MEASURED gen + PROJECTED verifier"
+  },
+  {
+   "config": "+ vision-embeds fix (N=8)",
+   "generation": 1.2026395573083093,
+   "head": 2.0653223737470835e-05,
+   "verifier": 2.186187155120831,
+   "open_question_flopeq": 3.388847365652878,
+   "macro8_flopeq": 1.895817762119829,
+   "note": "ACCURACY NOT RE-MEASURED through the image_embeds path (which casts bf16->fp16)",
+   "provenance": "MEASURED cost, ASSERTED accuracy"
+  },
+  {
+   "config": "control: prefix caching OFF",
+   "generation": 8.24449873332767,
+   "head": 6.892620853901701,
+   "verifier": 7.4653992685576815,
+   "open_question_flopeq": 22.602518855787054,
+   "macro8_flopeq": 9.100944570920145,
+   "note": "validates the instrument -- reproduces the as-charged 8.0 generation convention",
+   "provenance": "MEASURED"
+  }
+ ],
+ "COST_UNIT": "1.0 FLOP-eq = one Lingshu-7B cap320 open-text forward+generate = 5831.42 GFLOPs (cost_decomposition_2026-08-12.json:N2)"
+}
