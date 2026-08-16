@@ -199,21 +199,12 @@ ul.body{font-size:1.2rem;line-height:1.55;margin:8px 0 8px 22px}ul.body li{margi
 dl.def{font-size:1.14rem}dl.def dt{font-weight:700;color:var(--indigo-d);margin-top:8px}dl.def dd{margin:2px 0 6px 0;color:var(--ink)}
 .src{font-size:.95rem;color:var(--muted);margin-top:6px}
 table td,table th{font-size:1.03rem}
-/* presenter notes reuse the house details.dd component */
-details.dd.script{border-color:var(--teal-l); background:var(--teal-bg)}
-details.dd.script>summary{color:var(--teal-d)}
-details.dd.script>summary:hover{background:#d3e9e6}
-body.present details.dd.script{display:none}
-.pbtn{font-family:'Roboto Mono',monospace; font-size:.78rem; font-weight:600; letter-spacing:.1em;
-  text-transform:uppercase; background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.45);
-  border-radius:5px; padding:6px 12px; cursor:pointer; white-space:nowrap}
-.pbtn:hover{background:rgba(255,255,255,.28)}
 </style>
 </head>
 <body>
 <div class="appbar"><span class="mark">Med-VLM &middot; Test-Time Compute</span>
 <span class="title">Cheap Test-Time Improvements &mdash; <b>and an Honest Map of the Limits</b></span>
-<span class="spacer"></span><button class="pbtn" id="ptog">Hide notes</button></div>
+<span class="spacer"></span></div>
 <div class="progress"><div class="progress-bar" id="pbar"></div></div>
 <div class="deck-viewport"><main class="deck" id="deck">
 <section class="slide"><div class="swrap"><div class="card"><div class="cover">
@@ -239,10 +230,6 @@ body.present details.dd.script{display:none}
 <tr><td>MedXpert-MM</td><td>multiple choice</td><td>2,000</td></tr>
 </tbody></table></div>
 <p class="caption">Three datasets appear twice: their <b>closed</b> split has a fixed answer space, their <b>open</b> split is free text.</p>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>A <b>cell</b> is one benchmark paired with one answer format. Three of these datasets have both a closed split &mdash; yes/no or a fixed option &mdash; and an open split where the model writes free text. Those two behave so differently that we score them separately. Eight cells in total.</p>
-<p>Worth saying out loud: the format is not a stylistic difference. Almost everything that works on free text fails on multiple choice, and the reverse. Most of this talk is downstream of that one fact.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>2 &middot; How we measure</div>
@@ -254,10 +241,6 @@ body.present details.dd.script{display:none}
 <div class="tile"><div class="v">&plusmn;0.003</div><div class="l">the threshold for statistical significance on this scale</div></div>
 </div>
 <div class="callout note"><b>Why it matters:</b> weighting by questions would let one dataset &mdash; the one with no published human verification &mdash; speak for the whole suite. Equal weighting makes our numbers smaller and makes them mean something.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>This is a reporting choice worth defending. PMC-VQA alone is 33,430 of the 42,224 questions. Average over questions and it carries 79% of the number, so any improvement we reported would really be an improvement on that one dataset.</p>
-<p>So every cell counts one eighth. And for scale &mdash; a change of about <b>three thousandths</b> on this scale is the threshold for significance. Keep that number in mind; it comes back at the end.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>3 &middot; The system</div>
@@ -272,11 +255,6 @@ body.present details.dd.script{display:none}
 <li>The big model costs <b>4.6&times;</b> a small-model pass &mdash; so the fewer times we call it, the better</li>
 <li>The gate reads the <b>margin</b>: the gap between the model's top two answer probabilities</li>
 </ul>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>The small model answers first. A gate decides whether to trust it. If not, the question goes to the big model.</p>
-<p>The gate signal is the <b>margin</b> &mdash; the gap between the top-ranked and second-ranked answer probabilities. A large gap means the model is decided. A small gap means it is torn between two options, which is when it tends to be wrong.</p>
-<p>Everything expensive here is the escalation. That is why so much of the work is about deciding when <i>not</i> to escalate.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>4 &middot; The system</div>
@@ -289,10 +267,6 @@ body.present details.dd.script{display:none}
 <tr class="total"><td>best answer present among the eight</td><td>0.6260</td></tr>
 </tbody></table></div>
 <div class="callout note"><b>The gap that drives the whole project:</b> a correct answer is <b>available</b> 63% of the time, and we <b>select</b> it 49% of the time.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>This is where most of our research went. Rather than take the model's first answer, we sample eight and choose between them.</p>
-<p>The third row is the important one. A correct answer is <i>present</i> in the eight about 63% of the time, but we only <i>select</i> it 49% of the time. That gap &mdash; between what is available and what we pick &mdash; is the number this project has spent the most effort trying to close.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>5 &middot; The system</div>
@@ -303,12 +277,6 @@ body.present details.dd.script{display:none}
 <li>Scores <span class="kbd">P(correct | image, question, candidate)</span> and we keep the best</li>
 </ul>
 <div class="callout warn"><b>A LoRA adapter is not a model.</b> It cannot see an image or read text on its own. It is a set of correction matrices applied on top of the 7B &mdash; so scoring one candidate costs a <b>full pass through all 8.29 billion parameters</b>.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Explain this properly, because the next act depends on it.</p>
-<p>A LoRA adapter has no meaning without the base model underneath it. Concretely: for a weight matrix inside the 7B holding about 12.8 million numbers, LoRA stores two thin matrices totalling about 114,000, and at inference the model computes <b>(W + BA)x</b> instead of <b>Wx</b>.</p>
-<p>So you have changed <i>which weights are used</i> &mdash; not <i>how many operations run</i>. The forward pass is still a full pass through the whole network. LoRA makes training cheap and storage cheap. It does nothing whatsoever for inference cost.</p>
-<p>Plant that firmly. It is the setup for the biggest cost finding in the talk.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>6 &middot; The system</div>
@@ -319,10 +287,6 @@ body.present details.dd.script{display:none}
 <li><b>Switched to equal weighting per cell.</b></li>
 </ul>
 <div class="callout honest"><b>Each one made our headline smaller</b> &mdash; and we found all three ourselves, before anyone else read the work.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>The prompt one deserves a sentence. We had been comparing a reasoning arm against a direct arm, but the two prompts <i>also</i> differed in the answer format they asked for. Once we matched the format, the effect we had attributed to reasoning turned out to be an effect of the format request &mdash; asking a model to put its answer in a box is itself enough to make it reason.</p>
-<p>The contamination one is a simple audit: if removing the image barely changes the score, the model is not reading the image.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>7 &middot; The limits</div>
@@ -338,11 +302,6 @@ body.present details.dd.script{display:none}
 <li>Image&ndash;text similarity models &mdash; <b>below</b> picking at random</li>
 </ul>
 <div class="callout note"><b>Independent systems in the literature report the same conversion rate.</b> This is a property of the problem, not a failure of our engineering.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Define the number first. <b>Selection efficiency</b> is the fraction of the available gain we actually capture: if a correct answer is in the pool, how often do we pick it.</p>
-<p>We attacked this roughly twenty-seven distinct ways and every one lands in the same narrow band. The important part is what we found looking outside: independent systems report the same number. That reframes it from a failure into a finding.</p>
-<p>And our own seed-to-seed variation is larger than the difference between most of those architectures &mdash; which suggests much of the published variation at this scale is noise too.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>8 &middot; The limits</div>
@@ -355,11 +314,6 @@ body.present details.dd.script{display:none}
 <tr class="total"><td>after fixing the defect on the next slide</td><td class="ours">1.20&times;</td></tr>
 </tbody></table></div>
 <p class="caption">Measured with the engine's cache deliberately switched on and off. With it off we reproduce our old 8.0 &mdash; which is what validates the instrument.</p>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>We had assumed eight answers cost eight times one answer. They do not &mdash; the serving engine shares the expensive part.</p>
-<p>Reading the image and the question is <b>prefill</b>, and it is about 82% of the total work. Actually writing the answer is barely 1%. All eight candidates share the same image and question, so the engine computes that once and reuses it.</p>
-<p>This matters because it changes what is affordable. Sampling eight answers is not an eight-fold cost. It is roughly double.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>9 &middot; The limits</div>
@@ -370,11 +324,6 @@ body.present details.dd.script{display:none}
 <li>The image occupies positions <b>31&ndash;325</b>; the cache is block-aligned to <b>320</b></li>
 </ul>
 <div class="callout warn"><b>Five tokens past a block boundary</b>, so the engine cannot mark the image as already computed &mdash; and re-encodes all 294 of its tokens to recover the last five.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>A nice concrete one. The cache works in fixed-size blocks. The image sits at positions 31 through 325 and the cached region ends at 320, a block boundary. Because the image runs five tokens past that boundary the engine cannot reuse it, so it re-encodes the whole thing.</p>
-<p>We tried every configuration route &mdash; batch size, concurrency, cache size &mdash; and got identical results to three decimal places every time. It is not a tuning problem: the engine keys that cache by request identity, and the eight candidates are eight different requests.</p>
-<p>Passing pre-computed image features instead fixes it exactly, and that is the 1.20 on the previous slide.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>10 &middot; The limits</div>
@@ -390,12 +339,6 @@ body.present details.dd.script{display:none}
 <li>It reads a vector the 7B <b>already computed</b> while processing the candidate</li>
 </ul>
 <div class="callout win"><b>One re-runs the model. The other reads it.</b> That is why the gap is a factor of a million &mdash; and the cheaper one scores higher.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Here is the payoff for the LoRA explanation earlier.</p>
-<p>While the 7B processes a candidate answer, it builds an internal representation at every layer. The <b>head</b> is a small standalone network that takes that vector &mdash; from layer 21 &mdash; and maps it to a single score. It does not modify the model. It is not a forward pass through anything. About 1.8 million operations, roughly a millionth of what the adapter costs.</p>
-<p>The gap is that large because they are different kinds of object. The adapter <i>is</i> the 7B with altered weights, so using it means running the whole network again. The head reads the network's output.</p>
-<p>And for reference: picking at random scores 0.676.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>11 &middot; The limits</div>
@@ -412,11 +355,6 @@ body.present details.dd.script{display:none}
 <tr class="total"><td>both combined</td><td class="ours">0.8065</td></tr>
 </tbody></table></div>
 <div class="callout note"><b>We recommend the head alone.</b> It captures nearly all of the combined gain &mdash; the difference is not statistically significant &mdash; at essentially no cost.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Why <i>ranks</i> and not scores: the two scorers produce numbers on completely different scales, so averaging them directly would let one dominate for no good reason. Ranking each first puts them on a common footing.</p>
-<p>Why equal weight: we tried learning the weight. Fitted with full visibility of the answers, the best weight it found was <b>0.5</b> &mdash; exactly the parameter-free choice. There was nothing to learn.</p>
-<p>And the recommendation. On our primary metric the head alone captures nearly all of the combined gain while costing essentially nothing, so that is the version worth deploying.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>12 &middot; The reframe</div>
@@ -427,10 +365,6 @@ body.present details.dd.script{display:none}
 <li>On free text the big model is about <b>ten times more efficient per point of accuracy</b></li>
 <li>Sampling eight answers and scoring them costs more than asking the big model once &mdash; and is less accurate</li>
 </ul>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Two things forced this. First the selection ceiling &mdash; we now know how much is reachable and it is not enough. Second, and more decisive: on free-text questions the big model is roughly ten times more efficient per point of accuracy.</p>
-<p>So the honest move was to stop competing with it and change the baseline. Everything after this is measured against the 7B alone, and the question is how much we can add without adding cost.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>13 &middot; The result</div>
@@ -447,10 +381,6 @@ body.present details.dd.script{display:none}
 <li>Ask the question <b>without supplying the answer space</b> and the bias largely disappears.</li>
 <li>Same model, same number of generated tokens &mdash; <b>zero extra compute</b>.</li>
 </ul>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>The model still answers yes or no &mdash; it knows the question is binary. It just stops being pushed.</p>
-<p>Two controls worth mentioning. We checked the answers did not get longer, so this is not the grader being fooled. And we tried merely <i>reordering</i> the options &mdash; &ldquo;output no or yes&rdquo; &mdash; which did <b>not</b> help and hurt on one cell. So it is the answer space being given at all, not the order it is given in.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>14 &middot; The result</div>
@@ -462,10 +392,6 @@ body.present details.dd.script{display:none}
 <div class="tile"><div class="v">0</div><div class="l">cells that get worse</div></div>
 </div>
 <div class="callout win"><b>Two independent graders agree to 0.0003.</b> When an automatic judge and strict string matching disagree, it usually means the grader moved rather than the model. Here they do not.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>State it plainly: a free improvement, larger than the significance threshold, and nothing regresses.</p>
-<p>The two-grader agreement is the part I would emphasise. We score with an automatic judge and with strict string matching, and they agree to within three ten-thousandths.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>15 &middot; The result</div>
@@ -478,13 +404,6 @@ body.present details.dd.script{display:none}
 <tr class="total"><td>our prompt fix</td><td>+0.0416</td><td><span class="pos">+0.0471</span></td></tr>
 </tbody></table></div>
 <div class="callout win"><b>A real improvement grows when the key is balanced. An artefact vanishes.</b> We discarded a two-point gain because it failed this test.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>This is the slide to spend time on.</p>
-<p>There is an obvious rival explanation for any gain on these benchmarks: you might not be improving the model at all, only exploiting a lopsided answer key. One of these datasets has 74% of its answers concentrated in two of four options.</p>
-<p>So we re-scored everything against a <b>balanced answer key</b> &mdash; reweighted so no answer is more common than any other. If a gain came from exploiting the key it disappears. If it came from the model genuinely answering better it survives.</p>
-<p>The first row is a method that looked like it gained two points. Balanced, it is <b>exactly zero</b>. It was reading the answer key, not improving the model, so we threw it away.</p>
-<p>Our prompt fix goes the other way &mdash; it gets <i>larger</i>. That is what a real improvement looks like, and it is why I am comfortable putting it in front of you.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>16 &middot; Closing</div>
@@ -495,9 +414,6 @@ body.present details.dd.script{display:none}
 <li><b>Deciding adaptively how many answers to sample.</b> A fixed number, chosen once, beats it.</li>
 <li><b>Voting among the sampled answers.</b> Helps on two cells, does nothing on five, and hurts if you sample too few.</li>
 </ul>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Keep this brisk. The second one is worth a sentence because it surprised us: we thought the model was constrained by being <i>shown</i> the options. It is not &mdash; on a binary question it produces the same handful of answers either way. The answer space belongs to the question, not to the prompt.</p>
-</div></details>
 </div></div></section>
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>17 &middot; Closing</div>
@@ -508,10 +424,6 @@ body.present details.dd.script{display:none}
 <li><b>Next.</b> Audit the remaining harness prompts for the same defect, and re-run the system end to end with the cost fixes in place.</li>
 </ul>
 <div class="callout note"><b>If the same instruction defect exists in the other benchmarks</b>, this stops being one result and becomes a general finding about how these systems are evaluated.</div>
-<details class="dd script"><summary><span class="chev">&#9656;</span>Speaker script</summary><div class="dd-body">
-<p>Be straight about the shape of it. One clean result, and a lot of well-mapped territory around it. The result is free, it is statistically solid, and it got <i>bigger</i> under the most adversarial check we could design &mdash; which is unusual and worth trusting.</p>
-<p>The honest limitation is that it rests on one cell. So the obvious next step is whether the same defect exists elsewhere.</p>
-</div></details>
 </div></div></section>
 
 
@@ -530,8 +442,5 @@ document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='PageDo
 let tx=0,ty=0;deck.addEventListener('touchstart',e=>{tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
 deck.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy))go(idx+(dx<0?1:-1));},{passive:true});
 window.addEventListener('resize',render);render();
-const ptog=document.getElementById('ptog');
-ptog.addEventListener('click',()=>{document.body.classList.toggle('present');
-  ptog.textContent=document.body.classList.contains('present')?'Show notes':'Hide notes';});
 </script>
 </body></html>
