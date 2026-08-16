@@ -1,0 +1,690 @@
+<title>Self-Consistency Across Eight Cells</title>
+<style>
+:root{
+  --ground:#F2F4F6; --surface:#FFFFFF; --surface-2:#EAEEF2;
+  --ink:#161C23; --ink-2:#4E5A67; --ink-3:#78848F;
+  --rule:#D8DEE5; --rule-2:#C3CCD5;
+  --accent:#0F6E78; --accent-soft:#DCEDEF;
+  --win:#3F8F60; --loss:#9C2F26; --tie:#7A8794;
+  --win-bg:#E4F0E9; --loss-bg:#F6E3E0; --tie-bg:#E9ECEF;
+  --serif:"Iowan Old Style","Charter","Palatino Linotype",Palatino,Georgia,ui-serif,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular","Cascadia Mono",Menlo,Consolas,monospace;
+  --measure:66ch; --wide:1140px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#12161B; --surface:#1A2028; --surface-2:#212932;
+    --ink:#E4E9EF; --ink-2:#98A5B2; --ink-3:#7B8895;
+    --rule:#2A333D; --rule-2:#3A4550;
+    --accent:#4FB5C0; --accent-soft:#16333A;
+    --win:#4FA87A; --loss:#C0453A; --tie:#82909E;
+    --win-bg:#182A22; --loss-bg:#2E1A18; --tie-bg:#222932;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12161B; --surface:#1A2028; --surface-2:#212932;
+  --ink:#E4E9EF; --ink-2:#98A5B2; --ink-3:#7B8895;
+  --rule:#2A333D; --rule-2:#3A4550;
+  --accent:#4FB5C0; --accent-soft:#16333A;
+  --win:#4FA87A; --loss:#C0453A; --tie:#82909E;
+  --win-bg:#182A22; --loss-bg:#2E1A18; --tie-bg:#222932;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.62;
+  margin:0; padding:0 24px 96px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--wide); margin:0 auto}
+.col{max-width:var(--measure)}
+p{margin:0 0 1.05em}
+a{color:var(--accent); text-underline-offset:3px; text-decoration-thickness:1px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+strong{font-weight:640}
+code,.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+code{font-size:.86em; background:var(--surface-2); padding:.1em .34em; border-radius:3px}
+
+/* ---------- masthead ---------- */
+.mast{padding:64px 0 34px; border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 18px;
+}
+h1{
+  font-family:var(--serif); font-weight:600; font-size:clamp(34px,5.2vw,54px);
+  line-height:1.06; letter-spacing:-.015em; margin:0 0 20px; text-wrap:balance;
+}
+.standfirst{font-size:19px; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0}
+.standfirst b{color:var(--ink); font-weight:620}
+.runmeta{
+  display:flex; flex-wrap:wrap; gap:8px 26px; margin-top:26px;
+  font-family:var(--mono); font-size:12px; color:var(--ink-3);
+}
+.runmeta span b{color:var(--ink-2); font-weight:500}
+
+/* ---------- sections ---------- */
+section{padding-top:52px}
+h2{
+  font-family:var(--serif); font-weight:600; font-size:clamp(23px,2.7vw,30px);
+  line-height:1.2; letter-spacing:-.01em; margin:0 0 6px; text-wrap:balance;
+}
+h3{
+  font-family:var(--sans); font-weight:640; font-size:16.5px; letter-spacing:-.005em;
+  margin:32px 0 8px;
+}
+.sectag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-3); display:block; margin-bottom:14px;
+  padding-bottom:12px; border-bottom:1px solid var(--rule);
+}
+.lede{font-size:17.5px; color:var(--ink-2); max-width:62ch; margin:0 0 20px}
+
+/* ---------- verdict block ---------- */
+.verdict{
+  background:var(--surface); border:1px solid var(--rule-2); border-left:3px solid var(--accent);
+  padding:22px 26px; margin:30px 0 6px; border-radius:2px;
+}
+.verdict p:last-child{margin-bottom:0}
+.verdict .vtag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:9px;
+}
+
+/* ---------- stat row ---------- */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(212px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); margin:28px 0 8px; border-radius:2px; overflow:hidden}
+.stat{background:var(--surface); padding:18px 20px 20px}
+.stat .k{font-family:var(--mono); font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-3); margin-bottom:10px}
+.stat .v{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:30px;
+  line-height:1; letter-spacing:-.02em; font-weight:500}
+.stat .ci{font-family:var(--mono); font-size:12px; color:var(--ink-2); margin-top:9px; white-space:nowrap}
+.stat .sub{font-size:12.5px; color:var(--ink-3); margin-top:7px}
+
+/* ---------- chips ---------- */
+.chip{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; font-weight:600;
+  padding:2px 7px 3px; border-radius:2px; display:inline-block; white-space:nowrap;
+}
+.chip.win{background:var(--win-bg); color:var(--win)}
+.chip.loss{background:var(--loss-bg); color:var(--loss)}
+.chip.tie{background:var(--tie-bg); color:var(--tie)}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto; margin:24px 0 10px; border:1px solid var(--rule); border-radius:2px;
+  background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:840px}
+caption{caption-side:bottom; text-align:left; font-size:12.5px; color:var(--ink-3);
+  padding:12px 2px 0; line-height:1.5}
+th,td{padding:9px 14px; text-align:right; border-bottom:1px solid var(--rule); white-space:nowrap}
+th{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:500; border-bottom:1px solid var(--rule-2); vertical-align:bottom}
+td{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink)}
+th:first-child,td:first-child{text-align:left; font-family:var(--sans); font-weight:520}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface-2)}
+.grp{border-left:1px solid var(--rule)}
+td.dim{color:var(--ink-3)}
+.num-win{color:var(--win)} .num-loss{color:var(--loss)}
+
+/* ---------- figure ---------- */
+figure{margin:26px 0 8px; background:var(--surface); border:1px solid var(--rule);
+  border-radius:2px; padding:20px 20px 14px}
+figcaption{font-size:12.5px; color:var(--ink-3); line-height:1.55; margin-top:10px;
+  padding-top:12px; border-top:1px solid var(--rule)}
+.figtitle{font-family:var(--sans); font-weight:620; font-size:14.5px; margin:0 0 2px}
+.figsub{font-size:12.5px; color:var(--ink-3); margin:0 0 14px}
+.figscroll{overflow-x:auto}
+svg{display:block}
+.axis-line{stroke:var(--rule-2); stroke-width:1}
+.grid-line{stroke:var(--rule); stroke-width:1}
+.zero-line{stroke:var(--ink-2); stroke-width:1.5; stroke-dasharray:none}
+.tick{font-family:var(--mono); font-size:10.5px; fill:var(--ink-3)}
+.rowlab{font-family:var(--sans); font-size:12.5px; fill:var(--ink)}
+.whisk{stroke-width:2; stroke-linecap:round}
+.ptdot{stroke:var(--surface); stroke-width:2}
+.valtxt{font-family:var(--mono); font-size:11.5px; fill:var(--ink-2)}
+.band{fill:var(--accent); opacity:.13}
+.curve{fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round}
+
+/* ---------- callout ---------- */
+.finding{
+  background:var(--surface); border:1px solid var(--rule); border-radius:2px;
+  padding:20px 24px; margin:24px 0;
+}
+.finding .ftag{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-3); display:block; margin-bottom:8px;
+}
+.finding h3{margin-top:0}
+.finding p:last-child{margin-bottom:0}
+.finding.alert{border-left:3px solid var(--loss)}
+.finding.good{border-left:3px solid var(--win)}
+
+ul{margin:0 0 1.05em; padding-left:1.15em}
+li{margin-bottom:.42em}
+li::marker{color:var(--ink-3)}
+
+details{border-top:1px solid var(--rule); padding:14px 0}
+summary{cursor:pointer; font-family:var(--mono); font-size:12px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink-2)}
+details[open] summary{margin-bottom:12px; color:var(--accent)}
+
+footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--rule);
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-3); line-height:1.75}
+footer b{color:var(--ink-2); font-weight:500}
+
+.tooltip{
+  position:fixed; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--ink); color:var(--ground); font-family:var(--mono); font-size:11.5px;
+  padding:6px 9px; border-radius:3px; z-index:20; white-space:nowrap;
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:640px){
+  body{padding:0 16px 72px}
+  .mast{padding-top:44px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Attack 2 &middot; Lingshu-7B &middot; 2026-08-17</p>
+  <h1>Self-consistency across all eight cells</h1>
+  <p class="standfirst">Majority vote over N samples was swept across the whole benchmark suite for the
+  first time. At its best budget it is a <b>macro tie at 2.37&times; the compute</b>. It wins on two
+  cells, is inert on five, and at N=2 it is a significant loss on four. Two defects turned up on the
+  way &mdash; and one of them says the published baseline was already doing this.</p>
+  <div class="runmeta">
+    <span><b>Zero GPU.</b> No new generation</span>
+    <span><b>5/5</b> null tests pass</span>
+    <span><b>nboot</b> 10,000 &middot; seed 20260817</span>
+    <span><b>n</b> 14,794 items</span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">The headline</span>
+  <h2>The curve turns positive at N&nbsp;=&nbsp;8, and stops there</h2>
+  <p class="lede">Each cell's delta is measured against a greedy control generated in the same session
+  and the same engine as its sampled pool &mdash; never against a stored number. Macro is the
+  equal-weight mean of the eight per-cell deltas.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="k">N = 1 &middot; 1.00&times;</div>
+      <div class="v num-loss">&minus;0.0062</div>
+      <div class="ci">[&minus;0.0104, &minus;0.0018] <span class="chip loss">LOSS</span></div>
+      <div class="sub">One random draw. The floor the vote must clear.</div>
+    </div>
+    <div class="stat">
+      <div class="k">N = 2 &middot; 1.26&times;</div>
+      <div class="v num-loss">&minus;0.0064</div>
+      <div class="ci">[&minus;0.0103, &minus;0.0023] <span class="chip loss">LOSS</span></div>
+      <div class="sub">4 of 8 cells are a CI-clean loss. Guardrail fails.</div>
+    </div>
+    <div class="stat">
+      <div class="k">N = 4 &middot; 1.66&times;</div>
+      <div class="v">&minus;0.0007</div>
+      <div class="ci">[&minus;0.0041, &plus;0.0027] <span class="chip tie">TIE</span></div>
+      <div class="sub">Back to parity. Nothing bought yet.</div>
+    </div>
+    <div class="stat">
+      <div class="k">N = 8 &middot; 2.37&times;</div>
+      <div class="v num-win">&plus;0.0024</div>
+      <div class="ci">[&minus;0.0014, &plus;0.0064] <span class="chip tie">TIE</span></div>
+      <div class="sub">Guardrail clean, 2 cells win &mdash; but the macro CI holds zero.</div>
+    </div>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-3);margin:12px 0 0;max-width:74ch">
+  Compute is measured, not modelled: FLOP-eq of N samples relative to one greedy answer, vLLM default
+  (automatic prefix caching on). The cache-off control reproduces the project's as-charged 8.0
+  convention to 0.3%, which is what validates the instrument.</p>
+
+  <figure>
+    <p class="figtitle">Macro accuracy against compute</p>
+    <p class="figsub">Delta vs always-7B greedy, 8-cell equal-weight macro, primary currency. Shaded band is the 95% bootstrap CI.</p>
+    <div class="figscroll">
+      <svg id="curve" viewBox="0 0 700 260" width="700" height="260" role="img"
+           aria-label="Macro delta rises from minus 0.0062 at N=1 to plus 0.0024 at N=8 while compute rises from 1.0 to 2.37 FLOP-equivalents; the confidence band contains zero at N=4 and N=8."></svg>
+    </div>
+    <figcaption>The vote spends 137% more compute to move the macro from &minus;0.0062 to &plus;0.0024
+    &mdash; a total travel of 0.0086, of which the first 0.0062 is only climbing back out of the hole
+    that sampling instead of decoding greedily put it in.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">Per cell &middot; N = 8</span>
+  <h2>Two cells carry it; the open cells drag</h2>
+  <p class="lede">Both winning cells are multiple-choice-shaped, with a small, skewed answer space.
+  Every open-text cell is a tie or worse.</p>
+
+  <figure>
+    <p class="figtitle">Delta vs matched greedy at N = 8, by cell</p>
+    <p class="figsub">Point estimate with 95% paired-item bootstrap CI. Verdict is printed on each row, so identity never rests on colour alone.</p>
+    <div class="figscroll">
+      <svg id="forest" viewBox="0 0 760 360" width="760" height="360" role="img"
+           aria-label="Forest plot of per-cell deltas at N=8. PMC-VQA plus 0.0100 win, PATH-VQA-closed plus 0.0051 win, all other six cells tie."></svg>
+    </div>
+    <figcaption>PMC&#8209;VQA and PATH&#8209;VQA&#8209;closed are the only CI-clean wins. VQA&#8209;RAD&#8209;closed's
+    +0.0120 has a lower bound of exactly 0.0000 and is a tie, not a win.</figcaption>
+  </figure>
+
+  <div class="scroll">
+    <table>
+      <caption>Primary currency is the grader that defines each published cell (<code>judge_multi_choice</code> on
+      multiple choice, the 32B LLM judge on open text and the closed cells). EM is the length-neutral
+      diagnostic. Every delta is against the in-session greedy control in the same row.</caption>
+      <thead>
+        <tr>
+          <th>Cell</th><th>n</th><th>Greedy</th><th>Floor</th>
+          <th class="grp">&Delta; N=2</th><th>&Delta; N=4</th><th>&Delta; N=8</th><th>Verdict</th>
+          <th class="grp">EM &Delta; N=8</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>PMC_VQA</td><td>6,000</td><td>0.5407</td><td class="dim">0.5246</td>
+          <td class="grp num-loss">&minus;0.0190</td><td class="dim">&minus;0.0008</td>
+          <td class="num-win">&plus;0.0100</td><td><span class="chip win">WIN</span></td>
+          <td class="grp num-win">&plus;0.0132</td></tr>
+        <tr><td>SLAKE_closed</td><td>836</td><td>0.8254</td><td class="dim">0.8240</td>
+          <td class="grp dim">&minus;0.0024</td><td class="dim">&plus;0.0000</td>
+          <td class="dim">&plus;0.0036</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&plus;0.0012</td></tr>
+        <tr><td>VQA_RAD_closed</td><td>251</td><td>0.7331</td><td class="dim">0.7435</td>
+          <td class="grp dim">&plus;0.0083</td><td class="dim">&plus;0.0069</td>
+          <td class="dim">&plus;0.0120</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&plus;0.0120</td></tr>
+        <tr><td>PATH_VQA_closed</td><td>3,362</td><td>0.8370</td><td class="dim">0.8288</td>
+          <td class="grp num-loss">&minus;0.0042</td><td class="dim">&plus;0.0032</td>
+          <td class="num-win">&plus;0.0051</td><td><span class="chip win">WIN</span></td>
+          <td class="grp num-win">&plus;0.0051</td></tr>
+        <tr><td>MedXpertQA-MM</td><td>2,000</td><td>0.2680</td><td class="dim">0.2601</td>
+          <td class="grp num-loss">&minus;0.0078</td><td class="dim">&minus;0.0046</td>
+          <td class="dim">&minus;0.0010</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&minus;0.0010</td></tr>
+        <tr><td>SLAKE_open</td><td>645</td><td>0.7328</td><td class="dim">0.7301</td>
+          <td class="grp dim">&minus;0.0032</td><td class="dim">&plus;0.0011</td>
+          <td class="dim">&plus;0.0031</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&plus;0.0109</td></tr>
+        <tr><td>VQA_RAD_open</td><td>200</td><td>0.4850</td><td class="dim">0.4708</td>
+          <td class="grp dim">&minus;0.0145</td><td class="dim">&minus;0.0081</td>
+          <td class="dim">&minus;0.0100</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&plus;0.0000</td></tr>
+        <tr><td>PATH_VQA_open</td><td>1,500</td><td>0.3436</td><td class="dim">0.3338</td>
+          <td class="grp num-loss">&minus;0.0082</td><td class="dim">&minus;0.0038</td>
+          <td class="dim">&minus;0.0038</td><td><span class="chip tie">TIE</span></td>
+          <td class="grp dim">&minus;0.0002</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding alert">
+    <span class="ftag">Currency divergence &middot; must be stated</span>
+    <h3>The macro at N=8 is a tie under the judge and a win under exact match</h3>
+    <p>Judge <span class="mono">+0.0024 [&minus;0.0014, +0.0064] TIE</span> against EM
+    <span class="mono">+0.0051 [+0.0017, +0.0088] WIN</span>. Both are positive and the sign agrees on
+    19 of 24 cell&times;N pairs, but only one crosses significance. The gap is driven by SLAKE_open
+    (judge +0.0031 vs EM +0.0109) and PMC_VQA (+0.0100 vs +0.0132). Under the project's rule that a
+    judge/EM divergence signals an artefact rather than a gain, the conservative read is the judge's:
+    <b>a tie</b>. Note the direction is the opposite of the known paraphrase-drift trap, where the
+    judge is the generous currency.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">The pre-registered question</span>
+  <h2>Confirmed: voting is the multiple-choice tool, the head is the open-text tool</h2>
+  <p class="lede">Tested on one pool, so the two mechanisms compete on identical candidates. All three
+  pre-registered conditions hold at N=8.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Frozen 2,345-item open pool, 32B judge, identical candidates for every arm. The head is a
+      free selector &mdash; it scores hidden states the generator already produced.</caption>
+      <thead><tr><th>Arm on the open cells</th><th>Accuracy</th><th>vs vote@8</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Majority vote @8</td><td>0.4469</td><td class="dim">&mdash;</td><td><span class="chip tie">reference</span></td></tr>
+        <tr><td>Hybrid &mdash; vote shortlist, head breaks ties</td><td>0.4665</td><td class="num-win">&plus;0.0196</td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td>Incumbent LoRA verifier</td><td>0.4853</td><td class="num-win">&plus;0.0384</td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td>Hybrid &mdash; top-2 vote shortlist, head picks</td><td>0.4968</td><td class="num-win">&plus;0.0499</td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td><b>Free head alone</b></td><td><b>0.5015</b></td><td class="num-win"><b>&plus;0.0546</b></td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td>Head + LoRA fusion</td><td>0.5075</td><td class="num-win">&plus;0.0606</td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td class="dim">Oracle @8 (ceiling)</td><td class="dim">0.6260</td><td class="dim">&plus;0.1791</td><td><span class="chip tie">ceiling</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding">
+    <span class="ftag">The hybrid</span>
+    <h3>Every constraint the vote imposes on the head costs accuracy</h3>
+    <p>The brief's cheap hybrid &mdash; let the vote shortlist, let the head break ties &mdash; scores
+    <span class="mono">0.4665</span>, which is <span class="mono">&minus;0.0350 [&minus;0.0495,
+    &minus;0.0205]</span> <b>worse than simply using the head</b>. Widening the shortlist to the top-two
+    vote counts recovers almost all of it (<span class="mono">&minus;0.0047, TIE</span>). The ordering is
+    monotone in how much the vote is allowed to constrain the choice: the vote is not adding information
+    the head lacks, it is removing options the head would have picked correctly. There is no version of
+    the hybrid that beats the head alone.</p>
+    <p style="margin-bottom:0">Independently confirmed on the T=0.4 pools against a real greedy control,
+    where the LoRA verifier beats the vote by <span class="mono">+0.0296</span> (judge) and
+    <span class="mono">+0.0192</span> (EM), and the hybrid again loses to the plain selector.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">Defect found &middot; the sampler</span>
+  <h2>An n=8 vLLM pool is not eight interchangeable draws</h2>
+  <p class="lede">Found because vote@2 behaved strangely on PMC-VQA. Per-slot accuracy across the eight
+  sample positions was tested against a permutation null that shuffles slot order within each item.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Statistic is max-minus-min of the eight per-slot accuracies; null shuffles slot order within
+      each item, preserving pool composition and within-item correlation. 2,000 permutations.</caption>
+      <thead><tr><th>Pool</th><th>Observed spread</th><th>Null p95</th><th>p</th><th>Exchangeable?</th></tr></thead>
+      <tbody>
+        <tr><td>PMC_VQA</td><td class="num-loss">0.1360</td><td class="dim">0.0160</td><td class="num-loss">0.000</td><td><span class="chip loss">NO</span></td></tr>
+        <tr><td>PATH_VQA_closed</td><td class="num-loss">0.0782</td><td class="dim">0.0155</td><td class="num-loss">0.000</td><td><span class="chip loss">NO</span></td></tr>
+        <tr><td>PATH_VQA_open <span class="dim">(3 of 3 seeds)</span></td><td class="dim">0.023&ndash;0.039</td><td class="dim">0.021&ndash;0.025</td><td class="dim">0.000&ndash;0.013</td><td><span class="chip loss">NO</span></td></tr>
+        <tr><td>VQA_RAD_open <span class="dim">(1 of 3 seeds)</span></td><td class="dim">0.040&ndash;0.080</td><td class="dim">0.055&ndash;0.065</td><td class="dim">0.011&ndash;0.433</td><td><span class="chip loss">mixed</span></td></tr>
+        <tr><td>MedXpertQA-MM</td><td class="dim">0.0140</td><td class="dim">0.0215</td><td class="dim">0.5335</td><td><span class="chip win">yes</span></td></tr>
+        <tr><td>SLAKE_closed</td><td class="dim">0.0108</td><td class="dim">0.0251</td><td class="dim">0.934</td><td><span class="chip win">yes</span></td></tr>
+        <tr><td>VQA_RAD_closed</td><td class="dim">0.0239</td><td class="dim">0.0637</td><td class="dim">0.962</td><td><span class="chip win">yes</span></td></tr>
+        <tr><td>SLAKE_open (3 seeds)</td><td class="dim">0.017&ndash;0.026</td><td class="dim">0.034</td><td class="dim">0.320&ndash;0.766</td><td><span class="chip win">yes</span></td></tr>
+        <tr><td><b>Frozen deployed T=0.7 pool</b></td><td class="dim">0.013&ndash;0.040</td><td class="dim">0.030&ndash;0.080</td><td class="dim">0.679&ndash;0.894</td><td><span class="chip win">yes</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>What actually differs between the slots is the answer-space bias</h3>
+  <p>On PMC-VQA, slot 4 emits letter <b>A</b> on 51.3% of items against a gold marginal of 13.3%, and
+  scores 0.4453; slot 7 emits A on 10.3%, puts 80.4% of its mass on B+C, and scores 0.5813. The
+  correlation between a slot's on-marginal mass and its accuracy is
+  <span class="mono">0.937</span>; the correlation with generated length is
+  <span class="mono">0.344</span>, and mean tokens are flat at 3.018&ndash;3.064 across all eight slots.
+  On PATH-VQA-closed the same shape appears as polarity: slot 5 answers "yes" 75.3% of the time against
+  a gold rate of 54.0%, and is the worst slot at 0.7647.</p>
+  <p>Agreement with the greedy answer is a stable per-slot constant with a 0.20&ndash;0.25 spread on the
+  multiple-choice cells. That pattern is <b>consistent with</b> a fixed per-request seed making the n
+  sequences a fixed quantile fan rather than n independent draws &mdash; it would explain why the effect
+  is large where the answer is one token from a small skewed space and washes out on multi-token open
+  text. <b>This mechanism is not proven here.</b> Proving it needs an A/B of one fixed seed against
+  per-request seeds, which is a GPU job and was not run.</p>
+
+  <div class="finding alert">
+    <span class="ftag">Consequence &middot; identifiability</span>
+    <h3>On PMC-VQA the N&lt;8 points are not identified &mdash; the sign flips</h3>
+    <p>At N=2, a random 2-subset of the fan gives <span class="mono num-loss">&minus;0.0190</span> and the
+    first 2 slots of the same fan give <span class="mono num-win">&plus;0.0193</span>. A sign flip of
+    0.038 from nothing but which two samples you get. N=8 uses the whole pool and is invariant across all
+    three tie-break and subset conventions, so <b>it is the only budget at which this cell's number means
+    anything.</b> Every N point in the table above is therefore reported three ways in the artifact;
+    on the exchangeable pools the three agree to &le;0.002.</p>
+  </div>
+  <p style="max-width:70ch">The reassuring half: the <b>frozen deployed T=0.7 pool</b> &mdash; the one
+  every published best-of-8, oracle@8 and coverage number in this project rests on &mdash; passes the
+  exchangeability test on all three cells (p = 0.68 / 0.85 / 0.89). The defect is specific to the
+  fixed-seed, short-answer pools generated in the August rounds.</p>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">Defect found &middot; the baseline</span>
+  <h2>The published open-cell baseline is already self-consistency@8</h2>
+  <p class="lede">Found because <code>vote@8 &minus; greedy</code> came out as exactly 0.0000 with a
+  zero-width bootstrap CI on SLAKE_open &mdash; 645 of 645 items identical, which cannot happen between
+  two independently generated arms.</p>
+
+  <p>The <code>greedy_ok</code> field in the frozen transfer dumps, which supplies the published
+  &ldquo;always-7B greedy&rdquo; values <span class="mono">0.7364 / 0.4650 / 0.3240</span> for the three
+  open cells &mdash; three of the eight macro cells &mdash; carries the label of the pool's
+  <b>modal-of-8</b> answer, not a temperature-0 decode. It matches the modal-of-8 label on
+  <span class="mono">2,339 / 2,345 = 99.74%</span> of items and slot 0 on only 91.68%. The repository
+  already says so in three places, including
+  <code>verifier_n_scaling.py:173</code> &mdash; &ldquo;NB: this is the MODAL-of-8 answer, i.e. SC@8&rdquo;
+  &mdash; but the label on the headline table does not.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>True temperature-0 greedy from <code>ckpt_&lt;ds&gt;_lingshu7b.judge.jsonl</code> &mdash; the same
+      June runner, same engine, same session, same 32B judge as the sc8 pool, so this is a matched
+      control and not a cross-session comparison.</caption>
+      <thead><tr><th>Cell</th><th>n</th><th>Published "greedy"</th><th>True T=0 greedy</th><th>Difference</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>SLAKE_open</td><td>645</td><td>0.7364</td><td>0.7302</td><td class="dim">&minus;0.0062 [&minus;0.0233, +0.0109]</td><td><span class="chip tie">TIE</span></td></tr>
+        <tr><td>VQA_RAD_open</td><td>200</td><td>0.4650</td><td>0.4900</td><td class="dim">&plus;0.0250 [&minus;0.0100, +0.0650]</td><td><span class="chip tie">TIE</span></td></tr>
+        <tr><td>PATH_VQA_open</td><td>1,500</td><td>0.3240</td><td>0.3427</td><td class="num-win">&plus;0.0187 [&plus;0.0060, +0.0320]</td><td><span class="chip win">WIN</span></td></tr>
+        <tr><td><b>Pooled</b></td><td><b>2,345</b></td><td><b>0.4495</b></td><td><b>0.4618</b></td><td class="num-win"><b>&plus;0.0124 [&plus;0.0026, +0.0226]</b></td><td><span class="chip win">WIN</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding good">
+    <span class="ftag">Read the other way round</span>
+    <h3>Deleting self-consistency from the baseline is the cheapest thing this round found</h3>
+    <p>Correcting those three cells to a real greedy decode moves the macro baseline from
+    <span class="mono">0.5971</span> to <span class="mono">0.6018</span> &mdash;
+    <span class="mono">+0.0047 [&minus;0.0007, +0.0102]</span>, a tie on the macro but a CI-clean win on
+    PATH_VQA_open &mdash; and it cuts the baseline's own compute from <span class="mono">1.51</span> to
+    <span class="mono">1.00</span> FLOP-eq, because three of its eight cells were quietly paying for eight
+    samples. Accuracy parity-or-better at &minus;34% compute, with nothing to build.</p>
+    <p style="margin-bottom:0"><b>What is not claimed:</b> no published delta is wrong. Every arm in the
+    open-cell chain was compared against the same <code>greedy_ok</code> field, so the deltas are
+    internally consistent. What is wrong is the label on the baseline and the 1.0 charged for it.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <span class="sectag">Controls</span>
+  <h2>What was checked before any delta was read</h2>
+
+  <h3>Null tests &mdash; all five pass</h3>
+  <ul>
+    <li><b>N1 &middot; frozen open metric.</b> Reproduces sel_eff 0.775204, oracle@8 0.626013, greedy
+      0.449467, n 2345/1468. Max abs deviation <span class="mono">3.6e&minus;07</span>.</li>
+    <li><b>N2 &middot; multiple-choice grader.</b> Reproduces MedEvalKit's stored <code>correct</code> field
+      row by row on all 33,430 PMC and 2,000 MedXpert rows &mdash; <b>zero</b> row disagreements &mdash;
+      and the published 0.5427 / 0.2615 cells to <span class="mono">4.4e&minus;05</span>.</li>
+    <li><b>N3 &middot; closed grader.</b> Zero row disagreements; published 0.8254 / 0.7809 / 0.8409
+      reproduced to <span class="mono">4.1e&minus;05</span>.</li>
+    <li><b>N4 &middot; vote machinery.</b> Subset weights sum to 1 at every N; at N=M the exact expectation
+      equals the plain deterministic vote; at N=1 it equals the slot mean; a 1&ndash;1 tie returns the
+      earlier slot. Max deviation <span class="mono">0.0</span>.</li>
+    <li><b>N5 &middot; exchangeability tripwire.</b> vote@2 minus a single random draw, pre-predicted to be
+      ~0. Measured &minus;0.0029 on PMC and &le;0.004 elsewhere &mdash; the residual that led to the
+      sampler defect above.</li>
+  </ul>
+
+  <h3>Multiplicity</h3>
+  <p>The 24 cell&times;N combinations were tested against a permutation null in which the vote's pick is
+  replaced by a uniformly random slot from the same pool. On the per-cell standardised statistic,
+  PMC_VQA@8 sits at <span class="mono">z = 7.45</span> against a null max p95 of
+  <span class="mono">2.52</span> (p = 0.000) and PATH_VQA_closed@8 at
+  <span class="mono">z = 3.96</span> &mdash; both clear the correction. On the raw un-standardised
+  statistic the best observed delta does <b>not</b> clear the grid maximum (p = 0.91), because that
+  version is dominated by the noisiest cell (VQA_RAD_closed, n = 251). Neither correction is needed for
+  the pre-specified endpoints: the macro is a single number, and PMC@8 was published on 2026-08-16 before
+  this grid existed.</p>
+
+  <h3>Random-gold luck floor on the multiple-choice cells</h3>
+  <p>PMC-VQA's gold is A 13.3 / B 36.9 / C 37.3 / D 12.6 &mdash; B+C = 74.2% in this 6,000-item
+  subsample. With gold re-drawn i.i.d. from that marginal, vote@8 scores
+  <span class="mono">0.3058</span> and oracle@8 scores <span class="mono">0.4927</span>. The measured
+  vote@8 of <span class="mono">0.5507</span> clears its own floor by
+  <span class="mono">+0.2595</span>, so the gain is not letter-marginal luck. MedXpert's gold is near
+  uniform and its floor sits at <span class="mono">0.1988</span>.</p>
+
+  <details>
+    <summary>Method, in one paragraph</summary>
+    <p style="margin-bottom:0">Slots are grouped into equivalence classes by a per-cell normaliser (answer
+    letter on multiple choice; normalised text elsewhere). The winner is the class with the most votes in
+    the subset, ties broken by the smallest slot index present; the returned string is that earliest slot,
+    so a real generated string is always what gets graded &mdash; no synthetic string is ever scored. For
+    N&nbsp;&lt;&nbsp;8 the arm's value is the <b>exact</b> mean over all C(8,N) subsets &mdash; 8 at N=1,
+    28 at N=2, 70 at N=4, 1 at N=8 &mdash; not a Monte-Carlo draw, which is strictly stronger than a
+    3-seed estimate. The three open cells additionally carry three independent generation seeds; the
+    multiple-choice and closed cells rest on a single 8-sample pool per item at N=8, which is stated
+    rather than smoothed over. Every arm returns an answer for every question; an unparseable string is
+    graded wrong, never withheld.</p>
+  </details>
+
+  <details>
+    <summary>Standing caveats that constrain these numbers</summary>
+    <ul style="margin-bottom:0">
+      <li>The FLOP-eq ratio was measured on the open-text cap320 geometry. Mean prefill varies
+        275&ndash;868 tokens across cells and the ratio was <b>not</b> separately measured on the
+        multiple-choice or closed cells; it is applied uniformly as the best available measurement.</li>
+      <li>The closed cells' sampled pools run at cap320 while the published cells are fullres. Every delta
+        here uses the cap320 greedy control, so the comparison is matched; the published values are shown
+        for orientation only.</li>
+      <li>PMC-VQA is the pre-registered 6,000-item subsample of 33,430 (<code>test_2.csv</code>), the
+        split with zero published verification. An answer-letter-bias audit is still owed on it.</li>
+      <li>The free head has never been scored on a T=0.4 pool &mdash; no hidden-state cache exists for
+        those pools. The head-vs-vote comparison therefore runs on the T=0.7 pool where both are scored.
+        Not measured, not estimated.</li>
+      <li>On the frozen T=0.7 pool the "greedy" arm is itself modal-of-8, so the <code>vote@8 vs
+        greedy</code> row on that pool is a tie-break convention difference and not an effect. The claim
+        that voting does not help the open cells rests on the T=0.4 block and the open stage, both of
+        which use a real temperature-0 control.</li>
+    </ul>
+  </details>
+</section>
+
+<footer>
+  <div><b>Artifact</b> results/cascade_methods/artifacts/self_consistency_suite_2026-08-17.json</div>
+  <div><b>Pre-registration</b> results/cascade_methods/artifacts/self_consistency_suite_2026-08-17_preregistration.json</div>
+  <div><b>Parts</b> results/cascade_methods/artifacts/_selfcons_parts/{mcq,closed,open,head,slot_exchangeability,baseline_defect}.json</div>
+  <div><b>Code</b> src/cascade_methods/{selfcons_lib,selfcons_suite,selfcons_slots,selfcons_prereg}.py</div>
+  <div><b>Cost source</b> artifacts/verifier_restructure_2026-08-16.json &middot; Q1 per_config["count|default"].flopeq_rel_to_N1 (measured)</div>
+  <div style="margin-top:10px"><b>Every number on this page is read from those files.</b> No figure is
+  hand-derived, interpolated, or carried over from another harness.</div>
+</footer>
+
+</div>
+<div class="tooltip" id="tt"></div>
+
+<script>
+(function(){
+  const tt = document.getElementById('tt');
+  function showTT(e, html){ tt.innerHTML = html; tt.style.opacity = 1;
+    tt.style.left = Math.min(e.clientX + 14, window.innerWidth - tt.offsetWidth - 10) + 'px';
+    tt.style.top  = (e.clientY - 34) + 'px'; }
+  function hideTT(){ tt.style.opacity = 0; }
+  const SV='http://www.w3.org/2000/svg';
+  const mk=(t,a)=>{const e=document.createElementNS(SV,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(4);
+
+  // ---------------- curve: macro delta vs FLOP-eq ----------------
+  const CURVE=[
+    {N:1, x:1.0,        d:-0.006206, lo:-0.010426, hi:-0.001827},
+    {N:2, x:1.260068,   d:-0.006378, lo:-0.010321, hi:-0.002287},
+    {N:4, x:1.664550,   d:-0.000749, lo:-0.004116, hi:0.002718},
+    {N:8, x:2.369969,   d:0.002365,  lo:-0.001401, hi:0.006394}
+  ];
+  function drawCurve(){
+    const s=document.getElementById('curve'); s.innerHTML='';
+    const W=700,H=260,L=64,R=26,T=18,B=42;
+    const xs=v=>L+(v-0.95)/(2.45-0.95)*(W-L-R);
+    const ys=v=>T+(0.010-v)/(0.010-(-0.014))*(H-T-B);
+    for(const g of [0.008,0.004,0,-0.004,-0.008,-0.012]){
+      s.appendChild(mk('line',{x1:L,x2:W-R,y1:ys(g),y2:ys(g),
+        class:g===0?'zero-line':'grid-line'}));
+      const t=mk('text',{x:L-9,y:ys(g)+3.5,class:'tick','text-anchor':'end'});
+      t.textContent=(g>0?'+':g<0?'−':'')+Math.abs(g).toFixed(3); s.appendChild(t);
+    }
+    for(const c of [1.0,1.5,2.0,2.4]){
+      const t=mk('text',{x:xs(c),y:H-B+18,class:'tick','text-anchor':'middle'});
+      t.textContent=c.toFixed(1)+'×'; s.appendChild(t);
+    }
+    s.appendChild(mk('line',{x1:L,x2:W-R,y1:H-B,y2:H-B,class:'axis-line'}));
+    const ax=mk('text',{x:(L+W-R)/2,y:H-4,class:'tick','text-anchor':'middle'});
+    ax.textContent='FLOP-eq per question  (1.0 = one greedy answer, measured)'; s.appendChild(ax);
+    const ay=mk('text',{x:14,y:T+10,class:'tick'}); ay.textContent='macro Δ'; s.appendChild(ay);
+
+    let up='',dn='';
+    CURVE.forEach((p,i)=>{ up+=(i?' L':'M')+xs(p.x)+' '+ys(p.hi); });
+    for(let i=CURVE.length-1;i>=0;i--){ dn+=' L'+xs(CURVE[i].x)+' '+ys(CURVE[i].lo); }
+    s.appendChild(mk('path',{d:up+dn+' Z',class:'band'}));
+    let ln=''; CURVE.forEach((p,i)=>{ ln+=(i?' L':'M')+xs(p.x)+' '+ys(p.d); });
+    s.appendChild(mk('path',{d:ln,class:'curve'}));
+
+    CURVE.forEach(p=>{
+      const col = p.lo>0?css('--win') : p.hi<0?css('--loss') : css('--tie');
+      const c=mk('circle',{cx:xs(p.x),cy:ys(p.d),r:5.5,fill:col,class:'ptdot'});
+      c.style.cursor='crosshair';
+      const vd = p.lo>0?'WIN':p.hi<0?'LOSS':'TIE';
+      c.addEventListener('mousemove',e=>showTT(e,
+        'N='+p.N+' &middot; '+p.x.toFixed(3)+'×<br>'+fmt(p.d)+
+        ' ['+fmt(p.lo)+', '+fmt(p.hi)+'] '+vd));
+      c.addEventListener('mouseleave',hideTT);
+      s.appendChild(c);
+      const lab=mk('text',{x:xs(p.x),y:ys(p.d)-13,class:'valtxt','text-anchor':'middle'});
+      lab.textContent='N='+p.N; s.appendChild(lab);
+    });
+  }
+
+  // ---------------- forest: per-cell delta at N=8 ----------------
+  const FOREST=[
+    {c:'PMC_VQA',         n:6000, d:0.010000, lo:0.004833, hi:0.015167, v:'WIN'},
+    {c:'PATH_VQA_closed', n:3362, d:0.005057, lo:0.000297, hi:0.009816, v:'WIN'},
+    {c:'VQA_RAD_closed',  n:251,  d:0.011952, lo:0.000000, hi:0.027888, v:'TIE'},
+    {c:'SLAKE_closed',    n:836,  d:0.003589, lo:-0.004785,hi:0.013158, v:'TIE'},
+    {c:'SLAKE_open',      n:645,  d:0.003101, lo:-0.008269,hi:0.013953, v:'TIE'},
+    {c:'MedXpertQA-MM',   n:2000, d:-0.001000,lo:-0.008000,hi:0.006000, v:'TIE'},
+    {c:'PATH_VQA_open',   n:1500, d:-0.003778,lo:-0.010000,hi:0.002222, v:'TIE'},
+    {c:'VQA_RAD_open',    n:200,  d:-0.010000,lo:-0.031667,hi:0.011667, v:'TIE'}
+  ];
+  function drawForest(){
+    const s=document.getElementById('forest'); s.innerHTML='';
+    const W=760,H=360,L=150,R=118,T=26,B=42;
+    const rowH=(H-T-B)/FOREST.length;
+    const xs=v=>L+(v+0.037)/(0.037+0.032)*(W-L-R);
+    for(const g of [-0.03,-0.02,-0.01,0,0.01,0.02,0.03]){
+      s.appendChild(mk('line',{x1:xs(g),x2:xs(g),y1:T-6,y2:H-B,
+        class:g===0?'zero-line':'grid-line'}));
+      const t=mk('text',{x:xs(g),y:H-B+18,class:'tick','text-anchor':'middle'});
+      t.textContent=(g>0?'+':g<0?'−':'')+Math.abs(g).toFixed(2); s.appendChild(t);
+    }
+    const zl=mk('text',{x:xs(0),y:T-13,class:'tick','text-anchor':'middle'});
+    zl.textContent='no change'; s.appendChild(zl);
+    const ax=mk('text',{x:(L+W-R)/2,y:H-4,class:'tick','text-anchor':'middle'});
+    ax.textContent='Δ accuracy vs matched greedy, N = 8'; s.appendChild(ax);
+
+    FOREST.forEach((r,i)=>{
+      const y=T+rowH*i+rowH/2;
+      const col = r.v==='WIN'?css('--win') : r.v==='LOSS'?css('--loss') : css('--tie');
+      const nm=mk('text',{x:L-14,y:y+4,class:'rowlab','text-anchor':'end'});
+      nm.textContent=r.c; s.appendChild(nm);
+      s.appendChild(mk('line',{x1:xs(r.lo),x2:xs(r.hi),y1:y,y2:y,stroke:col,class:'whisk'}));
+      s.appendChild(mk('line',{x1:xs(r.lo),x2:xs(r.lo),y1:y-4,y2:y+4,stroke:col,class:'whisk'}));
+      s.appendChild(mk('line',{x1:xs(r.hi),x2:xs(r.hi),y1:y-4,y2:y+4,stroke:col,class:'whisk'}));
+      const c=mk('circle',{cx:xs(r.d),cy:y,r:5,fill:col,class:'ptdot'});
+      c.style.cursor='crosshair';
+      c.addEventListener('mousemove',e=>showTT(e,
+        r.c+' &middot; n='+r.n.toLocaleString()+'<br>'+fmt(r.d)+' ['+fmt(r.lo)+', '+fmt(r.hi)+'] '+r.v));
+      c.addEventListener('mouseleave',hideTT);
+      s.appendChild(c);
+      const vt=mk('text',{x:W-R+14,y:y+4,class:'valtxt'});
+      vt.textContent=fmt(r.d)+'  '+r.v; vt.setAttribute('fill',col); s.appendChild(vt);
+    });
+  }
+
+  function draw(){ drawCurve(); drawForest(); }
+  draw();
+  if(window.matchMedia){
+    const m=window.matchMedia('(prefers-color-scheme: dark)');
+    (m.addEventListener?m.addEventListener.bind(m,'change'):m.addListener.bind(m))(draw);
+  }
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>

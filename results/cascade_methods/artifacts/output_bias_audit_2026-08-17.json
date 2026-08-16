@@ -1,0 +1,2950 @@
+{
+ "title": "ATTACK 1 (2026-08-17) -- the OUTPUT-BIAS AUDIT AND CORRECTION across all eight reporting cells: measuring the format-induced output priors of Lingshu-7B and removing them at zero extra compute.",
+ "date": "2026-08-17",
+ "baseline": "always-7B greedy, macro 0.5971 over 8 cells at 1.0 FLOP-eq",
+ "no_fabricated_numbers": true,
+ "not_abstention": "every arm answers every item; a corrected argmax is still an answer.",
+ "numerics_pinned": {
+  "OMP_NUM_THREADS": "1",
+  "numpy": "1.26.4",
+  "python": "3.12.3",
+  "TF32": "off in the generator (torch.backends.*.allow_tf32=False); this module is numpy-only",
+  "nboot": 10000,
+  "seed_boot": 20260817
+ },
+ "reproduce": "OMP_NUM_THREADS=1 python3 src/cascade_methods/output_bias_audit.py",
+ "null_tests": {
+  "N1_frozen_open_text_metric": {
+   "pass": true,
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237
+   },
+   "source": "src/training_methods/genframe_data.py null_test() (frozen metric)"
+  },
+  "N2_prompt_byte_equality_vs_MedEvalKit": {
+   "PMC_VQA": {
+    "n_checked": 33430,
+    "mismatches": 0
+   },
+   "SLAKE_closed": {
+    "n_checked": 836,
+    "mismatches": 0
+   },
+   "cells_without_a_stored_prompt_field": [
+    "MedXpertQA-MM",
+    "VQA_RAD_closed",
+    "PATH_VQA_closed"
+   ],
+   "pass": true
+  },
+  "G1_grader_reproduces_all_eight_published_cells": {
+   "PMC_VQA": {
+    "n": 33430,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded": 0.542656,
+    "published_always_7b": 0.5427,
+    "abs_dev_vs_published": 4.4e-05
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded": 0.2615,
+    "published_always_7b": 0.2615,
+    "abs_dev_vs_published": 0.0
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded": 0.825359,
+    "published_always_7b": 0.8254,
+    "abs_dev_vs_published": 4.1e-05
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded": 0.780876,
+    "published_always_7b": 0.7809,
+    "abs_dev_vs_published": 2.4e-05
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "row_disagreements_with_harness_correct_field": 0,
+    "acc_regraded": 0.840869,
+    "published_always_7b": 0.8409,
+    "abs_dev_vs_published": 3.1e-05
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc_from_transfer_dump_greedy_ok": 0.736434,
+    "published_always_7b": 0.7364,
+    "abs_dev_vs_published": 3.4e-05,
+    "currency": "32B judge (the dump's greedy_ok field)"
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc_from_transfer_dump_greedy_ok": 0.465,
+    "published_always_7b": 0.465,
+    "abs_dev_vs_published": 0.0,
+    "currency": "32B judge (the dump's greedy_ok field)"
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc_from_transfer_dump_greedy_ok": 0.324,
+    "published_always_7b": 0.324,
+    "abs_dev_vs_published": 0.0,
+    "currency": "32B judge (the dump's greedy_ok field)"
+   },
+   "max_abs_deviation": 4.4e-05,
+   "pass": true,
+   "note": "published cells are 4-dp rounded, so a deviation at 1e-5 is rounding; any non-zero row disagreement on a generative cell is a grader defect and fails."
+  },
+  "A1_pathvqa_prompt_fix_reproduction": {
+   "closedD_g_full": {
+    "n": 3362,
+    "EM_harness": 0.839976,
+    "judge_32b": 0.839976,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.000297,
+    "pred_yes_rate": 0.609459,
+    "gold_yes_rate": 0.540155,
+    "YES_BIAS": 0.069304
+   },
+   "openMEK_g_full": {
+    "n": 3362,
+    "EM_harness": 0.881618,
+    "judge_32b": 0.881916,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.000595,
+    "pred_yes_rate": 0.545211,
+    "gold_yes_rate": 0.540155,
+    "YES_BIAS": 0.005057
+   },
+   "delta_openMEK_minus_closedD": {
+    "judge": {
+     "delta": 0.041939321832242714,
+     "ci": [
+      0.032123735871505056,
+      0.05175490779298037
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 3362,
+     "nboot": 10000,
+     "seed": 20260817
+    },
+    "EM_harness": {
+     "delta": 0.04164187983343248,
+     "ci": [
+      0.031826293872694825,
+      0.05145746579417014
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 3362,
+     "nboot": 10000,
+     "seed": 20260817
+    }
+   },
+   "reference_2026-08-16": {
+    "judge": "+0.0419 [+0.0321,+0.0518]",
+    "EM": "+0.0416 [+0.0318,+0.0515]",
+    "artifact": "artifacts/closed_as_open_2026-08-16.json"
+   },
+   "pass": true
+  },
+  "A2_judge_equals_exact_match_on_yesno": {
+   "SLAKE_closed": {
+    "n_judge_calls_on_yesno": 419,
+    "agreement_with_exact_match": 1.0
+   },
+   "VQA_RAD_closed": {
+    "n_judge_calls_on_yesno": 338,
+    "agreement_with_exact_match": 1.0
+   },
+   "PATH_VQA_closed": {
+    "n_judge_calls_on_yesno": 4447,
+    "agreement_with_exact_match": 1.0
+   },
+   "pooled": {
+    "n": 5204,
+    "agreement": 1.0
+   },
+   "consequence": "agreement is exactly 1.0 over 5204 calls, so a yes/no answer's judge label is IMPUTED as exact match rather than re-judged. This is a measurement, not an assumption.",
+   "pass": true
+  }
+ },
+ "STEP1_bias_audit": {
+  "binary_cells": {
+   "SLAKE_closed": {
+    "n": 836,
+    "n_with_yesno_gold": 355,
+    "gold_yes_rate": 0.492958,
+    "pred_yes_rate_deployed": 0.56338,
+    "YES_BIAS_deployed": 0.070423,
+    "n_unparsed_polarity": 0,
+    "deployed_instruction": "get_close_ended_prompt (NO answer space given)",
+    "per_predicted_polarity": {
+     "yes": {
+      "n": 200,
+      "precision_P_correct_given_predicts": 0.805,
+      "mean_conf": 0.899058,
+      "mean_margin": 0.798166
+     },
+     "no": {
+      "n": 155,
+      "precision_P_correct_given_predicts": 0.909677,
+      "mean_conf": 0.91544,
+      "mean_margin": 0.830921
+     }
+    },
+    "by_prompt_arm_matched_fullres": {
+     "closedD_g_full": {
+      "pred_yes_rate": 0.569014,
+      "YES_BIAS": 0.076056,
+      "mean_gen_tokens": 2.815789,
+      "EM_harness": 0.818182
+     },
+     "openMEK_g_full": {
+      "pred_yes_rate": 0.569014,
+      "YES_BIAS": 0.076056,
+      "mean_gen_tokens": 3.261962,
+      "EM_harness": 0.819378
+     },
+     "openPRJ_g_full": {
+      "pred_yes_rate": 0.549296,
+      "YES_BIAS": 0.056338,
+      "mean_gen_tokens": 3.255981,
+      "EM_harness": 0.825359
+     }
+    }
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "n_with_yesno_gold": 251,
+    "gold_yes_rate": 0.47012,
+    "pred_yes_rate_deployed": 0.516,
+    "YES_BIAS_deployed": 0.04588,
+    "n_unparsed_polarity": 1,
+    "deployed_instruction": "get_judgement_prompt (answer space GIVEN: yes/no)",
+    "per_predicted_polarity": {
+     "yes": {
+      "n": 129,
+      "precision_P_correct_given_predicts": 0.744186,
+      "mean_conf": 0.828259,
+      "mean_margin": 0.658796
+     },
+     "no": {
+      "n": 121,
+      "precision_P_correct_given_predicts": 0.826446,
+      "mean_conf": 0.813555,
+      "mean_margin": 0.627864
+     }
+    },
+    "by_prompt_arm_matched_fullres": {
+     "closedD_g_full": {
+      "pred_yes_rate": 0.52,
+      "YES_BIAS": 0.04988,
+      "mean_gen_tokens": 3.007968,
+      "EM_harness": 0.768924
+     },
+     "openMEK_g_full": {
+      "pred_yes_rate": 0.46988,
+      "YES_BIAS": -0.00024,
+      "mean_gen_tokens": 3.007968,
+      "EM_harness": 0.76494
+     },
+     "openPRJ_g_full": {
+      "pred_yes_rate": 0.473896,
+      "YES_BIAS": 0.003776,
+      "mean_gen_tokens": 3.007968,
+      "EM_harness": 0.752988
+     }
+    }
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "n_with_yesno_gold": 3362,
+    "gold_yes_rate": 0.540155,
+    "pred_yes_rate_deployed": 0.611723,
+    "YES_BIAS_deployed": 0.071568,
+    "n_unparsed_polarity": 1,
+    "deployed_instruction": "get_judgement_prompt (answer space GIVEN: yes/no)",
+    "per_predicted_polarity": {
+     "yes": {
+      "n": 2056,
+      "precision_P_correct_given_predicts": 0.81177,
+      "mean_conf": 0.870808,
+      "mean_margin": 0.741808
+     },
+     "no": {
+      "n": 1305,
+      "precision_P_correct_given_predicts": 0.887356,
+      "mean_conf": 0.819765,
+      "mean_margin": 0.640073
+     }
+    },
+    "by_prompt_arm_matched_fullres": {
+     "closedD_g_full": {
+      "pred_yes_rate": 0.60964,
+      "YES_BIAS": 0.069485,
+      "mean_gen_tokens": 3.000297,
+      "EM_harness": 0.839976
+     },
+     "openMEK_g_full": {
+      "pred_yes_rate": 0.545536,
+      "YES_BIAS": 0.005381,
+      "mean_gen_tokens": 3.000595,
+      "EM_harness": 0.881618
+     },
+     "openPRJ_g_full": {
+      "pred_yes_rate": 0.542585,
+      "YES_BIAS": 0.00243,
+      "mean_gen_tokens": 3.001487,
+      "EM_harness": 0.866746
+     }
+    }
+   }
+  },
+  "mcq_cells": {
+   "PMC_VQA": {
+    "n": 33430,
+    "n_options": 4,
+    "gold_letter_marginal": {
+     "A": 0.132306,
+     "B": 0.35848,
+     "C": 0.377984,
+     "D": 0.131229
+    },
+    "pred_letter_marginal": {
+     "A": 0.199581,
+     "B": 0.347682,
+     "C": 0.319862,
+     "D": 0.132875,
+     "UNPARSED": 0.0
+    },
+    "L1_marginal_mismatch": 0.137841,
+    "majority_gold_letter_floor": 0.377984,
+    "acc": 0.542656,
+    "marginal_only_acc_zero_skill": 0.289383,
+    "skill_above_marginal": 0.253273,
+    "per_predicted_letter": {
+     "A": {
+      "n": 6672,
+      "precision_P_correct_given_predicts_L": 0.282824,
+      "mean_confidence": 0.537496,
+      "calibration_gap_precision_minus_confidence": -0.254673
+     },
+     "B": {
+      "n": 11623,
+      "precision_P_correct_given_predicts_L": 0.612751,
+      "mean_confidence": 0.625202,
+      "calibration_gap_precision_minus_confidence": -0.012451
+     },
+     "C": {
+      "n": 10693,
+      "precision_P_correct_given_predicts_L": 0.670158,
+      "mean_confidence": 0.638298,
+      "calibration_gap_precision_minus_confidence": 0.03186
+     },
+     "D": {
+      "n": 4442,
+      "precision_P_correct_given_predicts_L": 0.442593,
+      "mean_confidence": 0.594973,
+      "calibration_gap_precision_minus_confidence": -0.152379
+     }
+    },
+    "precision_range_across_letters": 0.387334,
+    "confidence_range_across_letters": 0.100802,
+    "ratio_precision_range_over_confidence_range": 3.842523
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "n_options": 5,
+    "gold_letter_marginal": {
+     "A": 0.1995,
+     "B": 0.204,
+     "C": 0.1915,
+     "D": 0.193,
+     "E": 0.212
+    },
+    "pred_letter_marginal": {
+     "A": 0.258,
+     "B": 0.2175,
+     "C": 0.234,
+     "D": 0.166,
+     "E": 0.1245,
+     "UNPARSED": 0.0
+    },
+    "L1_marginal_mismatch": 0.229,
+    "majority_gold_letter_floor": 0.212,
+    "acc": 0.2615,
+    "marginal_only_acc_zero_skill": 0.199084,
+    "skill_above_marginal": 0.062416,
+    "per_predicted_letter": {
+     "A": {
+      "n": 516,
+      "precision_P_correct_given_predicts_L": 0.261628,
+      "mean_confidence": 0.616327,
+      "calibration_gap_precision_minus_confidence": -0.3547
+     },
+     "B": {
+      "n": 435,
+      "precision_P_correct_given_predicts_L": 0.255172,
+      "mean_confidence": 0.647974,
+      "calibration_gap_precision_minus_confidence": -0.392801
+     },
+     "C": {
+      "n": 468,
+      "precision_P_correct_given_predicts_L": 0.264957,
+      "mean_confidence": 0.625435,
+      "calibration_gap_precision_minus_confidence": -0.360478
+     },
+     "D": {
+      "n": 332,
+      "precision_P_correct_given_predicts_L": 0.246988,
+      "mean_confidence": 0.653928,
+      "calibration_gap_precision_minus_confidence": -0.40694
+     },
+     "E": {
+      "n": 249,
+      "precision_P_correct_given_predicts_L": 0.285141,
+      "mean_confidence": 0.638181,
+      "calibration_gap_precision_minus_confidence": -0.353041
+     }
+    },
+    "precision_range_across_letters": 0.038153,
+    "confidence_range_across_letters": 0.037601,
+    "ratio_precision_range_over_confidence_range": 1.01468
+   }
+  },
+  "open_cells": {
+   "SLAKE_open": {
+    "source_dump": "ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_lingshu7b.jsonl",
+    "n": 645,
+    "judge_acc_of_this_dump": 0.730233,
+    "published_cell": 0.7364,
+    "abs_dev_vs_published": 0.006167,
+    "mean_pred_words": 1.710078,
+    "mean_gold_words": 1.71938,
+    "LENGTH_BIAS_words_pred_minus_gold": -0.009302,
+    "mean_pred_chars": 10.055814,
+    "mean_gold_chars": 10.04186,
+    "frac_pred_shorter_than_gold": 0.110078,
+    "frac_pred_longer_than_gold": 0.072868,
+    "frac_pred_exactly_one_word": 0.710078,
+    "frac_gold_exactly_one_word": 0.67907,
+    "corr_predlen_judge": -0.192305,
+    "corr_predlen_EM": -0.255188,
+    "judge_leniency_judge_minus_EM": 0.024806,
+    "by_predicted_length_tercile": {
+     "1_word": {
+      "n": 458,
+      "mean_pred_words": 1.0,
+      "judge": 0.80786,
+      "EM": 0.80131,
+      "judge_minus_EM": 0.00655
+     },
+     "2_words": {
+      "n": 109,
+      "mean_pred_words": 2.0,
+      "judge": 0.605505,
+      "EM": 0.568807,
+      "judge_minus_EM": 0.036697
+     },
+     "3plus_words": {
+      "n": 78,
+      "mean_pred_words": 5.474359,
+      "judge": 0.448718,
+      "EM": 0.333333,
+      "judge_minus_EM": 0.115385
+     }
+    }
+   },
+   "VQA_RAD_open": {
+    "source_dump": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7b.jsonl",
+    "n": 200,
+    "judge_acc_of_this_dump": 0.49,
+    "published_cell": 0.465,
+    "abs_dev_vs_published": 0.025,
+    "mean_pred_words": 1.825,
+    "mean_gold_words": 2.27,
+    "LENGTH_BIAS_words_pred_minus_gold": -0.445,
+    "mean_pred_chars": 11.895,
+    "mean_gold_chars": 14.45,
+    "frac_pred_shorter_than_gold": 0.325,
+    "frac_pred_longer_than_gold": 0.2,
+    "frac_pred_exactly_one_word": 0.55,
+    "frac_gold_exactly_one_word": 0.455,
+    "corr_predlen_judge": -0.115182,
+    "corr_predlen_EM": -0.206221,
+    "judge_leniency_judge_minus_EM": 0.23,
+    "by_predicted_length_tercile": {
+     "1_word": {
+      "n": 110,
+      "mean_pred_words": 1.0,
+      "judge": 0.563636,
+      "EM": 0.363636,
+      "judge_minus_EM": 0.2
+     },
+     "2_words": {
+      "n": 54,
+      "mean_pred_words": 2.0,
+      "judge": 0.425926,
+      "EM": 0.12963,
+      "judge_minus_EM": 0.296296
+     },
+     "3plus_words": {
+      "n": 36,
+      "mean_pred_words": 4.083333,
+      "judge": 0.361111,
+      "EM": 0.138889,
+      "judge_minus_EM": 0.222222
+     }
+    }
+   },
+   "PATH_VQA_open": {
+    "source_dump": "ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b.jsonl",
+    "n": 1500,
+    "judge_acc_of_this_dump": 0.342667,
+    "published_cell": 0.324,
+    "abs_dev_vs_published": 0.018667,
+    "mean_pred_words": 1.764667,
+    "mean_gold_words": 2.358,
+    "LENGTH_BIAS_words_pred_minus_gold": -0.593333,
+    "mean_pred_chars": 13.891333,
+    "mean_gold_chars": 18.468667,
+    "frac_pred_shorter_than_gold": 0.306,
+    "frac_pred_longer_than_gold": 0.119333,
+    "frac_pred_exactly_one_word": 0.668667,
+    "frac_gold_exactly_one_word": 0.533333,
+    "corr_predlen_judge": -0.076369,
+    "corr_predlen_EM": -0.141302,
+    "judge_leniency_judge_minus_EM": 0.056,
+    "by_predicted_length_tercile": {
+     "1_word": {
+      "n": 1003,
+      "mean_pred_words": 1.0,
+      "judge": 0.360917,
+      "EM": 0.326022,
+      "judge_minus_EM": 0.034895
+     },
+     "2_words": {
+      "n": 269,
+      "mean_pred_words": 2.0,
+      "judge": 0.35316,
+      "EM": 0.297398,
+      "judge_minus_EM": 0.055762
+     },
+     "3plus_words": {
+      "n": 228,
+      "mean_pred_words": 4.850877,
+      "judge": 0.25,
+      "EM": 0.100877,
+      "judge_minus_EM": 0.149123
+     }
+    }
+   }
+  },
+  "letter_bias_position_vs_content": {
+   "model": "Lingshu-32B (the only rotation dump in the repo)",
+   "source": "ckpts/mcq_tta/PMC_VQA_stageA.jsonl",
+   "n_items_with_all_4_rotations": 5998,
+   "pred_marginal_BY_SLOT_per_rotation": [
+    [
+     0.230744,
+     0.33878,
+     0.316772,
+     0.113705
+    ],
+    [
+     0.201234,
+     0.222574,
+     0.305102,
+     0.27109
+    ],
+    [
+     0.3001,
+     0.191731,
+     0.252251,
+     0.255919
+    ],
+    [
+     0.284428,
+     0.304435,
+     0.172057,
+     0.23908
+    ]
+   ],
+   "pred_marginal_BY_ORIGINAL_OPTION_per_rotation": [
+    [
+     0.230744,
+     0.33878,
+     0.316772,
+     0.113705
+    ],
+    [
+     0.222574,
+     0.305102,
+     0.27109,
+     0.201234
+    ],
+    [
+     0.252251,
+     0.255919,
+     0.3001,
+     0.191731
+    ],
+    [
+     0.23908,
+     0.284428,
+     0.304435,
+     0.172057
+    ]
+   ],
+   "position_component_slot_marginal_averaged_over_rotations": [
+    0.254126,
+    0.26438,
+    0.261546,
+    0.219948
+   ],
+   "content_component_original_option_marginal_averaged_over_rotations": [
+    0.236162,
+    0.296057,
+    0.298099,
+    0.169682
+   ],
+   "L1_nonuniformity_of_position_component": 0.060103,
+   "L1_nonuniformity_of_content_component": 0.188313,
+   "gold_marginal_by_ORIGINAL_option_on_this_subsample": [
+    0.132377,
+    0.368956,
+    0.372624,
+    0.126042
+   ],
+   "L1_nonuniformity_of_gold": 0.483161,
+   "content_component_as_fraction_of_gold_nonuniformity": 0.389752,
+   "reading": "TWO SEPARABLE THINGS, and only one of them is a model pathology. (1) The POSITION component is small (L1 0.0601) and is essentially an aversion to the LAST option slot -- that one IS a bias. (2) The CONTENT component is three times larger (L1 0.1883), and it points in the SAME DIRECTION as the gold marginal (L1 0.4917): averaged over positions the model favours the options that started in slots B and C, which is exactly where PMC-VQA v2 puts 73.6%% of its answers -- but it only travels ~38%% of the way there. So the model is UNDER-USING a real, stable dataset regularity rather than hallucinating a positional one, and an output-side letter prior on this cell mostly supplies the missing 62%%. That is a legitimate test-time intervention when the prior is taken from TRAIN, but it must be described as dataset-prior exploitation, not as repairing a model defect.",
+   "caveat": "measured on Lingshu-32B; the 7B has no rotation dump in this repo, so the position/content split is NOT MEASURED for the 7B."
+  },
+  "ORACLE_upper_bounds": {
+   "PMC_VQA": {
+    "n": 33430,
+    "deployed_acc": 0.542656,
+    "letter_argmax_acc": 0.552169,
+    "readout_minus_deployed": 0.009512,
+    "ORACLE_marginal_matched_acc": 0.573856,
+    "ORACLE_marginal_matched_gain_vs_readout": 0.021687,
+    "RECOVERABLE_vs_deployed_cell": 0.0312,
+    "BEST_FOUND_global_shift_acc": 0.590039,
+    "BEST_FOUND_global_shift_gain_vs_readout": 0.03787,
+    "BEST_FOUND_global_shift_gain_vs_deployed_cell": 0.047383,
+    "BEST_FOUND_global_shift": [
+     0.918619,
+     -0.45274,
+     -0.718334,
+     0.252455
+    ],
+    "note": "Both look at the eval labels; neither is a method. The marginal-matched line is an exact construction; the BEST_FOUND line is a multi-start coordinate ascent, i.e. a LOWER bound on the true oracle, not the oracle -- the objective is piecewise constant in w."
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "deployed_acc": 0.2615,
+    "letter_argmax_acc": 0.2675,
+    "readout_minus_deployed": 0.006,
+    "ORACLE_marginal_matched_acc": 0.2595,
+    "ORACLE_marginal_matched_gain_vs_readout": -0.008,
+    "RECOVERABLE_vs_deployed_cell": -0.002,
+    "BEST_FOUND_global_shift_acc": 0.274,
+    "BEST_FOUND_global_shift_gain_vs_readout": 0.0065,
+    "BEST_FOUND_global_shift_gain_vs_deployed_cell": 0.0125,
+    "BEST_FOUND_global_shift": [
+     -0.527707,
+     -0.52591,
+     1.619032,
+     -0.282707,
+     -0.282707
+    ],
+    "note": "Both look at the eval labels; neither is a method. The marginal-matched line is an exact construction; the BEST_FOUND line is a multi-start coordinate ascent, i.e. a LOWER bound on the true oracle, not the oracle -- the objective is piecewise constant in w."
+   },
+   "SLAKE_closed": {
+    "n_yesno": 355,
+    "n_cell": 836,
+    "yesno_share_of_cell": 0.424641,
+    "polarity_argmax_acc_on_subset": 0.84507,
+    "ORACLE_marginal_matched_acc": 0.870423,
+    "ORACLE_marginal_matched_gain_on_subset": 0.025352,
+    "ORACLE_best_threshold_acc": 0.870423,
+    "ORACLE_best_threshold": 0.75,
+    "ORACLE_best_threshold_gain_on_subset": 0.025352,
+    "RECOVERABLE_scaled_to_the_whole_cell": 0.010766,
+    "note": "UPPER BOUNDS on the yes/no-gold subset; the last line rescales the best-threshold bound by that subset's share of the cell, which is the number that is comparable across cells."
+   },
+   "VQA_RAD_closed": {
+    "n_yesno": 251,
+    "n_cell": 251,
+    "yesno_share_of_cell": 1.0,
+    "polarity_argmax_acc_on_subset": 0.780876,
+    "ORACLE_marginal_matched_acc": 0.768924,
+    "ORACLE_marginal_matched_gain_on_subset": -0.011952,
+    "ORACLE_best_threshold_acc": 0.788845,
+    "ORACLE_best_threshold": 0.125,
+    "ORACLE_best_threshold_gain_on_subset": 0.007968,
+    "RECOVERABLE_scaled_to_the_whole_cell": 0.007968,
+    "note": "UPPER BOUNDS on the yes/no-gold subset; the last line rescales the best-threshold bound by that subset's share of the cell, which is the number that is comparable across cells."
+   },
+   "PATH_VQA_closed": {
+    "n_yesno": 3362,
+    "n_cell": 3362,
+    "yesno_share_of_cell": 1.0,
+    "polarity_argmax_acc_on_subset": 0.840274,
+    "ORACLE_marginal_matched_acc": 0.844735,
+    "ORACLE_marginal_matched_gain_on_subset": 0.004462,
+    "ORACLE_best_threshold_acc": 0.848305,
+    "ORACLE_best_threshold": 0.5,
+    "ORACLE_best_threshold_gain_on_subset": 0.008031,
+    "RECOVERABLE_scaled_to_the_whole_cell": 0.008031,
+    "note": "UPPER BOUNDS on the yes/no-gold subset; the last line rescales the best-threshold bound by that subset's share of the cell, which is the number that is comparable across cells."
+   },
+   "SLAKE_open": {
+    "RECOVERABLE_from_an_output_prior": "NOT DEFINED",
+    "why": "a length or phrasing prior on a free-text cell cannot be corrected by re-ranking a single greedy string -- there is nothing to re-rank. The nearest measurable bound is oracle@8 over the sampled pool, which is the coverage / selection wall this project has already quantified: greedy 0.449467 -> oracle@8 0.626013 over the 2,345 pooled open questions (src/training_methods/genframe_data.py, null test N1), and that requires 8 samples, not zero extra compute."
+   },
+   "VQA_RAD_open": {
+    "RECOVERABLE_from_an_output_prior": "NOT DEFINED",
+    "why": "a length or phrasing prior on a free-text cell cannot be corrected by re-ranking a single greedy string -- there is nothing to re-rank. The nearest measurable bound is oracle@8 over the sampled pool, which is the coverage / selection wall this project has already quantified: greedy 0.449467 -> oracle@8 0.626013 over the 2,345 pooled open questions (src/training_methods/genframe_data.py, null test N1), and that requires 8 samples, not zero extra compute."
+   },
+   "PATH_VQA_open": {
+    "RECOVERABLE_from_an_output_prior": "NOT DEFINED",
+    "why": "a length or phrasing prior on a free-text cell cannot be corrected by re-ranking a single greedy string -- there is nothing to re-rank. The nearest measurable bound is oracle@8 over the sampled pool, which is the coverage / selection wall this project has already quantified: greedy 0.449467 -> oracle@8 0.626013 over the 2,345 pooled open questions (src/training_methods/genframe_data.py, null test N1), and that requires 8 samples, not zero extra compute."
+   }
+  }
+ },
+ "STEP2a_prompt_side": {
+  "SLAKE_closed": {
+   "closedD_g_full": {
+    "EM_harness": 0.818182,
+    "judge_32b": 0.832536,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 2.815789
+   },
+   "openMEK_g_full": {
+    "EM_harness": 0.819378,
+    "judge_32b": 0.836124,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.261962,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": 0.0035885167464114833,
+      "ci": [
+       -0.008373205741626795,
+       0.01555023923444976
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": 0.0011961722488038277,
+      "ci": [
+       -0.01076555023923445,
+       0.013157894736842105
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   },
+   "openPRJ_g_full": {
+    "EM_harness": 0.825359,
+    "judge_32b": 0.840909,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.255981,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": 0.008373205741626795,
+      "ci": [
+       -0.004784688995215311,
+       0.0215311004784689
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": 0.007177033492822967,
+      "ci": [
+       -0.005980861244019139,
+       0.02033492822966507
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  },
+  "VQA_RAD_closed": {
+   "closedD_g_full": {
+    "EM_harness": 0.768924,
+    "judge_32b": 0.768924,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.007968
+   },
+   "openMEK_g_full": {
+    "EM_harness": 0.76494,
+    "judge_32b": 0.768924,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.007968,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": 0.0,
+      "ci": [
+       -0.0398406374501992,
+       0.0398406374501992
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": -0.00398406374501992,
+      "ci": [
+       -0.043824701195219126,
+       0.035856573705179286
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   },
+   "openPRJ_g_full": {
+    "EM_harness": 0.752988,
+    "judge_32b": 0.756972,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.007968,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": -0.01195219123505976,
+      "ci": [
+       -0.04780876494023904,
+       0.02390438247011952
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": -0.01593625498007968,
+      "ci": [
+       -0.05179282868525897,
+       0.0199203187250996
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  },
+  "PATH_VQA_closed": {
+   "closedD_g_full": {
+    "EM_harness": 0.839976,
+    "judge_32b": 0.839976,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.000297
+   },
+   "openMEK_g_full": {
+    "EM_harness": 0.881618,
+    "judge_32b": 0.881916,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.000595,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": 0.041939321832242714,
+      "ci": [
+       0.032123735871505056,
+       0.05175490779298037
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": 0.04164187983343248,
+      "ci": [
+       0.031826293872694825,
+       0.05145746579417014
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   },
+   "openPRJ_g_full": {
+    "EM_harness": 0.866746,
+    "judge_32b": 0.867043,
+    "n_judge_unlabelled_scored_0": 0,
+    "mean_gen_tokens": 3.001487,
+    "vs_deployed_prompt": {
+     "judge": {
+      "delta": 0.02706722189173111,
+      "ci": [
+       0.017251635930993457,
+       0.036882807852468766
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "EM_harness": {
+      "delta": 0.02676977989292088,
+      "ci": [
+       0.016954193932183226,
+       0.036585365853658534
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  }
+ },
+ "STEP2a_prompt_side_INSTRUCTION_ORDER_SWAP": {
+  "status": "EXPLORATORY -- not part of the pre-specified policy",
+  "what_it_separates": "the 2026-08-16 open-instruction arm removed the answer space ENTIRELY (+0.0419 on PATH_VQA_closed). This arm keeps the answer space and changes only the order the two options are named in, so it isolates an ordering effect from an answer-space effect.",
+  "SLAKE_closed": {
+   "n": 836,
+   "gold_yes_rate": 0.492958,
+   "id_arm": {
+    "EM_harness": 0.816986,
+    "pred_yes_rate": 0.56338,
+    "YES_BIAS": 0.070423,
+    "mean_gen_tokens": 2.815789,
+    "mean_prompt_tokens": 599.764354
+   },
+   "swap_arm": {
+    "EM_harness": 0.825359,
+    "pred_yes_rate": 0.566197,
+    "YES_BIAS": 0.073239,
+    "mean_gen_tokens": 3.232057,
+    "mean_prompt_tokens": 598.266746
+   },
+   "swap_minus_id": {
+    "delta": 0.008373205741626795,
+    "ci": [
+     0.0,
+     0.017942583732057416
+    ],
+    "significant": false,
+    "sign": "TIE",
+    "n": 836,
+    "nboot": 10000,
+    "seed": 20260817
+   }
+  },
+  "VQA_RAD_closed": {
+   "n": 251,
+   "gold_yes_rate": 0.47012,
+   "id_arm": {
+    "EM_harness": 0.780876,
+    "pred_yes_rate": 0.524,
+    "YES_BIAS": 0.05388,
+    "mean_gen_tokens": 3.007968,
+    "mean_prompt_tokens": 938.741036
+   },
+   "swap_arm": {
+    "EM_harness": 0.776892,
+    "pred_yes_rate": 0.552,
+    "YES_BIAS": 0.08188,
+    "mean_gen_tokens": 3.007968,
+    "mean_prompt_tokens": 938.741036
+   },
+   "swap_minus_id": {
+    "delta": -0.00398406374501992,
+    "ci": [
+     -0.02390438247011952,
+     0.01593625498007968
+    ],
+    "significant": false,
+    "sign": "TIE",
+    "n": 251,
+    "nboot": 10000,
+    "seed": 20260817
+   }
+  },
+  "PATH_VQA_closed": {
+   "n": 3362,
+   "gold_yes_rate": 0.540155,
+   "id_arm": {
+    "EM_harness": 0.839976,
+    "pred_yes_rate": 0.60964,
+    "YES_BIAS": 0.069485,
+    "mean_gen_tokens": 3.000297,
+    "mean_prompt_tokens": 538.432183
+   },
+   "swap_arm": {
+    "EM_harness": 0.831053,
+    "pred_yes_rate": 0.618566,
+    "YES_BIAS": 0.078411,
+    "mean_gen_tokens": 3.000297,
+    "mean_prompt_tokens": 538.432183
+   },
+   "swap_minus_id": {
+    "delta": -0.00892325996430696,
+    "ci": [
+     -0.013979773944080905,
+     -0.004164187983343248
+    ],
+    "significant": true,
+    "sign": "LOSS",
+    "n": 3362,
+    "nboot": 10000,
+    "seed": 20260817
+   }
+  }
+ },
+ "STEP3_macro": {
+  "integration_rule": "cell_new = published_always_7B + delta(intervention - matched in-session control); absolute accuracies of the intervention arms are NEVER substituted for a published cell.",
+  "bar": {
+   "macro_delta_for_a_CI_clean_win": 0.0029,
+   "equivalently_summed_per_cell_gain": 0.0232
+  },
+  "PRE_SPECIFIED_POLICY": {
+   "per_cell": {
+    "PMC_VQA": {
+     "published": 0.5427,
+     "intervention": "output-side pm_train",
+     "delta": 0.032546,
+     "ci": [
+      0.029405,
+      0.035627
+     ],
+     "sign": "WIN",
+     "significant": true,
+     "cost_flopeq": 1.0,
+     "currency": "MedEvalKit judge_multi_choice == exact letter match; no 32B judge call exists for this cell",
+     "DECOMPOSITION": {
+      "readout_vs_deployed_ACROSS_RUNS": {
+       "delta": 0.009512,
+       "ci": [
+        0.007359,
+        0.011666
+       ],
+       "what": "reading the letter off the option posterior instead of parsing the generated string. Mixes the grader's fuzzy option-body fallback with same-config regeneration noise, because the deployed responses come from a different vLLM run."
+      },
+      "debias_vs_readout_WITHIN_RUN": {
+       "delta": 0.023033,
+       "ci": [
+        0.020162,
+        0.025845
+       ],
+       "significant": true,
+       "what": "the prior correction alone, both arms from the SAME forward passes. This is the clean measurement of the intervention."
+      }
+     },
+     "new_cell": 0.575246,
+     "new_cell_CONSERVATIVE_debias_component_only": 0.565733
+    },
+    "SLAKE_closed": {
+     "published": 0.8254,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    },
+    "VQA_RAD_closed": {
+     "published": 0.7809,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    },
+    "PATH_VQA_closed": {
+     "published": 0.8409,
+     "intervention": "prompt-side: get_open_ended_prompt instead of get_judgement_prompt",
+     "delta": 0.041939,
+     "ci": [
+      0.032124,
+      0.051755
+     ],
+     "sign": "WIN",
+     "significant": true,
+     "EM_delta": 0.041642,
+     "EM_ci": [
+      0.031826,
+      0.051457
+     ],
+     "judge_minus_EM_delta": 0.000297,
+     "cost_flopeq": 1.0,
+     "new_cell": 0.882839
+    },
+    "MedXpertQA-MM": {
+     "published": 0.2615,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    },
+    "SLAKE_open": {
+     "published": 0.7364,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    },
+    "VQA_RAD_open": {
+     "published": 0.465,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    },
+    "PATH_VQA_open": {
+     "published": 0.324,
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "cost_flopeq": 1.0
+    }
+   },
+   "macro_always_7b": 0.5971,
+   "macro_after": 0.606411,
+   "macro_delta": 0.009311,
+   "macro_after_CONSERVATIVE": 0.605222,
+   "macro_delta_CONSERVATIVE": 0.008122,
+   "conservative_means": "PMC_VQA credited only with the WITHIN-RUN debias component, i.e. no credit is taken for the readout/parse change, which cannot be separated from same-config regeneration noise.",
+   "beats_bar": true,
+   "beats_bar_CONSERVATIVE": true,
+   "guardrail_no_cell_loses": true,
+   "cost_flopeq": 1.0,
+   "cost_note": "1.000x exactly. The output-side correction reads a posterior the deployed forward pass already computes (MedEvalKit stores its top-5 summary as conf/margin); the prompt-side correction changes the instruction string only, with generated tokens 3.0006 vs 3.0003."
+  },
+  "HONEST_HEADLINE": {
+   "rule": "an intervention is claimed as a model improvement ONLY if it survives the gold-balanced answer key (see PRIOR_DEPENDENCE_DIAGNOSTIC). One of the two components of this round does; the other does not.",
+   "claimed": {
+    "cells": [
+     "PATH_VQA_closed"
+    ],
+    "intervention": "prompt-side: replace MedEvalKit's judgement instruction",
+    "macro_always_7b": 0.5971,
+    "macro_after": 0.602342,
+    "macro_delta": 0.005242,
+    "beats_bar": true,
+    "cost_flopeq": 1.0
+   },
+   "reported_but_NOT_claimed": {
+    "cells": [
+     "PMC_VQA"
+    ],
+    "intervention": "output-side pm_train",
+    "why_not_claimed": "it is a class-prior correction whose entire gain comes from PMC-VQA v2's skewed answer key (B+C = 73.6%%); on a gold-balanced subsample of the same cell it is a TIE or a small loss. It is a genuine free improvement ON THIS BENCHMARK AS PUBLISHED and would not transfer to a balanced answer key.",
+    "macro_delta_if_included": 0.009311
+   }
+  },
+  "UNIFORM_APPLICATION_per_correction": {
+   "pm_train": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.032546,
+      "ci": [
+       0.029405,
+       0.035627
+      ],
+      "sign": "WIN"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": 0.004068,
+    "guardrail_clean": true,
+    "first_cell_that_LOSES": null
+   },
+   "pm_transductive_cv": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.031499,
+      "ci": [
+       0.028388,
+       0.03452
+      ],
+      "sign": "WIN"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": 0.003937,
+    "guardrail_clean": true,
+    "first_cell_that_LOSES": null
+   },
+   "pm_train_marginal_cv": {
+    "per_cell": {
+     "SLAKE_closed": {
+      "delta": 0.001196,
+      "ci": [
+       -0.007177,
+       0.009569
+      ],
+      "sign": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.003984,
+      "ci": [
+       -0.035857,
+       0.027888
+      ],
+      "sign": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": 0.002082,
+      "ci": [
+       -0.006544,
+       0.01041
+      ],
+      "sign": "TIE"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": -8.8e-05,
+    "guardrail_clean": true,
+    "first_cell_that_LOSES": null
+   },
+   "pm_uniform_cv": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.043195,
+      "ci": [
+       -0.047113,
+       -0.039186
+      ],
+      "sign": "LOSS"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.0065,
+      "ci": [
+       -0.018,
+       0.005
+      ],
+      "sign": "TIE"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": -0.006212,
+    "guardrail_clean": false,
+    "first_cell_that_LOSES": "PMC_VQA"
+   },
+   "cc_cf_na": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": -0.047771,
+      "ci": [
+       -0.052677,
+       -0.042656
+      ],
+      "sign": "LOSS"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.0075,
+      "ci": [
+       -0.007512,
+       0.023
+      ],
+      "sign": "TIE"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": -0.005034,
+    "guardrail_clean": false,
+    "first_cell_that_LOSES": "PMC_VQA"
+   },
+   "cc_cf_blank": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.045408,
+      "ci": [
+       0.041131,
+       0.049746
+      ],
+      "sign": "WIN"
+     },
+     "MedXpertQA-MM": {
+      "delta": -0.021,
+      "ci": [
+       -0.038,
+       -0.004
+      ],
+      "sign": "LOSS"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": 0.003051,
+    "guardrail_clean": false,
+    "first_cell_that_LOSES": "MedXpertQA-MM"
+   },
+   "cc_cf_blank_global": {
+    "per_cell": {
+     "SLAKE_closed": {
+      "delta": -0.011962,
+      "ci": [
+       -0.023923,
+       0.0
+      ],
+      "sign": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.071713,
+      "ci": [
+       -0.12749,
+       -0.015936
+      ],
+      "sign": "LOSS"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.094884,
+      "ci": [
+       -0.108566,
+       -0.081499
+      ],
+      "sign": "LOSS"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": -0.02232,
+    "guardrail_clean": false,
+    "first_cell_that_LOSES": "VQA_RAD_closed"
+   },
+   "cc_cf_img_blind_language_prior": {
+    "per_cell": {
+     "SLAKE_closed": {
+      "delta": -0.011962,
+      "ci": [
+       -0.026316,
+       0.002392
+      ],
+      "sign": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": -0.027888,
+      "ci": [
+       -0.071713,
+       0.015936
+      ],
+      "sign": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.151695,
+      "ci": [
+       -0.165675,
+       -0.137418
+      ],
+      "sign": "LOSS"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": -0.023943,
+    "guardrail_clean": false,
+    "first_cell_that_LOSES": "PATH_VQA_closed"
+   },
+   "readout": {
+    "per_cell": {
+     "PMC_VQA": {
+      "delta": 0.009512,
+      "ci": [
+       0.007359,
+       0.011666
+      ],
+      "sign": "WIN"
+     },
+     "MedXpertQA-MM": {
+      "delta": 0.006,
+      "ci": [
+       -0.0005,
+       0.0125
+      ],
+      "sign": "TIE"
+     },
+     "SLAKE_closed": {
+      "delta": -0.002392,
+      "ci": [
+       -0.007177,
+       0.002392
+      ],
+      "sign": "TIE"
+     },
+     "VQA_RAD_closed": {
+      "delta": 0.0,
+      "ci": [
+       -0.01992,
+       0.01992
+      ],
+      "sign": "TIE"
+     },
+     "PATH_VQA_closed": {
+      "delta": -0.000892,
+      "ci": [
+       -0.005651,
+       0.004164
+      ],
+      "sign": "TIE"
+     }
+    },
+    "macro_delta_over_the_cells_it_touches": 0.001528,
+    "guardrail_clean": true,
+    "first_cell_that_LOSES": null
+   }
+  },
+  "BEST_SAFE_PER_CELL_RULE": {
+   "what": "per cell, adopt the largest-gain correction whose paired 95%% interval excludes zero, else adopt nothing. Significance inside the permutation loop uses the paired normal approximation (1.96 * sd/sqrt(n)) because 1000 x 10000 bootstraps is not affordable; the reported per-cell CIs are the full 10000-draw bootstrap.",
+   "chosen": {
+    "PMC_VQA": {
+     "correction": "cc_cf_blank",
+     "delta": 0.045408
+    },
+    "MedXpertQA-MM": {
+     "correction": "none",
+     "delta": 0.0
+    },
+    "SLAKE_closed": {
+     "correction": "none",
+     "delta": 0.0
+    },
+    "VQA_RAD_closed": {
+     "correction": "none",
+     "delta": 0.0
+    },
+    "PATH_VQA_closed": {
+     "correction": "none",
+     "delta": 0.0
+    }
+   },
+   "observed_macro_gain": 0.005676,
+   "permutation_null": {
+    "nperm": 1000,
+    "seed": 20260817,
+    "mean": 0.000976,
+    "p95": 0.005478,
+    "max": 0.015249,
+    "p_value": 0.042
+   },
+   "verdict": "SURVIVES the permutation null"
+  },
+  "REGENERATION_CONSISTENCY": {
+   "what": "the same greedy configuration, run three times by three different scripts. This is why every delta in this artifact is taken against a control from the SAME session and never against a published absolute.",
+   "per_cell": {
+    "SLAKE_closed": {
+     "deployed_MedEvalKit_2026-07": 0.8254,
+     "this_session_id_arm_2026-08-17": 0.816986,
+     "closed_as_open_control_2026-08-16": 0.818182,
+     "spread_max_minus_min": 0.008414
+    },
+    "VQA_RAD_closed": {
+     "deployed_MedEvalKit_2026-07": 0.7809,
+     "this_session_id_arm_2026-08-17": 0.780876,
+     "closed_as_open_control_2026-08-16": 0.768924,
+     "spread_max_minus_min": 0.011976
+    },
+    "PATH_VQA_closed": {
+     "deployed_MedEvalKit_2026-07": 0.8409,
+     "this_session_id_arm_2026-08-17": 0.839976,
+     "closed_as_open_control_2026-08-16": 0.839976,
+     "spread_max_minus_min": 0.000924
+    }
+   },
+   "standing_caveat": "+/-0.008 open-text reproducibility (CLAUDE.md sec 0)"
+  },
+  "PRIOR_DEPENDENCE_DIAGNOSTIC": {
+   "what": "Both families in this round move the model's PREDICTED answer marginal toward the gold marginal, so both are open to the same charge: that the gain is class-prior exploitation of a skewed answer key rather than better answers. The test is to rescore each intervention on a seeded subsample downsampled to an EQUAL number of items per gold class, WITHOUT refitting anything. Labels are used here for DIAGNOSIS only. An intervention whose balanced delta collapses to zero is a benchmark artifact; one that survives is a real improvement in balanced accuracy.",
+   "probes": {
+    "PMC_VQA_output_side_pm_train": {
+     "intervention": "output-side prior correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 33430,
+      "base": 0.552169,
+      "arm": 0.575202,
+      "delta": 0.023033,
+      "ci": [
+       0.020162,
+       0.025845
+      ],
+      "sign": "WIN"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 17548,
+      "per_class_n": 4387,
+      "base": 0.514304,
+      "arm": 0.512252,
+      "delta": -0.002052,
+      "ci": [
+       -0.005984,
+       0.001824
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "A": {
+       "n": 4423,
+       "base": 0.433416,
+       "arm": 0.333258,
+       "delta": -0.100158
+      },
+      "B": {
+       "n": 11984,
+       "base": 0.601969,
+       "arm": 0.61991,
+       "delta": 0.017941
+      },
+      "C": {
+       "n": 12636,
+       "base": 0.580405,
+       "arm": 0.659465,
+       "delta": 0.07906
+      },
+      "D": {
+       "n": 4387,
+       "base": 0.454525,
+       "arm": 0.454297,
+       "delta": -0.000228
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "PMC_VQA_output_side_pm_transductive_NOCV_leaky": {
+     "intervention": "output-side prior correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 33430,
+      "base": 0.552169,
+      "arm": 0.573856,
+      "delta": 0.021687,
+      "ci": [
+       0.018935,
+       0.024469
+      ],
+      "sign": "WIN"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 17548,
+      "per_class_n": 4387,
+      "base": 0.514304,
+      "arm": 0.513221,
+      "delta": -0.001083,
+      "ci": [
+       -0.004901,
+       0.002678
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "A": {
+       "n": 4423,
+       "base": 0.433416,
+       "arm": 0.333258,
+       "delta": -0.100158
+      },
+      "B": {
+       "n": 11984,
+       "base": 0.601969,
+       "arm": 0.61991,
+       "delta": 0.017941
+      },
+      "C": {
+       "n": 12636,
+       "base": 0.580405,
+       "arm": 0.652659,
+       "delta": 0.072254
+      },
+      "D": {
+       "n": 4387,
+       "base": 0.454525,
+       "arm": 0.463643,
+       "delta": 0.009118
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "PMC_VQA_output_side_pm_transductive_cv": {
+     "intervention": "output-side prior correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 33430,
+      "base": 0.552169,
+      "arm": 0.574155,
+      "delta": 0.021986,
+      "ci": [
+       0.019204,
+       0.024798
+      ],
+      "sign": "WIN"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 17548,
+      "per_class_n": 4387,
+      "base": 0.514304,
+      "arm": 0.512423,
+      "delta": -0.001881,
+      "ci": [
+       -0.005756,
+       0.001995
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "A": {
+       "n": 4423,
+       "base": 0.433416,
+       "arm": 0.337328,
+       "delta": -0.096089
+      },
+      "B": {
+       "n": 11984,
+       "base": 0.601969,
+       "arm": 0.619159,
+       "delta": 0.01719
+      },
+      "C": {
+       "n": 12636,
+       "base": 0.580405,
+       "arm": 0.656616,
+       "delta": 0.076211
+      },
+      "D": {
+       "n": 4387,
+       "base": 0.454525,
+       "arm": 0.452473,
+       "delta": -0.002052
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "PMC_VQA_output_side_cc_cf_blank": {
+     "intervention": "output-side prior correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 33430,
+      "base": 0.552169,
+      "arm": 0.588065,
+      "delta": 0.035896,
+      "ci": [
+       0.031768,
+       0.040024
+      ],
+      "sign": "WIN"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 17548,
+      "per_class_n": 4387,
+      "base": 0.514304,
+      "arm": 0.477433,
+      "delta": -0.03687,
+      "ci": [
+       -0.042797,
+       -0.030944
+      ],
+      "sign": "LOSS",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "A": {
+       "n": 4423,
+       "base": 0.433416,
+       "arm": 0.19376,
+       "delta": -0.239656
+      },
+      "B": {
+       "n": 11984,
+       "base": 0.601969,
+       "arm": 0.691756,
+       "delta": 0.089786
+      },
+      "C": {
+       "n": 12636,
+       "base": 0.580405,
+       "arm": 0.718661,
+       "delta": 0.138256
+      },
+      "D": {
+       "n": 4387,
+       "base": 0.454525,
+       "arm": 0.326191,
+       "delta": -0.128334
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "PATH_VQA_closed_prompt_side_open_instruction": {
+     "intervention": "prompt-side open instruction (vs the matched in-session closed control)",
+     "natural_answer_key": {
+      "n": 3362,
+      "base": 0.839976,
+      "arm": 0.881618,
+      "delta": 0.041642,
+      "ci": [
+       0.031826,
+       0.051457
+      ],
+      "sign": "WIN"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 3092,
+      "per_class_n": 1546,
+      "base": 0.835382,
+      "arm": 0.881953,
+      "delta": 0.046572,
+      "ci": [
+       0.036223,
+       0.056921
+      ],
+      "sign": "WIN",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "gold_no": {
+       "n": 1546,
+       "base": 0.750323,
+       "arm": 0.865459,
+       "delta": 0.115136
+      },
+      "gold_yes": {
+       "n": 1816,
+       "base": 0.9163,
+       "arm": 0.895374,
+       "delta": -0.020925
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": true
+    },
+    "VQA_RAD_closed_prompt_side_open_instruction": {
+     "intervention": "prompt-side open instruction (vs the matched in-session closed control)",
+     "natural_answer_key": {
+      "n": 251,
+      "base": 0.768924,
+      "arm": 0.76494,
+      "delta": -0.003984,
+      "ci": [
+       -0.043825,
+       0.035857
+      ],
+      "sign": "TIE"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 236,
+      "per_class_n": 118,
+      "base": 0.766949,
+      "arm": 0.762712,
+      "delta": -0.004237,
+      "ci": [
+       -0.042373,
+       0.033898
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "gold_no": {
+       "n": 133,
+       "base": 0.736842,
+       "arm": 0.781955,
+       "delta": 0.045113
+      },
+      "gold_yes": {
+       "n": 118,
+       "base": 0.805085,
+       "arm": 0.745763,
+       "delta": -0.059322
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "SLAKE_closed_output_side_pm_train_marginal_cv": {
+     "intervention": "output-side yes/no threshold correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 355,
+      "base": 0.84507,
+      "arm": 0.853521,
+      "delta": 0.008451,
+      "ci": [
+       -0.011268,
+       0.028169
+      ],
+      "sign": "TIE"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 350,
+      "per_class_n": 175,
+      "base": 0.848571,
+      "arm": 0.857143,
+      "delta": 0.008571,
+      "ci": [
+       -0.011429,
+       0.028571
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "gold_no": {
+       "n": 180,
+       "base": 0.777778,
+       "arm": 0.822222,
+       "delta": 0.044444
+      },
+      "gold_yes": {
+       "n": 175,
+       "base": 0.914286,
+       "arm": 0.885714,
+       "delta": -0.028571
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "VQA_RAD_closed_output_side_pm_train_marginal_cv": {
+     "intervention": "output-side yes/no threshold correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 251,
+      "base": 0.780876,
+      "arm": 0.776892,
+      "delta": -0.003984,
+      "ci": [
+       -0.031873,
+       0.023904
+      ],
+      "sign": "TIE"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 236,
+      "per_class_n": 118,
+      "base": 0.779661,
+      "arm": 0.771186,
+      "delta": -0.008475,
+      "ci": [
+       -0.038136,
+       0.021186
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "gold_no": {
+       "n": 133,
+       "base": 0.744361,
+       "arm": 0.789474,
+       "delta": 0.045113
+      },
+      "gold_yes": {
+       "n": 118,
+       "base": 0.822034,
+       "arm": 0.762712,
+       "delta": -0.059322
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    },
+    "PATH_VQA_closed_output_side_pm_train_marginal_cv": {
+     "intervention": "output-side yes/no threshold correction (vs the readout arm, within-run)",
+     "natural_answer_key": {
+      "n": 3362,
+      "base": 0.839976,
+      "arm": 0.842951,
+      "delta": 0.002974,
+      "ci": [
+       -0.005354,
+       0.011303
+      ],
+      "sign": "TIE"
+     },
+     "GOLD_BALANCED_subsample": {
+      "n": 3092,
+      "per_class_n": 1546,
+      "base": 0.835382,
+      "arm": 0.844114,
+      "delta": 0.008732,
+      "ci": [
+       0.0,
+       0.017464
+      ],
+      "sign": "TIE",
+      "seed": 20260817
+     },
+     "by_gold_class": {
+      "gold_no": {
+       "n": 1546,
+       "base": 0.750323,
+       "arm": 0.817594,
+       "delta": 0.06727
+      },
+      "gold_yes": {
+       "n": 1816,
+       "base": 0.9163,
+       "arm": 0.864537,
+       "delta": -0.051762
+      }
+     },
+     "SURVIVES_a_balanced_answer_key": false
+    }
+   }
+  },
+  "COST": {
+   "unit": "mean(prompt_tokens + generated_tokens) per item, ratio to the deployed arm",
+   "why_the_global_corrections_are_1.000x": "they consume the FIRST-TOKEN logprob vector of the SAME forward pass that already produced the published answer. MedEvalKit's own wrapper already requests logprobs=5 and stores its top-5 summary as `conf`/`margin` (MedEvalKit/models/Qwen2_5_VL/Qwen2_5_VL_vllm.py:32); reading which option each mass belongs to needs a serving flag (logprobs 5 -> 20), not a second pass, and logprobs are read off logits the forward pass computes regardless.",
+   "PMC_VQA": {
+    "deployed_id_mean_tokens": 227.192761,
+    "cf_na_mean_tokens": 331.57927,
+    "cf_na_n_probed": 33430,
+    "total_flopeq_if_cf_na_is_used": 2.459462,
+    "cf_blank_mean_tokens": 320.945,
+    "cf_blank_n_probed": 200,
+    "total_flopeq_if_cf_blank_is_used": 2.497504
+   },
+   "MedXpertQA-MM": {
+    "deployed_id_mean_tokens": 1446.7675,
+    "cf_na_mean_tokens": 459.602,
+    "cf_na_n_probed": 2000,
+    "total_flopeq_if_cf_na_is_used": 1.317675,
+    "cf_blank_mean_tokens": 416.93,
+    "cf_blank_n_probed": 200,
+    "total_flopeq_if_cf_blank_is_used": 1.302511
+   },
+   "SLAKE_closed": {
+    "deployed_id_mean_tokens": 602.580144,
+    "cf_na_mean_tokens": 294.046651,
+    "cf_na_n_probed": 836,
+    "total_flopeq_if_cf_na_is_used": 1.487979,
+    "cf_blank_mean_tokens": 293.0,
+    "cf_blank_n_probed": 200,
+    "total_flopeq_if_cf_blank_is_used": 1.339635
+   },
+   "VQA_RAD_closed": {
+    "deployed_id_mean_tokens": 941.749004,
+    "cf_na_mean_tokens": 296.0,
+    "cf_na_n_probed": 251,
+    "total_flopeq_if_cf_na_is_used": 1.314309,
+    "cf_blank_mean_tokens": 296.0,
+    "cf_blank_n_probed": 200,
+    "total_flopeq_if_cf_blank_is_used": 1.318322
+   },
+   "PATH_VQA_closed": {
+    "deployed_id_mean_tokens": 541.432481,
+    "cf_na_mean_tokens": 296.0,
+    "cf_na_n_probed": 3362,
+    "total_flopeq_if_cf_na_is_used": 1.546698,
+    "cf_blank_mean_tokens": 296.0,
+    "cf_blank_n_probed": 200,
+    "total_flopeq_if_cf_blank_is_used": 1.5837
+   }
+  },
+  "BEST_PER_CELL_RULE": {
+   "what": "pick, per cell, whichever output-side correction has the largest gain -- a SELECTED rule, so it gets a permutation null. In this project a per-cell pick-the-best rule has previously earned +0.0109 macro from SHUFFLED LABELS.",
+   "chosen": {
+    "PMC_VQA": {
+     "correction": "cc_cf_blank",
+     "delta": 0.045408
+    },
+    "MedXpertQA-MM": {
+     "correction": "cc_cf_na",
+     "delta": 0.0075
+    },
+    "SLAKE_closed": {
+     "correction": "pm_train_marginal_cv",
+     "delta": 0.001196
+    },
+    "VQA_RAD_closed": {
+     "correction": "none",
+     "delta": 0.0
+    },
+    "PATH_VQA_closed": {
+     "correction": "pm_train_marginal_cv",
+     "delta": 0.002082
+    }
+   },
+   "observed_macro_gain": 0.007023,
+   "permutation_null": {
+    "nperm": 1000,
+    "seed": 20260817,
+    "mean": 0.00473,
+    "p95": 0.008782,
+    "max": 0.017307,
+    "p_value": 0.148
+   },
+   "verdict": "DOES NOT survive the permutation null"
+  }
+ },
+ "STEP2b_output_side": {
+  "PMC_VQA": {
+   "n": 33430,
+   "n_options": 4,
+   "grader_path_audit": {
+    "frac_deployed_responses_that_are_a_bare_letter": 0.994586,
+    "deployed_acc_via_MedEvalKit_grader": 0.542656,
+    "deployed_acc_via_pure_first_letter_EM": 0.552647,
+    "fuzzy_option_body_fallback_contribution": -0.009991,
+    "readout_minus_deployed": 0.009512,
+    "reading": "the debiasing delta is reported on top of the READOUT arm as well as on top of the deployed baseline, so the grader-path contribution is visible and separable rather than folded into the headline."
+   },
+   "N3_identity_control": {
+    "deployed_acc": 0.542656,
+    "rerun_text_acc": 0.542118,
+    "abs_dev": 0.000538,
+    "response_byte_agreement": 0.930691,
+    "published_always_7b": 0.5427,
+    "pass": true,
+    "tolerance": 0.008,
+    "what_it_tests": "whether raising logprobs 5 -> 20 moved the greedy argmax. The tolerance is the project's standing +/-0.008 same-config regeneration caveat (CLAUDE.md sec 0): two runs of the SAME greedy config under different vLLM engine settings disagree on individual items even though their accuracies match. That is why the intervention's own delta is also reported WITHIN-RUN, against the readout arm from the identical forward passes."
+   },
+   "READOUT_vs_deployed": {
+    "what": "reading the answer off the first-token option posterior instead of parsing the generated string. Same forward pass, no extra compute; part of any gain is bypassing MedEvalKit's fuzzy option-body fallback, so it is reported SEPARATELY from the debiasing.",
+    "delta": {
+     "delta": 0.009512413999401736,
+     "ci": [
+      0.007358659886329644,
+      0.011666168112473826
+     ],
+     "significant": true,
+     "sign": "WIN",
+     "n": 33430,
+     "nboot": 10000,
+     "seed": 20260817
+    }
+   },
+   "corrections": {
+    "readout": {
+     "acc": 0.552169,
+     "vs_deployed_baseline": {
+      "delta": 0.009512413999401736,
+      "ci": [
+       0.007358659886329644,
+       0.011666168112473826
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.19991,
+      0.34828,
+      0.319503,
+      0.132306
+     ],
+     "n_answers_changed_vs_readout": 0,
+     "n_fixed": 0,
+     "n_broken": 0
+    },
+    "pm_train": {
+     "acc": 0.575202,
+     "vs_deployed_baseline": {
+      "delta": 0.032545617708644926,
+      "ci": [
+       0.02940472629374813,
+       0.035626682620400835
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.124858,
+      0.359438,
+      0.386778,
+      0.128926
+     ],
+     "n_answers_changed_vs_readout": 3547,
+     "n_fixed": 1547,
+     "n_broken": 777,
+     "vs_readout_arm": {
+      "delta": 0.023033203709243194,
+      "ci": [
+       0.020161531558480408,
+       0.02584504935686509
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "pm_transductive_NOCV_leaky": {
+     "acc": 0.573856,
+     "vs_deployed_baseline": {
+      "delta": 0.031199521387974872,
+      "ci": [
+       0.028118456476218964,
+       0.03425067304816033
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.124858,
+      0.359438,
+      0.380556,
+      0.135148
+     ],
+     "n_answers_changed_vs_readout": 3368,
+     "n_fixed": 1468,
+     "n_broken": 743,
+     "vs_readout_arm": {
+      "delta": 0.02168710738857314,
+      "ci": [
+       0.01893508824409213,
+       0.02446903978462459
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "pm_transductive_cv": {
+     "acc": 0.574155,
+     "vs_deployed_baseline": {
+      "delta": 0.03149865390367933,
+      "ci": [
+       0.028387675740352978,
+       0.03451989231229435
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.12752,
+      0.359019,
+      0.384056,
+      0.129405
+     ],
+     "n_answers_changed_vs_readout": 3425,
+     "n_fixed": 1498,
+     "n_broken": 763,
+     "vs_readout_arm": {
+      "delta": 0.021986239904277595,
+      "ci": [
+       0.019204307508226146,
+       0.024798085551899492
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "pm_uniform_cv": {
+     "acc": 0.499462,
+     "vs_deployed_baseline": {
+      "delta": -0.0431947352677236,
+      "ci": [
+       -0.04711337122345199,
+       -0.039186359557283876
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.259168,
+      0.245917,
+      0.250165,
+      0.24475
+     ],
+     "n_answers_changed_vs_readout": 6558,
+     "n_fixed": 1232,
+     "n_broken": 2994,
+     "vs_readout_arm": {
+      "delta": -0.05270714926712534,
+      "ci": [
+       -0.0564163924618606,
+       -0.04893807956924918
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_na": {
+     "acc": 0.494885,
+     "vs_deployed_baseline": {
+      "delta": -0.047771462758001794,
+      "ci": [
+       -0.05267723601555489,
+       -0.042656296739455576
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.205354,
+      0.326832,
+      0.314029,
+      0.153784
+     ],
+     "n_answers_changed_vs_readout": 9954,
+     "n_fixed": 2503,
+     "n_broken": 4418,
+     "vs_readout_arm": {
+      "delta": -0.05728387675740353,
+      "ci": [
+       -0.0620707448399641,
+       -0.052318276996709545
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_blank": {
+     "acc": 0.588065,
+     "vs_deployed_baseline": {
+      "delta": 0.04540831588393658,
+      "ci": [
+       0.041130720909362845,
+       0.04974648519294046
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.054622,
+      0.426862,
+      0.444481,
+      0.074035
+     ],
+     "n_answers_changed_vs_readout": 7542,
+     "n_fixed": 3110,
+     "n_broken": 1910,
+     "vs_readout_arm": {
+      "delta": 0.03589590188453485,
+      "ci": [
+       0.03176787316781334,
+       0.040023930601256356
+      ],
+      "significant": true,
+      "sign": "WIN",
+      "n": 33430,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   },
+   "fitted_global_logit_shifts": {
+    "_w_pm_train": [
+     0.205104,
+     -0.065724,
+     -0.197538,
+     0.058159
+    ],
+    "_w_pm_transductive_cv": [
+     0.194996,
+     -0.061334,
+     -0.194645,
+     0.060984
+    ]
+   },
+   "train_prior": {
+    "source": "PMC-VQA train_2.csv (the fit input)",
+    "n": 152603,
+    "TRAIN_gold_marginal_USED_TO_FIT": [
+     0.137763,
+     0.35614,
+     0.378007,
+     0.128091
+    ],
+    "EVAL_gold_marginal_NOT_used_disclosed_for_comparison_only": [
+     0.132306,
+     0.35848,
+     0.377984,
+     0.131229
+    ],
+    "L1_distance_between_them": 0.010959,
+    "n_train_items_the_model_was_run_on": 6000,
+    "disjointness_VERIFIED": "measured, not assumed: train_2.csv has 135,339 distinct Figure_path values, test_2.csv 29,021, INTERSECTION 0; the (Figure_path, Question) intersection is also 0. No eval item, image or label enters the fit."
+   },
+   "all_option_letters_inside_deployed_top5_logprobs": 1.0,
+   "all_option_letters_inside_this_runs_top20_logprobs": 1.0,
+   "CURRENCY_NOTE": {
+    "claim": "on this cell the 32B judge plays no role: the published number is defined by MedEvalKit's judge_multi_choice, which on a single-letter response reduces to EXACT LETTER MATCH. Introducing the judge here would change the definition of the published cell, not measure it.",
+    "verified_fraction_where_MedEvalKit_grader_equals_letter_EM": 1.0
+   }
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "n_options": 5,
+   "grader_path_audit": {
+    "frac_deployed_responses_that_are_a_bare_letter": 1.0,
+    "deployed_acc_via_MedEvalKit_grader": 0.2615,
+    "deployed_acc_via_pure_first_letter_EM": 0.2615,
+    "fuzzy_option_body_fallback_contribution": 0.0,
+    "readout_minus_deployed": 0.006,
+    "reading": "the debiasing delta is reported on top of the READOUT arm as well as on top of the deployed baseline, so the grader-path contribution is visible and separable rather than folded into the headline."
+   },
+   "N3_identity_control": {
+    "deployed_acc": 0.2615,
+    "rerun_text_acc": 0.2675,
+    "abs_dev": 0.006,
+    "response_byte_agreement": 0.9485,
+    "published_always_7b": 0.2615,
+    "pass": true,
+    "tolerance": 0.008,
+    "what_it_tests": "whether raising logprobs 5 -> 20 moved the greedy argmax. The tolerance is the project's standing +/-0.008 same-config regeneration caveat (CLAUDE.md sec 0): two runs of the SAME greedy config under different vLLM engine settings disagree on individual items even though their accuracies match. That is why the intervention's own delta is also reported WITHIN-RUN, against the readout arm from the identical forward passes."
+   },
+   "READOUT_vs_deployed": {
+    "what": "reading the answer off the first-token option posterior instead of parsing the generated string. Same forward pass, no extra compute; part of any gain is bypassing MedEvalKit's fuzzy option-body fallback, so it is reported SEPARATELY from the debiasing.",
+    "delta": {
+     "delta": 0.006,
+     "ci": [
+      -0.0005,
+      0.0125
+     ],
+     "significant": false,
+     "sign": "TIE",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260817
+    }
+   },
+   "corrections": {
+    "readout": {
+     "acc": 0.2675,
+     "vs_deployed_baseline": {
+      "delta": 0.006,
+      "ci": [
+       -0.0005,
+       0.0125
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.2555,
+      0.222,
+      0.2265,
+      0.1715,
+      0.1245
+     ],
+     "n_answers_changed_vs_readout": 0,
+     "n_fixed": 0,
+     "n_broken": 0
+    },
+    "pm_uniform_cv": {
+     "acc": 0.255,
+     "vs_deployed_baseline": {
+      "delta": -0.0065,
+      "ci": [
+       -0.018,
+       0.005
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.1985,
+      0.1985,
+      0.2045,
+      0.1995,
+      0.199
+     ],
+     "n_answers_changed_vs_readout": 243,
+     "n_fixed": 46,
+     "n_broken": 71,
+     "vs_readout_arm": {
+      "delta": -0.0125,
+      "ci": [
+       -0.023,
+       -0.002
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_na": {
+     "acc": 0.269,
+     "vs_deployed_baseline": {
+      "delta": 0.0075,
+      "ci": [
+       -0.007512499999999988,
+       0.023
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.211,
+      0.211,
+      0.214,
+      0.179,
+      0.185
+     ],
+     "n_answers_changed_vs_readout": 474,
+     "n_fixed": 121,
+     "n_broken": 118,
+     "vs_readout_arm": {
+      "delta": 0.0015,
+      "ci": [
+       -0.0135,
+       0.0165
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_blank": {
+     "acc": 0.2405,
+     "vs_deployed_baseline": {
+      "delta": -0.021,
+      "ci": [
+       -0.038,
+       -0.004
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_letter_marginal": [
+      0.074,
+      0.3325,
+      0.4115,
+      0.1105,
+      0.0715
+     ],
+     "n_answers_changed_vs_readout": 640,
+     "n_fixed": 129,
+     "n_broken": 183,
+     "vs_readout_arm": {
+      "delta": -0.027,
+      "ci": [
+       -0.0445,
+       -0.0095
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   },
+   "fitted_global_logit_shifts": {},
+   "train_prior": "NOT AVAILABLE -- MedXpertQA-MM ships only test (2000) and dev (5)",
+   "all_option_letters_inside_deployed_top5_logprobs": 0.9995,
+   "all_option_letters_inside_this_runs_top20_logprobs": 1.0,
+   "CURRENCY_NOTE": {
+    "claim": "on this cell the 32B judge plays no role: the published number is defined by MedEvalKit's judge_multi_choice, which on a single-letter response reduces to EXACT LETTER MATCH. Introducing the judge here would change the definition of the published cell, not measure it.",
+    "verified_fraction_where_MedEvalKit_grader_equals_letter_EM": 1.0
+   }
+  },
+  "SLAKE_closed": {
+   "n": 836,
+   "n_corrected_subset_model_answers_yes_or_no": 355,
+   "N3_identity_control": {
+    "deployed_acc": 0.825359,
+    "rerun_text_acc": 0.816986,
+    "abs_dev_vs_deployed_DIFFERENT_ENGINE_CONFIG": 0.008373,
+    "response_byte_agreement_vs_deployed": 0.962919,
+    "published_always_7b": 0.8254,
+    "tolerance": 0.008,
+    "independent_regeneration_2026-08-16_acc": 0.818182,
+    "abs_dev_vs_independent_regeneration": 0.001196,
+    "spread_between_the_two_reference_runs": 0.007177,
+    "pass": true,
+    "basis": "this run must land within 0.008 of at least ONE of the two independent runs of the identical greedy configuration. Requiring both is not achievable here because the two references themselves differ by more than the tolerance on the small cells (VQA_RAD_closed: 0.0120 on n=251, i.e. 3 items), which is the caveat itself, not a defect of this round."
+   },
+   "train_prior": {
+    "source": "SLAKE_closed TRAIN split gold yes-rate (the fit input)",
+    "n": 1681,
+    "TRAIN_yes_rate_USED_TO_FIT": 0.51398,
+    "EVAL_yes_rate_NOT_used_disclosed_for_comparison_only": 0.492958,
+    "abs_difference": 0.021022
+   },
+   "currency": "EM_harness; the 32B judge agrees with exact match on 1.000 of 5,204 yes/no calls (null test A2), so the two currencies coincide here by MEASUREMENT.",
+   "corrections": {
+    "readout": {
+     "acc": 0.822967,
+     "vs_deployed_baseline": {
+      "delta": -0.0023923444976076554,
+      "ci": [
+       -0.007177033492822967,
+       0.0023923444976076554
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.56338,
+     "n_answers_changed_vs_readout": 0,
+     "n_fixed": 0,
+     "n_broken": 0
+    },
+    "pm_train_marginal_cv": {
+     "acc": 0.826555,
+     "vs_deployed_baseline": {
+      "delta": 0.0011961722488038277,
+      "ci": [
+       -0.007177033492822967,
+       0.009569377990430622
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.526761,
+     "n_answers_changed_vs_readout": 13,
+     "n_fixed": 8,
+     "n_broken": 5,
+     "vs_readout_arm": {
+      "delta": 0.0035885167464114833,
+      "ci": [
+       -0.004784688995215311,
+       0.011961722488038277
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_blank_global": {
+     "acc": 0.813397,
+     "vs_deployed_baseline": {
+      "delta": -0.011961722488038277,
+      "ci": [
+       -0.023923444976076555,
+       0.0
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.642254,
+     "n_answers_changed_vs_readout": 28,
+     "n_fixed": 10,
+     "n_broken": 18,
+     "vs_readout_arm": {
+      "delta": -0.009569377990430622,
+      "ci": [
+       -0.0215311004784689,
+       0.0023923444976076554
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_img_blind_language_prior": {
+     "acc": 0.813397,
+     "vs_deployed_baseline": {
+      "delta": -0.011961722488038277,
+      "ci": [
+       -0.02631578947368421,
+       0.0023923444976076554
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.501408,
+     "n_answers_changed_vs_readout": 36,
+     "n_fixed": 14,
+     "n_broken": 22,
+     "vs_readout_arm": {
+      "delta": -0.009569377990430622,
+      "ci": [
+       -0.023923444976076555,
+       0.004784688995215311
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 836,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  },
+  "VQA_RAD_closed": {
+   "n": 251,
+   "n_corrected_subset_model_answers_yes_or_no": 250,
+   "N3_identity_control": {
+    "deployed_acc": 0.780876,
+    "rerun_text_acc": 0.780876,
+    "abs_dev_vs_deployed_DIFFERENT_ENGINE_CONFIG": 0.0,
+    "response_byte_agreement_vs_deployed": 0.976096,
+    "published_always_7b": 0.7809,
+    "tolerance": 0.008,
+    "independent_regeneration_2026-08-16_acc": 0.768924,
+    "abs_dev_vs_independent_regeneration": 0.011952,
+    "spread_between_the_two_reference_runs": 0.011952,
+    "pass": true,
+    "basis": "this run must land within 0.008 of at least ONE of the two independent runs of the identical greedy configuration. Requiring both is not achievable here because the two references themselves differ by more than the tolerance on the small cells (VQA_RAD_closed: 0.0120 on n=251, i.e. 3 items), which is the caveat itself, not a defect of this round."
+   },
+   "train_prior": {
+    "source": "VQA_RAD_closed TRAIN split gold yes-rate (the fit input)",
+    "n": 940,
+    "TRAIN_yes_rate_USED_TO_FIT": 0.496809,
+    "EVAL_yes_rate_NOT_used_disclosed_for_comparison_only": 0.47012,
+    "abs_difference": 0.026689
+   },
+   "currency": "EM_harness; the 32B judge agrees with exact match on 1.000 of 5,204 yes/no calls (null test A2), so the two currencies coincide here by MEASUREMENT.",
+   "corrections": {
+    "readout": {
+     "acc": 0.780876,
+     "vs_deployed_baseline": {
+      "delta": 0.0,
+      "ci": [
+       -0.0199203187250996,
+       0.0199203187250996
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.524,
+     "n_answers_changed_vs_readout": 0,
+     "n_fixed": 0,
+     "n_broken": 0
+    },
+    "pm_train_marginal_cv": {
+     "acc": 0.776892,
+     "vs_deployed_baseline": {
+      "delta": -0.00398406374501992,
+      "ci": [
+       -0.035856573705179286,
+       0.027888446215139442
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.472,
+     "n_answers_changed_vs_readout": 13,
+     "n_fixed": 6,
+     "n_broken": 7,
+     "vs_readout_arm": {
+      "delta": -0.00398406374501992,
+      "ci": [
+       -0.03187250996015936,
+       0.02390438247011952
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_blank_global": {
+     "acc": 0.709163,
+     "vs_deployed_baseline": {
+      "delta": -0.07171314741035857,
+      "ci": [
+       -0.12749003984063745,
+       -0.01593625498007968
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.724,
+     "n_answers_changed_vs_readout": 50,
+     "n_fixed": 16,
+     "n_broken": 34,
+     "vs_readout_arm": {
+      "delta": -0.07171314741035857,
+      "ci": [
+       -0.12749003984063745,
+       -0.0199203187250996
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_img_blind_language_prior": {
+     "acc": 0.752988,
+     "vs_deployed_baseline": {
+      "delta": -0.027888446215139442,
+      "ci": [
+       -0.07171314741035857,
+       0.01593625498007968
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.512,
+     "n_answers_changed_vs_readout": 29,
+     "n_fixed": 11,
+     "n_broken": 18,
+     "vs_readout_arm": {
+      "delta": -0.027888446215139442,
+      "ci": [
+       -0.07171314741035857,
+       0.01593625498007968
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 251,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  },
+  "PATH_VQA_closed": {
+   "n": 3362,
+   "n_corrected_subset_model_answers_yes_or_no": 3361,
+   "N3_identity_control": {
+    "deployed_acc": 0.840869,
+    "rerun_text_acc": 0.839976,
+    "abs_dev_vs_deployed_DIFFERENT_ENGINE_CONFIG": 0.000892,
+    "response_byte_agreement_vs_deployed": 0.978287,
+    "published_always_7b": 0.8409,
+    "tolerance": 0.008,
+    "independent_regeneration_2026-08-16_acc": 0.839976,
+    "abs_dev_vs_independent_regeneration": 0.0,
+    "spread_between_the_two_reference_runs": 0.000892,
+    "pass": true,
+    "basis": "this run must land within 0.008 of at least ONE of the two independent runs of the identical greedy configuration. Requiring both is not achievable here because the two references themselves differ by more than the tolerance on the small cells (VQA_RAD_closed: 0.0120 on n=251, i.e. 3 items), which is the caveat itself, not a defect of this round."
+   },
+   "train_prior": {
+    "source": "PATH_VQA_closed TRAIN split gold yes-rate (the fit input)",
+    "n": 9751,
+    "TRAIN_yes_rate_USED_TO_FIT": 0.551533,
+    "EVAL_yes_rate_NOT_used_disclosed_for_comparison_only": 0.540155,
+    "abs_difference": 0.011379
+   },
+   "currency": "EM_harness; the 32B judge agrees with exact match on 1.000 of 5,204 yes/no calls (null test A2), so the two currencies coincide here by MEASUREMENT.",
+   "corrections": {
+    "readout": {
+     "acc": 0.839976,
+     "vs_deployed_baseline": {
+      "delta": -0.000892325996430696,
+      "ci": [
+       -0.005651397977394408,
+       0.004164187983343248
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.60964,
+     "n_answers_changed_vs_readout": 0,
+     "n_fixed": 0,
+     "n_broken": 0
+    },
+    "pm_train_marginal_cv": {
+     "acc": 0.842951,
+     "vs_deployed_baseline": {
+      "delta": 0.002082093991671624,
+      "ci": [
+       -0.006543723973825104,
+       0.01041046995835812
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.550729,
+     "n_answers_changed_vs_readout": 198,
+     "n_fixed": 104,
+     "n_broken": 94,
+     "vs_readout_arm": {
+      "delta": 0.00297441998810232,
+      "ci": [
+       -0.005353955978584176,
+       0.011302795954788817
+      ],
+      "significant": false,
+      "sign": "TIE",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_blank_global": {
+     "acc": 0.745985,
+     "vs_deployed_baseline": {
+      "delta": -0.09488399762046401,
+      "ci": [
+       -0.10856632956573468,
+       -0.08149910767400356
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.776257,
+     "n_answers_changed_vs_readout": 560,
+     "n_fixed": 122,
+     "n_broken": 438,
+     "vs_readout_arm": {
+      "delta": -0.09399167162403331,
+      "ci": [
+       -0.10767400356930398,
+       -0.08060678167757288
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "cc_cf_img_blind_language_prior": {
+     "acc": 0.689173,
+     "vs_deployed_baseline": {
+      "delta": -0.15169541939321832,
+      "ci": [
+       -0.16567519333729921,
+       -0.13741820345032718
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "pred_yes_rate_on_corrected_subset": 0.701577,
+     "n_answers_changed_vs_readout": 689,
+     "n_fixed": 91,
+     "n_broken": 598,
+     "vs_readout_arm": {
+      "delta": -0.15080309339678763,
+      "ci": [
+       -0.16508030933967877,
+       -0.1365258774538965
+      ],
+      "significant": true,
+      "sign": "LOSS",
+      "n": 3362,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    }
+   }
+  }
+ },
+ "prior_sources": {
+  "pm_train": "TRAIN -- PMC-VQA train_2.csv gold marginal + the model's own train preds",
+  "pm_transductive_cv": "TRANSDUCTIVE -- eval PREDICTIONS (no eval labels), TRAIN target, 5-fold",
+  "pm_uniform_cv": "A-PRIORI -- uniform target, 5-fold cross-fit",
+  "pm_train_marginal_cv": "TRAIN -- the binary cell's TRAIN gold yes-rate, 5-fold cross-fit",
+  "cc_cf_na": "CONTENT_FREE per item, MCQ only (costs +1 forward pass)",
+  "cc_cf_blank": "CONTENT_FREE global (cost O(1))",
+  "cc_cf_img_blind_language_prior": "CONTENT_FREE per item, binary cells: the REAL question with a gray image, i.e. the model's language-only yes-prior (costs +1 forward pass)"
+ },
+ "MedEvalKit_untouched": "every alternate prompt is built in src/cascade_methods/output_bias_lib.py and src/cascade_methods/closed_as_open_lib.py; MedEvalKit/ is read-only and byte-unmodified.",
+ "reproduce_full": "bash runners/run_output_bias_gen.sh 0 0 2  (and 1 1 2); then OMP_NUM_THREADS=1 python3 src/cascade_methods/output_bias_correct.py"
+}

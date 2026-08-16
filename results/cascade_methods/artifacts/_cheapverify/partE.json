@@ -1,0 +1,481 @@
+{
+ "META": {
+  "PMC_VQA": {
+   "n": 33430,
+   "gold_marginal": [
+    0.13230631169608137,
+    0.35848040682022136,
+    0.377983846844152,
+    0.1312294346395453
+   ]
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "n_options": 5
+  },
+  "SLAKE_closed": {
+   "n": 836
+  },
+  "VQA_RAD_closed": {
+   "n": 251
+  },
+  "PATH_VQA_closed": {
+   "n": 3362
+  },
+  "SLAKE_open": {
+   "n": 645,
+   "source": "transfer_dump_slake_open_lingshu7b.json"
+  },
+  "VQA_RAD_open": {
+   "n": 200,
+   "source": "transfer_dump_vqa_rad_open_lingshu7b.json"
+  },
+  "PATH_VQA_open": {
+   "n": 1500,
+   "source": "transfer_dump_pathvqa_open_lingshu7b.json"
+  }
+ },
+ "PER_CELL_CANDIDATES": {
+  "PMC_VQA": {
+   "output_pm_train": {
+    "delta": 0.023033203709243194,
+    "ci": [
+     0.020161531558480408,
+     0.02584504935686509
+    ],
+    "sign": "WIN",
+    "n": 33430
+   },
+   "output_pm_transductive_cv": {
+    "delta": 0.021986239904277595,
+    "ci": [
+     0.019204307508226146,
+     0.024798085551899492
+    ],
+    "sign": "WIN",
+    "n": 33430
+   }
+  },
+  "MedXpertQA-MM": {
+   "output_pm_uniform_cv": {
+    "delta": -0.0125,
+    "ci": [
+     -0.023,
+     -0.002
+    ],
+    "sign": "LOSS",
+    "n": 2000
+   }
+  },
+  "SLAKE_closed": {
+   "prompt_open_instruction": {
+    "delta": 0.0035885167464114833,
+    "ci": [
+     -0.008373205741626795,
+     0.01555023923444976
+    ],
+    "sign": "TIE",
+    "n": 836
+   }
+  },
+  "VQA_RAD_closed": {
+   "prompt_open_instruction": {
+    "delta": 0.0,
+    "ci": [
+     -0.0398406374501992,
+     0.0398406374501992
+    ],
+    "sign": "TIE",
+    "n": 251
+   }
+  },
+  "PATH_VQA_closed": {
+   "prompt_open_instruction": {
+    "delta": 0.041939321832242714,
+    "ci": [
+     0.032123735871505056,
+     0.05175490779298037
+    ],
+    "sign": "WIN",
+    "n": 3362
+   }
+  },
+  "SLAKE_open": {
+   "delete_baseline_self_consistency": {
+    "delta": -0.006201550387596899,
+    "ci": [
+     -0.023255813953488372,
+     0.010852713178294573
+    ],
+    "sign": "TIE",
+    "n": 645
+   }
+  },
+  "VQA_RAD_open": {
+   "delete_baseline_self_consistency": {
+    "delta": 0.025,
+    "ci": [
+     -0.01,
+     0.065
+    ],
+    "sign": "TIE",
+    "n": 200
+   }
+  },
+  "PATH_VQA_open": {
+   "delete_baseline_self_consistency": {
+    "delta": 0.018666666666666668,
+    "ci": [
+     0.006,
+     0.032
+    ],
+    "sign": "WIN",
+    "n": 1500
+   }
+  }
+ },
+ "SELECTION_RULE": {
+  "rule": "per cell adopt the largest-delta cheap correction whose paired 95% interval excludes 0, else nothing",
+  "observed_macro_gain": 0.010454899026019072,
+  "chosen": {
+   "PMC_VQA": {
+    "candidate": "output_pm_train",
+    "delta": 0.023033203709243194
+   },
+   "PATH_VQA_closed": {
+    "candidate": "prompt_open_instruction",
+    "delta": 0.041939321832242714
+   },
+   "PATH_VQA_open": {
+    "candidate": "delete_baseline_self_consistency",
+    "delta": 0.018666666666666668
+   }
+  },
+  "permutation_null": {
+   "kind": "paired sign-flip of the per-item delta, within cell",
+   "nperm": 1000,
+   "mean": 0.0005798487016582829,
+   "p95": 0.0049800796812749,
+   "max": 0.01160109561752988,
+   "p_value": 0.002,
+   "z": 6.340296245804838
+  },
+  "verdict": "SURVIVES"
+ },
+ "POLICIES": {
+  "P0_baseline_as_published": {
+   "macro": 0.5971,
+   "macro8_flopeq": 1.513738375,
+   "note": "the three open cells of this baseline are self-consistency@8, not greedy (verified PART C)"
+  },
+  "P1_prompt_fix_only": {
+   "name": "PathVQA prompt override only",
+   "per_cell": {
+    "PMC_VQA": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.5427
+    },
+    "SLAKE_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.8254
+    },
+    "VQA_RAD_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.7809
+    },
+    "PATH_VQA_closed": {
+     "intervention": "prompt_open_instruction",
+     "delta": 0.041939321832242714,
+     "ci": [
+      0.032123735871505056,
+      0.05175490779298037
+     ],
+     "sign": "WIN",
+     "n": 3362,
+     "new_cell": 0.8828393218322427
+    },
+    "MedXpertQA-MM": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.2615
+    },
+    "SLAKE_open": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.7364
+    },
+    "VQA_RAD_open": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.465
+    },
+    "PATH_VQA_open": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.324
+    }
+   },
+   "macro_before": 0.5971,
+   "macro_after": 0.6023424152290303,
+   "macro_delta": 0.005242415229030339,
+   "macro_ci": [
+    0.004015466983938132,
+    0.0064693634741225465
+   ],
+   "n_cells_moved": 1,
+   "guardrail_losing_cells": [],
+   "macro8_flopeq": 1.513738375
+  },
+  "P2_prompt_fix_plus_true_greedy_open": {
+   "name": "PathVQA prompt override + delete the baseline's own self-consistency on the 3 open cells",
+   "per_cell": {
+    "PMC_VQA": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.5427
+    },
+    "SLAKE_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.8254
+    },
+    "VQA_RAD_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.7809
+    },
+    "PATH_VQA_closed": {
+     "intervention": "prompt_open_instruction",
+     "delta": 0.041939321832242714,
+     "ci": [
+      0.032123735871505056,
+      0.05175490779298037
+     ],
+     "sign": "WIN",
+     "n": 3362,
+     "new_cell": 0.8828393218322427
+    },
+    "MedXpertQA-MM": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.2615
+    },
+    "SLAKE_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": -0.006201550387596899,
+     "ci": [
+      -0.023255813953488372,
+      0.010852713178294573
+     ],
+     "sign": "TIE",
+     "n": 645,
+     "new_cell": 0.7301984496124032
+    },
+    "VQA_RAD_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": 0.025,
+     "ci": [
+      -0.01,
+      0.065
+     ],
+     "sign": "TIE",
+     "n": 200,
+     "new_cell": 0.49000000000000005
+    },
+    "PATH_VQA_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": 0.018666666666666668,
+     "ci": [
+      0.006,
+      0.032
+     ],
+     "sign": "WIN",
+     "n": 1500,
+     "new_cell": 0.3426666666666667
+    }
+   },
+   "macro_before": 0.5971,
+   "macro_after": 0.6070255547639141,
+   "macro_delta": 0.00992555476391406,
+   "macro_ci": [
+    0.0044412798047258695,
+    0.015617757935821699
+   ],
+   "n_cells_moved": 4,
+   "guardrail_losing_cells": [],
+   "macro8_flopeq": 1.0
+  },
+  "P3_add_the_PMC_answer_prior_NOT_CLAIMED": {
+   "name": "P2 + PMC output-side pm_train (fails the balanced key -- reported, not claimed)",
+   "per_cell": {
+    "PMC_VQA": {
+     "intervention": "output_pm_train",
+     "delta": 0.023033203709243194,
+     "ci": [
+      0.020161531558480408,
+      0.02584504935686509
+     ],
+     "sign": "WIN",
+     "n": 33430,
+     "new_cell": 0.5657332037092432
+    },
+    "SLAKE_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.8254
+    },
+    "VQA_RAD_closed": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.7809
+    },
+    "PATH_VQA_closed": {
+     "intervention": "prompt_open_instruction",
+     "delta": 0.041939321832242714,
+     "ci": [
+      0.032123735871505056,
+      0.05175490779298037
+     ],
+     "sign": "WIN",
+     "n": 3362,
+     "new_cell": 0.8828393218322427
+    },
+    "MedXpertQA-MM": {
+     "intervention": "none",
+     "delta": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "sign": "TIE",
+     "n": 0,
+     "new_cell": 0.2615
+    },
+    "SLAKE_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": -0.006201550387596899,
+     "ci": [
+      -0.023255813953488372,
+      0.010852713178294573
+     ],
+     "sign": "TIE",
+     "n": 645,
+     "new_cell": 0.7301984496124032
+    },
+    "VQA_RAD_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": 0.025,
+     "ci": [
+      -0.01,
+      0.065
+     ],
+     "sign": "TIE",
+     "n": 200,
+     "new_cell": 0.49000000000000005
+    },
+    "PATH_VQA_open": {
+     "intervention": "delete_baseline_self_consistency",
+     "delta": 0.018666666666666668,
+     "ci": [
+      0.006,
+      0.032
+     ],
+     "sign": "WIN",
+     "n": 1500,
+     "new_cell": 0.3426666666666667
+    }
+   },
+   "macro_before": 0.5971,
+   "macro_after": 0.6099047052275695,
+   "macro_delta": 0.01280470522756946,
+   "macro_ci": [
+    0.007423989444780137,
+    0.018463568562904254
+   ],
+   "n_cells_moved": 5,
+   "guardrail_losing_cells": [],
+   "macro8_flopeq": 1.0
+  }
+ }
+}

@@ -1,0 +1,921 @@
+{
+ "null_test_N2_mcq_grader": {
+  "PMC_VQA": {
+   "n": 33430,
+   "row_disagreements_with_harness_correct_field": 0,
+   "acc_regraded_by_this_module": 0.542656,
+   "published_always_7b": 0.5427,
+   "abs_dev_vs_published": 4.4e-05
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "row_disagreements_with_harness_correct_field": 0,
+   "acc_regraded_by_this_module": 0.2615,
+   "published_always_7b": 0.2615,
+   "abs_dev_vs_published": 0.0
+  },
+  "max_abs_deviation": 4.4e-05,
+  "pass": true
+ },
+ "cells": {
+  "PMC_VQA": {
+   "n": 6000,
+   "pool": "T=0.4, n=8, fullres, deployed MedEvalKit MCQ prompt (in-session)",
+   "greedy_control": "T=0, same engine/session/prompt/resolution (mcq_g)",
+   "published_always_7b": 0.5427,
+   "published_grader": "MedEvalKit judge_multi_choice",
+   "in_session_greedy_minus_published": -0.002033,
+   "judge_currency_harness_judge_multi_choice": {
+    "n": 6000,
+    "greedy_matched_control": 0.540667,
+    "random_slot_floor_N1": 0.524625,
+    "oracle@8": 0.742167,
+    "vote@2": 0.521708,
+    "vote@2_orderfree": 0.524625,
+    "vote@2_prefix": 0.56,
+    "vote@4": 0.539902,
+    "vote@4_orderfree": 0.540485,
+    "vote@4_prefix": 0.552,
+    "vote@8": 0.550667,
+    "vote@8_orderfree": 0.550675,
+    "vote@8_prefix": 0.550667,
+    "ROBUSTNESS_slot_order": {
+     "why": "an n=8 vLLM pool with a fixed seed is NOT slot-exchangeable on 6 of 14 pools (_selfcons_parts/slot_exchangeability.json). Three tie-break / subset conventions are therefore reported, and the spread between them is the size of the position artefact.",
+     "N=2": {
+      "index_tiebreak": 0.521708,
+      "orderfree_tiebreak": 0.524625,
+      "first_N_slots_prefix": 0.56,
+      "max_minus_min": 0.038292
+     },
+     "N=4": {
+      "index_tiebreak": 0.539902,
+      "orderfree_tiebreak": 0.540485,
+      "first_N_slots_prefix": 0.552,
+      "max_minus_min": 0.012098
+     },
+     "N=8": {
+      "index_tiebreak": 0.550667,
+      "orderfree_tiebreak": 0.550675,
+      "first_N_slots_prefix": 0.550667,
+      "max_minus_min": 9e-06
+     }
+    },
+    "vs_matched_greedy": {
+     "N=2": {
+      "delta": -0.018958,
+      "ci": [
+       -0.024393,
+       -0.013518
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.000764,
+      "ci": [
+       -0.005426,
+       0.003805
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.01,
+      "ci": [
+       0.004833,
+       0.015167
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_ORDERFREE": {
+     "N=2": {
+      "delta": -0.016042,
+      "ci": [
+       -0.021271,
+       -0.010854
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.000182,
+      "ci": [
+       -0.004834,
+       0.004422
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.010009,
+      "ci": [
+       0.004815,
+       0.015293
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_PREFIX": {
+     "N=2": {
+      "delta": 0.019333,
+      "ci": [
+       0.013167,
+       0.0255
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.011333,
+      "ci": [
+       0.005667,
+       0.017
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.01,
+      "ci": [
+       0.004833,
+       0.015167
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_random_slot_floor": {
+     "N=2": {
+      "delta": -0.002917,
+      "ci": [
+       -0.003937,
+       -0.001935
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.015277,
+      "ci": [
+       0.012927,
+       0.017632
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.026042,
+      "ci": [
+       0.021313,
+       0.030792
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "greedy_vs_random_slot_floor": {
+     "delta": 0.016042,
+     "ci": [
+      0.010854,
+      0.021271
+     ],
+     "significant": true,
+     "verdict": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260817
+    },
+    "N5_exchangeability_vote@2_minus_random_slot": -0.002917
+   },
+   "em_currency_letter_em": {
+    "n": 6000,
+    "greedy_matched_control": 0.552167,
+    "random_slot_floor_N1": 0.537125,
+    "oracle@8": 0.755,
+    "vote@2": 0.535208,
+    "vote@2_orderfree": 0.537125,
+    "vote@2_prefix": 0.574833,
+    "vote@4": 0.554117,
+    "vote@4_orderfree": 0.553655,
+    "vote@4_prefix": 0.566833,
+    "vote@8": 0.565333,
+    "vote@8_orderfree": 0.564417,
+    "vote@8_prefix": 0.565333,
+    "ROBUSTNESS_slot_order": {
+     "why": "an n=8 vLLM pool with a fixed seed is NOT slot-exchangeable on 6 of 14 pools (_selfcons_parts/slot_exchangeability.json). Three tie-break / subset conventions are therefore reported, and the spread between them is the size of the position artefact.",
+     "N=2": {
+      "index_tiebreak": 0.535208,
+      "orderfree_tiebreak": 0.537125,
+      "first_N_slots_prefix": 0.574833,
+      "max_minus_min": 0.039625
+     },
+     "N=4": {
+      "index_tiebreak": 0.554117,
+      "orderfree_tiebreak": 0.553655,
+      "first_N_slots_prefix": 0.566833,
+      "max_minus_min": 0.013179
+     },
+     "N=8": {
+      "index_tiebreak": 0.565333,
+      "orderfree_tiebreak": 0.564417,
+      "first_N_slots_prefix": 0.565333,
+      "max_minus_min": 0.000917
+     }
+    },
+    "vs_matched_greedy": {
+     "N=2": {
+      "delta": -0.016958,
+      "ci": [
+       -0.022351,
+       -0.01156
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.00195,
+      "ci": [
+       -0.002467,
+       0.006333
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.013167,
+      "ci": [
+       0.008167,
+       0.018167
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_ORDERFREE": {
+     "N=2": {
+      "delta": -0.015042,
+      "ci": [
+       -0.020229,
+       -0.009854
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.001488,
+      "ci": [
+       -0.003034,
+       0.005971
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.01225,
+      "ci": [
+       0.007125,
+       0.017417
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_PREFIX": {
+     "N=2": {
+      "delta": 0.022667,
+      "ci": [
+       0.0165,
+       0.028833
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.014667,
+      "ci": [
+       0.009,
+       0.020167
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.013167,
+      "ci": [
+       0.008167,
+       0.018167
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_random_slot_floor": {
+     "N=2": {
+      "delta": -0.001917,
+      "ci": [
+       -0.002866,
+       -0.000973
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.016992,
+      "ci": [
+       0.014661,
+       0.019307
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.028208,
+      "ci": [
+       0.023542,
+       0.032937
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 6000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "greedy_vs_random_slot_floor": {
+     "delta": 0.015042,
+     "ci": [
+      0.009854,
+      0.020229
+     ],
+     "significant": true,
+     "verdict": "WIN",
+     "n": 6000,
+     "nboot": 10000,
+     "seed": 20260817
+    },
+    "N5_exchangeability_vote@2_minus_random_slot": -0.001917
+   },
+   "RANDOM_GOLD_LUCK_FLOOR_letter_em": {
+    "gold_letter_marginal": {
+     "a": 0.1325,
+     "b": 0.369,
+     "c": 0.3725,
+     "d": 0.126
+    },
+    "greedy_pred_letter_marginal": {
+     "a": 0.1923,
+     "b": 0.3558,
+     "c": 0.3297,
+     "d": 0.1222
+    },
+    "greedy_random_gold": 0.29498,
+    "vote@1_random_gold": 0.293802,
+    "oracle@1_random_gold": 0.293802,
+    "vote@2_random_gold": 0.29384,
+    "oracle@2_random_gold": 0.362268,
+    "vote@4_random_gold": 0.30062,
+    "oracle@4_random_gold": 0.427646,
+    "vote@8_random_gold": 0.305809,
+    "oracle@8_random_gold": 0.492711,
+    "how_to_read": "gold letters re-drawn i.i.d. from this cell's OWN empirical gold marginal, independent of the item. An arm that does not clear its own random-gold floor has produced no evidence of skill on this cell. PMC-VQA gold is 73.6% B+C [pmcvqa_answer_bias_audit_2026-08-11.json], which is exactly why this control is mandatory here.",
+    "oracle@8_vs_its_own_random_gold_floor": 0.262289,
+    "vote@8_vs_its_own_random_gold_floor": 0.259524
+   },
+   "diagnostics": {
+    "unparsed_letter_rate_greedy": 0.0,
+    "unparsed_letter_rate_sampled": 0.0,
+    "mean_distinct_letters_in_pool": 1.8055,
+    "distinct_letter_hist": {
+     "1": 2817,
+     "2": 1815,
+     "3": 1086,
+     "4": 282
+    },
+    "contested_frac": 0.5305
+   }
+  },
+  "MedXpertQA-MM": {
+   "n": 2000,
+   "pool": "T=0.4, n=8, fullres, deployed MedEvalKit MCQ prompt (in-session)",
+   "greedy_control": "T=0, same engine/session/prompt/resolution (mcq_g)",
+   "published_always_7b": 0.2615,
+   "published_grader": "MedEvalKit judge_multi_choice",
+   "in_session_greedy_minus_published": 0.0065,
+   "judge_currency_harness_judge_multi_choice": {
+    "n": 2000,
+    "greedy_matched_control": 0.268,
+    "random_slot_floor_N1": 0.260125,
+    "oracle@8": 0.4005,
+    "vote@2": 0.260161,
+    "vote@2_orderfree": 0.260125,
+    "vote@2_prefix": 0.264,
+    "vote@4": 0.263443,
+    "vote@4_orderfree": 0.263211,
+    "vote@4_prefix": 0.266,
+    "vote@8": 0.267,
+    "vote@8_orderfree": 0.266917,
+    "vote@8_prefix": 0.267,
+    "ROBUSTNESS_slot_order": {
+     "why": "an n=8 vLLM pool with a fixed seed is NOT slot-exchangeable on 6 of 14 pools (_selfcons_parts/slot_exchangeability.json). Three tie-break / subset conventions are therefore reported, and the spread between them is the size of the position artefact.",
+     "N=2": {
+      "index_tiebreak": 0.260161,
+      "orderfree_tiebreak": 0.260125,
+      "first_N_slots_prefix": 0.264,
+      "max_minus_min": 0.003875
+     },
+     "N=4": {
+      "index_tiebreak": 0.263443,
+      "orderfree_tiebreak": 0.263211,
+      "first_N_slots_prefix": 0.266,
+      "max_minus_min": 0.002789
+     },
+     "N=8": {
+      "index_tiebreak": 0.267,
+      "orderfree_tiebreak": 0.266917,
+      "first_N_slots_prefix": 0.267,
+      "max_minus_min": 8.3e-05
+     }
+    },
+    "vs_matched_greedy": {
+     "N=2": {
+      "delta": -0.007839,
+      "ci": [
+       -0.01509,
+       -0.000482
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.004557,
+      "ci": [
+       -0.010479,
+       0.001472
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001,
+      "ci": [
+       -0.008,
+       0.006
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_ORDERFREE": {
+     "N=2": {
+      "delta": -0.007875,
+      "ci": [
+       -0.014938,
+       -0.000812
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.004789,
+      "ci": [
+       -0.01079,
+       0.001307
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001083,
+      "ci": [
+       -0.007833,
+       0.005833
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_PREFIX": {
+     "N=2": {
+      "delta": -0.004,
+      "ci": [
+       -0.0125,
+       0.004
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.002,
+      "ci": [
+       -0.0095,
+       0.0055
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001,
+      "ci": [
+       -0.008,
+       0.006
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_random_slot_floor": {
+     "N=2": {
+      "delta": 3.6e-05,
+      "ci": [
+       -0.001562,
+       0.001643
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.003318,
+      "ci": [
+       0.000239,
+       0.006472
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.006875,
+      "ci": [
+       0.000563,
+       0.013188
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "greedy_vs_random_slot_floor": {
+     "delta": 0.007875,
+     "ci": [
+      0.000812,
+      0.014938
+     ],
+     "significant": true,
+     "verdict": "WIN",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260817
+    },
+    "N5_exchangeability_vote@2_minus_random_slot": 3.6e-05
+   },
+   "em_currency_letter_em": {
+    "n": 2000,
+    "greedy_matched_control": 0.268,
+    "random_slot_floor_N1": 0.260125,
+    "oracle@8": 0.4005,
+    "vote@2": 0.260161,
+    "vote@2_orderfree": 0.260125,
+    "vote@2_prefix": 0.264,
+    "vote@4": 0.263443,
+    "vote@4_orderfree": 0.263211,
+    "vote@4_prefix": 0.266,
+    "vote@8": 0.267,
+    "vote@8_orderfree": 0.266917,
+    "vote@8_prefix": 0.267,
+    "ROBUSTNESS_slot_order": {
+     "why": "an n=8 vLLM pool with a fixed seed is NOT slot-exchangeable on 6 of 14 pools (_selfcons_parts/slot_exchangeability.json). Three tie-break / subset conventions are therefore reported, and the spread between them is the size of the position artefact.",
+     "N=2": {
+      "index_tiebreak": 0.260161,
+      "orderfree_tiebreak": 0.260125,
+      "first_N_slots_prefix": 0.264,
+      "max_minus_min": 0.003875
+     },
+     "N=4": {
+      "index_tiebreak": 0.263443,
+      "orderfree_tiebreak": 0.263211,
+      "first_N_slots_prefix": 0.266,
+      "max_minus_min": 0.002789
+     },
+     "N=8": {
+      "index_tiebreak": 0.267,
+      "orderfree_tiebreak": 0.266917,
+      "first_N_slots_prefix": 0.267,
+      "max_minus_min": 8.3e-05
+     }
+    },
+    "vs_matched_greedy": {
+     "N=2": {
+      "delta": -0.007839,
+      "ci": [
+       -0.01509,
+       -0.000482
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.004557,
+      "ci": [
+       -0.010479,
+       0.001472
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001,
+      "ci": [
+       -0.008,
+       0.006
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_ORDERFREE": {
+     "N=2": {
+      "delta": -0.007875,
+      "ci": [
+       -0.014938,
+       -0.000812
+      ],
+      "significant": true,
+      "verdict": "LOSS",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.004789,
+      "ci": [
+       -0.01079,
+       0.001307
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001083,
+      "ci": [
+       -0.007833,
+       0.005833
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_matched_greedy_PREFIX": {
+     "N=2": {
+      "delta": -0.004,
+      "ci": [
+       -0.0125,
+       0.004
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": -0.002,
+      "ci": [
+       -0.0095,
+       0.0055
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": -0.001,
+      "ci": [
+       -0.008,
+       0.006
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "vs_random_slot_floor": {
+     "N=2": {
+      "delta": 3.6e-05,
+      "ci": [
+       -0.001562,
+       0.001643
+      ],
+      "significant": false,
+      "verdict": "TIE",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=4": {
+      "delta": 0.003318,
+      "ci": [
+       0.000239,
+       0.006472
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     },
+     "N=8": {
+      "delta": 0.006875,
+      "ci": [
+       0.000563,
+       0.013188
+      ],
+      "significant": true,
+      "verdict": "WIN",
+      "n": 2000,
+      "nboot": 10000,
+      "seed": 20260817
+     }
+    },
+    "greedy_vs_random_slot_floor": {
+     "delta": 0.007875,
+     "ci": [
+      0.000812,
+      0.014938
+     ],
+     "significant": true,
+     "verdict": "WIN",
+     "n": 2000,
+     "nboot": 10000,
+     "seed": 20260817
+    },
+    "N5_exchangeability_vote@2_minus_random_slot": 3.6e-05
+   },
+   "RANDOM_GOLD_LUCK_FLOOR_letter_em": {
+    "gold_letter_marginal": {
+     "a": 0.1995,
+     "b": 0.204,
+     "c": 0.1915,
+     "d": 0.193,
+     "e": 0.212
+    },
+    "greedy_pred_letter_marginal": {
+     "a": 0.2555,
+     "b": 0.223,
+     "c": 0.2265,
+     "d": 0.1705,
+     "e": 0.1245
+    },
+    "greedy_random_gold": 0.199139,
+    "vote@1_random_gold": 0.198669,
+    "oracle@1_random_gold": 0.198669,
+    "vote@2_random_gold": 0.198476,
+    "oracle@2_random_gold": 0.23979,
+    "vote@4_random_gold": 0.198828,
+    "oracle@4_random_gold": 0.280533,
+    "vote@8_random_gold": 0.198804,
+    "oracle@8_random_gold": 0.321711,
+    "how_to_read": "gold letters re-drawn i.i.d. from this cell's OWN empirical gold marginal, independent of the item. An arm that does not clear its own random-gold floor has produced no evidence of skill on this cell. PMC-VQA gold is 73.6% B+C [pmcvqa_answer_bias_audit_2026-08-11.json], which is exactly why this control is mandatory here.",
+    "oracle@8_vs_its_own_random_gold_floor": 0.078789,
+    "vote@8_vs_its_own_random_gold_floor": 0.068196
+   },
+   "diagnostics": {
+    "unparsed_letter_rate_greedy": 0.0,
+    "unparsed_letter_rate_sampled": 0.0,
+    "mean_distinct_letters_in_pool": 1.621,
+    "distinct_letter_hist": {
+     "1": 1106,
+     "2": 623,
+     "3": 201,
+     "4": 63,
+     "5": 7
+    },
+    "contested_frac": 0.447
+   }
+  }
+ }
+}

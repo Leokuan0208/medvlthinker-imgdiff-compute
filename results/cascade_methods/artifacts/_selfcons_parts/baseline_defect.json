@@ -1,0 +1,120 @@
+{
+ "question": "the round brief and CLAUDE.md both call 0.7364 / 0.4650 / 0.3240 the 'always-7B GREEDY' cells and charge them 1.0 FLOP-eq. Are they greedy?",
+ "how_this_was_found": "vote@8 minus greedy came out EXACTLY 0.0000 with a zero-width bootstrap CI on SLAKE_open (645/645 items identical), which is impossible for two independently generated arms.",
+ "cells": {
+  "SLAKE_open": {
+   "n": 645,
+   "published_always_7b_greedy": 0.7364,
+   "mean_greedy_ok_field": 0.736434,
+   "greedy_ok_equals_modal_of_8_label": "645/645 = 1.0000",
+   "greedy_ok_equals_slot0_label": "594/645 = 0.9209",
+   "TRUE_temperature0_greedy_acc": 0.730233,
+   "n_items_without_a_t0_label_scored_0": 0,
+   "TRUE_greedy_minus_published_modal_of_8": {
+    "delta": -0.006202,
+    "ci": [
+     -0.023256,
+     0.010853
+    ],
+    "significant": false,
+    "verdict": "TIE",
+    "n": 645,
+    "nboot": 10000,
+    "seed": 20260817
+   },
+   "t0_source": "ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_lingshu7b.judge.jsonl (June 2026, T=0 decode of the same items, same 32B judge, same session and engine as the sc8 pool -- so this is a MATCHED control, not a cross-session comparison)"
+  },
+  "VQA_RAD_open": {
+   "n": 200,
+   "published_always_7b_greedy": 0.465,
+   "mean_greedy_ok_field": 0.465,
+   "greedy_ok_equals_modal_of_8_label": "199/200 = 0.9950",
+   "greedy_ok_equals_slot0_label": "187/200 = 0.9350",
+   "TRUE_temperature0_greedy_acc": 0.49,
+   "n_items_without_a_t0_label_scored_0": 0,
+   "TRUE_greedy_minus_published_modal_of_8": {
+    "delta": 0.025,
+    "ci": [
+     -0.01,
+     0.065
+    ],
+    "significant": false,
+    "verdict": "TIE",
+    "n": 200,
+    "nboot": 10000,
+    "seed": 20260817
+   },
+   "t0_source": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7b.judge.jsonl (June 2026, T=0 decode of the same items, same 32B judge, same session and engine as the sc8 pool -- so this is a MATCHED control, not a cross-session comparison)"
+  },
+  "PATH_VQA_open": {
+   "n": 1500,
+   "published_always_7b_greedy": 0.324,
+   "mean_greedy_ok_field": 0.324,
+   "greedy_ok_equals_modal_of_8_label": "1495/1500 = 0.9967",
+   "greedy_ok_equals_slot0_label": "1369/1500 = 0.9127",
+   "TRUE_temperature0_greedy_acc": 0.342667,
+   "n_items_without_a_t0_label_scored_0": 0,
+   "TRUE_greedy_minus_published_modal_of_8": {
+    "delta": 0.018667,
+    "ci": [
+     0.006,
+     0.032
+    ],
+    "significant": true,
+    "verdict": "WIN",
+    "n": 1500,
+    "nboot": 10000,
+    "seed": 20260817
+   },
+   "t0_source": "ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b.judge.jsonl (June 2026, T=0 decode of the same items, same 32B judge, same session and engine as the sc8 pool -- so this is a MATCHED control, not a cross-session comparison)"
+  }
+ },
+ "pooled_greedy_ok_equals_modal_of_8": "2339/2345 = 0.9974",
+ "pooled_greedy_ok_equals_slot0": "2150/2345 = 0.9168",
+ "POOLED_2345": {
+  "true_t0_greedy": 0.461834,
+  "published_greedy_ok_modal_of_8": 0.449467,
+  "difference": {
+   "delta": 0.012367,
+   "ci": [
+    0.002559,
+    0.022601
+   ],
+   "significant": true,
+   "verdict": "WIN",
+   "n": 2345,
+   "nboot": 10000,
+   "seed": 20260817
+  }
+ },
+ "MACRO8_consequence": {
+  "how": "five of the eight cells are untouched (their published value IS a real greedy decode); the three open cells move by the measured per-cell difference. The macro is the equal-weight mean over eight cells, so the shift is (sum of the three per-cell differences) / 8, bootstrapped by resampling items inside each of the three moving cells.",
+  "macro3_delta_over_the_three_open_cells": 0.012488,
+  "macro8_shift": 0.004683,
+  "macro8_shift_ci": [
+   -0.000709,
+   0.010182
+  ],
+  "verdict": "TIE",
+  "stated_macro_baseline": 0.5971,
+  "corrected_macro_baseline_true_greedy": 0.601783,
+  "and_it_is_cheaper": "the corrected baseline is a REAL greedy decode on all eight cells, so it costs 1.0 FLOP-eq, against 1.513738 for the published one.",
+  "read_as_an_intervention": "stated the other way round: DELETING self-consistency from the three open cells of the published baseline is the cheapest intervention this round found -- it moves the macro UP and cuts baseline compute by a third."
+ },
+ "CODE_CITATIONS_the_repo_already_says_so_in_three_places": [
+  "src/cascade_methods/gen_slake_open_bestofN.py:138  greedy_ok = int(aj[i].get(modal_norm, 0)) -- the field is WRITTEN as the modal-of-8 label",
+  "src/cascade_methods/gen_slake_open_bestofN.py:163  '# self-consistency modal (dump greedy_ok)'",
+  "src/cascade_methods/verifier_n_scaling.py:173  '# NB: this is the MODAL-of-8 answer, i.e. SC@8'",
+  "src/cascade_methods/inference_params_verify.py:125  'greedy_ok (= modal-of-8, the frozen metric's definition)'"
+ ],
+ "CONSEQUENCE_accuracy": "on the three open cells the 'always-7B greedy' baseline IS self-consistency@8. Attack 2 asks whether self-consistency beats always-7B greedy; on 3 of the 8 cells the incumbent baseline was already self-consistency@8, so that comparison was self-referential until this round supplied a real greedy control.",
+ "CONSEQUENCE_cost": {
+  "stated_baseline_cost": "1.0 FLOP-eq on all eight cells",
+  "measured_cost_of_modal_of_8": 2.369969,
+  "corrected_macro8_baseline_cost": 1.513738,
+  "arithmetic": "five cells at 1.0 plus three cells at the measured 2.369969 = 1.513738",
+  "source": "artifacts/verifier_restructure_2026-08-16.json : Q1_generation_cost_and_prefill_sharing.per_config['count|default'].flopeq_rel_to_N1 (MEASURED)",
+  "read": "the baseline every arm in this round is measured against is not a 1.0 FLOP-eq baseline. It is a 1.51 FLOP-eq baseline under the project's own measured generation cost, because three of its eight cells already pay for eight samples."
+ },
+ "WHAT_IS_NOT_CLAIMED": "this does NOT say any published DELTA is wrong. Every arm in the open-cell chain (verifier, head, oracle) was compared against the same greedy_ok field, so the deltas are internally consistent. What is wrong is the LABEL on the baseline and the 1.0 charged for it."
+}

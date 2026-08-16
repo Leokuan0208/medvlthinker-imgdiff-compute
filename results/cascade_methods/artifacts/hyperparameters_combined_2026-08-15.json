@@ -1,0 +1,1898 @@
+{
+ "title": "Four untuned hyper-parameters: adversarial verification, the combined operating point, and what T=0.4 is worth once the shipped escalation policy sees it",
+ "date": "2026-08-15",
+ "verified": "2026-08-16",
+ "one_line_verdict": "ESSENTIALLY NOTHING MOVES THE HEADLINE. Three of the four knobs are worth exactly or approximately zero accuracy; the fourth (the certified veto's binning) is real, survives its own permutation null at 6.5 sigma, and is worth +0.0012 macro-8. Combined with T=0.4 the best arm is 0.6589 at 1.718x -- +0.0022 [-0.0016,+0.0058] vs always-32B-direct, still a TIE, 0.7x the +0.0029 a significant macro delta needs.",
+ "convention": "MACRO, equal weight per reporting cell, 8 cells at 1/8, Variant B (MMMU excluded), CLEAN disjoint verifier. Bar = always-32B-direct macro 0.656672. Significance bar |delta| ~ 0.0029.",
+ "numerics_pinned": {
+  "OMP/OPENBLAS/MKL_NUM_THREADS": "1 (8 for the F10 rebuild, stated per section)",
+  "PYTHONHASHSEED": "0",
+  "device": "CPU only; no torch in the verification path, so no TF32 exposure",
+  "bootstrap": "paired item bootstrap, nboot=10000, seed 20260815",
+  "row_order": "frozen canonical order (src/training_methods/genframe_data.py DUMP_ORDER) for the open half; MedEvalKit dump order for the MCQ half",
+  "numpy": "1.26.4",
+  "ranker": "argmax over raw verifier scores, strict > (first-index argmax) -- never rank_avg"
+ },
+ "inputs": {
+  "frozen_eval_vectors": "results/cascade_methods/artifacts/_selector_rerun_parts/vec_disjoint.npz",
+  "frozen_costs": "results/cascade_methods/artifacts/_selector_rerun_parts/macro_disjoint.json",
+  "mcq_dumps": "MedEvalKit/eval_results_lingshu{7b,32b}_full + eval_results_lingshu32b_reason (via beat32b_fusion.mcq)",
+  "open_pools_in_session": "ckpts/openvqa/decoding_sweep/ckpt_{ds}_{T04,T07r}_s{0,1,2}.jsonl",
+  "verifier": "ckpts/train/lora_verifier_disjoint (CLEAN, disjoint) -- HF-scored; never vLLM",
+  "rounds_verified": [
+   "hole17_macro_refit_2026-08-15.json",
+   "veto_binning_2026-08-15.json",
+   "verifier_hparams_2026-08-15.json",
+   "weitzman_T04_2026-08-15.json",
+   "weitzman_T04_addendum_2026-08-15.json",
+   "decoding_ladder_cold_2026-08-14.json"
+  ]
+ },
+ "S0_NULL_TESTS": {
+  "N1_frozen_metric": {
+   "source": "src/training_methods/genframe_data.null_test()",
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245
+   },
+   "PASSED": true
+  },
+  "N2_exact_identity": {
+   "identity": "selected = oracle@8 x sel_eff (MULTIPLICATIVE)",
+   "value": 0.4852878464818763,
+   "selected": 0.48528784648187634,
+   "residual": 5.551115123125783e-17,
+   "additive_form_FORBIDDEN": 0.586326,
+   "additive_over_predicts_by": 0.101038,
+   "PASSED": true
+  },
+  "N3_published_PMC_veto": {
+   "what": "independent re-implementation of beat32b_more.f8_veto(5,1.645) on the published fold structure arange(n)%5 vs artifacts/pmc_label_noise_audit_2026-07-29.json",
+   "recomputed": {
+    "acc_7b": 0.5427,
+    "acc_32b_direct": 0.5518,
+    "veto_acc": 0.5613,
+    "veto_delta": 0.0095,
+    "veto_rate": 0.4002
+   },
+   "published": {
+    "acc_7b": 0.5427,
+    "acc_32b_direct": 0.5518,
+    "veto_acc": 0.5613,
+    "veto_delta": 0.0095,
+    "veto_rate": 0.4002
+   },
+   "max_abs_deviation": 0.0,
+   "PASSED": true
+  },
+  "N4_macro_reconstruction": {
+   "always_32b_direct": 0.656672,
+   "method_accuracy_max_veto": 0.657505,
+   "method_compute_lean": 0.644277,
+   "published": [
+    0.656672,
+    0.6575,
+    0.6443
+   ],
+   "max_abs_deviation": 0.0,
+   "PASSED": true
+  },
+  "N5_F10_open_cells": {
+   "what": "independent re-implementation of the shipped accuracy-max open policy (best-of-8 verifier pick + F10-L2D rejector -> 32B-direct)",
+   "recomputed": {
+    "SLAKE_open": 0.81705,
+    "VQA_RAD_open": 0.59,
+    "PATH_VQA_open": 0.38467
+   },
+   "published": {
+    "SLAKE_open": 0.8171,
+    "VQA_RAD_open": 0.59,
+    "PATH_VQA_open": 0.3847
+   },
+   "max_abs_deviation": 4.573643410854533e-05,
+   "note": "the stored artifact's own 4-dp rounding",
+   "PASSED": true
+  },
+  "N6_item_alignment": {
+   "what": "32B-direct judge vectors, stored transfer dumps vs the in-session pool build, item by item",
+   "max_abs_deviation": 0.0,
+   "PASSED": true
+  },
+  "max_abs_deviation_overall": 4.573643410854533e-05
+ },
+ "S1_KNOB_BY_KNOB_VERIFICATION": {
+  "_how": "each knob's headline was re-derived from the raw dumps by code written for this pass, not by re-running the round's own scripts, except where the round's script IS the object under test.",
+  "knob1_hole17_macro_refit": {
+   "round_artifact": "results/cascade_methods/artifacts/hole17_macro_refit_2026-08-15.json",
+   "claim": "refitting tau/lambda/the open escalation threshold against a MACRO objective is worth +0.0009 macro on the compute-lean arm, p=0.375 against its own permutation null, and EXACTLY 0.0000 on the shipped accuracy-max arm.",
+   "verification": "CONFIRMED as a NEGATIVE. The round's own nested permutation null (200 replicates, macro_iso_cost anchor) gives real +0.0009162 vs null mean +0.0007302 sd 0.0009434, p(null>=real)=0.375; best-of-4-anchors p=0.425. THE GAIN IS THE NULL MEAN. Fold-seed stability over 10 seeds: mean +0.00013, sd 0.00233, range [-0.00325,+0.00348] -- the sign is not stable. Ceiling of the whole threshold family 0.6471 at mu=0, BELOW the 0.656672 bar.",
+   "contribution_to_the_combined_point_ACCURACY": 0.0,
+   "contribution_to_the_combined_point_COST": "7.951 -> 7.660 macro FLOP-eq on accuracy-max (1.7398x -> 1.6762x) with accuracy exactly unchanged -- BUT this saving is bought by lowering the Pandora meanN while the accuracy vector still comes from a FIXED best-of-8 pick, i.e. it spends the accounting inconsistency the same round flags as its own side finding (method_final_mmmu_corrected.py:160 charges cost_pandora(meanN) against an argmax(scores[:8]) accuracy). Under the round's recommended repair (ii) it costs -0.0001 judge / -0.0009 EM macro. NOT TAKEN into the combined point.",
+   "verdict": "NO GAIN. Close as diagnosed. The premise ('the thresholds are cross-fit against a POOLED objective') is refuted by the code: paper_baselines.cascade_persample:88 and pandora_persample:120 fit each threshold against THAT CELL's own train target."
+  },
+  "knob2_certified_veto_binning": {
+   "round_artifact": "results/cascade_methods/artifacts/veto_binning_2026-08-15.json",
+   "claim": "a coarser binning (n_bins 2-4, alpha_z ~0.25) chosen by nested CV under an inner McNemar guardrail (rule R4) is worth +0.00094 macro-8 over the shipped arm at 1.7198x vs 1.7403x.",
+   "independent_replication": {
+    "_how": "fresh nested-CV implementation, outer 5 x inner 5, 10 fold seeds, own Wilson LB, own binning; shares only the raw MedEvalKit dumps with the round's code",
+    "R0_shipped_macro8": 0.657514,
+    "R0_round_value": 0.65751,
+    "R4_macro8": 0.658702,
+    "R4_round_value": 0.65845,
+    "R4_macro8_seed_sd": 0.000296,
+    "R4_macro8_seed_range": [
+     0.65811,
+     0.658996
+    ],
+    "delta_R4_minus_R0": 0.001188,
+    "round_value": 0.00094,
+    "agreement": "same sign, same order, mine is +0.00025 larger. The difference is the MedXpert guardrail leak: the round's folds admitted MedXpert on 6% of decisions (-0.00095 on that cell); mine admitted it on 0 of 50 fold decisions. That leak is fold-assignment noise, not a property of the rule.",
+    "per_cell_R4": {
+     "PMC_VQA": {
+      "acc": 0.56229,
+      "veto_rate": 0.4923
+     },
+     "SLAKE_closed": {
+      "acc": 0.86746,
+      "veto_rate": 0.2984
+     },
+     "VQA_RAD_closed": {
+      "acc": 0.85259,
+      "veto_rate": 0.0
+     },
+     "PATH_VQA_closed": {
+      "acc": 0.88905,
+      "veto_rate": 0.0
+     },
+     "MedXpertQA-MM": {
+      "acc": 0.3065,
+      "veto_rate": 0.0
+     }
+    },
+    "deploy_frequency_over_50_fold_decisions": {
+     "PMC_VQA": 1.0,
+     "SLAKE_closed": 1.0,
+     "VQA_RAD_closed": 0.0,
+     "PATH_VQA_closed": 0.0,
+     "MedXpertQA-MM": 0.0
+    },
+    "modal_settings": [
+     [
+      [
+       4,
+       0.25
+      ],
+      29
+     ],
+     [
+      [
+       2,
+       0.0
+      ],
+      8
+     ],
+     [
+      [
+       10,
+       0.25
+      ],
+      3
+     ],
+     [
+      [
+       4,
+       0.5
+      ],
+      2
+     ],
+     [
+      [
+       4,
+       0.842
+      ],
+      1
+     ],
+     [
+      [
+       12,
+       0.25
+      ],
+      1
+     ]
+    ],
+    "mechanism_confirmed": "COARSER, not looser. The selected settings cluster at n_bins 2-4 with alpha_z in [0,0.5]. More bins => smaller bins => wider Wilson intervals plus the 30-item train guard => nothing certifies, which is exactly why 4 of 5 MCQ cells sit at veto rate 0.0000 under the shipped n_bins=5."
+   },
+   "verdict": "REAL and REPLICATED, and it works by switching SLAKE-closed ON for the first time (veto rate 0.0000 -> 0.298). But see S3: its PMC half is answer-prior and its SLAKE half does not cleanly pass the same control."
+  },
+  "knob3_verifier_inference_resolution": {
+   "round_artifact": "results/cascade_methods/artifacts/verifier_hparams_2026-08-15.json",
+   "claim": "max_pixels 501,760 is the cheapest rung indistinguishable from the deployed 1,003,520 (d_sel_eff judge exactly 0.000000); the pre-registered prize (scoring at the generator's cap320) is REFUTED at -0.0177 judge / -0.0142 EM.",
+   "verification": "CONFIRMED as a COST-ONLY result. The round's own leakage control is decisive against any accuracy claim: 'pick the best rung' earns null mean +0.004319 in sample (p95 +0.010899) from SHUFFLED LABELS ALONE, while the real in-sample best rung gains EXACTLY 0.000000 => p = 1.0; nested CV is WORSE than the control (global -0.002044, p=0.6385; per-cell -0.005450, p=0.845). NO RUNG BEATS THE DEPLOYED ONE.",
+   "contribution_to_the_combined_point_ACCURACY": 0.0,
+   "contribution_to_the_combined_point_COST": "-6.39% of OPEN-ARM FLOP-eq, -0.52 GiB, -23% batch-1 verifier latency; 1.0003x at the honest macro, i.e. NOTHING. As-charged (the currency this file's frontier uses) it is exactly 0, because pandora_controller.py:50-52 charges one verifier forward at 1.0 regardless of resolution.",
+   "verdict": "SHIP AS HYGIENE, NOT AS A RESULT."
+  },
+  "knob4_weitzman_lambda": {
+   "round_artifact": "results/cascade_methods/artifacts/weitzman_T04_2026-08-15.json",
+   "claim": "refitting lambda on T=0.4 pools LOSES -0.00361 [-0.00553,-0.00172] judge / -0.00399 EM on the open-3 macro (permutation p=0.005); the free win is the TEMPERATURE, not the refit.",
+   "verification": "CONFIRMED. The round's five null tests reproduce (frozen metric 3.60e-07, identity 5.55e-17, zeta closed form 3.44e-15, policy bit-exact 0.0, shipped open cells 4.81e-05). Re-read from the ARMS block: A_deployed_T07r open-3 judge 0.579712, B_stale_on_T04 0.588334 (+0.008622), C_refit_T04 0.584719 (-0.003615 vs stale). Both currencies agree.",
+   "contribution_to_the_combined_point": "NEGATIVE if taken. NOT TAKEN.",
+   "verdict": "DO NOT REFIT. The incumbent lambda is the better one."
+  }
+ },
+ "S2_WHAT_T04_IS_ACTUALLY_WORTH_ON_THE_SHIPPED_ARM": {
+  "_the_new_measurement": "the temperature ladder measured T=0.4 on the SELECTED endpoint (the best-of-8 verifier pick, BEFORE escalation) and knob 4 measured it on the plain-Weitzman open arm. Neither is the shipped accuracy-max open policy, which is best-of-8 + the F10-L2D rejector escalating to 32B-direct. This section measures it there for the first time, with an IN-SESSION T=0.7 control (T07r) generated in the same session as the T=0.4 pools, so the +-0.008 stored-vs-in-session nuisance cancels.",
+  "_protocol": "3 generation seeds per temperature, per-item vectors seed-averaged, F10 rejector refit per fold on each pool's own features (identical code both sides), paired item bootstrap nboot=10000 seed 20260815, BOTH currencies on IDENTICAL picks.",
+  "attenuation_table": {
+   "SLAKE_open": {
+    "judge": {
+     "SELECTED_bo8_T07r": 0.7385,
+     "SELECTED_bo8_T04": 0.74677,
+     "d_SELECTED": 0.00827,
+     "esc_T07r": 0.5478,
+     "esc_T04": 0.5545,
+     "after_F10_T07r": 0.81034,
+     "after_F10_T04": 0.81499,
+     "d_after_F10": 0.00465,
+     "fraction_of_SELECTED_gain_retained": 0.562
+    },
+    "em": {
+     "SELECTED_bo8_T07r": 0.76072,
+     "SELECTED_bo8_T04": 0.77933,
+     "d_SELECTED": 0.0186,
+     "esc_T07r": 0.5917,
+     "esc_T04": 0.5457,
+     "after_F10_T07r": 0.84186,
+     "after_F10_T04": 0.84186,
+     "d_after_F10": 0.0,
+     "fraction_of_SELECTED_gain_retained": 0.0
+    }
+   },
+   "VQA_RAD_open": {
+    "judge": {
+     "SELECTED_bo8_T07r": 0.46833,
+     "SELECTED_bo8_T04": 0.50833,
+     "d_SELECTED": 0.04,
+     "esc_T07r": 0.86,
+     "esc_T04": 0.785,
+     "after_F10_T07r": 0.58833,
+     "after_F10_T04": 0.58167,
+     "d_after_F10": -0.00667,
+     "fraction_of_SELECTED_gain_retained": -0.167
+    },
+    "em": {
+     "SELECTED_bo8_T07r": 0.4,
+     "SELECTED_bo8_T04": 0.42667,
+     "d_SELECTED": 0.02667,
+     "esc_T07r": 0.8917,
+     "esc_T04": 0.9383,
+     "after_F10_T07r": 0.52833,
+     "after_F10_T04": 0.535,
+     "d_after_F10": 0.00667,
+     "fraction_of_SELECTED_gain_retained": 0.25
+    }
+   },
+   "PATH_VQA_open": {
+    "judge": {
+     "SELECTED_bo8_T07r": 0.37111,
+     "SELECTED_bo8_T04": 0.37689,
+     "d_SELECTED": 0.00578,
+     "esc_T07r": 0.498,
+     "esc_T04": 0.3769,
+     "after_F10_T07r": 0.38378,
+     "after_F10_T04": 0.38711,
+     "d_after_F10": 0.00333,
+     "fraction_of_SELECTED_gain_retained": 0.577
+    },
+    "em": {
+     "SELECTED_bo8_T07r": 0.34467,
+     "SELECTED_bo8_T04": 0.35422,
+     "d_SELECTED": 0.00956,
+     "esc_T07r": 0.5029,
+     "esc_T04": 0.372,
+     "after_F10_T07r": 0.35667,
+     "after_F10_T04": 0.368,
+     "d_after_F10": 0.01133,
+     "fraction_of_SELECTED_gain_retained": 1.186
+    }
+   }
+  },
+  "per_cell": {
+   "judge": {
+    "SLAKE_open": {
+     "T04": 0.8149870801033591,
+     "T07r": 0.8103359173126616,
+     "delta": 0.004651162790697675,
+     "lo": 0.0005167958656330749,
+     "hi": 0.0103359173126615,
+     "sig": true,
+     "n": 645,
+     "vs_direct_T04": {
+      "delta": -0.003617571059431525,
+      "lo": -0.0082687338501292,
+      "hi": 0.0
+     },
+     "direct": 0.8186046511627907
+    },
+    "VQA_RAD_open": {
+     "T04": 0.5816666666666667,
+     "T07r": 0.5883333333333333,
+     "delta": -0.006666666666666667,
+     "lo": -0.016666666666666666,
+     "hi": 0.0,
+     "sig": false,
+     "n": 200,
+     "vs_direct_T04": {
+      "delta": -0.018333333333333333,
+      "lo": -0.03833333333333334,
+      "hi": -0.0033333333333333335
+     },
+     "direct": 0.6
+    },
+    "PATH_VQA_open": {
+     "T04": 0.3871111111111112,
+     "T07r": 0.3837777777777778,
+     "delta": 0.0033333333333333357,
+     "lo": -0.0035555555555555523,
+     "hi": 0.010000000000000002,
+     "sig": false,
+     "n": 1500,
+     "vs_direct_T04": {
+      "delta": 0.01111111111111111,
+      "lo": -0.005777777777777782,
+      "hi": 0.028222222222222218
+     },
+     "direct": 0.376
+    }
+   },
+   "em": {
+    "SLAKE_open": {
+     "T04": 0.8418604651162791,
+     "T07r": 0.8418604651162791,
+     "delta": 8.606380035853927e-20,
+     "lo": -0.0031007751937984496,
+     "hi": 0.0025839793281653752,
+     "sig": false,
+     "n": 645,
+     "vs_direct_T04": {
+      "delta": -0.004651162790697674,
+      "lo": -0.009302325581395349,
+      "hi": -0.00103359173126615
+     },
+     "direct": 0.8465116279069768
+    },
+    "VQA_RAD_open": {
+     "T04": 0.535,
+     "T07r": 0.5283333333333333,
+     "delta": 0.006666666666666666,
+     "lo": -0.0016666666666666672,
+     "hi": 0.016666666666666666,
+     "sig": false,
+     "n": 200,
+     "vs_direct_T04": {
+      "delta": -0.01,
+      "lo": -0.02,
+      "hi": -0.0016666666666666668
+     },
+     "direct": 0.545
+    },
+    "PATH_VQA_open": {
+     "T04": 0.368,
+     "T07r": 0.3566666666666667,
+     "delta": 0.011333333333333336,
+     "lo": 0.0037777777777777796,
+     "hi": 0.01888888888888889,
+     "sig": true,
+     "n": 1500,
+     "vs_direct_T04": {
+      "delta": 0.023999999999999994,
+      "lo": 0.006222222222222219,
+      "hi": 0.041555555555555554
+     },
+     "direct": 0.344
+    }
+   }
+  },
+  "open3_macro": {
+   "judge": {
+    "delta": 0.0004392764857881146,
+    "lo": -0.0035445305770887164,
+    "hi": 0.004115417743324721,
+    "macro8_contribution": 0.00016472868217054298
+   },
+   "em": {
+    "delta": 0.006000000000000001,
+    "lo": 0.0018906115417743332,
+    "hi": 0.010259302325581395,
+    "macro8_contribution": 0.0022500000000000003
+   }
+  },
+  "finding": "THE SHIPPED ARM'S OWN ESCALATION POLICY ABSORBS THE TEMPERATURE WIN. On the SELECTED endpoint T=0.4 is +0.0083 / +0.0400 / +0.0058 judge per cell (reproducing decoding_ladder_cold_2026-08-14.json exactly). After the F10 rejector, which escalates 55-86% of items to the 32B, the same three cells move +0.0047 / -0.0067 / +0.0033, and the open-3 macro moves +0.00044 [-0.00354,+0.00412] -- a TIE. Only 2.4% of the macro-3 SELECTED gain survives. Under normalised exact match it survives better (+0.00600 [+0.00189,+0.01026], a WIN), so the two currencies DISAGREE about whether T=0.4 helps the shipped arm at all, and the published macro is denominated in the JUDGE.",
+  "why": "escalated items take the 32B's answer, which is identical at both temperatures; the temperature can only act on the retained fraction, and F10 preferentially retains the items the 7B already gets right -- exactly the items the temperature cannot improve.",
+  "instability_flag": "F10's escalation rate on PATH_VQA_open spans 0.326-0.762 across three generation seeds at the SAME temperature (T07r s0/s1/s2 = 0.406/0.326/0.762). The escalation rate of the shipped open policy is NOT IDENTIFIED at this pool size; no cost claim is made from its movement."
+ },
+ "S3_ANSWER_PRIOR_CONTROL": {
+  "_why": "the certified veto's PMC gain is 44% attributable to test_2.csv's answer-letter skew (artifacts/pmcvqa_answer_bias_audit_2026-08-11.json). Any cell the TUNED veto newly switches on must clear the same bar, and the tuning must not make the PMC prior worse.",
+  "PMC_VQA_gold_marginal": {
+   "A": 0.1323,
+   "B": 0.3585,
+   "C": 0.378,
+   "D": 0.1312
+  },
+  "PMC_VQA_independently_recomputed": {
+   "R0_shipped": {
+    "raw": {
+     "delta": 0.00962,
+     "ci": [
+      0.00726,
+      0.01196
+     ]
+    },
+    "letter_balanced": {
+     "delta": 0.00536,
+     "ci": [
+      0.00286,
+      0.00786
+     ]
+    },
+    "gold_A": {
+     "delta": -0.01185,
+     "ci": [
+      -0.01809,
+      -0.00558
+     ]
+    }
+   },
+   "R4_tuned": {
+    "raw": {
+     "delta": 0.01051,
+     "ci": [
+      0.0077,
+      0.01332
+     ]
+    },
+    "letter_balanced": {
+     "delta": 0.00472,
+     "ci": [
+      0.00163,
+      0.00785
+     ]
+    },
+    "gold_A": {
+     "delta": -0.02166,
+     "ci": [
+      -0.02941,
+      -0.01402
+     ]
+    }
+   },
+   "round_values": {
+    "R0": {
+     "raw": 0.00955,
+     "letter_balanced": 0.0053,
+     "gold_A": -0.0118
+    },
+    "R4": {
+     "raw": 0.01025,
+     "letter_balanced": 0.00442,
+     "gold_A": -0.02243
+    }
+   },
+   "finding": "CONFIRMED. Tuning RAISES the raw PMC delta (+0.00962 -> +0.01051) while LOWERING the letter-balanced one (+0.00536 -> +0.00472) and nearly DOUBLING the gold-A damage (-0.01185 -> -0.02166). The PMC half of the tuning gain is answer-prior."
+  },
+  "SLAKE_closed_counter_control_IS_NOT_ROBUST": {
+   "_what": "the round reports SLAKE-closed's gain GROWING when balanced over gold-answer strata (+0.00778 raw -> +0.01792), and concludes item-level competence rather than an answer prior. That conclusion depends on the arbitrary min-stratum-n threshold.",
+   "raw_delta": {
+    "delta": 0.00861,
+    "ci": [
+     0.00132,
+     0.01711
+    ]
+   },
+   "answer_balanced_by_min_stratum_n": {
+    "1": {
+     "n_strata": 48,
+     "item_coverage": 1.0,
+     "delta": -0.00293,
+     "ci": [
+      -0.00871,
+      0.00207
+     ],
+     "verdict": "TIE (point negative)"
+    },
+    "5": {
+     "n_strata": 19,
+     "item_coverage": 0.9306,
+     "delta": -0.00213,
+     "ci": [
+      -0.01435,
+      0.00762
+     ],
+     "verdict": "TIE"
+    },
+    "10": {
+     "n_strata": 13,
+     "item_coverage": 0.8816,
+     "delta": 0.00304,
+     "ci": [
+      -0.01354,
+      0.01469
+     ],
+     "verdict": "TIE"
+    },
+    "20": {
+     "n_strata": 7,
+     "item_coverage": 0.7907,
+     "delta": 0.01749,
+     "ci": [
+      0.00677,
+      0.02943
+     ],
+     "verdict": "WIN"
+    },
+    "30": {
+     "n_strata": 6,
+     "item_coverage": 0.7656,
+     "delta": 0.02041,
+     "ci": [
+      0.00808,
+      0.03433
+     ],
+     "verdict": "WIN (the round's choice)"
+    }
+   },
+   "semantic_decomposition": {
+    "AFF_yes_type": {
+     "n": 346,
+     "delta": 0.02688
+    },
+    "NEG_no_type": {
+     "n": 365,
+     "delta": -0.00219
+    },
+    "OTHER_organ_or_modality": {
+     "n": 125,
+     "delta": -0.0104
+    },
+    "AFF_NEG_balanced": {
+     "n": 711,
+     "delta": 0.01234,
+     "ci": [
+      0.00408,
+      0.02187
+     ],
+     "verdict": "WIN"
+    }
+   },
+   "finding": "THE COUNTER-CONTROL IS THRESHOLD-DEPENDENT AND THEREFORE INCONCLUSIVE. It is a WIN under the round's n>=30 cut (76.6% of items) and under an AFF/NEG semantic collapse (85% of items), and a TIE with a negative point estimate when all 48 gold-answer strata get equal weight. The gain is concentrated entirely on affirmative answers (+0.0269) while negative (-0.0022) and open-vocabulary (-0.0104) strata go the other way -- which is the shape an answer prior has. The round's sentence 'so it is item-level competence, not an answer prior' should be SOFTENED to 'the control does not settle it'.",
+   "_this_is_the_single_most_important_correction_in_this_pass": true
+  }
+ },
+ "S4_PERMUTATION_NULLS": {
+  "_design": "the paired labels (ok7, ok32) are permuted JOINTLY within each MCQ cell -- 7B confidence, fold structure, both accuracy marginals and the ok7/ok32 correlation all preserved; only the item-level confidence->outcome link destroyed -- and the ENTIRE nested-CV selection pipeline is re-run. Statistic = the MCQ-side contribution to the 8-cell macro (which IS the whole macro delta, because this knob leaves the open half byte-identical).",
+  "_why_mandatory": "this project has measured a per-cell 'pick the best' rule earning +0.0109 macro from SHUFFLED LABELS ALONE against +0.0090 on real data (p=0.67).",
+  "INDEPENDENT_RUN_this_pass": {
+   "_seeds": "RNG stream 900000+rep, 2 fold seeds averaged per replicate, fresh implementation",
+   "_file": "results/cascade_methods/artifacts/_hpv_veto_null_indep.jsonl",
+   "R0_shipped_fixed_setting": {
+    "n_perm": 200,
+    "null_mean": -5e-07,
+    "null_sd": 5.4e-06,
+    "null_p50": 0.0,
+    "null_p95": 0.0,
+    "null_max": 0.0,
+    "observed": 0.001204,
+    "p_value_one_sided": 0.00498,
+    "z": 224.928
+   },
+   "R4_guardrail_gated_global": {
+    "n_perm": 200,
+    "null_mean": -0.0001996,
+    "null_sd": 0.0002181,
+    "null_p50": -0.0001539,
+    "null_p95": 5.41e-05,
+    "null_max": 0.0005981,
+    "observed": 0.0023797,
+    "p_value_one_sided": 0.00498,
+    "z": 11.825
+   },
+   "R4_minus_R0_THE_TUNING_GAIN": {
+    "n_perm": 200,
+    "null_mean": -0.000199,
+    "null_sd": 0.0002176,
+    "null_p50": -0.0001539,
+    "null_p95": 5.41e-05,
+    "null_max": 0.0005981,
+    "observed": 0.0011757,
+    "p_value_one_sided": 0.00498,
+    "z": 6.318
+   },
+   "_completed": "200 replicates, 0 per-replicate errors"
+  },
+  "ROUND_RUN_for_comparison": {
+   "R4": {
+    "observed": 0.00206,
+    "null_mean": -0.00018,
+    "null_sd": 0.0002,
+    "null_max": 0.001,
+    "z": 11.27,
+    "p": 0.00498
+   },
+   "R2_per_cell_the_known_fake_win_route": {
+    "observed": 0.00094,
+    "null_mean": -0.0016,
+    "null_sd": 0.0007,
+    "z": 3.63
+   },
+   "R0_sanity_anchor": {
+    "observed": 0.00117,
+    "null_mean": -0.0,
+    "null_sd": 1e-05
+   }
+  },
+  "reading": "THE VETO TUNING IS NOT INSIDE ITS NULL. Unlike the project's prior +0.0109-from-shuffled-labels precedent, these nulls are NEGATIVE: vetoing at random replaces a 32B answer with a worse 7B one, so noise-driven certification LOSES. The guardrail is what keeps the null tight (the round measures the unguarded rule's null sd at 0.00057 against the guarded rule's 0.00020, a 2.9x reduction).",
+  "knob1_null": {
+   "anchor": "macro_iso_cost, nested, 200 replicates",
+   "real": 0.0009162,
+   "null_mean": 0.0007302,
+   "null_sd": 0.0009434,
+   "null_p95": 0.0023811,
+   "p_null_ge_real": 0.375,
+   "best_of_4_anchors_p": 0.425,
+   "reading": "INSIDE THE NULL. The observed effect IS the null mean."
+  },
+  "knob3_null": {
+   "design": "labels shuffled within each item's 8-slot pool, 2000 permutations",
+   "in_sample_max_over_rungs_null_mean": 0.004018,
+   "null_p95": 0.010899,
+   "real_in_sample_best_rung_gain": 0.0,
+   "p": 1.0,
+   "nested_global_p": 0.6385,
+   "nested_per_cell_p": 0.845,
+   "reading": "THE SELECTION PROCEDURE EARNS STRICTLY LESS THAN CHANCE. No 'best rung' claim is licensed."
+  },
+  "knob4_null": {
+   "design": "the whole label bundle permuted across items within each cell, 200 replicates",
+   "S4_refit_minus_stale": {
+    "real": -0.00361,
+    "null_mean": -0.00031,
+    "null_sd": 0.00071,
+    "p_two_sided": 0.005
+   },
+   "S5_T04_best_minus_T07_best": {
+    "real": 0.00522,
+    "null_mean": -0.00012,
+    "null_sd": 0.00067,
+    "p": 0.005
+   },
+   "S1_WARNING": "shuffled labels REACH the always-32B-direct bar in 90.5% (T=0.4) and 100% (T=0.7) of replicates at a median 4.57 FLOP-eq, because a flat isotonic map makes the controller degenerate into always-32B-direct. 'The controller reaches parity at some compute' is therefore NOT A CLAIM.",
+   "reading": "the refit-vs-stale contrast and the temperature contrast both SURVIVE; the parity claim does not."
+  },
+  "T04_selection": "the temperature was chosen in a PRE-REGISTERED round (artifacts/_decoding_ladder_cold_prereg.json, written before any rung existed) against a matched in-session control, CI-clean in BOTH currencies, with a declared plateau {T03r, T04}. No selection is priced here. What this pass adds is that the SHIPPED ARM does not receive most of that win (S2)."
+ },
+ "S5_THE_COMBINED_OPERATING_POINT": {
+  "_arms": {
+   "always_32b_direct": "THE BAR",
+   "shipped_accuracy_max": "the shipped headline arm (F8 veto on PMC, always-32B-direct on the other 4 MCQ cells, pandora-N + F10-L2D on the 3 open cells)",
+   "shipped_best_cost_point": "the pre-specified per-cell arm swap of cost_decomposition_2026-08-12.json: certified veto on PMC, compute-lean on SLAKE-closed and PathVQA-closed, always-32B-direct on VQA-RAD-closed, MedXpert AND all three open cells",
+   "A_veto_tuned_accuracy_max": "shipped accuracy-max with the R4 tuned veto (knob 2) on the MCQ half",
+   "B_T04_accuracy_max": "shipped accuracy-max with the open half regenerated at T=0.4 (knob 4's free lever)",
+   "C_COMBINED_accuracy_max": "both",
+   "D_COMBINED_cost_point": "the shipped best cost point with the R4 tuned veto substituted on the two cells R4's own inner guardrail admits (PMC, SLAKE-closed). T=0.4 does nothing here because all three open cells already run always-32B-direct."
+  },
+  "_cost_currency": "as-charged FLOP-eq, equal weight per cell, from _selector_rerun_parts/macro_disjoint.json; veto cell = 1.0 + (1-v)*4.57; a fold whose certificate accepts no bin never runs the 7B and costs 4.57.",
+  "_note_on_the_open_half": "arms B and C apply the IN-SESSION-MATCHED T04-minus-T07r per-item delta to the stored open vectors, so the stored-vs-in-session nuisance cancels in the delta but the arm's absolute open cells remain the stored ones. Their open cost is held at the shipped values: knob 4 measures meanN essentially unchanged under the stale policy at T=0.4 (5.919 -> 5.934), and the escalation-rate moves are inside generation-seed noise (S2 instability flag).",
+  "table": {
+   "always_32b_direct": {
+    "macro_acc": 0.656672,
+    "macro_flopeq_as_charged": 4.57,
+    "x_always_32b_direct": 1.0,
+    "per_cell_acc": {
+     "PMC_VQA": 0.55178,
+     "SLAKE_closed": 0.85885,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88905,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.8186,
+     "VQA_RAD_open": 0.6,
+     "PATH_VQA_open": 0.376
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 4.57,
+     "SLAKE_closed": 4.57,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 4.57,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 4.57,
+     "VQA_RAD_open": 4.57,
+     "PATH_VQA_open": 4.57
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": -0.000832,
+     "lo": -0.003737,
+     "hi": 0.002213,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": -0.000184,
+     "lo": -0.002303,
+     "hi": 0.001887,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.00912,
+       "lo": 0.00398,
+       "hi": 0.01445
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.03349,
+       "lo": 0.00957,
+       "hi": 0.05861
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.02789,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04819,
+       "lo": 0.03599,
+       "hi": 0.06038
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.021,
+       "hi": 0.068
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08217,
+       "lo": 0.05116,
+       "hi": 0.11318
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.135,
+       "lo": 0.07,
+       "hi": 0.2
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.052,
+       "lo": 0.02933,
+       "hi": 0.07467
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": []
+   },
+   "shipped_accuracy_max": {
+    "macro_acc": 0.657505,
+    "macro_flopeq_as_charged": 7.951,
+    "x_always_32b_direct": 1.7398,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56132,
+     "SLAKE_closed": 0.85885,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88905,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.81705,
+     "VQA_RAD_open": 0.59,
+     "PATH_VQA_open": 0.38467
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.741,
+     "SLAKE_closed": 4.57,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 4.57,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 13.971,
+     "VQA_RAD_open": 17.304,
+     "PATH_VQA_open": 10.312
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.000832,
+     "lo": -0.002146,
+     "hi": 0.003665,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.000648,
+     "lo": -0.002992,
+     "hi": 0.004166,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01867,
+       "lo": 0.01394,
+       "hi": 0.02327
+      },
+      "vs_direct": {
+       "delta": 0.00954,
+       "lo": 0.00721,
+       "hi": 0.01194
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.03349,
+       "lo": 0.00957,
+       "hi": 0.05861
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.02789,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04819,
+       "lo": 0.03629,
+       "hi": 0.06008
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.0225,
+       "hi": 0.0685
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08062,
+       "lo": 0.04961,
+       "hi": 0.11318
+      },
+      "vs_direct": {
+       "delta": -0.00155,
+       "lo": -0.00775,
+       "hi": 0.0031
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.125,
+       "lo": 0.06,
+       "hi": 0.19
+      },
+      "vs_direct": {
+       "delta": -0.01,
+       "lo": -0.025,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.06067,
+       "lo": 0.04267,
+       "hi": 0.07933
+      },
+      "vs_direct": {
+       "delta": 0.00867,
+       "lo": -0.00933,
+       "hi": 0.02667
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": []
+   },
+   "shipped_best_cost_point": {
+    "macro_acc": 0.656857,
+    "macro_flopeq_as_charged": 3.9519,
+    "x_always_32b_direct": 0.8647,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56132,
+     "SLAKE_closed": 0.85167,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88816,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.8186,
+     "VQA_RAD_open": 0.6,
+     "PATH_VQA_open": 0.376
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.741,
+     "SLAKE_closed": 1.935,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 3.089,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 4.57,
+     "VQA_RAD_open": 4.57,
+     "PATH_VQA_open": 4.57
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.000184,
+     "lo": -0.001855,
+     "hi": 0.00226,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": -0.000648,
+     "lo": -0.004199,
+     "hi": 0.003109,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.0,
+     "lo": 0.0,
+     "hi": 0.0,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01867,
+       "lo": 0.01394,
+       "hi": 0.02342
+      },
+      "vs_direct": {
+       "delta": 0.00954,
+       "lo": 0.00724,
+       "hi": 0.01188
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.02632,
+       "lo": 0.00718,
+       "hi": 0.04426
+      },
+      "vs_direct": {
+       "delta": -0.00718,
+       "lo": -0.02392,
+       "hi": 0.00957
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.0239,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04729,
+       "lo": 0.03569,
+       "hi": 0.0586
+      },
+      "vs_direct": {
+       "delta": -0.00089,
+       "lo": -0.00416,
+       "hi": 0.00238
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.02199,
+       "hi": 0.0685
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08217,
+       "lo": 0.05116,
+       "hi": 0.11473
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.135,
+       "lo": 0.07,
+       "hi": 0.2
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.052,
+       "lo": 0.02933,
+       "hi": 0.07467
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": []
+   },
+   "A_veto_tuned_accuracy_max": {
+    "macro_acc": 0.658702,
+    "macro_flopeq_as_charged": 7.8529,
+    "x_always_32b_direct": 1.7184,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56229,
+     "SLAKE_closed": 0.86746,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88905,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.81705,
+     "VQA_RAD_open": 0.59,
+     "PATH_VQA_open": 0.38467
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.3204,
+     "SLAKE_closed": 4.2061,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 4.57,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 13.971,
+     "VQA_RAD_open": 17.304,
+     "PATH_VQA_open": 10.312
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.00203,
+     "lo": -0.001132,
+     "hi": 0.005084,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": 0.001197,
+     "lo": 0.000258,
+     "hi": 0.002254,
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.001846,
+     "lo": -0.001632,
+     "hi": 0.005275,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01963,
+       "lo": 0.01527,
+       "hi": 0.02395
+      },
+      "vs_direct": {
+       "delta": 0.01051,
+       "lo": 0.00771,
+       "hi": 0.01337
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.04211,
+       "lo": 0.0201,
+       "hi": 0.06471
+      },
+      "vs_direct": {
+       "delta": 0.00861,
+       "lo": 0.00144,
+       "hi": 0.01675
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.0239,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04819,
+       "lo": 0.03599,
+       "hi": 0.06038
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.0215,
+       "hi": 0.068
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08062,
+       "lo": 0.04961,
+       "hi": 0.11318
+      },
+      "vs_direct": {
+       "delta": -0.00155,
+       "lo": -0.00775,
+       "hi": 0.0031
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.125,
+       "lo": 0.06,
+       "hi": 0.19
+      },
+      "vs_direct": {
+       "delta": -0.01,
+       "lo": -0.025,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.06067,
+       "lo": 0.04333,
+       "hi": 0.07933
+      },
+      "vs_direct": {
+       "delta": 0.00867,
+       "lo": -0.00933,
+       "hi": 0.02733
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": []
+   },
+   "B_T04_accuracy_max": {
+    "macro_acc": 0.65767,
+    "macro_flopeq_as_charged": 7.951,
+    "x_always_32b_direct": 1.7398,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56132,
+     "SLAKE_closed": 0.85885,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88905,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.82171,
+     "VQA_RAD_open": 0.58333,
+     "PATH_VQA_open": 0.388
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.741,
+     "SLAKE_closed": 4.57,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 4.57,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 13.971,
+     "VQA_RAD_open": 17.304,
+     "PATH_VQA_open": 10.312
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.000997,
+     "lo": -0.002545,
+     "hi": 0.004477,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": 0.000165,
+     "lo": -0.001326,
+     "hi": 0.001555,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.000813,
+     "lo": -0.003314,
+     "hi": 0.004925,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01867,
+       "lo": 0.01406,
+       "hi": 0.02327
+      },
+      "vs_direct": {
+       "delta": 0.00954,
+       "lo": 0.00721,
+       "hi": 0.01188
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.03349,
+       "lo": 0.00957,
+       "hi": 0.05861
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.02789,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04819,
+       "lo": 0.03629,
+       "hi": 0.06038
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.022,
+       "hi": 0.0685
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08527,
+       "lo": 0.05426,
+       "hi": 0.11731
+      },
+      "vs_direct": {
+       "delta": 0.0031,
+       "lo": -0.00362,
+       "hi": 0.00982
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.11833,
+       "lo": 0.05667,
+       "hi": 0.18
+      },
+      "vs_direct": {
+       "delta": -0.01667,
+       "lo": -0.03333,
+       "hi": -0.00333
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.064,
+       "lo": 0.04444,
+       "hi": 0.08333
+      },
+      "vs_direct": {
+       "delta": 0.012,
+       "lo": -0.01111,
+       "hi": 0.03489
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": [
+     "VQA_RAD_open"
+    ]
+   },
+   "C_COMBINED_accuracy_max": {
+    "macro_acc": 0.658867,
+    "macro_flopeq_as_charged": 7.8529,
+    "x_always_32b_direct": 1.7184,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56229,
+     "SLAKE_closed": 0.86746,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88905,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.82171,
+     "VQA_RAD_open": 0.58333,
+     "PATH_VQA_open": 0.388
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.3204,
+     "SLAKE_closed": 4.2061,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 4.57,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 13.971,
+     "VQA_RAD_open": 17.304,
+     "PATH_VQA_open": 10.312
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.002194,
+     "lo": -0.00155,
+     "hi": 0.005839,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": 0.001362,
+     "lo": -0.000416,
+     "hi": 0.003081,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.00201,
+     "lo": -0.00205,
+     "hi": 0.005843,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01963,
+       "lo": 0.01523,
+       "hi": 0.02404
+      },
+      "vs_direct": {
+       "delta": 0.01051,
+       "lo": 0.0077,
+       "hi": 0.01341
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.04211,
+       "lo": 0.01926,
+       "hi": 0.06471
+      },
+      "vs_direct": {
+       "delta": 0.00861,
+       "lo": 0.0012,
+       "hi": 0.01687
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.02789,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04819,
+       "lo": 0.03599,
+       "hi": 0.06038
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.0225,
+       "hi": 0.068
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08527,
+       "lo": 0.05426,
+       "hi": 0.11783
+      },
+      "vs_direct": {
+       "delta": 0.0031,
+       "lo": -0.00362,
+       "hi": 0.01034
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.11833,
+       "lo": 0.05667,
+       "hi": 0.17833
+      },
+      "vs_direct": {
+       "delta": -0.01667,
+       "lo": -0.035,
+       "hi": -0.00333
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.064,
+       "lo": 0.04466,
+       "hi": 0.08289
+      },
+      "vs_direct": {
+       "delta": 0.012,
+       "lo": -0.01067,
+       "hi": 0.03422
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": [
+     "VQA_RAD_open"
+    ]
+   },
+   "D_COMBINED_cost_point": {
+    "macro_acc": 0.658951,
+    "macro_flopeq_as_charged": 4.1832,
+    "x_always_32b_direct": 0.9154,
+    "per_cell_acc": {
+     "PMC_VQA": 0.56229,
+     "SLAKE_closed": 0.86746,
+     "VQA_RAD_closed": 0.85259,
+     "PATH_VQA_closed": 0.88816,
+     "MedXpertQA-MM": 0.3065,
+     "SLAKE_open": 0.8186,
+     "VQA_RAD_open": 0.6,
+     "PATH_VQA_open": 0.376
+    },
+    "per_cell_flopeq": {
+     "PMC_VQA": 3.3204,
+     "SLAKE_closed": 4.2061,
+     "VQA_RAD_closed": 4.57,
+     "PATH_VQA_closed": 3.089,
+     "MedXpertQA-MM": 4.57,
+     "SLAKE_open": 4.57,
+     "VQA_RAD_open": 4.57,
+     "PATH_VQA_open": 4.57
+    },
+    "vs_always_32b_direct": {
+     "delta": 0.002279,
+     "lo": 0.001222,
+     "hi": 0.003432,
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "vs_shipped_accuracy_max": {
+     "delta": 0.001446,
+     "lo": -0.001544,
+     "hi": 0.004831,
+     "sig": false,
+     "verdict": "TIE"
+    },
+    "vs_shipped_best_cost_point": {
+     "delta": 0.002094,
+     "lo": 0.000386,
+     "hi": 0.003841,
+     "sig": true,
+     "verdict": "WIN"
+    },
+    "guardrail_per_cell": {
+     "PMC_VQA": {
+      "vs_7b": {
+       "delta": 0.01963,
+       "lo": 0.01522,
+       "hi": 0.02401
+      },
+      "vs_direct": {
+       "delta": 0.01051,
+       "lo": 0.00773,
+       "hi": 0.01332
+      }
+     },
+     "SLAKE_closed": {
+      "vs_7b": {
+       "delta": 0.04211,
+       "lo": 0.01962,
+       "hi": 0.06459
+      },
+      "vs_direct": {
+       "delta": 0.00861,
+       "lo": 0.00119,
+       "hi": 0.01699
+      }
+     },
+     "VQA_RAD_closed": {
+      "vs_7b": {
+       "delta": 0.07171,
+       "lo": 0.02789,
+       "hi": 0.11952
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_closed": {
+      "vs_7b": {
+       "delta": 0.04729,
+       "lo": 0.03569,
+       "hi": 0.05919
+      },
+      "vs_direct": {
+       "delta": -0.00089,
+       "lo": -0.00416,
+       "hi": 0.00238
+      }
+     },
+     "MedXpertQA-MM": {
+      "vs_7b": {
+       "delta": 0.045,
+       "lo": 0.0225,
+       "hi": 0.06751
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "SLAKE_open": {
+      "vs_7b": {
+       "delta": 0.08217,
+       "lo": 0.05116,
+       "hi": 0.11318
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "VQA_RAD_open": {
+      "vs_7b": {
+       "delta": 0.135,
+       "lo": 0.07,
+       "hi": 0.2
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     },
+     "PATH_VQA_open": {
+      "vs_7b": {
+       "delta": 0.052,
+       "lo": 0.02933,
+       "hi": 0.074
+      },
+      "vs_direct": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      }
+     }
+    },
+    "guardrail_flags_vs_always_7b": [],
+    "guardrail_flags_vs_always_32b_direct": []
+   }
+  },
+  "ADDITIVITY": {
+   "veto_alone_vs_shipped": 0.001197,
+   "T04_alone_vs_shipped": 0.000165,
+   "sum": 0.001362,
+   "combined_vs_shipped": 0.001362,
+   "residual": 0.0,
+   "reading": "EXACTLY ADDITIVE ON THE 8-CELL MACRO, by construction: knob 2 moves only multiple-choice cells and T=0.4 moves only open cells, and the macro is an equal-weight average over disjoint cells. THE SUB-ADDITIVITY IS INSIDE THE OPEN HALF, not between the knobs: T=0.4 is worth +0.0180 on the open-3 SELECTED macro and +0.00044 after the shipped arm's own F10 escalation, i.e. 2.4% survives (S2). Knob 1 and knob 3 are exactly 0.0000 on accuracy, so there is nothing for them to be sub-additive with."
+  },
+  "D_arm_scrutiny": {
+   "_why": "D is the only CI-clean win in this pass, and it has the shape the project has already learned to distrust (armcombine_mcqonly_2026-08-11.json: 'a CI-clean macro WIN that works by switching the method OFF').",
+   "per_cell_delta_vs_direct": {
+    "PMC_VQA": 0.01051,
+    "SLAKE_closed": 0.00861,
+    "VQA_RAD_closed": 0.0,
+    "PATH_VQA_closed": -0.00089,
+    "MedXpertQA-MM": 0.0,
+    "SLAKE_open": 0.0,
+    "VQA_RAD_open": 0.0,
+    "PATH_VQA_open": 0.0
+   },
+   "cells_byte_identical_to_the_bar": 5,
+   "leave_one_cell_out_of_the_vs_direct_delta": {
+    "drop_PMC_VQA": 0.001103,
+    "drop_SLAKE_closed": 0.001374,
+    "drop_VQA_RAD_closed": 0.002604,
+    "drop_PATH_VQA_closed": 0.002732,
+    "drop_MedXpertQA-MM": 0.002604,
+    "drop_SLAKE_open": 0.002604,
+    "drop_VQA_RAD_open": 0.002604,
+    "drop_PATH_VQA_open": 0.002604,
+    "range": [
+     0.001103,
+     0.002732
+    ],
+    "reading": "unlike armcombine_mcqonly (which goes to exactly 0.000 on dropping PMC), D survives every leave-one-out at >= +0.0011. Two cells carry it, not one."
+   },
+   "answer_prior_corrected": {
+    "with_letter_balanced_PMC_and_SLAKE_all_48_strata": 0.000113,
+    "with_letter_balanced_PMC_and_SLAKE_min_n_30": 0.00303,
+    "raw": 0.002279,
+    "reading": "THE VERDICT FLIPS WITH AN ARBITRARY STRATUM THRESHOLD. Under the answer-prior-corrected currency D's macro delta is anywhere from +0.0001 to +0.0030 depending on a choice with no canonical answer. That is not a shippable win."
+   },
+   "selection_status": "POST-HOC / EXPLORATORY. The cost point's cell assignment is pre-specified (cost_floor_2026-08-10 cross-fit) and the veto setting comes from R4's nested CV under its own permutation null, but the DECISION TO COMBINE THEM was taken after seeing both results. It needs pre-registration before it can be claimed.",
+   "guardrail": "clean on all 8 cells against always-7B AND against always-32B-direct."
+  }
+ },
+ "S6_HEADLINE_TRANSLATION": {
+  "does_anything_move_the_headline": "NO. The published headline is '+0.0615 [+0.0514,+0.0715] vs a reasoning 32B, TIE vs always-32B-direct, at 1.74x'. After this round the best defensible accuracy-max point is 0.6589 at 1.718x: the vs-reasoning claim is unchanged (the reasoning baseline is untouched), and the vs-direct verdict is still a TIE (+0.0022 [-0.0016,+0.0058], 0.76x the +0.0029 bar).",
+  "vs_always_32b_direct_0_656672": {
+   "shipped_accuracy_max": {
+    "delta": 0.000832,
+    "lo": -0.002146,
+    "hi": 0.003665,
+    "sig": false,
+    "verdict": "TIE"
+   },
+   "C_COMBINED_accuracy_max": {
+    "delta": 0.002194,
+    "lo": -0.00155,
+    "hi": 0.005839,
+    "sig": false,
+    "verdict": "TIE"
+   },
+   "D_COMBINED_cost_point": {
+    "delta": 0.002279,
+    "lo": 0.001222,
+    "hi": 0.003432,
+    "sig": true,
+    "verdict": "WIN"
+   }
+  },
+  "vs_shipped_accuracy_max_0_6575_at_1_740x": {
+   "C_COMBINED_accuracy_max": {
+    "delta": 0.001362,
+    "lo": -0.000416,
+    "hi": 0.003081,
+    "sig": false,
+    "verdict": "TIE",
+    "compute": "1.718x vs 1.740x, -1.2%"
+   },
+   "D_COMBINED_cost_point": {
+    "delta": 0.001446,
+    "lo": -0.001544,
+    "hi": 0.004831,
+    "sig": false,
+    "verdict": "TIE",
+    "compute": "0.915x vs 1.740x, -47.4%"
+   }
+  },
+  "vs_best_cost_point_0_6569_at_0_865x": {
+   "C_COMBINED_accuracy_max": {
+    "delta": 0.00201,
+    "lo": -0.00205,
+    "hi": 0.005843,
+    "sig": false,
+    "verdict": "TIE",
+    "compute": "1.718x vs 0.865x, +98.6% MORE expensive"
+   },
+   "D_COMBINED_cost_point": {
+    "delta": 0.002094,
+    "lo": 0.000386,
+    "hi": 0.003841,
+    "sig": true,
+    "verdict": "WIN",
+    "compute": "0.915x vs 0.865x, +5.8% MORE expensive"
+   }
+  },
+  "the_only_Pareto_statement_available": "D dominates the shipped accuracy-max arm on BOTH axes (0.65895 vs 0.65750 at 0.915x vs 1.740x) -- but it does so by running always-32B-direct on all three open cells, i.e. by switching the open-text machinery off, and its accuracy edge is answer-prior-sensitive (S5). It does NOT dominate the best cost point, which is 5.8% cheaper.",
+  "what_the_bar_needs": "a summed per-cell gain of ~+0.0235. The whole of this round delivers +0.0182 summed (D) or +0.0109 summed (C), of which the answer-prior-corrected part is +0.0009 to +0.0242."
+ },
+ "S7_WHAT_IS_LEFT_ranked": [
+  {
+   "rank": 1,
+   "item": "An answer-letter-bias audit of PMC-VQA test_2.csv",
+   "why": "it was already OWED (armcombine_mcqonly_2026-08-11) and this round makes it load-bearing twice over: the veto tuning's PMC gain moves the RAW delta up (+0.00962 -> +0.01051) and the letter-balanced delta DOWN (+0.00536 -> +0.00472), and every arm in the frontier table above carries PMC as its largest single cell.",
+   "cost": "CPU only",
+   "blocking": true
+  },
+  {
+   "rank": 2,
+   "item": "A canonical definition of the answer-balanced currency for open-vocabulary closed cells",
+   "why": "SLAKE-closed's counter-control swings from -0.00293 to +0.02041 across min-stratum-n in {1,...,30} (S3). Whether knob 2's newly-switched-on cell is competence or prior is currently a choice, not a measurement.",
+   "cost": "CPU only",
+   "blocking": true
+  },
+  {
+   "rank": 3,
+   "item": "Pre-register arm D and re-run it on a held-out draw",
+   "why": "it is the only CI-clean point in the round and it was assembled post hoc.",
+   "cost": "CPU only"
+  },
+  {
+   "rank": 4,
+   "item": "Fix the accuracy/cost inconsistency at method_final_mmmu_corrected.py:160 (repair (ii))",
+   "why": "the accuracy-max open cells charge cost_pandora(meanN, esc) with meanN 4.37-6.63 while the accuracy comes from argmax(scores[:8]). Every cost claim on the accuracy-max arm -- including knob 1's 1.740x -> 1.676x -- currently spends that inconsistency. Repair (ii) costs -0.0001 judge / -0.0009 EM macro and preserves the published 1.740x.",
+   "cost": "CPU only"
+  },
+  {
+   "rank": 5,
+   "item": "The pre-registration candidate the veto sweep found and could not claim: n_bins=12 with alpha_z in {1.96, 2.326}",
+   "why": "the only 2 of 135 settings that beat the shipped one LETTER-BALANCED (+0.00623 / +0.00569 vs +0.00534), and they move the OPPOSITE way from what the sweep selects (tighter bound, lower veto rate 0.333 vs 0.400). Found by ranking the eval set in a currency chosen after the fact => pre-registration candidate only.",
+   "cost": "CPU only"
+  },
+  {
+   "rank": 6,
+   "item": "An identified escalation rate for the F10 open policy",
+   "why": "F10's escalation rate on PATH_VQA_open spans 0.326-0.762 across three generation seeds at the SAME temperature. No open-half cost claim is safe until that is pinned.",
+   "cost": "CPU only"
+  },
+  {
+   "rank": 7,
+   "item": "Retire the Weitzman controller in favour of a cross-fit fixed N=1 + confidence gate",
+   "why": "knob 4's addendum measures it more accurate in both currencies, 2.7x cheaper and 3.3x faster sequentially than the refitted controller. It would remove the adaptive-N machinery the surviving '11.74 vs 16.0 FLOP-eq (-27%)' claim depends on, so that claim must be re-examined at the same time.",
+   "cost": "CPU only"
+  },
+  {
+   "rank": 8,
+   "item": "Ship max_pixels 501,760 for the verifier as cost hygiene",
+   "why": "-6.39% open-arm FLOP-eq, -0.52 GiB, -23% batch-1 verifier latency at d_sel_eff judge exactly 0.000000. Zero at the macro. No accuracy claim attaches.",
+   "cost": "config change"
+  },
+  {
+   "rank": 9,
+   "item": "NOT WORTH DOING: any further sweep of tau, lambda or the open escalation threshold",
+   "why": "knob 1 measured the ceiling of that whole threshold family at macro 0.6471 (mu=0, pure accuracy maximisation), BELOW the 0.656672 bar. No re-scalarisation can reach it."
+  }
+ ],
+ "S8_CAVEATS_OF_RECORD": [
+  "Nothing ran end to end. Every operating point is a CPU re-costing of saved per-sample dumps with measured batch-1 constants. VRAM is not measured in this pass.",
+  "Arms B and C mix STORED open cells with an IN-SESSION-MEASURED delta; the delta is nuisance-cancelled but the absolute open cells are the stored ones. Arms A and D touch only the MCQ half and are free of that mix.",
+  "The 8-cell macro's open cells are denominated in the 32B JUDGE. Every open-half number in this file is reported in BOTH currencies, and S2 is the case where they disagree about the verdict.",
+  "vqa_rad cells are n=200/251. VQA_RAD_open is guardrail-FLAGGED against always-32B-direct in arms B and C (-0.01667 with the T04 substitution vs -0.01000 shipped), and that move is inside generation-seed noise.",
+  "MedXpertQA-MM is guardrail-flagged at -0.00095 [-0.00185,-0.00010] in the ROUND's R4 (6% of folds admit it) and at exactly 0.0000 in this pass's independent replication (0 of 50 fold decisions admit it). The leak is fold-assignment noise; the rule should carry an explicit never-deploy-on-MedXpert clause if it is ever shipped.",
+  "Two A100s were shared with concurrent sessions throughout. No GPU job was launched in this pass -- it is CPU numpy over stored caches -- and nothing was killed. MedEvalKit/ untouched. freeze_selector.py NOT run. No visual LoRA scored under vLLM."
+ ],
+ "S9_CODE_AND_LOGS": {
+  "verification_scripts": "src/cascade_methods/hyperparameters_verify.py (this pass, assembled from the working scripts listed below)",
+  "permutation_null_output": "results/cascade_methods/artifacts/_hpv_veto_null_indep.jsonl (resumable, one JSON row per replicate, rep=-1 is the real data)",
+  "log": "logs/hpv_veto_null_indep.log"
+ }
+}

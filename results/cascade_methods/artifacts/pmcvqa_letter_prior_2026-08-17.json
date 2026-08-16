@@ -1,0 +1,117 @@
+{
+  "title": "LIVE PMC-VQA (test_2.csv track) answer-letter prior and calibration residual",
+  "no_fabricated_numbers": true,
+  "source_dump": "MedEvalKit/eval_results_lingshu7b_full/{}/PMC_VQA/results.json",
+  "gpu_used": false,
+  "null_test": {
+    "n": 33430,
+    "acc_recomputed": 0.5426562967394556,
+    "published_always_7b": 0.5427,
+    "abs_dev_vs_published": 4.3703260544369904e-05,
+    "unparsed_responses": 0,
+    "passed": true
+  },
+  "per_letter": {
+    "A": {
+      "gold_rate": 0.13230631169608137,
+      "pred_rate": 0.19958121447801375,
+      "n_pred": 6672,
+      "precision": 0.2868705035971223,
+      "recall": 0.4327379606601854,
+      "mean_conf_when_predicted": 0.5374964434857503,
+      "gold_given_pred": {
+        "A": 0.2868705035971223,
+        "B": 0.3065047961630695,
+        "C": 0.29451438848920863,
+        "D": 0.11211031175059952
+      }
+    },
+    "B": {
+      "gold_rate": 0.35848040682022136,
+      "pred_rate": 0.3476817230032905,
+      "n_pred": 11623,
+      "precision": 0.6210100662479566,
+      "recall": 0.6023030707610146,
+      "mean_conf_when_predicted": 0.6252019932567232,
+      "gold_given_pred": {
+        "A": 0.11081476383033641,
+        "B": 0.6210100662479566,
+        "C": 0.19168889271272477,
+        "D": 0.07648627720898218
+      }
+    },
+    "C": {
+      "gold_rate": 0.377983846844152,
+      "pred_rate": 0.31986239904277597,
+      "n_pred": 10693,
+      "precision": 0.6869914897596558,
+      "recall": 0.581354859132637,
+      "mean_conf_when_predicted": 0.6382979417979722,
+      "gold_given_pred": {
+        "A": 0.07369307023286262,
+        "B": 0.16889553913775368,
+        "C": 0.6869914897596558,
+        "D": 0.07041990086972785
+      }
+    },
+    "D": {
+      "gold_rate": 0.1312294346395453,
+      "pred_rate": 0.13287466347591984,
+      "n_pred": 4442,
+      "precision": 0.4495722647456101,
+      "recall": 0.45520857077729654,
+      "mean_conf_when_predicted": 0.5949728801799666,
+      "gold_given_pred": {
+        "A": 0.0974786132372805,
+        "B": 0.2059882935614588,
+        "C": 0.24696082845565062,
+        "D": 0.4495722647456101
+      }
+    }
+  },
+  "gold_B_plus_C": 0.7364642536643733,
+  "pred_B_plus_C": 0.6675441220460664,
+  "constant_guesser_acc": {
+    "A": 0.13230631169608137,
+    "B": 0.35848040682022136,
+    "C": 0.377983846844152,
+    "D": 0.1312294346395453
+  },
+  "calibration_residual": {
+    "precision_range_across_predicted_letters": 0.40012098616253355,
+    "mean_conf_range_across_predicted_letters": 0.10080149831222185,
+    "ratio": 3.969395225884457,
+    "reading": "confidence is not a sufficient statistic for correctness on this cell; the residual is the predicted answer letter"
+  },
+  "label_level_prior_shift_is_dead": {
+    "status": "DIAGNOSTIC, evaluated on eval gold; NOT cross-fit, NOT a claimed method",
+    "gold_given_pred_A": {
+      "A": 0.2868705035971223,
+      "B": 0.3065047961630695,
+      "C": 0.29451438848920863,
+      "D": 0.11211031175059952
+    },
+    "reading": "gold is near-uniform given pred=A, so A-predictions are near-uninformative rather than systematically mis-signed",
+    "crude_rule_reroute_all_predA_to_C_cell_delta": 0.0015255758300927325,
+    "macro_contribution_one_eighth": 0.00019069697876159157
+  },
+  "caveat_wrong_track_dump": {
+    "file": "ckpts/gate_lingshu7b_mcq/ckpt_PMC-VQA_nothink_norag.jsonl",
+    "note": "has opt_logprobs but is n=500, gold B+C=0.6100, acc=0.6040 -- NOT the live cell"
+  },
+  "live_dump_lacks_option_logprobs": {
+    "keys_present": [
+      "answer",
+      "choices",
+      "conf",
+      "correct",
+      "cum_logprob",
+      "gen_toks",
+      "latency_s",
+      "margin",
+      "prompt",
+      "response"
+    ],
+    "note": "conf (top-1 prob) and margin (top1-top2) only; any contextual/batch calibration or PriDe test needs a re-scoring pass over all items"
+  }
+}

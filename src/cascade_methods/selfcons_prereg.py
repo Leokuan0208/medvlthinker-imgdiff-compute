@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""selfcons_prereg.py -- PRE-REGISTRATION for ATTACK 2 (self-consistency across all eight cells).
+
+Written and committed to disk BEFORE selfcons_suite.py is run for the first time.  It fixes the
+arms, the graders, the vote rule, the controls, the bootstrap seed, the guardrail and the decision
+rule, and -- just as important -- it lists what was ALREADY KNOWN before this round so that no
+already-published number can later be passed off as a pre-specified prediction.
+
+  python3 src/cascade_methods/selfcons_prereg.py
+"""
+import json
+import os
+import time
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+OUT = os.path.join(ROOT, "results/cascade_methods/artifacts",
+                   "self_consistency_suite_2026-08-17_preregistration.json")
+
+P = {
+ "title": "PRE-REGISTRATION -- ATTACK 2: training-free self-consistency (majority vote) swept across "
+          "all eight macro cells at N = 1, 2, 4, 8",
+ "date": "2026-08-17",
+ "written_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+ "not_abstention": "every arm returns an answer for every question. The vote always yields a "
+                   "returned string; an unparseable string is graded WRONG, never withheld. "
+                   "CRITICAL RULE 6 is not engaged.",
+ "no_fabricated_numbers": "every number in the output artifact is computed by selfcons_suite.py from "
+                          "the named checkpoint dumps in the same run. Numbers quoted FROM other "
+                          "artifacts are labelled with the file they came from and are never mixed "
+                          "into a delta computed here.",
+
+ "OBJECTIVE": "Does majority vote over N samples at T=0.4 beat always-7B greedy, per cell, on all "
+              "eight macro cells? Generation is the only cost, so the N-vs-accuracy curve IS the "
+              "deliverable.",
+
+ "ZERO_NEW_GENERATION": {
+   "claim": "this round runs no GPU job. Every pool it needs already exists on disk from the "
+            "2026-08-13/14 decoding ladder and the 2026-08-16 closed-as-open round.",
+   "why_that_is_legitimate": "the +-0.008 regeneration caveat is satisfied by using, for every cell, "
+                             "the GREEDY CONTROL GENERATED IN THE SAME SESSION AND THE SAME ENGINE as "
+                             "the sampled pool it is compared against -- never a stored published "
+                             "number as the subtrahend.",
+ },
+
+ "CELLS_POOLS_AND_MATCHED_CONTROLS": {
+  "PMC_VQA": {"n": 6000, "note": "pre-registered 6000-item subsample of 33430, seed 20260810",
+              "sampled": "ckpts/closed_as_open_mcq/gen_PMC_VQA_mcq_s8.jsonl (T=0.4, n=8, fullres, "
+                         "deployed MedEvalKit MCQ prompt)",
+              "greedy_control": "gen_PMC_VQA_mcq_g.jsonl (T=0, same engine/session/prompt/resolution)",
+              "primary_currency": "MedEvalKit judge_multi_choice (the grader that DEFINES the "
+                                  "published 0.5427 cell)",
+              "em_currency": "letter_em (first-branch letter rule, unparsed -> wrong)"},
+  "MedXpertQA-MM": {"n": 2000, "sampled": "gen_MedXpertQA-MM_mcq_s8.jsonl",
+                    "greedy_control": "gen_MedXpertQA-MM_mcq_g.jsonl",
+                    "primary_currency": "MedEvalKit judge_multi_choice (published 0.2615)",
+                    "em_currency": "letter_em"},
+  "SLAKE_closed": {"n": 836, "sampled": "ckpts/closed_as_open/gen_SLAKE_closed_closedD_s8.jsonl "
+                                        "(T=0.4, n=8, cap320, deployed prompt)",
+                   "greedy_control": "gen_SLAKE_closed_closedD_g.jsonl (T=0, cap320, same session)",
+                   "primary_currency": "32B LLM judge (the project's ruled primary currency)",
+                   "em_currency": "MedEvalKit judge_close_end_vqa -- the grader that DEFINES the "
+                                  "published 0.8254 cell -- plus the length-neutral em_repaired"},
+  "VQA_RAD_closed": {"n": 251, "sampled": "gen_VQA_RAD_closed_closedD_s8.jsonl",
+                     "greedy_control": "gen_VQA_RAD_closed_closedD_g.jsonl",
+                     "primary_currency": "32B LLM judge",
+                     "em_currency": "MedEvalKit judge_judgement (published 0.7809) + em_repaired"},
+  "PATH_VQA_closed": {"n": 3362, "sampled": "gen_PATH_VQA_closed_closedD_s8.jsonl",
+                      "greedy_control": "gen_PATH_VQA_closed_closedD_g.jsonl",
+                      "primary_currency": "32B LLM judge",
+                      "em_currency": "MedEvalKit judge_judgement (published 0.8409) + em_repaired"},
+  "SLAKE_open": {"n": 645, "sampled": "ckpts/openvqa/decoding_sweep/ckpt_slake_open_T04_s{0,1,2}.jsonl",
+                 "greedy_control": "ckpt_slake_open_T00_s{0,1,2}.jsonl (in-session greedy, 3 seeds)",
+                 "primary_currency": "32B LLM judge (defines the published 0.7364 cell)",
+                 "em_currency": "normalised exact match (oks_em, run_openvqa.score)"},
+  "VQA_RAD_open": {"n": 200, "sampled": "ckpt_vqa_rad_open_T04_s{0,1,2}.jsonl",
+                   "greedy_control": "ckpt_vqa_rad_open_T00_s{0,1,2}.jsonl",
+                   "primary_currency": "32B LLM judge (0.4650)", "em_currency": "normalised EM"},
+  "PATH_VQA_open": {"n": 1500, "sampled": "ckpt_pathvqa_open_T04_s{0,1,2}.jsonl",
+                    "greedy_control": "ckpt_pathvqa_open_T00_s{0,1,2}.jsonl",
+                    "primary_currency": "32B LLM judge (0.3240)", "em_currency": "normalised EM"},
+ },
+
+ "THE_VOTE_RULE_pre_specified": {
+   "equivalence_classes": "slots are grouped by a per-cell NORMALISER: MCQ -> the extracted answer "
+                          "letter (unparseable -> its own class keyed by the normalised raw string); "
+                          "closed -> closed_as_open_lib.norm_text; open -> genframe_data.norm.",
+   "winner": "the class with the most votes in the subset; TIES broken by the SMALLEST slot index "
+             "present in the subset (the frozen `modal_pred` first-occurrence convention).",
+   "returned_string": "the earliest slot in the subset belonging to the winning class -- a REAL "
+                      "generated string. No synthetic string is ever graded.",
+   "N_lt_8_is_EXACT_not_monte_carlo": "the vote of a subset is deterministic, so the N-point is the "
+                                      "EXACT mean over all C(8,N) subsets: 8 at N=1, 28 at N=2, 70 at "
+                                      "N=4, 1 at N=8. This averages over subsets, which is strictly "
+                                      "stronger than a 3-seed Monte Carlo at N<8.",
+   "N_eq_1": "C(8,1) = 8 singletons, i.e. a single random draw from the pool. This is the RANDOM-PICK "
+             "FLOOR that the vote must clear to have done any work.",
+ },
+
+ "PRIMARY_ENDPOINT": "per cell, majority-vote accuracy at N in {2,4,8} MINUS the matched in-session "
+                     "greedy control, in the cell's PRIMARY currency, with a paired item bootstrap "
+                     "(nboot 10000, seed 20260817). MACRO = unweighted mean of the eight per-cell "
+                     "deltas (each cell 1/8, the published convention).",
+
+ "GUARDRAIL": "an intervention is not a win if ANY of the eight cells is a CI-clean loss at the same "
+              "N in the primary currency. Reported per cell, per N, per currency.",
+
+ "SECONDARY_ENDPOINTS": [
+   "MCQ RANDOM-GOLD LUCK FLOOR: gold letters re-drawn i.i.d. from the cell's own empirical gold-letter "
+   "marginal, independent of the item. Reported for greedy, majority@N and oracle@N. A vote result on "
+   "an MCQ cell is uninterpretable without it (PMC gold is 73.6% B+C).",
+   "ORACLE@N (exact hypergeometric) for headroom context only -- never as the comparison bar.",
+   "HEAD vs SELF-CONSISTENCY on the 3 open cells, on the FROZEN T=0.7 2345-item pool where the head "
+   "is actually scored: greedy / random-slot / modal@{2,4,8} / head-only / fusion, identical pools, "
+   "paired bootstrap. The head has NEVER been scored on a T=0.4 pool (no hidden-state cache exists "
+   "for those pools); that is stated as a limitation, not worked around.",
+   "HYBRID (the brief's cheap hybrid): shortlist = the vote-winning class(es); when the plurality is "
+   "unique the hybrid IS the plain vote; when tied, the selector picks among the tied classes. "
+   "Variant B widens the shortlist to the top-2 vote counts. Run with the free head on the T=0.7 pool "
+   "and with the incumbent LoRA verifier on the T=0.4 pools.",
+   "PERMUTATION NULL over arm multiplicity: the vote's pick is replaced by a uniformly random slot "
+   "from the same pool; the statistic is the max over the (cell x N) grid of (arm - greedy). 2000 "
+   "permutations, seed 20260817.",
+ ],
+
+ "DECISION_RULE_pre_specified": {
+   "confirms_the_split": "self-consistency is the MCQ-side tool and the head is the open-side tool IFF "
+                         "(a) at least one MCQ cell is a CI-clean WIN for the vote at some N, AND "
+                         "(b) no open cell is a CI-clean WIN for the vote at that N, AND "
+                         "(c) the head beats the vote on the open cells on the same pool.",
+   "refutes_the_split": "any open cell is a CI-clean WIN for the vote while no MCQ cell is.",
+   "partial": "anything else is reported as partial, with the pattern stated rather than forced into "
+              "one of the two labels.",
+ },
+
+ "COST_MODEL": {
+   "unit": "1.0 FLOP-eq = one always-7B greedy answer.",
+   "source": "artifacts/verifier_restructure_2026-08-16.json : "
+             "Q1_generation_cost_and_prefill_sharing.per_config['count|default'].flopeq_rel_to_N1 "
+             "(MEASURED, vLLM default = automatic prefix caching ON).",
+   "self_consistency_charges_generation_only": "no verifier forward, no head forward, no 32B call. "
+                                               "The cost of the arm IS the cost of N samples.",
+   "known_caveat_to_state": "that ratio was measured on the open-text cap320 geometry. Per-cell "
+                            "prefill differs (prefill_cost.json: mean prefill 275-868 tokens across "
+                            "cells) and the ratio has NOT been separately measured per cell.",
+ },
+
+ "NULL_TESTS_that_must_pass_before_any_delta_is_read": [
+   "N1 open: src/training_methods/genframe_data.py reproduces sel_eff 0.775204 / oracle@8 0.626013 / "
+   "greedy 0.449467 / n 2345 / n_recoverable 1468. Tolerance 1e-6.",
+   "N2 MCQ: this round's judge_multi_choice copy reproduces MedEvalKit's stored `correct` field ROW BY "
+   "ROW on the deployed dumps and the published 0.5427 / 0.2615 cells. Tolerance 1e-4, zero row "
+   "disagreements.",
+   "N3 closed: this round's closed-grader copy reproduces the stored `correct` field row by row and "
+   "the published 0.8254 / 0.7809 / 0.8409 cells. Tolerance 1e-4, zero row disagreements.",
+   "N4 vote machinery: (a) the subset weights sum to 1 at every N; (b) at N = M the exact expectation "
+   "equals the plain deterministic vote over the whole pool; (c) at N=1 it equals the plain per-item "
+   "mean of the slot labels.",
+   "N5 exchangeability: at N=2 the vote must equal the random single draw to within label-within-class "
+   "variation. Reported as a measured deviation, PRE-PREDICTED to be ~0 because a 1-1 tie resolves to "
+   "the earlier slot and the slots are exchangeable. If it is not ~0, the vote implementation is "
+   "wrong.",
+ ],
+
+ "ALREADY_KNOWN_BEFORE_THIS_ROUND_not_a_prediction": {
+   "PMC_VQA majority@8": "+0.0132 [+0.0080,+0.0182] letter_em and +0.0100 [+0.0048,+0.0153] harness, "
+                         "artifacts/_closed_as_open_parts/mcq_self_consistency.json (2026-08-16). The "
+                         "grader-defect confound is discharged there.",
+   "MedXpertQA-MM majority@8": "-0.0010 [-0.0080,+0.0060] TIE, same file.",
+   "open cells pooled modal@8 at T=0.4": "MODAL_VOTE_judge 0.460128 / MODAL_VOTE_em 0.457854 against "
+                                         "in-session T00 greedy 0.462687 / 0.455295, "
+                                         "artifacts/decoding_ladder_cold_2026-08-14.json. POOLED ONLY, "
+                                         "no per-cell split, no CI, N=8 only.",
+   "closed cells majority@8": "reported per arm without a majority-vs-greedy CI in "
+                              "artifacts/closed_as_open_2026-08-16.json.",
+   "what is genuinely new here": ["the N = 1,2,4 curve on every cell",
+                                  "per-cell open-cell splits with CIs",
+                                  "majority-vs-greedy CIs on the closed cells",
+                                  "the 8-cell macro and the guardrail",
+                                  "the random-gold luck floors in this setup",
+                                  "the head-vs-vote head-to-head and the hybrid",
+                                  "the arm-multiplicity permutation null"],
+ },
+
+ "NUMERICS_PINNED": {"OMP_NUM_THREADS": "4", "nboot": 10000, "bootstrap_seed": 20260817,
+                     "nperm": 2000, "permutation_seed": 20260817,
+                     "TF32": "not engaged -- this round is numpy/CPU only, no GPU, no matmul in "
+                             "reduced precision except the frozen head's CPU forward pass"},
+
+ "PRE_SPECIFIED_EXPECTATION": "based on the pool-degeneracy measurements already on disk "
+                              "(_closed_as_open_parts/skill_vs_floor.json: the closed cells emit 3-54 "
+                              "distinct strings cell-wide and are contested on 16-29% of items, versus "
+                              "3919 strings and 73.6% contested on the open cells) the vote is "
+                              "expected to have almost no surface on the closed cells. That is written "
+                              "down here so a null there is read as predicted, not as a failure.",
+}
+
+os.makedirs(os.path.dirname(OUT), exist_ok=True)
+json.dump(P, open(OUT, "w"), indent=1, ensure_ascii=False)
+print("wrote", OUT)
