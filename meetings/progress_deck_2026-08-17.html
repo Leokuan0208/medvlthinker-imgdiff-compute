@@ -1,0 +1,368 @@
+<title>Cheap Test-Time Improvements</title>
+<style>
+  :root{
+    --ground:#F6F8F7; --panel:#FFFFFF; --ink:#12171A; --ink-2:#414B4F; --ink-3:#6B767A;
+    --rule:#D9E0DE; --rule-2:#E9EEEC; --accent:#0E6E62; --accent-soft:#E3F0EE;
+    --win:#1B7A4B; --loss:#A63127; --warn:#8A6A16;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+    --rule:#26302F; --rule-2:#1D2528; --accent:#3FB3A2; --accent-soft:#12312D;
+    --win:#4CBE7F; --loss:#E0705F; --warn:#D0A63C;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+    --rule:#26302F; --rule-2:#1D2528; --accent:#3FB3A2; --accent-soft:#12312D;
+    --win:#4CBE7F; --loss:#E0705F; --warn:#D0A63C;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.5;margin:0;padding:0 18px 80px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .bar{position:sticky;top:0;z-index:9;background:var(--ground);border-bottom:1px solid var(--rule);padding:14px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .bar h1{font-size:16px;font-weight:640;margin:0;letter-spacing:-.01em}
+  .bar .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:3px}
+  button{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--panel);border:0;border-radius:3px;padding:9px 15px;cursor:pointer;font-weight:600}
+  button:hover{opacity:.9}
+  .act{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:52px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  .slide{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:32px 34px;margin-bottom:16px}
+  .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em;margin:0 0 12px}
+  .slide h2{font-size:26px;line-height:1.15;letter-spacing:-.018em;font-weight:640;margin:0 0 20px;text-wrap:balance;max-width:24ch}
+  .big{font-family:var(--mono);font-size:38px;font-weight:600;letter-spacing:-.03em;color:var(--ink);margin:0;font-variant-numeric:tabular-nums;line-height:1.1}
+  .big small{display:block;font-family:var(--sans);font-size:14px;font-weight:400;letter-spacing:0;color:var(--ink-2);margin-top:8px}
+  .pts{margin:0;padding:0;list-style:none}
+  .pts li{font-size:18px;color:var(--ink);margin-bottom:14px;padding-left:20px;position:relative;max-width:56ch;line-height:1.4}
+  .pts li:before{content:"";position:absolute;left:0;top:.6em;width:7px;height:1.5px;background:var(--accent)}
+  .pts li .m{color:var(--ink-3);font-size:15px;display:block;margin-top:3px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin-top:4px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--rule)}
+  td{padding:9px 12px;border-bottom:1px solid var(--rule-2)}
+  tr:last-child td{border-bottom:0}
+  td.r,th.r{text-align:right}
+  .hl td{background:var(--accent-soft);font-weight:600}
+  .tbox{overflow-x:auto}
+  .strike{text-decoration:line-through;opacity:.5}
+  .w{color:var(--win);font-weight:600} .l{color:var(--loss);font-weight:600}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+  .box{border:1px solid var(--rule);border-radius:3px;padding:12px 16px;font-size:14.5px;background:var(--ground)}
+  .box b{display:block;font-size:11px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px;font-weight:600}
+  .arw{color:var(--accent);font-size:20px}
+  .script{border-left:2px solid var(--accent);background:var(--accent-soft);padding:16px 20px;margin-top:22px;border-radius:0 3px 3px 0}
+  .script .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:9px}
+  .script p{margin:0 0 10px;font-size:14.5px;color:var(--ink-2);line-height:1.6;max-width:74ch}
+  .script p:last-child{margin-bottom:0}
+  .script strong{color:var(--ink)}
+  body.present .script{display:none}
+  code{font-family:var(--mono);font-size:.88em;background:var(--rule-2);padding:1px 5px;border-radius:2px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+<div class="bar">
+  <div><span class="sub">Progress report</span><h1>Cheap test-time improvements for a medical VLM</h1></div>
+  <button id="t" onclick="document.body.classList.toggle('present');t.textContent=document.body.classList.contains('present')?'Show script':'Hide script'">Hide script</button>
+</div>
+
+<p class="act">Act I · the system</p>
+
+<div class="slide">
+  <p class="n">01</p>
+  <h2>What we report on</h2>
+  <div class="tbox"><table>
+    <thead><tr><th>Benchmark</th><th>Format</th><th class="r">Questions</th></tr></thead>
+    <tbody>
+      <tr><td>PMC-VQA</td><td>multiple choice</td><td class="r num">33,430</td></tr>
+      <tr><td>SLAKE</td><td>closed · open</td><td class="r num">836 · 645</td></tr>
+      <tr><td>VQA-RAD</td><td>closed · open</td><td class="r num">251 · 200</td></tr>
+      <tr><td>PathVQA</td><td>closed · open</td><td class="r num">3,362 · 1,500</td></tr>
+      <tr><td>MedXpert-MM</td><td>multiple choice</td><td class="r num">2,000</td></tr>
+    </tbody>
+  </table></div>
+  <div class="script"><p class="lab">Script</p>
+    <p>A <strong>cell</strong> is one benchmark paired with one answer format. Three of these datasets have both a <em>closed</em> split — where the answer is yes/no or a fixed option — and an <em>open</em> split, where the model writes free text. Those behave so differently that we score them separately. That gives us <strong>eight cells</strong>.</p>
+    <p>Worth saying out loud: the formats are not a stylistic difference. Almost everything that works on free text fails on multiple choice, and vice versa. Most of this talk is downstream of that.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">02</p>
+  <h2>Every cell counts the same</h2>
+  <p class="big">1/8 each<small>Not weighted by question count</small></p>
+  <ul class="pts" style="margin-top:26px">
+    <li>PMC-VQA alone is <span class="num">33,430</span> of the <span class="num">42,224</span> questions<span class="m">Weighting by count gives it 79% of the score</span></li>
+    <li>Baseline for everything that follows: <strong>the 7B model alone, <span class="num">0.5971</span></strong></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>This is a reporting choice worth defending. If we averaged over questions rather than over cells, one dataset would carry <strong>79% of the number</strong> — and that dataset is the one with no published human verification. Any improvement we reported would really be an improvement on it alone.</p>
+    <p>So every cell counts one eighth. It makes our numbers <em>smaller</em>, and it makes them mean something. For scale: a change of about <strong>±0.003</strong> on this scale is the threshold for statistical significance.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">03</p>
+  <h2>The system: answer cheap, escalate when unsure</h2>
+  <div class="flow">
+    <div class="box"><b>Question</b>image + text</div>
+    <span class="arw">→</span>
+    <div class="box"><b>Cheap model</b>Lingshu-7B</div>
+    <span class="arw">→</span>
+    <div class="box"><b>Gate</b>confident?</div>
+    <span class="arw">→</span>
+    <div class="box"><b>Big model</b>Lingshu-32B</div>
+  </div>
+  <ul class="pts" style="margin-top:24px">
+    <li>The big model costs <strong><span class="num">4.6×</span></strong> a small-model pass<span class="m">so the fewer times we call it, the better</span></li>
+    <li>The gate reads the gap between the model's top two answer probabilities</li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>The small model answers first. A <strong>gate</strong> decides whether to trust it. If not, the question goes to the big model.</p>
+    <p>The gate signal is the <strong>margin</strong> — the gap between the top-ranked and second-ranked answer probabilities. A large gap means the model is decided; a small gap means it is torn between two options, which is when it tends to be wrong.</p>
+    <p>Everything expensive in this system is the escalation. That is why so much of the work is about deciding when <em>not</em> to escalate.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">04</p>
+  <h2>On free-text questions we sample several answers and pick one</h2>
+  <ul class="pts">
+    <li>The 7B writes <strong>N candidate answers</strong> instead of one</li>
+    <li>A <strong>verifier</strong> scores each one and we keep the best</li>
+    <li>It scores <code>P(correct | image, question, candidate)</code></li>
+  </ul>
+  <div class="tbox" style="margin-top:22px"><table>
+    <thead><tr><th>On the open-text pool</th><th class="r">Accuracy</th></tr></thead>
+    <tbody>
+      <tr><td>one greedy answer</td><td class="r num">0.4495</td></tr>
+      <tr><td>verifier picks from 8</td><td class="r num">0.4853</td></tr>
+      <tr class="hl"><td>best answer present in the 8</td><td class="r num">0.6260</td></tr>
+    </tbody>
+  </table></div>
+  <div class="script"><p class="lab">Script</p>
+    <p>This is the part of the system most of our research went into. Rather than take the model's first answer, we sample <strong>eight</strong> and choose between them.</p>
+    <p>The third row is the important one. A correct answer is <em>present</em> in the eight about <strong>63%</strong> of the time, but we only <em>select</em> it 49% of the time. That gap — between what's available and what we pick — is the single number this project has spent the most effort trying to close.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">05</p>
+  <h2>What the verifier actually is</h2>
+  <ul class="pts">
+    <li>A <strong>LoRA adapter</strong> on the same 7B<span class="m">47.6 million parameters · 182 MB on disk</span></li>
+    <li>Trained on questions and images the evaluation never sees</li>
+    <li>Reads out a single yes/no judgement: <em>is this candidate right?</em></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Explain LoRA properly, because the next act depends on it.</p>
+    <p>A LoRA adapter is <strong>not a model</strong>. It is a set of small correction matrices that get applied on top of an existing model's weights. On its own it cannot see an image or read text — it has no meaning without the base model underneath it.</p>
+    <p>Concretely: for a weight matrix inside the 7B with about 12.8 million numbers, LoRA stores two thin matrices totalling about 114,000, and at inference the model computes <code>(W + BA)x</code> instead of <code>Wx</code>.</p>
+    <p><strong>So you have changed which weights are used — not how many operations run.</strong> The forward pass is still a full pass through all 8.29 billion parameters. LoRA makes <em>training</em> cheap and <em>storage</em> cheap. It does nothing whatsoever for inference cost. Scoring one candidate costs a full run of the 7B.</p>
+    <p>Plant that. It's the setup for the biggest cost finding in the talk.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">06</p>
+  <h2>We made the measurement stricter three times</h2>
+  <ul class="pts">
+    <li><strong>Matched the prompts.</strong> Our two arms differed in answer format as well as in the thing we were testing<span class="m">correcting it strengthened one finding and dissolved another</span></li>
+    <li><strong>Dropped a contaminated benchmark.</strong> The 7B scored 0.80 against its own published 54.0<span class="m">removing the image dropped it to 0.59; a control model scored 0.57</span></li>
+    <li><strong>Switched to equal weighting per cell</strong></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Each of these made our headline number <em>smaller</em>. I want to be explicit that we found all three ourselves, before anyone else read the work.</p>
+    <p>The prompt one is worth a sentence: we had been comparing a reasoning arm against a direct arm, but the two prompts <strong>also differed in the answer format they requested</strong>. Once we matched the format, the effect we had attributed to reasoning turned out to be an effect of the format request. Asking a model to put its answer in a box is itself enough to make it reason.</p>
+    <p>The contamination one is a straightforward audit: if removing the image barely hurts the score, the model isn't reading the image.</p>
+  </div>
+</div>
+
+<p class="act">Act II · the limits we found</p>
+
+<div class="slide">
+  <p class="n">07</p>
+  <h2>Selection is the bottleneck, and it does not move</h2>
+  <p class="big">~27 architectures<small>every one lands between 0.78 and 0.81</small></p>
+  <ul class="pts" style="margin-top:26px">
+    <li>Prompted judges · larger judges · six other model families</li>
+    <li>Head-to-head comparison · ranking objectives · set-aware scorers</li>
+    <li>Image–text similarity models — <em>below</em> picking at random</li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Define the number first: <strong>selection efficiency</strong> is the fraction of the available gain we actually capture — if a correct answer is in the pool, how often do we pick it. Random picking scores about 0.68. We sit at 0.78–0.81.</p>
+    <p>We attacked this roughly twenty-seven distinct ways. Every single one lands in the same narrow band. The important part is what we found when we looked outside: <strong>independent systems in the literature report the same conversion rate.</strong> This is a property of the problem, not a failure of our engineering.</p>
+    <p>Our own seed-to-seed variation is larger than the difference between most of those architectures — which means much of the published variation at this scale is probably noise too.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">08</p>
+  <h2>We had been charging ourselves 3.5× too much for sampling</h2>
+  <div class="tbox"><table>
+    <thead><tr><th>Cost of generating 8 answers</th><th class="r">Relative to one answer</th></tr></thead>
+    <tbody>
+      <tr><td>what our cost model charged</td><td class="r num">8.00×</td></tr>
+      <tr class="hl"><td>what we measured</td><td class="r num">2.28×</td></tr>
+      <tr><td>after fixing the defect on the next slide</td><td class="r num w">1.20×</td></tr>
+    </tbody>
+  </table></div>
+  <div class="script"><p class="lab">Script</p>
+    <p>We had assumed eight answers cost eight times one answer. They don't — the serving engine shares the expensive part.</p>
+    <p>Reading an image and a question is <strong>prefill</strong>, and it's about 82% of the total work; actually writing the answer is barely 1%. All eight candidates share the same image and question, so the engine computes that once and reuses it. We measured this with the cache deliberately switched on and off: with it off we reproduce our old 8.0, with it on we get 2.28.</p>
+    <p>This matters because it changes what is affordable. Sampling eight answers is not an eight-fold cost — it's roughly double.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">09</p>
+  <h2>The image encoder re-runs 294 tokens to recover five</h2>
+  <ul class="pts">
+    <li>Language prefill is shared across the eight candidates — <span class="num">1.16×</span></li>
+    <li>The image encoder is <strong>not</strong> — <span class="num">4.74×</span> for eight answers</li>
+    <li>The image occupies positions <span class="num">31–325</span>; the cache is aligned to <span class="num">320</span><span class="m">five tokens short, so the whole image is re-encoded</span></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>This is a nice concrete one. The cache works in fixed-size blocks. The image sits at positions 31 through 325, and the cached region ends at 320 — a block boundary. Because the image runs five tokens past that boundary, the engine cannot mark it as already computed, so it <strong>re-encodes all 294 image tokens to recover the last five</strong>.</p>
+    <p>We tried every configuration route to fix it — batch size, concurrency, cache size — and got identical results to three decimals every time. It isn't a tuning problem: the engine keys that cache by request identity, and the eight candidates are eight different requests.</p>
+    <p>Passing pre-computed image features instead fixes it exactly, and that's the 1.20 on the previous slide.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">10</p>
+  <h2>The same job, for a millionth of the compute</h2>
+  <div class="tbox"><table>
+    <thead><tr><th>Scorer</th><th class="r">Work per candidate</th><th class="r">Selection efficiency</th></tr></thead>
+    <tbody>
+      <tr><td>LoRA verifier</td><td class="r num">8.29 B parameters</td><td class="r num">0.7752</td></tr>
+      <tr class="hl"><td>the head</td><td class="r num">918,017 parameters</td><td class="r num">0.7956</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="pts" style="margin-top:22px">
+    <li>A two-layer network: <span class="num">3584 → 256 → 1</span></li>
+    <li>Reads a vector the 7B <strong>already computed</strong></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Here is the payoff for the LoRA explanation earlier.</p>
+    <p>While the 7B processes a candidate answer, it builds an internal representation at every layer. The <strong>head</strong> is a small standalone network that takes that vector — from layer 21 — and maps it to a single score. It does not modify the model. It is not a forward pass through anything. It is about <strong>1.8 million operations</strong>, roughly a millionth of what the adapter costs.</p>
+    <p><strong>The gap is that large because they are different kinds of object.</strong> The adapter <em>is</em> the 7B with altered weights, so using it means running the whole network again. The head reads the network's output. One re-runs the model; the other reads it.</p>
+    <p>And the cheaper one scores <em>higher</em>. Random picking, for reference, is 0.676.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">11</p>
+  <h2>Combining the two scorers</h2>
+  <ul class="pts">
+    <li>Rank the candidates by each scorer, then <strong>average the two ranks</strong></li>
+    <li>No trained weights — both scorers count equally</li>
+  </ul>
+  <div class="tbox" style="margin-top:22px"><table>
+    <thead><tr><th>Selector</th><th class="r">Selection efficiency</th></tr></thead>
+    <tbody>
+      <tr><td>LoRA verifier alone</td><td class="r num">0.7752</td></tr>
+      <tr><td>head alone</td><td class="r num">0.7956</td></tr>
+      <tr class="hl"><td>the two combined</td><td class="r num">0.8065</td></tr>
+    </tbody>
+  </table></div>
+  <div class="script"><p class="lab">Script</p>
+    <p>Why <em>ranks</em> and not scores: the two scorers produce numbers on completely different scales, so averaging the scores directly would let one of them dominate for no good reason. Ranking each first puts them on a common footing.</p>
+    <p>Why equal weight: we tried learning the weight. Fitted with full visibility of the answers, the best weight it found was <strong>0.5</strong> — the parameter-free choice. So there was nothing to learn.</p>
+    <p>And the recommendation: on our primary metric the <strong>head alone captures nearly all of the combined gain</strong> — the difference between them is not statistically significant — while costing essentially nothing. That's the version worth deploying.</p>
+  </div>
+</div>
+
+<p class="act">Act III · changing the question</p>
+
+<div class="slide">
+  <p class="n">12</p>
+  <h2>We were asking the wrong question</h2>
+  <ul class="pts">
+    <li class="strike">Can a small model plus extra computation match the big one?</li>
+    <li><strong>How much can we improve the small model, for free?</strong></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Two things forced this. First, the selection ceiling — we now know how much is reachable and it isn't enough. Second, and more decisive: on free-text questions the <strong>big model is about ten times more efficient per point of accuracy</strong>. Running the small model eight times and scoring the results costs more than simply asking the big model once, and is less accurate.</p>
+    <p>So the honest move was to stop competing with the big model and change the baseline. Everything after this is measured against <strong>the 7B alone</strong>, and the question is how much we can add without adding cost.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">13</p>
+  <h2>The benchmark's own instruction biases the model</h2>
+  <ul class="pts">
+    <li>On yes/no questions the model says <em>yes</em> too often<span class="m">PathVQA +0.072 · SLAKE +0.070 · VQA-RAD +0.046 above the true rate</span></li>
+    <li>Removing the supplied answer space from the prompt removes the bias</li>
+    <li>Costs nothing — same model, same number of generated tokens</li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>The evaluation harness tells the model what the answer options are. That instruction pushes it toward answering <em>yes</em> — by about seven percentage points more than the data warrants.</p>
+    <p>If we simply ask the question without supplying the answer space, the bias largely disappears. The model still answers yes or no — it knows the question is binary — it just stops being pushed.</p>
+    <p>Two controls worth mentioning. We checked the generated answers didn't get longer, so this isn't the grader being fooled. And we tried merely reordering the options — <em>"output no or yes"</em> — which did <strong>not</strong> help, and hurt on one cell. So it is the answer space being given at all, not the order.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">14</p>
+  <h2>The result</h2>
+  <p class="big w">+0.0052<small>on the eight-cell average, at 1.000× the compute</small></p>
+  <ul class="pts" style="margin-top:26px">
+    <li>On the cell itself: <strong><span class="num">+0.0419</span></strong> <span class="m">two independent graders agree to 0.0003</span></li>
+    <li>No cell gets worse</li>
+    <li>Roughly <span class="num">1.8×</span> the threshold for significance</li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>State it plainly: a free improvement, larger than the significance threshold, and nothing regresses.</p>
+    <p>The two-grader agreement matters. We score with an automatic judge and with strict string matching, and they agree to within three ten-thousandths. When those two disagree it almost always means we've moved the grader rather than the model — here they don't.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">15</p>
+  <h2>The test that separates a real fix from a benchmark artefact</h2>
+  <div class="tbox"><table>
+    <thead><tr><th>Intervention</th><th class="r">As measured</th><th class="r">With a balanced answer key</th></tr></thead>
+    <tbody>
+      <tr><td>matching the model's answer rates to the data's</td><td class="r num">+0.0202</td><td class="r num l">−0.0001</td></tr>
+      <tr><td>the same, on another benchmark</td><td class="r num">−0.0095</td><td class="r num l">−0.0110</td></tr>
+      <tr class="hl"><td>our prompt fix</td><td class="r num">+0.0416</td><td class="r num w">+0.0471</td></tr>
+    </tbody>
+  </table></div>
+  <div class="script"><p class="lab">Script</p>
+    <p>This is the slide I'd spend the most time on.</p>
+    <p>There is an obvious rival explanation for any gain on these benchmarks: you might not be improving the model at all, just exploiting the fact that the answer key is lopsided. One of these datasets has 74% of its answers concentrated in two of four options.</p>
+    <p>So we re-scored everything against a <strong>balanced answer key</strong> — reweighted so no answer is more common than any other. If a gain came from exploiting the key, it disappears. If it came from the model genuinely answering better, it survives.</p>
+    <p>The first row is a method that looked like it gained two points. Balanced, it is <strong>exactly zero</strong>. It was reading the answer key, not improving the model — so we discarded it.</p>
+    <p>Our prompt fix goes the other way: it gets <strong>larger</strong>. That's what a real improvement looks like, and it's why I'm comfortable putting it in front of you.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">16</p>
+  <h2>What didn't work</h2>
+  <ul class="pts">
+    <li>Making the candidate pool more diverse<span class="m">more variety, no better selection</span></li>
+    <li>Re-asking the multiple-choice questions as free text<span class="m">the model answers yes/no whether or not you offer the options</span></li>
+    <li>Deciding adaptively how many answers to sample<span class="m">a fixed number, chosen once, beats it</span></li>
+    <li>Voting among the sampled answers<span class="m">helps on two cells, does nothing on five, hurts if you sample too few</span></li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Keep this brisk. The second one is worth a sentence because it surprised us: we thought the model was constrained by being <em>shown</em> the options. It isn't — on a binary question it produces the same handful of answers either way. The answer space belongs to the question, not the prompt.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <p class="n">17</p>
+  <h2>Where we stand</h2>
+  <ul class="pts">
+    <li><strong>Solid:</strong> a free, significant improvement that survives the hardest test we have<span class="m">plus a much better understanding of what the components actually cost</span></li>
+    <li><strong>Open:</strong> the effect lives on one cell — we need to know whether other benchmarks carry the same defect</li>
+    <li><strong>Next:</strong> audit the remaining harness prompts, and re-run the system end to end with the cost fixes in place</li>
+  </ul>
+  <div class="script"><p class="lab">Script</p>
+    <p>Be straight about the shape of it. We have one clean result and a lot of well-mapped territory around it. The result is free, it's statistically solid, and it got <em>bigger</em> under the most adversarial check we could design — which is unusual and worth trusting.</p>
+    <p>The honest limitation is that it currently rests on one cell. The obvious next step is whether the same instruction defect exists in the other benchmarks, because if it does, this stops being one result and becomes a general finding about how these systems are evaluated.</p>
+  </div>
+</div>
+
+</div>

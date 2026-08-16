@@ -1,0 +1,341 @@
+<title>Method Recap — Compute, VRAM, Accuracy</title>
+<style>
+  :root{
+    --ground:#F6F8F7; --panel:#FFFFFF; --ink:#12171A; --ink-2:#414B4F; --ink-3:#6B767A;
+    --rule:#D9E0DE; --rule-2:#E9EEEC;
+    --accent:#0E6E62; --accent-soft:#E3F0EE;
+    --win:#1B7A4B; --tie:#8A6A16; --loss:#A63127; --killed:#6E7679; --forbidden:#6B3487;
+    --grid:#E4EAE8; --bar:#0E6E62;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+      --rule:#26302F; --rule-2:#1D2528;
+      --accent:#3FB3A2; --accent-soft:#12312D;
+      --win:#4CBE7F; --tie:#D0A63C; --loss:#E0705F; --killed:#8A9497; --forbidden:#B08AD0;
+      --grid:#1F2729; --bar:#3FB3A2;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+    --rule:#26302F; --rule-2:#1D2528;
+    --accent:#3FB3A2; --accent-soft:#12312D;
+    --win:#4CBE7F; --tie:#D0A63C; --loss:#E0705F; --killed:#8A9497; --forbidden:#B08AD0;
+    --grid:#1F2729; --bar:#3FB3A2;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink); font-family:var(--sans);
+    line-height:1.55; margin:0; padding:0 20px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+  header{padding:56px 0 28px;border-bottom:1px solid var(--rule)}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 14px;
+  }
+  h1{
+    font-size:clamp(28px,4.2vw,44px); line-height:1.08; letter-spacing:-.022em;
+    font-weight:640; margin:0 0 14px; text-wrap:balance; max-width:20ch;
+  }
+  .sub{color:var(--ink-2); font-size:16.5px; max-width:64ch; margin:0}
+  h2{
+    font-size:20px; letter-spacing:-.012em; font-weight:640; margin:0 0 4px;
+  }
+  section{margin-top:52px}
+  .sec-note{color:var(--ink-3); font-size:14px; margin:0 0 20px; max-width:72ch}
+
+  /* summary tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:26px}
+  .tile{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:14px 16px}
+  .tile .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+  .tile .v{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:0;color:var(--ink)}
+  .tile .d{font-size:12.5px;color:var(--ink-2);margin:6px 0 0;line-height:1.4}
+
+  /* chart */
+  .chartbox{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:18px 8px 8px;overflow-x:auto}
+  svg{display:block;min-width:660px;width:100%;height:auto}
+  .ax{stroke:var(--rule);stroke-width:1}
+  .gr{stroke:var(--grid);stroke-width:1}
+  .tk{font-family:var(--mono);font-size:10px;fill:var(--ink-3);font-variant-numeric:tabular-nums}
+  .axl{font-family:var(--mono);font-size:10.5px;fill:var(--ink-2);letter-spacing:.09em;text-transform:uppercase}
+  .pl{font-family:var(--mono);font-size:10.5px;fill:var(--ink-2)}
+  .barline{stroke:var(--bar);stroke-width:1.4;stroke-dasharray:5 4}
+  .barlab{font-family:var(--mono);font-size:10.5px;fill:var(--bar);font-weight:600}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:14px 2px 0;font-size:12.5px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  /* table */
+  .tablebox{overflow-x:auto;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:900px;font-size:13.2px}
+  thead th{
+    position:sticky;top:0;background:var(--panel);text-align:left;font-family:var(--mono);
+    font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;padding:11px 12px;border-bottom:1px solid var(--rule);white-space:nowrap;
+  }
+  tbody td{padding:9px 12px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .m{font-weight:600}
+  .fam td{
+    background:var(--accent-soft);font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;padding:8px 12px;
+  }
+  .nm{color:var(--ink-3);font-style:italic}
+  .src{font-family:var(--mono);font-size:11px;color:var(--ink-3);word-break:break-word}
+  .pill{
+    display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.07em;
+    text-transform:uppercase;font-weight:600;padding:2px 7px;border-radius:2px;white-space:nowrap;
+    border:1px solid currentColor;
+  }
+  .p-win{color:var(--win)} .p-tie{color:var(--tie)} .p-loss{color:var(--loss)}
+  .p-kill{color:var(--killed)} .p-base{color:var(--ink-3)} .p-forb{color:var(--forbidden)}
+  .strike{text-decoration:line-through;text-decoration-thickness:1px;opacity:.75}
+
+  .callout{
+    border-left:2px solid var(--accent);background:var(--panel);border-top:1px solid var(--rule);
+    border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
+    padding:16px 18px;border-radius:0 3px 3px 0;margin-top:18px
+  }
+  .callout p{margin:0 0 9px;font-size:14.2px;color:var(--ink-2)}
+  .callout p:last-child{margin-bottom:0}
+  .callout strong{color:var(--ink)}
+  ol.notes{padding-left:20px;margin:0;color:var(--ink-2);font-size:14px}
+  ol.notes li{margin-bottom:11px}
+  ol.notes strong{color:var(--ink)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--rule-2);padding:1px 5px;border-radius:2px;color:var(--ink)}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);color:var(--ink-3);font-size:12.5px}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Adaptive cascade · Lingshu-7B → 32B · MedEvalKit</p>
+  <h1>Every method we tested, and what it cost</h1>
+  <p class="sub">229 arms catalogued from the project artifacts. Accuracy is <strong>macro</strong> — equal weight per reporting cell, 8 cells, Variant B (MMMU excluded). Compute is FLOP-equivalent against one always-32B-direct forward pass. Every figure names the artifact it came from; anything never measured says so.</p>
+</header>
+
+<div class="tiles">
+  <div class="tile"><p class="k">The bar</p><p class="v">0.6567</p><p class="d">always-32B-direct, macro over 8 cells</p></div>
+  <div class="tile"><p class="k">Best clean method</p><p class="v">0.6590</p><p class="d">+0.0023 [−0.0010, +0.0054] — a tie, at 1.74× compute</p></div>
+  <div class="tile"><p class="k">Win we do hold</p><p class="v">+0.0615</p><p class="d">vs always-32B-reasoning; −88% latency, −84% energy</p></div>
+  <div class="tile"><p class="k">Open-text arm footprint</p><p class="v">18.76 GiB</p><p class="d">measured — fits a 24 GB card, vs 72.60 for always-32B-direct</p></div>
+</div>
+
+<section>
+  <h2>Measured test-time VRAM</h2>
+  <p class="sec-note">The first real VRAM data in the project, taken 2026-08-11 with HuggingFace transformers (bf16, FlashAttention-2, tp=1, batch 1, one A100 80GB). <strong>Process footprint is the number to provision</strong> — it includes the CUDA context and allocator fragmentation that a weights figure omits and a memory-pool reservation buries.</p>
+
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Scenario</th><th>Weights resident</th><th>Peak allocated</th><th>Peak reserved</th><th>Process footprint</th><th>n</th><th>Peak driver</th></tr></thead>
+    <tbody>
+      <tr><td>Lingshu-7B direct — the cheap leg</td><td class="num">15.49</td><td class="num">18.02</td><td class="num">22.04</td><td class="num m">23.42 GiB</td><td class="num">15</td><td>46,816 vision tokens, 11,931 in, 3 gen</td></tr>
+      <tr><td class="m">Lingshu-32B direct — the bar</td><td class="num">62.31</td><td class="num">67.87</td><td class="num">71.22</td><td class="num m">72.60 GiB</td><td class="num">15</td><td>same item — 90.8% of an 80 GB card</td></tr>
+      <tr><td>7B + clean LoRA verifier</td><td class="num">15.49 <span class="nm">(+0.196 adapter)</span></td><td class="num">16.48</td><td class="num">17.61</td><td class="num m">18.99 GiB</td><td class="num">12</td><td>VQA-RAD-open, 4,960 vision tokens</td></tr>
+      <tr><td class="m">Open-text best-of-8 — the FULL arm</td><td class="num">15.49 <span class="nm">(+0.196)</span></td><td class="num">16.66</td><td class="num">17.38</td><td class="num m">18.76 GiB</td><td class="num">12</td><td>generator phase on 10/12 items</td></tr>
+      <tr><td>Lingshu-32B, genuine reasoning <span class="nm">(259 tok)</span></td><td class="num">62.31</td><td class="num">67.87</td><td class="num">71.31</td><td class="num m">72.70 GiB</td><td class="num">15</td><td>+0.09 GiB over direct — prefill-bound, not decode</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>What a deployer needs.</strong> The cheap leg alone wants a 24 GB card (23.42 GiB peak is 97.6% full — take 32 GB for headroom). <strong>The entire open-text arm — 8-sample generator and verifier co-resident — fits in 18.76 GiB on a single 24 GB card</strong>, because the verifier is a LoRA adapter on the generator's own base and adds just 0.196 GiB: the arm costs one 7B, not two. always-32B-direct needs an 80 GB card and nothing smaller. <strong>A 3.9× smaller footprint at the accuracy tie.</strong></p>
+    <p><strong>Three numbers, three different things.</strong> The circulating vLLM figures (71.45 / 152.82 GB) are memory-pool <em>reservations</em> — a property of the <code>--gpu_mem</code> flag, which is why three different 7B models report an identical 71.45. vLLM's own "model weights take X GiB" line is honest but weights-only <em>and per tensor-parallel worker</em> (31.28 × 2 = 62.56 for the 32B). The HF measurement lands at 15.49 / 62.31 — within 0.5%, cross-validating both, and independently confirmed by a tp=1 probe at 62.43.</p>
+    <p><strong>Two things the measurement overturned.</strong> Reasoning does <em>not</em> cost more memory: 3 → 259 generated tokens moves the footprint by <span class="num">+0.09 GiB</span>, because the peak is set by prefill of a long multimodal prompt, not by decode — so the circulating "think adds 1.26 GB" was never a KV-cache measurement, just two different pool reservations. And the token audit caught an error in the measurement itself: pairing the reasoning prompt with MedEvalKit's MCQ tail produced <strong>2.6 generated tokens</strong> — the exact pseudo-reasoning trap this project documents — because "directly" sits closer to the generation point and overrides the system prompt. That run is retained in the artifact marked <em>do not quote</em>.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Compute against accuracy</h2>
+  <p class="sec-note">Each point is a measured operating point. The dashed line is always-32B-direct; anything below it loses on accuracy, anything right of 1.0× costs more than simply running the big model once. The cluster hugging the line from both sides is the whole story of this project.</p>
+
+  <div class="chartbox">
+  <svg viewBox="0 0 820 450" role="img" aria-label="Scatter plot of compute versus macro accuracy for every tested operating point. The always-32B-direct baseline sits at 1.0 times compute and 0.6567 accuracy; all clean methods cluster within 0.003 of that accuracy while costing 1.0 to 4.3 times as much.">
+    <!-- grid -->
+    <line class="gr" x1="70" y1="380" x2="790" y2="380"/>
+    <line class="gr" x1="70" y1="303" x2="790" y2="303"/>
+    <line class="gr" x1="70" y1="225" x2="790" y2="225"/>
+    <line class="gr" x1="70" y1="147" x2="790" y2="147"/>
+    <line class="gr" x1="70" y1="69"  x2="790" y2="69"/>
+    <!-- axes -->
+    <line class="ax" x1="70" y1="30" x2="70" y2="380"/>
+    <line class="ax" x1="70" y1="380" x2="790" y2="380"/>
+    <!-- y ticks -->
+    <text class="tk" x="62" y="384" text-anchor="end">0.590</text>
+    <text class="tk" x="62" y="307" text-anchor="end">0.610</text>
+    <text class="tk" x="62" y="229" text-anchor="end">0.630</text>
+    <text class="tk" x="62" y="151" text-anchor="end">0.650</text>
+    <text class="tk" x="62" y="73"  text-anchor="end">0.670</text>
+    <!-- x ticks -->
+    <text class="tk" x="70"  y="398" text-anchor="middle">0</text>
+    <text class="tk" x="222" y="398" text-anchor="middle">1.0×</text>
+    <text class="tk" x="374" y="398" text-anchor="middle">2.0×</text>
+    <text class="tk" x="526" y="398" text-anchor="middle">3.0×</text>
+    <text class="tk" x="678" y="398" text-anchor="middle">4.0×</text>
+    <text class="axl" x="430" y="420" text-anchor="middle">Compute — FLOP-eq × one always-32B-direct pass</text>
+    <text class="axl" x="18" y="205" text-anchor="middle" transform="rotate(-90 18 205)">Macro accuracy</text>
+
+    <!-- 1.0x vertical -->
+    <line x1="222" y1="30" x2="222" y2="380" stroke="var(--rule)" stroke-width="1" stroke-dasharray="2 4"/>
+    <!-- the bar -->
+    <line class="barline" x1="70" y1="121" x2="790" y2="121"/>
+    <text class="barlab" x="786" y="114" text-anchor="end">always-32B-direct · 0.6567</text>
+
+    <!-- contaminated (retired) -->
+    <circle cx="285" cy="71"  r="5" fill="none" stroke="var(--loss)" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <circle cx="252" cy="108" r="5" fill="none" stroke="var(--loss)" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <text class="pl" x="295" y="68" fill="var(--loss)">contaminated verifier — retired</text>
+
+    <!-- baselines -->
+    <rect x="99"  y="348" width="9" height="9" fill="var(--ink-3)"/>
+    <text class="pl" x="113" y="356">always-7B · 0.5971</text>
+    <rect x="218" y="348" width="9" height="9" fill="var(--ink-3)"/>
+    <text class="pl" x="232" y="356">always-32B-reasoning (unmatched) · 0.5974</text>
+    <rect x="218" y="240" width="9" height="9" fill="var(--ink-3)"/>
+    <text class="pl" x="232" y="248">always-32B-reasoning (prompt-matched) · 0.6250</text>
+    <rect x="218" y="117" width="9" height="9" fill="var(--ink)"/>
+    <text class="pl" x="232" y="140" fill="var(--ink)">always-32B-direct — the bar</text>
+
+    <!-- clean method points -->
+    <circle cx="221" cy="124" r="5" fill="var(--tie)"/>
+    <circle cx="247" cy="115" r="5" fill="var(--tie)"/>
+    <text class="pl" x="258" y="112">cost-floor per-cell selection · 0.6578 @ 1.165×</text>
+    <circle cx="292" cy="169" r="5" fill="var(--loss)"/>
+    <text class="pl" x="302" y="173">compute-lean · 0.6443 (significant loss)</text>
+    <circle cx="329" cy="146" r="5" fill="var(--loss)"/>
+    <text class="pl" x="339" y="150">fusion · 0.6503 (loss)</text>
+    <circle cx="335" cy="116" r="5" fill="var(--tie)"/>
+    <text class="pl" x="345" y="106">accuracy-max · 0.6575 · 1.74×</text>
+    <circle cx="335" cy="112" r="5" fill="var(--tie)"/>
+    <circle cx="718" cy="109" r="5" fill="var(--tie)"/>
+    <text class="pl" x="712" y="98" text-anchor="end">32B best-of-8 · 0.6586–0.6597 · 4.26×</text>
+    <circle cx="718" cy="113" r="5" fill="var(--tie)"/>
+
+    <!-- oracle -->
+    <path d="M222 110 l5 8 l-10 0 z" fill="var(--accent)"/>
+    <text class="pl" x="234" y="98" fill="var(--accent)">oracle mode-select · 0.6573</text>
+  </svg>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--tie)"></i>statistical tie with the bar</span>
+    <span><i class="dot" style="background:var(--loss)"></i>significant loss</span>
+    <span><i class="dot" style="background:var(--ink-3)"></i>baseline</span>
+    <span><i class="dot" style="background:var(--accent)"></i>oracle (upper bound)</span>
+  </div>
+
+  <div class="callout">
+    <p><strong>Read the horizontal spread, not the vertical.</strong> Every clean operating point sits within 0.003 accuracy of the bar — inside the confidence interval — while spanning 1.0× to 4.3× its compute. Eight pre-registered attacks across two rounds have not moved a point above the dashed line with a CI excluding zero.</p>
+    <p>The one exception is retired: the two dashed circles above the line used a verifier trained on ~70% of the items it scored. Decontamination costs <span class="num">−0.0119 [−0.0188, −0.0052]</span> and turns that win into a tie.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The methods</h2>
+  <p class="sec-note">Highest-value rows from the 229-row inventory, grouped by family. <strong>Compute</strong> is × one always-32B-direct pass unless stated. <strong>VRAM</strong> reads <span class="nm">reservation</span> where the only figure available is a vLLM memory-pool setting rather than a measurement — those are per model tier, not per method.</p>
+
+  <div class="tablebox">
+  <table>
+    <thead><tr>
+      <th>Method</th><th>Accuracy (macro)</th><th>vs 32B-direct</th><th>Compute</th><th>VRAM</th><th>Verdict</th><th>Source artifact</th>
+    </tr></thead>
+    <tbody>
+
+    <tr class="fam"><td colspan="7">Baselines</td></tr>
+    <tr><td>always-7B</td><td class="num">0.5971</td><td class="num">−0.0596</td><td class="num">0.219×</td><td class="nm">71.45 GB reservation</td><td><span class="pill p-base">baseline</span></td><td class="src">macro_average_headline_2026-07-30</td></tr>
+    <tr><td class="m">always-32B-direct</td><td class="num m">0.6567</td><td class="num">— the bar</td><td class="num">1.00×</td><td class="nm">152.82 GB reservation</td><td><span class="pill p-base">baseline</span></td><td class="src">macro_average_headline_2026-07-30</td></tr>
+    <tr><td>always-32B-reasoning <span class="nm">(unmatched)</span></td><td class="num">0.5974</td><td class="num">−0.0593</td><td class="num">1.00×</td><td class="nm">154.08 GB reservation</td><td><span class="pill p-base">baseline</span></td><td class="src">headline_three_way_2026-08-03 — 90% of the pool never reasons (3.0–3.3 tokens)</td></tr>
+    <tr><td class="m">always-32B-reasoning <span class="nm">(prompt-matched)</span></td><td class="num">0.6250</td><td class="num">−0.0317</td><td class="num">1.00×</td><td class="nm">154.08 GB reservation</td><td><span class="pill p-base">baseline</span></td><td class="src">headline_three_way_2026-08-03 — the honest one; halves our win</td></tr>
+    <tr><td>oracle mode-select 32B</td><td class="num">0.6573</td><td class="num">+0.0006</td><td class="num">1.00×</td><td class="nm">not measured</td><td><span class="pill p-base">oracle</span></td><td class="src">macro_average_headline_2026-07-30</td></tr>
+    <tr><td>always-32B best-of-8 + clean verifier</td><td class="num">0.6586</td><td class="num">+0.0001</td><td class="num">4.26×</td><td class="nm">not measured</td><td><span class="pill p-tie">tie</span></td><td class="src">openstrong_bestofn_2026-08-10 — 8× more 32B buys nothing</td></tr>
+
+    <tr class="fam"><td colspan="7">Shipped operating points</td></tr>
+    <tr><td class="strike">accuracy-max — contaminated <span class="nm">(the paper row)</span></td><td class="num strike">0.6694</td><td class="num strike">+0.0128 [+0.0056, +0.0200]</td><td class="num">1.410×</td><td class="nm">not measured</td><td><span class="pill p-loss">retired</span></td><td class="src">cascade_selector_rerun_2026-08-05 · per_arm.pooled4</td></tr>
+    <tr><td class="m">accuracy-max — clean disjoint</td><td class="num m">0.6575</td><td class="num">+0.0008 [−0.0022, +0.0037]</td><td class="num">1.74×</td><td class="nm">not measured</td><td><span class="pill p-tie">tie</span></td><td class="src">cascade_selector_rerun_2026-08-05 · per_arm.disjoint</td></tr>
+    <tr><td>compute-lean — clean disjoint</td><td class="num">0.6443</td><td class="num">−0.0124 [−0.0191, −0.0062]</td><td class="num">1.46×</td><td class="nm">not measured</td><td><span class="pill p-loss">loss</span></td><td class="src">cascade_selector_rerun_2026-08-05</td></tr>
+    <tr><td>accuracy-max⁺ fusion — clean</td><td class="num">0.6503</td><td class="num">−0.0063 [−0.0120, −0.0011]</td><td class="num">1.699×</td><td class="nm">not measured</td><td><span class="pill p-loss">loss</span></td><td class="src">cascade_selector_rerun_2026-08-05</td></tr>
+    <tr><td class="m">accuracy-max + frozen 8-seed selector</td><td class="num m">0.6590</td><td class="num">+0.0023 [−0.0010, +0.0054]</td><td class="num">1.739×</td><td class="nm">not measured</td><td><span class="pill p-tie">tie</span></td><td class="src">cascade_selector_rerun_2026-08-05 · ens8_scaled</td></tr>
+    <tr><td>ens8 raw-rank scale</td><td class="num">0.6571</td><td class="num">+0.0004</td><td class="num">0.886× ⚠</td><td class="nm">not measured</td><td><span class="pill p-kill">degenerate</span></td><td class="src">the cheapness <em>is</em> a gate collapse — never quote the cost</td></tr>
+
+    <tr class="fam"><td colspan="7">Round 1 attacks — 2026-08-10</td></tr>
+    <tr><td>Open-strong: best-of-N on the 32B</td><td class="num">0.6597</td><td class="num">+0.0012 [−0.0055, +0.0080]</td><td class="num">4.26×</td><td class="nm">not measured</td><td><span class="pill p-tie">tie</span></td><td class="src">openstrong_bestofn_2026-08-10 — PathVQA-open won +0.0269</td></tr>
+    <tr><td>MCQ test-time augmentation (K=4)</td><td class="num">−0.0013 macro Δ</td><td class="num">summed MCQ −0.0078 vs bar +0.0235</td><td class="num">4 × 32B passes</td><td class="nm">not measured</td><td><span class="pill p-kill">killed</span></td><td class="src">mcq_tta_2026-08-10 — cost artifact never produced</td></tr>
+    <tr><td>Cost-floor — honest nested CV</td><td class="num">0.6558</td><td class="num">−0.0009 [−0.0034, +0.0015]</td><td class="num">0.993×</td><td class="nm">never measured</td><td><span class="pill p-tie">tie</span></td><td class="src">cost_floor_2026-08-10</td></tr>
+    <tr><td class="m">Cost-floor — cross-fit per-cell selection</td><td class="num m">0.6578</td><td class="num">+0.0011 [−0.0014, +0.0035]</td><td class="num m">1.165×</td><td class="nm">never measured</td><td><span class="pill p-tie">tie, cheaper</span></td><td class="src">cost_floor_2026-08-10 — equal accuracy, 1.49× less compute than shipped</td></tr>
+    <tr><td>Open-diverse DPP portfolio</td><td class="num">sel_eff −0.0748 (SLAKE)</td><td class="num">−0.0465 [−0.0729, −0.0217]</td><td class="num">15 gens for 8 slots</td><td class="nm">not measured</td><td><span class="pill p-kill">killed</span></td><td class="src">open_diverse_2026-08-10 — retires a live claim</td></tr>
+
+    <tr class="fam"><td colspan="7">Verifiers &amp; selectors — endpoint is selection efficiency on the n=2,345 open pool</td></tr>
+    <tr><td class="m">Incumbent LoRA verifier (clean)</td><td class="num m">0.775204</td><td class="num">— the selector bar</td><td class="num">3.82 passes/q</td><td class="nm">not measured</td><td><span class="pill p-base">bar</span></td><td class="src">genframe_cache_audit_2026-08-05</td></tr>
+    <tr><td class="strike">Same verifier, contaminated</td><td class="num strike">0.884196</td><td class="num">+0.109 inflation (2.90×)</td><td class="num">3.82</td><td class="nm">not measured</td><td><span class="pill p-loss">invalid</span></td><td class="src">crossfamily_verifier_sweep_2026-08-04</td></tr>
+    <tr><td>Six cross-family zero-shot judges</td><td class="num">0.668–0.688</td><td class="num">all six CIs exclude zero, losing</td><td class="num">~1 pass/candidate</td><td class="nm">not measured</td><td><span class="pill p-kill">killed</span></td><td class="src">crossfamily_verifier_sweep_2026-08-04</td></tr>
+    <tr><td>Lingshu-32B zero-shot judge (4.5× scale)</td><td class="num">0.768392</td><td class="num">tie with a 7B trained judge</td><td class="num">4.5×/candidate</td><td class="nm">not measured</td><td><span class="pill p-tie">tie</span></td><td class="src">training, not size, is the active ingredient</td></tr>
+    <tr><td>Real pairwise A-vs-B (HF, engine-matched)</td><td class="num">0.803158</td><td class="num">vs 0.808421 on the same items</td><td class="num">13.07 passes/q</td><td class="nm">not measured</td><td><span class="pill p-kill">null</span></td><td class="src">verifarch_realpairwise_hf_2026-08-05</td></tr>
+    <tr><td>Same, under vLLM</td><td class="num">0.711172</td><td class="num">−0.072 engine artifact</td><td class="num">17.02 passes/q</td><td class="nm">not measured</td><td><span class="pill p-loss">artifact</span></td><td class="src">vLLM drops all 192 visual LoRA modules</td></tr>
+    <tr><td>Listwise / ranking losses (27 arms)</td><td class="num">0.781335</td><td class="num">best arm is itself pointwise</td><td class="num">0</td><td class="nm">n/a</td><td><span class="pill p-kill">closed</span></td><td class="src">verifarch_listwise_2026-08-04</td></tr>
+    <tr><td>Set-aware / DeepSets / attention</td><td class="num">0.793597</td><td class="num">−0.0102 vs pointwise</td><td class="num">0 marginal</td><td class="nm">n/a</td><td><span class="pill p-loss">loss</span></td><td class="src">verifarch_setaware_2026-08-04</td></tr>
+    <tr><td>Pairwise contrast head</td><td class="num">0.805177</td><td class="num">+0.0020 vs pointwise, n.s.</td><td class="num">0 extra passes</td><td class="nm">n/a</td><td><span class="pill p-kill">killed</span></td><td class="src">97.93% of the learned matrix is additive</td></tr>
+    <tr><td>Pool-relative geometry</td><td class="num">0.810627</td><td class="num">+0.005 vs pointwise, n.s.</td><td class="num">0</td><td class="nm">n/a</td><td><span class="pill p-kill">killed as mechanism</span></td><td class="src">geometry alone 0.6628 &lt; random 0.6763</td></tr>
+    <tr><td>Feature GBM / MLP (39 features)</td><td class="num">0.763624</td><td class="num">−0.012 n.s.</td><td class="num">0 model calls</td><td class="nm">n/a</td><td><span class="pill p-tie">tie</span></td><td class="src">guardrail dirty on PathVQA</td></tr>
+    <tr><td>SigLIP / PubMedCLIP / BiomedCLIP zero-shot</td><td class="num">0.6247 / 0.6417 / 0.6608</td><td class="num">all below the 0.6763 random floor</td><td class="num">1 dual-encoder pass</td><td class="nm">not measured</td><td><span class="pill p-kill">killed</span></td><td class="src">verifarch_alignment_2026-08-04</td></tr>
+    <tr><td class="m">rank_avg(incumbent, hidden head)</td><td class="num m">0.806540</td><td class="num">+0.031 [+0.016, +0.046]</td><td class="num">7.64 passes/q</td><td class="nm">not measured</td><td><span class="pill p-win">win</span></td><td class="src">verifarch_hidden_fusion_controls_2026-08-04</td></tr>
+    <tr><td class="m">Frozen 8-seed ensemble <span class="nm">(shipped)</span></td><td class="num m">0.810627</td><td class="num">+0.035 vs bar; +0.004 n.s. vs deployed</td><td class="num">0 marginal</td><td class="nm">29.4 MB on disk</td><td><span class="pill p-win">win / tie</span></td><td class="src">verifarch_integrated_2026-08-04 — variance elimination, not mechanism</td></tr>
+
+    <tr class="fam"><td colspan="7">MCQ levers &amp; the open arm</td></tr>
+    <tr><td>F8 certified veto <span class="nm">(not abstention)</span></td><td class="num">PMC 0.5613</td><td class="num">PMC +0.0095 [+0.0071, +0.0118]</td><td class="num">0.885×</td><td class="nm">not measured</td><td><span class="pill p-win">win, PMC only</span></td><td class="src">beat32b_more · fires on 0 of the other 4 MCQ cells</td></tr>
+    <tr><td>F3 confidence-advantage fusion</td><td class="num">PMC 0.5653</td><td class="num">+0.0135 [+0.0100, +0.0169]</td><td class="num">5.57 FLOP-eq</td><td class="nm">not measured</td><td><span class="pill p-win">win, PMC only</span></td><td class="src">beat32b_fusion — loses elsewhere</td></tr>
+    <tr><td>Margin-gate cascade (MCQ arm)</td><td class="num">per cell</td><td class="num">MCQ-half −0.0070 [−0.0126, −0.0017]</td><td class="num">escalation 8.45%→89.60%</td><td class="nm">reservation only</td><td><span class="pill p-loss">loss on the MCQ half</span></td><td class="src">paper_baselines · retrospective §4.3</td></tr>
+    <tr><td>7B best-of-8 + trained verifier</td><td class="num">0.4853 selected</td><td class="num">arm 0.5143 vs direct 0.5168</td><td class="num">16.0 FLOP-eq</td><td class="nm">not measured</td><td><span class="pill p-tie">parity, not a beat</span></td><td class="src">bestofn_latency_energy_2026-08-03</td></tr>
+    <tr><td class="m">Adaptive-N Weitzman controller</td><td class="num">iso-accuracy</td><td class="num">—</td><td class="num m">11.74 vs 16.0 (−27%)</td><td class="nm">not measured</td><td><span class="pill p-win">win</span></td><td class="src">pandora_controller — one of four survivors</td></tr>
+    <tr><td>Scaling best-of-N to N=16/32/64</td><td class="num">oracle 0.6178→0.6695</td><td class="num">never reaches 32B-direct</td><td class="num">N gen + N verify</td><td class="nm">not measured</td><td><span class="pill p-kill">killed</span></td><td class="src">sel_eff decays −0.0761 per doubling</td></tr>
+    <tr><td>Gate bake-off: margin vs 13 alternatives</td><td class="num">0.6445 vs 0.6407 / 0.6430</td><td class="num">margin wins</td><td class="num">32.5% escalation at parity</td><td class="nm">not measured</td><td><span class="pill p-win">margin holds</span></td><td class="src">gate_unified_bakeoff — best detector ≠ best cascade</td></tr>
+
+    <tr class="fam"><td colspan="7">Historical — June era, internal harness, not comparable to the rows above</td></tr>
+    <tr><td class="m">June live co-resident cascade (τ=0.426)</td><td class="num">0.566 vs 7B 0.531</td><td class="num">strong leg was 32B-<em>think</em></td><td class="num">73.6% of always-32B-think</td><td class="m num">86,335 MB measured</td><td><span class="pill p-base">historical</span></td><td class="src">logs/rt_cascade.log — the only genuine end-to-end run in the project</td></tr>
+    <tr><td>3-tier ACC cascade</td><td class="num">0.5693 vs parity 0.5723</td><td class="num">—</td><td class="num">52.0% FLOPs · 2.27 s · 1,182 J</td><td class="nm">reservation only</td><td><span class="pill p-base">historical</span></td><td class="src">master_data.csv</td></tr>
+    <tr><td>~90 killed directions (N1–N83)</td><td class="num">—</td><td class="num">e.g. TTT −0.1591 · routing −29σ</td><td class="num">—</td><td class="nm">—</td><td><span class="pill p-kill">killed</span></td><td class="src">retrospective §6.1–6.11</td></tr>
+    <tr><td>Abstention / reject-option</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="nm">—</td><td><span class="pill p-forb">forbidden direction</span></td><td class="src">historical record only — never a live method</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>What the numbers are not</h2>
+  <p class="sec-note">Eight conventions that decide whether two rows in the table above can be compared at all. Most of this project's historical errors were comparisons across these lines.</p>
+  <ol class="notes">
+    <li><strong>Weighting.</strong> Macro gives each of 8 reporting cells 1/8. Sample-weighted gives PMC-VQA 79.2% of the suite. The same method reads <span class="num">1.196×</span> macro and <span class="num">0.492×</span> sample-weighted — never pair a macro accuracy with a sample-weighted cost.</li>
+    <li><strong>Three harnesses.</strong> (A) faithful MedEvalKit, PMC-VQA = <code>test_2.csv</code>, 33,430 items, zero published verification. (B) internal NGC, PMC-VQA = <code>test_clean.csv</code>, 2,000 items, human-verified. (C) a custom judged open-text pipeline. The headline pool is a splice of A and C. <code>test_clean ∩ test_2 = 6 items</code>.</li>
+    <li><strong>Contamination.</strong> Every open-text cell of the published headline used a verifier trained on ~70% of the items it scored. Decontaminating costs <span class="num">−0.0119 [−0.0188, −0.0052]</span> and turns "beats always-32B-direct" into a tie.</li>
+    <li><strong>Cost convention.</strong> As-charged uses R32 = 4.57; the honestly derived R32 = 3.816 moves every ratio against the method. The assumed vLLM prefill-sharing credit is <strong>void</strong> — vLLM V1 splits <code>n=N</code> into N child requests each carrying the full prompt.</li>
+    <li><strong>Engine.</strong> vLLM 0.9.0.1 silently drops all 192 <code>visual.*</code> LoRA modules: the same adapter scores <span class="num">0.775204</span> under HF and <span class="num">0.702997</span> under vLLM. Its decode is also non-deterministic across tensor-parallel settings — open cells reproduce only to <span class="num">±0.008</span> per cell, which is <strong>larger than the entire published headline delta</strong>.</li>
+    <li><strong>The reasoning baseline is two different things.</strong> Prompt-unmatched it scores 0.5974 but is not a reasoning run on ~90% of the pool (3.0–3.3 generated tokens). Prompt-matched it scores 0.6250, and our win against it halves.</li>
+    <li><strong>Nothing was run end to end.</strong> Every Lingshu-era operating point is a CPU re-costing of saved per-sample dumps using per-leg batch-1 constants. The single genuine execution is the June live cascade.</li>
+    <li><strong>Two paper constants are refuted.</strong> Best-of-N latency and energy were asserted at 522 ms / 568.8 J; measured they are <span class="num">1,305.3 ms / 316.7 J</span> (n=45). "N drops out of latency" is false.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>The VRAM gap</h2>
+  <p class="sec-note">You asked for VRAM. It is the one column the project cannot honestly fill, and the reason is worth stating precisely.</p>
+  <div class="callout">
+    <p><strong>160 of 229 rows have no VRAM figure, and the submitted paper contains none at all.</strong> The nine numbers that circulate — 71.45, 152.82, 154.08 GB and so on — are vLLM memory-pool <em>reservations</em> set by a <code>--gpu_mem</code> flag, allocated per model tier. The tell: three different 7B models all report exactly 71.45 GB, and three different 32B models all report exactly 152.82 GB.</p>
+    <p><strong>One genuine measurement exists</strong> — the June co-resident cascade, 18,014 MB (7B) + 68,321 MB (32B) = 86,335 MB — and it lives in a log file with no artifact, as a resident-after-load snapshot rather than a peak.</p>
+    <p>vLLM's own honest figures for weights alone (7B <span class="num">15.63</span> GiB, 32B <span class="num">31.46</span> GiB, 38B <span class="num">37.87</span> GiB) are cited nowhere. The INT4 strong leg claimed "a real VRAM win" with no measured number behind it — the quantised shards never downloaded.</p>
+    <p><strong>✓ Measured 2026-08-11</strong> — see the table above. Five test-time scenarios on HuggingFace rather than vLLM. The per-method rows below still read <span class="nm">not measured</span>, and that remains honest: what exists now is a footprint per <em>tier and pipeline stage</em>, not per operating point.</p>
+    <p><strong>Still uncharacterised:</strong> batch &gt; 1, tp=2 footprint, 7B+32B co-residency on one card, and a resolution-cap ablation — that last is the direct VRAM lever, since the peak is prefill-bound and driven by vision-token count (46,816 on the worst item).</p>
+  </div>
+</section>
+
+<footer>
+  Compiled from <span class="num">results/cascade_methods/artifacts/method_inventory_2026-08-11.json</span> — 229 rows, each value carrying its own source field. Accuracy figures are macro over 8 cells, Variant B, clean verifier unless a row says otherwise. Intervals are 95% paired item-level bootstraps, nboot = 10,000.
+</footer>
+</div>

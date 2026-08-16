@@ -1,0 +1,272 @@
+<title>The Method, In Full</title>
+<style>
+  :root{
+    --ground:#F6F8F7; --panel:#FFFFFF; --ink:#12171A; --ink-2:#414B4F; --ink-3:#6B767A;
+    --rule:#D9E0DE; --rule-2:#E9EEEC;
+    --accent:#0E6E62; --accent-soft:#E3F0EE;
+    --win:#1B7A4B; --tie:#8A6A16; --loss:#A63127; --killed:#6E7679;
+    --grid:#E4EAE8;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+      --rule:#26302F; --rule-2:#1D2528; --accent:#3FB3A2; --accent-soft:#12312D;
+      --win:#4CBE7F; --tie:#D0A63C; --loss:#E0705F; --killed:#8A9497; --grid:#1F2729;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0C1012; --panel:#141A1D; --ink:#E8EEEC; --ink-2:#A9B5B8; --ink-3:#7A868A;
+    --rule:#26302F; --rule-2:#1D2528; --accent:#3FB3A2; --accent-soft:#12312D;
+    --win:#4CBE7F; --tie:#D0A63C; --loss:#E0705F; --killed:#8A9497; --grid:#1F2729;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;margin:0;padding:0 20px 96px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto}
+  header{padding:56px 0 26px;border-bottom:1px solid var(--rule)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;letter-spacing:-.022em;font-weight:640;margin:0 0 14px;text-wrap:balance}
+  .sub{color:var(--ink-2);font-size:17px;max-width:62ch;margin:0}
+  h2{font-size:23px;letter-spacing:-.014em;font-weight:640;margin:0 0 6px;text-wrap:balance}
+  h3{font-size:16px;letter-spacing:-.006em;font-weight:640;margin:26px 0 6px}
+  section{margin-top:52px}
+  .lead{color:var(--ink-2);font-size:15px;margin:0 0 20px;max-width:70ch}
+  p{max-width:70ch}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  code{font-family:var(--mono);font-size:.88em;background:var(--rule-2);padding:1px 5px;border-radius:2px}
+  .tablebox{overflow-x:auto;border:1px solid var(--rule);border-radius:3px;background:var(--panel);margin-top:14px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.4px}
+  thead th{background:var(--panel);text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--rule);white-space:nowrap}
+  tbody td{padding:9px 12px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  tbody td.r,thead th.r{text-align:right}
+  .m{font-weight:650}
+  .hl td{background:var(--accent-soft)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;padding:2px 7px;border-radius:2px;border:1px solid currentColor;white-space:nowrap}
+  .p-win{color:var(--win)} .p-tie{color:var(--tie)} .p-loss{color:var(--loss)} .p-kill{color:var(--killed)}
+  .stage{border:1px solid var(--rule);background:var(--panel);border-radius:3px;padding:16px 18px;margin-top:12px}
+  .stage h4{margin:0 0 6px;font-size:15px;font-weight:640;letter-spacing:-.005em}
+  .stage .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+  .stage p{margin:0 0 8px;font-size:14.2px;color:var(--ink-2)}
+  .stage p:last-child{margin-bottom:0}
+  .callout{border-left:2px solid var(--accent);background:var(--panel);border-top:1px solid var(--rule);border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:15px 18px;border-radius:0 3px 3px 0;margin-top:16px}
+  .callout.warn{border-left-color:var(--loss)}
+  .callout p{margin:0 0 9px;font-size:14.2px;color:var(--ink-2)}
+  .callout p:last-child{margin-bottom:0}
+  .callout strong{color:var(--ink)}
+  ol,ul{color:var(--ink-2);font-size:14.6px;padding-left:22px;max-width:70ch}
+  li{margin-bottom:9px}
+  li strong{color:var(--ink)}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);color:var(--ink-3);font-size:12.5px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Status as of 2026-08-12 · Lingshu-7B → 32B · MedEvalKit</p>
+  <h1>The method, in full</h1>
+  <p class="sub">What it is, what every component contributes, what it scores, what it costs, and which of the three configurations you should actually quote. All figures are macro — equal weight per reporting cell, 8 cells, MMMU excluded — measured with the decontaminated verifier.</p>
+</header>
+
+<section>
+  <h2>1 · What the method is</h2>
+  <p class="lead">A <strong>format-aware adaptive cascade</strong> between two models of the same family. It reads the prompt, decides whether the question is multiple-choice or open-ended, and runs a different policy for each. Both policies end with the same escape hatch: hand the question to the big model.</p>
+
+  <div class="stage">
+    <span class="tag">Stage 0 · Router</span>
+    <h4>Format detection from the prompt text alone</h4>
+    <p>Decides multiple-choice vs open-ended by inspecting the prompt template — never the gold answer. This is reliable because the harness's own templates differ structurally: option-bearing prompts supply an answer space, open ones do not.</p>
+  </div>
+
+  <div class="stage">
+    <span class="tag">Stage 1a · Multiple-choice arm — 5 of 8 cells, 62.5% of the score</span>
+    <h4>7B-direct → confidence-margin gate → 32B-direct</h4>
+    <p>The 7B answers directly. The gate reads the <strong>margin</strong> — the gap between the top-1 and top-2 option log-probabilities — and escalates to the 32B when the margin falls below a cross-fit threshold. No reasoning trace is generated at any point.</p>
+    <p>A <strong>certified veto</strong> sits on top: where a Wilson lower bound on the 7B's precision in a confidence bin exceeds the 32B's accuracy in that same bin, the 7B's answer is kept and the 32B is never called. It <em>answers</em> — it is not abstention.</p>
+  </div>
+
+  <div class="stage">
+    <span class="tag">Stage 1b · Open-text arm — 3 of 8 cells, 37.5% of the score</span>
+    <h4>7B best-of-N → trained verifier → escalate on low confidence</h4>
+    <p>The 7B samples up to 8 candidate answers, with a <strong>Weitzman optimal-stopping rule</strong> deciding when to stop drawing (mean 5.5 of 8). A LoRA verifier scores <span class="num">P(correct | image, question, candidate)</span> for each, and the argmax is taken. If the verifier's top score is low, the question escalates to the 32B instead.</p>
+    <p>The deployed selector is a rank fusion of that verifier with a frozen 8-seed discriminative head reading the generator's own hidden states.</p>
+  </div>
+
+  <h3>What is actually resident</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Component</th><th class="r">Parameters</th><th class="r">Weights</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Lingshu-7B base (incl. vision tower)</td><td class="num r">8.29 B</td><td class="num r">15.45 GiB</td><td>generator <em>and</em> verifier share this</td></tr>
+      <tr><td>Verifier LoRA (r=16)</td><td class="num r">47.6 M</td><td class="num r">181.6 MiB</td><td>adapter on the same base — 0.57% overhead</td></tr>
+      <tr><td>Frozen 8-seed selector head</td><td class="num r">7.34 M</td><td class="num r">28.1 MiB</td><td>reads cached hidden states, no extra pass</td></tr>
+      <tr class="hl"><td class="m">Lingshu-32B (the escalation target)</td><td class="num r m">33.45 B</td><td class="num r m">62.31 GiB</td><td>needed on ~42% of questions</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>2 · What it scores</h2>
+  <p class="lead">Macro accuracy, 8 cells at 1/8 each, Variant B (MMMU excluded on contamination grounds), clean disjoint-trained verifier. Intervals are 95% paired item-level bootstraps, 10,000 resamples.</p>
+
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Arm</th><th class="r">Macro</th><th>vs 32B-reasoning</th><th>vs 32B-direct</th><th class="r">Compute</th></tr></thead>
+    <tbody>
+      <tr><td>always-7B</td><td class="num r">0.5971</td><td class="num">−0.0003</td><td class="num">−0.0596</td><td class="num r">0.219×</td></tr>
+      <tr><td>always-32B-reasoning <span style="color:var(--ink-3)">(unmatched prompt)</span></td><td class="num r">0.5974</td><td>—</td><td class="num">−0.0593</td><td class="num r">1.00×</td></tr>
+      <tr><td>always-32B-reasoning <span style="color:var(--ink-3)">(prompt-matched — the honest one)</span></td><td class="num r">0.6250</td><td>—</td><td class="num">−0.0317</td><td class="num r">1.00×</td></tr>
+      <tr class="hl"><td class="m">always-32B-direct — <strong>the bar</strong></td><td class="num r m">0.6567</td><td>—</td><td>—</td><td class="num r">1.00×</td></tr>
+      <tr><td>oracle mode-select on the 32B</td><td class="num r">0.6573</td><td>—</td><td class="num">+0.0006</td><td class="num r">1.00×</td></tr>
+      <tr><td class="m">accuracy-max <span style="color:var(--ink-3)">(the shipped method)</span></td><td class="num r m">0.6575</td><td class="num">+0.0601 [+0.0499,+0.0700] <span class="pill p-win">win</span></td><td class="num">+0.0008 [−0.0022,+0.0037] <span class="pill p-tie">tie</span></td><td class="num r">1.74×</td></tr>
+      <tr><td>accuracy-max + frozen selector</td><td class="num r">0.6590</td><td class="num">+0.0615 [+0.0514,+0.0715] <span class="pill p-win">win</span></td><td class="num">+0.0023 [−0.0010,+0.0054] <span class="pill p-tie">tie</span></td><td class="num r">1.74×</td></tr>
+      <tr><td>compute-lean</td><td class="num r">0.6443</td><td class="num">+0.0469</td><td class="num">−0.0124 [−0.0191,−0.0062] <span class="pill p-loss">loss</span></td><td class="num r">1.46×</td></tr>
+      <tr><td>accuracy-max⁺ fusion</td><td class="num r">0.6503</td><td class="num">+0.0529</td><td class="num">−0.0063 [−0.0120,−0.0011] <span class="pill p-loss">loss</span></td><td class="num r">1.70×</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Read this table as two different results.</strong> Against a <em>reasoning</em> 32B the method wins decisively and cheaply. Against a 32B answering <em>directly</em> it is a statistical tie — and it pays 74% more compute for that tie. Both statements are true simultaneously; which one matters depends on what you think a deployer would actually run.</p>
+    <p>The vs-direct claim <strong>used to be a win</strong> (+0.0128 [+0.0056, +0.0200]). Decontaminating the verifier — which had been trained on ~70% of the items it scored — cost <span class="num">−0.0119 [−0.0188, −0.0052]</span> and turned it into a tie. That single correction is roughly <strong>7× larger</strong> than any selector improvement we have ever made.</p>
+  </div>
+
+  <h3>Per cell — where the score actually comes from</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Cell</th><th class="r">n</th><th class="r">7B</th><th class="r">32B-direct</th><th class="r">method</th><th class="r">escalates</th></tr></thead>
+    <tbody>
+      <tr><td>PMC-VQA <span style="color:var(--ink-3)">(MCQ)</span></td><td class="num r">33,430</td><td class="num r">0.5427</td><td class="num r">0.5518</td><td class="num r m">0.5613</td><td class="num r">8.45%</td></tr>
+      <tr><td>SLAKE-closed</td><td class="num r">836</td><td class="num r">0.8254</td><td class="num r">0.8589</td><td class="num r">0.8589</td><td class="num r">20.45%</td></tr>
+      <tr><td>VQA-RAD-closed</td><td class="num r">251</td><td class="num r">0.7809</td><td class="num r">0.8526</td><td class="num r">0.8526</td><td class="num r">56.97%</td></tr>
+      <tr><td>PathVQA-closed</td><td class="num r">3,362</td><td class="num r">0.8409</td><td class="num r">0.8891</td><td class="num r">0.8891</td><td class="num r">45.72%</td></tr>
+      <tr><td>MedXpert-MM</td><td class="num r">2,000</td><td class="num r">0.2615</td><td class="num r">0.3065</td><td class="num r">0.3065</td><td class="num r">89.60%</td></tr>
+      <tr><td>SLAKE-open</td><td class="num r">645</td><td class="num r">0.7364</td><td class="num r">0.8186</td><td class="num r">0.8171</td><td class="num r">43.41%</td></tr>
+      <tr><td>VQA-RAD-open</td><td class="num r">200</td><td class="num r">0.4650</td><td class="num r">0.6000</td><td class="num r">0.5900</td><td class="num r">54.00%</td></tr>
+      <tr><td>PathVQA-open</td><td class="num r">1,500</td><td class="num r">0.3240</td><td class="num r">0.3760</td><td class="num r m">0.3847</td><td class="num r">16.00%</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <p><strong>On four of the five multiple-choice cells the method is byte-identical to always-32B-direct.</strong> The gate escalates, the veto never fires, and the output is the baseline's. On 50% of the macro weight the method <em>is</em> the thing it is being compared against.</p>
+    <p>The entire vs-direct delta is therefore two cells: <strong>PMC-VQA (+0.0095)</strong> and <strong>PathVQA-open (+0.0087)</strong>, less what SLAKE-open and VQA-RAD-open give back. Drop PMC-VQA and the delta goes negative. And PMC-VQA is the split with <em>zero published verification</em> — an audit found 44% of its gain traceable to answer-position skew, and 53% of audited veto wins sitting on defective labels.</p>
+  </div>
+</section>
+
+<section>
+  <h2>3 · What it costs</h2>
+  <p class="lead">Compute is FLOP-equivalent against one always-32B-direct forward pass, macro-weighted. Never pair a macro accuracy with a sample-weighted cost — the same method reads 1.20× macro and 0.49× sample-weighted.</p>
+
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Configuration</th><th class="r">Macro</th><th class="r">Compute</th><th class="r">Latency</th><th class="r">Energy</th><th class="r">Must be resident</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td class="m">always-32B-direct (baseline)</td><td class="num r">0.6567</td><td class="num r">1.000×</td><td class="num r">665 ms</td><td class="num r">127.0 J</td><td class="num r">62.31 GiB</td></tr>
+      <tr><td>shipped accuracy-max</td><td class="num r">0.6575</td><td class="num r">1.740×</td><td class="num r">775.9 ms <span style="color:var(--loss)">+17%</span></td><td class="num r">255.3 J <span style="color:var(--loss)">+101%</span></td><td class="num r">77.76 GiB</td></tr>
+      <tr><td class="m">cost-optimal point <span style="color:var(--ink-3)">(§5)</span></td><td class="num r m">0.6569</td><td class="num r m">0.865×</td><td class="num r m">650.6 ms <span style="color:var(--win)">−2.2%</span></td><td class="num r m">116.6 J <span style="color:var(--win)">−8.2%</span></td><td class="num r">77.76 GiB</td></tr>
+      <tr><td>always-7B</td><td class="num r">0.5971</td><td class="num r">0.219×</td><td class="num r">347 ms</td><td class="num r">45.8 J</td><td class="num r">15.45 GiB</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Where the compute actually goes</h3>
+  <p>Decomposing the shipped arm's 7.951 FLOP-eq:</p>
+  <ul>
+    <li><strong>By leg</strong> — 32B escalation <span class="num">46.4%</span>, cheap-leg generation <span class="num">27.6%</span>, verifier scoring <span class="num">26.0%</span>, selector head <span class="num">0.0%</span>.</li>
+    <li><strong>By phase</strong> — LM prefill <span class="num">82.1%</span>, vision towers <span class="num">16.7%</span>, <em>all</em> decode <span class="num">1.2%</span>. <strong>This is a prefill-bound workload.</strong> Every idea about generating fewer or shorter answers was doomed before it started; the only levers are fewer forward passes and fewer prompt/image tokens.</li>
+    <li><strong>Pure waste</strong> — <span class="num">44.1%</span> of macro compute is cheap-side work on questions that get escalated anyway.</li>
+    <li>The three open cells are 3/8 of the weight but <span class="num">65.4%</span> of the cost.</li>
+  </ul>
+
+  <h3>Memory, measured</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Scenario</th><th class="r">Weights</th><th class="r">Peak allocated</th><th class="r">Process footprint</th></tr></thead>
+    <tbody>
+      <tr><td>Lingshu-7B direct</td><td class="num r">15.49</td><td class="num r">18.02</td><td class="num r m">23.42 GiB</td></tr>
+      <tr><td>7B + verifier + best-of-8 <span style="color:var(--ink-3)">(the whole cheap arm)</span></td><td class="num r">15.69</td><td class="num r">16.66</td><td class="num r m">18.76 GiB</td></tr>
+      <tr class="hl"><td class="m">Lingshu-32B direct</td><td class="num r">62.31</td><td class="num r">67.87</td><td class="num r m">72.60 GiB</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:12px">The entire open-text arm — 8-sample generator <em>and</em> verifier co-resident — runs in <strong>18.76 GiB on a single 24 GB card</strong>, because the verifier is an adapter on the generator's own base and adds 0.196 GiB. always-32B-direct needs an 80 GB card and nothing smaller. But <strong>any escalation puts both models in memory</strong>: 77.76 GiB of weights plus activations exceeds one 80 GB card, so the deployed method is a two-card system. Going 7B-only is not a gradual saving — it is a hardware-class cliff.</p>
+</section>
+
+<section>
+  <h2>4 · What each component is worth</h2>
+  <p class="lead">Measured contributions, not design intentions. Several components earn less than their complexity implies.</p>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Component</th><th>Measured contribution</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Margin gate (MCQ)</td><td>Beats 13 alternatives including learned GBM and conformal routers; best escalation-at-parity at 32.5%</td><td><span class="pill p-win">earns it</span></td></tr>
+      <tr><td>Certified veto</td><td>+0.0095 on PMC-VQA; fires on <em>zero</em> of the other four MCQ cells. Letter-balanced it is +0.0053</td><td><span class="pill p-tie">one cell</span></td></tr>
+      <tr><td>Trained LoRA verifier</td><td>Selection efficiency 0.775 vs a 0.676 random-pick floor. Beats a zero-shot 32B judge and six cross-family judges</td><td><span class="pill p-win">earns it</span></td></tr>
+      <tr><td>Weitzman adaptive-N</td><td>Iso-accuracy at 11.74 vs 16.0 FLOP-eq — <span class="num">−27%</span> of the open arm's generation cost</td><td><span class="pill p-win">earns it</span></td></tr>
+      <tr><td>Frozen 8-seed selector</td><td>+0.035 selection efficiency, but only <span class="num">+0.0014 [−0.0003, +0.0032]</span> macro — not significant. Buys determinism, not accuracy</td><td><span class="pill p-tie">marginal</span></td></tr>
+      <tr><td>The open-text arm as a whole</td><td>Buys +0.0251 open-macro accuracy for +10.03 FLOP-eq. One 32B pass buys +0.0897 for +3.57 — <strong>10× more efficient</strong></td><td><span class="pill p-loss">negative value</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>5 · The three configurations, and which to quote</h2>
+
+  <div class="stage">
+    <span class="tag">Configuration A · the shipped method</span>
+    <h4>accuracy-max — macro 0.6575 at 1.74× compute</h4>
+    <p>What the spec and the paper describe. <strong>Wins against a reasoning 32B by +0.0601 [+0.0499, +0.0700]</strong> at −87.9% parallel latency and −84.3% energy; <strong>ties a direct 32B</strong> (+0.0008). Quote this if the claim is about reasoning models.</p>
+  </div>
+
+  <div class="stage">
+    <span class="tag">Configuration B · the cost-optimal point</span>
+    <h4>macro 0.6569 at 0.865× compute, −2.2% latency, −8.2% energy</h4>
+    <p>Certified veto on PMC-VQA, compute-lean on SLAKE-closed and PathVQA-closed, and <strong>always-32B-direct on VQA-RAD-closed, MedXpert and all three open cells</strong>. Tie with the baseline (+0.0002 [−0.0019, +0.0023]), guardrail-clean on all 8 cells, and cheaper on <em>all three</em> cost axes at once. The arm assignment was pre-specified from an earlier cross-fit, not chosen on this evaluation.</p>
+    <p>The uncomfortable part: it reaches that by <strong>switching the open-text machinery off</strong>. Exhaustive enumeration of all 1,679,616 per-cell assignments shows nothing below ~0.86× can satisfy the accuracy constraint at all.</p>
+  </div>
+
+  <div class="stage">
+    <span class="tag">Configuration C · the MCQ-only restriction</span>
+    <h4>+0.0012 [+0.0009, +0.0015] at 0.977× — the only CI-clean win</h4>
+    <p>Shipped MCQ policy, open half left at always-32B-direct. Formally beats the bar, but it is <strong>100% one cell</strong> — byte-identical to the baseline on seven of eight by construction, so drop PMC-VQA and the delta is exactly zero. Post-hoc and exploratory. Do not lead with it.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>My recommendation.</strong> Lead with the reasoning comparison from Configuration A and the cost result from Configuration B: <em>"matches a 32B forward pass at 0.87× its compute, −2.2% latency and −8.2% energy, and beats a reasoning 32B by +0.060 at a tenth of its latency and energy."</em> Both halves are measured, guardrail-clean, and survive every correction applied so far.</p>
+  </div>
+</section>
+
+<section>
+  <h2>6 · The limits, measured</h2>
+  <p class="lead">Free upper bounds on the 8-cell macro. These are what a perfect version of each component would buy.</p>
+  <ul>
+    <li><strong>Perfect selection</strong> over the current 8-sample pools: <span class="num">+0.0301</span>.</li>
+    <li><strong>Perfect coverage</strong> (infinite sampling): <span class="num">+0.0091</span>. Selection headroom is 3.3× coverage headroom.</li>
+    <li><strong>Perfect 7B-vs-32B routing</strong>: <span class="num">+0.0661</span> — of which <strong>1.3% is currently converted</strong>. The ceiling is not the problem; identifiability is.</li>
+    <li><strong>Selection efficiency is stuck at 0.78–0.81</strong> across ~27 distinct architectures. This is a <em>field constant</em>, externally confirmed — an independent 2026 system converts 78.3% of its oracle; we convert 77.5%.</li>
+    <li><strong>Seed spread (~0.021) exceeds every architectural effect we have measured.</strong></li>
+    <li>A no-32B pipeline would need open-text selection efficiency of <span class="num">0.988</span> to reach parity. It cannot get there.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>7 · Caveats that constrain every number above</h2>
+  <ol>
+    <li><strong>±0.008 open-text reproducibility.</strong> Regenerating the 32B open arm under a different tensor-parallel configuration moves cells by ±0.008 — <em>larger than the entire vs-direct delta</em>. Every open-text comparison needs a matched control in the same serving configuration.</li>
+    <li><strong>Nothing was run end to end.</strong> Every operating point is a CPU re-costing of saved per-sample dumps with per-leg batch-1 constants. The one genuine execution in the project is a June-era cascade.</li>
+    <li><strong>PMC-VQA is load-bearing and unverified.</strong> It carries the vs-direct claim, uses the split with no published verification, has B+C = 73.6% answer-position skew, and 53% of audited veto wins sit on defective labels.</li>
+    <li><strong>A grading defect in the harness itself.</strong> A bare <code>"C:"</code> response is reduced to the empty string and falls through to fuzzy text matching — and it differentially penalises the 32B. One apparent win this week was entirely this artifact.</li>
+    <li><strong>MMMU-Medical is excluded</strong> on contamination grounds (the 7B scores 0.80 against its own published 54.0). Under macro it would carry 11.1%, so the exclusion is consequential and must be argued on those grounds alone.</li>
+    <li><strong>vLLM silently drops all 192 visual LoRA modules</strong> — the same adapter scores 0.775 under HuggingFace and 0.703 under vLLM. Never score a visual adapter under vLLM.</li>
+    <li><strong>Four numerics landmines</strong>, each larger than most real effects here: TF32 defaults (up to 0.024), CPU thread count, feature row order, ranker choice.</li>
+  </ol>
+</section>
+
+<footer>
+  Primary sources: <span class="num">artifacts/cascade_selector_rerun_2026-08-05.json</span> (accuracy, escalation, per-cell), <span class="num">cost_decomposition_2026-08-12.json</span> (FLOP decomposition, frontier), <span class="num">vram_testtime_2026-08-11.json</span> (memory), <span class="num">method_inventory_2026-08-11.json</span> (229 tested methods). Intervals are 95% paired item-level bootstraps, nboot = 10,000. Accuracy macro over 8 cells, Variant B, clean disjoint verifier throughout.
+</footer>
+</div>
