@@ -269,6 +269,39 @@ def cost_table(cap_rows, n_q, n_gen=8):
     }
 
 
+def distinct_answers_vs_n():
+    """MEASURED: mean distinct NORMALISED answers in the first n samples of each pool, n = 1..8.
+
+    This is exactly the head's extraction-pass count as a function of the sample budget, read off
+    the stored pools -- no modelling.  It is the bridge between this build's fixed-N=8 endpoint and
+    the DEPLOYED adaptive-N operating point (meanN 4.371-6.630, measured in
+    cost_decomposition_2026-08-12.json:null_tests.N3), whose exact per-question N is set by the
+    Weitzman policy and is NOT reproduced here.
+    """
+    items = G.load_items()
+    per_ds = {}
+    for ds in G.EVAL_DS:
+        it = [x for x in items if x["ds"] == ds]
+        per_ds[ds] = {str(n): float(np.mean([len(set(G.norm(a) for a in x["preds"][:n])) for x in it]))
+                      for n in range(1, 9)}
+    pooled = {str(n): float(np.mean([len(set(G.norm(a) for a in x["preds"][:n])) for x in items]))
+              for n in range(1, 9)}
+    return {"pooled": pooled, "per_ds": per_ds,
+            "deployed_meanN_measured": {
+                "SLAKE_open": 5.547287, "VQA_RAD_open": 6.63, "PATH_VQA_open": 4.371333,
+                "source": "results/cascade_methods/artifacts/cost_decomposition_2026-08-12.json"
+                          ":null_tests.N3.per_cell.*.meanN_recomputed (MEASURED)"},
+            "how_to_read": "at sample budget n the head costs this many extraction passes per "
+                           "question TODAY and ZERO once captured during generation.  The deployed "
+                           "arm's per-question N varies, so its exact head cost is bracketed by the "
+                           "curve at floor(meanN) and at 8, not computed here.",
+            "note_shipped_table_assumed_zero":
+                "cost_decomposition_2026-08-12.json:Q0.stage_definitions.selector_head records "
+                "selector_head = 0.0 for the SHIPPED accuracy-max arm because that arm selects with "
+                "the LoRA verifier alone.  The FUSION selector (the better one: sel_eff 0.810627 vs "
+                "0.775204) does incur these passes; this build is what makes charging them zero true."}
+
+
 if __name__ == "__main__":
     nt = null_test()
     print("N1 pass =", nt["pass"], " max abs dev (GFLOP) =", round(nt["max_abs_deviation_gflops"], 4))

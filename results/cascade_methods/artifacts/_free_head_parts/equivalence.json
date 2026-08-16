@@ -1,0 +1,2848 @@
+{
+ "title": "BUILD 1 -- MAKE THE HEAD FREE: capture the generator-frame features during generation instead of recomputing them",
+ "date": "2026-08-16",
+ "reproduce": [
+  "python3 src/training_methods/free_head_selectors.py",
+  "CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/free_head_capture.py --cap cap320 --out feats_free",
+  "CUDA_VISIBLE_DEVICES=1 python3 src/training_methods/free_head_capture.py --cap fullres --out feats_free",
+  "python3 src/training_methods/free_head_analyze.py"
+ ],
+ "null_tests": {
+  "genframe_metric": {
+   "measured": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.6260127931769722,
+    "selected": 0.48528784648187634,
+    "greedy": 0.4494669509594883,
+    "sel_eff": 0.7752043596730245,
+    "cand_auroc": 0.8855921901711237,
+    "per_ds": {
+     "slake_open": 0.8500881834215167,
+     "vqa_rad_open": 0.7619047619047619,
+     "pathvqa_open": 0.7225806451612903
+    }
+   },
+   "published": {
+    "n": 2345,
+    "n_recoverable": 1468,
+    "oracle@8": 0.626013,
+    "selected": 0.485288,
+    "greedy": 0.449467,
+    "sel_eff": 0.775204,
+    "cand_auroc": 0.885592,
+    "per_ds": {
+     "slake_open": 0.850088,
+     "vqa_rad_open": 0.761905,
+     "pathvqa_open": 0.722581
+    }
+   },
+   "abs_deviation": {
+    "oracle@8": 2.068230278151617e-07,
+    "selected": 1.5351812365782536e-07,
+    "greedy": 4.9040511707065804e-08,
+    "sel_eff": 3.5967302447481586e-07,
+    "cand_auroc": 1.9017112362629263e-07,
+    "per_ds.slake_open": 1.8342151675287965e-07,
+    "per_ds.vqa_rad_open": 2.3809523819195988e-07,
+    "per_ds.pathvqa_open": 3.548387097485062e-07,
+    "n": 0,
+    "n_recoverable": 0
+   },
+   "max_abs_deviation": 3.5967302447481586e-07,
+   "pass": true,
+   "tolerance": 1e-06,
+   "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+  },
+  "frozen_selector_reload": {
+   "path": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/genframe_head_ens8",
+   "measured": {
+    "sel_eff": 0.8106267029972752,
+    "acc": 0.5074626865671642,
+    "per_ds": {
+     "slake_open": 0.8853615520282186,
+     "vqa_rad_open": 0.8095238095238095,
+     "pathvqa_open": 0.7561290322580645
+    }
+   },
+   "published": {
+    "sel_eff": 0.810627,
+    "acc": 0.507463,
+    "per_ds": {
+     "slake_open": 0.885362,
+     "vqa_rad_open": 0.809524,
+     "pathvqa_open": 0.756129
+    }
+   },
+   "abs_deviation": {
+    "sel_eff": 2.970027247473084e-07,
+    "acc": 3.134328357967675e-07,
+    "per_ds.slake_open": 4.47971781336598e-07,
+    "per_ds.vqa_rad_open": 1.9047619048695452e-07,
+    "per_ds.pathvqa_open": 3.225806444184798e-08
+   },
+   "max_abs_deviation": 4.47971781336598e-07,
+   "pass": true,
+   "tolerance": 1e-06,
+   "reloaded_vs_training_run_max_abs_logit_deviation": 0.0,
+   "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+  },
+  "flop_model_rebuild": {
+   "name": "N1 -- rebuild flop_ratio_derivation_2026-08-03:flop_model.lingshu_7b_gflops",
+   "operating_point": {
+    "T": 326.68,
+    "M": 280.48,
+    "P_patches": 1121.9,
+    "G_7b": 5.64,
+    "G_32b": 5.6
+   },
+   "rebuilt": {
+    "vision_tower_dense": 1418.05,
+    "vision_tower_attn": 36.07,
+    "vision_merger": 25.0,
+    "lm_prefill_dense": 4263.58,
+    "lm_prefill_attn": 21.42,
+    "lm_decode_dense": 60.56,
+    "lm_decode_attn": 0.61,
+    "lm_head": 6.15,
+    "TOTAL": 5831.44
+   },
+   "published": {
+    "vision_tower_dense": 1418.05,
+    "vision_tower_attn": 36.07,
+    "vision_merger": 25.0,
+    "lm_prefill_dense": 4263.58,
+    "lm_prefill_attn": 21.42,
+    "lm_decode_dense": 60.56,
+    "lm_decode_attn": 0.61,
+    "lm_head": 6.15,
+    "TOTAL": 5831.45
+   },
+   "abs_deviation": {
+    "vision_tower_dense": 0.002309811200348122,
+    "vision_tower_attn": 0.0019287582720011187,
+    "vision_merger": 0.004491325440003635,
+    "lm_prefill_dense": 0.000233113600188517,
+    "lm_prefill_attn": 0.0009047650303983801,
+    "lm_decode_dense": 0.0022300672000099553,
+    "lm_decode_attn": 0.0015476803584001386,
+    "lm_head": 0.002429598720000925,
+    "TOTAL": 0.008149102796778607
+   },
+   "max_abs_deviation_gflops": 0.008149102796778607,
+   "pass": true,
+   "note": "published components are 2-dp rounded"
+  }
+ },
+ "nboot": 10000,
+ "sources": {
+  "deployed": "feats_hidden (fullres, teacher-forced) -- what ships today",
+  "cap320_tf": "feats_free/free_cap320_L21",
+  "cap320_ar": "feats_free/free_cap320_L21",
+  "fullres_tf": "feats_free/free_fullres_L21",
+  "fullres_ar": "feats_free/free_fullres_L21"
+ },
+ "equivalence": {
+  "cap320_ar_vs_cap320_tf": {
+   "n_rows": 8943,
+   "max_abs_deviation": 1.125,
+   "mean_abs_deviation": 0.010449443943798542,
+   "max_abs_value": 105.1875,
+   "cosine_min": 0.9998396039009094,
+   "cosine_mean": 0.9999768733978271,
+   "rel_l2_max": 0.017961638048291206,
+   "rel_l2_mean": 0.00662204809486866,
+   "n_rows_bitidentical_fp16": 0
+  },
+  "cap320_tf_vs_deployed": {
+   "n_rows": 8943,
+   "max_abs_deviation": 15.71875,
+   "mean_abs_deviation": 0.1191820576786995,
+   "max_abs_value": 105.125,
+   "cosine_min": 0.916151225566864,
+   "cosine_mean": 0.9963085651397705,
+   "rel_l2_max": 0.4208444058895111,
+   "rel_l2_mean": 0.07376351207494736,
+   "n_rows_bitidentical_fp16": 1528
+  },
+  "cap320_ar_vs_deployed": {
+   "n_rows": 8943,
+   "max_abs_deviation": 15.703125,
+   "mean_abs_deviation": 0.1210394874215126,
+   "max_abs_value": 105.1875,
+   "cosine_min": 0.9165505170822144,
+   "cosine_mean": 0.9963036179542542,
+   "rel_l2_max": 0.42019084095954895,
+   "rel_l2_mean": 0.07495701313018799,
+   "n_rows_bitidentical_fp16": 0
+  },
+  "head_logits_cap320_tf_vs_deployed": {
+   "max_abs_deviation": 18.58774447441101,
+   "mean_abs_deviation": 1.004407748962898,
+   "logit_sd_deployed": 6.799041321281287,
+   "pearson_r": 0.9752799550367558
+  },
+  "head_logits_cap320_ar_vs_deployed": {
+   "max_abs_deviation": 18.580448150634766,
+   "mean_abs_deviation": 1.0169872443046524,
+   "logit_sd_deployed": 6.799041321281287,
+   "pearson_r": 0.9753156569578324
+  },
+  "cap320_row_diagnostics": {
+   "n_rows": 8943,
+   "n_errors": 0,
+   "tokenisation_boundary_ok_frac": 1.0,
+   "span_start_matches_prompt_end_frac": 1.0,
+   "forced_tokens_emitted_frac": 1.0,
+   "n_ans_tok_mean": 5.28480375712848,
+   "n_img_tok_mean": 277.30772671363076,
+   "n_tok_mean": 327.55976741585596,
+   "n_prompt_tok_mean": 322.2749636587275,
+   "note_boundary": "boundary_ok: tokenising prompt+answer gives prompt_ids + tokenise(answer) exactly, so the span the head reads is exactly the candidate's tokens and the AR path can force the identical ids."
+  },
+  "fullres_ar_vs_fullres_tf": {
+   "n_rows": 8943,
+   "max_abs_deviation": 1.125,
+   "mean_abs_deviation": 0.010717416182160378,
+   "max_abs_value": 104.75,
+   "cosine_min": 0.9995778799057007,
+   "cosine_mean": 0.9999755620956421,
+   "rel_l2_max": 0.02914862520992756,
+   "rel_l2_mean": 0.006795598194003105,
+   "n_rows_bitidentical_fp16": 0
+  },
+  "fullres_tf_vs_deployed": {
+   "n_rows": 8943,
+   "max_abs_deviation": 0.0,
+   "mean_abs_deviation": 0.0,
+   "max_abs_value": 104.9375,
+   "cosine_min": 0.9999998807907104,
+   "cosine_mean": 1.0,
+   "rel_l2_max": 0.0,
+   "rel_l2_mean": 0.0,
+   "n_rows_bitidentical_fp16": 8943
+  },
+  "fullres_ar_vs_deployed": {
+   "n_rows": 8943,
+   "max_abs_deviation": 1.125,
+   "mean_abs_deviation": 0.010717416182160378,
+   "max_abs_value": 104.75,
+   "cosine_min": 0.9995778799057007,
+   "cosine_mean": 0.9999755620956421,
+   "rel_l2_max": 0.02914862520992756,
+   "rel_l2_mean": 0.006795598194003105,
+   "n_rows_bitidentical_fp16": 0
+  },
+  "head_logits_fullres_tf_vs_deployed": {
+   "max_abs_deviation": 3.814697265625e-06,
+   "mean_abs_deviation": 1.3486109069965836e-09,
+   "logit_sd_deployed": 6.799041321281287,
+   "pearson_r": 0.9999999999999998
+  },
+  "head_logits_fullres_ar_vs_deployed": {
+   "max_abs_deviation": 0.613311767578125,
+   "mean_abs_deviation": 0.06565305147539949,
+   "logit_sd_deployed": 6.799041321281287,
+   "pearson_r": 0.9999166831827825
+  },
+  "fullres_row_diagnostics": {
+   "n_rows": 8943,
+   "n_errors": 0,
+   "tokenisation_boundary_ok_frac": 1.0,
+   "span_start_matches_prompt_end_frac": 1.0,
+   "forced_tokens_emitted_frac": 1.0,
+   "n_ans_tok_mean": 5.28480375712848,
+   "n_img_tok_mean": 520.4940176674494,
+   "n_tok_mean": 570.7460583696746,
+   "n_prompt_tok_mean": 565.4612546125461,
+   "note_boundary": "boundary_ok: tokenising prompt+answer gives prompt_ids + tokenise(answer) exactly, so the span the head reads is exactly the candidate's tokens and the AR path can force the identical ids."
+  }
+ },
+ "candidate_auroc": {
+  "deployed": {
+   "head_mean_logit_auroc": 0.7289301306739507,
+   "n_rows": 8943,
+   "note": "row-level AUROC of the 8-seed MEAN RAW head logit against the judge label of the distinct candidate (not the 18760-slot convention)"
+  },
+  "cap320_tf": {
+   "head_mean_logit_auroc": 0.7241558023925364,
+   "n_rows": 8943,
+   "note": "row-level AUROC of the 8-seed MEAN RAW head logit against the judge label of the distinct candidate (not the 18760-slot convention)"
+  },
+  "cap320_ar": {
+   "head_mean_logit_auroc": 0.7240839203698519,
+   "n_rows": 8943,
+   "note": "row-level AUROC of the 8-seed MEAN RAW head logit against the judge label of the distinct candidate (not the 18760-slot convention)"
+  },
+  "fullres_tf": {
+   "head_mean_logit_auroc": 0.7289302820045248,
+   "n_rows": 8943,
+   "note": "row-level AUROC of the 8-seed MEAN RAW head logit against the judge label of the distinct candidate (not the 18760-slot convention)"
+  },
+  "fullres_ar": {
+   "head_mean_logit_auroc": 0.728934897587034,
+   "n_rows": 8943,
+   "note": "row-level AUROC of the 8-seed MEAN RAW head logit against the judge label of the distinct candidate (not the 18760-slot convention)"
+  }
+ },
+ "shuffled_feature_null": {
+  "deployed": {
+   "sel_eff_mean": 0.6237057220708447,
+   "sel_eff_sd": 0.010675497560850006,
+   "sel_eff_min": 0.6110354223433242,
+   "sel_eff_max": 0.6505449591280654,
+   "random_pick_floor": 0.6762602179836512,
+   "n_seeds": 10
+  },
+  "cap320_tf": {
+   "sel_eff_mean": 0.6253405994550408,
+   "sel_eff_sd": 0.011732979730030716,
+   "sel_eff_min": 0.6042234332425068,
+   "sel_eff_max": 0.6444141689373297,
+   "random_pick_floor": 0.6762602179836512,
+   "n_seeds": 10
+  },
+  "cap320_ar": {
+   "sel_eff_mean": 0.625,
+   "sel_eff_sd": 0.01080057765124912,
+   "sel_eff_min": 0.6069482288828338,
+   "sel_eff_max": 0.6444141689373297,
+   "random_pick_floor": 0.6762602179836512,
+   "n_seeds": 10
+  },
+  "fullres_tf": {
+   "sel_eff_mean": 0.6264305177111718,
+   "sel_eff_sd": 0.010689976744990863,
+   "sel_eff_min": 0.6130790190735694,
+   "sel_eff_max": 0.6423705722070845,
+   "random_pick_floor": 0.6762602179836512,
+   "n_seeds": 10
+  },
+  "fullres_ar": {
+   "sel_eff_mean": 0.6267029972752044,
+   "sel_eff_sd": 0.010405485229236719,
+   "sel_eff_min": 0.6130790190735694,
+   "sel_eff_max": 0.6416893732970027,
+   "random_pick_floor": 0.6762602179836512,
+   "n_seeds": 10
+  }
+ },
+ "arms": {
+  "head_only::deployed": {
+   "name": "head-only, features=deployed",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5014925373134328,
+   "sel_eff_judge": 0.8010899182561307,
+   "selected_em": 0.4528784648187633,
+   "sel_eff_em": 0.7547974413646056,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8765432098765432,
+     "selected_judge": 0.7705426356589147,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8568935427574171,
+     "selected_em": 0.7612403100775194,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7301587301587301,
+     "selected_judge": 0.46,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7181818181818181,
+     "selected_em": 0.395,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7574193548387097,
+     "selected_judge": 0.3913333333333333,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.6795580110497238,
+     "selected_em": 0.328,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "fusion::deployed": {
+   "name": "fusion(inc + head), features=deployed",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5074626865671642,
+   "sel_eff_judge": 0.8106267029972752,
+   "selected_em": 0.470362473347548,
+   "sel_eff_em": 0.7839374555792467,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8853615520282186,
+     "selected_judge": 0.7782945736434108,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8726003490401396,
+     "selected_em": 0.7751937984496124,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8095238095238095,
+     "selected_judge": 0.51,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7454545454545455,
+     "selected_em": 0.41,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7561290322580645,
+     "selected_judge": 0.39066666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7196132596685083,
+     "selected_em": 0.3473333333333333,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "head_only::cap320_tf": {
+   "name": "head-only, features=cap320_tf",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.4946695095948827,
+   "sel_eff_judge": 0.7901907356948229,
+   "selected_em": 0.44690831556503197,
+   "sel_eff_em": 0.7448471926083866,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8677248677248677,
+     "selected_judge": 0.7627906976744186,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8534031413612565,
+     "selected_em": 0.7581395348837209,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7222222222222222,
+     "selected_judge": 0.455,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7090909090909091,
+     "selected_em": 0.39,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7445161290322581,
+     "selected_judge": 0.38466666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.664364640883978,
+     "selected_em": 0.32066666666666666,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "fusion::cap320_tf": {
+   "name": "fusion(inc + head), features=cap320_tf",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5066098081023455,
+   "sel_eff_judge": 0.8092643051771117,
+   "selected_em": 0.47121535181236673,
+   "sel_eff_em": 0.7853589196872779,
+   "identity_selected_eq_oracle_x_seleff_judge": 1.1102230246251565e-16,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8818342151675485,
+     "selected_judge": 0.7751937984496124,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8726003490401396,
+     "selected_em": 0.7751937984496124,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8174603174603174,
+     "selected_judge": 0.515,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7272727272727273,
+     "selected_em": 0.4,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7548387096774194,
+     "selected_judge": 0.39,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7251381215469613,
+     "selected_em": 0.35,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "head_only::cap320_ar": {
+   "name": "head-only, features=cap320_ar",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.4946695095948827,
+   "sel_eff_judge": 0.7901907356948229,
+   "selected_em": 0.44818763326226013,
+   "sel_eff_em": 0.7469793887704336,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8677248677248677,
+     "selected_judge": 0.7627906976744186,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8551483420593369,
+     "selected_em": 0.7596899224806202,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7142857142857143,
+     "selected_judge": 0.45,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7090909090909091,
+     "selected_em": 0.39,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7458064516129033,
+     "selected_judge": 0.38533333333333336,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.6671270718232044,
+     "selected_em": 0.322,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "fusion::cap320_ar": {
+   "name": "fusion(inc + head), features=cap320_ar",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5066098081023455,
+   "sel_eff_judge": 0.8092643051771117,
+   "selected_em": 0.4720682302771855,
+   "sel_eff_em": 0.7867803837953091,
+   "identity_selected_eq_oracle_x_seleff_judge": 1.1102230246251565e-16,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8800705467372134,
+     "selected_judge": 0.7736434108527132,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8726003490401396,
+     "selected_em": 0.7751937984496124,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8174603174603174,
+     "selected_judge": 0.515,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7363636363636363,
+     "selected_em": 0.405,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7561290322580645,
+     "selected_judge": 0.39066666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7265193370165746,
+     "selected_em": 0.3506666666666667,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "head_only::fullres_tf": {
+   "name": "head-only, features=fullres_tf",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5014925373134328,
+   "sel_eff_judge": 0.8010899182561307,
+   "selected_em": 0.4528784648187633,
+   "sel_eff_em": 0.7547974413646056,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8765432098765432,
+     "selected_judge": 0.7705426356589147,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8568935427574171,
+     "selected_em": 0.7612403100775194,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7301587301587301,
+     "selected_judge": 0.46,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7181818181818181,
+     "selected_em": 0.395,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7574193548387097,
+     "selected_judge": 0.3913333333333333,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.6795580110497238,
+     "selected_em": 0.328,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "fusion::fullres_tf": {
+   "name": "fusion(inc + head), features=fullres_tf",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5074626865671642,
+   "sel_eff_judge": 0.8106267029972752,
+   "selected_em": 0.470362473347548,
+   "sel_eff_em": 0.7839374555792467,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8853615520282186,
+     "selected_judge": 0.7782945736434108,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8726003490401396,
+     "selected_em": 0.7751937984496124,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8095238095238095,
+     "selected_judge": 0.51,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7454545454545455,
+     "selected_em": 0.41,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7561290322580645,
+     "selected_judge": 0.39066666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7196132596685083,
+     "selected_em": 0.3473333333333333,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "head_only::fullres_ar": {
+   "name": "head-only, features=fullres_ar",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5023454157782516,
+   "sel_eff_judge": 0.8024523160762943,
+   "selected_em": 0.4537313432835821,
+   "sel_eff_em": 0.7562189054726368,
+   "identity_selected_eq_oracle_x_seleff_judge": 1.1102230246251565e-16,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8783068783068783,
+     "selected_judge": 0.772093023255814,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8586387434554974,
+     "selected_em": 0.7627906976744186,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7380952380952381,
+     "selected_judge": 0.465,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7181818181818181,
+     "selected_em": 0.395,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7574193548387097,
+     "selected_judge": 0.3913333333333333,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.680939226519337,
+     "selected_em": 0.32866666666666666,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "fusion::fullres_ar": {
+   "name": "fusion(inc + head), features=fullres_ar",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5083155650319829,
+   "sel_eff_judge": 0.8119891008174387,
+   "selected_em": 0.47121535181236673,
+   "sel_eff_em": 0.7853589196872779,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8871252204585538,
+     "selected_judge": 0.7798449612403101,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8743455497382199,
+     "selected_em": 0.7767441860465116,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8095238095238095,
+     "selected_judge": 0.51,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7454545454545455,
+     "selected_em": 0.41,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7574193548387097,
+     "selected_judge": 0.3913333333333333,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7209944751381215,
+     "selected_em": 0.348,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  },
+  "incumbent": {
+   "name": "incumbent LoRA verifier alone (no head)",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.48528784648187634,
+   "sel_eff_judge": 0.7752043596730245,
+   "selected_em": 0.4673773987206823,
+   "sel_eff_em": 0.7789623312011372,
+   "identity_selected_eq_oracle_x_seleff_judge": 5.551115123125783e-17,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8500881834215167,
+     "selected_judge": 0.7472868217054264,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8429319371727748,
+     "selected_em": 0.7488372093023256,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7619047619047619,
+     "selected_judge": 0.48,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7363636363636363,
+     "selected_em": 0.405,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7225806451612903,
+     "selected_judge": 0.37333333333333335,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7348066298342542,
+     "selected_em": 0.3546666666666667,
+     "oracle_em": 0.4826666666666667
+    }
+   },
+   "slot_coverage": 1.0
+  }
+ },
+ "comparisons": {
+  "head_only::deployed__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.005970149253731405,
+    "d_selected_ci": [
+     -0.016631130063965882,
+     0.004690831556503183
+    ],
+    "d_sel_eff": -0.0095367847411445,
+    "d_sel_eff_ci": [
+     -0.02588555858310626,
+     0.006811989100817484
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.008818342151675429,
+     "vqa_rad_open": -0.07936507936507942,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.017484008528784678,
+    "d_selected_ci": [
+     -0.027718550106609785,
+     -0.006823027718550145
+    ],
+    "d_sel_eff": -0.029140014214641075,
+    "d_sel_eff_ci": [
+     -0.04619758351101644,
+     -0.012082444918265822
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.015706806282722474,
+     "vqa_rad_open": -0.027272727272727337,
+     "pathvqa_open": -0.04005524861878451
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 533,
+   "nboot": 10000
+  },
+  "head_only::cap320_tf__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.012793176972281495,
+    "d_selected_ci": [
+     -0.024307036247334768,
+     -0.0012793176972281106
+    ],
+    "d_sel_eff": -0.02043596730245234,
+    "d_sel_eff_ci": [
+     -0.03950953678474112,
+     -0.002043596730245234
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.01763668430335097,
+     "vqa_rad_open": -0.08730158730158732,
+     "pathvqa_open": -0.011612903225806437
+    },
+    "verdict": "LOSS"
+   },
+   "em": {
+    "d_selected": -0.023454157782516027,
+    "d_selected_ci": [
+     -0.034968017057569245,
+     -0.011940298507462699
+    ],
+    "d_sel_eff": -0.039090262970860046,
+    "d_sel_eff_ci": [
+     -0.05828002842928215,
+     -0.02061122956645345
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.01919720767888311,
+     "vqa_rad_open": -0.036363636363636376,
+     "pathvqa_open": -0.05524861878453036
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 631,
+   "nboot": 10000
+  },
+  "fusion::cap320_tf__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.0008528784648187404,
+    "d_selected_ci": [
+     -0.005970149253731405,
+     0.004690831556503183
+    ],
+    "d_sel_eff": -0.0013623978201635634,
+    "d_sel_eff_ci": [
+     -0.009536784741144388,
+     0.006811989100817484
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.003527336860670194,
+     "vqa_rad_open": 0.007936507936507908,
+     "pathvqa_open": -0.001290322580645098
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     -0.004264392324093813,
+     0.005970149253731349
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     -0.007107320540156392,
+     0.00995024875621886
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": -0.018181818181818188,
+     "pathvqa_open": 0.0055248618784530246
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 148,
+   "nboot": 10000
+  },
+  "head_only::cap320_ar__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.012793176972281495,
+    "d_selected_ci": [
+     -0.024307036247334768,
+     -0.0012793176972281106
+    ],
+    "d_sel_eff": -0.02043596730245234,
+    "d_sel_eff_ci": [
+     -0.03950953678474112,
+     -0.002043596730245234
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.01763668430335097,
+     "vqa_rad_open": -0.09523809523809523,
+     "pathvqa_open": -0.010322580645161228
+    },
+    "verdict": "LOSS"
+   },
+   "em": {
+    "d_selected": -0.02217484008528786,
+    "d_selected_ci": [
+     -0.033262260127931764,
+     -0.010660980810234533
+    ],
+    "d_sel_eff": -0.036958066808813084,
+    "d_sel_eff_ci": [
+     -0.05545486851457005,
+     -0.018479033404406486
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.017452006980802737,
+     "vqa_rad_open": -0.036363636363636376,
+     "pathvqa_open": -0.0524861878453039
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 631,
+   "nboot": 10000
+  },
+  "fusion::cap320_ar__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.0008528784648187404,
+    "d_selected_ci": [
+     -0.005970149253731349,
+     0.004264392324093813
+    ],
+    "d_sel_eff": -0.0013623978201635634,
+    "d_sel_eff_ci": [
+     -0.009536784741144388,
+     0.006811989100817484
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.005291005291005235,
+     "vqa_rad_open": 0.007936507936507908,
+     "pathvqa_open": 0.0
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0017057569296374808,
+    "d_selected_ci": [
+     -0.0034115138592750727,
+     0.00682302771855009
+    ],
+    "d_sel_eff": 0.002842928216062468,
+    "d_sel_eff_ci": [
+     -0.005685856432125047,
+     0.011371712864250205
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": -0.00909090909090915,
+     "pathvqa_open": 0.006906077348066253
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 153,
+   "nboot": 10000
+  },
+  "head_only::fullres_tf__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.005970149253731405,
+    "d_selected_ci": [
+     -0.016631130063965882,
+     0.004690831556503183
+    ],
+    "d_sel_eff": -0.0095367847411445,
+    "d_sel_eff_ci": [
+     -0.02588555858310626,
+     0.006811989100817484
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.008818342151675429,
+     "vqa_rad_open": -0.07936507936507942,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.017484008528784678,
+    "d_selected_ci": [
+     -0.027718550106609785,
+     -0.006823027718550145
+    ],
+    "d_sel_eff": -0.029140014214641075,
+    "d_sel_eff_ci": [
+     -0.04619758351101644,
+     -0.012082444918265822
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.015706806282722474,
+     "vqa_rad_open": -0.027272727272727337,
+     "pathvqa_open": -0.04005524861878451
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 533,
+   "nboot": 10000
+  },
+  "fusion::fullres_tf__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": 0.0,
+    "d_selected_ci": [
+     0.0,
+     0.0
+    ],
+    "d_sel_eff": 0.0,
+    "d_sel_eff_ci": [
+     0.0,
+     0.0
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0,
+    "d_selected_ci": [
+     0.0,
+     0.0
+    ],
+    "d_sel_eff": 0.0,
+    "d_sel_eff_ci": [
+     0.0,
+     0.0
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 0,
+   "nboot": 10000
+  },
+  "head_only::fullres_ar__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.0051172707889125535,
+    "d_selected_ci": [
+     -0.01577825159914714,
+     0.005543710021321924
+    ],
+    "d_sel_eff": -0.008174386920980936,
+    "d_sel_eff_ci": [
+     -0.02520435967302459,
+     0.008855585831062607
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.007054673721340388,
+     "vqa_rad_open": -0.0714285714285714,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.016631130063965882,
+    "d_selected_ci": [
+     -0.026865671641791045,
+     -0.005970149253731349
+    ],
+    "d_sel_eff": -0.02771855010660984,
+    "d_sel_eff_ci": [
+     -0.04477611940298509,
+     -0.009950248756218971
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.013961605584642212,
+     "vqa_rad_open": -0.027272727272727337,
+     "pathvqa_open": -0.03867403314917128
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 544,
+   "nboot": 10000
+  },
+  "fusion::fullres_ar__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     0.0,
+     0.002132196162046962
+    ],
+    "d_sel_eff": 0.0013623978201634523,
+    "d_sel_eff_ci": [
+     0.0,
+     0.0034059945504087974
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017636684303351524,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     0.0,
+     0.0021321961620469065
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     0.0,
+     0.003553660270078196
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980802626,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0013812154696132284
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 15,
+   "nboot": 10000
+  },
+  "incumbent__vs__fusion::deployed": {
+   "judge": {
+    "d_selected": -0.02217484008528786,
+    "d_selected_ci": [
+     -0.03155650319829428,
+     -0.012793176972281495
+    ],
+    "d_sel_eff": -0.03542234332425076,
+    "d_sel_eff_ci": [
+     -0.05040871934604907,
+     -0.02043596730245234
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.03527336860670194,
+     "vqa_rad_open": -0.04761904761904767,
+     "pathvqa_open": -0.03354838709677421
+    },
+    "verdict": "LOSS"
+   },
+   "em": {
+    "d_selected": -0.0029850746268657025,
+    "d_selected_ci": [
+     -0.01279317697228144,
+     0.00682302771855009
+    ],
+    "d_sel_eff": -0.00497512437810943,
+    "d_sel_eff_ci": [
+     -0.022032693674484682,
+     0.012082444918265822
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.029668411867364797,
+     "vqa_rad_open": -0.00909090909090915,
+     "pathvqa_open": 0.015193370165745845
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 527,
+   "nboot": 10000
+  },
+  "head_only::cap320_ar__vs__head_only::cap320_tf": {
+   "judge": {
+    "d_selected": 0.0,
+    "d_selected_ci": [
+     -0.0021321961620469065,
+     0.0021321961620469065
+    ],
+    "d_sel_eff": 0.0,
+    "d_sel_eff_ci": [
+     -0.0034059945504086864,
+     0.0034059945504086864
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": -0.007936507936507908,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0012793176972281661,
+    "d_selected_ci": [
+     0.0,
+     0.002985074626865647
+    ],
+    "d_sel_eff": 0.002132196162046962,
+    "d_sel_eff_ci": [
+     0.0,
+     0.00497512437810943
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980803736,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0027624309392264568
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 24,
+   "nboot": 10000
+  },
+  "fusion::cap320_ar__vs__fusion::cap320_tf": {
+   "judge": {
+    "d_selected": 0.0,
+    "d_selected_ci": [
+     -0.0012793176972281106,
+     0.0012793176972281106
+    ],
+    "d_sel_eff": 0.0,
+    "d_sel_eff_ci": [
+     -0.002043596730245234,
+     0.002043596730245234
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.0017636684303350414,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.001290322580645098
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     0.0,
+     0.0021321961620469065
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     0.0,
+     0.003553660270078196
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0,
+     "vqa_rad_open": 0.009090909090909038,
+     "pathvqa_open": 0.0013812154696132284
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 14,
+   "nboot": 10000
+  },
+  "head_only::cap320_ar__vs__head_only::deployed": {
+   "judge": {
+    "d_selected": -0.00682302771855009,
+    "d_selected_ci": [
+     -0.014498933901918976,
+     0.0008528784648187404
+    ],
+    "d_sel_eff": -0.01089918256130784,
+    "d_sel_eff_ci": [
+     -0.023160762942779245,
+     0.0013623978201634552
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.00881834215167554,
+     "vqa_rad_open": -0.015873015873015817,
+     "pathvqa_open": -0.011612903225806437
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.004690831556503183,
+    "d_selected_ci": [
+     -0.011940298507462699,
+     0.0025586353944562767
+    ],
+    "d_sel_eff": -0.00781805259417201,
+    "d_sel_eff_ci": [
+     -0.01990049751243783,
+     0.004264392324093813
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.0017452006980802626,
+     "vqa_rad_open": -0.009090909090909038,
+     "pathvqa_open": -0.012430939226519389
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 236,
+   "nboot": 10000
+  },
+  "head_only::cap320_ar__vs__incumbent": {
+   "judge": {
+    "d_selected": 0.009381663113006367,
+    "d_selected_ci": [
+     -0.004690831556503183,
+     0.023880597014925342
+    ],
+    "d_sel_eff": 0.01498637602179842,
+    "d_sel_eff_ci": [
+     -0.0074931880108992654,
+     0.03746594005449588
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.01763668430335097,
+     "vqa_rad_open": -0.04761904761904756,
+     "pathvqa_open": 0.023225806451612985
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.01918976545842216,
+    "d_selected_ci": [
+     -0.03327292110874204,
+     -0.004690831556503183
+    ],
+    "d_sel_eff": -0.031982942430703654,
+    "d_sel_eff_ci": [
+     -0.05614783226723519,
+     -0.00781805259417201
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.01221640488656206,
+     "vqa_rad_open": -0.027272727272727226,
+     "pathvqa_open": -0.06767955801104975
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 971,
+   "nboot": 10000
+  },
+  "head_only::fullres_ar__vs__head_only::fullres_tf": {
+   "judge": {
+    "d_selected": 0.0008528784648188514,
+    "d_selected_ci": [
+     -0.0008528784648187404,
+     0.0025586353944563323
+    ],
+    "d_sel_eff": 0.0013623978201635634,
+    "d_sel_eff_ci": [
+     -0.0013623978201634523,
+     0.004087193460490468
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017636684303350414,
+     "vqa_rad_open": 0.00793650793650802,
+     "pathvqa_open": 0.0
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187959,
+    "d_selected_ci": [
+     -0.0008528784648187404,
+     0.0025586353944562767
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     -0.001421464108031234,
+     0.004264392324093813
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980802626,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0013812154696132284
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 22,
+   "nboot": 10000
+  },
+  "fusion::fullres_ar__vs__fusion::fullres_tf": {
+   "judge": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     0.0,
+     0.002132196162046962
+    ],
+    "d_sel_eff": 0.0013623978201634523,
+    "d_sel_eff_ci": [
+     0.0,
+     0.0034059945504087974
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017636684303351524,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187404,
+    "d_selected_ci": [
+     0.0,
+     0.0021321961620469065
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     0.0,
+     0.003553660270078196
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980802626,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0013812154696132284
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 15,
+   "nboot": 10000
+  },
+  "head_only::fullres_ar__vs__head_only::deployed": {
+   "judge": {
+    "d_selected": 0.0008528784648188514,
+    "d_selected_ci": [
+     -0.0008528784648187404,
+     0.0025586353944563323
+    ],
+    "d_sel_eff": 0.0013623978201635634,
+    "d_sel_eff_ci": [
+     -0.0013623978201634523,
+     0.004087193460490468
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017636684303350414,
+     "vqa_rad_open": 0.00793650793650802,
+     "pathvqa_open": 0.0
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": 0.0008528784648187959,
+    "d_selected_ci": [
+     -0.0008528784648187404,
+     0.0025586353944562767
+    ],
+    "d_sel_eff": 0.001421464108031234,
+    "d_sel_eff_ci": [
+     -0.001421464108031234,
+     0.004264392324093813
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980802626,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.0013812154696132284
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 22,
+   "nboot": 10000
+  },
+  "head_only::fullres_ar__vs__incumbent": {
+   "judge": {
+    "d_selected": 0.017057569296375308,
+    "d_selected_ci": [
+     0.0034115138592750727,
+     0.030703624733475487
+    ],
+    "d_sel_eff": 0.027247956403269824,
+    "d_sel_eff_ci": [
+     0.005449591280654031,
+     0.049046321525885506
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.02821869488536155,
+     "vqa_rad_open": -0.023809523809523725,
+     "pathvqa_open": 0.03483870967741942
+    },
+    "verdict": "WIN"
+   },
+   "em": {
+    "d_selected": -0.01364605543710018,
+    "d_selected_ci": [
+     -0.027292110874200415,
+     0.0004264392324093702
+    ],
+    "d_sel_eff": -0.02274342572850041,
+    "d_sel_eff_ci": [
+     -0.046908315565031944,
+     0.000710732054015617
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.015706806282722585,
+     "vqa_rad_open": -0.018181818181818188,
+     "pathvqa_open": -0.05386740331491713
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 950,
+   "nboot": 10000
+  }
+ },
+ "vs_always_7b": {
+  "head_only::deployed": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7705426356589147,
+      "delta": 0.03410852713178292,
+      "ci": [
+       0.006201550387596844,
+       0.06356589147286817
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.46,
+      "delta": -0.0050000000000000044,
+      "ci": [
+       -0.06,
+       0.04999999999999999
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.3913333333333333,
+      "delta": 0.0673333333333333,
+      "ci": [
+       0.04799999999999999,
+       0.08733333333333332
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5014925373134328,
+    "pooled_delta": 0.0520255863539445,
+    "pooled_ci": [
+     0.03624733475479747,
+     0.06780383795309164
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0321472868217054
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7612403100775194,
+      "delta": -0.0015503875968992942,
+      "ci": [
+       -0.03100775193798444,
+       0.02635658914728689
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.395,
+      "delta": -0.02999999999999997,
+      "ci": [
+       -0.07500000000000001,
+       0.015000000000000013
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.328,
+      "delta": 0.001333333333333353,
+      "ci": [
+       -0.018666666666666665,
+       0.021333333333333315
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4528784648187633,
+    "pooled_delta": -0.0021321961620469065,
+    "pooled_ci": [
+     -0.017484008528784678,
+     0.014072494669509552
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.010072351421188638
+   }
+  },
+  "fusion::deployed": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7782945736434108,
+      "delta": 0.041860465116279055,
+      "ci": [
+       0.015503875968992276,
+       0.06821705426356584
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.51,
+      "delta": 0.044999999999999984,
+      "ci": [
+       -0.0050000000000000044,
+       0.09500000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.39066666666666666,
+      "delta": 0.06666666666666665,
+      "ci": [
+       0.04933333333333334,
+       0.08466666666666667
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5074626865671642,
+    "pooled_delta": 0.0579957356076759,
+    "pooled_ci": [
+     0.0439232409381663,
+     0.07206823027718551
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05117571059431523
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7751937984496124,
+      "delta": 0.012403100775193798,
+      "ci": [
+       -0.013953488372092981,
+       0.037209302325581395
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.41,
+      "delta": -0.015000000000000013,
+      "ci": [
+       -0.065,
+       0.034999999999999976
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3473333333333333,
+      "delta": 0.020666666666666667,
+      "ci": [
+       0.002666666666666706,
+       0.03866666666666663
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.470362473347548,
+    "pooled_delta": 0.015351812366737771,
+    "pooled_ci": [
+     0.0008528784648187959,
+     0.02942430703624732
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0060232558139534835
+   }
+  },
+  "head_only::cap320_tf": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7627906976744186,
+      "delta": 0.02635658914728689,
+      "ci": [
+       -0.0015503875968992942,
+       0.05581395348837204
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.455,
+      "delta": -0.010000000000000009,
+      "ci": [
+       -0.065,
+       0.044999999999999984
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.38466666666666666,
+      "delta": 0.06066666666666665,
+      "ci": [
+       0.04133333333333333,
+       0.08066666666666666
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.4946695095948827,
+    "pooled_delta": 0.04520255863539441,
+    "pooled_ci": [
+     0.02985074626865669,
+     0.06098081023454155
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.025674418604651177
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7581395348837209,
+      "delta": -0.0046511627906977715,
+      "ci": [
+       -0.032558139534883734,
+       0.023255813953488302
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.39,
+      "delta": -0.034999999999999976,
+      "ci": [
+       -0.08000000000000002,
+       0.014999999999999958
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.32066666666666666,
+      "delta": -0.006000000000000005,
+      "ci": [
+       -0.026000000000000023,
+       0.014000000000000012
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.44690831556503197,
+    "pooled_delta": -0.008102345415778256,
+    "pooled_ci": [
+     -0.023880597014925342,
+     0.007675906183368886
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.015217054263565918
+   }
+  },
+  "fusion::cap320_tf": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7751937984496124,
+      "delta": 0.03875968992248069,
+      "ci": [
+       0.013953488372092981,
+       0.06511627906976747
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.515,
+      "delta": 0.04999999999999999,
+      "ci": [
+       0.0,
+       0.10000000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.39,
+      "delta": 0.066,
+      "ci": [
+       0.04866666666666669,
+       0.08333333333333337
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5066098081023455,
+    "pooled_delta": 0.05714285714285716,
+    "pooled_ci": [
+     0.043070362473347557,
+     0.07121535181236671
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05158656330749356
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7751937984496124,
+      "delta": 0.012403100775193798,
+      "ci": [
+       -0.013953488372092981,
+       0.03875968992248058
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.4,
+      "delta": -0.024999999999999967,
+      "ci": [
+       -0.07500000000000001,
+       0.025000000000000022
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.35,
+      "delta": 0.023333333333333317,
+      "ci": [
+       0.006000000000000005,
+       0.040666666666666684
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.47121535181236673,
+    "pooled_delta": 0.016204690831556512,
+    "pooled_ci": [
+     0.0021321961620469065,
+     0.030277185501066062
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0035788113695090495
+   }
+  },
+  "head_only::cap320_ar": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7627906976744186,
+      "delta": 0.02635658914728689,
+      "ci": [
+       -0.0015503875968991832,
+       0.054263565891472965
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.45,
+      "delta": -0.015000000000000013,
+      "ci": [
+       -0.07,
+       0.03999999999999998
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.38533333333333336,
+      "delta": 0.06133333333333335,
+      "ci": [
+       0.04133333333333333,
+       0.08133333333333337
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.4946695095948827,
+    "pooled_delta": 0.04520255863539441,
+    "pooled_ci": [
+     0.02942430703624732,
+     0.06098081023454155
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.02422997416020674
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7596899224806202,
+      "delta": -0.0031007751937984773,
+      "ci": [
+       -0.03100775193798455,
+       0.024806201550387597
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.39,
+      "delta": -0.034999999999999976,
+      "ci": [
+       -0.08000000000000002,
+       0.014999999999999958
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.322,
+      "delta": -0.004666666666666652,
+      "ci": [
+       -0.02466666666666667,
+       0.01533333333333331
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.44818763326226013,
+    "pooled_delta": -0.00682302771855009,
+    "pooled_ci": [
+     -0.02217484008528786,
+     0.008955223880596996
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.014255813953488369
+   }
+  },
+  "fusion::cap320_ar": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7736434108527132,
+      "delta": 0.037209302325581395,
+      "ci": [
+       0.012403100775193798,
+       0.06201550387596899
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.515,
+      "delta": 0.04999999999999999,
+      "ci": [
+       0.0,
+       0.10000000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.39066666666666666,
+      "delta": 0.06666666666666665,
+      "ci": [
+       0.04933333333333334,
+       0.08466666666666667
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5066098081023455,
+    "pooled_delta": 0.05714285714285716,
+    "pooled_ci": [
+     0.043070362473347557,
+     0.07121535181236671
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05129198966408268
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7751937984496124,
+      "delta": 0.012403100775193798,
+      "ci": [
+       -0.013953488372092981,
+       0.03875968992248058
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.405,
+      "delta": -0.019999999999999962,
+      "ci": [
+       -0.07,
+       0.02999999999999997
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3506666666666667,
+      "delta": 0.02400000000000002,
+      "ci": [
+       0.006666666666666654,
+       0.04199999999999998
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4720682302771855,
+    "pooled_delta": 0.017057569296375252,
+    "pooled_ci": [
+     0.0025586353944563323,
+     0.031130063965884858
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.005467700258397952
+   }
+  },
+  "head_only::fullres_tf": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7705426356589147,
+      "delta": 0.03410852713178292,
+      "ci": [
+       0.006201550387596844,
+       0.06356589147286817
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.46,
+      "delta": -0.0050000000000000044,
+      "ci": [
+       -0.06,
+       0.04999999999999999
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.3913333333333333,
+      "delta": 0.0673333333333333,
+      "ci": [
+       0.04799999999999999,
+       0.08733333333333332
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5014925373134328,
+    "pooled_delta": 0.0520255863539445,
+    "pooled_ci": [
+     0.03624733475479747,
+     0.06780383795309164
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0321472868217054
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7612403100775194,
+      "delta": -0.0015503875968992942,
+      "ci": [
+       -0.03100775193798444,
+       0.02635658914728689
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.395,
+      "delta": -0.02999999999999997,
+      "ci": [
+       -0.07500000000000001,
+       0.015000000000000013
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.328,
+      "delta": 0.001333333333333353,
+      "ci": [
+       -0.018666666666666665,
+       0.021333333333333315
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4528784648187633,
+    "pooled_delta": -0.0021321961620469065,
+    "pooled_ci": [
+     -0.017484008528784678,
+     0.014072494669509552
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.010072351421188638
+   }
+  },
+  "fusion::fullres_tf": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7782945736434108,
+      "delta": 0.041860465116279055,
+      "ci": [
+       0.015503875968992276,
+       0.06821705426356584
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.51,
+      "delta": 0.044999999999999984,
+      "ci": [
+       -0.0050000000000000044,
+       0.09500000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.39066666666666666,
+      "delta": 0.06666666666666665,
+      "ci": [
+       0.04933333333333334,
+       0.08466666666666667
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5074626865671642,
+    "pooled_delta": 0.0579957356076759,
+    "pooled_ci": [
+     0.0439232409381663,
+     0.07206823027718551
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05117571059431523
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7751937984496124,
+      "delta": 0.012403100775193798,
+      "ci": [
+       -0.013953488372092981,
+       0.037209302325581395
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.41,
+      "delta": -0.015000000000000013,
+      "ci": [
+       -0.065,
+       0.034999999999999976
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3473333333333333,
+      "delta": 0.020666666666666667,
+      "ci": [
+       0.002666666666666706,
+       0.03866666666666663
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.470362473347548,
+    "pooled_delta": 0.015351812366737771,
+    "pooled_ci": [
+     0.0008528784648187959,
+     0.02942430703624732
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0060232558139534835
+   }
+  },
+  "head_only::fullres_ar": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.772093023255814,
+      "delta": 0.03565891472868221,
+      "ci": [
+       0.007751937984496138,
+       0.06511627906976736
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.465,
+      "delta": 0.0,
+      "ci": [
+       -0.05499999999999999,
+       0.05499999999999999
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.3913333333333333,
+      "delta": 0.0673333333333333,
+      "ci": [
+       0.04799999999999999,
+       0.08733333333333332
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5023454157782516,
+    "pooled_delta": 0.05287846481876335,
+    "pooled_ci": [
+     0.03710021321961621,
+     0.06865671641791044
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.03433074935400517
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7627906976744186,
+      "delta": 0.0,
+      "ci": [
+       -0.029457364341085257,
+       0.027906976744186074
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.395,
+      "delta": -0.02999999999999997,
+      "ci": [
+       -0.07500000000000001,
+       0.015000000000000013
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.32866666666666666,
+      "delta": 0.0020000000000000018,
+      "ci": [
+       -0.018000000000000016,
+       0.021999999999999964
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4537313432835821,
+    "pooled_delta": -0.0012793176972281106,
+    "pooled_ci": [
+     -0.016631130063965882,
+     0.014498933901918976
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.009333333333333324
+   }
+  },
+  "fusion::fullres_ar": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7798449612403101,
+      "delta": 0.04341085271317835,
+      "ci": [
+       0.01705426356589146,
+       0.06976744186046513
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.51,
+      "delta": 0.044999999999999984,
+      "ci": [
+       -0.0050000000000000044,
+       0.09500000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.3913333333333333,
+      "delta": 0.0673333333333333,
+      "ci": [
+       0.04999999999999999,
+       0.08533333333333332
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5083155650319829,
+    "pooled_delta": 0.05884861407249464,
+    "pooled_ci": [
+     0.04477611940298504,
+     0.0729211087420043
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05191472868217054
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7767441860465116,
+      "delta": 0.013953488372092981,
+      "ci": [
+       -0.012403100775193798,
+       0.04031007751937976
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.41,
+      "delta": -0.015000000000000013,
+      "ci": [
+       -0.065,
+       0.034999999999999976
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.348,
+      "delta": 0.021333333333333315,
+      "ci": [
+       0.003333333333333355,
+       0.03933333333333333
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.47121535181236673,
+    "pooled_delta": 0.016204690831556512,
+    "pooled_ci": [
+     0.0021321961620469065,
+     0.030277185501066117
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.006762273901808761
+   }
+  },
+  "incumbent": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7472868217054264,
+      "delta": 0.010852713178294615,
+      "ci": [
+       -0.01705426356589157,
+       0.03875968992248058
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.48,
+      "delta": 0.014999999999999958,
+      "ci": [
+       -0.034999999999999976,
+       0.065
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.37333333333333335,
+      "delta": 0.04933333333333334,
+      "ci": [
+       0.03200000000000003,
+       0.06666666666666665
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.48528784648187634,
+    "pooled_delta": 0.03582089552238804,
+    "pooled_ci": [
+     0.02174840085287849,
+     0.049893390191897646
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.025062015503875972
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7488372093023256,
+      "delta": -0.013953488372093092,
+      "ci": [
+       -0.041860465116279055,
+       0.012403100775193798
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.405,
+      "delta": -0.019999999999999962,
+      "ci": [
+       -0.07,
+       0.030000000000000027
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3546666666666667,
+      "delta": 0.028000000000000025,
+      "ci": [
+       0.010666666666666713,
+       0.04466666666666669
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4673773987206823,
+    "pooled_delta": 0.012366737739872069,
+    "pooled_ci": [
+     -0.0017057569296375363,
+     0.026012793176972304
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.00198449612403101
+   }
+  }
+ },
+ "cost": {
+  "unit": "1 FLOP-eq = one always-7B answer = ONE batch-1 Lingshu-7B forward at the MEASURED cap320 generation geometry (5692.2 GFLOP)",
+  "geometry": {
+   "generation_cap320_per_question": {
+    "T": 318.9897654584222,
+    "M": 274.1313432835821,
+    "n": 2345
+   },
+   "extraction_fullres_per_row": {
+    "T": 570.7460583696746,
+    "M": 520.4940176674494,
+    "n": 8943
+   },
+   "verifier_fullres_per_row": {
+    "T": 600.5826903723582,
+    "M": 520.4940176674494,
+    "n": 8943
+   },
+   "fullres_minus_cap320_image_tokens_mean": 271.1518123667377,
+   "method": "T and M(cap320) MEASURED in feats_free/free_cap320_L21.rows.jsonl; M(fullres) = M(cap320) + (n_tok_fullres - n_tok_cap320) row-by-row, with n_tok_fullres from feats_hidden's own metadata. No modelling."
+  },
+  "per_forward_gflops": {
+   "generation_cap320": 5692.21162504575,
+   "generation_fullres": 10293.870489728082,
+   "head_extraction_fullres_DEPLOYED": 10300.118627552643,
+   "head_extraction_cap320_hypothetical": 5758.708198715032,
+   "verifier_fullres_DEPLOYED": 10697.628077101768
+  },
+  "per_forward_flopeq": {
+   "generation_cap320": 1.0,
+   "generation_fullres": 1.8084131736134015,
+   "head_extraction_fullres_DEPLOYED": 1.8095108379723774,
+   "head_extraction_cap320_hypothetical": 1.0116820276633245,
+   "verifier_fullres_DEPLOYED": 1.8793447576741822
+  },
+  "passes_per_question": {
+   "distinct_normalised_answers": 3.8136460554371,
+   "distinct_surface_answers": 3.8230277185501067
+  },
+  "arms_fixed_bestof8": {
+   "always_7b_BASELINE": {
+    "gen_passes": 1.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 0.0,
+    "total_passes": 1.0,
+    "flopeq_as_charged": 1.0,
+    "gflops": 5692.21162504575,
+    "flopeq_measured_geometry": 1.0
+   },
+   "bo8_generation_only": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 0.0,
+    "total_passes": 8.0,
+    "flopeq_as_charged": 8.0,
+    "gflops": 45537.693000366,
+    "flopeq_measured_geometry": 8.0
+   },
+   "bo8_head_TODAY": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 3.8136460554371,
+    "verifier_passes": 0.0,
+    "total_passes": 11.8136460554371,
+    "flopeq_as_charged": 11.8136460554371,
+    "gflops": 84818.69977486634,
+    "flopeq_measured_geometry": 14.900833869504039
+   },
+   "bo8_head_FREE": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 0.0,
+    "total_passes": 8.0,
+    "flopeq_as_charged": 8.0,
+    "gflops": 45537.693000366,
+    "flopeq_measured_geometry": 8.0
+   },
+   "bo8_incumbent_LoRA": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 3.8230277185501067,
+    "total_passes": 11.823027718550106,
+    "flopeq_as_charged": 11.823027718550106,
+    "gflops": 86435.02166186593,
+    "flopeq_measured_geometry": 15.18478710130023
+   },
+   "bo8_fusion_TODAY": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 3.8136460554371,
+    "verifier_passes": 3.8230277185501067,
+    "total_passes": 15.636673773987207,
+    "flopeq_as_charged": 15.636673773987207,
+    "gflops": 125716.02843636628,
+    "flopeq_measured_geometry": 22.08562097080427
+   },
+   "bo8_fusion_head_FREE": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 3.8230277185501067,
+    "total_passes": 11.823027718550106,
+    "flopeq_as_charged": 11.823027718550106,
+    "gflops": 86435.02166186593,
+    "flopeq_measured_geometry": 15.18478710130023
+   },
+   "bo8_head_FREE_generating_at_fullres": {
+    "gen_passes": 8.0,
+    "head_extraction_passes": 0.0,
+    "verifier_passes": 0.0,
+    "total_passes": 8.0,
+    "flopeq_as_charged": 8.0,
+    "gflops": 82350.96391782466,
+    "flopeq_measured_geometry": 14.467305388907212
+   }
+  },
+  "headline": {
+   "head_passes_removed_per_question": 3.8136460554371,
+   "flopeq_removed_as_charged": 3.8136460554371,
+   "flopeq_removed_measured_geometry": 6.900833869504038,
+   "note_as_charged_understates": "the as-charged convention charges the head's extraction one full generation pass, but it was run at FULLRES while generation ran at cap320, so it is really 1.810 FLOP-eq each."
+  },
+  "distinct_answers_vs_sample_budget": {
+   "pooled": {
+    "1": 1.0,
+    "2": 1.5334754797441366,
+    "3": 1.9906183368869936,
+    "4": 2.3982942430703624,
+    "5": 2.7739872068230276,
+    "6": 3.14498933901919,
+    "7": 3.482302771855011,
+    "8": 3.8136460554371
+   },
+   "per_ds": {
+    "slake_open": {
+     "1": 1.0,
+     "2": 1.254263565891473,
+     "3": 1.4434108527131784,
+     "4": 1.5844961240310078,
+     "5": 1.716279069767442,
+     "6": 1.834108527131783,
+     "7": 1.9333333333333333,
+     "8": 2.0356589147286823
+    },
+    "vqa_rad_open": {
+     "1": 1.0,
+     "2": 1.52,
+     "3": 1.935,
+     "4": 2.305,
+     "5": 2.625,
+     "6": 2.965,
+     "7": 3.24,
+     "8": 3.545
+    },
+    "pathvqa_open": {
+     "1": 1.0,
+     "2": 1.6553333333333333,
+     "3": 2.2333333333333334,
+     "4": 2.760666666666667,
+     "5": 3.248666666666667,
+     "6": 3.732666666666667,
+     "7": 4.180666666666666,
+     "8": 4.614
+    }
+   },
+   "deployed_meanN_measured": {
+    "SLAKE_open": 5.547287,
+    "VQA_RAD_open": 6.63,
+    "PATH_VQA_open": 4.371333,
+    "source": "results/cascade_methods/artifacts/cost_decomposition_2026-08-12.json:null_tests.N3.per_cell.*.meanN_recomputed (MEASURED)"
+   },
+   "how_to_read": "at sample budget n the head costs this many extraction passes per question TODAY and ZERO once captured during generation.  The deployed arm's per-question N varies, so its exact head cost is bracketed by the curve at floor(meanN) and at 8, not computed here.",
+   "note_shipped_table_assumed_zero": "cost_decomposition_2026-08-12.json:Q0.stage_definitions.selector_head records selector_head = 0.0 for the SHIPPED accuracy-max arm because that arm selects with the LoRA verifier alone.  The FUSION selector (the better one: sel_eff 0.810627 vs 0.775204) does incur these passes; this build is what makes charging them zero true."
+  }
+ }
+}

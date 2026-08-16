@@ -149,6 +149,94 @@ def main():
         "arms_all_feature_sources": {k: arm(k) for k in arms},
         "baselines": A["baselines"],
     }
+
+    # ------------------------------------------------------------------ verdict
+    # Every value below is COPIED from a part file; nothing is recomputed here.
+    dep = arms["fusion::deployed"]
+    c320 = arms["fusion::cap320_ar"]
+    hd = arms["head_only::deployed"]
+    inc_a = arms["incumbent"]
+    cmp320 = cmpB["fusion::cap320_ar__vs__fusion::deployed"]
+    cmpfull = cmpB["fusion::fullres_ar__vs__fusion::deployed"]
+    cost = B["cost"]
+    out["VERDICT"] = {
+        "1_the_head_is_free_and_the_picks_barely_move": {
+            "claim": "capturing layer-21 h_span out of model.generate()'s own per-step hidden states "
+                     "reproduces the frozen head's endpoint. At the resolution the head was trained on "
+                     "(fullres) the capture changes %d of %d picks; at the resolution the DEPLOYED pools "
+                     "were generated at (cap320) it changes %d of %d, and neither is a significant move "
+                     "in EITHER currency."
+                     % (cmpfull["picks_changed"], dep["n"], cmp320["picks_changed"], dep["n"]),
+            "fullres_captured_vs_deployed": cmpfull,
+            "cap320_captured_vs_deployed": cmp320,
+            "states_are_NOT_bit_identical": eq["fullres_ar_vs_fullres_tf"],
+            "why": "the definition, the span and the causal mask are identical; the residual is bf16 "
+                   "kernel arithmetic, because a prefill over many positions and a KV-cached decode of "
+                   "one position reduce in different orders. The proof that this is the only cause is "
+                   "the harness null test: the SAME script's teacher-forced pass reproduced the frozen "
+                   "cache bit-identically on %d of %d rows, so the pipeline itself is deterministic."
+                   % (eq["fullres_tf_vs_deployed"]["n_rows_bitidentical_fp16"],
+                      eq["fullres_tf_vs_deployed"]["n_rows"]),
+        },
+        "2_cost": {
+            "passes_removed_per_question": cost["headline"]["head_passes_removed_per_question"],
+            "flopeq_removed_as_charged": cost["headline"]["flopeq_removed_as_charged"],
+            "flopeq_removed_measured_geometry": cost["headline"]["flopeq_removed_measured_geometry"],
+            "fusion_best_of_8": {
+                "today": cost["arms_fixed_bestof8"]["bo8_fusion_TODAY"],
+                "head_free": cost["arms_fixed_bestof8"]["bo8_fusion_head_FREE"]},
+            "head_only_best_of_8": {
+                "today": cost["arms_fixed_bestof8"]["bo8_head_TODAY"],
+                "head_free": cost["arms_fixed_bestof8"]["bo8_head_FREE"]},
+            "what_is_left": "with the head free the open arm's remaining cost is N generations plus the "
+                            "LoRA verifier's own passes. The verifier is the ONLY thing that still has "
+                            "to be paid for, and it cannot be captured from the generator the way the "
+                            "head can, because its adapter changes the weights.",
+        },
+        "3_head_only_is_NOT_a_safe_replacement_for_the_LoRA": {
+            "claim": "the round brief's premise -- the head alone (0.7956) beats the LoRA verifier "
+                     "(0.7752), so dropping the LoRA is cheaper AND better -- is REFUTED by the second "
+                     "currency. The head-alone advantage is judge-only and REVERSES under exact match.",
+            "head_ens8_alone_vs_incumbent": A["comparisons"]["head_vs_incumbent"],
+            "sel_eff_judge": {"head_ens8_alone": hd["sel_eff_judge"], "incumbent": inc_a["sel_eff_judge"]},
+            "sel_eff_em": {"head_ens8_alone": hd["sel_eff_em"], "incumbent": inc_a["sel_eff_em"]},
+            "the_safe_selector_is_the_fusion": A["comparisons"]["fusion_vs_incumbent"],
+            "also_note": "0.7956 is a SINGLE-SEED fit; the frozen 8-seed ensemble head alone is "
+                         "%.6f (judge). See per_seed_head_only." % hd["sel_eff_judge"],
+        },
+        "4_vs_the_new_always_7b_baseline": {
+            "arm": "fusion on captured cap320 features (the free head, at the deployed generation "
+                   "geometry), best-of-8",
+            "judge": B["vs_always_7b"]["fusion::cap320_ar"]["judge"],
+            "em": B["vs_always_7b"]["fusion::cap320_ar"]["em"],
+            "cells": "3 of the 8 macro cells. The other 5 are multiple-choice-as-presented and carry "
+                     "no open-text candidate pool; they are neither claimed nor charged.",
+        },
+        "HOLES": [
+            "The capture was driven through HF transformers' model.generate(). The DEPLOYED pools were "
+            "generated with vLLM, which does not expose per-step hidden states through its standard "
+            "API. 'The head is free' is proven for the HF generation path and is an ENGINEERING task, "
+            "not a scientific one, for the vLLM path. NOT MEASURED: a vLLM capture.",
+            "The candidates were FORCED to the stored token ids with a LogitsProcessor so the "
+            "comparison is exactly paired. A live deployment captures the states of whatever it "
+            "actually samples; those are the same states by construction, but this run does not "
+            "re-sample, so no fresh generation and no +-0.008 exposure is incurred.",
+            "The head was TRAINED on fullres features while the deployed pools are GENERATED at "
+            "cap320, so a free capture necessarily feeds the head out-of-distribution features. "
+            "Measured cost of that mismatch at the fusion level: %s (judge) / %s (em), both TIE. "
+            "At the HEAD-ONLY level it is larger and the judge arm becomes a LOSS vs deployed fusion. "
+            "NOT MEASURED: refitting the head on cap320 features, which is the obvious repair."
+            % (cmp320["judge"]["d_selected"], cmp320["em"]["d_selected"]),
+            "N=8 fixed. The deployed arm draws adaptive N (meanN 4.371-6.630); the head's pass count "
+            "at smaller N is given as a MEASURED curve in cost.distinct_answers_vs_sample_budget, but "
+            "the Weitzman policy's per-question N is not reproduced here, so no single adaptive-N "
+            "FLOP-eq number is claimed.",
+            "This build changes the COST of the selector, not its accuracy. It does not by itself "
+            "bring the open arm's Y near 1: best-of-8 fusion is still 11.823 FLOP-eq as-charged with "
+            "the head free. The remaining levers are N (T=0.4 at N=4 already beats T=0.7 at N=8) and "
+            "the LoRA verifier's N-times-repeated image prefill.",
+        ],
+    }
     json.dump(out, open(OUT, "w"), indent=1, default=float)
     print("wrote", OUT, f"({os.path.getsize(OUT)/1e3:.0f} kB)")
     return out

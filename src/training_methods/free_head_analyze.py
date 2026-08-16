@@ -242,6 +242,7 @@ def main():
         good = [r for r in row_meta["cap320"] if "err" not in r]
         if len(good) >= 8000:
             cost = C.cost_table(good, n_q=len(items))
+            cost["distinct_answers_vs_sample_budget"] = C.distinct_answers_vs_n()
         else:
             cost = {"status": "cap320 capture incomplete (%d/8943 rows) -- cost table not computed"
                               % len(good)}
