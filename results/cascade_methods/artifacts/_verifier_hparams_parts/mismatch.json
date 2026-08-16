@@ -1,0 +1,173 @@
+{
+ "_what": "separates the RESOLUTION effect from the TRAIN/INFERENCE MISMATCH effect using the pre-registered no-adapter base-model control.",
+ "_code": "src/cascade_methods/verifier_hparams_mismatch.py",
+ "_scores": "ckpts/openvqa/verifier_hparams/scores_{,base_}px*.jsonl",
+ "_identity": "d_LoRA = resolution + mismatch ; d_base = resolution ; DiD = d_LoRA - d_base = mismatch, under the stated assumption that the resolution term is shared between the adapted and unadapted model.",
+ "0_floor_check": {
+  "random_pick_floor_judge": {
+   "mean": 0.6764063351498637,
+   "sd": 0.00811561915009833,
+   "p2.5": 0.6607629427792916,
+   "p97.5": 0.6927792915531336,
+   "ndraw": 20000,
+   "_what": "uniform random slot pick, sel_eff on the recoverable items. A selector at this value carries no signal and its resolution curve cannot move."
+  },
+  "random_pick_floor_em": {
+   "mean": 0.6822687277896233,
+   "sd": 0.008330182153985786,
+   "p2.5": 0.665955934612651,
+   "p97.5": 0.6986496090973703,
+   "ndraw": 20000,
+   "_what": "uniform random slot pick, sel_eff on the recoverable items. A selector at this value carries no signal and its resolution curve cannot move."
+  }
+ },
+ "1_the_base_control_clears_the_floor": {
+  "base_sel_eff_judge_at_control": 0.7057220708446866,
+  "random_pick_floor_judge_mean": 0.6764063351498637,
+  "sd_above_floor": 3.612261141464202,
+  "base_cand_auroc_judge_at_control": 0.7607774338626888,
+  "lora_sel_eff_judge_at_control": 0.7772479564032697,
+  "lora_cand_auroc_judge_at_control": 0.8856127857359646,
+  "_read": "the zero-shot base verifier is NOT at the random-pick floor, so its flat sel_eff curve is a real measurement and not a floor artifact. It is however a much weaker selector than the adapter, which is the known result that a TRAINED verifier is the only thing that broke the floor in this project."
+ },
+ "2_difference_in_differences": {
+  "250880": {
+   "direction": "DOWN from the trained resolution",
+   "vision_tokens_lora": 277.3037367540435,
+   "vision_tokens_base": 277.3037367540435,
+   "judge": {
+    "d_lora": -0.017711171662125325,
+    "d_lora_ci": [
+     -0.02997275204359673,
+     -0.006130790190735702
+    ],
+    "d_base": 0.0,
+    "d_base_ci": [
+     -0.011580381471389622,
+     0.011580381471389622
+    ],
+    "DiD_mismatch_term": -0.017711171662125325,
+    "DiD_ci": [
+     -0.03269754768392363,
+     -0.002724795640327124
+    ],
+    "DiD_excludes_0": true,
+    "p_two_sided_DiD": 0.0196,
+    "nboot": 10000,
+    "seed": 20260815,
+    "n_items_in_subset": 1468
+   },
+   "em": {
+    "d_lora": -0.014305177111716527,
+    "d_lora_ci": [
+     -0.02588555858310626,
+     -0.0034059945504086864
+    ],
+    "d_base": 0.0034059945504086864,
+    "d_base_ci": [
+     -0.006811989100817484,
+     0.013623978201634857
+    ],
+    "DiD_mismatch_term": -0.017711171662125214,
+    "DiD_ci": [
+     -0.03135217983651232,
+     -0.004087193460490357
+    ],
+    "DiD_excludes_0": true,
+    "p_two_sided_DiD": 0.0116,
+    "nboot": 10000,
+    "seed": 20260815,
+    "n_items_in_subset": 1468
+   },
+   "auroc_lora": {
+    "d_auroc": -0.006920156343324546,
+    "ci": [
+     -0.009839581642527517,
+     -0.003986102164016857
+    ],
+    "excludes_0": true,
+    "nboot": 2000,
+    "seed": 20260815
+   },
+   "auroc_base": {
+    "d_auroc": -0.006301602685284569,
+    "ci": [
+     -0.011629092951572028,
+     -0.0007478716196161006
+    ],
+    "excludes_0": true,
+    "nboot": 2000,
+    "seed": 20260815
+   }
+  },
+  "12845056": {
+   "direction": "UP from it",
+   "vision_tokens_lora": 535.3503625209147,
+   "vision_tokens_base": 535.3503625209147,
+   "judge": {
+    "d_lora": 0.0,
+    "d_lora_ci": [
+     -0.0027247956403270157,
+     0.0027247956403270157
+    ],
+    "d_base": 0.0027247956403270157,
+    "d_base_ci": [
+     -0.002043596730245234,
+     0.007493188010899154
+    ],
+    "DiD_mismatch_term": -0.0027247956403270157,
+    "DiD_ci": [
+     -0.008174386920980936,
+     0.0027247956403269047
+    ],
+    "DiD_excludes_0": false,
+    "p_two_sided_DiD": 0.3676,
+    "nboot": 10000,
+    "seed": 20260815,
+    "n_items_in_subset": 1468
+   },
+   "em": {
+    "d_lora": 0.0,
+    "d_lora_ci": [
+     -0.0027247956403270157,
+     0.0027247956403270157
+    ],
+    "d_base": 0.0027247956403270157,
+    "d_base_ci": [
+     -0.002043596730245234,
+     0.007493188010899154
+    ],
+    "DiD_mismatch_term": -0.0027247956403270157,
+    "DiD_ci": [
+     -0.008174386920980936,
+     0.0027247956403269047
+    ],
+    "DiD_excludes_0": false,
+    "p_two_sided_DiD": 0.3608,
+    "nboot": 10000,
+    "seed": 20260815,
+    "n_items_in_subset": 1468
+   },
+   "auroc_lora": {
+    "d_auroc": 0.0003125881814908249,
+    "ci": [
+     -0.00041585989533811927,
+     0.000994110487552732
+    ],
+    "excludes_0": false,
+    "nboot": 2000,
+    "seed": 20260815
+   },
+   "auroc_base": {
+    "d_auroc": 0.0005530075018370662,
+    "ci": [
+     -0.0011751250863346163,
+     0.0022005491865907693
+    ],
+    "excludes_0": false,
+    "nboot": 2000,
+    "seed": 20260815
+   }
+  }
+ }
+}

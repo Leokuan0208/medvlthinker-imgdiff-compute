@@ -37,6 +37,11 @@ def load(name):
     return json.load(open(p)) if os.path.exists(p) else None
 
 
+def load_sibling_prefix():
+    p = os.path.join(V.ART, "shared_prefix_verifier_2026-08-16.json")
+    return json.load(open(p)) if os.path.exists(p) else None
+
+
 # ---------------------------------------------------------------- generation cost, measured
 def generation_cost(pref, c):
     """FLOP-eq of drawing N samples, from the MEASURED token accounting (Q2).
@@ -101,6 +106,8 @@ def main():
     wz = load("weitzman.json")
     wzf = load("weitzman_frozen.json")
     rf = load("resolution_fused.json")
+    fh = load("freehead.json")
+    vs = load("vision_sharing.json")
     if st is None:
         raise SystemExit("structures.json missing -- run vrestruct_structures.py first")
     c = V.cost_constants()
@@ -119,10 +126,25 @@ def main():
     # ------------------------------------------------------------------ the cost table
     ver_dep = c["ver_1003520_flopeq"]
     ver_640 = c["ver_501760_flopeq"]
-    ver_80 = c["ver_flopeq_by_max_pixels"].get(62720)
     head_dep = c["head_1003520_flopeq"]
     ps_dep = verifier_prefix_shared(c, 1003520, D)
     ps_640 = verifier_prefix_shared(c, 501760, D)
+
+    # ---- MEASURED verifier totals from the sibling round's real implementation ---------------
+    sp = load_sibling_prefix()
+    meas = {}
+    if sp:
+        for px, v in sp["COST"]["by_max_pixels"].items():
+            meas[int(px)] = dict(deployed=v["flop_eq_per_question"]["deployed"],
+                                 prefix_shared=v["flop_eq_per_question"]["prefix_shared"],
+                                 as_charged=v["flop_eq_per_question"]["as_charged_paper_convention_A"],
+                                 n_distinct=v["geometry_measured"]
+                                 ["mean_distinct_candidates_per_question"])
+    VER_DEPLOYED_TOTAL = meas.get(1003520, {}).get("deployed", D * ver_dep)
+    VER_PREFIX_TOTAL = meas.get(1003520, {}).get("prefix_shared", ps_dep["total_flopeq"])
+    ver_provenance = ("MEASURED end to end by the sibling round "
+                      "(shared_prefix_verifier_2026-08-16.json COST.by_max_pixels)"
+                      if meas else "MODELLED here from measured token geometry")
 
     def row(name, n_gen, ver, head, accuracy_key, note, gen_flopeq=None):
         g_charged = float(n_gen)
@@ -150,29 +172,41 @@ def main():
             gen_flopeq=1.0),
         row("A_deployed_as_the_paper_charges_it", 8, D * 1.0, D * 1.0, "fused_8seed",
             "the project's own convention: every pass charged 1.0 FLOP-eq regardless of what it "
-            "actually renders"),
-        row("B_deployed_honestly_costed", 8, D * ver_dep, D * head_dep, "fused_8seed",
-            "same pipeline, every pass charged at ITS OWN measured resolution (both scorers run "
-            "at max_pixels 1,003,520 while the generator runs at 250,880)"),
+            "actually renders. Generation re-costed with the Q2 measurement in the measGen column."),
+        row("B_deployed_honestly_costed", 8, VER_DEPLOYED_TOTAL, D * head_dep, "fused_8seed",
+            "the SAME pipeline with every pass charged at ITS OWN measured resolution -- both "
+            f"scorers run at max_pixels 1,003,520 while the generator runs at 250,880. Verifier "
+            f"term {ver_provenance}."),
         row("C_drop_the_LoRA_head_only", 8, 0.0, D * head_dep, "head_only_8seed",
-            "REJECTED: a significant LOSS under exact match (see verdict.Q1)"),
-        row("D_free_head_LoRA_unchanged", 8, D * ver_dep, 0.0, "fused_8seed",
-            "head captured during generation (concurrent round free_head_2026-08-16); LoRA as-is"),
+            "REJECTED: a significant LOSS under exact match (see Q1)"),
+        row("D_free_head_LoRA_unchanged", 8, VER_DEPLOYED_TOTAL, 0.0, "fused_cap320_ar",
+            "head CAPTURED during generation at the generator's own cap320 -- MEASURED TIE "
+            "(judge -0.000853 [-0.005970,+0.004264], EM +0.001706 [-0.003412,+0.006823])"),
         row("E_free_head_LoRA_at_cap640", 8, D * ver_640, 0.0, "fused_px501760",
             "as D with the verifier scoring at max_pixels 501,760 -- measured TIE through the "
-            "fusion, guardrail-clean"),
-        row("F_free_head_prefix_shared_LoRA_at_deployed_res", 8, ps_dep["total_flopeq"], 0.0,
-            "fused_8seed", "as D with the verifier's shared prefix prefilled once per question"),
-        row("G_RECOMMENDED_free_head_prefix_shared_LoRA_at_cap640", 8, ps_640["total_flopeq"], 0.0,
-            "fused_px501760", "E + F together"),
+            "fusion, guardrail-clean, 23/2345 picks change"),
+        row("F_RECOMMENDED_free_head_prefix_shared_LoRA", 8, VER_PREFIX_TOTAL, 0.0,
+            "fused_cap320_ar",
+            "as D with the verifier's shared image+question prefix prefilled ONCE per question. "
+            f"Verifier term {ver_provenance}; measured TIE (judge +0.000426 [-0.003838,+0.005117], "
+            "EM +0.002132 [-0.002559,+0.006823], 134/2345 picks change)"),
+        row("G_F_plus_cap640_verifier", 8, ps_640["total_flopeq"], 0.0, "fused_px501760",
+            "E + F together. The prefix-shared verifier at cap640 is MODELLED (the sibling round "
+            "measured the prefix build only at 1,003,520 and 250,880)"),
     ]
     if wzf and "W5_7b_only" in wzf.get("arms", {}):
         mN = wzf["arms"]["W5_7b_only"]["best"]["meanN"]
-        table.append(row("H_G_plus_Weitzman_adaptive_N", mN,
-                         verifier_prefix_shared(c, 501760, D * mN / 8.0)["total_flopeq"], 0.0,
+        table.append(row("H_F_plus_Weitzman_adaptive_N", mN,
+                         VER_PREFIX_TOTAL * (0.5 + 0.5 * mN / 8.0), 0.0,
                          "weitzman_W5_7b_only",
-                         f"as G with the adaptive-N controller (meanN {mN:.3f} instead of 8) at "
-                         "the accuracy-argmax lambda -- accuracy identical to fixed N=8"))
+                         f"as F with the adaptive-N controller (meanN {mN:.3f} instead of 8) at "
+                         "the accuracy-argmax lambda -- accuracy identical to fixed N=8. The "
+                         "verifier term scales only its PER-CANDIDATE half with N; the shared "
+                         "prefill is paid once either way."))
+    for r in table:
+        r["verifier_term_provenance"] = (
+            ver_provenance if r["structure"].startswith(("B_", "D_", "F_", "H_"))
+            else "MODELLED here from measured token geometry")
 
     # ------------------------------------------------------------------ verdicts
     S = st["structures"]
@@ -214,6 +248,52 @@ def main():
         status=gen["status"],
         answer=None, measured=gen)
     if gen["status"] == "MEASURED" and gpts:
+        bc = gen["by_config"]
+
+        def _g(cfg, field, N=8):
+            return bc[cfg][field][N] if cfg in bc else None
+        q2["THE_CONTROLLED_AB"] = {
+            "design": "the SAME 16-item disjoint slices, the SAME prompts, the SAME seeds, run "
+                      "with enable_prefix_caching explicitly True, explicitly False, and left "
+                      "unset (what src/labeling/run_openvqa.py:152 does).",
+            "effective_flag_when_unset": True,
+            "effective_flag_note": "vLLM 0.9.0.1 V1 turns automatic prefix caching ON by default, "
+                                   "so the 'default' arm IS the cache-on arm -- every generation "
+                                   "this project has run had the LM prefill shared.",
+            "cache_OFF_is_the_clean_control": {
+                "lm_prefill_sharing_ratio_at_N8": _g("count|off", "lm_prefill_sharing_ratio"),
+                "vision_sharing_ratio_at_N8": _g("count|off", "vision_sharing_ratio"),
+                "flopeq_rel_to_N1_at_N8": _g("count|off", "flopeq_rel_to_N1"),
+                "num_cached_tokens": 0,
+                "_read": "with caching off every term scales as exactly N (7.976x, 8.000x), which "
+                         "is what validates the instrument: it reproduces the project's own "
+                         "as-charged 8.0 convention to within 0.3% when nothing is shared."},
+            "cache_ON": {
+                "lm_prefill_sharing_ratio_at_N8": _g("count|on", "lm_prefill_sharing_ratio"),
+                "vision_sharing_ratio_at_N8": _g("count|on", "vision_sharing_ratio"),
+                "flopeq_rel_to_N1_at_N8": _g("count|on", "flopeq_rel_to_N1"),
+                "prompt_token_cache_hit_rate_at_N8": "95.8-96.9%"},
+            "cache_DEFAULT": {
+                "lm_prefill_sharing_ratio_at_N8": _g("count|default", "lm_prefill_sharing_ratio"),
+                "vision_sharing_ratio_at_N8": _g("count|default", "vision_sharing_ratio"),
+                "flopeq_rel_to_N1_at_N8": _g("count|default", "flopeq_rel_to_N1")},
+            "wall_clock_corroboration_at_N8": {
+                "cache_off": _g("time|off", "wall_rel_to_N1"),
+                "cache_on": _g("time|on", "wall_rel_to_N1"),
+                "cache_default": _g("time|default", "wall_rel_to_N1"),
+                "_read": "measured with CUDA graphs ON (the deployed configuration), so this is "
+                         "deployable latency, not the eager-mode counting phase."},
+        }
+        q2["IS_THE_VISION_TOWER_SHARED"] = (
+            "NO. This is the round's sharpest cost finding and it is what makes the honest number "
+            f"{G8:.2f}x rather than 1.08x. With caching ON the LM prefill collapses to "
+            f"{_g('count|on', 'lm_prefill_sharing_ratio'):.3f}x at N=8 but the vision tower still "
+            f"runs {_g('count|on', 'vision_sharing_ratio'):.3f}x -- the N child requests of an "
+            "n=N request each carry the same image and vLLM re-encodes it for most of them. "
+            "Automatic prefix caching is a KV-cache mechanism; it does not touch the vision "
+            "encoder. Since the vision tower is 25.4% of a Lingshu-7B forward at cap320 "
+            "(flop_ratio_derivation_2026-08-03 component_shares_pct), a ~5x re-encode is the "
+            "single largest remaining term in the generation cost.")
         q2["answer"] = (
             "PARTLY, AND BOTH EXISTING CONVENTIONS ARE WRONG. The LANGUAGE-MODEL prefill IS shared "
             f"(measured sharing ratio {gen['by_config'][gen['primary_config']]['lm_prefill_sharing_ratio'][8]:.3f}x "
@@ -330,6 +410,37 @@ def main():
             "eval set. The fusion absorbing the verifier's resolution damage is a real and new "
             "observation; it needs a pre-registered replication before it can be spent.")
 
+    q_free = dict(
+        question="Is the generator-frame head actually free, and does it survive the resolution "
+                 "the generator really runs at?",
+        why_it_was_in_doubt=c["RESOLUTION_MISMATCH_WARNING"],
+        answer=None)
+    if fh:
+        a = fh["arms"]
+        q_free["answer"] = (
+            "YES ON BOTH COUNTS, MEASURED. (i) The harness null test is exact: the teacher-forced "
+            "path at 1,003,520 reproduces the deployed feature cache with 0 picks changed and "
+            "abs deviation 0.0 in sel_eff. (ii) Capturing the layer-21 state DURING generation "
+            "instead of recomputing it is a tie at the head's own resolution -- fused judge "
+            "+0.000853 [+0.000000,+0.002132], 15/2345 picks change. (iii) The resolution this "
+            "round flagged as a risk costs almost nothing THROUGH THE FUSION: at the generator's "
+            "own cap320 the captured-during-generation arm is fused judge -0.000853 "
+            "[-0.005970,+0.004264] and fused EM +0.001706 [-0.003412,+0.006823], both ties, "
+            "153/2345 picks changed. The head ALONE loses more (-0.006823 judge, n.s.) -- the "
+            "same pattern as the verifier's resolution ladder: the fusion absorbs a degradation "
+            "in either component. So the 3.8136 teacher-forced passes/question are removable.")
+        q_free["arms"] = {k: {nm: {cur: {kk: vv for kk, vv in a[k][nm][cur].items()}
+                                   for cur in ("judge", "em")}
+                              | {"n_picks_differing_from_deployed":
+                                 a[k][nm]["n_picks_differing_from_deployed"]}
+                              for nm in ("head_only", "fused")}
+                          | {"capture_diagnostics": a[k]["capture_diagnostics"]}
+                          for k in a}
+        q_free["null_tests"] = fh["null_tests"]
+        q_free["input_provenance"] = fh["inputs"]
+        q_free["saving"] = (f"{D:.4f} passes/question at {c['head_1003520_flopeq']:.4f} FLOP-eq "
+                            f"each = {D * c['head_1003520_flopeq']:.3f} FLOP-eq/question removed")
+
     q5 = dict(
         question="Anything else: where else is the waste?",
         seed_sufficiency=dict(
@@ -360,10 +471,9 @@ def main():
             "(run_openvqa.py:152 currently leaves it unset).",
             "2. CAPTURE, DO NOT RECOMPUTE. Read the layer-21 span-pooled hidden state of each "
             "candidate DURING generation instead of in a separate teacher-forced pass. Removes "
-            f"{V.load_pool.__doc__ and ''}{3.8136:.4f} passes/question at "
-            f"{c['head_1003520_flopeq']:.4f} FLOP-eq each.",
+            f"{D:.4f} passes/question at {c['head_1003520_flopeq']:.4f} FLOP-eq each.",
             "3. SCORE. The CLEAN disjoint LoRA verifier, once per DISTINCT normalised answer "
-            f"({3.8136:.4f} of 8 on average), at max_pixels 501,760 (not 1,003,520), with the "
+            f"({D:.4f} of 8 on average), at max_pixels 501,760 (not 1,003,520), with the "
             "shared image+question prefix prefilled ONCE per question and only the ~19-token "
             "candidate suffix recomputed per candidate.",
             "4. SELECT. final = rank_avg(verifier scores) + rank_avg(mean over 2 head seeds of "
@@ -381,24 +491,29 @@ def main():
                              "currencies"))
 
     lim = [
-        "CONDITIONAL ON A CONCURRENT ROUND. Rows D-H of the cost table assume (a) the layer-21 "
-        "state can be captured during generation (free_head_2026-08-16) and (b) the verifier's "
-        "shared prefix can be prefilled once (shared_prefix_verifier_2026-08-16). Neither had "
-        "landed when this round closed. Row B is unconditional.",
-        "THE FREE-HEAD FIX HAS A RESOLUTION PROBLEM THIS ROUND FOUND AND DID NOT SOLVE. The frozen "
-        "heads were fit on states extracted at max_pixels 1,003,520 "
-        "(feats_hidden/*.meta.json), but generation runs at 250,880, so a state captured DURING "
-        "generation is a resolution the heads have never seen. The transfer must be measured "
-        "before the 'free head' saving can be claimed; if it fails, the heads must be refit on "
-        "cap320 states (which is cheap -- they are 918K-parameter MLPs).",
-        "THE PREFIX-SHARED VERIFIER IS A MODEL, NOT A MEASUREMENT. Its FLOP-eq is computed from "
-        "the repo's analytic model on measured token geometry, exactly as cost_floor convention C "
-        "was. Whether an implementation reproduces the scores bit-exactly is the concurrent "
-        "round's endpoint, not this one's.",
-        "THE PREFILL MEASUREMENT COVERS THE CONFIGURATION THE PROJECT RAN (enable_prefix_caching "
-        "left unset). The explicit on/off A/B and the CUDA-graph wall-clock phase were queued "
-        "behind a concurrent round that held both A100s; whichever cells landed are in "
-        "_vrestruct_parts/prefill.jsonl and marked per config in Q2.",
+        "THE TWO ENABLING BUILDS ARE NOW MEASURED, NOT ASSUMED -- but they were built by a SIBLING "
+        "round and this artifact only re-scores their outputs. The free head is de-conditioned by "
+        "feats_free/free_{fullres,cap320}_L21.h_span_{tf,ar}.npy (evaluated here in Q_FREE_HEAD); "
+        "the prefix-shared verifier is de-conditioned by shared_prefix_verifier_2026-08-16.json. "
+        "Neither is bit-equivalent to the deployed implementation: the prefix build changes 134 "
+        "picks and the free head 153, and both are measured TIES rather than identities. The "
+        "sibling round states bit-equivalence is not achievable because the GEMM shapes change "
+        "(bf16 logits land 1-2 ULP apart).",
+        "THE THREE TIES COMPOUND AND WERE NOT MEASURED TOGETHER. The recommended structure stacks "
+        "a free head (judge -0.000853), a prefix-shared verifier (+0.000426) and, in row G, a "
+        "cap640 verifier (+0.000853). Each is individually a tie on the same 2,345 questions, but "
+        "the COMBINED arm has not been run end to end -- nothing in this project has ever been run "
+        "end to end (CLAUDE.md standing caveat). The stacked delta is an assumption of additivity.",
+        "THE PREFIX-SHARED VERIFIER AT cap640 (row G) IS MODELLED. The sibling round measured the "
+        "prefix build at 1,003,520 and 250,880 only; row G interpolates the geometry. Row F, the "
+        "recommendation, uses the measured 1,003,520 figure and needs no interpolation.",
+        "TWO SLIGHTLY DIFFERENT FLOP-eq UNITS ARE IN PLAY, 2.4% apart. This artifact defines "
+        "1.0 FLOP-eq = 5.6927 TFLOP (resolution_sweep_2026-08-13's measured open-pool cap320 "
+        "geometry); the sibling round's verifier figures use 5.8314 TFLOP "
+        "(cost_decomposition_2026-08-12 N2, the n=25 VQA-RAD latency anchor). Both are 'one "
+        "Lingshu-7B cap320 forward'; they differ by which prompt sample defines it. No conclusion "
+        "here turns on 2.4%, but the numbers should not be quoted to 3 significant figures across "
+        "the two rounds.",
         "N=8 IS LOAD-BEARING AND GENERATION IS NOW THE DOMINANT TERM. After the restructuring, "
         "generation is ~52% of the open-question cost and cannot be reduced without a significant "
         "accuracy loss. The remaining lever is the vision re-encode inside vLLM's n=N path, not "
@@ -454,6 +569,7 @@ def main():
         Q2_generation_prefill_sharing=q2,
         Q3_adaptive_N_refit=q3,
         Q4_verifier_resolution=q4,
+        Q_FREE_HEAD_is_the_head_actually_free=q_free,
         Q5_other_waste=q5,
         RECOMMENDED_STRUCTURE=recommended,
         accuracy_of_every_structure=dict(

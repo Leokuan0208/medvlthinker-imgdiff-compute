@@ -43,6 +43,11 @@ def main():
     isoesc = rd(os.path.join(PARTS, "isoesc.json"))
     grcis = rd(os.path.join(PARTS, "guardrail_cis.json"))
     recost = rd(os.path.join(PARTS, "recost.json"))
+    mism = rd(os.path.join(PARTS, "mismatch.json"))
+    mism_au = rd(os.path.join(PARTS, "mismatch_auroc_did.json"))
+    dose = rd(os.path.join(PARTS, "doseresponse.json"))
+    determ = rd(os.path.join(PARTS, "determinism.json"))
+    prereg6 = rd(os.path.join(PARTS, "_prereg_6rung_backup", "ladder.json"))
 
     out = {
         "_meta": {
@@ -76,7 +81,17 @@ def main():
                 "endpoint_ladder_and_leakage_controls":
                     "src/cascade_methods/verifier_hparams_analyze.py",
                 "cost": "src/cascade_methods/verifier_hparams_cost.py",
-                "vram_and_latency": "src/cascade_methods/verifier_hparams_vram.py",
+                "honest_recosting": "src/cascade_methods/verifier_hparams_recost.py",
+                "vram_and_latency": "src/cascade_methods/verifier_hparams_vram.py "
+                                    "(+ runners/run_verifier_hparams_vram_queued.sh, which waits "
+                                    "for an EXCLUSIVE card because the (d) convention is "
+                                    "board-minus-baseline and free space is not enough)",
+                "iso_escalation": "src/cascade_methods/verifier_hparams_isoesc.py",
+                "per_set_guardrail_cis": "src/cascade_methods/verifier_hparams_guardrail.py",
+                "process_determinism": "src/cascade_methods/verifier_hparams_determinism.py",
+                "mismatch_vs_resolution_DiD": "src/cascade_methods/verifier_hparams_mismatch.py",
+                "binding_fraction_and_dose_response":
+                    "src/cascade_methods/verifier_hparams_doseresponse.py",
                 "end_to_end_macro": "src/cascade_methods/verifier_hparams_macro.py "
                                     "(wraps cascade_selector_rerun.run_source / combine, unmodified)",
                 "aggregator": "src/cascade_methods/verifier_hparams_report.py",
@@ -84,7 +99,12 @@ def main():
             "logs": ["logs/verifier_hparams_gpu0_2026-08-15.log",
                      "logs/verifier_hparams_gpu1_2026-08-15.log",
                      "logs/verifier_hparams_base_2026-08-16.log",
-                     "logs/verifier_hparams_vram_2026-08-16.log"],
+                     "logs/verifier_hparams_queue2_2026-08-16.log",
+                     "logs/verifier_hparams_knee_2026-08-16.log",
+                     "logs/verifier_hparams_vram_2026-08-16.log",
+                     "logs/verifier_hparams_vram_q_2026-08-16.log",
+                     "logs/verifier_hparams_analyze7_2026-08-16.log",
+                     "logs/verifier_hparams_macro7_2026-08-16.log"],
             "environment": {
                 "host": "dual A100 80GB PCIe, SHARED. Both cards were verified empty (13 MiB) at "
                         "launch (08:26 UTC) and stayed that way through the entire six-rung LoRA "
@@ -99,7 +119,16 @@ def main():
                         "differences on 36,776 slots). The VRAM (d) convention, which is board-used "
                         "minus a pre-run baseline and is the only quantity a co-tenant could "
                         "corrupt, was measured before the co-tenant arrived and its own pre/post "
-                        "board readings are recorded in vram_latency.json.",
+                        "board readings are recorded in vram_latency.json. "
+                        "SECOND SESSION (2026-08-16 afternoon): the two remaining base-control "
+                        "rungs finished at 11:56, an EXPLORATORY knee rung at 376,320 finished at "
+                        "13:18, and the VRAM/latency ladder was then RE-RUN from scratch over all "
+                        "seven rungs at 15:26-15:29 on a card re-verified exclusive (13 MiB "
+                        "resident), so every VRAM row is in-session comparable. The six rungs "
+                        "common to both VRAM sessions reproduce to 3 dp on the (d) footprint for "
+                        "5 of 6 (501,760 differs by 0.018 GiB); batch-1 latency moves by up to "
+                        "10 ms, which is that measurement's own noise. The pre-registered session "
+                        "is preserved at _verifier_hparams_parts/_prereg_6rung_backup/.",
                 "framework": "HuggingFace transformers, bf16, flash_attention_2, tp=1, batch 1. "
                              "NEVER vLLM -- vLLM 0.9.0.1 silently drops all 192 visual.* LoRA "
                              "modules (0.775204 HF vs 0.702997 vLLM). The scorer asserts 192 "
@@ -136,6 +165,7 @@ def main():
         "1_null_tests": nulls,
         "2_the_rescore_nuisance_that_forces_an_in_session_control": {
             "measurement": rescore,
+            "process_to_process_determinism_check": determ,
             "_read": "re-scoring stored (item, candidate) pairs at the DEPLOYED 1,003,520 with the "
                      "deployed adapter, prompt and batch size does NOT reproduce the stored score: "
                      "max abs deviation 6.03e-2, mean 5.86e-3, 79/200 pairs above 1e-3. The prior "
@@ -148,9 +178,64 @@ def main():
                      "dumps. The stored dumps are used only as the published ANCHOR.",
         },
         "3_endpoint_ladder": ladder,
+        "3b_the_exploratory_seventh_rung": {
+            "_what": "376,320 px (cap480) was NOT pre-registered. It was added after the "
+                     "pre-registered ladder showed all its movement between 250,880 and 501,760, "
+                     "purely to locate that transition. It is EXPLORATORY and is excluded from "
+                     "every pre-registered claim.",
+            "consequence_for_the_leakage_controls":
+                "nested CV and the permutation null are properties of the ARM SET, so adding a "
+                "seventh arm changes them. BOTH are reported: section 3's controls are the "
+                "seven-rung set, and 3c is the pre-registered six-rung set recomputed unchanged.",
+        },
+        "3c_pre_registered_six_rung_leakage_controls":
+            (prereg6.get("selection_leakage_controls", {"_status": "NOT MEASURED"})
+             if isinstance(prereg6, dict) else {"_status": "NOT MEASURED"}),
         "4_mismatch_control_base_model_no_lora": base,
+        "4b_resolution_vs_mismatch_difference_in_differences": {
+            "sel_eff_scale": mism,
+            "auroc_scale": mism_au,
+            "_why_two_scales": "sel_eff is an ARGMAX endpoint, so a given loss of ranking quality "
+                               "moves it only if the loss lands at the TOP of the pool; AUROC is "
+                               "the un-thresholded ranking scale and moves with the information "
+                               "itself. The base model and the adapter sit at very different "
+                               "points on the ranking->argmax map (sel_eff 0.706 vs 0.777, cand "
+                               "AUROC 0.755 vs 0.886), so a DiD on sel_eff cannot assume a shared "
+                               "resolution term while a DiD on AUROC can. Both are reported.",
+        },
+        "4c_binding_fraction_and_fixed_stratum_dose_response": dose,
         "5_cost_flops": cost,
         "6_vram_and_latency": vram,
+        "6b_A_LABELLING_INCONSISTENCY_FOUND_IN_THE_REFERENCE_VRAM_ARTIFACT": {
+            "_what": "the task asked for the four conventions of "
+                     "results/cascade_methods/artifacts/vram_testtime_2026-08-11.json 'so rows are "
+                     "comparable'. The four MEMORY conventions (a)-(d) are comparable and were "
+                     "reproduced. The `vision_tokens` COLUMN IS NOT: that artifact reports "
+                     "PRE-MERGE PATCHES under the name `vision_tokens`, while this round (and "
+                     "resolution_sweep_2026-08-13) report MERGED tokens = patches / 4.",
+            "evidence": {
+                "same_12_items_same_max_pixels_1003520": True,
+                "vram_testtime_2026-08-11_S3_vision_tokens_mean": 2362.6667,
+                "this_round_1003520_vision_tokens_mean": 590.6666666666666,
+                "ratio": 4.0,
+                "smoking_gun_row_0": "that artifact's first row records image_pixels 57,600 with "
+                                     "vision_tokens 324. Qwen2.5-VL smart_resize takes a 57,600 px "
+                                     "image to 252x252, which is (252/14)^2 = 324 PRE-MERGE "
+                                     "patches; after the 2x2 spatial merge the language model "
+                                     "receives 324/4 = 81 tokens -- and 81 is exactly this round's "
+                                     "minimum for the same item.",
+                "input_tokens_agree": "674.33 there vs 674.67 here, so only the vision column "
+                                      "carries the different definition.",
+            },
+            "_consequence": "NO number in this artifact is affected -- this round measures its own "
+                            "geometry on all 8,965 triples and divides by 4 explicitly "
+                            "(verifier_hparams_score.py records `patch`, load_arm divides). The "
+                            "finding is recorded because the two artifacts' vision-token columns "
+                            "must never be compared or cross-multiplied, and because a FLOP model "
+                            "built on the wrong one is off by 4x on the vision term.",
+            "_not_a_retraction": "vram_testtime_2026-08-11's memory numbers stand; only its "
+                                 "vision_tokens column name is misleading.",
+        },
         "7_end_to_end_macro": {"per_arm": macro, "cross_arm_paired_cis": macro_ci},
         "7b_guardrail_per_set_bootstrap_cis": grcis,
         "8_iso_escalation_is_the_macro_move_selection_or_bought_compute": isoesc,
@@ -221,26 +306,136 @@ def main():
         "ladder_em_sel_eff": {px: g(px, "em", "sel_eff") for px in sorted(A, key=int)},
         "ladder_measured_vision_tokens": {px: g(px, "geometry", "mean_vision_tokens")
                                           for px in sorted(A, key=int)},
-        "shape": "A STEP, NOT A PEAK. Every rung at or above 501,760 gives judge sel_eff identical "
-                 "to 6 decimal places; every rung at or below 250,880 sits ~0.018-0.020 lower and "
-                 "is flat all the way down to 62,720. The knee lies between 277.3 and 464.8 "
-                 "measured vision tokens.",
-        "the_asymmetry": "the SCORER needs roughly 465 vision tokens where the PROPOSER runs at 277 "
-                         "-- about 1.7x, on the same images, for the same model family, on a task "
-                         "that only asks Yes/No about a candidate the proposer already wrote.",
+        "pooled_shape_LOOKS_like_a_step": "every rung at or above 501,760 gives judge sel_eff "
+                                          "identical to 6 dp; every rung at or below 376,320 sits "
+                                          "~0.016-0.020 lower and is nearly flat down to 62,720. "
+                                          "Taken at face value that reads as a threshold between "
+                                          "398 and 465 measured vision tokens.",
+        "BUT_THE_POOLED_SHAPE_IS_CONFOUNDED": {
+            "_what": "max_pixels is a CAP and Qwen's smart_resize only SHRINKS, so an image already "
+                     "below the cap is rendered byte-identically to the deployed arm. The fraction "
+                     "of the pool the cap actually BINDS on therefore changes at every rung, and "
+                     "the pooled delta is (damage per affected item) x (fraction affected).",
+            "binding_fraction_by_rung": {
+                px: r.get("frac_binding") for px, r in
+                ((dose.get("1_the_cap_binds_on_a_different_fraction_at_every_rung", {})
+                  .get("by_max_pixels", {}) or {}).items())},
+            "_read": "the binding fraction collapses from 69.8% at 376,320 to 15.2% at 501,760. "
+                     "That collapse alone is enough to manufacture an apparent STEP with no "
+                     "threshold in the model at all, so the pooled ladder cannot answer the "
+                     "question and the fixed-stratum reading below is the one that counts.",
+        },
+        "THE_CORRECTED_SHAPE_a_graded_dose_response_on_a_fixed_item_set": {
+            "_stratum": (dose.get("_stratum_definition")
+                         if isinstance(dose, dict) else None),
+            "n_items": (dose.get("2_fixed_stratum_dose_response", {}) or {}).get(
+                "n_items_in_stratum"),
+            "n_recoverable": (dose.get("2_fixed_stratum_dose_response", {}) or {}).get(
+                "n_recoverable_in_stratum"),
+            "by_rung": {
+                px: {"vision_tokens": r.get("mean_vision_tokens_on_stratum"),
+                     "d_sel_eff_judge": r.get("d_sel_eff_judge"),
+                     "d_sel_eff_judge_ci": r.get("d_sel_eff_judge_ci"),
+                     "d_sel_eff_em": r.get("d_sel_eff_em"),
+                     "d_sel_eff_em_ci": r.get("d_sel_eff_em_ci"),
+                     "is_trained_resolution": r.get("is_trained_resolution", False)}
+                for px, r in sorted(((dose.get("2_fixed_stratum_dose_response", {}) or {})
+                                     .get("by_max_pixels", {}) or {}).items(), key=lambda x: int(x[0]))},
+            "shape": "MONOTONE AND GRADED, NOT A STEP, and NOT A PEAK AT THE TRAINED RESOLUTION. "
+                     "On one fixed set of 357 large images (284 recoverable) re-rendered at every "
+                     "rung, judge sel_eff falls smoothly as vision tokens fall -- 0.000 at 622 "
+                     "tokens, -0.025 at 445, -0.053 at 292, -0.056 at 145, -0.074 at 66 -- and the "
+                     "EM currency has the same sign and shape throughout. The damage SATURATES at "
+                     "about 622 vision tokens, which is BELOW the 1,200 the trained/deployed rung "
+                     "spends on this stratum.",
+        },
+        "the_asymmetry_restated": "the honest form of the asymmetry is not a magic threshold. It "
+                                  "is that the SCORER keeps paying for detail it stops using at "
+                                  "~620 vision tokens on the images where the cap binds, while the "
+                                  "PROPOSER runs at 277 pooled. The deployed verifier is above its "
+                                  "own saturation point, which is why a saving exists at all -- and "
+                                  "why that saving is small, because the cap only binds on 15% of "
+                                  "the pool once you are at 501,760.",
     }
-    hl["3_THE_MISMATCH_CONFOUND_is_resolved_by_the_shape_and_by_the_base_control"] = {
+    BA = base.get("_arms", {}) if isinstance(base, dict) else {}
+    MD = mism.get("2_difference_in_differences", {}) if isinstance(mism, dict) else {}
+    hl["3_THE_MISMATCH_CONFOUND_is_MEASURED_and_the_effect_is_RESOLUTION_not_mismatch"] = {
         "the_confound": "the adapter was TRAINED at 1,003,520, so every other rung is a "
-                        "train/inference mismatch as well as a resolution change.",
-        "evidence_from_the_shape": "if mismatch drove the effect the TRAINED rung would be a PEAK. "
-                                   "It is not: 501,760 (below) and 12,845,056 (above) are BOTH "
-                                   "mismatches and BOTH tie it to 6 dp on judge sel_eff. A "
-                                   "one-sided step whose plateau extends through the trained point "
-                                   "in both directions is a resolution/information effect.",
-        "base_model_control": base,
-        "residual_limit": "one adapter, one training resolution. All 15 verifier adapters on disk "
-                          "were trained at 1,003,520; training a verifier at a second resolution "
-                          "(>=10 seeds x ~108 min each) was out of budget and is NOT MEASURED.",
+                        "train/inference mismatch as well as a resolution change. The round "
+                        "pre-registered a control for exactly this and it is now MEASURED.",
+        "the_control": "the BASE Lingshu-7B with NO adapter, run as a zero-shot verifier on the "
+                       "IDENTICAL prompt, pool, item order and numerics at 250,880 / 1,003,520 / "
+                       "12,845,056. It was never trained at any resolution, so NO point on its "
+                       "ladder is a mismatch and its curve is a pure resolution effect.",
+        "0_FLOOR_CHECK_without_which_the_control_would_be_worthless": {
+            "_why": "this project has measured that every TRAINING-FREE selector sits at the "
+                    "random-pick floor, and a selector at the floor cannot move -- its flat "
+                    "resolution curve would mean nothing. So the control must clear the floor "
+                    "before any of its deltas are read.",
+            **((mism.get("1_the_base_control_clears_the_floor", {})) if isinstance(mism, dict) else {}),
+            "random_pick_floor_judge": (mism.get("0_floor_check", {}) or {}).get(
+                "random_pick_floor_judge") if isinstance(mism, dict) else None,
+            "verdict": "CLEARS IT. The zero-shot base verifier reaches judge sel_eff 0.705722 "
+                       "against a random-pick floor of 0.676406 (sd 0.008116) -- about 3.6 sd "
+                       "above it -- with candidate AUROC 0.755, not 0.5. The control is a real "
+                       "measurement, though it is a much weaker selector than the adapter, which "
+                       "is the project's known result that only a TRAINED verifier broke the floor.",
+        },
+        "1_the_base_ladder": {
+            "judge_sel_eff": {px: (BA.get(px, {}).get("judge", {}) or {}).get("sel_eff")
+                              for px in sorted(BA, key=int)},
+            "em_sel_eff": {px: (BA.get(px, {}).get("em", {}) or {}).get("sel_eff")
+                           for px in sorted(BA, key=int)},
+            "cand_auroc_judge": {px: (BA.get(px, {}).get("judge", {}) or {}).get("cand_auroc")
+                                 for px in sorted(BA, key=int)},
+            "_note": "the base model's judge sel_eff at 250,880 and at 1,003,520 are equal to 6 dp "
+                     "(0.705722), but that is a NET zero over 279 items whose pick changed, not an "
+                     "absence of change -- which is precisely why the AUROC scale below is the one "
+                     "that carries the answer.",
+        },
+        "2_THE_DECISIVE_TEST_difference_in_differences_on_the_AUROC_SCALE": {
+            **(mism_au if isinstance(mism_au, dict) else {}),
+            "verdict": "THE MISMATCH TERM IS UNDETECTABLE. Moving from the trained 1,003,520 down "
+                       "to the generator's 250,880 costs the ADAPTER -0.006920 AUROC "
+                       "[-0.00984,-0.00399] and costs the UNADAPTED BASE MODEL -0.006302 "
+                       "[-0.01163,-0.00075]. The base model has no training resolution to mismatch "
+                       "against, so its loss is pure resolution -- and the difference between the "
+                       "two losses is -0.000619 [-0.005689,+0.004139], p = 0.815. The adapter "
+                       "loses no more ranking information at cap320 than an unadapted model does. "
+                       "The effect is RESOLUTION, and the mismatch term is bounded at "
+                       "|dAUROC| <= 0.0057.",
+        },
+        "3_the_same_test_on_the_sel_eff_scale_DISAGREES_and_why_it_is_the_weaker_test": {
+            "by_rung": {px: {"d_lora_judge": (r.get("judge", {}) or {}).get("d_lora"),
+                             "d_base_judge": (r.get("judge", {}) or {}).get("d_base"),
+                             "DiD": (r.get("judge", {}) or {}).get("DiD_mismatch_term"),
+                             "DiD_ci": (r.get("judge", {}) or {}).get("DiD_ci"),
+                             "p": (r.get("judge", {}) or {}).get("p_two_sided_DiD")}
+                        for px, r in sorted(MD.items(), key=lambda x: int(x[0]))},
+            "_read": "on sel_eff the DiD at 250,880 is -0.017711 [-0.032698,-0.002725], p = 0.0196 "
+                     "-- nominally significant, i.e. the adapter's ENDPOINT falls further than the "
+                     "base model's does. This is reported because it disagrees with the AUROC test "
+                     "and must not be hidden. It is the weaker test: sel_eff is an argmax endpoint "
+                     "and the two models sit at very different operating points (0.777 vs 0.706), "
+                     "so a DiD on that scale cannot assume the resolution term is shared, which is "
+                     "the assumption the DiD needs. A ranking loss of equal size moves the argmax "
+                     "more for the stronger ranker.",
+            "honest_statement": "the resolution effect is real and shared; a mismatch component "
+                                "cannot be excluded on the endpoint scale, but it is not detectable "
+                                "on the information scale, and the trained rung is NOT a peak on "
+                                "either (12,845,056, also a mismatch, ties it exactly).",
+        },
+        "4_supporting_evidence_from_the_shape": "if mismatch drove the effect the TRAINED rung "
+                                                "would be a PEAK. It is not: on the fixed stratum "
+                                                "the curve is monotone in vision tokens and "
+                                                "saturates at ~622, well BELOW the trained rung's "
+                                                "1,200, and 12,845,056 (a mismatch ABOVE the "
+                                                "trained point) ties it exactly in both currencies.",
+        "residual_limit": "one adapter, one training resolution, and the base control was run at "
+                          "only 3 of the 7 rungs. All 15 verifier adapters on disk were trained at "
+                          "1,003,520; TRAINING a verifier at a second resolution (>=10 seeds x "
+                          "~108 min each) remains the only way to close this completely and is "
+                          "NOT MEASURED.",
     }
     hl["4_BEST_SETTING_and_what_it_is_worth"] = {
         "best_setting": "max_pixels 501,760 (cap640)",
@@ -332,6 +527,19 @@ def main():
                  "rambling essays that already violate the prompt's 'short, specific phrase' "
                  "instruction, so the true bound is far lower. CLOSED: max_tokens=64 is not "
                  "costing this method measurable coverage.",
+    }
+    hl["9_the_scorer_is_deterministic_process_to_process"] = {
+        "n_triples_scored_twice_in_two_processes":
+            (determ.get("replicated_arm", {}) or {}).get("n_triples_scored_twice"),
+        "n_that_disagree": (determ.get("replicated_arm", {}) or {}).get(
+            "n_replicates_that_DISAGREE"),
+        "max_abs_disagreement": (determ.get("replicated_arm", {}) or {}).get(
+            "max_abs_disagreement"),
+        "verdict": determ.get("verdict"),
+        "_read": "combined with the identical-rendering placebo (0 score differences over every "
+                 "identically-rendered slot at every rung), the numerical noise floor of this "
+                 "whole round is exactly 0. Every non-zero delta reported here is a real change "
+                 "in what the verifier was shown, not measurement noise.",
     }
     out["HEADLINE"] = hl
 

@@ -41,7 +41,12 @@ from verifier_hparams_score import (MINPX, SYS, imgs_for, load_dump_items)   # n
 
 OUT = os.path.join(ROOT, "results/cascade_methods/artifacts/_verifier_hparams_parts")
 GIB = 1024 ** 3
-LADDER = [62720, 125440, 250880, 501760, 1003520, 12845056]
+LADDER = [62720, 125440, 250880, 376320, 501760, 1003520, 12845056]
+# 376,320 (cap480) is the EXPLORATORY knee rung added after the pre-registered ladder showed a
+# STEP between 250,880 and 501,760; it is not part of the pre-registered set.  All seven rungs
+# are measured in ONE session against ONE pre-run baseline so the rows stay comparable, and the
+# pre-registered six-rung session is preserved at
+# _verifier_hparams_parts/_prereg_6rung_backup/vram_latency.json for a session-to-session check.
 # the S3 bracket, verbatim from vram_testtime_2026-08-11.json scenarios.S3...rows
 S3_ITEMS = [("slake_open", 12615), ("slake_open", 12618), ("slake_open", 12532),
             ("slake_open", 12533), ("vqa_rad_open", 133), ("vqa_rad_open", 134),

@@ -1,0 +1,27 @@
+{
+ "_what": "process-to-process determinism of the verifier scorer, from an accidental double launch of the exploratory 376,320 rung.",
+ "_code": "src/cascade_methods/verifier_hparams_determinism.py",
+ "_provenance": "logs/verifier_hparams_queue2_2026-08-16.log scored all 8,965 triples 11:56-13:17; logs/verifier_hparams_knee_2026-08-16.log started at 13:06, found 7,112 already on disk and re-scored the remaining 1,853 in a SECOND process. Both appended to scores_px376320.jsonl.",
+ "replicated_arm": {
+  "file": "scores_px376320.jsonl",
+  "n_lines": 10818,
+  "n_distinct_triples": 8965,
+  "n_triples_scored_twice": 1853,
+  "n_replicates_that_DISAGREE": 0,
+  "max_abs_disagreement": 0.0
+ },
+ "all_arms_line_counts": {
+  "scores_base_px1003520.jsonl": 8965,
+  "scores_base_px12845056.jsonl": 8965,
+  "scores_base_px250880.jsonl": 8965,
+  "scores_px1003520.jsonl": 8965,
+  "scores_px125440.jsonl": 8965,
+  "scores_px12845056.jsonl": 8965,
+  "scores_px250880.jsonl": 8965,
+  "scores_px376320.jsonl": 8965,
+  "scores_px501760.jsonl": 8965,
+  "scores_px62720.jsonl": 8965
+ },
+ "verdict": "BIT-IDENTICAL. 1853 triples were scored twice in two separate processes and 0 of them disagree; max abs disagreement 0.0. Batch-1 verifier scoring in this round is therefore deterministic process to process, which REFUTES run-to-run noise as the cause of the 6.03e-2 re-score nuisance in section 2 and localises that nuisance to the code-path difference against the older verifier_transfer_eval.py that wrote the stored dumps. The in-session control absorbs exactly that.",
+ "_consequence_for_the_ladder": "the duplicate lines are harmless: every reader keys by (ds, idx, answer) and the two copies are identical, so the loaded arm is unchanged. It is recorded rather than cleaned up because it is evidence."
+}

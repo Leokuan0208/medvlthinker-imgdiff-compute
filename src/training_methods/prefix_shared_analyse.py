@@ -288,6 +288,7 @@ def main():
     # ------------------------------------------------------------ N2: in-session == stored
     dmax, nslot, nzero = 0.0, 0, 0
     per_item_argmax = 0
+    n_tie_explained, n_argmax_unexplained, n_tie_label_changing = 0, 0, 0
     for it in items:
         k = (it["ds"], it["idx"])
         if k not in A or "error" in A[k]:
@@ -297,14 +298,37 @@ def main():
         dmax = max(dmax, max(d))
         nslot += len(d)
         nzero += sum(1 for x in d if x == 0.0)
-        if int(np.argmax(b)) == int(np.argmax(it["scores"])):
+        ab, as_ = int(np.argmax(b)), int(np.argmax(it["scores"]))
+        if ab == as_:
             per_item_argmax += 1
+        else:
+            # the stored dump rounds scores to 5 dp; two candidates that differ beyond the 5th
+            # decimal become an exact tie there, and np.argmax then breaks it at a different
+            # slot.  That is a property of the DUMP's precision, not of the re-scored values.
+            if round(float(b[ab]), 5) == round(float(b[as_]), 5) == it["scores"][ab] == \
+                    it["scores"][as_]:
+                n_tie_explained += 1
+                if it["sl"][ab] != it["sl"][as_]:
+                    n_tie_label_changing += 1
+            else:
+                n_argmax_unexplained += 1
     nulls["N2_in_session_deployed_vs_stored"] = {
         "what": "the deployed per-candidate loop, re-run IN THIS SESSION at 1,003,520 px with the "
                 "frozen adapter, reproduces ckpts/train/lora_verifier_disjoint/transfer_dump_*.json",
         "slots_compared": nslot, "max_abs_score_deviation": float(dmax),
         "n_slots_exactly_equal": nzero,
         "argmax_agreement": f"{per_item_argmax}/{len(items)-len(miss)}",
+        "argmax_mismatch_audit": {
+            "n_argmax_mismatches": int(len(items) - len(miss) - per_item_argmax),
+            "n_explained_by_stored_dump_5dp_ties": n_tie_explained,
+            "n_unexplained": n_argmax_unexplained,
+            "n_of_those_ties_that_change_the_judge_label": n_tie_label_changing,
+            "_read": "the SCORES are exactly equal (max abs deviation 0.0 over every slot). The "
+                     "argmax mismatches are an artifact of the stored dump's 5-decimal rounding: "
+                     "two candidates that differ beyond the 5th decimal are an exact tie in the "
+                     "dump, and np.argmax breaks that tie at a different slot. If n_unexplained "
+                     "is 0 the in-session control is a slot-for-slot reproduction and the only "
+                     "endpoint consequence is the handful of tie-broken picks counted here."},
         "tf32": "torch DEFAULT (matmul.allow_tf32=True) -- the setting that produced the dumps. "
                 "Pinning TF32 OFF instead gives max abs deviation 6.03e-2 on the same pairs "
                 "(ckpts/openvqa/verifier_hparams/null_test_rescore.json), which is why this "

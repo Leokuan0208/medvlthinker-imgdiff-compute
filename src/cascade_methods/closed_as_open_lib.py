@@ -94,7 +94,18 @@ ARMS = {
     "openMEK_s8":     dict(prompt="open_mek", sys=None,     cap="cap320",  **T04, n=N_SAMPLES),
     "openPRJ_g":      dict(prompt="bare",     sys=SYS_OPEN, cap="cap320",  **GREEDY, n=1),
     "openPRJ_s8":     dict(prompt="bare",     sys=SYS_OPEN, cap="cap320",  **T04, n=N_SAMPLES),
+    # ---- POST-HOC, ADDED 2026-08-16 AFTER THE PRIMARY ENDPOINT WAS READ -----------------------
+    # Not part of the pre-registered design and NOT eligible for the verifier claim.  The primary
+    # endpoint was already settled (0 of 3 cells) when these were added.  They exist for ONE
+    # question raised by the only positive the round produced: the open-form greedy gain over the
+    # deployed prompt was measured at cap320, so is it a PROMPT effect that also survives at the
+    # deployed FULLRES resolution, or only a cap320 phenomenon?  Without these, the recommendation
+    # "just change the prompt" would be confounded with the resolution the arms happened to run at.
+    "openMEK_g_full": dict(prompt="open_mek", sys=None,     cap="fullres", **GREEDY, n=1),
+    "openPRJ_g_full": dict(prompt="bare",     sys=SYS_OPEN, cap="fullres", **GREEDY, n=1),
 }
+#: arms added after the primary endpoint was read; every report must mark them exploratory
+POST_HOC_ARMS = ("openMEK_g_full", "openPRJ_g_full")
 #: PRE-SPECIFIED PRIMARY ENDPOINT: SELECTED (frozen verifier over openPRJ_s8) vs GREEDY (openPRJ_g),
 #: per cell, in BOTH currencies.  openPRJ is primary because its generation recipe is byte-identical
 #: to the deployed open arm (SYS_OPEN + bare question + cap320 + max_tokens 64), i.e. it is the

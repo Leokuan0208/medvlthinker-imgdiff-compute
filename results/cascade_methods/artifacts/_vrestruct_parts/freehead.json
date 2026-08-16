@@ -1,0 +1,911 @@
+{
+ "title": "Does the FREE head survive? The frozen 8-seed head + fusion on captured-during-generation states, at both image budgets",
+ "date": "2026-08-16",
+ "cpu_only": true,
+ "no_refit": true,
+ "inputs": "feats_free/free_{fullres,cap320}_L21.h_span_{tf,ar}.npy, written by the sibling round's src/training_methods/free_head_capture.py (fullres 167.7 min / cap320 91.7 min, 8,943 rows each, 0 failed)",
+ "null_tests": {
+  "NT_deployed_cache_reproduces_published": {
+   "fused_acc": 0.5074626865671642,
+   "published": 0.507463,
+   "fused_sel_eff": 0.8106267029972752,
+   "published_sel_eff": 0.810627,
+   "pass": true
+  },
+  "NT_fullres_TF_should_match_the_deployed_cache": {
+   "_what": "free_head_capture's TF path is extract_generator_hidden's path at the SAME resolution, so fullres/tf is the harness null test: any gap is bf16/attention-kernel noise, not a mechanism.",
+   "fused_sel_eff_fullres_tf": 0.8106267029972752,
+   "fused_sel_eff_deployed_cache": 0.8106267029972752,
+   "abs_deviation": 0.0,
+   "n_picks_differing": 0
+  }
+ },
+ "arms": {
+  "fullres_tf": {
+   "capture_diagnostics": {
+    "n_rows": 8943,
+    "minutes": 167.7,
+    "max_pixels": 1003520,
+    "n_boundary_bad": 0,
+    "n_span_bad": 0,
+    "n_forced_bad": 0,
+    "d_span_max_p50": 0.1944427490234375,
+    "d_span_max_p99": 0.625,
+    "d_span_max_max": 1.125
+   },
+   "head_only": {
+    "judge": {
+     "sel_eff": 0.8010899182561307,
+     "acc": 0.5014925373134328,
+     "macro3": 0.540625322997416,
+     "per_cell": {
+      "SLAKE_open": 0.7705426356589147,
+      "VQA_RAD_open": 0.46,
+      "PATH_VQA_open": 0.3913333333333333
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "p_two_sided": 2.0,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "em": {
+     "sel_eff": 0.7547974413646056,
+     "acc": 0.4528784648187633,
+     "macro3": 0.49474677002583983,
+     "per_cell": {
+      "SLAKE_open": 0.7612403100775194,
+      "VQA_RAD_open": 0.395,
+      "PATH_VQA_open": 0.328
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "p_two_sided": 2.0,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "n_picks_differing_from_deployed": 0
+   },
+   "fused": {
+    "judge": {
+     "sel_eff": 0.8106267029972752,
+     "acc": 0.5074626865671642,
+     "macro3": 0.5596537467700259,
+     "per_cell": {
+      "SLAKE_open": 0.7782945736434108,
+      "VQA_RAD_open": 0.51,
+      "PATH_VQA_open": 0.39066666666666666
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "p_two_sided": 2.0,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "em": {
+     "sel_eff": 0.7839374555792467,
+     "acc": 0.470362473347548,
+     "macro3": 0.5108423772609819,
+     "per_cell": {
+      "SLAKE_open": 0.7751937984496124,
+      "VQA_RAD_open": 0.41,
+      "PATH_VQA_open": 0.3473333333333333
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "p_two_sided": 2.0,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "n_picks_differing_from_deployed": 0
+   }
+  },
+  "fullres_ar": {
+   "capture_diagnostics": {
+    "n_rows": 8943,
+    "minutes": 167.7,
+    "max_pixels": 1003520,
+    "n_boundary_bad": 0,
+    "n_span_bad": 0,
+    "n_forced_bad": 0,
+    "d_span_max_p50": 0.1944427490234375,
+    "d_span_max_p99": 0.625,
+    "d_span_max_max": 1.125
+   },
+   "head_only": {
+    "judge": {
+     "sel_eff": 0.8024523160762943,
+     "acc": 0.5023454157782516,
+     "macro3": 0.5428087855297158,
+     "per_cell": {
+      "SLAKE_open": 0.772093023255814,
+      "VQA_RAD_open": 0.465,
+      "PATH_VQA_open": 0.3913333333333333
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0008528784648187633,
+      "lo": -0.0008528784648187633,
+      "hi": 0.00255863539445629,
+      "p_two_sided": 0.4458,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0015503875968992248,
+       "lo": 0.0,
+       "hi": 0.004651162790697674,
+       "p_two_sided": 0.7232,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.005,
+       "lo": 0.0,
+       "hi": 0.015,
+       "p_two_sided": 0.7298,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": -0.002,
+       "hi": 0.002,
+       "p_two_sided": 1.3086,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "em": {
+     "sel_eff": 0.7562189054726368,
+     "acc": 0.4537313432835821,
+     "macro3": 0.4954857881136951,
+     "per_cell": {
+      "SLAKE_open": 0.7627906976744186,
+      "VQA_RAD_open": 0.395,
+      "PATH_VQA_open": 0.32866666666666666
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0008528784648187633,
+      "lo": -0.0008528784648187633,
+      "hi": 0.00255863539445629,
+      "p_two_sided": 0.4526,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0015503875968992248,
+       "lo": 0.0,
+       "hi": 0.004651162790697674,
+       "p_two_sided": 0.7232,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0006666666666666666,
+       "lo": -0.0013333333333333333,
+       "hi": 0.0026833333333330907,
+       "p_two_sided": 0.791,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "n_picks_differing_from_deployed": 22
+   },
+   "fused": {
+    "judge": {
+     "sel_eff": 0.8119891008174387,
+     "acc": 0.5083155650319829,
+     "macro3": 0.5603927648578811,
+     "per_cell": {
+      "SLAKE_open": 0.7798449612403101,
+      "VQA_RAD_open": 0.51,
+      "PATH_VQA_open": 0.3913333333333333
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0008528784648187633,
+      "lo": 0.0,
+      "hi": 0.0021321961620469083,
+      "p_two_sided": 0.276,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0015503875968992248,
+       "lo": 0.0,
+       "hi": 0.004651162790697674,
+       "p_two_sided": 0.7558,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0006666666666666666,
+       "lo": 0.0,
+       "hi": 0.002,
+       "p_two_sided": 0.7322,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "em": {
+     "sel_eff": 0.7853589196872779,
+     "acc": 0.47121535181236673,
+     "macro3": 0.5115813953488372,
+     "per_cell": {
+      "SLAKE_open": 0.7767441860465116,
+      "VQA_RAD_open": 0.41,
+      "PATH_VQA_open": 0.348
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0008528784648187633,
+      "lo": 0.0,
+      "hi": 0.0021321961620469083,
+      "p_two_sided": 0.276,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0015503875968992248,
+       "lo": 0.0,
+       "hi": 0.004651162790697674,
+       "p_two_sided": 0.7558,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.0,
+       "lo": 0.0,
+       "hi": 0.0,
+       "p_two_sided": 2.0,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0006666666666666666,
+       "lo": 0.0,
+       "hi": 0.002,
+       "p_two_sided": 0.7322,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": true
+    },
+    "n_picks_differing_from_deployed": 15
+   }
+  },
+  "cap320_tf": {
+   "capture_diagnostics": {
+    "n_rows": 8943,
+    "minutes": 91.7,
+    "max_pixels": 250880,
+    "n_boundary_bad": 0,
+    "n_span_bad": 0,
+    "n_forced_bad": 0,
+    "d_span_max_p50": 0.1875,
+    "d_span_max_p99": 0.625,
+    "d_span_max_max": 1.125
+   },
+   "head_only": {
+    "judge": {
+     "sel_eff": 0.7901907356948229,
+     "acc": 0.4946695095948827,
+     "macro3": 0.5341524547803618,
+     "per_cell": {
+      "SLAKE_open": 0.7627906976744186,
+      "VQA_RAD_open": 0.455,
+      "PATH_VQA_open": 0.38466666666666666
+     },
+     "vs_deployed_cache": {
+      "delta": -0.006823027718550106,
+      "lo": -0.014498933901918977,
+      "hi": 0.0008528784648187633,
+      "p_two_sided": 0.0942,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.007751937984496124,
+       "lo": -0.020155038759689922,
+       "hi": 0.0031007751937984496,
+       "p_two_sided": 0.239,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.005,
+       "lo": -0.025,
+       "hi": 0.01,
+       "p_two_sided": 0.8144,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": -0.006666666666666667,
+       "lo": -0.017333333333333333,
+       "hi": 0.004,
+       "p_two_sided": 0.2476,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "em": {
+     "sel_eff": 0.7448471926083866,
+     "acc": 0.44690831556503197,
+     "macro3": 0.4896020671834625,
+     "per_cell": {
+      "SLAKE_open": 0.7581395348837209,
+      "VQA_RAD_open": 0.39,
+      "PATH_VQA_open": 0.32066666666666666
+     },
+     "vs_deployed_cache": {
+      "delta": -0.005970149253731343,
+      "lo": -0.013219616204690832,
+      "hi": 0.001279317697228145,
+      "p_two_sided": 0.1254,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.0031007751937984496,
+       "lo": -0.013953488372093023,
+       "hi": 0.007751937984496124,
+       "p_two_sided": 0.6952,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.005,
+       "lo": -0.015,
+       "hi": 0.0,
+       "p_two_sided": 0.745,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": -0.007333333333333333,
+       "lo": -0.017333333333333333,
+       "hi": 0.0026666666666666666,
+       "p_two_sided": 0.1686,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "n_picks_differing_from_deployed": 240
+   },
+   "fused": {
+    "judge": {
+     "sel_eff": 0.8092643051771117,
+     "acc": 0.5066098081023455,
+     "macro3": 0.5600645994832042,
+     "per_cell": {
+      "SLAKE_open": 0.7751937984496124,
+      "VQA_RAD_open": 0.515,
+      "PATH_VQA_open": 0.39
+     },
+     "vs_deployed_cache": {
+      "delta": -0.0008528784648187633,
+      "lo": -0.005970149253731343,
+      "hi": 0.004690831556503198,
+      "p_two_sided": 0.7994,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.0031007751937984496,
+       "lo": -0.012403100775193798,
+       "hi": 0.004651162790697674,
+       "p_two_sided": 0.6002,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.005,
+       "lo": -0.015,
+       "hi": 0.03,
+       "p_two_sided": 0.8056,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": -0.0006666666666666666,
+       "lo": -0.007333333333333333,
+       "hi": 0.006,
+       "p_two_sided": 0.9274,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "em": {
+     "sel_eff": 0.7853589196872779,
+     "acc": 0.47121535181236673,
+     "macro3": 0.5083979328165374,
+     "per_cell": {
+      "SLAKE_open": 0.7751937984496124,
+      "VQA_RAD_open": 0.4,
+      "PATH_VQA_open": 0.35
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0008528784648187633,
+      "lo": -0.0042643923240938165,
+      "hi": 0.005970149253731343,
+      "p_two_sided": 0.8106,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": -0.007751937984496124,
+       "hi": 0.007751937984496124,
+       "p_two_sided": 1.1564,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.01,
+       "lo": -0.025,
+       "hi": 0.0,
+       "p_two_sided": 0.269,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0026666666666666666,
+       "lo": -0.004666666666666667,
+       "hi": 0.01,
+       "p_two_sided": 0.5216,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "n_picks_differing_from_deployed": 148
+   }
+  },
+  "cap320_ar": {
+   "capture_diagnostics": {
+    "n_rows": 8943,
+    "minutes": 91.7,
+    "max_pixels": 250880,
+    "n_boundary_bad": 0,
+    "n_span_bad": 0,
+    "n_forced_bad": 0,
+    "d_span_max_p50": 0.1875,
+    "d_span_max_p99": 0.625,
+    "d_span_max_max": 1.125
+   },
+   "head_only": {
+    "judge": {
+     "sel_eff": 0.7901907356948229,
+     "acc": 0.4946695095948827,
+     "macro3": 0.5327080103359173,
+     "per_cell": {
+      "SLAKE_open": 0.7627906976744186,
+      "VQA_RAD_open": 0.45,
+      "PATH_VQA_open": 0.38533333333333336
+     },
+     "vs_deployed_cache": {
+      "delta": -0.006823027718550106,
+      "lo": -0.014498933901918977,
+      "hi": 0.0008528784648187633,
+      "p_two_sided": 0.0824,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.007751937984496124,
+       "lo": -0.020155038759689922,
+       "hi": 0.0031007751937984496,
+       "p_two_sided": 0.2432,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.01,
+       "lo": -0.03,
+       "hi": 0.01,
+       "p_two_sided": 0.4548,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": -0.006,
+       "lo": -0.016666666666666666,
+       "hi": 0.004666666666666667,
+       "p_two_sided": 0.292,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "em": {
+     "sel_eff": 0.7469793887704336,
+     "acc": 0.44818763326226013,
+     "macro3": 0.4905633074935401,
+     "per_cell": {
+      "SLAKE_open": 0.7596899224806202,
+      "VQA_RAD_open": 0.39,
+      "PATH_VQA_open": 0.322
+     },
+     "vs_deployed_cache": {
+      "delta": -0.004690831556503198,
+      "lo": -0.011940298507462687,
+      "hi": 0.00255863539445629,
+      "p_two_sided": 0.2402,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.0015503875968992248,
+       "lo": -0.013953488372093023,
+       "hi": 0.009302325581395349,
+       "p_two_sided": 0.9034,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.005,
+       "lo": -0.015,
+       "hi": 0.0,
+       "p_two_sided": 0.745,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": -0.006,
+       "lo": -0.016,
+       "hi": 0.004,
+       "p_two_sided": 0.2646,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "n_picks_differing_from_deployed": 236
+   },
+   "fused": {
+    "judge": {
+     "sel_eff": 0.8092643051771117,
+     "acc": 0.5066098081023455,
+     "macro3": 0.5597700258397933,
+     "per_cell": {
+      "SLAKE_open": 0.7736434108527132,
+      "VQA_RAD_open": 0.515,
+      "PATH_VQA_open": 0.39066666666666666
+     },
+     "vs_deployed_cache": {
+      "delta": -0.0008528784648187633,
+      "lo": -0.005970149253731343,
+      "hi": 0.0042643923240938165,
+      "p_two_sided": 0.796,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": -0.004651162790697674,
+       "lo": -0.012403100775193798,
+       "hi": 0.0031007751937984496,
+       "p_two_sided": 0.3388,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": 0.005,
+       "lo": -0.015,
+       "hi": 0.03,
+       "p_two_sided": 0.8056,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0,
+       "lo": -0.006666666666666667,
+       "hi": 0.006666666666666667,
+       "p_two_sided": 1.0756,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "em": {
+     "sel_eff": 0.7867803837953091,
+     "acc": 0.4720682302771855,
+     "macro3": 0.5102868217054264,
+     "per_cell": {
+      "SLAKE_open": 0.7751937984496124,
+      "VQA_RAD_open": 0.405,
+      "PATH_VQA_open": 0.3506666666666667
+     },
+     "vs_deployed_cache": {
+      "delta": 0.0017057569296375266,
+      "lo": -0.003411513859275053,
+      "hi": 0.006823027718550106,
+      "p_two_sided": 0.5842,
+      "significant": false,
+      "n": 2345,
+      "nboot": 10000
+     },
+     "per_cell_vs_deployed": {
+      "SLAKE_open": {
+       "delta": 0.0,
+       "lo": -0.007751937984496124,
+       "hi": 0.007751937984496124,
+       "p_two_sided": 1.1564,
+       "significant": false,
+       "n": 645,
+       "nboot": 10000
+      },
+      "VQA_RAD_open": {
+       "delta": -0.005,
+       "lo": -0.025,
+       "hi": 0.01,
+       "p_two_sided": 0.78,
+       "significant": false,
+       "n": 200,
+       "nboot": 10000
+      },
+      "PATH_VQA_open": {
+       "delta": 0.0033333333333333335,
+       "lo": -0.004,
+       "hi": 0.010666666666666666,
+       "p_two_sided": 0.4042,
+       "significant": false,
+       "n": 1500,
+       "nboot": 10000
+      }
+     },
+     "guardrail_clean": false
+    },
+    "n_picks_differing_from_deployed": 153
+   }
+  }
+ },
+ "verdict": {
+  "the_question": "does capturing the layer-21 state during generation, at the resolution generation actually runs at, keep the frozen head working?",
+  "AR_vs_TF_at_fullres": {
+   "delta": 0.0008528784648187633,
+   "lo": 0.0,
+   "hi": 0.0021321961620469083,
+   "p_two_sided": 0.276,
+   "significant": false,
+   "n": 2345,
+   "nboot": 10000
+  },
+  "AR_vs_TF_at_cap320": {
+   "delta": -0.0008528784648187633,
+   "lo": -0.005970149253731343,
+   "hi": 0.0042643923240938165,
+   "p_two_sided": 0.796,
+   "significant": false,
+   "n": 2345,
+   "nboot": 10000
+  },
+  "deployed_reference": {
+   "fused_acc_judge": 0.5074626865671642,
+   "fused_acc_em": 0.470362473347548,
+   "fused_sel_eff": 0.8106267029972752
+  }
+ }
+}

@@ -47,8 +47,11 @@ BSEED = 20260815
 NPERM = 2000
 
 LADDER = {62720: "cap80", 125440: "cap160", 250880: "cap320 (= GENERATOR's resolution)",
+          376320: "cap480 (EXPLORATORY knee rung, added post-hoc)",
           501760: "cap640", 1003520: "fullres (DEPLOYED = TRAINED)",
           12845056: "native (no effective cap on these images)"}
+#: the six rungs named in the pre-registration (_verifier_hparams_parts/prereg.json).
+PREREG_RUNGS = [62720, 125440, 250880, 501760, 1003520, 12845056]
 
 
 # =====================================================================================
@@ -269,8 +272,14 @@ def main():
                     help="skip nested CV / permutation null (nothing is selected on that arm set)")
     ap.add_argument("--no_dumps", action="store_true",
                     help="skip writing per-rung transfer dumps for the macro re-run")
+    ap.add_argument("--rungs", default="",
+                    help="comma-separated max_pixels to restrict to. Used to reproduce the "
+                         "PRE-REGISTERED six-rung arm set exactly after the exploratory "
+                         "376,320 knee rung was added, because the nested-CV / permutation-null "
+                         "leakage controls are properties of the ARM SET, not of one arm.")
     A = ap.parse_args()
     pfx = A.prefix
+    only = {int(x) for x in A.rungs.split(",") if x.strip()} if A.rungs.strip() else None
 
     os.makedirs(PARTS, exist_ok=True)
     items = G.load_items()
@@ -280,6 +289,8 @@ def main():
     pat = f"scores_{pfx}px*.jsonl"
     pxs = sorted(int(os.path.basename(f)[len(f"scores_{pfx}px"):-len(".jsonl")])
                  for f in glob.glob(os.path.join(SCOREDIR, pat)))
+    if only is not None:
+        pxs = [p for p in pxs if p in only]
     arms, EP = {}, {}
     for px in pxs:
         a = load_arm(px, pfx)
