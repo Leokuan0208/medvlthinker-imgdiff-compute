@@ -1,0 +1,96 @@
+{
+ "N1_frozen_metric": {
+  "expected": {
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "n": 2345,
+   "n_recoverable": 1468,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "measured": {
+   "oracle@8": 0.6260127931769722,
+   "selected": 0.48528784648187634,
+   "greedy": 0.4494669509594883,
+   "sel_eff": 0.7752043596730245,
+   "n": 2345,
+   "n_recoverable": 1468,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "verdict": "PASS",
+  "_code": "src/training_methods/genframe_data.py sel_eff() on incumbent_scores()"
+ },
+ "N2_identity": {
+  "selected": 0.48528784648187634,
+  "oracle@8_x_sel_eff": 0.4852878464818763,
+  "abs_deviation": 5.551115123125783e-17,
+  "verdict": "PASS",
+  "the_FORBIDDEN_additive_form": 0.5863260575286278,
+  "additive_form_error": 0.10103821104675142,
+  "_read": "selected = oracle@8 x sel_eff is EXACT. greedy + sel_eff*(oracle-greedy) over-predicts and must never be used."
+ },
+ "N3_em_currency_pairing": {
+  "n_items": 2345,
+  "n_missing_from_generation_dump": 0,
+  "n_pool_length_mismatch": 0,
+  "n_pred_string_mismatch_vs_transfer_dump": 0,
+  "verdict": "PASS",
+  "_what": "the EM currency is recomputed from the transfer dumps' OWN preds with run_openvqa.py's scorer and the generation dump's gold, so judge-EM deltas are on identical picks by construction.",
+  "_source": "ckpts/openvqa/cheap_lingshu7b/ckpt_{ds}_lingshu7b_sc8.jsonl",
+  "n_items_where_recomputed_EM_differs_from_stored_oks": 0,
+  "verdict_vs_stored_oks": "PASS"
+ },
+ "EM_vs_JUDGE_on_the_frozen_pool": {
+  "n_items": 2345,
+  "n_slots": 18760,
+  "judge_oracle@8": 0.6260127931769722,
+  "em_oracle@8": 0.6,
+  "judge_slot_positive_rate": 0.42334754797441365,
+  "em_slot_positive_rate": 0.40927505330490405,
+  "slot_agreement": 0.9321961620469084,
+  "judge_yes_em_no_slots": 768,
+  "em_yes_judge_no_slots": 504,
+  "_read": "the judge is more lenient than exact match by construction (its prompt instructs leniency about phrasing and synonyms). BOTH currencies are reported for every endpoint in this round."
+ },
+ "N4_max_tokens_truncation_audit": {
+  "_lever": "src/labeling/run_openvqa.py:64  ap.add_argument('--max_tokens', type=int, default=64); the deployed open arm uses the default.",
+  "_method": "every one of the 18,760 stored candidate strings re-tokenized with the Lingshu-7B tokenizer (add_special_tokens=False). A generation stopped by the 64-token budget must tokenize to ~64; run_openvqa.extract() only .strip()s, so the count is exact up to trailing whitespace.",
+  "n_candidate_strings": 18760,
+  "n_at_or_above_64_tokens": 5,
+  "n_at_or_above_60_tokens": 5,
+  "max_tokens_observed": 64,
+  "mean_tokens": 4.404797441364606,
+  "median_tokens": 4.0,
+  "p99_tokens": 17.0,
+  "per_ds_mean": {
+   "slake_open": 3.7151162790697674,
+   "vqa_rad_open": 4.4775,
+   "pathvqa_open": 4.691666666666666
+  },
+  "per_ds_max": {
+   "slake_open": 27,
+   "vqa_rad_open": 28,
+   "pathvqa_open": 64
+  },
+  "truncation_rate": 0.00026652452025586353,
+  "stored_gen_tokens_slot0": {
+   "n": 2345,
+   "mean": 5.373560767590618,
+   "max": 64,
+   "n_at_64": 1
+  },
+  "stored_gen_tokens_all_slots": {
+   "_note": "this dump version stores gen_tokens for slot 0 only; the tokenizer pass above covers all 8 slots"
+  }
+ }
+}

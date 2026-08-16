@@ -1,0 +1,964 @@
+{
+ "title": "BUILD 1 part A -- HEAD-ONLY selection quality on the frozen best-of-8 open pool",
+ "date": "2026-08-16",
+ "no_gpu": true,
+ "reproduce": "python3 src/training_methods/free_head_selectors.py",
+ "null_test": {
+  "measured": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.6260127931769722,
+   "selected": 0.48528784648187634,
+   "greedy": 0.4494669509594883,
+   "sel_eff": 0.7752043596730245,
+   "cand_auroc": 0.8855921901711237,
+   "per_ds": {
+    "slake_open": 0.8500881834215167,
+    "vqa_rad_open": 0.7619047619047619,
+    "pathvqa_open": 0.7225806451612903
+   }
+  },
+  "published": {
+   "n": 2345,
+   "n_recoverable": 1468,
+   "oracle@8": 0.626013,
+   "selected": 0.485288,
+   "greedy": 0.449467,
+   "sel_eff": 0.775204,
+   "cand_auroc": 0.885592,
+   "per_ds": {
+    "slake_open": 0.850088,
+    "vqa_rad_open": 0.761905,
+    "pathvqa_open": 0.722581
+   }
+  },
+  "abs_deviation": {
+   "oracle@8": 2.068230278151617e-07,
+   "selected": 1.5351812365782536e-07,
+   "greedy": 4.9040511707065804e-08,
+   "sel_eff": 3.5967302447481586e-07,
+   "cand_auroc": 1.9017112362629263e-07,
+   "per_ds.slake_open": 1.8342151675287965e-07,
+   "per_ds.vqa_rad_open": 2.3809523819195988e-07,
+   "per_ds.pathvqa_open": 3.548387097485062e-07,
+   "n": 0,
+   "n_recoverable": 0
+  },
+  "max_abs_deviation": 3.5967302447481586e-07,
+  "pass": true,
+  "tolerance": 1e-06,
+  "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+ },
+ "selector_reload_verify": {
+  "path": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/genframe_head_ens8",
+  "measured": {
+   "sel_eff": 0.8106267029972752,
+   "acc": 0.5074626865671642,
+   "per_ds": {
+    "slake_open": 0.8853615520282186,
+    "vqa_rad_open": 0.8095238095238095,
+    "pathvqa_open": 0.7561290322580645
+   }
+  },
+  "published": {
+   "sel_eff": 0.810627,
+   "acc": 0.507463,
+   "per_ds": {
+    "slake_open": 0.885362,
+    "vqa_rad_open": 0.809524,
+    "pathvqa_open": 0.756129
+   }
+  },
+  "abs_deviation": {
+   "sel_eff": 2.970027247473084e-07,
+   "acc": 3.134328357967675e-07,
+   "per_ds.slake_open": 4.47971781336598e-07,
+   "per_ds.vqa_rad_open": 1.9047619048695452e-07,
+   "per_ds.pathvqa_open": 3.225806444184798e-08
+  },
+  "max_abs_deviation": 4.47971781336598e-07,
+  "pass": true,
+  "tolerance": 1e-06,
+  "reloaded_vs_training_run_max_abs_logit_deviation": 3.814697265625e-06,
+  "note": "published cells are 6-dp rounded; deviations at 1e-6 are rounding, not disagreement."
+ },
+ "features": "feats_hidden/generator_eval_s*of2.npz (FULLRES teacher-forced), layer 21, span",
+ "currencies": {
+  "judge": "32B judge label of the picked slot (frozen endpoint)",
+  "em": "normalised exact match, run_openvqa.score == decoding_sweep_gen.score_em, read from ckpts/openvqa/cheap_lingshu7b/ckpt_<ds>_lingshu7b_sc8.jsonl:oks"
+ },
+ "arms": {
+  "incumbent": {
+   "name": "incumbent LoRA verifier (clean/disjoint)",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.48528784648187634,
+   "sel_eff_judge": 0.7752043596730245,
+   "selected_em": 0.4673773987206823,
+   "sel_eff_em": 0.7789623312011372,
+   "identity_selected_eq_oracle_x_seleff_judge": 5.551115123125783e-17,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8500881834215167,
+     "selected_judge": 0.7472868217054264,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8429319371727748,
+     "selected_em": 0.7488372093023256,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7619047619047619,
+     "selected_judge": 0.48,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7363636363636363,
+     "selected_em": 0.405,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7225806451612903,
+     "selected_judge": 0.37333333333333335,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7348066298342542,
+     "selected_em": 0.3546666666666667,
+     "oracle_em": 0.4826666666666667
+    }
+   }
+  },
+  "head_ens8": {
+   "name": "frozen 8-seed generator-frame head ALONE",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5014925373134328,
+   "sel_eff_judge": 0.8010899182561307,
+   "selected_em": 0.4528784648187633,
+   "sel_eff_em": 0.7547974413646056,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8765432098765432,
+     "selected_judge": 0.7705426356589147,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8568935427574171,
+     "selected_em": 0.7612403100775194,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7301587301587301,
+     "selected_judge": 0.46,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7181818181818181,
+     "selected_em": 0.395,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7574193548387097,
+     "selected_judge": 0.3913333333333333,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.6795580110497238,
+     "selected_em": 0.328,
+     "oracle_em": 0.4826666666666667
+    }
+   }
+  },
+  "fusion": {
+   "name": "deployed fusion: rank_avg(inc) + rank_avg(head)",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.5074626865671642,
+   "sel_eff_judge": 0.8106267029972752,
+   "selected_em": 0.470362473347548,
+   "sel_eff_em": 0.7839374555792467,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8853615520282186,
+     "selected_judge": 0.7782945736434108,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8726003490401396,
+     "selected_em": 0.7751937984496124,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.8095238095238095,
+     "selected_judge": 0.51,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7454545454545455,
+     "selected_em": 0.41,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.7561290322580645,
+     "selected_judge": 0.39066666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.7196132596685083,
+     "selected_em": 0.3473333333333333,
+     "oracle_em": 0.4826666666666667
+    }
+   }
+  },
+  "self_consistency": {
+   "name": "plurality of 8 surface strings",
+   "n": 2345,
+   "n_recoverable_judge": 1468,
+   "n_recoverable_em": 1407,
+   "oracle_judge": 0.6260127931769722,
+   "oracle_em": 0.6,
+   "greedy_judge": 0.4494669509594883,
+   "selected_judge": 0.44690831556503197,
+   "sel_eff_judge": 0.7138964577656676,
+   "selected_em": 0.4439232409381663,
+   "sel_eff_em": 0.7398720682302772,
+   "identity_selected_eq_oracle_x_seleff_judge": 0.0,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "sel_eff_judge": 0.8377425044091711,
+     "selected_judge": 0.7364341085271318,
+     "oracle_judge": 0.8790697674418605,
+     "sel_eff_em": 0.8551483420593369,
+     "selected_em": 0.7596899224806202,
+     "oracle_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "sel_eff_judge": 0.7301587301587301,
+     "selected_judge": 0.46,
+     "oracle_judge": 0.63,
+     "sel_eff_em": 0.7727272727272727,
+     "selected_em": 0.425,
+     "oracle_em": 0.55
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "sel_eff_judge": 0.6206451612903225,
+     "selected_judge": 0.32066666666666666,
+     "oracle_judge": 0.5166666666666667,
+     "sel_eff_em": 0.643646408839779,
+     "selected_em": 0.31066666666666665,
+     "oracle_em": 0.4826666666666667
+    }
+   }
+  }
+ },
+ "baselines": {
+  "always_7b_greedy": {
+   "selected_judge": 0.4494669509594883,
+   "selected_em": 0.4550106609808102,
+   "per_ds": {
+    "slake_open": {
+     "selected_judge": 0.7364341085271318,
+     "selected_em": 0.7627906976744186
+    },
+    "vqa_rad_open": {
+     "selected_judge": 0.465,
+     "selected_em": 0.425
+    },
+    "pathvqa_open": {
+     "selected_judge": 0.324,
+     "selected_em": 0.32666666666666666
+    }
+   },
+   "source_judge": "transfer dump greedy_ok",
+   "source_em": "ckpts/openvqa/cheap_lingshu7b/ckpt_<ds>_lingshu7b.jsonl oks[0]"
+  },
+  "oracle_at_8": {
+   "selected_judge": 0.6260127931769722,
+   "selected_em": 0.6,
+   "per_ds": {
+    "slake_open": {
+     "selected_judge": 0.8790697674418605,
+     "selected_em": 0.8883720930232558
+    },
+    "vqa_rad_open": {
+     "selected_judge": 0.63,
+     "selected_em": 0.55
+    },
+    "pathvqa_open": {
+     "selected_judge": 0.5166666666666667,
+     "selected_em": 0.4826666666666667
+    }
+   }
+  },
+  "random_pick_closed_form_judge": {
+   "acc": 0.42334754797441365,
+   "sel_eff": 0.6762602179836512
+  }
+ },
+ "head_per_seed": {
+  "per_seed_sel_eff_judge": [
+   0.7956403269754768,
+   0.7881471389645777,
+   0.8004087193460491,
+   0.7888283378746594,
+   0.7908719346049047,
+   0.7956403269754768,
+   0.7983651226158038,
+   0.7922343324250681
+  ],
+  "mean": 0.7937670299727521,
+  "sd": 0.0044557758752211225,
+  "min": 0.7881471389645777,
+  "max": 0.8004087193460491,
+  "ensemble_of_8_sel_eff_judge": 0.8010899182561307,
+  "note": "the round brief quotes 0.7956 for the head alone; that is a SINGLE-SEED fit (freeze_selector.py records seed-0 sel_eff 0.795640 at the pinned thread count). The frozen 8-seed ENSEMBLE head alone is the number reported here."
+ },
+ "vs_always_7b": {
+  "incumbent": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7472868217054264,
+      "delta": 0.010852713178294615,
+      "ci": [
+       -0.01705426356589157,
+       0.03875968992248058
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.48,
+      "delta": 0.014999999999999958,
+      "ci": [
+       -0.034999999999999976,
+       0.065
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.37333333333333335,
+      "delta": 0.04933333333333334,
+      "ci": [
+       0.03200000000000003,
+       0.06666666666666665
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.48528784648187634,
+    "pooled_delta": 0.03582089552238804,
+    "pooled_ci": [
+     0.02174840085287849,
+     0.049893390191897646
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.025062015503875972
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7488372093023256,
+      "delta": -0.013953488372093092,
+      "ci": [
+       -0.041860465116279055,
+       0.012403100775193798
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.405,
+      "delta": -0.019999999999999962,
+      "ci": [
+       -0.07,
+       0.030000000000000027
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3546666666666667,
+      "delta": 0.028000000000000025,
+      "ci": [
+       0.010666666666666713,
+       0.04466666666666669
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4673773987206823,
+    "pooled_delta": 0.012366737739872069,
+    "pooled_ci": [
+     -0.0017057569296375363,
+     0.026012793176972304
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.00198449612403101
+   }
+  },
+  "head_ens8": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7705426356589147,
+      "delta": 0.03410852713178292,
+      "ci": [
+       0.006201550387596844,
+       0.06356589147286817
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.46,
+      "delta": -0.0050000000000000044,
+      "ci": [
+       -0.06,
+       0.04999999999999999
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.3913333333333333,
+      "delta": 0.0673333333333333,
+      "ci": [
+       0.04799999999999999,
+       0.08733333333333332
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5014925373134328,
+    "pooled_delta": 0.0520255863539445,
+    "pooled_ci": [
+     0.03624733475479747,
+     0.06780383795309164
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0321472868217054
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7612403100775194,
+      "delta": -0.0015503875968992942,
+      "ci": [
+       -0.03100775193798444,
+       0.02635658914728689
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.395,
+      "delta": -0.02999999999999997,
+      "ci": [
+       -0.07500000000000001,
+       0.015000000000000013
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.328,
+      "delta": 0.001333333333333353,
+      "ci": [
+       -0.018666666666666665,
+       0.021333333333333315
+      ],
+      "verdict": "TIE"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4528784648187633,
+    "pooled_delta": -0.0021321961620469065,
+    "pooled_ci": [
+     -0.017484008528784678,
+     0.014072494669509552
+    ],
+    "pooled_verdict": "TIE",
+    "macro3_delta": -0.010072351421188638
+   }
+  },
+  "fusion": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7782945736434108,
+      "delta": 0.041860465116279055,
+      "ci": [
+       0.015503875968992276,
+       0.06821705426356584
+      ],
+      "verdict": "WIN"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.51,
+      "delta": 0.044999999999999984,
+      "ci": [
+       -0.0050000000000000044,
+       0.09500000000000003
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.39066666666666666,
+      "delta": 0.06666666666666665,
+      "ci": [
+       0.04933333333333334,
+       0.08466666666666667
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 2,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.5074626865671642,
+    "pooled_delta": 0.0579957356076759,
+    "pooled_ci": [
+     0.0439232409381663,
+     0.07206823027718551
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.05117571059431523
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7751937984496124,
+      "delta": 0.012403100775193798,
+      "ci": [
+       -0.013953488372092981,
+       0.037209302325581395
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.41,
+      "delta": -0.015000000000000013,
+      "ci": [
+       -0.065,
+       0.034999999999999976
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.3473333333333333,
+      "delta": 0.020666666666666667,
+      "ci": [
+       0.002666666666666706,
+       0.03866666666666663
+      ],
+      "verdict": "WIN"
+     }
+    },
+    "n_cells_CI_clean_win": 1,
+    "n_cells_CI_clean_loss": 0,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.470362473347548,
+    "pooled_delta": 0.015351812366737771,
+    "pooled_ci": [
+     0.0008528784648187959,
+     0.02942430703624732
+    ],
+    "pooled_verdict": "WIN",
+    "macro3_delta": 0.0060232558139534835
+   }
+  },
+  "self_consistency": {
+   "n_cells_of_8_covered": 3,
+   "note": "the other 5 macro cells (PMC_VQA, MedXpert, SLAKE/VQA-RAD/PathVQA closed) are multiple-choice-as-presented and carry no open-text pool, so this selector does not apply to them -- they are NOT counted as wins or losses here.",
+   "judge": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7364341085271318,
+      "selector": 0.7364341085271318,
+      "delta": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.465,
+      "selector": 0.46,
+      "delta": -0.0050000000000000044,
+      "ci": [
+       -0.015000000000000013,
+       0.0
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.324,
+      "selector": 0.32066666666666666,
+      "delta": -0.003333333333333355,
+      "ci": [
+       -0.006666666666666654,
+       -0.0006666666666666488
+      ],
+      "verdict": "LOSS"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 1,
+    "pooled_always_7b": 0.4494669509594883,
+    "pooled_selector": 0.44690831556503197,
+    "pooled_delta": -0.0025586353944563323,
+    "pooled_ci": [
+     -0.004690831556503183,
+     -0.0008528784648187404
+    ],
+    "pooled_verdict": "LOSS",
+    "macro3_delta": -0.0027777777777777866
+   },
+   "em": {
+    "per_cell": {
+     "slake_open": {
+      "n": 645,
+      "always_7b": 0.7627906976744186,
+      "selector": 0.7596899224806202,
+      "delta": -0.0031007751937984773,
+      "ci": [
+       -0.018604651162790642,
+       0.012403100775193798
+      ],
+      "verdict": "TIE"
+     },
+     "vqa_rad_open": {
+      "n": 200,
+      "always_7b": 0.425,
+      "selector": 0.425,
+      "delta": 0.0,
+      "ci": [
+       -0.034999999999999976,
+       0.034999999999999976
+      ],
+      "verdict": "TIE"
+     },
+     "pathvqa_open": {
+      "n": 1500,
+      "always_7b": 0.32666666666666666,
+      "selector": 0.31066666666666665,
+      "delta": -0.016000000000000014,
+      "ci": [
+       -0.028666666666666618,
+       -0.003333333333333355
+      ],
+      "verdict": "LOSS"
+     }
+    },
+    "n_cells_CI_clean_win": 0,
+    "n_cells_CI_clean_loss": 1,
+    "pooled_always_7b": 0.4550106609808102,
+    "pooled_selector": 0.4439232409381663,
+    "pooled_delta": -0.011087420042643903,
+    "pooled_ci": [
+     -0.020469083155650325,
+     -0.0017057569296375363
+    ],
+    "pooled_verdict": "LOSS",
+    "macro3_delta": -0.0063669250645994975
+   }
+  }
+ },
+ "comparisons": {
+  "head_vs_incumbent": {
+   "judge": {
+    "d_selected": 0.016204690831556456,
+    "d_selected_ci": [
+     0.0025586353944563323,
+     0.029850746268656747
+    ],
+    "d_sel_eff": 0.02588555858310626,
+    "d_sel_eff_ci": [
+     0.004087193460490468,
+     0.04768392370572205
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.02645502645502651,
+     "vqa_rad_open": -0.031746031746031744,
+     "pathvqa_open": 0.03483870967741942
+    },
+    "verdict": "WIN"
+   },
+   "em": {
+    "d_selected": -0.014498933901918976,
+    "d_selected_ci": [
+     -0.02814498933901921,
+     -0.0004264392324093702
+    ],
+    "d_sel_eff": -0.024164889836531644,
+    "d_sel_eff_ci": [
+     -0.04832977967306318,
+     -0.000710732054015617
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.013961605584642323,
+     "vqa_rad_open": -0.018181818181818188,
+     "pathvqa_open": -0.05524861878453036
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 945,
+   "nboot": 10000
+  },
+  "head_vs_fusion": {
+   "judge": {
+    "d_selected": -0.005970149253731405,
+    "d_selected_ci": [
+     -0.016631130063965882,
+     0.004690831556503183
+    ],
+    "d_sel_eff": -0.0095367847411445,
+    "d_sel_eff_ci": [
+     -0.02588555858310626,
+     0.006811989100817484
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.008818342151675429,
+     "vqa_rad_open": -0.07936507936507942,
+     "pathvqa_open": 0.001290322580645209
+    },
+    "verdict": "TIE"
+   },
+   "em": {
+    "d_selected": -0.017484008528784678,
+    "d_selected_ci": [
+     -0.027718550106609785,
+     -0.006823027718550145
+    ],
+    "d_sel_eff": -0.029140014214641075,
+    "d_sel_eff_ci": [
+     -0.04619758351101644,
+     -0.012082444918265822
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": -0.015706806282722474,
+     "vqa_rad_open": -0.027272727272727337,
+     "pathvqa_open": -0.04005524861878451
+    },
+    "verdict": "LOSS"
+   },
+   "picks_changed": 533,
+   "nboot": 10000
+  },
+  "fusion_vs_incumbent": {
+   "judge": {
+    "d_selected": 0.02217484008528786,
+    "d_selected_ci": [
+     0.012793176972281495,
+     0.03155650319829428
+    ],
+    "d_sel_eff": 0.03542234332425076,
+    "d_sel_eff_ci": [
+     0.02043596730245234,
+     0.05040871934604907
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.03527336860670194,
+     "vqa_rad_open": 0.04761904761904767,
+     "pathvqa_open": 0.03354838709677421
+    },
+    "verdict": "WIN"
+   },
+   "em": {
+    "d_selected": 0.0029850746268657025,
+    "d_selected_ci": [
+     -0.00682302771855009,
+     0.01279317697228144
+    ],
+    "d_sel_eff": 0.00497512437810943,
+    "d_sel_eff_ci": [
+     -0.012082444918265822,
+     0.022032693674484682
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.029668411867364797,
+     "vqa_rad_open": 0.00909090909090915,
+     "pathvqa_open": -0.015193370165745845
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 527,
+   "nboot": 10000
+  },
+  "head_vs_self_consistency": {
+   "judge": {
+    "d_selected": 0.05458422174840083,
+    "d_selected_ci": [
+     0.03880597014925374,
+     0.06994669509594874
+    ],
+    "d_sel_eff": 0.08719346049046317,
+    "d_sel_eff_ci": [
+     0.06335149863760214,
+     0.11171662125340598
+    ],
+    "guardrail_clean_sel_eff": true,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.03880070546737213,
+     "vqa_rad_open": 0.0,
+     "pathvqa_open": 0.13677419354838716
+    },
+    "verdict": "WIN"
+   },
+   "em": {
+    "d_selected": 0.008955223880596996,
+    "d_selected_ci": [
+     -0.00639658848614072,
+     0.024733475479744138
+    ],
+    "d_sel_eff": 0.014925373134328401,
+    "d_sel_eff_ci": [
+     -0.011371712864250094,
+     0.0412224591329069
+    ],
+    "guardrail_clean_sel_eff": false,
+    "per_ds_d_sel_eff": {
+     "slake_open": 0.0017452006980802626,
+     "vqa_rad_open": -0.054545454545454564,
+     "pathvqa_open": 0.035911602209944826
+    },
+    "verdict": "TIE"
+   },
+   "picks_changed": 1098,
+   "nboot": 10000
+  }
+ },
+ "cost": {
+  "convention": "as-charged PRIMARY (1 FLOP-eq = 1 full batch-1 Lingshu-7B forward on the cap320 open-text geometry); the honest re-cost charges the scoring passes prefill-only.",
+  "always_7b_baseline_flopeq": 1.0,
+  "distinct_normalised_answers_per_question": 3.8136460554371,
+  "distinct_surface_answers_per_question": 3.8230277185501067,
+  "prefill_only_pass_flopeq": 1.0003764632055836,
+  "note_prefill_only": "vision 0.253643 + lm_prefill 0.734812 * (326.68 + 5.3)/326.68",
+  "arms_fixed_bestof8": {
+   "always_7b": {
+    "gen_passes": 1.0,
+    "scoring_passes": 0.0,
+    "total_passes": 1.0,
+    "flopeq_as_charged": 1.0,
+    "flopeq_honest": 1.0,
+    "x_always_7b_as_charged": 1.0
+   },
+   "bo8_no_selector": {
+    "gen_passes": 8.0,
+    "scoring_passes": 0.0,
+    "total_passes": 8.0,
+    "flopeq_as_charged": 8.0,
+    "flopeq_honest": 8.0,
+    "x_always_7b_as_charged": 8.0
+   },
+   "bo8_incumbent": {
+    "gen_passes": 8.0,
+    "scoring_passes": 3.8230277185501067,
+    "total_passes": 11.823027718550106,
+    "flopeq_as_charged": 11.823027718550106,
+    "flopeq_honest": 11.824466947820067,
+    "x_always_7b_as_charged": 11.823027718550106
+   },
+   "bo8_head_today": {
+    "gen_passes": 8.0,
+    "scoring_passes": 3.8136460554371,
+    "total_passes": 11.8136460554371,
+    "flopeq_as_charged": 11.8136460554371,
+    "flopeq_honest": 11.815081752856091,
+    "x_always_7b_as_charged": 11.8136460554371
+   },
+   "bo8_head_FREE": {
+    "gen_passes": 8.0,
+    "scoring_passes": 0.0,
+    "total_passes": 8.0,
+    "flopeq_as_charged": 8.0,
+    "flopeq_honest": 8.0,
+    "x_always_7b_as_charged": 8.0
+   },
+   "bo8_fusion_today": {
+    "gen_passes": 8.0,
+    "scoring_passes": 7.636673773987207,
+    "total_passes": 15.636673773987207,
+    "flopeq_as_charged": 15.636673773987207,
+    "flopeq_honest": 15.639548700676158,
+    "x_always_7b_as_charged": 15.636673773987207
+   },
+   "bo8_fusion_head_free": {
+    "gen_passes": 8.0,
+    "scoring_passes": 3.8230277185501067,
+    "total_passes": 11.823027718550106,
+    "flopeq_as_charged": 11.823027718550106,
+    "flopeq_honest": 11.824466947820067,
+    "x_always_7b_as_charged": 11.823027718550106
+   }
+  }
+ }
+}

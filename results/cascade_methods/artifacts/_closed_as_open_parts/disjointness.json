@@ -1,0 +1,64 @@
+{
+ "title": "BUILD 3 image disjointness: frozen verifier training images vs the three NEW closed eval cells",
+ "date": "2026-08-16",
+ "currency": "md5 of DECODED RGB pixels with a 'WxH|' prefix -- pixhash() verbatim from src/training_methods/build_disjoint_verifier_split.py:66",
+ "adapter": "ckpts/train/lora_verifier_disjoint (frozen)",
+ "train_pool": {
+  "slake_open_train": 449,
+  "vqa_rad_open_train": 155,
+  "pathvqa_open_train": 2577,
+  "kvasir_open": 1048,
+  "radimagenet_open": 1000
+ },
+ "train_pool_distinct_images": 5229,
+ "per_cell": {
+  "SLAKE_closed": {
+   "n_items": 836,
+   "n_distinct_images": 180,
+   "image_pixel_md5_intersection_with_training_pool": 70,
+   "n_eval_items_on_a_shared_image": 298,
+   "frac_items_on_a_shared_image": 0.35646,
+   "n_items_image_disjoint": 538,
+   "per_source": {
+    "slake_open_train": 70,
+    "vqa_rad_open_train": 0,
+    "pathvqa_open_train": 0,
+    "kvasir_open": 0,
+    "radimagenet_open": 0
+   }
+  },
+  "VQA_RAD_closed": {
+   "n_items": 251,
+   "n_distinct_images": 135,
+   "image_pixel_md5_intersection_with_training_pool": 64,
+   "n_eval_items_on_a_shared_image": 121,
+   "frac_items_on_a_shared_image": 0.48207,
+   "n_items_image_disjoint": 130,
+   "per_source": {
+    "slake_open_train": 0,
+    "vqa_rad_open_train": 64,
+    "pathvqa_open_train": 0,
+    "kvasir_open": 0,
+    "radimagenet_open": 0
+   }
+  },
+  "PATH_VQA_closed": {
+   "n_items": 3362,
+   "n_distinct_images": 839,
+   "image_pixel_md5_intersection_with_training_pool": 0,
+   "n_eval_items_on_a_shared_image": 0,
+   "frac_items_on_a_shared_image": 0.0,
+   "n_items_image_disjoint": 3362,
+   "per_source": {
+    "slake_open_train": 0,
+    "vqa_rad_open_train": 0,
+    "pathvqa_open_train": 0,
+    "kvasir_open": 0,
+    "radimagenet_open": 0
+   }
+  }
+ },
+ "clean": false,
+ "note": "the L1 pool is a SUPERSET of the examples the verifier actually sampled (10,364 composition-matched draws), so a zero here is conservative. Where the intersection is NON-zero the analysis reports BOTH the full cell and the IMAGE-DISJOINT subset, and the image-disjoint subset is the honest number.",
+ "why_the_published_split_did_not_catch_this": "artifacts/verifier_disjoint_split.json proved disjointness against the three OPEN eval sets only; SLAKE_closed / VQA_RAD_closed were not eval surface then. VQA-RAD and SLAKE split train/test by QUESTION, not by image, so the same picture carries both an open training question and a closed test question."
+}

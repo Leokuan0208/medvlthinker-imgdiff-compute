@@ -1,0 +1,22 @@
+{
+ "model": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9",
+ "cap": "cap320",
+ "max_pixels": 250880,
+ "per_cell": 16,
+ "max_tokens": 64,
+ "temp": 0.7,
+ "vllm_version": "0.9.0.1",
+ "vllm_multiprocessing": "0",
+ "cuda_visible": "0",
+ "design": "every (phase,apc,N,rep) cell gets a DISJOINT slice of items and the prefix cache is reset before it, so no cell can be served from another cell's cache",
+ "phases": {
+  "count": "enforce_eager=True -- hooks see every forward; wall clock NOT representative",
+  "time": "CUDA graphs on (deployed config) -- wall clock representative; hooks miss graph-captured decode"
+ },
+ "model_path_in_engine": "model_executor.driver_worker.model_runner.model",
+ "hooks": {
+  "lm": "Qwen2DecoderLayer",
+  "vit": "Qwen2_5_VisionTransformer",
+  "lm_path": "language_model.model.layers"
+ }
+}

@@ -1,0 +1,345 @@
+{
+ "title": "QUESTION 2 -- does vLLM SamplingParams(n=N) share the generation prefill?",
+ "date": "2026-08-16",
+ "meta": {
+  "model": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9",
+  "cap": "cap320",
+  "max_pixels": 250880,
+  "per_cell": 16,
+  "max_tokens": 64,
+  "temp": 0.7,
+  "vllm_version": "0.9.0.1",
+  "vllm_multiprocessing": "0",
+  "cuda_visible": "1",
+  "design": "every (phase,apc,N,rep) cell gets a DISJOINT slice of items and the prefix cache is reset before it, so no cell can be served from another cell's cache",
+  "phases": {
+   "count": "enforce_eager=True -- hooks see every forward; wall clock NOT representative",
+   "time": "CUDA graphs on (deployed config) -- wall clock representative; hooks miss graph-captured decode"
+  },
+  "model_path_in_engine": "model_executor.driver_worker.model_runner.model",
+  "hooks": {
+   "lm": "Qwen2DecoderLayer",
+   "vit": "Qwen2_5_VisionTransformer",
+   "lm_path": "language_model.model.layers"
+  }
+ },
+ "per_cell_items": 16,
+ "instruments": {
+  "I1": "direct token accounting via forward pre-hooks on the LM's first decoder layer and the vision tower (phase 'count', enforce_eager=True)",
+  "I2": "RequestOutput.num_cached_tokens",
+  "I3": "wall clock vs N with CUDA graphs on (phase 'time')"
+ },
+ "design": "every (phase,apc,N,rep) cell gets a DISJOINT slice of items and the prefix cache is reset before it, so no cell can be served from another cell's cache",
+ "cells": {
+  "count|default|N1": {
+   "phase": "count",
+   "apc": "default",
+   "N": 1,
+   "n_reps": 3,
+   "effective_enable_prefix_caching": true,
+   "lm_prefill_sharing_ratio": {
+    "mean": 0.9494748588558575,
+    "sd": 0.0032948839818180407,
+    "n": 3,
+    "values": [
+     0.9456706281833617,
+     0.9514231499051233,
+     0.9513307984790874
+    ]
+   },
+   "vision_sharing_ratio": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "n": 3,
+    "values": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "flopeq_per_question": {
+    "mean": 0.9605979428496959,
+    "sd": 0.06381701035081287,
+    "n": 3,
+    "values": [
+     0.8869090706548126,
+     0.9977132960938488,
+     0.997171461800426
+    ]
+   },
+   "wall_s": {
+    "mean": 2.5786777337392173,
+    "sd": 0.15909774994460593,
+    "n": 3,
+    "values": [
+     2.7596302032470703,
+     2.460737943649292,
+     2.515665054321289
+    ]
+   },
+   "gen_tok_per_item": {
+    "mean": 5.479166666666667,
+    "sd": 0.7764435480660093,
+    "n": 3,
+    "values": [
+     6.375,
+     5.0625,
+     5.0
+    ]
+   },
+   "num_cached_tokens_total": {
+    "mean": 240.0,
+    "sd": 0.0,
+    "n": 3,
+    "values": [
+     240.0,
+     240.0,
+     240.0
+    ]
+   }
+  },
+  "count|default|N2": {
+   "phase": "count",
+   "apc": "default",
+   "N": 2,
+   "n_reps": 3,
+   "effective_enable_prefix_caching": true,
+   "lm_prefill_sharing_ratio": {
+    "mean": 0.9802419790602491,
+    "sd": 0.0048559981842589495,
+    "n": 3,
+    "values": [
+     0.9789106913625527,
+     0.9856247696277184,
+     0.9761904761904762
+    ]
+   },
+   "vision_sharing_ratio": {
+    "mean": 1.5218048437861313,
+    "sd": 0.09653909454790748,
+    "n": 3,
+    "values": [
+     1.4996850724333404,
+     1.6274841437632135,
+     1.43824531516184
+    ]
+   },
+   "flopeq_per_question": {
+    "mean": 1.2104183267339292,
+    "sd": 0.035737961408350505,
+    "n": 3,
+    "values": [
+     1.2130529510159966,
+     1.2447660668400746,
+     1.1734359623457167
+    ]
+   },
+   "wall_s": {
+    "mean": 2.4751137097676597,
+    "sd": 0.08047444526626038,
+    "n": 3,
+    "values": [
+     2.3990442752838135,
+     2.5593676567077637,
+     2.4669291973114014
+    ]
+   },
+   "gen_tok_per_item": {
+    "mean": 9.708333333333334,
+    "sd": 0.7403898184965358,
+    "n": 3,
+    "values": [
+     10.5625,
+     9.3125,
+     9.25
+    ]
+   },
+   "num_cached_tokens_total": {
+    "mean": 4416.0,
+    "sd": 676.7451514418112,
+    "n": 3,
+    "values": [
+     4976.0,
+     3664.0,
+     4608.0
+    ]
+   }
+  },
+  "count|default|N4": {
+   "phase": "count",
+   "apc": "default",
+   "N": 4,
+   "n_reps": 3,
+   "effective_enable_prefix_caching": true,
+   "lm_prefill_sharing_ratio": {
+    "mean": 1.0327464133123188,
+    "sd": 0.033256887917915125,
+    "n": 3,
+    "values": [
+     1.0447644998053718,
+     0.9951510630361805,
+     1.0583236770954036
+    ]
+   },
+   "vision_sharing_ratio": {
+    "mean": 2.8330839130127843,
+    "sd": 0.2658005724307516,
+    "n": 3,
+    "values": [
+     2.808385933273219,
+     3.1103714837878464,
+     2.580494321977288
+    ]
+   },
+   "flopeq_per_question": {
+    "mean": 1.5989629908670988,
+    "sd": 0.08503035532570653,
+    "n": 3,
+    "values": [
+     1.5717188171130911,
+     1.6942764333098046,
+     1.5308937221784
+    ]
+   },
+   "wall_s": {
+    "mean": 3.5162978172302246,
+    "sd": 0.34351718412874727,
+    "n": 3,
+    "values": [
+     3.8379573822021484,
+     3.556478977203369,
+     3.1544570922851562
+    ]
+   },
+   "gen_tok_per_item": {
+    "mean": 21.770833333333332,
+    "sd": 0.5807233276985981,
+    "n": 3,
+    "values": [
+     22.25,
+     21.9375,
+     21.125
+    ]
+   },
+   "num_cached_tokens_total": {
+    "mean": 4640.0,
+    "sd": 328.2925524589311,
+    "n": 3,
+    "values": [
+     4960.0,
+     4304.0,
+     4656.0
+    ]
+   }
+  },
+  "count|default|N8": {
+   "phase": "count",
+   "apc": "default",
+   "N": 8,
+   "n_reps": 3,
+   "effective_enable_prefix_caching": true,
+   "lm_prefill_sharing_ratio": {
+    "mean": 1.1619343784749265,
+    "sd": 0.024940686011040214,
+    "n": 3,
+    "values": [
+     1.1424118449249951,
+     1.190031152647975,
+     1.1533601378518092
+    ]
+   },
+   "vision_sharing_ratio": {
+    "mean": 4.739159627141611,
+    "sd": 0.05003139769925426,
+    "n": 3,
+    "values": [
+     4.783698351772409,
+     4.748755092802173,
+     4.685025436850254
+    ]
+   },
+   "flopeq_per_question": {
+    "mean": 2.276587357306768,
+    "sd": 0.006428632192675867,
+    "n": 3,
+    "values": [
+     2.269686229118536,
+     2.2776697714550607,
+     2.2824060713467067
+    ]
+   },
+   "wall_s": {
+    "mean": 4.78826109568278,
+    "sd": 0.6573935976079823,
+    "n": 3,
+    "values": [
+     5.461819410324097,
+     4.754641532897949,
+     4.148322343826294
+    ]
+   },
+   "gen_tok_per_item": {
+    "mean": 44.9375,
+    "sd": 2.868879354382125,
+    "n": 3,
+    "values": [
+     48.125,
+     42.5625,
+     44.125
+    ]
+   },
+   "num_cached_tokens_total": {
+    "mean": 4949.333333333333,
+    "sd": 122.20201853215573,
+    "n": 3,
+    "values": [
+     4976.0,
+     4816.0,
+     5056.0
+    ]
+   }
+  }
+ },
+ "verdict": {
+  "count|default": {
+   "N1": {
+    "flopeq_per_question": 0.9605979428496959,
+    "flopeq_rel_to_N1": 1.0,
+    "lm_prefill_sharing_ratio": 0.9494748588558575,
+    "vision_sharing_ratio": 1.0,
+    "wall_rel_to_N1": 1.0
+   },
+   "N2": {
+    "flopeq_per_question": 1.2104183267339292,
+    "flopeq_rel_to_N1": 1.2600675815972704,
+    "lm_prefill_sharing_ratio": 0.9802419790602491,
+    "vision_sharing_ratio": 1.5218048437861313,
+    "wall_rel_to_N1": 0.9598383223244479
+   },
+   "N4": {
+    "flopeq_per_question": 1.5989629908670988,
+    "flopeq_rel_to_N1": 1.6645496721798492,
+    "lm_prefill_sharing_ratio": 1.0327464133123188,
+    "vision_sharing_ratio": 2.8330839130127843,
+    "wall_rel_to_N1": 1.363604986859451
+   },
+   "N8": {
+    "flopeq_per_question": 2.276587357306768,
+    "flopeq_rel_to_N1": 2.369969011752281,
+    "lm_prefill_sharing_ratio": 1.1619343784749265,
+    "vision_sharing_ratio": 4.739159627141611,
+    "wall_rel_to_N1": 1.8568668093083318
+   },
+   "_predictions": {
+    "as_charged_N8": 8.0,
+    "shared_prefill_G8": 1.080808,
+    "note": "as-charged = the project's cost model (1.0 FLOP-eq per sample); shared_prefill = cost_floor convention B, G(N)=prefill_share+N*decode_share"
+   }
+  }
+ },
+ "cost_constants_used": {
+  "unit_tflop": 5.69265667648249,
+  "prefill_share_7b": 0.988456,
+  "decode_share_7b": 0.011544
+ }
+}

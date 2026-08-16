@@ -1,0 +1,30 @@
+{
+ "_what": "PRE-REGISTRATION of the decision rule for KNOB 3 (the verifier's scoring resolution). Written while NO arm was complete and NO endpoint had been computed -- the state of the score files at the moment of writing is recorded below as evidence.",
+ "written_utc": "2026-08-16T08:38:30.900658Z",
+ "score_file_state_at_writing": {
+  "scores_px12845056.jsonl": 2000,
+  "scores_px250880.jsonl": 4000
+ },
+ "n_triples_per_complete_arm": 8965,
+ "design": {
+  "frozen": "the generator, the candidate pool (2345 items x 8 slots, cap320), the judge labels, the item order, the adapter (ckpts/train/lora_verifier_disjoint), min_pixels 3136, batch 1, bf16, flash_attention_2, TF32 OFF",
+  "swept": "the verifier's max_pixels over {62720, 125440, 250880, 501760, 1003520, 12845056}",
+  "control": "the IN-SESSION 1,003,520 arm (the DEPLOYED and TRAINED rung). NOT the stored dumps: a batch-1 re-score of stored pairs at 1,003,520 already deviates by max 6.03e-2 / mean 5.86e-3 per candidate (null_test_rescore.json).",
+  "no_regeneration": "nothing is generated, so the project's +-0.008 open-text regeneration caveat does not apply to any delta in this round."
+ },
+ "primary_endpoint": "judge-currency selection efficiency (genframe_data.sel_eff) at max_pixels 250,880 (= the generator's resolution) MINUS the in-session 1,003,520 control, paired item bootstrap nboot=10000 over the 1,468 recoverable items.",
+ "co_primary_endpoint": "the SAME quantity in the normalised-exact-match currency, on identical picks.",
+ "decision_rule": {
+  "PRIZE_no_loss": "declare 'the verifier can score at the generator's resolution for free' iff, in BOTH currencies, the 95% CI of d_sel_eff contains 0 AND the point estimate is >= -0.01. Rationale for -0.01: d_selected = oracle@8 x d_sel_eff = 0.626 x -0.01 = -0.0063 on the open pool, which is under a third of the macro CI half-width (+-0.0029) once the open half carries 3/8 of the weight and ~60% of open items keep the 7B pick.",
+  "ASYMMETRY_finding": "declare 'the scorer needs to see more than the proposer' iff cap320 LOSES significantly (95% CI of d_sel_eff entirely below 0) in BOTH currencies.",
+  "BEST_RUNG_claim": "any claim that some rung BEATS the deployed one must clear (a) a paired bootstrap CI excluding 0 in both currencies, (b) the nested-CV score of the SELECTION PROCEDURE, not the best arm's in-sample score, and (c) the permutation null (labels shuffled within each pool, 2000 draws) at p<0.05.",
+  "MACRO": "decided ONLY by the end-to-end re-run (cascade_selector_rerun via verifier_hparams_macro.py), never inferred from sel_eff, because escalation is driven by the selector's own max(score) and therefore moves when the resolution moves.",
+  "GUARDRAIL": "per-set sel_eff deltas reported for all three sets; any negative is flagged. vqa_rad_open has n=200 (n_recoverable ~126), so a flag there is reported as within seed noise unless its own CI excludes 0."
+ },
+ "mismatch_confound": {
+  "statement": "the adapter was TRAINED at max_pixels 1,003,520 (ckpts/train/lora_verifier_disjoint/train_config.json). Every other rung is a train/inference mismatch as well as a resolution change. All 15 verifier adapters in this repo were trained at 1,003,520, so no second training resolution exists on disk.",
+  "control": "the BASE Lingshu-7B with NO adapter, run as a zero-shot verifier on the identical prompt/pool at {250880, 1003520, 12845056}. It was never trained at any resolution for this task, so its curve is a pure resolution effect. Same shape as the LoRA's => resolution effect; LoRA peaks at 1,003,520 while base does not => mismatch effect.",
+  "limit": "this separates the two effects only as far as one adapter allows. Training a verifier at a second resolution (>=10 seeds x 108 min) is out of budget and is named as not-measured."
+ },
+ "not_selecting_anything_in_the_headline": "the cap320-vs-1,003,520 comparison is named by the task and is pre-specified here; it involves no selection. The permutation null exists to price the SEPARATE claim 'and this rung is the best of the six'."
+}

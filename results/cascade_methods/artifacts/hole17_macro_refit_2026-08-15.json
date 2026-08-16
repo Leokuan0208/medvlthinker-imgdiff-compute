@@ -1,0 +1,1644 @@
+{
+ "title": "HOLE 17 -- refitting every escalation threshold against the MACRO objective. CPU only, no new inference, no GPU.",
+ "date": "2026-08-15",
+ "reproduce": [
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_nulltest.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_data.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_engine.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_analyse.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_null.py --mode nested --lo 0 --n 39 --tag ''  (then --lo 40 --n 80 --tag _w1, --lo 81 --n 120 --tag _w2, --lo 121 --n 160 --tag _w3, --lo 161 --n 200 --tag _w4 in parallel; disjoint seed ranges, merged by glob)",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_null.py --mode diagnostic --n 500",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_seeds.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_currency.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_dual.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_amax_consistency.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_extras.py",
+  "OMP_NUM_THREADS=1 PYTHONHASHSEED=0 python3 src/cascade_methods/hole17_finalize.py"
+ ],
+ "numerics_pins": {
+  "OMP_NUM_THREADS": "1",
+  "OPENBLAS_NUM_THREADS": "1",
+  "MKL_NUM_THREADS": "1",
+  "PYTHONHASHSEED": "0",
+  "device": "CPU only, numpy 1.26.4 / sklearn 1.7.1, no torch, no TF32 path",
+  "bootstrap_seed": 20260815,
+  "nboot": 10000,
+  "folds": "outer i mod 5 (the repo's own modulo convention); inner 4-fold inside each outer-train split"
+ },
+ "convention": "MACRO, equal weight per reporting cell, 8 cells at 1/8, Variant B (MMMU excluded), CLEAN disjoint verifier (ckpts/train/lora_verifier_disjoint). Cost is as-charged FLOP-eq, macro-weighted; never paired with a sample-weighted accuracy.",
+ "NULL_TEST_1": {
+  "what": "reproduce the published CLEAN arm end to end before touching anything",
+  "source": "results/cascade_methods/artifacts/_selector_rerun_parts/{summary,vec}_disjoint.*",
+  "per_sample_vectors_compared": 56,
+  "per_sample_vectors_mismatching": 0,
+  "max_abs_deviation": 4.832535885168632e-05,
+  "worst_field": "acc|SLAKE_closed|always_32b_direct",
+  "note": "the 4.8e-05 residual is rounding in the stored 4-decimal summary; the per-sample vectors are byte-identical.",
+  "PASSED": true
+ },
+ "NULL_TEST_2": {
+  "what": "the re-implemented threshold engine must reproduce the published compute-lean per-sample vectors on all 8 cells",
+  "total_items": 42224,
+  "result": "0 item mismatches out of 42,224; max abs per-cell accuracy deviation 0.0; max escalation deviation 4.5e-05 (4-dp rounding in the stored summary)",
+  "PASSED": true
+ },
+ "NULL_TEST_3_frozen_identity": {
+  "what": "selected = oracle@8 x sel_eff, the project's single frozen metric definition",
+  "source": "src/training_methods/genframe_data.py, incumbent scores",
+  "n": 2345,
+  "n_recoverable": 1468,
+  "oracle": 0.626013,
+  "greedy": 0.449467,
+  "sel_eff": 0.775204,
+  "selected": 0.485287846482,
+  "oracle_times_sel_eff": 0.485287846482,
+  "abs_difference": 5.551e-17,
+  "additive_form_greedy_plus_sel_eff_times_gap": 0.586326,
+  "additive_form_over_predicts_by": 0.101038,
+  "PASSED": true
+ },
+ "THE_DEFECT_AS_STATED_AND_WHAT_THE_CODE_ACTUALLY_DOES": {
+  "hole_17_wording": "the escalation thresholds are cross-fit against a POOLED objective while the report is MACRO (cascade_selector_rerun_2026-08-05.json:6330; method_inventory_2026-08-11.json:194; retrospective 7.17)",
+  "what_the_code_does": [
+   "paper_baselines.cascade_persample:88 -- tau_k = IM.pick_tau_isocost(ok7[tr], ok32[tr], margin[tr], ok32[tr].mean()): min escalation subject to THAT CELL's own train accuracy reaching THAT CELL's own 32B train accuracy.",
+   "paper_baselines.pandora_persample:120 -- lam_k = min TRAIN FLOPs subject to THAT CELL's own train accuracy reaching THAT CELL's own fixed-bo8 target - 3e-3.",
+   "beat32b_more.f8_veto and method_final_mmmu_corrected.f10_persample -- also per cell.",
+   "No threshold in the shipped method sees another cell's data, and no pooled aggregate appears in any fitting objective."
+  ],
+  "correction": "Hole 17 as written is MIS-STATED. The thresholds are not fit against a pooled objective; they are fit against PER-CELL accuracy floors, which is the macro-compatible form. What was never checked is whether the per-cell floors leave the cells at a COMMON marginal exchange rate -- and they do not (below).",
+  "what_a_genuinely_pooled_fit_WOULD_have_cost": "measured, not asserted: see arms.nested_pooled_iso_acc -- macro accuracy 0.618422 (-0.0259 vs the shipped rule) at 0.669x direct."
+ },
+ "THE_ALGEBRA": {
+  "claim": "With per-cell independent thresholds the refit objective is SEPARABLE: argmax_{theta_k} w_k[acc_k(theta_k) - mu cost_k(theta_k)] does not depend on w_k. So at a fixed exchange rate mu the MACRO-optimal and POOLED-optimal threshold vectors are IDENTICAL, and the reporting weight can only change WHICH mu an aggregate anchor selects -- it re-indexes one frontier, it does not move it.",
+  "consequence": "A 'macro-objective refit' of this method is therefore not a different fit; it is a different choice of one scalar. The whole of hole 17 lives in that scalar.",
+  "measured_frontier": "frontier (241 mu values) in _hole17_main.json"
+ },
+ "A_current_shipped_thresholds": {
+  "arm": "method_compute_lean (the arm the three named knobs live in)",
+  "macro_acc": 0.6442771347653277,
+  "macro_flops": 6.673602266677555,
+  "macro_x_always_32b_direct": 1.460306841723754,
+  "pooled_acc": 0.5713338385752179,
+  "pooled_flops": 2.2554540071996967,
+  "per_cell_escalation": {
+   "PMC_VQA": 0.08453484893807957,
+   "SLAKE_closed": 0.20454545454545456,
+   "VQA_RAD_closed": 0.5697211155378487,
+   "PATH_VQA_closed": 0.45716835217132656,
+   "MedXpertQA-MM": 0.896,
+   "SLAKE_open": 0.43410852713178294,
+   "VQA_RAD_open": 0.54,
+   "PATH_VQA_open": 0.16
+  },
+  "per_cell_acc": {
+   "PMC_VQA": 0.5507927011666168,
+   "SLAKE_closed": 0.8516746411483254,
+   "VQA_RAD_closed": 0.8326693227091634,
+   "PATH_VQA_closed": 0.8881618084473528,
+   "MedXpertQA-MM": 0.3005,
+   "SLAKE_open": 0.8077519379844961,
+   "VQA_RAD_open": 0.54,
+   "PATH_VQA_open": 0.38266666666666665
+  },
+  "per_cell_flops": {
+   "PMC_VQA": 1.3863242596470235,
+   "SLAKE_closed": 1.9347727272727273,
+   "VQA_RAD_closed": 3.6036254980079683,
+   "PATH_VQA_closed": 3.0892593694229626,
+   "MedXpertQA-MM": 5.09472,
+   "SLAKE_open": 13.078449612403102,
+   "VQA_RAD_open": 15.727799999999997,
+   "PATH_VQA_open": 9.473866666666666
+  },
+  "vs_always_32b_direct_macro": {
+   "delta": -0.012395357753475715,
+   "ci95": [
+    -0.018815231071230294,
+    -0.006066667367989698
+   ],
+   "sig": true,
+   "verdict": "LOSS"
+  },
+  "reproduces_published": "macro 0.6443, 1.46x direct, pooled 0.49x, vs-direct -0.0124 [-0.0191,-0.0062] -- all matched"
+ },
+ "B_macro_refit": {
+  "headline_arm": "nested_macro_iso_cost (max macro accuracy at no more than the shipped macro compute), mu chosen by NESTED CV",
+  "macro_acc": 0.6451933414169745,
+  "macro_flops": 6.574114263870345,
+  "macro_x_always_32b_direct": 1.4385370380460272,
+  "delta_vs_shipped": {
+   "delta": 0.0009162066516468434,
+   "ci95": [
+    -0.0020552754631776187,
+    0.0036699196408149343
+   ],
+   "sig": false,
+   "verdict": "TIE",
+   "d_macro_cost": -0.09948800280721048
+  },
+  "vs_always_32b_direct": {
+   "delta": -0.011479151101828872,
+   "ci95": [
+    -0.018159151594738836,
+    -0.005174722567645524
+   ],
+   "sig": true,
+   "verdict": "LOSS"
+  },
+  "per_cell_escalation": {
+   "PMC_VQA": 0.3075979658988932,
+   "SLAKE_closed": 0.3624401913875598,
+   "VQA_RAD_closed": 0.5737051792828686,
+   "PATH_VQA_closed": 0.4821534800713861,
+   "MedXpertQA-MM": 0.939,
+   "SLAKE_open": 0.4372093023255814,
+   "VQA_RAD_open": 0.54,
+   "PATH_VQA_open": 0.27
+  },
+  "per_cell_acc": {
+   "PMC_VQA": 0.5617110379898295,
+   "SLAKE_closed": 0.861244019138756,
+   "VQA_RAD_closed": 0.8326693227091634,
+   "PATH_VQA_closed": 0.8890541344437835,
+   "MedXpertQA-MM": 0.303,
+   "SLAKE_open": 0.8062015503875969,
+   "VQA_RAD_open": 0.525,
+   "PATH_VQA_open": 0.38266666666666665
+  },
+  "per_cell_flops": {
+   "PMC_VQA": 2.4057227041579425,
+   "SLAKE_closed": 2.656351674641148,
+   "VQA_RAD_closed": 3.6218326693227088,
+   "PATH_VQA_closed": 3.203441403926235,
+   "MedXpertQA-MM": 5.291229999999999,
+   "SLAKE_open": 10.754635658914728,
+   "VQA_RAD_open": 14.197799999999997,
+   "PATH_VQA_open": 10.4619
+  },
+  "mu_per_outer_fold": [
+   0.004359382504599239,
+   0.0056276254634897915,
+   0.002897241132709139,
+   0.0017385381457858688,
+   0.002132575381529499
+  ],
+  "all_anchors": {
+   "macro_iso_acc": {
+    "nested": {
+     "macro_acc": 0.6390346428777979,
+     "macro_cost": 6.071648817074114,
+     "macro_x_direct": 1.3285883625982742,
+     "pooled_acc": 0.5800729442970822,
+     "pooled_cost": 3.023491852974612,
+     "pooled_x_direct": 0.6615955914605278
+    },
+    "nested_delta": {
+     "delta": -0.005242491887529781,
+     "ci95": [
+      -0.010411544837308676,
+      -0.00037391239470355305
+     ],
+     "sig": true,
+     "verdict": "LOSS",
+     "d_macro_cost": -0.6019534496034415
+    },
+    "eval_visible_diagnostic": {
+     "macro_acc": 0.6451821239476356,
+     "macro_cost": 6.460987836639697,
+     "macro_x_direct": 1.413782896420065,
+     "pooled_acc": 0.5801913603637742,
+     "pooled_cost": 2.9883085449033726,
+     "pooled_x_direct": 0.6538968369591625
+    },
+    "eval_visible_delta": {
+     "delta": 0.0009049891823079345,
+     "ci95": [
+      -0.002311468384011995,
+      0.0038555478383783433
+     ],
+     "sig": false,
+     "verdict": "TIE",
+     "d_macro_cost": -0.21261443003785807
+    }
+   },
+   "macro_iso_cost": {
+    "nested": {
+     "macro_acc": 0.6451933414169745,
+     "macro_cost": 6.574114263870345,
+     "macro_x_direct": 1.4385370380460272,
+     "pooled_acc": 0.5802624100037893,
+     "pooled_cost": 3.0876913603637743,
+     "pooled_x_direct": 0.6756436237119856
+    },
+    "nested_delta": {
+     "delta": 0.0009162066516468434,
+     "ci95": [
+      -0.0020552754631776187,
+      0.0036699196408149343
+     ],
+     "sig": false,
+     "verdict": "TIE",
+     "d_macro_cost": -0.09948800280721048
+    },
+    "eval_visible_diagnostic": {
+     "macro_acc": 0.6457237906143023,
+     "macro_cost": 6.6456203366396975,
+     "macro_x_direct": 1.4541838811027783,
+     "pooled_acc": 0.5801913603637742,
+     "pooled_cost": 3.019229111405836,
+     "pooled_x_direct": 0.6606628252529181
+    },
+    "eval_visible_delta": {
+     "delta": 0.001446655848974604,
+     "ci95": [
+      -0.0014714965860772062,
+      0.004149657302393614
+     ],
+     "sig": false,
+     "verdict": "TIE",
+     "d_macro_cost": -0.02798193003785787
+    }
+   },
+   "pooled_iso_acc": {
+    "nested": {
+     "macro_acc": 0.6184216306888419,
+     "macro_cost": 3.0583751715998853,
+     "macro_x_direct": 0.6692287027570865,
+     "pooled_acc": 0.5745784388025768,
+     "pooled_cost": 2.2559127510420613,
+     "pooled_x_direct": 0.49363517528272677
+    },
+    "nested_delta": {
+     "delta": -0.025855504076485673,
+     "ci95": [
+      -0.03449336091964323,
+      -0.01749291641124865
+     ],
+     "sig": true,
+     "verdict": "LOSS",
+     "d_macro_cost": -3.61522709507767
+    },
+    "eval_visible_diagnostic": {
+     "macro_acc": 0.6173919474476656,
+     "macro_cost": 2.823040572050973,
+     "macro_x_direct": 0.61773316675076,
+     "pooled_acc": 0.571831186055324,
+     "pooled_cost": 2.069082512315271,
+     "pooled_x_direct": 0.45275328497051875
+    },
+    "eval_visible_delta": {
+     "delta": -0.02688518731766211,
+     "ci95": [
+      -0.036114542032779785,
+      -0.01774600246378217
+     ],
+     "sig": true,
+     "verdict": "LOSS",
+     "d_macro_cost": -3.8505616946265824
+    }
+   },
+   "pooled_iso_cost": {
+    "nested": {
+     "macro_acc": 0.620296630688842,
+     "macro_cost": 3.2196020142293675,
+     "macro_x_direct": 0.7045080993937346,
+     "pooled_acc": 0.5746494884425919,
+     "pooled_cost": 2.26237400530504,
+     "pooled_x_direct": 0.4950490164781268
+    },
+    "nested_delta": {
+     "delta": -0.02398050407648567,
+     "ci95": [
+      -0.03231535070891232,
+      -0.01566287246257212
+     ],
+     "sig": true,
+     "verdict": "LOSS",
+     "d_macro_cost": -3.454000252448188
+    },
+    "eval_visible_diagnostic": {
+     "macro_acc": 0.6199414108264429,
+     "macro_cost": 3.1646643392636604,
+     "macro_x_direct": 0.6924867263158994,
+     "pooled_acc": 0.5723995831754453,
+     "pooled_cost": 2.1433184918529746,
+     "pooled_x_direct": 0.4689974818059025
+    },
+    "eval_visible_delta": {
+     "delta": -0.024335723938884717,
+     "ci95": [
+      -0.03272317558800766,
+      -0.015956174106698303
+     ],
+     "sig": true,
+     "verdict": "LOSS",
+     "d_macro_cost": -3.508937927413895
+    }
+   }
+  },
+  "fold_seed_stability": {
+   "macro_iso_acc": {
+    "n_seeds": 10,
+    "d_macro_acc_mean": -0.0014900937576355355,
+    "d_macro_acc_sd": 0.0025197824242607202,
+    "d_macro_acc_range": [
+     -0.006766305840851916,
+     0.0028374367309871307
+    ],
+    "d_macro_cost_mean": -0.4410653393521489
+   },
+   "macro_iso_cost": {
+    "n_seeds": 10,
+    "d_macro_acc_mean": 0.00013353592041586148,
+    "d_macro_acc_sd": 0.0023299710983505813,
+    "d_macro_acc_range": [
+     -0.003254816976197228,
+     0.003482147214126763
+    ],
+    "d_macro_cost_mean": -0.16148352526712761
+   },
+   "pooled_iso_acc": {
+    "n_seeds": 10,
+    "d_macro_acc_mean": -0.027786285282903278,
+    "d_macro_acc_sd": 0.004397949459958551,
+    "d_macro_acc_range": [
+     -0.03516785029797731,
+     -0.02224508701895367
+    ],
+    "d_macro_cost_mean": -3.6143707463375456
+   },
+   "pooled_iso_cost": {
+    "n_seeds": 10,
+    "d_macro_acc_mean": -0.02764608097709148,
+    "d_macro_acc_sd": 0.004355022572459458,
+    "d_macro_acc_range": [
+     -0.03516785029797731,
+     -0.022616889517466432
+    ],
+    "d_macro_cost_mean": -3.5785374026392063
+   }
+  },
+  "ceiling_of_the_threshold_family": {
+   "max_macro_acc_over_all_mu": 0.6470937582780419,
+   "at_flops": 7.874773472702345,
+   "note": "even at mu=0 (pure accuracy maximisation, no cost pressure) the compute-lean threshold family tops out below always-32B-direct's 0.6567."
+  }
+ },
+ "C_permutation_null": {
+  "nested": {
+   "mode": "nested",
+   "n_null_replicates": 200,
+   "what_is_permuted": "within each cell, the (ok7, ok32) outcome pair (MCQ) / the (sl, strong, greedy) label rows (open) are permuted against the gate signal. Every marginal -- a7, a32, the verifier score distribution, the pool composition -- is preserved; only the gate<->outcome association is destroyed.",
+   "per_anchor": {
+    "macro_iso_acc": {
+     "real_d_macro_acc": -0.005242491887529788,
+     "null_mean": -0.00011445012685049937,
+     "null_sd": 0.0008896734212960888,
+     "null_p50": -5.994380883250772e-05,
+     "null_p95": 0.0011258998842932687,
+     "null_min": -0.0038933641608543956,
+     "null_max": 0.002391930386110741,
+     "p_null_ge_real": 1.0,
+     "real_d_macro_cost": -0.6019534496034415,
+     "null_mean_d_macro_cost": -0.616586815214457
+    },
+    "macro_iso_cost": {
+     "real_d_macro_acc": 0.0009162066516468226,
+     "null_mean": 0.0007302218929704157,
+     "null_sd": 0.0009433772948722135,
+     "null_p50": 0.0005801545373045336,
+     "null_p95": 0.0023811458365540195,
+     "null_min": -0.0039452897218791305,
+     "null_max": 0.00410425639969747,
+     "p_null_ge_real": 0.375,
+     "real_d_macro_cost": -0.09948800280721048,
+     "null_mean_d_macro_cost": -0.3683980791071986
+    },
+    "pooled_iso_acc": {
+     "real_d_macro_acc": -0.025855504076485736,
+     "null_mean": 0.0007752778266312365,
+     "null_sd": 0.0008786494658024914,
+     "null_p50": 0.0005652519861621963,
+     "null_p95": 0.0023834453040651564,
+     "null_min": -0.0011144577637202113,
+     "null_max": 0.004193996154408852,
+     "p_null_ge_real": 1.0,
+     "real_d_macro_cost": -3.61522709507767,
+     "null_mean_d_macro_cost": -0.3743314803302909
+    },
+    "pooled_iso_cost": {
+     "real_d_macro_acc": -0.023980504076485665,
+     "null_mean": 0.0007451484650198253,
+     "null_sd": 0.0008954099462868742,
+     "null_p50": 0.0005491115495283583,
+     "null_p95": 0.0023575916056638594,
+     "null_min": -0.0011450247797890611,
+     "null_max": 0.004266760432656724,
+     "p_null_ge_real": 1.0,
+     "real_d_macro_cost": -3.454000252448188,
+     "null_mean_d_macro_cost": -0.3699266917172564
+    }
+   },
+   "best_of_4_anchors": {
+    "real": 0.0009162066516468226,
+    "null_mean": 0.0008639889730940959,
+    "null_p95": 0.002551534239140496,
+    "null_max": 0.004266760432656724,
+    "p_null_ge_real": 0.425
+   }
+  },
+  "diagnostic": {
+   "mode": "diagnostic",
+   "n_null_replicates": 500,
+   "what_is_permuted": "within each cell, the (ok7, ok32) outcome pair (MCQ) / the (sl, strong, greedy) label rows (open) are permuted against the gate signal. Every marginal -- a7, a32, the verifier score distribution, the pool composition -- is preserved; only the gate<->outcome association is destroyed.",
+   "per_anchor": {
+    "macro_iso_acc": {
+     "real_d_macro_acc": 0.0009049891823079692,
+     "null_mean": 0.0002020693390008823,
+     "null_sd": 0.0002819886388420063,
+     "null_p50": 0.00013085265550905056,
+     "null_p95": 0.0007391153267575831,
+     "null_min": -0.0009029212196979275,
+     "null_max": 0.0017253293917395274,
+     "p_null_ge_real": 0.028,
+     "real_d_macro_cost": -0.21261443003785807,
+     "null_mean_d_macro_cost": -0.5738388452786348
+    },
+    "macro_iso_cost": {
+     "real_d_macro_acc": 0.0014466558489746317,
+     "null_mean": 0.000716776888386674,
+     "null_sd": 0.0008161796064219481,
+     "null_p50": 0.000567018219726545,
+     "null_p95": 0.0021282970861302873,
+     "null_min": -0.0010195074479917299,
+     "null_max": 0.005063345937904584,
+     "p_null_ge_real": 0.184,
+     "real_d_macro_cost": -0.02798193003785787,
+     "null_mean_d_macro_cost": -0.4139781658138688
+    },
+    "pooled_iso_acc": {
+     "real_d_macro_acc": -0.026885187317662096,
+     "null_mean": 0.0007622263148611972,
+     "null_sd": 0.0007991071192122174,
+     "null_p50": 0.0005935126737089402,
+     "null_p95": 0.002227568493823388,
+     "null_min": -0.0014381814649866431,
+     "null_max": 0.005048389312119372,
+     "p_null_ge_real": 1.0,
+     "real_d_macro_cost": -3.8505616946265824,
+     "null_mean_d_macro_cost": -0.33189867986534793
+    },
+    "pooled_iso_cost": {
+     "real_d_macro_acc": -0.024335723938884724,
+     "null_mean": 0.0007038571544961683,
+     "null_sd": 0.0008266879479534152,
+     "null_p50": 0.0005649106912284929,
+     "null_p95": 0.0021917806497775082,
+     "null_min": -0.0012055436653396479,
+     "null_max": 0.005063345937904584,
+     "p_null_ge_real": 1.0,
+     "real_d_macro_cost": -3.508937927413895,
+     "null_mean_d_macro_cost": -0.3863954459227466
+    }
+   },
+   "best_of_4_anchors": {
+    "real": 0.0014466558489746317,
+    "null_mean": 0.0008526536366481719,
+    "null_p95": 0.0023195879482478974,
+    "null_max": 0.005063345937904584,
+    "p_null_ge_real": 0.206
+   }
+  }
+ },
+ "implied_exchange_rate_of_the_shipped_operating_point": {
+  "what": "for each cell, the interval of mu on which the SHIPPED threshold is the Lagrangian argmax of (acc - mu*cost) on that fold's TRAIN split.",
+  "how_to_read": "lagrangian_optimal_on_all_folds is FALSE on every cell: the shipped threshold is the min-escalation point at a per-cell accuracy FLOOR, which generally sits off the concave hull of its own train accuracy-cost curve, so no exchange rate selects it exactly. Where that happens the reported mu is the Lagrangian solution with the CLOSEST TRAIN COST, i.e. a nearest-neighbour read of the price the cell is implicitly paying for compute -- a diagnostic, not an exact recovery.",
+  "finding": "the 8 cells sit at implicit prices spanning roughly 0 (PathVQA-closed, MedXpert, VQA-RAD-open: no cost pressure at all -- pure accuracy maximisation) to 0.0141 (PMC-VQA). The intervals do not intersect. The deployed method therefore charges itself a different price for a FLOP in every cell. That -- not a pooled-vs-macro objective -- is the real content of hole 17, and equalising it is worth what section B measures.",
+  "per_cell": {
+   "PMC_VQA": {
+    "mu_lo": 0.014111264712506481,
+    "mu_hi": 0.014111264712506481,
+    "per_fold_lo": [
+     0.012741068634365967,
+     0.014111264712506481,
+     0.01210670090614183,
+     0.01485066770985821,
+     0.01485066770985821
+    ],
+    "per_fold_hi": [
+     0.012741068634365967,
+     0.014111264712506481,
+     0.01210670090614183,
+     0.01485066770985821,
+     0.01485066770985821
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "SLAKE_closed": {
+    "mu_lo": 0.010386893720509114,
+    "mu_hi": 0.010386893720509114,
+    "per_fold_lo": [
+     0.017309563095340798,
+     0.008467701121250615,
+     0.010386893720509114,
+     0.027409838871053634,
+     0.0076454919781593755
+    ],
+    "per_fold_hi": [
+     0.017309563095340798,
+     0.008467701121250615,
+     0.010386893720509114,
+     0.027409838871053634,
+     0.0076454919781593755
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "VQA_RAD_closed": {
+    "mu_lo": 0.0,
+    "mu_hi": 0.003936088850018276,
+    "per_fold_lo": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "per_fold_hi": [
+     0.006559418063913645,
+     0.0056276254634897915,
+     0.0,
+     0.0,
+     0.003936088850018276
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "PATH_VQA_closed": {
+    "mu_lo": 0.0,
+    "mu_hi": 0.0,
+    "per_fold_lo": [
+     0.0,
+     0.008467701121250615,
+     0.0019255034794964363,
+     0.0,
+     0.0
+    ],
+    "per_fold_hi": [
+     0.0,
+     0.008467701121250615,
+     0.0019255034794964363,
+     0.0,
+     0.0
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "MedXpertQA-MM": {
+    "mu_lo": 0.0,
+    "mu_hi": 0.0,
+    "per_fold_lo": [
+     0.0030490509684127525,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "per_fold_hi": [
+     0.0076454919781593755,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "SLAKE_open": {
+    "mu_lo": 1e-05,
+    "mu_hi": 1e-05,
+    "per_fold_lo": [
+     0.0,
+     1e-05,
+     1e-05,
+     0.0,
+     1e-05
+    ],
+    "per_fold_hi": [
+     0.0,
+     1e-05,
+     0.00891139229403276,
+     0.0,
+     0.0019255034794964363
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "VQA_RAD_open": {
+    "mu_lo": 0.0,
+    "mu_hi": 0.0,
+    "per_fold_lo": [
+     1e-05,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "per_fold_hi": [
+     1e-05,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "PATH_VQA_open": {
+    "mu_lo": 0.003936088850018276,
+    "mu_hi": 0.003936088850018276,
+    "per_fold_lo": [
+     0.004587805722232354,
+     0.003936088850018276,
+     0.005347430443509978,
+     0.0,
+     0.0014915715758838826
+    ],
+    "per_fold_hi": [
+     0.009378332026723413,
+     0.003936088850018276,
+     0.00891139229403276,
+     0.0,
+     0.003376951068385617
+    ],
+    "lagrangian_optimal_on_all_folds": false
+   },
+   "_intersection": {
+    "lo": 0.014111264712506481,
+    "hi": 0.0,
+    "nonempty": false,
+    "spread_ratio": 14111264712.506481
+   }
+  }
+ },
+ "guardrail": {
+  "nested_macro_iso_acc": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5617110379898295,
+    "vs_always_7b": 0.019054741250373874,
+    "vs_always_32b_direct": 0.00993119952138799,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8167330677290837,
+    "vs_always_7b": 0.03585657370517936,
+    "vs_always_32b_direct": -0.03585657370517925,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8890541344437835,
+    "vs_always_7b": 0.04818560380725756,
+    "vs_always_32b_direct": 0.0,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.304,
+    "vs_always_7b": 0.04249999999999998,
+    "vs_always_32b_direct": -0.0025000000000000022,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.8062015503875969,
+    "vs_always_7b": 0.06976744186046513,
+    "vs_always_32b_direct": -0.012403100775193798,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.49,
+    "vs_always_7b": 0.024999999999999967,
+    "vs_always_32b_direct": -0.10999999999999999,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.38333333333333336,
+    "vs_always_7b": 0.05933333333333335,
+    "vs_always_32b_direct": 0.007333333333333358,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "diag_macro_iso_acc": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5616212982351182,
+    "vs_always_7b": 0.018965001495662603,
+    "vs_always_32b_direct": 0.009841459766676719,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8326693227091634,
+    "vs_always_7b": 0.05179282868525903,
+    "vs_always_32b_direct": -0.019920318725099584,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8890541344437835,
+    "vs_always_7b": 0.04818560380725756,
+    "vs_always_32b_direct": 0.0,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.303,
+    "vs_always_7b": 0.04149999999999998,
+    "vs_always_32b_direct": -0.003500000000000003,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.8062015503875969,
+    "vs_always_7b": 0.06976744186046513,
+    "vs_always_32b_direct": -0.012403100775193798,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.525,
+    "vs_always_7b": 0.06,
+    "vs_always_32b_direct": -0.07499999999999996,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.38266666666666665,
+    "vs_always_7b": 0.058666666666666645,
+    "vs_always_32b_direct": 0.006666666666666654,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "nested_macro_iso_cost": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5617110379898295,
+    "vs_always_7b": 0.019054741250373874,
+    "vs_always_32b_direct": 0.00993119952138799,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8326693227091634,
+    "vs_always_7b": 0.05179282868525903,
+    "vs_always_32b_direct": -0.019920318725099584,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8890541344437835,
+    "vs_always_7b": 0.04818560380725756,
+    "vs_always_32b_direct": 0.0,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.303,
+    "vs_always_7b": 0.04149999999999998,
+    "vs_always_32b_direct": -0.003500000000000003,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.8062015503875969,
+    "vs_always_7b": 0.06976744186046513,
+    "vs_always_32b_direct": -0.012403100775193798,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.525,
+    "vs_always_7b": 0.06,
+    "vs_always_32b_direct": -0.07499999999999996,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.38266666666666665,
+    "vs_always_7b": 0.058666666666666645,
+    "vs_always_32b_direct": 0.006666666666666654,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "diag_macro_iso_cost": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5616212982351182,
+    "vs_always_7b": 0.018965001495662603,
+    "vs_always_32b_direct": 0.009841459766676719,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8326693227091634,
+    "vs_always_7b": 0.05179282868525903,
+    "vs_always_32b_direct": -0.019920318725099584,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8890541344437835,
+    "vs_always_7b": 0.04818560380725756,
+    "vs_always_32b_direct": 0.0,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.303,
+    "vs_always_7b": 0.04149999999999998,
+    "vs_always_32b_direct": -0.003500000000000003,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.8062015503875969,
+    "vs_always_7b": 0.06976744186046513,
+    "vs_always_32b_direct": -0.012403100775193798,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.53,
+    "vs_always_7b": 0.065,
+    "vs_always_32b_direct": -0.06999999999999995,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.382,
+    "vs_always_7b": 0.057999999999999996,
+    "vs_always_32b_direct": 0.006000000000000005,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "nested_pooled_iso_acc": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5612623392162728,
+    "vs_always_7b": 0.018606042476817186,
+    "vs_always_32b_direct": 0.009482500747831302,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8207171314741036,
+    "vs_always_7b": 0.03984063745019928,
+    "vs_always_32b_direct": -0.031872509960159334,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8780487804878049,
+    "vs_always_7b": 0.03718024985127899,
+    "vs_always_32b_direct": -0.01100535395597857,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.269,
+    "vs_always_7b": 0.007500000000000007,
+    "vs_always_32b_direct": -0.03749999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.7364341085271318,
+    "vs_always_7b": 0.0,
+    "vs_always_32b_direct": -0.08217054263565893,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.48,
+    "vs_always_7b": 0.014999999999999958,
+    "vs_always_32b_direct": -0.12,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.3406666666666667,
+    "vs_always_7b": 0.016666666666666663,
+    "vs_always_32b_direct": -0.03533333333333333,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "diag_pooled_iso_acc": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5578223152856715,
+    "vs_always_7b": 0.01516601854621591,
+    "vs_always_32b_direct": 0.006042476817230025,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8207171314741036,
+    "vs_always_7b": 0.03984063745019928,
+    "vs_always_32b_direct": -0.031872509960159334,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8777513384889947,
+    "vs_always_7b": 0.03688280785246878,
+    "vs_always_32b_direct": -0.01130279595478878,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.2695,
+    "vs_always_7b": 0.008000000000000007,
+    "vs_always_32b_direct": -0.03699999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.7364341085271318,
+    "vs_always_7b": 0.0,
+    "vs_always_32b_direct": -0.08217054263565893,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.475,
+    "vs_always_7b": 0.009999999999999953,
+    "vs_always_32b_direct": -0.125,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.3406666666666667,
+    "vs_always_7b": 0.016666666666666663,
+    "vs_always_32b_direct": -0.03533333333333333,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "nested_pooled_iso_cost": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5612623392162728,
+    "vs_always_7b": 0.018606042476817186,
+    "vs_always_32b_direct": 0.009482500747831302,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8207171314741036,
+    "vs_always_7b": 0.03984063745019928,
+    "vs_always_32b_direct": -0.031872509960159334,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8780487804878049,
+    "vs_always_7b": 0.03718024985127899,
+    "vs_always_32b_direct": -0.01100535395597857,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.269,
+    "vs_always_7b": 0.007500000000000007,
+    "vs_always_32b_direct": -0.03749999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.7364341085271318,
+    "vs_always_7b": 0.0,
+    "vs_always_32b_direct": -0.08217054263565893,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.495,
+    "vs_always_7b": 0.02999999999999997,
+    "vs_always_32b_direct": -0.10499999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.3406666666666667,
+    "vs_always_7b": 0.016666666666666663,
+    "vs_always_32b_direct": -0.03533333333333333,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "diag_pooled_iso_cost": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5584205803170804,
+    "vs_always_7b": 0.015764283577624827,
+    "vs_always_32b_direct": 0.0066407418486389425,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.861244019138756,
+    "vs_always_7b": 0.03588516746411485,
+    "vs_always_32b_direct": 0.0023923444976077235,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8207171314741036,
+    "vs_always_7b": 0.03984063745019928,
+    "vs_always_32b_direct": -0.031872509960159334,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8780487804878049,
+    "vs_always_7b": 0.03718024985127899,
+    "vs_always_32b_direct": -0.01100535395597857,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.269,
+    "vs_always_7b": 0.007500000000000007,
+    "vs_always_32b_direct": -0.03749999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.7364341085271318,
+    "vs_always_7b": 0.0,
+    "vs_always_32b_direct": -0.08217054263565893,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.495,
+    "vs_always_7b": 0.02999999999999997,
+    "vs_always_32b_direct": -0.10499999999999998,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.3406666666666667,
+    "vs_always_7b": 0.016666666666666663,
+    "vs_always_32b_direct": -0.03533333333333333,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  },
+  "incumbent": {
+   "PMC_VQA": {
+    "n": 33430,
+    "acc": 0.5507927011666168,
+    "vs_always_7b": 0.008136404427161237,
+    "vs_always_32b_direct": -0.0009871373018246477,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_closed": {
+    "n": 836,
+    "acc": 0.8516746411483254,
+    "vs_always_7b": 0.02631578947368418,
+    "vs_always_32b_direct": -0.0071770334928229484,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_closed": {
+    "n": 251,
+    "acc": 0.8326693227091634,
+    "vs_always_7b": 0.05179282868525903,
+    "vs_always_32b_direct": -0.019920318725099584,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_closed": {
+    "n": 3362,
+    "acc": 0.8881618084473528,
+    "vs_always_7b": 0.04729327781082693,
+    "vs_always_32b_direct": -0.0008923259964306318,
+    "guardrail_ok_vs_7b": true
+   },
+   "MedXpertQA-MM": {
+    "n": 2000,
+    "acc": 0.3005,
+    "vs_always_7b": 0.03899999999999998,
+    "vs_always_32b_direct": -0.006000000000000005,
+    "guardrail_ok_vs_7b": true
+   },
+   "SLAKE_open": {
+    "n": 645,
+    "acc": 0.8077519379844961,
+    "vs_always_7b": 0.07131782945736431,
+    "vs_always_32b_direct": -0.010852713178294615,
+    "guardrail_ok_vs_7b": true
+   },
+   "VQA_RAD_open": {
+    "n": 200,
+    "acc": 0.54,
+    "vs_always_7b": 0.07500000000000001,
+    "vs_always_32b_direct": -0.05999999999999994,
+    "guardrail_ok_vs_7b": true
+   },
+   "PATH_VQA_open": {
+    "n": 1500,
+    "acc": 0.38266666666666665,
+    "vs_always_7b": 0.058666666666666645,
+    "vs_always_32b_direct": 0.006666666666666654,
+    "guardrail_ok_vs_7b": true
+   },
+   "_n_cells_below_always_7b": 0
+  }
+ },
+ "dual_currency_open_arm": {
+  "what": "open-text arm under BOTH graders on IDENTICAL picks; policies fit under the judge, as shipped",
+  "em_scorer": "src/labeling/run_openvqa.py norm()+score() lifted verbatim (normalised EM + short-answer contains)",
+  "baselines_open": {
+   "SLAKE_open": {
+    "judge_a32": 0.8186046511627907,
+    "em_a32": 0.8465116279069768,
+    "judge_a7": 0.7364341085271318,
+    "em_a7": 0.7627906976744186
+   },
+   "VQA_RAD_open": {
+    "judge_a32": 0.6,
+    "em_a32": 0.545,
+    "judge_a7": 0.465,
+    "em_a7": 0.425
+   },
+   "PATH_VQA_open": {
+    "judge_a32": 0.376,
+    "em_a32": 0.344,
+    "judge_a7": 0.324,
+    "em_a7": 0.32666666666666666
+   }
+  },
+  "arms": {
+   "incumbent": {
+    "open_macro_judge": 0.5768062015503875,
+    "open_macro_em": 0.5497080103359173,
+    "per_cell": {
+     "SLAKE_open": {
+      "acc_judge": 0.8077519379844961,
+      "acc_em": 0.8294573643410853,
+      "esc_rate": 0.43410852713178294,
+      "meanN": 5.547286821705426
+     },
+     "VQA_RAD_open": {
+      "acc_judge": 0.54,
+      "acc_em": 0.465,
+      "esc_rate": 0.54,
+      "meanN": 6.63
+     },
+     "PATH_VQA_open": {
+      "acc_judge": 0.38266666666666665,
+      "acc_em": 0.3546666666666667,
+      "esc_rate": 0.16,
+      "meanN": 4.371333333333333
+     }
+    },
+    "d_open_macro_judge_vs_incumbent": 0.0,
+    "d_open_macro_em_vs_incumbent": 0.0,
+    "d_8cell_macro_judge": 0.0,
+    "d_8cell_macro_em": 0.0
+   },
+   "nested_macro_iso_acc": {
+    "open_macro_judge": 0.55984496124031,
+    "open_macro_em": 0.5346356589147286,
+    "per_cell": {
+     "SLAKE_open": {
+      "acc_judge": 0.8062015503875969,
+      "acc_em": 0.827906976744186,
+      "esc_rate": 0.4372093023255814,
+      "meanN": 4.324031007751938
+     },
+     "VQA_RAD_open": {
+      "acc_judge": 0.49,
+      "acc_em": 0.42,
+      "esc_rate": 0.445,
+      "meanN": 5.19
+     },
+     "PATH_VQA_open": {
+      "acc_judge": 0.38333333333333336,
+      "acc_em": 0.356,
+      "esc_rate": 0.17133333333333334,
+      "meanN": 4.232
+     }
+    },
+    "d_open_macro_judge_vs_incumbent": -0.016961240310077508,
+    "d_open_macro_em_vs_incumbent": -0.015072351421188679,
+    "d_8cell_macro_judge": -0.006360465116279065,
+    "d_8cell_macro_em": -0.005652131782945755
+   },
+   "nested_macro_iso_cost": {
+    "open_macro_judge": 0.5712894056847545,
+    "open_macro_em": 0.547968992248062,
+    "per_cell": {
+     "SLAKE_open": {
+      "acc_judge": 0.8062015503875969,
+      "acc_em": 0.827906976744186,
+      "esc_rate": 0.4372093023255814,
+      "meanN": 4.3782945736434105
+     },
+     "VQA_RAD_open": {
+      "acc_judge": 0.525,
+      "acc_em": 0.46,
+      "esc_rate": 0.54,
+      "meanN": 5.865
+     },
+     "PATH_VQA_open": {
+      "acc_judge": 0.38266666666666665,
+      "acc_em": 0.356,
+      "esc_rate": 0.27,
+      "meanN": 4.614
+     }
+    },
+    "d_open_macro_judge_vs_incumbent": -0.0055167958656330285,
+    "d_open_macro_em_vs_incumbent": -0.0017390180878553707,
+    "d_8cell_macro_judge": -0.0020687984496123857,
+    "d_8cell_macro_em": -0.000652131782945764
+   },
+   "nested_pooled_iso_acc": {
+    "open_macro_judge": 0.5190335917312662,
+    "open_macro_em": 0.4865633074935401,
+    "per_cell": {
+     "SLAKE_open": {
+      "acc_judge": 0.7364341085271318,
+      "acc_em": 0.7596899224806202,
+      "esc_rate": 0.0,
+      "meanN": 1.1736434108527132
+     },
+     "VQA_RAD_open": {
+      "acc_judge": 0.48,
+      "acc_em": 0.39,
+      "esc_rate": 0.16,
+      "meanN": 3.12
+     },
+     "PATH_VQA_open": {
+      "acc_judge": 0.3406666666666667,
+      "acc_em": 0.31,
+      "esc_rate": 0.0,
+      "meanN": 2.094
+     }
+    },
+    "d_open_macro_judge_vs_incumbent": -0.05777260981912136,
+    "d_open_macro_em_vs_incumbent": -0.06314470284237722,
+    "d_8cell_macro_judge": -0.02166472868217051,
+    "d_8cell_macro_em": -0.023679263565891458
+   },
+   "nested_pooled_iso_cost": {
+    "open_macro_judge": 0.5240335917312662,
+    "open_macro_em": 0.4948966408268734,
+    "per_cell": {
+     "SLAKE_open": {
+      "acc_judge": 0.7364341085271318,
+      "acc_em": 0.7596899224806202,
+      "esc_rate": 0.0,
+      "meanN": 1.1736434108527132
+     },
+     "VQA_RAD_open": {
+      "acc_judge": 0.495,
+      "acc_em": 0.415,
+      "esc_rate": 0.21,
+      "meanN": 3.505
+     },
+     "PATH_VQA_open": {
+      "acc_judge": 0.3406666666666667,
+      "acc_em": 0.31,
+      "esc_rate": 0.0,
+      "meanN": 2.094
+     }
+    },
+    "d_open_macro_judge_vs_incumbent": -0.05277260981912135,
+    "d_open_macro_em_vs_incumbent": -0.05481136950904392,
+    "d_8cell_macro_judge": -0.019789728682170507,
+    "d_8cell_macro_em": -0.02055426356589147
+   }
+  }
+ },
+ "accuracy_max_knock_on": {
+  "macro_iso_acc": {
+   "per_cell": {
+    "SLAKE_open": {
+     "esc_F10": 0.6295,
+     "cost_published": 13.971,
+     "cost_recomputed_inc": 13.971388643410853,
+     "cost_refit": 11.524877015503877,
+     "meanN_inc": 5.547286821705426,
+     "meanN_refit": 4.324031007751938
+    },
+    "VQA_RAD_open": {
+     "esc_F10": 0.885,
+     "cost_published": 17.304,
+     "cost_recomputed_inc": 17.30445,
+     "cost_refit": 15.12445,
+     "meanN_inc": 6.63,
+     "meanN_refit": 5.54
+    },
+    "PATH_VQA_open": {
+     "esc_F10": 0.3433,
+     "cost_published": 10.312,
+     "cost_recomputed_inc": 10.311547666666666,
+     "cost_refit": 10.708881,
+     "meanN_inc": 4.371333333333333,
+     "meanN_refit": 4.57
+    }
+   },
+   "published_macro_cost": 7.951,
+   "macro_cost_after_refit": 7.422352713178294,
+   "delta_macro_cost": -0.5286472868217051,
+   "x_direct_before": 1.7398249452954047,
+   "x_direct_after": 1.6241472020083794,
+   "accuracy_unchanged_reason": "accuracy-max is always-32B-direct on 4 MCQ cells, F8 on PMC and F10 over a FIXED best-of-8 pick on the 3 open cells; tau and lambda enter none of those accuracy vectors."
+  },
+  "macro_iso_cost": {
+   "per_cell": {
+    "SLAKE_open": {
+     "esc_F10": 0.6295,
+     "cost_published": 13.971,
+     "cost_recomputed_inc": 13.971388643410853,
+     "cost_refit": 12.486117325581397,
+     "meanN_inc": 5.547286821705426,
+     "meanN_refit": 4.804651162790698
+    },
+    "VQA_RAD_open": {
+     "esc_F10": 0.885,
+     "cost_published": 17.304,
+     "cost_recomputed_inc": 17.30445,
+     "cost_refit": 15.774450000000002,
+     "meanN_inc": 6.63,
+     "meanN_refit": 5.865
+    },
+    "PATH_VQA_open": {
+     "esc_F10": 0.3433,
+     "cost_published": 10.312,
+     "cost_recomputed_inc": 10.311547666666666,
+     "cost_refit": 10.999547666666667,
+     "meanN_inc": 4.371333333333333,
+     "meanN_refit": 4.715333333333334
+    }
+   },
+   "published_macro_cost": 7.951,
+   "macro_cost_after_refit": 7.660091085271318,
+   "delta_macro_cost": -0.29090891472868163,
+   "x_direct_before": 1.7398249452954047,
+   "x_direct_after": 1.6761687276304853,
+   "accuracy_unchanged_reason": "accuracy-max is always-32B-direct on 4 MCQ cells, F8 on PMC and F10 over a FIXED best-of-8 pick on the 3 open cells; tau and lambda enter none of those accuracy vectors."
+  },
+  "pooled_iso_acc": {
+   "per_cell": {
+    "SLAKE_open": {
+     "esc_F10": 0.6295,
+     "cost_published": 13.971,
+     "cost_recomputed_inc": 13.971388643410853,
+     "cost_refit": 6.334179341085271,
+     "meanN_inc": 5.547286821705426,
+     "meanN_refit": 1.7286821705426356
+    },
+    "VQA_RAD_open": {
+     "esc_F10": 0.885,
+     "cost_published": 17.304,
+     "cost_recomputed_inc": 17.30445,
+     "cost_refit": 10.81445,
+     "meanN_inc": 6.63,
+     "meanN_refit": 3.385
+    },
+    "PATH_VQA_open": {
+     "esc_F10": 0.3433,
+     "cost_published": 10.312,
+     "cost_recomputed_inc": 10.311547666666666,
+     "cost_refit": 6.490214333333333,
+     "meanN_inc": 4.371333333333333,
+     "meanN_refit": 2.4606666666666666
+    }
+   },
+   "published_macro_cost": 7.951,
+   "macro_cost_after_refit": 5.707432170542635,
+   "delta_macro_cost": -2.243567829457364,
+   "x_direct_before": 1.7398249452954047,
+   "x_direct_after": 1.2488910657642527,
+   "accuracy_unchanged_reason": "accuracy-max is always-32B-direct on 4 MCQ cells, F8 on PMC and F10 over a FIXED best-of-8 pick on the 3 open cells; tau and lambda enter none of those accuracy vectors."
+  },
+  "pooled_iso_cost": {
+   "per_cell": {
+    "SLAKE_open": {
+     "esc_F10": 0.6295,
+     "cost_published": 13.971,
+     "cost_recomputed_inc": 13.971388643410853,
+     "cost_refit": 5.2241018217054265,
+     "meanN_inc": 5.547286821705426,
+     "meanN_refit": 1.1736434108527132
+    },
+    "VQA_RAD_open": {
+     "esc_F10": 0.885,
+     "cost_published": 17.304,
+     "cost_recomputed_inc": 17.30445,
+     "cost_refit": 10.364450000000001,
+     "meanN_inc": 6.63,
+     "meanN_refit": 3.16
+    },
+    "PATH_VQA_open": {
+     "esc_F10": 0.3433,
+     "cost_published": 10.312,
+     "cost_recomputed_inc": 10.311547666666666,
+     "cost_refit": 5.895547666666667,
+     "meanN_inc": 4.371333333333333,
+     "meanN_refit": 2.1633333333333336
+    }
+   },
+   "published_macro_cost": 7.951,
+   "macro_cost_after_refit": 5.438089147286822,
+   "delta_macro_cost": -2.512910852713178,
+   "x_direct_before": 1.7398249452954047,
+   "x_direct_after": 1.1899538615507268,
+   "accuracy_unchanged_reason": "accuracy-max is always-32B-direct on 4 MCQ cells, F8 on PMC and F10 over a FIXED best-of-8 pick on the 3 open cells; tau and lambda enter none of those accuracy vectors."
+  }
+ },
+ "side_finding_accuracy_max_cost_accuracy_mismatch": {
+  "status": "ALREADY ON RECORD as a caveat, NEVER QUANTIFIED until now",
+  "on_record_at": [
+   "results/cascade_methods/docs/current/METHOD_FINAL_2026-07.md:355-356",
+   "results/cascade_methods/docs/current/RESEARCH_RESULTS_2026-07.md:978-979"
+  ],
+  "the_mismatch": "method_final_mmmu_corrected.py:160 charges the open accuracy-max cells cost_pandora(meanN, esc_F10) with meanN = 4.37-6.63, while the accuracy vector it charges comes from beat32b_more.open_features, whose pick is argmax(scores[:8]) and whose 7 gate features are all computed over all 8 candidates -- i.e. 8 draws, 16.0 FLOP-eq.",
+  "audit": {
+   "per_cell": {
+    "SLAKE_open": {
+     "meanN_charged": 5.547286821705426,
+     "esc_F10": 0.6295,
+     "flops_as_charged": 13.971,
+     "flops_consistent_with_the_accuracy_vector": 18.876815,
+     "undercharge": 4.9058150000000005,
+     "check_charged_formula": 13.971388643410853
+    },
+    "VQA_RAD_open": {
+     "meanN_charged": 6.63,
+     "esc_F10": 0.885,
+     "flops_as_charged": 17.304,
+     "flops_consistent_with_the_accuracy_vector": 20.04445,
+     "undercharge": 2.7404500000000027,
+     "check_charged_formula": 17.30445
+    },
+    "PATH_VQA_open": {
+     "meanN_charged": 4.371333333333333,
+     "esc_F10": 0.3433,
+     "flops_as_charged": 10.312,
+     "flops_consistent_with_the_accuracy_vector": 17.568881,
+     "undercharge": 7.256881000000002,
+     "check_charged_formula": 10.311547666666666
+    }
+   },
+   "published_macro_flops_accuracy_max": 7.951,
+   "consistent_macro_flops_accuracy_max": 9.81389325,
+   "delta_macro_flops": 1.8628932500000006,
+   "published_x_direct": 1.7398249452954047,
+   "consistent_x_direct": 2.1474602297592997,
+   "compute_lean_macro_flops_unaffected": 6.674,
+   "note": "COMPUTE-LEAN is NOT affected: its open cells' accuracy vector IS the Pandora adaptive-N outcome, so meanN is the right charge there.  Only the accuracy-max arm pairs a fixed-best-of-8 accuracy vector with an adaptive-N cost.",
+   "source_lines": [
+    "src/cascade_methods/method_final_mmmu_corrected.py:155-162",
+    "src/cascade_methods/beat32b_more.py:237-254 (pick = argmax(scores[:8]))"
+   ]
+  },
+  "repairs": {
+   "per_cell": {
+    "SLAKE_open": {
+     "n": 645,
+     "keep7_rate": 0.3705426356589147,
+     "esc_F10": 0.6294573643410852,
+     "meanN_incumbent": 5.547286821705426,
+     "meanN_floored": 5.547286821705426,
+     "acc_published_bo8_judge": 0.8170542635658915,
+     "acc_consistent_boN_judge": 0.8170542635658915,
+     "acc_published_bo8_em": 0.8449612403100775,
+     "acc_consistent_boN_em": 0.8449612403100775,
+     "d_judge": 0.0,
+     "d_em": 0.0,
+     "flops_as_charged": 13.971193798449612,
+     "flops_if_8_draws_charged": 18.876620155038758
+    },
+    "VQA_RAD_open": {
+     "n": 200,
+     "keep7_rate": 0.115,
+     "esc_F10": 0.885,
+     "meanN_incumbent": 6.63,
+     "meanN_floored": 6.63,
+     "acc_published_bo8_judge": 0.59,
+     "acc_consistent_boN_judge": 0.59,
+     "acc_published_bo8_em": 0.53,
+     "acc_consistent_boN_em": 0.53,
+     "d_judge": 0.0,
+     "d_em": 0.0,
+     "flops_as_charged": 17.30445,
+     "flops_if_8_draws_charged": 20.04445
+    },
+    "PATH_VQA_open": {
+     "n": 1500,
+     "keep7_rate": 0.6566666666666666,
+     "esc_F10": 0.3433333333333334,
+     "meanN_incumbent": 4.371333333333333,
+     "meanN_floored": 4.371333333333333,
+     "acc_published_bo8_judge": 0.38466666666666666,
+     "acc_consistent_boN_judge": 0.384,
+     "acc_published_bo8_em": 0.36533333333333334,
+     "acc_consistent_boN_em": 0.358,
+     "d_judge": -0.0006666666666666488,
+     "d_em": -0.007333333333333358,
+     "flops_as_charged": 10.3117,
+     "flops_if_8_draws_charged": 17.569033333333334
+    }
+   },
+   "repair_i_charge_8_draws": {
+    "delta_macro_flops": 1.8628449612403102,
+    "accuracy_unchanged": true
+   },
+   "repair_ii_score_best_of_meanN": {
+    "delta_macro_acc_judge": -8.33333333333311e-05,
+    "delta_macro_acc_em": -0.0009166666666666698,
+    "cost_unchanged": true,
+    "is_an_upper_bound": "yes -- F10's rejector was trained on 8-candidate features and its routing is held fixed"
+   },
+   "reading": "The published pair (macro accuracy 0.6575, macro compute 1.740x direct) is not self-consistent on the 3 open cells. Making it consistent costs either +1.863 FLOP-eq on the macro (1.740x -> 2.147x) or -0.0001 macro accuracy under the judge / -0.0009 under exact match.",
+   "already_on_record": [
+    "results/cascade_methods/docs/current/METHOD_FINAL_2026-07.md:355-356",
+    "results/cascade_methods/docs/current/RESEARCH_RESULTS_2026-07.md:978-979"
+   ],
+   "never_quantified_until_now": true
+  },
+  "recommended_repair": "(ii) re-specify the arm as best-of-meanN. Holding the F10 routing fixed, re-picking from the first N candidates Pandora actually drew costs -0.0001 macro under the judge and -0.0009 under exact match -- so the published 1.740x survives and the accuracy barely moves. Charging 8 draws instead (repair i) would take 1.740x to 2.147x.",
+  "reading": "'mildly optimistic' was the right word and this is the number: the extra draws beyond meanN are worth ~0.0001-0.0009 macro. The verifier's pick from the first N candidates is essentially as good as its pick from all 8."
+ },
+ "decoupled_weitzman_lambda": {
+  "what": "lambda sets BOTH the draw-another reservation z_cheap and the escalate reservation z_strong; this sweeps a full 91x91 (lambda_c, lambda_s) grid per cell",
+  "eval_visible_best_open_macro_acc": 0.5995348837209301,
+  "coupled_best_open_macro_acc": 0.5761395348837209,
+  "apparent_gain_on_3_open_cells": 0.023395348837209173,
+  "WHAT_IT_ACTUALLY_IS": "the degenerate corner. Whenever z_strong > z_cheap the Weitzman rule opens the strong box at k=0, so the 'optimum' is meanN=0 with 100% escalation -- i.e. always-32B-direct on the open half, the open-text machinery switched off. Verified per cell per fold: SLAKE-open and VQA-RAD-open select preempt=True at every mu>=0.002; PathVQA-open is the only cell with a genuine non-degenerate gain, +0.0017 on that cell = +0.0002 on the 8-cell macro.",
+  "verdict": "NOT a knob win. It is the same 'wins by switching the open arm off' result as armcombine_mcqonly_2026-08-11.json."
+ },
+ "caveats": [
+  "MACRO CIs cover WITHIN-cell sampling noise only, not dataset-selection noise (the standing macro_average_headline.py limitation).",
+  "The open cells' iso-accuracy TARGET in the incumbent rule (paper_baselines.py:190) is a whole-cell held-out scalar, mildly leak-prone; it is kept IDENTICAL in both arms so the comparison is like-for-like, and it is not part of what was refit.",
+  "vqa_rad cells are n=200 / n=251; their per-cell escalation and accuracy moves are inside fold-assignment noise (see fold_seed_stability).",
+  "No new generation was done, so the +/-0.008 open-text reproducibility caveat does not apply: every arm here reads the SAME stored per-sample dumps under the same serving config, and the incumbent arm reproduces the published vectors byte-for-byte.",
+  "The accuracy-max arm's F8 (alpha_z, n_bins) and F10 rejector threshold were NOT refit; only the three knobs named in the round (MCQ tau, open escalation, Weitzman lambda) were. The knock-on those three have on the accuracy-max arm is cost-only and is reported."
+ ]
+}
