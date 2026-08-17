@@ -207,17 +207,17 @@ table td,table th{font-size:1.03rem}
 <span class="spacer"></span></div>
 <div class="progress"><div class="progress-bar" id="pbar"></div></div>
 <div class="deck-viewport"><main class="deck" id="deck">
+
 <section class="slide"><div class="swrap"><div class="card"><div class="cover">
 <div class="eyebrow"><span class="dot"></span>Progress report</div>
-<div class="big">A free improvement, and<br><span class="accent">a much better map of the limits</span>.</div>
-<div class="sub">We stopped trying to match the 32B and asked a different question: <b>how much can we improve the 7B without paying for it?</b> The answer is a benchmark instruction that biases the model &mdash; removing it is worth <b>+0.0052</b> on the eight-cell average at <b>exactly zero extra compute</b>, and it survives the hardest test we could design.</div>
+<div class="big">We stopped trying to match the 32B<br><span class="accent">and started making the 7B better</span>.</div>
+<div class="sub">The old cascade matched the big model by <i>spending more than the big model</i>. So we changed the question to <b>how much can we improve the 7B without paying for it</b> &mdash; and got two answers: a verifier that now costs nothing to run, and a benchmark instruction that was biasing the model all along.</div>
 <div class="cover-stats">
-<div class="cstat"><div class="v teal">+0.0052</div><div class="l">eight-cell average, over the 7B alone<br>1.8&times; the significance threshold</div></div>
-<div class="cstat"><div class="v">1.000&times;</div><div class="l">compute &mdash; same model, same tokens</div></div>
-<div class="cstat"><div class="v">2.28&times;</div><div class="l">true cost of 8 samples<br>we had been charging 8.0&times;</div></div>
+<div class="cstat"><div class="v teal">+0.0091</div><div class="l">eight-cell average from the verifier<br>at <b>1.51&times;</b> the 7B's compute today &mdash; <b>1.08&times;</b> with the encoder fix</div></div>
+<div class="cstat"><div class="v teal">+0.0052</div><div class="l">from deleting one sentence of the prompt<br>at <b>1.000&times;</b> &mdash; exactly zero extra compute</div></div>
+<div class="cstat"><div class="v">2.37&times;</div><div class="l">true cost of 8 samples<br>we had been charging 8.0&times;</div></div>
 <div class="cstat"><div class="v teal">~27</div><div class="l">selector architectures tried<br>all land in the same band</div></div>
 </div></div></div></div></section>
-
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>1 &middot; How we measure</div>
 <h2 class="slide-h sm">Eight cells &mdash; one benchmark, one answer format</h2>
 <div class="tbl-wrap"><table>
@@ -231,7 +231,6 @@ table td,table th{font-size:1.03rem}
 </tbody></table></div>
 <p class="caption">Three datasets appear twice: their <b>closed</b> split has a fixed answer space, their <b>open</b> split is free text.</p>
 </div></div></section>
-
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>2 &middot; How we measure</div>
 <h2 class="slide-h sm">Every cell counts one eighth</h2>
 <div class="tiles">
@@ -242,8 +241,7 @@ table td,table th{font-size:1.03rem}
 </div>
 <div class="callout note"><b>Why it matters:</b> weighting by questions would let one dataset &mdash; the one with no published human verification &mdash; speak for the whole suite. Equal weighting makes our numbers smaller and makes them mean something.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>3 &middot; The system</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>3 &middot; What we built</div>
 <h2 class="slide-h sm">Answer cheaply, escalate when unsure</h2>
 
 <figure class="chart">
@@ -288,7 +286,7 @@ table td,table th{font-size:1.03rem}
 
 <rect x="706" y="130" width="118" height="56" rx="8" fill="#fbe9e9" stroke="#c62828" stroke-width="2"/>
 <text x="765" y="153" font-size="14" font-weight="700" text-anchor="middle" fill="#c62828">32B</text>
-<text x="765" y="171" font-size="11.5" text-anchor="middle" fill="#5b6472">4.6&#215; the cost</text>
+<text x="765" y="171" font-size="11.5" text-anchor="middle" fill="#5b6472">4.57&#215; the cost</text>
 
 <text x="612" y="46" font-size="11.5" fill="#2e7d32">otherwise keep</text>
 <text x="606" y="290" font-size="11.5" fill="#2e7d32">otherwise keep</text>
@@ -297,12 +295,23 @@ table td,table th{font-size:1.03rem}
 </figure>
 
 <ul class="clean">
-<li>The big model costs <b>4.6&times;</b> a small-model pass &mdash; so the fewer times we call it, the better</li>
+<li>The big model costs <b>4.57&times;</b> a small-model pass &mdash; so the fewer times we call it, the better</li>
 <li>The gate reads the <b>margin</b>: the gap between the model's top two answer probabilities</li>
 </ul>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>4 &middot; The system</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>4 &middot; What we built</div>
+<h2 class="slide-h sm">The three fixed ways of answering</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>fixed policy</th><th>eight-cell average</th><th>free text only</th><th>compute</th><th>latency</th></tr></thead>
+<tbody>
+<tr><td>the 7B alone</td><td>0.5971</td><td>0.4495</td><td>1.00&times;</td><td>347 ms</td></tr>
+<tr><td>the 32B, reasoning</td><td>0.5974</td><td><span class="neg">0.3028</span></td><td>4.57&times;</td><td><span class="neg">10,522 ms</span></td></tr>
+<tr class="total"><td>the 32B, answering directly</td><td>0.6567</td><td>0.5168</td><td>4.57&times;</td><td>665 ms</td></tr>
+</tbody></table></div>
+<div class="callout warn"><b>The reasoning model is not the strong one.</b> Averaged over all eight cells it is level with the 7B (0.5974 against 0.5971). On free text it is far <i>worse</i> &mdash; and it takes <b>30&times; longer</b> to be worse. The damage is concentrated in PathVQA, where it scores <b>0.109</b> against the 7B's <b>0.324</b>.</div>
+<p class="caption"><b>So the bar worth beating is the 32B answering directly.</b> We carry the reasoning column through every comparison in this report, because it is the number the literature usually quotes and it is the one that misleads.</p>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>5 &middot; What we built</div>
 <h2 class="slide-h sm">On free text we sample several answers and pick one</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>on the open-text pool</th><th>accuracy</th></tr></thead>
@@ -311,10 +320,9 @@ table td,table th{font-size:1.03rem}
 <tr><td>a verifier picks from eight</td><td>0.4853</td></tr>
 <tr class="total"><td>best answer present among the eight</td><td>0.6260</td></tr>
 </tbody></table></div>
-<div class="callout note"><b>The gap that drives the whole project:</b> a correct answer is <b>available</b> 63% of the time, and we <b>select</b> it 49% of the time.</div>
+<div class="callout note"><b>The gap that drives the whole project:</b> a correct answer is <b>present in the pool</b> 63% of the time, and we end up <b>giving one</b> 49% of the time. Closing that gap is what a verifier is for.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>5 &middot; The system</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>6 &middot; What we built</div>
 <h2 class="slide-h sm">What the verifier actually is</h2>
 <ul class="clean">
 <li>A <b>LoRA adapter</b> on the same 7B &mdash; 47.6 million parameters, 182 MB on disk</li>
@@ -358,45 +366,67 @@ table td,table th{font-size:1.03rem}
 </figure>
 
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>6 &middot; The system</div>
-<h2 class="slide-h sm">We made the measurement stricter three times</h2>
-<ul class="clean">
-<li><b>Matched the prompts.</b> Our two arms differed in the answer format they requested, as well as in the thing we were testing. Correcting it strengthened one finding and dissolved another.</li>
-<li><b>Dropped a contaminated benchmark.</b> The 7B scored 0.80 against its own published 54.0. Removing the image dropped it to 0.59; a control model scored 0.57.</li>
-<li><b>Switched to equal weighting per cell.</b></li>
-</ul>
-<div class="callout honest"><b>Each one made our headline smaller</b> &mdash; and we found all three ourselves, before anyone else read the work.</div>
-</div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>7 &middot; The limits</div>
-<h2 class="slide-h sm">Selection is the bottleneck, and it does not move</h2>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>7 &middot; What we built</div>
+<h2 class="slide-h sm">It worked &mdash; and that is exactly the problem</h2>
 <div class="tiles">
-<div class="tile"><div class="v indigo">~27</div><div class="l">distinct selector architectures tried</div></div>
-<div class="tile"><div class="v">0.78&ndash;0.81</div><div class="l">every one of them lands here</div></div>
-<div class="tile"><div class="v">0.676</div><div class="l">picking at random</div></div>
+<div class="tile"><div class="v teal">0.6575</div><div class="l">the cascade, eight-cell average<br>against the 32B-direct 0.6567 &mdash; a tie</div></div>
+<div class="tile"><div class="v">+0.0601</div><div class="l">against the 32B reasoning<br>a real, significant win</div></div>
+<div class="tile"><div class="v bad">1.74&times;</div><div class="l">the 32B's own compute, to get there</div></div>
+<div class="tile"><div class="v bad">11.8&times;</div><div class="l">the 7B's compute on a single free-text question</div></div>
 </div>
-<ul class="clean">
-<li>Prompted judges &middot; larger judges &middot; six other model families</li>
-<li>Head-to-head comparison &middot; ranking objectives &middot; set-aware scorers</li>
-<li>Image&ndash;text similarity models &mdash; <b>below</b> picking at random</li>
-</ul>
-<div class="callout note"><b>Independent systems in the literature report the same conversion rate.</b> This is a property of the problem, not a failure of our engineering.</div>
+<div class="callout honest"><b>We had built something that matches the expensive model by spending more than the expensive model.</b> On the free-text half the 32B is roughly <b>ten times more efficient per point of accuracy</b> than sampling eight answers from the 7B and scoring them. Every other result in this report follows from taking that seriously.</div>
+<p class="caption">The next two slides are about where the 11.8&times; actually goes &mdash; because the answer decided everything that came after.</p>
 </div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>8 &middot; Why the verifier costs so much</div>
+<h2 class="slide-h sm">Scoring the answers costs as much as writing them</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>answering one free-text question</th><th>full 7B passes</th><th>running total</th></tr></thead>
+<tbody>
+<tr><td>the 7B answers once &mdash; the baseline</td><td>1.00</td><td>1.00&times;</td></tr>
+<tr><td>sample eight candidate answers instead</td><td>8.00</td><td>8.00&times;</td></tr>
+<tr class="total"><td>&hellip; then score them with the LoRA verifier</td><td class="ours">+3.82</td><td class="ours">11.82&times;</td></tr>
+</tbody></table></div>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>8 &middot; The limits</div>
-<h2 class="slide-h sm">We had been charging ourselves 3.5&times; too much for sampling</h2>
+<figure class="chart">
+<svg viewBox="0 0 840 254" role="img" aria-label="Generating eight candidate answers costs eight forward passes. Scoring them with the LoRA adapter costs a further 3.82 full forward passes, because the adapter cannot run without the whole 8.29-billion-parameter model underneath it.">
+<text x="14" y="26" font-size="12.5" font-weight="700" fill="#283593">GENERATE &#183; 8 candidate answers</text>
+<rect x="14"  y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="82"  y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="150" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="218" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="286" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="354" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="422" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<rect x="490" y="38" width="62" height="40" rx="4" fill="#eaecf7" stroke="#3949ab" stroke-width="1.6"/>
+<text x="566" y="63" font-size="14" font-weight="700" fill="#283593">8.0 passes</text>
+
+<text x="14" y="112" font-size="12.5" font-weight="700" fill="#c62828">SCORE &#183; the LoRA verifier reads each distinct answer back</text>
+<rect x="14"  y="124" width="62" height="40" rx="4" fill="#fbe9e9" stroke="#c62828" stroke-width="1.6"/>
+<rect x="82"  y="124" width="62" height="40" rx="4" fill="#fbe9e9" stroke="#c62828" stroke-width="1.6"/>
+<rect x="150" y="124" width="62" height="40" rx="4" fill="#fbe9e9" stroke="#c62828" stroke-width="1.6"/>
+<rect x="218" y="124" width="52" height="40" rx="4" fill="#fbe9e9" stroke="#c62828" stroke-width="1.6" stroke-dasharray="5 3"/>
+<text x="284" y="149" font-size="14" font-weight="700" fill="#c62828">3.8 passes</text>
+<text x="392" y="149" font-size="12.5" fill="#5b6472">&#8212; the 8 candidates collapse to 3.8 <tspan font-weight="700">distinct</tspan> answers</text>
+
+<line x1="14" y1="186" x2="826" y2="186" stroke="#e3e7f0"/>
+<text x="14" y="212" font-size="14" fill="#1d2030">Every one of those red boxes is a <tspan font-weight="700">complete pass through all 8.29 billion parameters</tspan> &#8212;</text>
+<text x="14" y="234" font-size="14" fill="#1d2030">the image re-read, the question re-read, from scratch.</text>
+</svg>
+<figcaption class="caption"><b>The adapter cannot run on its own.</b> It is a correction applied to the 7B's weights, so scoring one candidate means running the 7B again. Judging the answers costs about half as much as producing them.</figcaption>
+</figure>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>9 &middot; Why the verifier costs so much</div>
+<h2 class="slide-h sm">We had been charging ourselves 3.4&times; too much for sampling</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>cost of generating eight answers</th><th>relative to one answer</th></tr></thead>
 <tbody>
 <tr><td>what our cost model charged</td><td>8.00&times;</td></tr>
-<tr class="sub-total"><td>what we measured</td><td class="ours">2.28&times;</td></tr>
+<tr class="sub-total"><td>what we measured</td><td class="ours">2.37&times;</td></tr>
 <tr class="total"><td>after fixing the defect on the next slide</td><td class="ours">1.20&times;</td></tr>
 </tbody></table></div>
 <p class="caption">Measured with the engine's cache deliberately switched on and off. With it off we reproduce our old 8.0 &mdash; which is what validates the instrument.</p>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>9 &middot; The limits</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>10 &middot; Why the verifier costs so much</div>
 <h2 class="slide-h sm">The image encoder re-runs 294 tokens to recover five</h2>
 <ul class="clean">
 <li>Language prefill <b>is</b> shared across the eight candidates &mdash; 1.16&times;</li>
@@ -406,7 +436,7 @@ table td,table th{font-size:1.03rem}
 <div class="callout warn"><b>Five tokens past a block boundary</b>, so the engine cannot mark the image as already computed &mdash; and re-encodes all 294 of its tokens to recover the last five.</div>
 
 <figure class="chart">
-<svg viewBox="0 0 820 210" role="img" aria-label="The cached region ends at position 320, a block boundary. The image occupies positions 31 to 325, so it overhangs the cache by five tokens and the engine re-encodes all 294 image tokens.">
+<svg viewBox="0 0 880 210" role="img" aria-label="The cached region ends at position 320, a block boundary. The image occupies positions 31 to 325, so it overhangs the cache by five tokens and the engine re-encodes all 294 image tokens.">
 <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0,0 L10,5 L0,10 z" fill="#c62828"/></marker></defs>
 
@@ -431,20 +461,44 @@ table td,table th{font-size:1.03rem}
 </figure>
 
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>10 &middot; The limits</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>11 &middot; The pivot</div>
+<h2 class="slide-h sm">We were asking the wrong question</h2>
+<div class="callout honest" style="font-size:1.5rem"><b style="text-decoration:line-through;opacity:.55">Can a small model plus extra computation match the big one?</b></div>
+<div class="callout win" style="font-size:1.5rem"><b>How much can we improve the small model, for free?</b></div>
+<ul class="clean">
+<li>On free text the big model is about <b>ten times more efficient per point of accuracy</b></li>
+<li>Sampling eight answers and scoring them costs more than asking the big model once &mdash; and is less accurate</li>
+</ul>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>12 &middot; The pivot</div>
+<h2 class="slide-h sm">Selection is the bottleneck, and it does not move</h2>
+<div class="tiles">
+<div class="tile"><div class="v indigo">~27</div><div class="l">distinct selector architectures tried</div></div>
+<div class="tile"><div class="v">0.78&ndash;0.81</div><div class="l">every one of them lands here</div></div>
+<div class="tile"><div class="v">0.676</div><div class="l">picking at random</div></div>
+</div>
+<ul class="clean">
+<li>Prompted judges &middot; larger judges &middot; six other model families</li>
+<li>Head-to-head comparison &middot; ranking objectives &middot; set-aware scorers</li>
+<li>Image&ndash;text similarity models &mdash; <b>below</b> picking at random</li>
+</ul>
+<div class="callout note"><b>Independent systems in the literature report the same conversion rate.</b> This is a property of the problem, not a failure of our engineering.</div>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>13 &middot; The pivot</div>
 <h2 class="slide-h sm">The same job, for a millionth of the compute</h2>
 <div class="tbl-wrap"><table>
-<thead><tr><th>scorer</th><th>work per candidate</th><th>selection efficiency</th></tr></thead>
+<thead><tr><th>scorer</th><th>parameters it has to run</th><th>compute per candidate</th><th>selection efficiency</th></tr></thead>
 <tbody>
-<tr><td>LoRA verifier</td><td>8.29 B parameters</td><td>0.7752</td></tr>
-<tr class="total"><td>the head</td><td class="ours">918,017 parameters</td><td class="ours">0.7956</td></tr>
+<tr><td>LoRA verifier</td><td>8,290,000,000</td><td>10.7 TFLOP</td><td>0.7752</td></tr>
+<tr class="total"><td>the head</td><td class="ours">918,017</td><td class="ours">1.8 MFLOP</td><td class="ours">0.8011</td></tr>
 </tbody></table></div>
 <ul class="clean">
 <li>A standalone two-layer network: <b>3584 &rarr; 256 &rarr; 1</b></li>
 <li>It reads a vector the 7B <b>already computed</b> while processing the candidate</li>
+<li>Eight copies are trained on different random seeds and averaged &mdash; for <b>stability</b>, not accuracy; individual seeds land between 0.788 and 0.800</li>
+<li>Fifteen seconds of CPU to train one, against <b>108 GPU-minutes</b> for the adapter</li>
 </ul>
-<div class="callout win"><b>One re-runs the model. The other reads it.</b> That is why the gap is a factor of a million &mdash; and the cheaper one scores higher.</div>
+<div class="callout win"><b>One re-runs the model. The other reads it.</b> That is why the gap is a factor of millions &mdash; and the cheaper one scores higher.</div>
 
 <figure class="chart">
 <svg viewBox="0 0 820 320" role="img" aria-label="The adapter needs a second full pass through all 28 layers of the model to score a candidate. The head reads an activation the generator already computed at layer 21 and runs a small network on it.">
@@ -466,7 +520,7 @@ table td,table th{font-size:1.03rem}
 <text x="333" y="96" font-size="13" font-weight="700" text-anchor="middle" fill="#c62828">layers</text>
 <line x1="380" y1="83" x2="428" y2="83" stroke="#5b6472" stroke-width="2" marker-end="url(#ar3)"/>
 <text x="438" y="80" font-size="13.5" font-weight="600" fill="#1d2030">yes / no</text>
-<text x="438" y="98" font-size="12.5" fill="#c62828">8.29 B parameters of work</text>
+<text x="438" y="98" font-size="12.5" fill="#c62828">10.7 TFLOP of work</text>
 
 <line x1="20" y1="150" x2="800" y2="150" stroke="#e3e7f0" stroke-width="1"/>
 
@@ -492,14 +546,13 @@ table td,table th{font-size:1.03rem}
 <text x="537" y="235" font-size="11.5" text-anchor="middle" fill="#5b6472">918,017 params</text>
 <line x1="598" y1="222" x2="640" y2="222" stroke="#5b6472" stroke-width="2" marker-end="url(#ar3)"/>
 <text x="650" y="219" font-size="13.5" font-weight="600" fill="#1d2030">score</text>
-<text x="650" y="237" font-size="12.5" fill="#00695c">~1.8 M operations</text>
+<text x="650" y="237" font-size="12.5" fill="#00695c">~1.8 MFLOP</text>
 </svg>
-<figcaption class="caption"><b>One re-runs the model; the other reads it.</b> That is why the gap is a factor of roughly a million &mdash; and the cheaper one scores higher (0.7956 against 0.7752).</figcaption>
+<figcaption class="caption"><b>One re-runs the model; the other reads it.</b> That is why the gap is a factor of roughly <b>six million</b> &mdash; and the cheaper one scores higher (0.8011 against 0.7752).</figcaption>
 </figure>
 
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>11 &middot; The limits</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>14 &middot; The pivot</div>
 <h2 class="slide-h sm">Combining the two scorers</h2>
 <figure class="chart">
 <svg viewBox="0 0 830 296" role="img" aria-label="Worked example. Each scorer's raw scores are converted to within-question ranks, the two rank vectors are added, and the highest sum wins. Here the adapter would pick candidate A and the head picks C; the fusion picks C, which is the correct answer.">
@@ -547,50 +600,70 @@ table td,table th{font-size:1.03rem}
 <text x="724" y="172" font-size="13" font-weight="700" text-anchor="middle" fill="#283593">only the ordering</text>
 
 <text x="20" y="248" font-size="13" fill="#5b6472">Ties take the <tspan font-weight="700" fill="#1d2030">average</tspan> of their positions, not the first one.</text>
-<text x="20" y="272" font-size="13" fill="#5b6472">That single convention is worth <tspan font-weight="700" fill="#1d2030">0.008</tspan> &#8212; 0.8065 against 0.7984.</text>
+<text x="20" y="272" font-size="13" fill="#5b6472">That single convention is worth <tspan font-weight="700" fill="#1d2030">0.0123</tspan> &#8212; 0.8106 against 0.7984.</text>
 </svg>
 <figcaption class="caption"><b>Each scorer ranks the candidates within the question; the two ranks are added; the highest sum wins.</b> Here the adapter and the head disagree about the best answer, and the fusion resolves it in the head's favour &mdash; correctly.</figcaption>
 </figure>
 </div></div></section>
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>12 &middot; The limits</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>15 &middot; The pivot</div>
 <h2 class="slide-h sm">Why the weight is not learned</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>selector</th><th>selection efficiency</th></tr></thead>
 <tbody>
 <tr><td>LoRA adapter alone</td><td>0.7752</td></tr>
-<tr><td>the head alone</td><td>0.7956</td></tr>
-<tr class="total"><td>both, equal weight</td><td class="ours">0.8065</td></tr>
-<tr><td>both, weight fitted <i>on the answers</i></td><td><span class="neg">0.7997</span></td></tr>
+<tr><td>the head alone</td><td>0.8011</td></tr>
+<tr class="total"><td>both, equal weight &mdash; no parameter at all</td><td class="ours">0.8106</td></tr>
+<tr><td>both, weight fitted <i>on the evaluation answers</i></td><td><span class="neg">0.7997</span></td></tr>
 </tbody></table></div>
 <ul class="clean">
 <li>Fitted with full sight of the evaluation answers, the best weight found was <b>exactly 0.5</b> &mdash; the parameter-free choice</li>
-<li>The learned version also scored <b>worse</b>, and broke the no-cell-goes-backwards guardrail</li>
+<li>The learned version scored <b>worse</b> &mdash; &minus;0.0109 [&minus;0.0245, +0.0034] &mdash; and broke the no-cell-goes-backwards guardrail</li>
 </ul>
 <div class="callout warn"><b>One consequence to be aware of.</b> A rank only has meaning <i>within</i> its own question, so the fused number cannot double as a confidence signal. Fed to the escalation gate it collapsed to <b>15 distinct values across 2,345 questions</b> and the controller degenerated &mdash; two cells escalating everything, one escalating nothing.</div>
-<div class="callout note"><b>We recommend the head alone.</b> It captures nearly all of the combined gain &mdash; the difference is not statistically significant &mdash; at essentially no cost.</div>
+<div class="callout note"><b>And yet we are going to recommend the head alone.</b> The fusion is the better selector and it is the safe one. But it can only be bought by running the adapter, which means a full pass through the 7B for every candidate &mdash; and that is the cost the rest of this report is about removing.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>13 &middot; The reframe</div>
-<h2 class="slide-h sm">We were asking the wrong question</h2>
-<div class="callout honest" style="font-size:1.5rem"><b style="text-decoration:line-through;opacity:.55">Can a small model plus extra computation match the big one?</b></div>
-<div class="callout win" style="font-size:1.5rem"><b>How much can we improve the small model, for free?</b></div>
-<ul class="clean">
-<li>On free text the big model is about <b>ten times more efficient per point of accuracy</b></li>
-<li>Sampling eight answers and scoring them costs more than asking the big model once &mdash; and is less accurate</li>
-</ul>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>16 &middot; What it costs now</div>
+<h2 class="slide-h sm">What we give up, and what we stop paying</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>who picks the answer</th><th>free-text accuracy</th><th>scoring passes</th><th>cost per question</th></tr></thead>
+<tbody>
+<tr><td>nobody &mdash; the 7B answers once</td><td>0.4495</td><td>0</td><td>1.00&times;</td></tr>
+<tr><td>the LoRA verifier &mdash; the old structure</td><td>0.4853</td><td>3.82</td><td>11.82&times;</td></tr>
+<tr><td>the head, on a pass of its own</td><td>0.5015</td><td>3.81</td><td>11.81&times;</td></tr>
+<tr class="sub-total"><td>both of them</td><td>0.5075</td><td>7.64</td><td>15.64&times;</td></tr>
+<tr class="total"><td>the head, captured while the 7B generates</td><td class="ours">0.5023</td><td class="ours">0</td><td class="ours">8.00&times;</td></tr>
+<tr><td>both, with the head captured</td><td>0.5083</td><td>3.82</td><td>11.82&times;</td></tr>
+</tbody></table></div>
+<div class="callout win"><b>Dropping the LoRA costs 0.006 of accuracy and removes every scoring pass.</b> On its own the head is the <i>better</i> of the two selectors &mdash; it converts 0.8025 of the available gain against the adapter's 0.7752 &mdash; and it is the only one whose cost can be driven to zero, because it reads a number the generator has already computed. Capturing it instead of recomputing it changes 15 of 2,345 picks.</div>
+<div class="callout honest"><b>Three things we are not hiding.</b> The head alone is not guardrail-clean &mdash; VQA-RAD-open drops 0.015 (n=200, not significant). Its advantage over the adapter is judge-specific: under strict string matching the ordering reverses (&minus;0.0145). And the free capture above runs at full resolution; captured at the resolution the generator actually uses it reads <b>0.4947</b>, because the head was trained on full-resolution features. Refitting it is a fifteen-second job and has not been done.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>14 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>17 &middot; What it costs now</div>
+<h2 class="slide-h sm">And 8.00&times; was never the real number</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>the whole open-text arm, per question</th><th>generation</th><th>verification</th><th>total</th></tr></thead>
+<tbody>
+<tr><td>the 7B alone &mdash; the baseline</td><td>1.000</td><td>0</td><td>1.000&times;</td></tr>
+<tr><td>the old structure, our own cost model</td><td>8.000</td><td>3.823</td><td>11.823&times;</td></tr>
+<tr><td>head captured, generation charged as we used to</td><td>8.000</td><td>0.00002</td><td>8.000&times;</td></tr>
+<tr><td>head captured, generation <b>measured</b></td><td class="ours">2.370</td><td>0.00002</td><td class="ours">2.370&times;</td></tr>
+<tr class="total"><td>&hellip; and the image encoded once instead of 4.8 times</td><td class="ours">1.203</td><td>0.00002</td><td class="ours">1.203&times;</td></tr>
+</tbody></table></div>
+<div class="callout win"><b>Eight answers and a verifier, for 1.2&times; the cost of one answer.</b> Verification is <b>0.00002</b> of a forward pass &mdash; five orders of magnitude below everything else on this table. The open arm's cost is now simply the cost of generating.</div>
+<p class="caption">Across all eight cells that is <b>1.076&times;</b> the always-7B baseline, for <b>+0.0091</b> of accuracy. The last row's cost is measured end to end; its accuracy is carried over on the argument that moving <i>where</i> an image embedding is computed does not change the embedding &mdash; sound in exact arithmetic, and not yet re-scored. That re-scoring is the first item on the next-steps list.</p>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>18 &middot; What it costs now</div>
 <h2 class="slide-h sm">What the head alone buys, on free text</h2>
 <div class="tbl-wrap"><table>
-<thead><tr><th>free-text cell</th><th>questions</th><th>7B alone</th><th>7B + head</th><th>change</th><th>relative</th></tr></thead>
+<thead><tr><th>free-text cell</th><th>n</th><th>7B alone</th><th>7B + head</th><th>change</th><th>32B reasoning</th><th>32B direct</th></tr></thead>
 <tbody>
-<tr><td>SLAKE-open</td><td>645</td><td>0.7364</td><td>0.7721</td><td><span class="pos">+0.0357</span></td><td>+4.8%</td></tr>
-<tr><td>VQA-RAD-open</td><td>200</td><td>0.4650</td><td>0.4650</td><td><span class="zero">0.0000</span></td><td>&mdash;</td></tr>
-<tr><td>PathVQA-open</td><td>1,500</td><td>0.3240</td><td>0.3913</td><td><span class="pos">+0.0673</span></td><td>+20.8%</td></tr>
-<tr class="total"><td>all free text</td><td>2,345</td><td>0.4495</td><td class="ours">0.5023</td><td><span class="pos">+0.0529</span></td><td><b>+11.8%</b></td></tr>
+<tr><td>SLAKE-open</td><td>645</td><td>0.7364</td><td>0.7721</td><td><span class="pos">+0.0357</span></td><td>0.6791</td><td>0.8186</td></tr>
+<tr><td>VQA-RAD-open</td><td>200</td><td>0.4650</td><td>0.4650</td><td><span class="zero">0.0000</span></td><td>0.5450</td><td>0.6000</td></tr>
+<tr><td>PathVQA-open</td><td>1,500</td><td>0.3240</td><td>0.3913</td><td><span class="pos">+0.0673</span></td><td><span class="neg">0.1087</span></td><td>0.3760</td></tr>
+<tr class="total"><td>all free text</td><td>2,345</td><td>0.4495</td><td class="ours">0.5023</td><td><span class="pos">+0.0529</span></td><td><span class="neg">0.3028</span></td><td>0.5168</td></tr>
+<tr><td>cost per question</td><td></td><td>1.00&times;</td><td>2.37&times;</td><td></td><td>4.57&times;</td><td>4.57&times;</td></tr>
 </tbody></table></div>
 <p class="caption">95% interval on the total: <b>[+0.0371, +0.0687]</b>. Guardrail-clean &mdash; no cell goes backwards. Averaging the three cells equally instead gives <b>0.5085 &rarr; 0.5428</b>.</p>
+<div class="callout win"><b>Read the last two columns.</b> The 7B with a head that costs nothing lands at <b>0.5023</b> &mdash; comfortably past the 32B <i>reasoning</i> at 0.3028, and within <b>0.015</b> of the 32B answering directly, at <b>half</b> its compute today and <b>a quarter</b> of it once the image encoder is fixed. That gap is the whole remaining argument.</div>
 <figure class="chart">
 <svg viewBox="0 0 780 190" role="img" aria-label="Bar chart comparing the 7B alone against the 7B plus head on three free-text cells. SLAKE rises from 0.736 to 0.772, VQA-RAD is unchanged at 0.465, and PathVQA rises from 0.324 to 0.391.">
 <line x1="150" y1="150" x2="760" y2="150" stroke="#cdd4e3" stroke-width="1"/>
@@ -615,25 +688,69 @@ table td,table th{font-size:1.03rem}
 </figure>
 <div class="callout note"><b>The head and the prompt fix never overlap.</b> The head works on free text, where there are several candidate answers to choose between. The prompt fix works on the yes/no cells, where there is an answer space to stop supplying. They act on different cells, so they add across the suite rather than combining on any one of them.</div>
 </div></div></section>
-
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>15 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>19 &middot; What it costs now</div>
+<h2 class="slide-h sm">How adventurous the sampling should be</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>sampling temperature</th><th>distinct answers of 8</th><th>a correct one is in the pool</th><th>we manage to pick it</th><th>accuracy</th></tr></thead>
+<tbody>
+<tr><td>0.0 &mdash; the same answer eight times</td><td>1.00</td><td>0.4627</td><td>1.0000</td><td><span class="neg">0.4627</span></td></tr>
+<tr><td>0.2</td><td>1.79</td><td>0.5305</td><td>0.9108</td><td>0.4832</td></tr>
+<tr><td>0.3</td><td>2.18</td><td>0.5579</td><td>0.8717</td><td>0.4863</td></tr>
+<tr class="total"><td>0.4</td><td>2.58</td><td>0.5864</td><td>0.8356</td><td class="ours">0.4898</td></tr>
+<tr><td>0.5</td><td>2.96</td><td>0.6013</td><td>0.8098</td><td>0.4867</td></tr>
+<tr><td>0.7 &mdash; what we had been using</td><td>3.66</td><td>0.6277</td><td>0.7655</td><td>0.4805</td></tr>
+</tbody></table></div>
+<div class="callout note"><b>Two forces pulling opposite ways.</b> Hotter sampling puts a correct answer in the pool more often (column 3 rises) and makes it harder to identify (column 4 falls). Accuracy is <i>exactly</i> their product, so the best setting sits in the middle &mdash; at <b>0.4</b>, not the <b>0.7</b> we had been using. Worth <b>+0.0094 [+0.0034, +0.0154]</b>, on no extra compute and with no retraining, and no cell goes backwards.</div>
+<div class="callout honest"><b>It only helps because something is choosing.</b> Sampling at 0.0 and keeping the single answer is a <i>significant loss</i> against sampling at 0.7 and selecting. Diversity is worth nothing on its own; it is worth something only to a selector that can exploit it.</div>
+<p class="caption"><b>This is measured with the LoRA verifier doing the picking, on the same 2,345-question pool.</b> The head has never been evaluated at 0.4 &mdash; it was trained on candidates drawn at 0.7 &mdash; which is why retraining it at 0.4 is our first next step.</p>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>20 &middot; The prompt bias</div>
 <h2 class="slide-h sm">The benchmark's own instruction biases the model</h2>
 <div class="tbl-wrap"><table>
-<thead><tr><th>cell</th><th>says &ldquo;yes&rdquo; more often than the data warrants by</th></tr></thead>
+<thead><tr><th>yes/no cell</th><th>questions</th><th>what the harness appends</th><th>says &ldquo;yes&rdquo; more often than the data warrants by</th></tr></thead>
 <tbody>
-<tr><td>PathVQA-closed</td><td>+0.072</td></tr>
-<tr><td>SLAKE-closed</td><td>+0.070</td></tr>
-<tr><td>VQA-RAD-closed</td><td>+0.046</td></tr>
+<tr class="total"><td>PathVQA-closed</td><td>3,362</td><td class="ours">&ldquo;Please output 'yes' or 'no'&rdquo;</td><td>+0.0695</td></tr>
+<tr class="total"><td>VQA-RAD-closed</td><td>251</td><td class="ours">&ldquo;Please output 'yes' or 'no'&rdquo;</td><td>+0.0499</td></tr>
+<tr><td>SLAKE-closed</td><td>836</td><td>&ldquo;Answer using a single word or phrase&rdquo;</td><td>+0.0761</td></tr>
 </tbody></table></div>
-<ul class="clean">
-<li>The harness <b>tells the model what the answer options are</b>. That instruction pushes it toward &ldquo;yes&rdquo;.</li>
-<li>Ask the question <b>without supplying the answer space</b> and the bias largely disappears.</li>
-<li>Same model, same number of generated tokens &mdash; <b>zero extra compute</b>.</li>
-</ul>
+<div class="callout note"><b>Read the third column, not the fourth.</b> Two of the three cells are asked with the two allowed answers <i>named in the prompt</i>. The third is not &mdash; and it is just as biased, from some other cause we have not identified. That is what makes the next slide a test rather than a coincidence: if the sentence is the mechanism, removing it must fix the first two and do nothing to the third.</div>
+<p class="caption">&ldquo;Says yes more often than the data warrants&rdquo; = the rate at which the model answers yes, minus the rate at which yes is actually correct; a perfectly calibrated model scores 0. Measured on matched in-session control runs, so these pair exactly with the next slide.</p>
 </div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>21 &middot; The prompt bias</div>
+<h2 class="slide-h sm">The fix is one sentence, and it is a deletion</h2>
+<figure class="chart">
+<svg viewBox="0 0 860 300" role="img" aria-label="The evaluation harness appends the sentence naming the two allowed answers. Replacing it with a neutral instruction leaves the question, the image and the token budget identical, removes the pull toward yes on both cells that carried the sentence, and leaves the third cell untouched.">
+<rect x="14" y="26" width="378" height="122" rx="10" fill="#fbe9e9" stroke="#c62828" stroke-width="2"/>
+<text x="32" y="50" font-size="12.5" font-weight="700" fill="#c62828">WHAT THE HARNESS SENDS</text>
+<text x="32" y="78" font-size="14.5" fill="#1d2030">Is there evidence of consolidation</text>
+<text x="32" y="97" font-size="14.5" fill="#1d2030">in the left lower lobe?</text>
+<rect x="30" y="108" width="346" height="28" rx="5" fill="#fff" stroke="#c62828" stroke-dasharray="5 3"/>
+<text x="40" y="127" font-size="13.5" font-style="italic" fill="#c62828">Please output 'yes' or 'no'(no extra output).</text>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>16 &middot; The result</div>
+<rect x="468" y="26" width="378" height="122" rx="10" fill="#e2f1ef" stroke="#00897b" stroke-width="2"/>
+<text x="486" y="50" font-size="12.5" font-weight="700" fill="#00695c">WHAT WE SEND INSTEAD</text>
+<text x="486" y="78" font-size="14.5" fill="#1d2030">Is there evidence of consolidation</text>
+<text x="486" y="97" font-size="14.5" fill="#1d2030">in the left lower lobe?</text>
+<rect x="484" y="108" width="346" height="28" rx="5" fill="#fff" stroke="#00897b" stroke-dasharray="5 3"/>
+<text x="494" y="127" font-size="13.5" font-style="italic" fill="#00695c">Please answer the question concisely.</text>
+
+<text x="430" y="94" font-size="30" text-anchor="middle" fill="#5b6472">&#8594;</text>
+
+<line x1="14" y1="168" x2="846" y2="168" stroke="#e3e7f0"/>
+<text x="14" y="194" font-size="12.5" font-weight="700" fill="#5b6472">WHAT CHANGES</text>
+<text x="14"  y="220" font-size="14" fill="#1d2030">yes-bias &#160;<tspan font-weight="700" fill="#c62828">+0.069</tspan> <tspan fill="#9aa1ad">&#8594;</tspan> <tspan font-weight="700" fill="#00695c">+0.005</tspan> &#160;<tspan fill="#5b6472" font-size="12.5">PathVQA</tspan></text>
+<text x="14"  y="243" font-size="14" fill="#1d2030">yes-bias &#160;<tspan font-weight="700" fill="#c62828">+0.050</tspan> <tspan fill="#9aa1ad">&#8594;</tspan> <tspan font-weight="700" fill="#00695c">&#8722;0.000</tspan> &#160;<tspan fill="#5b6472" font-size="12.5">VQA-RAD</tspan></text>
+<text x="14"  y="266" font-size="14" fill="#9aa1ad">yes-bias &#160;+0.076 &#8594; +0.076 &#160;<tspan font-size="12.5">SLAKE &#8212; the control</tspan></text>
+<text x="468" y="194" font-size="12.5" font-weight="700" fill="#5b6472">WHAT DOES NOT CHANGE</text>
+<text x="468" y="220" font-size="14" fill="#1d2030">the model &#183; the weights &#183; the image &#183; the question</text>
+<text x="468" y="243" font-size="14" fill="#1d2030">generated tokens: <tspan font-weight="700">3.0003 &#8594; 3.0006</tspan></text>
+<text x="468" y="266" font-size="14" font-weight="700" fill="#00695c">compute: 1.000&#215;, exactly</text>
+</svg>
+<figcaption class="caption"><b>The model already knows the question is binary &mdash; it still answers yes or no.</b> Naming the options does not inform it, it pushes it, and the push is asymmetric: it pushes toward &ldquo;yes&rdquo;. <b>SLAKE is the control</b> &mdash; it never carried the sentence, and it does not move, which is what tells us the sentence is the mechanism.</figcaption>
+</figure>
+<div class="callout note"><b>We separated &ldquo;which options&rdquo; from &ldquo;in which order&rdquo;.</b> Keeping the sentence and only swapping the order &mdash; &ldquo;output 'no' or 'yes'&rdquo; &mdash; <b>raised</b> the bias on all three cells (+0.069&#8594;+0.078 on PathVQA) and cost <b>&minus;0.0089</b> of accuracy there, a significant loss. It is the answer space being supplied at all, not the order it is supplied in.</div>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>22 &middot; The prompt bias</div>
 <h2 class="slide-h sm">What it is worth</h2>
 <div class="tiles">
 <div class="tile"><div class="v teal">+0.0052</div><div class="l">on the eight-cell average</div></div>
@@ -643,8 +760,7 @@ table td,table th{font-size:1.03rem}
 </div>
 <div class="callout win"><b>Two independent graders agree to 0.0003.</b> When an automatic judge and strict string matching disagree, it usually means the grader moved rather than the model. Here they do not.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>17 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>23 &middot; The prompt bias</div>
 <h2 class="slide-h sm">The test that separates a real fix from a benchmark artefact</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>intervention</th><th>as measured</th><th>with a balanced answer key</th></tr></thead>
@@ -655,26 +771,42 @@ table td,table th{font-size:1.03rem}
 </tbody></table></div>
 <div class="callout win"><b>A real improvement grows when the key is balanced. An artefact vanishes.</b> We discarded a two-point gain because it failed this test.</div>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>18 &middot; Closing</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>24 &middot; How we keep ourselves honest</div>
+<h2 class="slide-h sm">We made the measurement stricter three times</h2>
+<ul class="clean">
+<li><b>Matched the prompts.</b> Our two arms differed in the answer format they requested, as well as in the thing we were testing. Correcting it strengthened one finding and dissolved another.</li>
+<li><b>Dropped a contaminated benchmark.</b> The 7B scored 0.80 against its own published 54.0. Removing the image dropped it to 0.59; a control model scored 0.57.</li>
+<li><b>Switched to equal weighting per cell.</b></li>
+</ul>
+<div class="callout honest"><b>Each one made our headline smaller</b> &mdash; and we found all three ourselves, before anyone else read the work.</div>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>25 &middot; How we keep ourselves honest</div>
 <h2 class="slide-h sm">What did not work</h2>
 <ul class="clean">
 <li><b>Making the candidate pool more diverse.</b> More variety, no better selection.</li>
-<li><b>Re-asking the multiple-choice questions as free text.</b> The model answers yes/no whether or not you offer it the options.</li>
+<li><b>Scoring the multiple-choice options with the verifier</b> instead of trusting the model's own pick. Beaten by the model's own answer on all four option cells &mdash; two of them significant losses.</li>
 <li><b>Deciding adaptively how many answers to sample.</b> A fixed number, chosen once, beats it.</li>
 <li><b>Voting among the sampled answers.</b> Helps on two cells, does nothing on five, and hurts if you sample too few.</li>
 </ul>
 </div></div></section>
-
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>19 &middot; Closing</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>26 &middot; Closing</div>
 <h2 class="slide-h sm">Where we stand</h2>
 <ul class="clean">
-<li><b>Solid.</b> A free, significant improvement that survives the hardest test we have &mdash; plus a much better understanding of what each component actually costs.</li>
-<li><b>Open.</b> The effect currently lives on one cell.</li>
-<li><b>Next.</b> Audit the remaining harness prompts for the same defect, and re-run the system end to end with the cost fixes in place.</li>
+<li><b>The verifier is no longer the expensive part.</b> A 918-thousand-parameter head reading a vector the generator already produced picks better than a 47-million-parameter adapter that costs a full model pass. Free text goes <b>0.4495 &rarr; 0.5023</b> at <b>2.37&times;</b> the 7B's compute today, <b>1.20&times;</b> once the image encoder is fixed &mdash; and past the 32B reasoning baseline either way.</li>
+<li><b>A free, significant improvement that survives the hardest test we have.</b> Deleting one sentence of the benchmark's own prompt is worth <b>+0.0052</b> on the eight-cell average at <b>1.000&times;</b> compute, and it <i>grows</i> when the answer key is balanced.</li>
+<li><b>An honest map of the limits.</b> Selection converts 0.78&ndash;0.81 of the available gain no matter what we build &mdash; about 27 architectures now &mdash; and that is a property of the problem, not of our engineering.</li>
+<li><b>What is still open.</b> The prompt effect lives on one cell. The head has never been evaluated at the temperature we now want to sample at. And nothing has been run end to end.</li>
 </ul>
-<div class="callout note"><b>If the same instruction defect exists in the other benchmarks</b>, this stops being one result and becomes a general finding about how these systems are evaluated.</div>
+<div class="callout note"><b>The shape of the claim has changed.</b> It used to be &ldquo;a 7B plus compute can match a 32B&rdquo;, which was true and cost more than the 32B. It is now <b>&ldquo;a small trained verifier improves a 7B on its three free-text cells &mdash; two of them significantly &mdash; at 1.2&times; its own compute, and a prompt correction improves it on a fourth cell for free&rdquo;</b> &mdash; a smaller claim, and one that survives its own cost accounting.</div>
 </div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>27 &middot; Closing</div>
+<h2 class="slide-h sm">What we do next</h2>
+<div class="step"><div class="n">1</div><div><b style="font-size:1.3rem">Retrain the head at the temperature we actually want to sample at.</b><p class="body muted" style="margin-top:2px">The head was trained on candidates drawn at 0.7 and the ladder says we should be drawing at 0.4. Nobody has measured the head on a 0.4 pool &mdash; it needs one fresh capture per generation seed, then about fifteen seconds of CPU per seed to refit. It should also be refitted on the resolution the generator actually runs at, which is the one place the free capture currently loses accuracy.</p></div></div>
+<div class="step"><div class="n">2</div><div><b style="font-size:1.3rem">Check the other benchmarks for the same instruction defect.</b><p class="body muted" style="margin-top:2px">Two of three yes/no cells carry the sentence. If the same pattern shows up in the multiple-choice harnesses and in other model families, this stops being one result on one dataset and becomes a general finding about how these systems are evaluated.</p></div></div>
+<div class="step"><div class="n">3</div><div><b style="font-size:1.3rem">Merge the pieces into one method and run it end to end.</b><p class="body muted" style="margin-top:2px">Prompt fix on the yes/no cells &#183; head selection on free text &#183; sampling at 0.4 &#183; states captured during generation &#183; the image encoded once. Right now each is measured on its own, by re-scoring saved outputs. <b>Nothing has ever been executed as a single program</b> &mdash; and until it is, the combined number is an expectation, not a measurement.</p></div></div>
+<div class="callout note"><b>Why we expect them to compose.</b> They act on different cells and at different stages: the prompt fix touches the two yes/no cells, the head touches the three free-text cells, the temperature and the encoding fix touch cost rather than accuracy. There is no cell where two of them contend for the same gain. That is a reason to expect it, not a substitute for measuring it.</div>
+</div></div></section>
+
 
 
 </main></div>
