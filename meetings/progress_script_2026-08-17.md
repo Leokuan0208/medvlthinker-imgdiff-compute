@@ -73,23 +73,29 @@ We tried every configuration route — batch size, concurrency, cache size — a
 
 Passing pre-computed image features instead fixes it exactly, and that is the 1.20 on the previous slide.
 
-### 11. The same job, for a millionth of the compute · 10 · The limits
+### 11. Combining the two scorers · The limits
 
-Here is the payoff for the LoRA explanation earlier.
+Walk the worked example left to right.
 
-While the 7B processes a candidate answer, it builds an internal representation at every layer. The head is a small standalone network that takes that vector — from layer 21 — and maps it to a single score. It does not modify the model. It is not a forward pass through anything. About 1.8 million operations, roughly a millionth of what the adapter costs.
+Each scorer produces a raw number per candidate. The adapter gives a probability between 0 and 1, read off the language-model head. The head gives an unbounded logit. Those are not comparable — averaging them directly would let whichever has the wider spread dominate for no principled reason.
 
-The gap is that large because they are different kinds of object. The adapter is the 7B with altered weights, so using it means running the whole network again. The head reads the network's output.
+So each score vector is converted to a **rank within that question**, on a 0-to-1 scale, and the two rank vectors are added. Highest sum wins.
 
-And for reference: picking at random scores 0.676.
+In this example the two disagree: the adapter would pick A, the head picks C. The fusion picks C, which is the correct answer. That is the case the fusion exists for.
 
-### 12. Combining the two scorers · 11 · The limits
+One detail that sounds pedantic and is not: when two candidates tie, they take the **average** of their positions rather than the first. Choosing the other convention costs 0.008 — 0.8065 becomes 0.7984 — which is larger than several effects we chased for weeks. It is written into the recipe so nobody swaps it by accident.
 
-Why ranks and not scores: the two scorers produce numbers on completely different scales, so averaging them directly would let one dominate for no good reason. Ranking each first puts them on a common footing.
+There is also a second level of averaging I have not drawn: the head is eight seeds, each ranking the candidates independently, and those eight rank vectors are averaged before the head ever meets the adapter.
 
-Why equal weight: we tried learning the weight. Fitted with full visibility of the answers, the best weight it found was 0.5 — exactly the parameter-free choice. There was nothing to learn.
+### 12. Why the weight is not learned · The limits
 
-And the recommendation. On our primary metric the head alone captures nearly all of the combined gain while costing essentially nothing, so that is the version worth deploying.
+The obvious question is why both scorers count equally, so answer it before it is asked.
+
+We tried to learn the weight. Fitted **with full sight of the evaluation answers** — an advantage no deployable version could ever have — the best weight it found was exactly 0.5, the parameter-free choice. And the learned version scored *worse*, 0.7997 against 0.8065, and broke our no-cell-goes-backwards guardrail. There was nothing to learn.
+
+The consequence in the amber box is worth stating out loud, because it cost us real time. A rank only has meaning *within* its own question. So although the fused number is excellent at ordering candidates, it is meaningless as a confidence signal across questions. When we fed it to the escalation gate it collapsed to fifteen distinct values across 2,345 questions and the controller degenerated — two cells escalating everything, one escalating nothing.
+
+The lesson generalises: a ranking signal and a calibrated signal are different objects, and the gate needs the second.
 
 ### 13. What the head alone buys, on free text · The result
 

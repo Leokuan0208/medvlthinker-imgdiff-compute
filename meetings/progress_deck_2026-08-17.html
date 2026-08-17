@@ -501,21 +501,76 @@ table td,table th{font-size:1.03rem}
 
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>11 &middot; The limits</div>
 <h2 class="slide-h sm">Combining the two scorers</h2>
-<ul class="clean">
-<li>Rank the candidates by each scorer, then <b>average the two ranks</b></li>
-<li><b>No trained weights</b> &mdash; both scorers count equally</li>
-</ul>
+<figure class="chart">
+<svg viewBox="0 0 830 296" role="img" aria-label="Worked example. Each scorer's raw scores are converted to within-question ranks, the two rank vectors are added, and the highest sum wins. Here the adapter would pick candidate A and the head picks C; the fusion picks C, which is the correct answer.">
+<text x="20"  y="30" font-size="12" font-weight="700" fill="#5b6472">CANDIDATE</text>
+<text x="126" y="30" font-size="12" font-weight="700" fill="#c62828">ADAPTER</text>
+<text x="216" y="30" font-size="12" font-weight="700" fill="#c62828">rank</text>
+<text x="316" y="30" font-size="12" font-weight="700" fill="#00695c">HEAD</text>
+<text x="406" y="30" font-size="12" font-weight="700" fill="#00695c">rank</text>
+<text x="516" y="30" font-size="12" font-weight="700" fill="#283593">SUM</text>
+<line x1="20" y1="38" x2="600" y2="38" stroke="#cdd4e3" stroke-width="1"/>
+
+<text x="20"  y="66" font-size="14" font-weight="600" fill="#1d2030">A</text>
+<text x="126" y="66" font-size="14" fill="#5b6472">0.81</text><text x="216" y="66" font-size="14" fill="#c62828">1.00</text>
+<text x="316" y="66" font-size="14" fill="#5b6472">+1.2</text><text x="406" y="66" font-size="14" fill="#00695c">0.33</text>
+<text x="516" y="66" font-size="14" fill="#5b6472">1.33</text>
+
+<rect x="14" y="80" width="580" height="30" rx="4" fill="#e2f1ef"/>
+<text x="20"  y="100" font-size="14" font-weight="700" fill="#00695c">C</text>
+<text x="126" y="100" font-size="14" fill="#5b6472">0.79</text><text x="216" y="100" font-size="14" fill="#c62828">0.67</text>
+<text x="316" y="100" font-size="14" fill="#5b6472">+3.1</text><text x="406" y="100" font-size="14" fill="#00695c">1.00</text>
+<text x="516" y="100" font-size="14" font-weight="700" fill="#283593">1.67</text>
+<text x="574" y="100" font-size="13" font-weight="700" fill="#00695c">&#10004;</text>
+
+<text x="20"  y="134" font-size="14" font-weight="600" fill="#1d2030">B</text>
+<text x="126" y="134" font-size="14" fill="#5b6472">0.44</text><text x="216" y="134" font-size="14" fill="#c62828">0.33</text>
+<text x="316" y="134" font-size="14" fill="#5b6472">+1.9</text><text x="406" y="134" font-size="14" fill="#00695c">0.67</text>
+<text x="516" y="134" font-size="14" fill="#5b6472">1.00</text>
+
+<text x="20"  y="164" font-size="14" font-weight="600" fill="#1d2030">D</text>
+<text x="126" y="164" font-size="14" fill="#5b6472">0.12</text><text x="216" y="164" font-size="14" fill="#c62828">0.00</text>
+<text x="316" y="164" font-size="14" fill="#5b6472">&minus;0.8</text><text x="406" y="164" font-size="14" fill="#00695c">0.00</text>
+<text x="516" y="164" font-size="14" fill="#5b6472">0.00</text>
+
+<line x1="20" y1="180" x2="600" y2="180" stroke="#cdd4e3" stroke-width="1"/>
+<text x="20"  y="204" font-size="13" font-weight="700" fill="#c62828">would pick A</text>
+<text x="316" y="204" font-size="13" font-weight="700" fill="#00695c">would pick C</text>
+<text x="516" y="204" font-size="13" font-weight="700" fill="#283593">picks C</text>
+
+<rect x="632" y="46" width="184" height="150" rx="10" fill="#eaecf7" stroke="#3949ab" stroke-width="2"/>
+<text x="724" y="76"  font-size="13" font-weight="700" text-anchor="middle" fill="#283593">bounded 0&#8211;1</text>
+<text x="724" y="96"  font-size="13" text-anchor="middle" fill="#5b6472">vs unbounded logit</text>
+<line x1="668" y1="112" x2="780" y2="112" stroke="#cdd4e3"/>
+<text x="724" y="136" font-size="13" text-anchor="middle" fill="#1d2030">ranking strips</text>
+<text x="724" y="154" font-size="13" text-anchor="middle" fill="#1d2030">the scale and keeps</text>
+<text x="724" y="172" font-size="13" font-weight="700" text-anchor="middle" fill="#283593">only the ordering</text>
+
+<text x="20" y="248" font-size="13" fill="#5b6472">Ties take the <tspan font-weight="700" fill="#1d2030">average</tspan> of their positions, not the first one.</text>
+<text x="20" y="272" font-size="13" fill="#5b6472">That single convention is worth <tspan font-weight="700" fill="#1d2030">0.008</tspan> &#8212; 0.8065 against 0.7984.</text>
+</svg>
+<figcaption class="caption"><b>Each scorer ranks the candidates within the question; the two ranks are added; the highest sum wins.</b> Here the adapter and the head disagree about the best answer, and the fusion resolves it in the head's favour &mdash; correctly.</figcaption>
+</figure>
+</div></div></section>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>12 &middot; The limits</div>
+<h2 class="slide-h sm">Why the weight is not learned</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>selector</th><th>selection efficiency</th></tr></thead>
 <tbody>
-<tr><td>LoRA verifier alone</td><td>0.7752</td></tr>
+<tr><td>LoRA adapter alone</td><td>0.7752</td></tr>
 <tr><td>the head alone</td><td>0.7956</td></tr>
-<tr class="total"><td>both combined</td><td class="ours">0.8065</td></tr>
+<tr class="total"><td>both, equal weight</td><td class="ours">0.8065</td></tr>
+<tr><td>both, weight fitted <i>on the answers</i></td><td><span class="neg">0.7997</span></td></tr>
 </tbody></table></div>
+<ul class="clean">
+<li>Fitted with full sight of the evaluation answers, the best weight found was <b>exactly 0.5</b> &mdash; the parameter-free choice</li>
+<li>The learned version also scored <b>worse</b>, and broke the no-cell-goes-backwards guardrail</li>
+</ul>
+<div class="callout warn"><b>One consequence to be aware of.</b> A rank only has meaning <i>within</i> its own question, so the fused number cannot double as a confidence signal. Fed to the escalation gate it collapsed to <b>15 distinct values across 2,345 questions</b> and the controller degenerated &mdash; two cells escalating everything, one escalating nothing.</div>
 <div class="callout note"><b>We recommend the head alone.</b> It captures nearly all of the combined gain &mdash; the difference is not statistically significant &mdash; at essentially no cost.</div>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>12 &middot; The reframe</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>13 &middot; The reframe</div>
 <h2 class="slide-h sm">We were asking the wrong question</h2>
 <div class="callout honest" style="font-size:1.5rem"><b style="text-decoration:line-through;opacity:.55">Can a small model plus extra computation match the big one?</b></div>
 <div class="callout win" style="font-size:1.5rem"><b>How much can we improve the small model, for free?</b></div>
@@ -525,7 +580,7 @@ table td,table th{font-size:1.03rem}
 </ul>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>13 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>14 &middot; The result</div>
 <h2 class="slide-h sm">What the head alone buys, on free text</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>free-text cell</th><th>questions</th><th>7B alone</th><th>7B + head</th><th>change</th><th>relative</th></tr></thead>
@@ -562,7 +617,7 @@ table td,table th{font-size:1.03rem}
 </div></div></section>
 
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>14 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>15 &middot; The result</div>
 <h2 class="slide-h sm">The benchmark's own instruction biases the model</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>cell</th><th>says &ldquo;yes&rdquo; more often than the data warrants by</th></tr></thead>
@@ -578,7 +633,7 @@ table td,table th{font-size:1.03rem}
 </ul>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>15 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>16 &middot; The result</div>
 <h2 class="slide-h sm">What it is worth</h2>
 <div class="tiles">
 <div class="tile"><div class="v teal">+0.0052</div><div class="l">on the eight-cell average</div></div>
@@ -589,7 +644,7 @@ table td,table th{font-size:1.03rem}
 <div class="callout win"><b>Two independent graders agree to 0.0003.</b> When an automatic judge and strict string matching disagree, it usually means the grader moved rather than the model. Here they do not.</div>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>16 &middot; The result</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>17 &middot; The result</div>
 <h2 class="slide-h sm">The test that separates a real fix from a benchmark artefact</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>intervention</th><th>as measured</th><th>with a balanced answer key</th></tr></thead>
@@ -601,7 +656,7 @@ table td,table th{font-size:1.03rem}
 <div class="callout win"><b>A real improvement grows when the key is balanced. An artefact vanishes.</b> We discarded a two-point gain because it failed this test.</div>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>17 &middot; Closing</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>18 &middot; Closing</div>
 <h2 class="slide-h sm">What did not work</h2>
 <ul class="clean">
 <li><b>Making the candidate pool more diverse.</b> More variety, no better selection.</li>
@@ -611,7 +666,7 @@ table td,table th{font-size:1.03rem}
 </ul>
 </div></div></section>
 
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>18 &middot; Closing</div>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>19 &middot; Closing</div>
 <h2 class="slide-h sm">Where we stand</h2>
 <ul class="clean">
 <li><b>Solid.</b> A free, significant improvement that survives the hardest test we have &mdash; plus a much better understanding of what each component actually costs.</li>
