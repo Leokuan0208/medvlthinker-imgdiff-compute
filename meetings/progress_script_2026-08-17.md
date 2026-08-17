@@ -91,25 +91,37 @@ Why equal weight: we tried learning the weight. Fitted with full visibility of t
 
 And the recommendation. On our primary metric the head alone captures nearly all of the combined gain while costing essentially nothing, so that is the version worth deploying.
 
-### 13. We were asking the wrong question · 12 · The reframe
+### 13. What the head alone buys, on free text · The result
+
+This is the head on its own, against the 7B on its own, on the three free-text cells — no big model anywhere, and no other intervention mixed in.
+
+The total is **+0.0529**, interval +0.0371 to +0.0687, which is an **11.8% relative improvement** on free text. Nothing goes backwards.
+
+The shape matters more than the total. It is largest exactly where the model is weakest: PathVQA is the hardest cell at 0.324, and it gains a fifth of its own accuracy. SLAKE, already at 0.736, gains about five percent relative. VQA-RAD does not move at all — with 200 questions and a narrow pool, there is often nothing to choose between.
+
+If asked why this is not the headline number: it is measured on three of the eight cells, so on the whole-suite average it is diluted by the five cells it does not touch. Both framings are in the deck — this one shows what the component actually does.
+
+One clarification worth volunteering. The head and the prompt fix never overlap. The head needs several candidate answers to choose between, so it only applies to free text. The prompt fix works by not supplying an answer space, so it only applies to the yes/no cells. They act on different cells — they add across the suite, they do not stack on any single cell.
+
+### 14. We were asking the wrong question · 12 · The reframe
 
 Two things forced this. First the selection ceiling — we now know how much is reachable and it is not enough. Second, and more decisive: on free-text questions the big model is roughly ten times more efficient per point of accuracy.
 
 So the honest move was to stop competing with it and change the baseline. Everything after this is measured against the 7B alone, and the question is how much we can add without adding cost.
 
-### 14. The benchmark's own instruction biases the model · 13 · The result
+### 15. The benchmark's own instruction biases the model · 13 · The result
 
 The model still answers yes or no — it knows the question is binary. It just stops being pushed.
 
 Two controls worth mentioning. We checked the answers did not get longer, so this is not the grader being fooled. And we tried merely reordering the options — “output no or yes” — which did not help and hurt on one cell. So it is the answer space being given at all, not the order it is given in.
 
-### 15. What it is worth · 14 · The result
+### 16. What it is worth · 14 · The result
 
 State it plainly: a free improvement, larger than the significance threshold, and nothing regresses.
 
 The two-grader agreement is the part I would emphasise. We score with an automatic judge and with strict string matching, and they agree to within three ten-thousandths.
 
-### 16. The test that separates a real fix from a benchmark artefact · 15 · The result
+### 17. The test that separates a real fix from a benchmark artefact · 15 · The result
 
 This is the slide to spend time on.
 
@@ -121,11 +133,11 @@ The first row is a method that looked like it gained two points. Balanced, it is
 
 Our prompt fix goes the other way — it gets larger. That is what a real improvement looks like, and it is why I am comfortable putting it in front of you.
 
-### 17. What did not work · 16 · Closing
+### 18. What did not work · 16 · Closing
 
 Keep this brisk. The second one is worth a sentence because it surprised us: we thought the model was constrained by being shown the options. It is not — on a binary question it produces the same handful of answers either way. The answer space belongs to the question, not to the prompt.
 
-### 18. Where we stand · 17 · Closing
+### 19. Where we stand · 17 · Closing
 
 Be straight about the shape of it. One clean result, and a lot of well-mapped territory around it. The result is free, it is statistically solid, and it got bigger under the most adversarial check we could design — which is unusual and worth trusting.
 
