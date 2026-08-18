@@ -17,32 +17,59 @@ on.** Any additional open-text cell is our own harness, so it will not be a
 |---|---|---|---|
 | **radimagenet_open** (2,000 q / 1,000 img) | yes, 1–3 words | **yes — 0 rows in head train, 0 in LoRA** | ✅ **ADOPT** |
 | kvasir_open (1,200 q / 1,052 img) | yes | ❌ 5,562 rows = 18% of the head's train pool | ⚠️ needs a refit without it |
-| Kvasir-VQA-x1 official test (15,955 q / 4,058 img) | yes | ❌ **1,052 of its 4,058 images are our kvasir training images** | ⚠️ usable only on the ~3,006 disjoint images |
-| Quilt-VQA (940 OPEN / 1,283) | **no — long form** | n/a | ❌ **REJECT for this arm** |
+| **Kvasir-VQA-x1 official test, disjoint part** (10,703 q / 3,006 img) | yes, ~10 words — same as our own kvasir pool | ✅ after excluding 1,052 contaminated images | ✅ **ADOPT** (largest cell available) |
+| Quilt-VQA (940 OPEN / 1,283) | **no — multi-clause explanations** | n/a | ❌ **REJECT for this arm** |
 | ProbMed (57,132 q / 6,303 img) | **no — 100% yes/no** | n/a | ❌ reject for this arm, ✅ **gift for the prompt-bias result** |
 | GEMeX | yes (dedicated open split) | n/a | ⛔ **not obtainable** — see §3 |
 | Medical-Diff-VQA | yes | n/a | deferred (two-image questions; PhysioNet) |
 
 ## 2. Why the two rejections are rejections
 
-**Quilt-VQA answers are an order of magnitude longer than ours.** Measured on
-`quiltvqa_test_w_ans.json`:
+**Quilt-VQA answers are multi-clause explanations, not answers.** Measured on
+`quiltvqa_test_w_ans.json`, against every pool we actually use:
 
 | set | n | answer words: mean / median / p90 |
 |---|---|---|
 | Quilt-VQA `answer_type=OPEN` | 940 | **20.4 / 17.0 / 37.0** |
 | Quilt-VQA `answer_type=CLOSED` | 343 | 15.6 / 13.0 / 27.0 |
-| our slake_open gold | 645 | 1.72 / 1.0 / 3.0 |
+| Kvasir-VQA-x1 clean subset | 10,703 | 10.1 / 9.0 / 18.0 |
+| **our own kvasir_open_1200 gold** | 1,200 | **9.92 / 9.0 / 17.0** |
 | our pathvqa_open gold | 1,500 | 2.36 / 1.0 / 5.0 |
+| our slake_open gold | 645 | 1.72 / 1.0 / 3.0 |
 
-That is not the same task. It breaks four things at once: the judge prompt assumes a short phrase;
-`max_tokens=64` truncates; the duplicate-collapse that turns 8 samples into ~3.8 distinct answers
-will not happen when every sample is a unique 20-word paragraph; and "is this candidate correct"
-stops being a clean binary, which is what `oracle@8` and `sel_eff` are built on. Adopting it means
-a different judge and a different metric — a separate paper, not a fourth cell.
+**CORRECTION to the first draft of this doc.** I first wrote that Quilt is "an order of magnitude
+longer than ours". That is true only against slake/pathvqa. Our kvasir pool — which the head has
+been trained on all along — is already at 9.92 words, so ~10-word answers are inside our proven
+operating range and length alone is not disqualifying. Quilt is ~2× kvasir, not 10×.
+
+The disqualifying property is the KIND of answer, not the count. Kvasir golds are terse clinical
+statements ("no polypoid lesions identified", "residual polyps remain") that are wholly right or
+wholly wrong. Quilt golds are explanations — *"After therapy, the cells are following the path of
+neuroendocrine differentiation and forming ganglion cells with big prominent cell nuclei and
+abundant eosinophilic cytoplasm"* — where partial correctness is the norm. That is what breaks the
+metric: `oracle@8` and `sel_eff` both require a BINARY per-candidate label, and on a multi-clause
+explanation that label is not well defined. Secondary problems: `max_tokens=64` truncates, and the
+duplicate-collapse that turns 8 samples into ~3.8 distinct candidates cannot happen when every
+sample is a unique paragraph. Adopting Quilt means a different judge and a different endpoint.
 
 **ProbMed is 100% binary.** All 57,132 questions end in the literal string
 `(please answer yes/no)`; the answer vocabulary is `{no: 29,129, yes: 28,003}`.
+
+## 2b. Kvasir-VQA-x1: what survives the contamination cut
+
+The official test split is 15,955 questions over 4,058 images. **1,052 of those images are ours** —
+our `kvasir_open_1200` pool was drawn from this very split, and the head trained on 5,562 rows from
+those images. Excluding them leaves:
+
+- **10,703 questions over 3,006 images** — larger than all three current open cells combined.
+- Answer length 10.1 / 9.0 / 18.0 words, i.e. indistinguishable from our own kvasir pool.
+- If a tighter profile is wanted, the single-class questions with ≤6-word answers give
+  **3,504 items over 2,180 images** (procedure_type, text_presence, instrument_count, polyp_type,
+  polyp_removal_status, finding_count, finding_presence, polyp_count).
+
+Either way the exclusion list is `set(os.listdir('/data/dan/dataset/kvasir_vqa_x1/images'))` and
+must be applied before anything is generated. GI endoscopy is a modality we currently have zero
+coverage of in the eval set.
 
 ## 3. GEMeX is not blocked by credentialing — it is not released
 
