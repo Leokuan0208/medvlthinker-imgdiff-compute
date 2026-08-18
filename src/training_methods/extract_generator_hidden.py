@@ -107,9 +107,15 @@ def json_imgs(jp):
     return {r["idx"]: (r["question"], r["img_path"]) for r in json.load(open(jp)) if os.path.exists(r["img_path"])}
 
 
+JSON_CELLS = {"kvasir_open": "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json",
+              "radimagenet_open": "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json"}
+
+
 def imgs_for_eval(ds):
     if ds == "slake_open":
         return slake_imgs("test")
+    if ds in JSON_CELLS:                      # out-of-domain cells promoted to eval (2026-08-18)
+        return json_imgs(JSON_CELLS[ds])
     base = "/data/dan/dataset/vqa_rad/data" if ds == "vqa_rad_open" else "/data/dan/dataset/path_vqa/data"
     return parquet_imgs(base, "test")
 
@@ -128,9 +134,9 @@ def judged_answers(ds):
     return sc, aj
 
 
-def build_eval_rows():
+def build_eval_rows(eval_ds=None):
     rows = []
-    for ds in EVAL_DS:
+    for ds in (eval_ds or EVAL_DS):
         sc, aj = judged_answers(ds)
         IMG = imgs_for_eval(ds)
         for i in sc:
@@ -232,15 +238,20 @@ def main():
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--nshard", type=int, default=1)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--eval_ds", nargs="+", default=None,
+                    help="eval cells to extract; default = the frozen three (EVAL_DS)")
+    ap.add_argument("--stem_tag", default="",
+                    help="appended to the output stem so a new cell cannot overwrite the frozen cache")
     ap.add_argument("--verify_memo", type=int, default=0,
                     help="assert the per-item memo reproduces the unmemoized processor call exactly")
     A = ap.parse_args()
     DEV = "cuda"
     outdir = os.path.join(ROOT, A.out); os.makedirs(outdir, exist_ok=True)
-    stem = f"{A.mode}_{A.split}" + (f"_s{A.shard}of{A.nshard}" if A.nshard > 1 else "")
+    stem = (f"{A.mode}_{A.split}" + (f"_{A.stem_tag}" if A.stem_tag else "")
+            + (f"_s{A.shard}of{A.nshard}" if A.nshard > 1 else ""))
 
     print(f"[build] rows for split={A.split} ...", flush=True)
-    rows = build_eval_rows() if A.split == "eval" else build_train_rows()
+    rows = build_eval_rows(A.eval_ds) if A.split == "eval" else build_train_rows()
     rows.sort(key=lambda r: (r["ds"], str(r["idx"]), r["na"]))
     if A.limit:
         rows = rows[:A.limit]
