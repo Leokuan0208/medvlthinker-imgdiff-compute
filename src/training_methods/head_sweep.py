@@ -149,7 +149,11 @@ def fit(Xtr, ytr, gtr, wtr=None, objective="bce", hidden=0, depth=1, drop=0.0, l
         wd=1e-2, lr=1e-3, epochs=30, bs=256, seed=0, sched="none", bt_margin=0.0, hybrid=0.0):
     torch.manual_seed(seed)
     m = MLP(Xtr.shape[1], hidden, depth, drop, ln)
-    opt = torch.optim.AdamW(m.parameters(), lr=lr, weight_decay=wd)
+    # foreach=False forces the single-tensor Adam loop.  The default multi-tensor (_foreach)
+    # path segfaults on this CPU build once the parameter tensors get large -- faulthandler
+    # traced every crash of 2026-08-18 to torch/optim/adam.py.  Slower per step, and it does
+    # not take the process down.
+    opt = torch.optim.AdamW(m.parameters(), lr=lr, weight_decay=wd, foreach=False)
     X = torch.tensor(Xtr); y = torch.tensor(ytr)
     W = torch.tensor(wtr) if wtr is not None else None
     packed = _groups(gtr, ytr) if objective in ("bt", "listwise", "hybrid") else None

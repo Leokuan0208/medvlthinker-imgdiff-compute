@@ -219,7 +219,13 @@ def stage_curve(A):
                 m = HS.fit((X[sub] - mu) / sg, y[sub], qid[sub], None, objective="bce",
                            hidden=hid, wd=cfg["wd"], lr=cfg.get("lr", 1e-3),
                            epochs=cfg["epochs"], seed=f)
-                sv_all = HS.predict(m, (X - mu) / sg)
+                # chunked, so the full standardised matrix is never materialised -- the
+                # 451 MB temporary per fold x width x fraction was churning the allocator and
+                # segfaulting the run (2026-08-18).
+                sv_all = np.empty(len(X), dtype=np.float32)
+                for b0 in range(0, len(X), 4096):
+                    b1 = min(b0 + 4096, len(X))
+                    sv_all[b0:b1] = HS.predict(m, (X[b0:b1] - mu) / sg)
 
                 def se(mask):
                     byq = defaultdict(list)
