@@ -73,18 +73,22 @@ def main():
         print(f"[samp] image-grouped draw -> {len(df)} over {df['img_id'].nunique()} images",
               flush=True)
 
-    imgdir = os.path.join(A.out, "images")
-    os.makedirs(imgdir, exist_ok=True)
+    # The parquet's `image` column is an HF URL, not bytes -- the pixels ship as loose files in the
+    # repo's images/ directory.  Point at those in place; do not re-encode.
+    srcimg = os.path.join(os.path.dirname(os.path.dirname(A.src)), "images")
+    have = {os.path.splitext(x)[0]: os.path.join(srcimg, x) for x in os.listdir(srcimg)}
+    missing = sorted(set(df["img_id"]) - set(have))
+    if missing:
+        print(f"[warn] {len(missing)} of {df['img_id'].nunique()} image ids have no file in "
+              f"{srcimg} -- those questions are DROPPED (is the download still running?)",
+              flush=True)
+        df = df[df["img_id"].isin(have)]
     written, rows = {}, []
     for i, (_, r) in enumerate(df.iterrows()):
         iid = r["img_id"]
-        p = os.path.join(imgdir, f"{iid}.jpg")
-        if iid not in written:
-            b = r["image"]["bytes"] if isinstance(r["image"], dict) else r["image"]
-            Image.open(io.BytesIO(b)).convert("RGB").save(p, quality=95)
-            written[iid] = p
+        written[iid] = have[iid]
         rows.append({"idx": i, "question": str(r["question"]), "answer": str(r["answer"]),
-                     "img_path": p, "img_id": iid,
+                     "img_path": have[iid], "img_id": iid,
                      "question_class": str(r["question_class"]),
                      "complexity": (int(r["complexity"]) if str(r["complexity"]).isdigit()
                                     else str(r["complexity"]))})

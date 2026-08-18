@@ -53,6 +53,10 @@ CAP_DIV = {"fullres": 1, "cap640": 2, "cap320": 4, "cap160": 8, "cap80": 16}
 ap = argparse.ArgumentParser()
 ap.add_argument("--model_path", required=True); ap.add_argument("--tag", required=True)
 ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open", "pathvqa_open", "kvasir_open", "radimagenet_open",
+                # kvasir_x1_open = the DISJOINT part of Kvasir-VQA-x1's official test split, built by
+                # src/data_prep/build_kvasir_x1_cell.py, which excludes the 1,052 images our own
+                # kvasir_open_1200 pool (and hence the head's training data) was drawn from.
+                "kvasir_x1_open",
                 # *_train = the datasets' OFFICIAL TRAIN splits, same open-ended filter. Added for the
                 # disjoint verifier retrain (src/training_methods/build_disjoint_verifier_split.py): the
                 # verifier must be trained on items that share no question and no image with the eval sets.
@@ -104,6 +108,9 @@ elif A.dataset == "radimagenet_open":
     for r in d:
         if os.path.exists(r["img_path"]):
             items.append((r["idx"], r["question"], r["answer"], r["img_path"]))
+elif A.dataset == "kvasir_x1_open":
+    d = json.load(open("/data/dan/dataset/kvasir_x1_cell/kvasir_x1_open.json"))
+    items = [(r["idx"], r["question"], r["answer"], r["img_path"]) for r in d]
 elif A.dataset == "kvasir_open":
     d = json.load(open(f"/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json"))
     for r in d:
