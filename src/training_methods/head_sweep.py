@@ -401,6 +401,40 @@ def grid_main2():
     return out
 
 
+def grid_reg():
+    """REGULARISATION.  head_curve_bce_2026-08-18.json shows the head MEMORISES: train sel_eff
+    0.96-0.99 against CV 0.59-0.70, a gap of +0.27 to +0.40 at every width, and the gap shrinks
+    with data rather than with capacity.  Round 1 only swept dropout and weight decay on the BT
+    objective, which the same sweep then refuted.  This sweeps them properly on BCE, plus the
+    directions a memorising model actually responds to: shorter training, smaller heads, label
+    smoothing via a soft target, and heavy weight decay."""
+    g = []
+    B = {**BASE, "objective": "bce", "hidden": 256}
+    for dr in (0.0, 0.1, 0.3, 0.5, 0.7):
+        g.append({**B, "drop": dr, "tag": f"REG_drop{dr}"})
+    for wd in (1e-3, 1e-2, 1e-1, 3e-1, 1.0):
+        g.append({**B, "wd": wd, "tag": f"REG_wd{wd}"})
+    for h in (16, 32, 64, 128, 256):
+        g.append({**B, "hidden": h, "tag": f"REG_h{h}"})
+    for ep in (5, 10, 20, 30, 60):
+        g.append({**B, "epochs": ep, "tag": f"REG_ep{ep}"})
+    for h in (32, 64):
+        for dr in (0.3, 0.5):
+            for wd in (1e-1, 3e-1):
+                g.append({**B, "hidden": h, "drop": dr, "wd": wd,
+                          "tag": f"REG_h{h}_dr{dr}_wd{wd}"})
+    for ln in (True,):
+        for dr in (0.3, 0.5):
+            g.append({**B, "ln": ln, "drop": dr, "tag": f"REG_ln_dr{dr}"})
+    seen, out = set(), []
+    for c in g:
+        k = key({a: b for a, b in c.items() if a != "tag"})
+        if k in seen:
+            continue
+        seen.add(k); out.append(c)
+    return out
+
+
 def grid_final(topk=8):
     """Round 3.  Seed spread on this head is ~0.005, so single-seed CV cannot separate configs that
     differ by less than ~0.01.  Re-run the top-K from rounds 1-2 at 4 seeds x 5 folds = 20 fits each
@@ -450,7 +484,8 @@ def load_done():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", default="null", choices=["null", "main", "main2", "final"])
+    ap.add_argument("--stage", default="null",
+                    choices=["null", "main", "main2", "final", "reg"])
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--nshard", type=int, default=1)
@@ -469,8 +504,8 @@ def main():
     print(f"  rows={len(y)} questions={len(set(qid))} images={len(set(img))} "
           f"pos_rate={y.mean():.4f}", flush=True)
 
-    cfgs = {"null": grid_null, "main": grid_main,
-            "main2": grid_main2, "final": grid_final}[A.stage]()
+    cfgs = {"null": grid_null, "main": grid_main, "main2": grid_main2,
+            "final": grid_final, "reg": grid_reg}[A.stage]()
     cfgs = [c for i, c in enumerate(cfgs) if i % A.nshard == A.shard]
     done = load_done()
     print(f"[{A.stage}] {len(cfgs)} configs for shard {A.shard}/{A.nshard}; "

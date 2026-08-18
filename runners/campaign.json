@@ -1,0 +1,36 @@
+[
+ {"name": "diag_bigtrain_crash",
+  "cmd": "export HEAD_SWEEP_THREADS=4 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4; python3 -X faulthandler src/training_methods/head_eval_bce.py --stage eval --threads 4 --seeds 2 --bigtrain --out results/cascade_methods/artifacts/_bigtrain_smoke.json",
+  "timeout_s": 5400, "stall_s": 1200,
+  "expect": "results/cascade_methods/artifacts/_bigtrain_smoke.json"},
+
+ {"name": "omnimed_generate_bo8",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; L7=/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path $L7 --tag lingshu7b_sc8 --dataset omnimed_open --n_samples 8 --temp 0.7 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096 && echo OMNIMED_GEN_DONE",
+  "timeout_s": 21600, "stall_s": 1800,
+  "expect_grep": "OMNIMED_GEN_DONE"},
+
+ {"name": "omnimed_generate_greedy",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; L7=/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path $L7 --tag lingshu7b --dataset omnimed_open --n_samples 1 --temp 0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096 && echo OMNIMED_GREEDY_DONE",
+  "timeout_s": 10800, "stall_s": 1800,
+  "expect_grep": "OMNIMED_GREEDY_DONE"},
+
+ {"name": "omnimed_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0,1 python3 src/labeling/run_judge.py --tp 2 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b_sc8_scexploded.jsonl ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b.jsonl && echo OMNIMED_JUDGE_DONE",
+  "timeout_s": 28800, "stall_s": 2400,
+  "expect_grep": "OMNIMED_JUDGE_DONE"},
+
+ {"name": "omnimed_extract",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; L7=/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/; for sh in 0 1; do CUDA_VISIBLE_DEVICES=$sh python3 src/training_methods/extract_generator_hidden.py --model_path $L7 --mode generator --split eval --eval_ds omnimed_open --stem_tag omnimed --shard $sh --nshard 2 --out feats_hidden > logs/omnimed_extract_s$sh.log 2>&1 & done; wait; echo OMNIMED_EXTRACT_DONE",
+  "timeout_s": 36000, "stall_s": 2400,
+  "expect_grep": "OMNIMED_EXTRACT_DONE"},
+
+ {"name": "slake_donor_rerun",
+  "cmd": "export HEAD_SWEEP_THREADS=6 OMP_NUM_THREADS=6 MKL_NUM_THREADS=6; python3 -X faulthandler src/training_methods/head_donor_hetero.py --domain slake_open_train --threads 6 --seeds 3",
+  "timeout_s": 7200, "stall_s": 1200,
+  "expect": "results/cascade_methods/artifacts/head_donor_hetero_slake_open_train_2026-08-18.json"},
+
+ {"name": "regularisation_sweep",
+  "cmd": "export HEAD_SWEEP_THREADS=6 OMP_NUM_THREADS=6 MKL_NUM_THREADS=6; python3 -X faulthandler src/training_methods/head_sweep.py --stage reg --threads 6 --shard 0 --nshard 1",
+  "timeout_s": 21600, "stall_s": 1800,
+  "expect": "results/cascade_methods/artifacts/_head_sweep_journal_reg_s0of1.jsonl"}
+]

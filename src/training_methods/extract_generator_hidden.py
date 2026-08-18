@@ -109,7 +109,8 @@ def json_imgs(jp):
 
 JSON_CELLS = {"kvasir_open": "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.json",
               "radimagenet_open": "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json",
-              "kvasir_x1_open": "/data/dan/dataset/kvasir_x1_cell/kvasir_x1_open.json"}
+              "kvasir_x1_open": "/data/dan/dataset/kvasir_x1_cell/kvasir_x1_open.json",
+              "omnimed_open": "/data/dan/dataset/omnimed_opentext/omnimed_open.json"}
 
 
 def imgs_for_eval(ds):
