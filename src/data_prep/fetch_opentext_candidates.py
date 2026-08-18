@@ -32,10 +32,14 @@ SETS = {
 }
 
 
+HF_HOME_DEFAULT = "/data/dan/hf_cache"
+
+
 def have_token():
     if os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN"):
         return True
-    return os.path.exists(os.path.expanduser("~/.cache/huggingface/token"))
+    return any(os.path.exists(os.path.expanduser(p)) for p in
+               ("~/.cache/huggingface/token", os.path.join(HF_HOME_DEFAULT, "token")))
 
 
 def fetch(key):
