@@ -159,7 +159,8 @@ def build_eval_rows(eval_ds=None):
     return rows
 
 
-def build_train_rows(level="L1", seed=0, max_train=10364, match_composition=True, full_groups=True):
+def build_train_rows(level="L1", seed=0, max_train=10364, match_composition=True, full_groups=True,
+                     exclude_ds=()):
     """Reproduces run_lora_verifier_disjoint.py's seed-0 matched draw EXACTLY (verified: the
     resulting pos_rate 0.19924739482825163 equals the value recorded in its train_config.json).
     With full_groups=True we additionally extract the REMAINING answers of every question the draw
@@ -167,7 +168,7 @@ def build_train_rows(level="L1", seed=0, max_train=10364, match_composition=True
     set is unchanged; only extra answers of already-selected questions are added."""
     SPL = json.load(open(os.path.join(ROOT, "results/cascade_methods/artifacts/verifier_disjoint_split.json")))
     assert SPL["disjointness_assertion"]["image_pixel_hash_intersection"] == 0
-    DSETS = list(SPL["train"].keys())
+    DSETS = [d for d in SPL["train"].keys() if d not in set(exclude_ds)]
     pref = "idx_" if level == "L1" else "strict_idx_"
     ALLOW = {ds: set(json.load(open(os.path.join(ROOT, "data/disjoint_split", f"{pref}{ds}.json")))) for ds in DSETS}
 
@@ -243,6 +244,16 @@ def main():
                     help="eval cells to extract; default = the frozen three (EVAL_DS)")
     ap.add_argument("--stem_tag", default="",
                     help="appended to the output stem so a new cell cannot overwrite the frozen cache")
+    ap.add_argument("--max_train", type=int, default=10364,
+                    help="size of the matched draw; the frozen cache used 10364")
+    ap.add_argument("--all_train", action="store_true",
+                    help="ignore the LoRA-matched composition and take EVERY judged candidate. The "
+                         "frozen cache holds 31,498 of the 68,539 judged rows on disk because it "
+                         "reproduced a draw specified for a different component (the LoRA verifier) "
+                         "and inherited by the head. This takes the lot.")
+    ap.add_argument("--exclude_ds", nargs="*", default=[],
+                    help="datasets to leave out entirely, e.g. radimagenet_open when it is serving "
+                         "as an eval cell and must not enter training")
     ap.add_argument("--verify_memo", type=int, default=0,
                     help="assert the per-item memo reproduces the unmemoized processor call exactly")
     A = ap.parse_args()
@@ -252,7 +263,10 @@ def main():
             + (f"_s{A.shard}of{A.nshard}" if A.nshard > 1 else ""))
 
     print(f"[build] rows for split={A.split} ...", flush=True)
-    rows = build_eval_rows(A.eval_ds) if A.split == "eval" else build_train_rows()
+    rows = (build_eval_rows(A.eval_ds) if A.split == "eval" else
+            build_train_rows(max_train=(10**9 if A.all_train else A.max_train),
+                             match_composition=not A.all_train,
+                             exclude_ds=A.exclude_ds))
     rows.sort(key=lambda r: (r["ds"], str(r["idx"]), r["na"]))
     if A.limit:
         rows = rows[:A.limit]

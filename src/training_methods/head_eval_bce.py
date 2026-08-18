@@ -42,6 +42,26 @@ ARMS = {
 }
 
 
+def load_train_big():
+    """The BIG train cache: every judged candidate (60,384 rows), not the 31,498-row matched draw
+    the head inherited from the LoRA verifier.  radimagenet is excluded -- it is an eval cell."""
+    zs, rows = [], []
+    for sh in (0, 1):
+        z = np.load(os.path.join(HS.FEATS, f"generator_train_bigtrain_s{sh}of2.npz"))
+        m = json.load(open(os.path.join(HS.FEATS, f"generator_train_bigtrain_s{sh}of2.meta.json")))
+        zs.append({"h_last": z["h_last"], "h_span": z["h_span"]})
+        rows += m["rows"]
+    H = {k: np.concatenate([z[k] for z in zs], 0) for k in ("h_last", "h_span")}
+    keep = [i for i, r in enumerate(rows) if r.get("n_tok", -1) > 0]
+    rows = [rows[i] for i in keep]
+    H = {k: v[keep] for k, v in H.items()}
+    y = np.array([r["y"] for r in rows], dtype=np.float32)
+    qid = np.array([f"{r['ds']}|{r['idx']}" for r in rows])
+    img = np.array([r["img_md5"] for r in rows])
+    ds = np.array([r["ds"] for r in rows])
+    return H, y, qid, img, ds
+
+
 def load_eval():
     zs, rows = [], []
     for sh in (0, 1):
@@ -125,7 +145,7 @@ def paired_boot(a, b, rec=None, nboot=10000, seed=20260818):
 
 # ------------------------------------------------------------------ stage: eval
 def stage_eval(A):
-    Hb, yb, qb, ib, db = HS.load_train()
+    Hb, yb, qb, ib, db = (load_train_big() if getattr(A, "bigtrain", False) else HS.load_train())
     He, ye, qe, de = load_eval()
     print(f"train {len(yb)} rows / {len(set(qb))} q | eval {len(ye)} rows / {len(set(qe))} q",
           flush=True)
@@ -139,6 +159,8 @@ def stage_eval(A):
            "readout": "8 seeds; per-seed within-question rank_avg (ties averaged); mean over seeds; "
                       "argmax with first-index tie-break -- the frozen deployed convention.",
            "frozen_artifact_published": FROZEN_PUBLISHED,
+           "train_pool": ("bigtrain: every judged row" if getattr(A, "bigtrain", False)
+                          else "the inherited 31,498-row matched draw"),
            "threads": A.threads, "seeds": A.seeds, "arms": {}}
     store = {}
     for name, cfg in ARMS.items():
@@ -261,6 +283,8 @@ def main():
     ap.add_argument("--widths", type=int, nargs="+", default=[128, 256, 1024])
     ap.add_argument("--fracs", type=float, nargs="+", default=[0.1, 0.25, 0.5, 1.0])
     ap.add_argument("--out", default=None)
+    ap.add_argument("--bigtrain", action="store_true",
+                    help="fit on the FULL 60,384-row judged pool instead of the 31,498-row draw")
     A = ap.parse_args()
     if A.out is None:
         A.out = os.path.join(HS.OUTDIR, f"head_{A.stage}_bce_2026-08-18.json")
