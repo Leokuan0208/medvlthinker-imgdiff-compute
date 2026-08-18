@@ -32,6 +32,18 @@ NOT comparable to the published 2026-08-04 numbers.
   python3 src/training_methods/head_sweep.py --stage main --workers 8
 """
 import argparse, os, sys, json, hashlib, time, itertools
+
+# ---------------------------------------------------------------------------------------------
+# THREAD PINNING MUST HAPPEN BEFORE numpy/torch LOAD.  OpenMP reads these at library init, so
+# setting them from main() is too late: every process then spawns one OpenMP thread per core.
+# Six such processes on 48 cores oversubscribed 6x and segfaulted round 2 (2026-08-18) once the
+# matrices reached hidden=1024.  The launcher exports HEAD_SWEEP_THREADS; this honours it.
+_T = os.environ.get("HEAD_SWEEP_THREADS", "")
+if _T:
+    for _v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+               "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+        os.environ.setdefault(_v, _T)
+# ---------------------------------------------------------------------------------------------
 import numpy as np
 from collections import defaultdict, Counter
 
@@ -441,7 +453,10 @@ def main():
     ap.add_argument("--seeds", type=int, default=1)
     A = ap.parse_args()
     torch.set_num_threads(A.threads)
-    os.environ["OMP_NUM_THREADS"] = str(A.threads)
+    _omp = os.environ.get("OMP_NUM_THREADS")
+    if _omp is None or _omp != str(A.threads):
+        print(f"  [warn] OMP_NUM_THREADS={_omp} but --threads={A.threads}; export "
+              f"HEAD_SWEEP_THREADS before launching so BLAS and torch agree", flush=True)
     global JOURNAL
     JOURNAL = os.path.join(OUTDIR, f"_head_sweep_journal_{A.stage}_s{A.shard}of{A.nshard}.jsonl")
 
