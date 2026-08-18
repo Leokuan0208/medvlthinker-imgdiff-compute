@@ -1,0 +1,71 @@
+{
+ "title": "radimagenet_open as a 4th open-text cell -- OUT-OF-DOMAIN transfer of the frozen head",
+ "date": "2026-08-18",
+ "no_fabricated_numbers": true,
+ "cleanliness": {
+  "rows_in_head_train_pool": 0,
+  "examples_in_lora_verifier_disjoint": 0,
+  "note": "reserved as a train source in verifier_disjoint_split.json and never spent; the frozen head has never seen a radimagenet image or question."
+ },
+ "n_questions": 2000,
+ "n_candidate_rows": 8155,
+ "n_dropped_missing_baseline": 0,
+ "mean_distinct_candidates": 4.0775,
+ "arms_judge": {
+  "always_7b_greedy": 0.321,
+  "lingshu32b_direct": 0.289,
+  "head_bestof8_selected": 0.3275,
+  "oracle_at_8": 0.512,
+  "sel_eff": 0.6396484375,
+  "random_pick_floor_sel_eff": 0.5822846912202381,
+  "headroom_above_floor_captured": 0.13732737362998262
+ },
+ "deltas": {
+  "head_vs_always_7b": {
+   "delta": 0.006500000000000006,
+   "ci": [
+    -0.009000000000000008,
+    0.02200000000000002
+   ],
+   "n": 2000,
+   "verdict": "TIE"
+  },
+  "head_vs_lingshu32b_direct": {
+   "delta": 0.038500000000000034,
+   "ci": [
+    0.019000000000000017,
+    0.05700000000000005
+   ],
+   "n": 2000,
+   "verdict": "WIN"
+  },
+  "always_7b_vs_lingshu32b_direct": {
+   "delta": 0.03200000000000003,
+   "ci": [
+    0.013487500000000024,
+    0.04999999999999999
+   ],
+   "n": 2000,
+   "verdict": "WIN"
+  }
+ },
+ "provenance": {
+  "features": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_radimagenet.npz",
+  "head": "ckpts/train/genframe_head_ens8 (frozen, 8 seeds, layer 21 h_span)",
+  "greedy": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b.judge.jsonl",
+  "pool": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc8_scexploded.judge.jsonl",
+  "strong": "ckpts/openvqa/strong_lingshu/ckpt_radimagenet_open_lingshu32b_t0.judge.jsonl"
+ },
+ "caveats": [
+  "JUDGE ONLY. Exact match is not reported: radimagenet golds are terse anatomy/pathology labels and EM would be dominated by surface form. The judge was audited -- of the 1,422 answers it marks wrong for the 32B, only 3 contain the gold string -- so the low 32B score is not a formatting artifact.",
+  "Picks are over DISTINCT normalised answers, not the 8 raw slots. Duplicates share a feature vector and a label, so the picked ANSWER is the same either way; only the tie-break differs from the 8-slot convention used on the frozen three cells.",
+  "The head is applied with its FROZEN train standardiser (mu/sd fitted on the four in-domain sets). No refit, no recalibration on radimagenet."
+ ],
+ "VERDICT": {
+  "one_line": "THE FROZEN HEAD DOES NOT TRANSFER TO THIS CELL. Against always-7B greedy it is +0.0065 [-0.0090,+0.0220], a TIE. Its selection efficiency is 0.6396 against a random-pick floor of 0.5823 on the same pool -- it captures 13.7% of the headroom above chance, where on the three in-domain cells it captures ~39%.",
+  "the_win_over_32b_is_not_the_head": "7B+head beats Lingshu-32B direct by +0.0385 [+0.0190,+0.0570], but always-7B greedy ALONE already beats it by +0.0320 [+0.0135,+0.0500]. The margin is the 7B being better than the 32B on this cell, not the selector doing work.",
+  "what_it_implies": "The head is not a general-purpose verifier -- it is fitted to the domains in its training pool (pathvqa 71%, kvasir 18%, slake 7%, vqa_rad 4%). Every new eval cell therefore needs a matching TRAIN split, not just eval data. That changes the expansion plan from 'add cells' to 'add train+eval pairs'.",
+  "scope": "ONE cell, and an unusual one: terse anatomy/pathology labels on which Lingshu-32B itself scores only 0.2890. Do not generalise to 'the head never transfers' from a single out-of-domain measurement.",
+  "next_test": "leave-one-dataset-out CV inside the existing training pool measures the same thing on four datasets at zero GPU cost."
+ }
+}
