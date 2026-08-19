@@ -1,0 +1,68 @@
+{
+ "title": "radimagenet_open as a 4th open-text cell -- OUT-OF-DOMAIN transfer of the frozen head",
+ "date": "2026-08-18",
+ "no_fabricated_numbers": true,
+ "cleanliness": {
+  "rows_in_head_train_pool": 0,
+  "examples_in_lora_verifier_disjoint": 0,
+  "note": "reserved as a train source in verifier_disjoint_split.json and never spent; the frozen head has never seen a radimagenet image or question."
+ },
+ "n_questions": 2000,
+ "n_candidate_rows": 8155,
+ "n_dropped_missing_baseline": 0,
+ "mean_distinct_candidates": 4.0775,
+ "arms_judge": {
+  "always_7b_greedy": 0.321,
+  "lingshu32b_direct": 0.289,
+  "head_bestof8_selected": 0.3295,
+  "oracle_at_8": 0.512,
+  "sel_eff": 0.6435546875
+ },
+ "deltas": {
+  "head_vs_always_7b": {
+   "delta": 0.008500000000000008,
+   "ci": [
+    -0.007000000000000006,
+    0.02400000000000002
+   ],
+   "n": 2000,
+   "verdict": "TIE"
+  },
+  "head_vs_lingshu32b_direct": {
+   "delta": 0.040500000000000036,
+   "ci": [
+    0.02100000000000002,
+    0.0595
+   ],
+   "n": 2000,
+   "verdict": "WIN"
+  },
+  "always_7b_vs_lingshu32b_direct": {
+   "delta": 0.03200000000000003,
+   "ci": [
+    0.013487500000000024,
+    0.04999999999999999
+   ],
+   "n": 2000,
+   "verdict": "WIN"
+  }
+ },
+ "provenance": {
+  "features": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_radimagenet.npz",
+  "head": "ckpts/train/genframe_head_ens8 (frozen, 8 seeds, layer 21 h_span)",
+  "greedy": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b.judge.jsonl",
+  "pool": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc8_scexploded.judge.jsonl",
+  "strong": "ckpts/openvqa/strong_lingshu/ckpt_radimagenet_open_lingshu32b_t0.judge.jsonl"
+ },
+ "readout_correction_2026_08_19": {
+  "what": "the deployed readout is per-seed within-pool rank_avg then mean over seeds; the first version of this script used a seed-mean LOGIT, which is not scale-invariant across seeds. Both are reported so the size of the error is visible rather than silently replaced.",
+  "sel_eff_deployed_readout": 0.6435546875,
+  "sel_eff_seed_mean_logit_WRONG": 0.6396484375,
+  "acc_seed_mean_logit_WRONG": 0.3275
+ },
+ "caveats": [
+  "JUDGE ONLY. Exact match is not reported: radimagenet golds are terse anatomy/pathology labels and EM would be dominated by surface form. The judge was audited -- of the 1,422 answers it marks wrong for the 32B, only 3 contain the gold string -- so the low 32B score is not a formatting artifact.",
+  "Picks are over DISTINCT normalised answers, not the 8 raw slots. Duplicates share a feature vector and a label, so the picked ANSWER is the same either way; only the tie-break differs from the 8-slot convention used on the frozen three cells.",
+  "The head is applied with its FROZEN train standardiser (mu/sd fitted on the four in-domain sets). No refit, no recalibration on radimagenet."
+ ]
+}
