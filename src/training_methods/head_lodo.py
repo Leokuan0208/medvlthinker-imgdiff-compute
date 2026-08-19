@@ -68,10 +68,17 @@ def main():
     ap.add_argument("--threads", type=int, default=8)
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--bigtrain", action="store_true",
+                    help="use the full 60,384-row judged pool instead of the inherited draw")
     A = ap.parse_args()
     HS.torch.set_num_threads(A.threads)
 
-    H, y, qid, img, ds = HS.load_train()
+    if A.bigtrain:
+        sys.path.insert(0, D)
+        from head_eval_bce import load_train_big
+        H, y, qid, img, ds = load_train_big()
+    else:
+        H, y, qid, img, ds = HS.load_train()
     sets = sorted(set(ds))
     print(f"rows={len(y)} datasets={ {d: int((ds==d).sum()) for d in sets} }", flush=True)
 

@@ -68,13 +68,21 @@ def kill_tree(p):
 def verify(job, logpath):
     """Exit status alone is not trusted; check the artefacts the job promised."""
     problems = []
-    exp = job.get("expect")
-    if exp:
+    # `expect` may be a path or a list of paths; expect_min_bytes guards against the failure that
+    # bit us on 2026-08-19, when omnimed_extract "passed" having written 1,028-byte empty npz files
+    # because its log marker echoed regardless of whether the extraction found any rows.
+    exps = job.get("expect") or []
+    if isinstance(exps, str):
+        exps = [exps]
+    floor = int(job.get("expect_min_bytes", 1))
+    for exp in exps:
         p = exp if os.path.isabs(exp) else os.path.join(ROOT, exp)
         if not os.path.exists(p):
             problems.append(f"expected file missing: {exp}")
-        elif os.path.getsize(p) == 0:
-            problems.append(f"expected file empty: {exp}")
+        else:
+            sz = os.path.getsize(p)
+            if sz < floor:
+                problems.append(f"expected file too small: {exp} is {sz}B < {floor}B")
     g = job.get("expect_grep")
     if g:
         try:
