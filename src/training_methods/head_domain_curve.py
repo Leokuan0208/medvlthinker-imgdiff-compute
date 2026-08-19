@@ -60,6 +60,22 @@ def pick_stats(scores, y, qid, mask):
             "sel_eff": float(got[rec == 1].mean()), "oracle": float(rec.mean())}
 
 
+def string_prior_scores(y, na, train_mask):
+    """P(y=1 | normalised answer STRING) counted on the training rows -- no image, no head.
+
+    MANDATORY 2026-08-19.  On RadImageNet this counter alone reproduced 72.6% of the head's entire
+    donor gain, and 62.8% on PathVQA, because both have small closed answer vocabularies.  A donor
+    curve reported without it measures label-vocabulary memorisation as if it were verification.
+    """
+    pos, tot = defaultdict(int), defaultdict(int)
+    idx = np.where(train_mask)[0]
+    for i in idx:
+        tot[na[i]] += 1
+        pos[na[i]] += int(y[i])
+    gp = float(y[idx].mean()) if len(idx) else 0.5
+    return np.array([(pos[a] + gp * 2) / (tot[a] + 2) if tot[a] else gp for a in na])
+
+
 def random_floor(y, qid, mask):
     idx = np.where(mask)[0]
     byq = defaultdict(list)
@@ -83,6 +99,15 @@ def main():
 
     Hb, yb, qb, ib, db = HS.load_train()
     Hr, yr, qr, ir, dr = load_radimagenet()
+    brows = []
+    for sh in (0, 1):
+        brows += json.load(open(os.path.join(HS.FEATS, f"generator_train_s{sh}of2.meta.json")))["rows"]
+    brows = [r for r in brows if r.get("n_tok", -1) > 0]
+    nab = np.array([str(r["na"]).strip().lower().rstrip(".") for r in brows])
+    rmeta = json.load(open(os.path.join(FEATS, "generator_eval_radimagenet.meta.json")))["rows"]
+    rmeta = [r for r in rmeta if r.get("n_tok", -1) > 0]
+    nar = np.array([str(r["na"]).strip().lower().rstrip(".") for r in rmeta])
+    assert len(nab) == len(yb) and len(nar) == len(yr)
     print(f"base pool {len(yb)} rows | radimagenet {len(yr)} rows / {len(set(ir))} images",
           flush=True)
 
@@ -131,7 +156,14 @@ def main():
                 sc = HS.predict(m, (Xr - mu) / sg)
                 runs.append(pick_stats(sc, yr, qr, is_eval))
             se = [r["sel_eff"] for r in runs]; ac = [r["acc"] for r in runs]
+            # the control: counted on the SAME rows the head trained on, scored on the eval half
+            na_all = np.concatenate([nab, nar]); y_all = np.concatenate([yb, yr])
+            tr_mask = np.concatenate([np.ones(len(yb), bool), use])
+            spv = string_prior_scores(y_all, na_all, tr_mask)[len(yb):]
+            sp = pick_stats(spv, yr, qr, is_eval)
             art["results"][cname][f"{fr:.2f}"] = {
+                "string_prior_sel_eff": sp["sel_eff"],
+                "head_minus_string_prior": float(np.mean(se) - sp["sel_eff"]),
                 "donor_images": k, "donor_rows": int(use.sum()),
                 "donor_questions": int(len(set(qr[use]))) if k else 0,
                 "sel_eff_mean": float(np.mean(se)), "sel_eff_sd": float(np.std(se)),
@@ -141,7 +173,8 @@ def main():
             r = art["results"][cname][f"{fr:.2f}"]
             print(f"  [{cname}] frac {fr:4.2f}  {r['donor_questions']:5} donor questions -> "
                   f"sel_eff {r['sel_eff_mean']:.4f} (sd {r['sel_eff_sd']:.4f})  "
-                  f"acc {r['acc_mean']:.4f}", flush=True)
+                  f"acc {r['acc_mean']:.4f}  strprior {r['string_prior_sel_eff']:.4f}  "
+                  f"head-prior {r['head_minus_string_prior']:+.4f}", flush=True)
             json.dump(art, open(A.out, "w"), indent=1)
     print(f"\nwrote {A.out}")
 

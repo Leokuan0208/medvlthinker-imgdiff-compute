@@ -229,6 +229,13 @@ def run_cv(cfg, H, y, qid, img, ds, seeds=(0,)):
     X = add_setrel(X, qid, cfg.get("setrel", "none"))
     fold_of = {h: int(hashlib.md5(str(h).encode()).hexdigest(), 16) % FOLDS for h in set(img)}
     fo = np.array([fold_of[h] for h in img])
+    if cfg.get("pairs_only"):
+        # restrict BCE to exactly the questions BT is given: those with both labels present.
+        byq_lab = defaultdict(set)
+        for i, q in enumerate(qid):
+            byq_lab[q].add(int(y[i]))
+        keep = np.array([len(byq_lab[q]) == 2 for q in qid])
+        X, y, qid, img, ds = X[keep], y[keep], qid[keep], img[keep], ds[keep]
     w = None
     if cfg.get("reweight") == "per_ds":
         cnt = Counter(ds); n = len(ds)
@@ -401,6 +408,34 @@ def grid_main2():
     return out
 
 
+def grid_budget():
+    """SETTLE OR DROP THE OBJECTIVE CLAIM (2026-08-19 audit).
+
+    The reported +0.01695 for bce over bt is confounded two ways, both inside fit():
+      DATA   _groups(need_both=True) drops every question lacking both a positive and a negative,
+             so BT trains on 12,244 of 31,498 rows (38.9%) and 2,391 of 6,029 questions (39.7%),
+             while BCE sees all of them.
+      STEPS  at equal `epochs`, BCE takes epochs*n/256 steps and BT epochs*NG/64 -- 3,720 vs 1,140,
+             a factor of 3.26.
+    This project's own data curve says the last data doubling is worth +0.024-0.036 sel_eff, so a
+    2.57x data deficit alone predicts the entire gap.  This grid removes both confounds:
+      bt at epochs 30/60/98/120   -- step-matched at ~98
+      bce at epochs 9             -- step-matched DOWN to bt's budget instead
+      bce_pairsonly               -- BCE restricted to the same both-label questions BT sees
+    If bce still wins with the budget matched, the claim stands.  If not, it is dropped.
+    """
+    B = {**BASE, "hidden": 256}
+    g = []
+    for ep in (30, 60, 98, 120):
+        g.append({**B, "objective": "bt", "epochs": ep, "tag": f"BUD_bt_ep{ep}"})
+    for ep in (9, 30):
+        g.append({**B, "objective": "bce", "epochs": ep, "tag": f"BUD_bce_ep{ep}"})
+    for ep in (30, 98):
+        g.append({**B, "objective": "bce", "epochs": ep, "pairs_only": 1,
+                  "tag": f"BUD_bce_pairsonly_ep{ep}"})
+    return g
+
+
 def grid_reg():
     """REGULARISATION.  head_curve_bce_2026-08-18.json shows the head MEMORISES: train sel_eff
     0.96-0.99 against CV 0.59-0.70, a gap of +0.27 to +0.40 at every width, and the gap shrinks
@@ -485,7 +520,7 @@ def load_done():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", default="null",
-                    choices=["null", "main", "main2", "final", "reg"])
+                    choices=["null", "main", "main2", "final", "reg", "budget"])
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--nshard", type=int, default=1)
@@ -505,7 +540,7 @@ def main():
           f"pos_rate={y.mean():.4f}", flush=True)
 
     cfgs = {"null": grid_null, "main": grid_main, "main2": grid_main2,
-            "final": grid_final, "reg": grid_reg}[A.stage]()
+            "final": grid_final, "reg": grid_reg, "budget": grid_budget}[A.stage]()
     cfgs = [c for i, c in enumerate(cfgs) if i % A.nshard == A.shard]
     done = load_done()
     print(f"[{A.stage}] {len(cfgs)} configs for shard {A.shard}/{A.nshard}; "

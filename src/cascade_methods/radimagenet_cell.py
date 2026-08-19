@@ -32,14 +32,23 @@ def loadj(p):
     return {json.loads(l)["idx"]: json.loads(l) for l in open(p) if l.strip()}
 
 
-def boot_delta(a, b, nboot=10000, seed=20260818):
-    """Paired item bootstrap of mean(a) - mean(b)."""
+def boot_delta(a, b, nboot=10000, seed=20260818, clusters=None):
+    """Paired bootstrap of mean(a) - mean(b), resampling IMAGES when clusters are given.
+
+    BUGFIX 2026-08-19: resampling questions i.i.d. ignores that this cell is 2,000 questions over
+    1,000 images (2 per image), so every interval was too narrow.
+    """
     a, b = np.asarray(a, float), np.asarray(b, float)
     rng = np.random.default_rng(seed)
     n = len(a)
     d = np.empty(nboot)
+    groups = ([np.where(np.asarray(clusters) == c)[0] for c in np.unique(clusters)]
+              if clusters is not None else None)
     for i in range(nboot):
-        s = rng.integers(0, n, n)
+        if groups is None:
+            s = rng.integers(0, n, n)
+        else:
+            s = np.concatenate([groups[k] for k in rng.integers(0, len(groups), len(groups))])
         d[i] = a[s].mean() - b[s].mean()
     lo, hi = np.percentile(d, [2.5, 97.5])
     return {"delta": float(a.mean() - b.mean()), "ci": [float(lo), float(hi)], "n": n,
@@ -66,6 +75,8 @@ def main():
     for i, r in enumerate(rows):
         byq[r["idx"]].append(i)
     qids = sorted(byq, key=lambda k: (len(str(k)), str(k)))
+    q_img = {r["idx"]: r["img_md5"] for r in rows}
+    clusters = np.array([q_img[q] for q in qids])
 
     # ---- the frozen head, applied out of domain --------------------------------------------
     from genframe_selector import FrozenSelector
@@ -125,9 +136,9 @@ def main():
             "sel_eff": float(picked_ok[keep][oracle_ok[keep] == 1].mean()),
         },
         "deltas": {
-            "head_vs_always_7b": boot_delta(picked_ok[keep], greedy[keep], A.nboot),
-            "head_vs_lingshu32b_direct": boot_delta(picked_ok[keep], strong[keep], A.nboot),
-            "always_7b_vs_lingshu32b_direct": boot_delta(greedy[keep], strong[keep], A.nboot),
+            "head_vs_always_7b": boot_delta(picked_ok[keep], greedy[keep], A.nboot, clusters=clusters[keep]),
+            "head_vs_lingshu32b_direct": boot_delta(picked_ok[keep], strong[keep], A.nboot, clusters=clusters[keep]),
+            "always_7b_vs_lingshu32b_direct": boot_delta(greedy[keep], strong[keep], A.nboot, clusters=clusters[keep]),
         },
         "provenance": {
             "features": A.feats + ".npz",

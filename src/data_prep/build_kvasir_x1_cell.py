@@ -38,6 +38,16 @@ def main():
     from PIL import Image
 
     burned = {os.path.splitext(x)[0] for x in os.listdir(BURNED_DIR)}
+    # PERCEPTUAL EXCLUSION 2026-08-19.  Id-disjointness is not enough for endoscopy: frames seconds
+    # apart in one procedure get different ids and near-identical pixels.  A 16x16 average-hash scan
+    # found 136 of the 3,006 "held-out" images (4.52%) within 12 bits of a burned image, some at
+    # distance 0.  Those ids are excluded here, so the cell is held out perceptually as well as
+    # nominally.  Regenerate the list with src/data_prep/kvasir_x1_neardup_scan.py.
+    ndp = "results/cascade_methods/artifacts/kvasir_x1_neardup_2026-08-19.json"
+    if os.path.exists(ndp):
+        nd = set(json.load(open(ndp)).get("excluded_image_ids", []))
+        print(f"[excl] {len(nd)} additional near-duplicate image ids", flush=True)
+        burned |= nd
     print(f"[excl] {len(burned)} contaminated image ids from {BURNED_DIR}", flush=True)
 
     f = pq.ParquetFile(A.src)

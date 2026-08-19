@@ -76,7 +76,8 @@ def load_eval():
     y = np.array([r["y"] for r in rows], dtype=np.float32)
     qid = np.array([f"{r['ds']}|{r['idx']}" for r in rows])
     ds = np.array([r["ds"] for r in rows])
-    return H, y, qid, ds
+    img = np.array([r["img_md5"] for r in rows])
+    return H, y, qid, ds, img
 
 
 # THE canonical ranking convention -- imported, not reimplemented, because tie handling here is
@@ -97,10 +98,11 @@ def ensemble_pick(L, qid):
     return picks
 
 
-def score(picks, y, qid, ds):
-    byq_ds = {}
+def score(picks, y, qid, ds, imgs=None):
+    byq_ds, byq_img = {}, {}
     for i, q in enumerate(qid):
         byq_ds.setdefault(q, ds[i])
+        byq_img.setdefault(q, imgs[i] if imgs is not None else q)
     rec = {}
     byq = defaultdict(list)
     for i, q in enumerate(qid):
@@ -111,27 +113,48 @@ def score(picks, y, qid, ds):
     got = np.array([int(y[picks[q]]) for q in qs])
     r = np.array([rec[q] for q in qs])
     d = np.array([byq_ds[q] for q in qs])
+    cl = np.array([byq_img[q] for q in qs])
     out = {"n_q": len(qs), "acc": float(got.mean()),
            "sel_eff": float(got[r == 1].mean()), "oracle": float(r.mean()), "per_ds": {}}
     for c in EVAL_DS:
         m = d == c
         out["per_ds"][c] = {"n": int(m.sum()), "acc": float(got[m].mean()),
                             "sel_eff": float(got[m & (r == 1)].mean())}
-    return out, got, r, d
+    return out, got, r, d, cl
 
 
-def paired_boot(a, b, rec=None, nboot=10000, seed=20260818):
+def paired_boot(a, b, rec=None, nboot=10000, seed=20260818, clusters=None):
+    """Paired bootstrap. If `clusters` is given, resample CLUSTERS (images) and take all their
+    questions -- questions about the same image are not independent.
+
+    BUGFIX 2026-08-19: this resampled questions i.i.d., but the eval pool is 2,345 questions over
+    528 images (4.44 per image, max 21). At an intra-cluster correlation of 0.2 the design effect is
+    1.69 and every interval was ~30% too narrow. No claim flipped, because every delta was a TIE --
+    but the first positive result would have been overstated.
+    """
     a, b = np.asarray(a, float), np.asarray(b, float)
     rng = np.random.default_rng(seed)
     n = len(a)
     da = np.empty(nboot); de = np.empty(nboot)
     ri = np.where(rec == 1)[0] if rec is not None else None
+    if clusters is not None:
+        cl = np.asarray(clusters)
+        groups = [np.where(cl == c)[0] for c in np.unique(cl)]
+        gr_rec = ([np.array([i for i in g if rec[i] == 1]) for g in groups]
+                  if ri is not None else None)
     for i in range(nboot):
-        s = rng.integers(0, n, n)
+        if clusters is None:
+            s = rng.integers(0, n, n)
+        else:
+            pick = rng.integers(0, len(groups), len(groups))
+            s = np.concatenate([groups[k] for k in pick])
         da[i] = a[s].mean() - b[s].mean()
         if ri is not None:
-            sr = rng.integers(0, len(ri), len(ri))
-            j = ri[sr]
+            if clusters is None:
+                j = ri[rng.integers(0, len(ri), len(ri))]
+            else:
+                sel = [gr_rec[k] for k in pick if len(gr_rec[k])]
+                j = np.concatenate(sel) if sel else ri
             de[i] = a[j].mean() - b[j].mean()
     o = {"d_acc": float(a.mean() - b.mean()),
          "d_acc_ci": [float(np.percentile(da, 2.5)), float(np.percentile(da, 97.5))]}
@@ -146,7 +169,7 @@ def paired_boot(a, b, rec=None, nboot=10000, seed=20260818):
 # ------------------------------------------------------------------ stage: eval
 def stage_eval(A):
     Hb, yb, qb, ib, db = (load_train_big() if getattr(A, "bigtrain", False) else HS.load_train())
-    He, ye, qe, de = load_eval()
+    He, ye, qe, de, ie = load_eval()
     print(f"train {len(yb)} rows / {len(set(qb))} q | eval {len(ye)} rows / {len(set(qe))} q",
           flush=True)
     art = {"title": "One-shot eval of the CV-selected head objective",
@@ -178,8 +201,8 @@ def stage_eval(A):
             print(f"    [{name}] seed {s} fitted", flush=True)
         L = np.stack(L)
         picks = ensemble_pick(L, qe)
-        st, got, rec, dsv = score(picks, ye, qe, de)
-        store[name] = (got, rec, dsv)
+        st, got, rec, dsv, clv = score(picks, ye, qe, de, ie)
+        store[name] = (got, rec, dsv, clv)
         art["arms"][name] = {**{k: v for k, v in st.items()}, "config":
                              {k: cfg[k] for k in ("objective", "hidden", "layers", "pools",
                                                   "epochs", "wd", "lr")}}
@@ -191,9 +214,10 @@ def stage_eval(A):
     for name in ARMS:
         if name == ctl:
             continue
-        a, rec, dsv = store[name]
+        a, rec, dsv, clv = store[name]
         b = store[ctl][0]
-        bt = paired_boot(a, b, rec)
+        bt = paired_boot(a, b, rec, clusters=clv)   # image-clustered
+        bt["bootstrap"] = "image-clustered (528 images / 2,345 questions)"
         clean = all(art["arms"][name]["per_ds"][c]["sel_eff"] >=
                     art["arms"][ctl]["per_ds"][c]["sel_eff"] for c in EVAL_DS)
         bt["guardrail_clean_sel_eff"] = bool(clean)
