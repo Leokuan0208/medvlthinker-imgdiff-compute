@@ -1,0 +1,13 @@
+[
+ {"name": "lodo_rerun_fixed_adam",
+  "cmd": "export HEAD_SWEEP_THREADS=6 OMP_NUM_THREADS=6 MKL_NUM_THREADS=6; python3 -X faulthandler src/training_methods/head_lodo.py --threads 6 --seeds 3 --out results/cascade_methods/artifacts/head_lodo_FIXEDADAM_2026-08-19.json",
+  "timeout_s": 28800, "stall_s": 2400,
+  "expect": "results/cascade_methods/artifacts/head_lodo_FIXEDADAM_2026-08-19.json",
+  "expect_min_bytes": 5000},
+ {"name": "omnimed_rebuild_filtered",
+  "cmd": "python3 src/data_prep/build_omnimed_opentext.py --per_modality 2500 --per_dataset_cap 900 --audit_overlap && echo OMNI_REBUILD_DONE",
+  "timeout_s": 7200, "stall_s": 1200,
+  "expect": "/data/dan/dataset/omnimed_opentext/omnimed_open.json",
+  "expect_min_bytes": 500000,
+  "expect_grep": "OMNI_REBUILD_DONE"}
+]

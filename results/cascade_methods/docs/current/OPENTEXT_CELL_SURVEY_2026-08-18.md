@@ -1,3 +1,17 @@
+> # ⚠️ SUPERSEDED IN PART — read `OPENTEXT_CORRECTIONS_2026-08-19.md` first
+>
+> A three-way audit on 2026-08-19 overturned several conclusions in this file:
+> - **GEMeX is NOT unobtainable** (§3 below). `BoKelvin/GEMeX-ThinkVG` is public and holds
+>   **61,240 open-ended questions**, mean 4.62 words. Only two repo IDs were checked here.
+> - **VQA-Med 2019 was never inspected.** Its C4 Abnormality split is a genuine open cell:
+>   3,817 QA pairs, 1,671 golds, mean 3.25 words, zero pixel collisions with our eval images.
+> - **Medical-Diff-VQA's deferral reason was wrong** — 76.5% is single-image, not two-image
+>   (though the free-text yield is ~97k, not 536k).
+> - **The Quilt-VQA correction in §2 is itself wrong.** "mean 1.28 clauses / 20.9% with ≥2" is a
+>   SENTENCE count; clause-level splits give 2.02–2.55 and 54.9–66.8%. The original objection was
+>   never refuted. An empirical test is queued.
+> - ProbMed's rejection stands (one nit: 6,301 images, not 6,303).
+
 # Open-text cell survey — what can and cannot become a 4th..Nth cell
 **2026-08-18.** Written while the RadImageNet extraction runs. Every access fact was verified
 against the live HF API or the file on disk on this date, not recalled.

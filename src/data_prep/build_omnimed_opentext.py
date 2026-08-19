@@ -13,12 +13,29 @@ open-access half is 88,996 samples over 42 source datasets and 9 modalities, of 
 absent from our pool entirely: ultrasound (10,991), dermoscopy (6,679), microscopy (5,680), fundus
 photography (5,398) and OCT (4,646).
 
-WHY IT FITS THE PIPELINE.  OmniMedVQA ships as multiple choice, but `gt_answer` is a free-text
-STRING ("Fundus imaging"), not a letter, and averages 2.35 words -- the same profile as our own
-open cells (slake_open gold 1.72, pathvqa_open gold 2.36).  So the options are simply dropped and
-the question asked open-ended, which is also the intervention we independently validated as a
-DEBIASING fix (output_bias_correct_2026-08-17.json: naming the answer space biases the model).
-The 32B judge then scores free text against gt_answer exactly as it does for every other cell.
+RETRACTION 2026-08-19 -- THE ORIGINAL JUSTIFICATION HERE WAS WRONG, AND WRONG IN A WAY THIS FILE
+HAD ALREADY BEEN WARNED ABOUT.  It argued that OmniMedVQA fits because `gt_answer` averages 2.35
+words, "the same profile as our own open cells".  That is an ANSWER-LENGTH test -- the exact test
+OPENTEXT_CELL_SURVEY_2026-08-18.md section 2 had already disowned when correcting the Quilt-VQA
+rejection: "The disqualifying property is the KIND of answer, not the count."  The lesson was
+written down and then not applied one day later.
+
+Measured on the 15,831-row file this script actually produced:
+  Disease Diagnosis          8,191 rows (51.7%) with only 224 distinct golds
+  ... of those, 42.9% have a question string that maps to MORE THAN ONE gold
+  ... the largest template, "What can be observed in this image?", is 436 rows over 65 golds,
+      i.e. a 65-way blind classification once the options are gone
+  binary-in-disguise         2,738 rows (17.3%) -- e.g. "Is the lesion depicted in this image
+                             non-cancerous?" -> gold "Yes".  That is the property that got
+                             ProbMed rejected, smuggled into "open-text" training data.
+  golds sit at a taxonomy abstraction no model emits unprompted: "Benign epidermal.",
+  "Chondral abnormality", "Arterial pathology".
+
+WHAT SURVIVES.  Modality Recognition and Anatomy Identification DO constrain the answer space from
+the question alone ("What imaging technique was employed?" -> "Fundus imaging"; "What organ is
+shown?" -> "liver").  That is 5,670 of the 15,831 rows over 74 distinct golds, and it is what
+--qtypes now defaults to.  Disease Diagnosis and Lesion Grading are excluded: their golds are only
+meaningful as a choice among the options that were dropped.
 
 NOT AN EVAL CELL.  OmniMedVQA is not one of the project's eight reporting cells, so using it as
 training data cannot contaminate a reported number.  --audit_overlap additionally checks its image
@@ -65,13 +82,22 @@ def main():
                     help="cap per source dataset so one big set cannot dominate its modality")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--qtypes", nargs="*",
+                    default=["Modality Recognition", "Anatomy Identification"],
+                    help="question types to keep. Default excludes Disease Diagnosis and Lesion "
+                         "Grading, whose golds are only meaningful given the dropped options. "
+                         "Pass ALL to disable the filter (and read the retraction above first).")
     ap.add_argument("--audit_overlap", action="store_true",
                     help="hash every drawn image against the eval pools and refuse to write on a hit")
     A = ap.parse_args()
 
-    recs = []
+    keep_qt = None if (len(A.qtypes) == 1 and A.qtypes[0] == "ALL") else set(A.qtypes)
+    recs, dropped = [], 0
     for f in sorted(glob.glob(os.path.join(QA, "*.json"))):
         for r in json.load(open(f)):
+            if keep_qt is not None and r.get("question_type") not in keep_qt:
+                dropped += 1
+                continue
             ip = os.path.join(OMNI, r["image_path"])
             if not os.path.exists(ip):
                 continue
@@ -79,6 +105,8 @@ def main():
                          "qtype": r.get("question_type", "?"), "question": r["question"],
                          "answer": str(r["gt_answer"]), "img_path": ip,
                          "qid": r.get("question_id", "")})
+    print(f"[filter] kept question types {sorted(keep_qt) if keep_qt else 'ALL'}; "
+          f"dropped {dropped} rows whose gold needs the options", flush=True)
     print(f"[load] {len(recs)} answerable records over "
           f"{len({r['src'] for r in recs})} datasets, {len({r['modality'] for r in recs})} modalities",
           flush=True)

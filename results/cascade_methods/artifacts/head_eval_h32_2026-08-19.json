@@ -1,0 +1,220 @@
+{
+ "title": "One-shot eval of the CV-selected head objective",
+ "date": "2026-08-18",
+ "no_fabricated_numbers": true,
+ "selection": "configs chosen on 5-fold image-grouped CV inside the TRAIN pool only (head_sweep round 1, 74 configs). Eval was read for the first time here.",
+ "multiplicity": "THREE arms are scored on eval, not one: the CV winner, the CV runner-up at a deployable width, and the deployed objective refit as a matched control. Declared rather than hidden.",
+ "readout": "8 seeds; per-seed within-question rank_avg (ties averaged); mean over seeds; argmax with first-index tie-break -- the frozen deployed convention.",
+ "frozen_artifact_published": {
+  "head_alone_sel_eff": 0.8010899182561307,
+  "head_alone_acc": 0.5014925373134328
+ },
+ "train_pool": "bigtrain: every judged row",
+ "threads": 6,
+ "seeds": 8,
+ "arms": {
+  "control_bt_h256_REFIT": {
+   "n_q": 2345,
+   "acc": 0.518550106609808,
+   "sel_eff": 0.8283378746594006,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.7875968992248062,
+     "sel_eff": 0.8959435626102292
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.47,
+     "sel_eff": 0.746031746031746
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.4093333333333333,
+     "sel_eff": 0.792258064516129
+    }
+   },
+   "config": {
+    "objective": "bt",
+    "hidden": 256,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  },
+  "reg_bce_h32": {
+   "n_q": 2345,
+   "acc": 0.518550106609808,
+   "sel_eff": 0.8283378746594006,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.7953488372093023,
+     "sel_eff": 0.9047619047619048
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.505,
+     "sel_eff": 0.8015873015873016
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.4013333333333333,
+     "sel_eff": 0.7767741935483871
+    }
+   },
+   "config": {
+    "objective": "bce",
+    "hidden": 32,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  },
+  "reg_bce_h64": {
+   "n_q": 2345,
+   "acc": 0.5245202558635395,
+   "sel_eff": 0.837874659400545,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.8077519379844961,
+     "sel_eff": 0.9188712522045855
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.5,
+     "sel_eff": 0.7936507936507936
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.406,
+     "sel_eff": 0.7858064516129032
+    }
+   },
+   "config": {
+    "objective": "bce",
+    "hidden": 64,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  },
+  "cv_runnerup_bce_h256": {
+   "n_q": 2345,
+   "acc": 0.5257995735607676,
+   "sel_eff": 0.8399182561307902,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.8093023255813954,
+     "sel_eff": 0.9206349206349206
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.52,
+     "sel_eff": 0.8253968253968254
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.4046666666666667,
+     "sel_eff": 0.7832258064516129
+    }
+   },
+   "config": {
+    "objective": "bce",
+    "hidden": 256,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  }
+ },
+ "deltas_vs_refit_control": {
+  "reg_bce_h32": {
+   "d_acc": 0.0,
+   "d_acc_ci": [
+    -0.009381663113006478,
+    0.009381663113006367
+   ],
+   "d_sel_eff": 0.0,
+   "d_sel_eff_ci": [
+    -0.01498637602179842,
+    0.01498637602179842
+   ],
+   "verdict": "TIE",
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": 0.00881834215167554,
+    "vqa_rad_open": 0.05555555555555558,
+    "pathvqa_open": -0.015483870967741953
+   }
+  },
+  "reg_bce_h64": {
+   "d_acc": 0.005970149253731405,
+   "d_acc_ci": [
+    -0.003837953091684443,
+    0.015351812366737771
+   ],
+   "d_sel_eff": 0.009536784741144388,
+   "d_sel_eff_ci": [
+    -0.00544959128065392,
+    0.02452316076294281
+   ],
+   "verdict": "TIE",
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": 0.022927689594356315,
+    "vqa_rad_open": 0.04761904761904756,
+    "pathvqa_open": -0.006451612903225823
+   }
+  },
+  "cv_runnerup_bce_h256": {
+   "d_acc": 0.0072494669509595155,
+   "d_acc_ci": [
+    -0.002132196162046962,
+    0.016631130063965882
+   ],
+   "d_sel_eff": 0.011580381471389622,
+   "d_sel_eff_ci": [
+    -0.0034059945504086864,
+    0.026566757493188042
+   ],
+   "verdict": "TIE",
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": 0.024691358024691357,
+    "vqa_rad_open": 0.0793650793650793,
+    "pathvqa_open": -0.00903225806451613
+   }
+  }
+ }
+}
