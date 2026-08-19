@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""head_omnimed_curve.py -- HOW MUCH in-domain data does the head need to stop being useless?
+"""head_omnimed_curve.py
+STRING-PRIOR CONTROL IS MANDATORY BEFORE THIS ARTIFACT IS QUOTED.  The RadImageNet donor curve this
+script was copied from was found on 2026-08-19 to be 72.6% reproducible by a counter over answer
+strings with no image and no head.  OmniMedVQA's filtered draw has only ~74 distinct golds, so it
+is MORE exposed to that failure, not less.  Do not report a gain here without head-minus-prior.
+ -- HOW MUCH in-domain data does the head need to stop being useless?
 
 THE QUESTION.  radimagenet_cell_2026-08-18.json showed the frozen head is a TIE against greedy on
 RadImageNet (sel_eff 0.6396 vs a 0.5823 random floor) because it never trained on that domain.  The
@@ -16,7 +21,7 @@ the curve from there is the value of in-domain data, measured rather than assume
 Image-grouped throughout: an image is wholly donor or wholly eval, never split, so no question can
 leak across.
 
-  python3 src/training_methods/head_domain_curve.py --threads 24
+  python3 src/training_methods/head_omnimed_curve.py --threads 8
 """
 import argparse, hashlib, json, os, sys
 import numpy as np
@@ -33,7 +38,7 @@ CONFIGS = {"deployed_bt_h256": dict(HS.BASE),
            "sweep_bce_h256": {**HS.BASE, "objective": "bce", "hidden": 256}}
 
 
-def load_radimagenet():
+def load_omnimed():
     """OmniMedVQA, extracted in two shards -- merged here."""
     zs, rows = [], []
     for sh in (0, 1):
@@ -86,7 +91,7 @@ def main():
     HS.torch.set_num_threads(A.threads)
 
     Hb, yb, qb, ib, db = HS.load_train()
-    Hr, yr, qr, ir, dr = load_radimagenet()
+    Hr, yr, qr, ir, dr = load_omnimed()
     print(f"base pool {len(yb)} rows | radimagenet {len(yr)} rows / {len(set(ir))} images",
           flush=True)
 
@@ -100,7 +105,7 @@ def main():
     floor = random_floor(yr, qr, is_eval)
     art = {"title": "How much in-domain data does the head need? OmniMedVQA donor curve",
            "date": "2026-08-18", "no_fabricated_numbers": True,
-           "design": "RadImageNet's images are halved by md5. The EVAL half is never trained on. "
+           "design": "OmniMedVQA's images are halved by md5. The EVAL half is never trained on. "
                      "The head is fitted on the four existing training datasets plus a growing "
                      "fraction of the DONOR half's images, and always scored on the eval half. "
                      "Fraction 0.0 IS the frozen head's out-of-domain condition. Zero GPU: every "

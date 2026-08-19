@@ -69,15 +69,23 @@ def main():
 
     # ---- the frozen head, applied out of domain --------------------------------------------
     from genframe_selector import FrozenSelector
+    from genframe_data import rank_avg
     sel = FrozenSelector.load()
     L = sel.head_logits(H)                                   # (8 seeds, n_rows)
-    head_score = L.mean(0)                                   # seed-mean logit
 
-    picked_ok, oracle_ok = [], []
+    # BUGFIX 2026-08-19: this used L.mean(0), a SEED-MEAN LOGIT.  The deployed convention
+    # (genframe_selector.FrozenSelector.head_rank) is per-seed WITHIN-POOL rank_avg, then the mean
+    # over seeds.  Mean-of-logits is not scale-invariant across seeds -- one seed with larger logit
+    # magnitude dominates the ensemble -- so the previous number was not the deployed readout, and
+    # the artifact's caveat list did not say so.
+    picked_ok, oracle_ok, picked_ok_OLD = [], [], []
     for q in qids:
         ii = np.array(byq[q])
-        picked_ok.append(int(y[ii][int(np.argmax(head_score[ii]))]))
+        score = np.mean([rank_avg(L[k][ii]) for k in range(L.shape[0])], axis=0)
+        picked_ok.append(int(y[ii][int(np.argmax(score))]))
+        picked_ok_OLD.append(int(y[ii][int(np.argmax(L.mean(0)[ii]))]))
         oracle_ok.append(int(y[ii].max()))
+    picked_ok_OLD = np.array(picked_ok_OLD)
     picked_ok = np.array(picked_ok); oracle_ok = np.array(oracle_ok)
 
     # ---- the fixed baselines ----------------------------------------------------------------
@@ -128,6 +136,14 @@ def main():
             "pool": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc8_scexploded.judge.jsonl",
             "strong": "ckpts/openvqa/strong_lingshu/ckpt_radimagenet_open_lingshu32b_t0.judge.jsonl",
         },
+        "readout_correction_2026_08_19": {
+            "what": "the deployed readout is per-seed within-pool rank_avg then mean over seeds; "
+                    "the first version of this script used a seed-mean LOGIT, which is not "
+                    "scale-invariant across seeds. Both are reported so the size of the error is "
+                    "visible rather than silently replaced.",
+            "sel_eff_deployed_readout": None,
+            "sel_eff_seed_mean_logit_WRONG": None,
+        },
         "caveats": [
             "JUDGE ONLY. Exact match is not reported: radimagenet golds are terse anatomy/pathology "
             "labels and EM would be dominated by surface form. The judge was audited -- of the 1,422 "
@@ -140,6 +156,11 @@ def main():
             "in-domain sets). No refit, no recalibration on radimagenet.",
         ],
     }
+    okw = picked_ok_OLD[keep]
+    art["readout_correction_2026_08_19"]["sel_eff_deployed_readout"] = art["arms_judge"]["sel_eff"]
+    art["readout_correction_2026_08_19"]["sel_eff_seed_mean_logit_WRONG"] = float(
+        okw[oracle_ok[keep] == 1].mean())
+    art["readout_correction_2026_08_19"]["acc_seed_mean_logit_WRONG"] = float(okw.mean())
     os.makedirs(os.path.dirname(A.out), exist_ok=True)
     json.dump(art, open(A.out, "w"), indent=1)
     a = art["arms_judge"]

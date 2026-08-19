@@ -56,18 +56,34 @@ NEW_MODALITIES = {"ultrasound", "Dermoscopy", "Microscopy Images", "Fundus Photo
 
 
 def img_md5(p):
+    """DECODED-RGB-PIXEL md5 -- the project's contamination currency.
+
+    BUGFIX 2026-08-19: this hashed raw FILE BYTES while the reference set it was compared against
+    (extract_generator_hidden.py:70-74) stores decoded-pixel hashes.  Two disjoint hash spaces, so
+    the collision guard was mathematically incapable of firing and its "0 collisions" line was not
+    evidence of anything.
+    """
     try:
-        with open(p, "rb") as f:
-            return hashlib.md5(f.read()).hexdigest()
+        from PIL import Image
+        with Image.open(p) as im:
+            return hashlib.md5(im.convert("RGB").tobytes()).hexdigest()
     except Exception:
         return None
 
 
+EVAL_META = ["feats_hidden/generator_eval_s0of2.meta.json",
+             "feats_hidden/generator_eval_s1of2.meta.json",
+             "feats_hidden/generator_eval_radimagenet.meta.json"]
+
+
 def eval_image_hashes():
-    """Pixel hashes of every image behind the three open eval cells, from the frozen feature cache."""
+    """Decoded-pixel hashes of every image behind EVERY open eval cell.
+
+    BUGFIX 2026-08-19: this covered only generator_eval_s{0,1}of2 -- the three original open cells --
+    and so never looked at radimagenet_open, which had meanwhile been adopted as a reporting cell.
+    """
     hs = set()
-    for sh in (0, 1):
-        p = f"feats_hidden/generator_eval_s{sh}of2.meta.json"
+    for p in EVAL_META:
         if os.path.exists(p):
             for r in json.load(open(p))["rows"]:
                 hs.add(r["img_md5"])
@@ -87,13 +103,25 @@ def main():
                     help="question types to keep. Default excludes Disease Diagnosis and Lesion "
                          "Grading, whose golds are only meaningful given the dropped options. "
                          "Pass ALL to disable the filter (and read the retraction above first).")
+    ap.add_argument("--exclude_src", nargs="*", default=["RadImageNet"],
+                    help="source datasets to drop entirely. Defaults to RadImageNet, which is the "
+                         "source of the radimagenet_open EVAL cell.")
     ap.add_argument("--audit_overlap", action="store_true",
                     help="hash every drawn image against the eval pools and refuse to write on a hit")
     A = ap.parse_args()
 
     keep_qt = None if (len(A.qtypes) == 1 and A.qtypes[0] == "ALL") else set(A.qtypes)
-    recs, dropped = [], 0
+    recs, dropped, skipped_src = [], 0, []
     for f in sorted(glob.glob(os.path.join(QA, "*.json"))):
+        # EXCLUDED 2026-08-19: RadImageNet is one of OmniMedVQA's 42 sources AND the source of the
+        # radimagenet_open eval cell.  It was 16.2% of the unfiltered draw, and the --qtypes filter
+        # RAISES it to 23.3% because Modality Recognition / Anatomy Identification are exactly the
+        # types it dominates (ultrasound and MR are 100% RadImageNet).  62 exact decoded-pixel
+        # collisions with the 1,000-image eval cell, plus task and taxonomy overlap a pixel hash
+        # cannot see.  You cannot keep both; the cell is the reported artefact, so the source goes.
+        if os.path.basename(f)[:-5] in set(A.exclude_src):
+            skipped_src.append(os.path.basename(f)[:-5])
+            continue
         for r in json.load(open(f)):
             if keep_qt is not None and r.get("question_type") not in keep_qt:
                 dropped += 1
@@ -105,6 +133,8 @@ def main():
                          "qtype": r.get("question_type", "?"), "question": r["question"],
                          "answer": str(r["gt_answer"]), "img_path": ip,
                          "qid": r.get("question_id", "")})
+    if skipped_src:
+        print(f"[filter] EXCLUDED source datasets: {sorted(set(skipped_src))}", flush=True)
     print(f"[filter] kept question types {sorted(keep_qt) if keep_qt else 'ALL'}; "
           f"dropped {dropped} rows whose gold needs the options", flush=True)
     print(f"[load] {len(recs)} answerable records over "
@@ -158,6 +188,11 @@ def main():
         print(f"[audit] 0 collisions with the eval pools", flush=True)
 
     os.makedirs(A.out, exist_ok=True)
+    # ALWAYS write the image key: without it downstream image-grouped CV cannot group the rows that
+    # share an image (2,083 of the 15,831 in the retracted draw did), and would leak across folds.
+    for r in draw:
+        if "img_md5" not in r:
+            r["img_md5"] = img_md5(r["img_path"])
     for i, r in enumerate(draw):
         r["idx"] = i
     jp = os.path.join(A.out, "omnimed_open.json")

@@ -24,6 +24,17 @@ D = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, D)
 import head_sweep as HS
 
+
+def load_answer_strings(n, bigtrain):
+    """Normalised candidate answer strings, aligned to the feature rows."""
+    stem = "generator_train_bigtrain" if bigtrain else "generator_train"
+    rows = []
+    for sh in (0, 1):
+        rows += json.load(open(os.path.join(HS.FEATS, f"{stem}_s{sh}of2.meta.json")))["rows"]
+    rows = [r for r in rows if r.get("n_tok", -1) > 0]
+    assert len(rows) == n, f"answer-string rows {len(rows)} != feature rows {n}"
+    return np.array([str(r["na"]).strip().lower().rstrip(".") for r in rows])
+
 OUT = os.path.join(HS.OUTDIR, "head_lodo_2026-08-18.json")
 
 CONFIGS = {
@@ -45,9 +56,27 @@ def pick_stats(scores, y, qid, mask):
         got.append(int(y[ii][int(np.argmax(scores[ii]))]))
         rec.append(int(y[ii].max()))
     got, rec = np.array(got), np.array(rec)
-    return {"n_q": len(got), "acc": float(got.mean()),
+    return {"n_q": len(got), "n_recoverable": int(rec.sum()), "acc": float(got.mean()),
             "sel_eff": float(got[rec == 1].mean()) if rec.sum() else float("nan"),
             "oracle": float(rec.mean())}
+
+
+def string_prior_scores(y, qid, na, train_mask):
+    """THE CONTROL THE DONOR CURVES DID NOT RUN, now mandatory on every transfer number.
+
+    Score each candidate by P(y=1 | its normalised answer STRING), counted on the training rows
+    only -- no image, no hidden state, no head.  On radimagenet this alone reproduces 72.6% of the
+    head's entire in-domain gain, and on pathvqa 62.8%, because both have small closed answer
+    vocabularies.  A transfer result that does not clear this counter is measuring label-vocabulary
+    memorisation, not verification skill.
+    """
+    pos, tot = defaultdict(int), defaultdict(int)
+    idx = np.where(train_mask)[0]
+    for i in idx:
+        tot[na[i]] += 1
+        pos[na[i]] += int(y[i])
+    gp = float(y[idx].mean()) if len(idx) else 0.5
+    return np.array([(pos[a] + gp * 2) / (tot[a] + 2) if tot[a] else gp for a in na])
 
 
 def random_floor(y, qid, mask):
@@ -79,6 +108,7 @@ def main():
         H, y, qid, img, ds = load_train_big()
     else:
         H, y, qid, img, ds = HS.load_train()
+    na = load_answer_strings(len(y), A.bigtrain)
     sets = sorted(set(ds))
     print(f"rows={len(y)} datasets={ {d: int((ds==d).sum()) for d in sets} }", flush=True)
 
@@ -101,6 +131,7 @@ def main():
         for d in sets:
             isD = ds == d
             floor = random_floor(y, qid, isD)
+            sp = pick_stats(string_prior_scores(y, qid, na, ~isD), y, qid, isD)
             # ---- OUT-OF-DOMAIN: never sees a single row of D -------------------------------
             od = []
             for s in range(A.seeds):
@@ -127,8 +158,11 @@ def main():
                                epochs=cfg["epochs"], seed=s + 100 * f)
                     sc = HS.predict(m, (X - mu) / sg)
                     per_fold.append(pick_stats(sc, y, qid, isD & (fo == f)))
-                w = np.array([p["n_q"] for p in per_fold], float)
-                idr.append({"n_q": int(w.sum()),
+                # BUGFIX 2026-08-19: weighted by n_q, but sel_eff's denominator is RECOVERABLE
+                # questions, so the aggregate was not the pooled sel_eff.
+                w = np.array([p["n_recoverable"] for p in per_fold], float)
+                w = np.where(w > 0, w, 1e-9)
+                idr.append({"n_q": int(sum(p["n_q"] for p in per_fold)),
                             "acc": float(np.average([p["acc"] for p in per_fold], weights=w)),
                             "sel_eff": float(np.average([p["sel_eff"] for p in per_fold], weights=w)),
                             "oracle": float(np.average([p["oracle"] for p in per_fold], weights=w))})
@@ -145,12 +179,16 @@ def main():
                 "out_domain_sel_eff": agg(od, "sel_eff"), "out_domain_acc": agg(od, "acc"),
                 "oracle": od[0]["oracle"],
                 "TRANSFER_PENALTY_sel_eff": float(gap),
+                "string_prior_out_domain_sel_eff": sp["sel_eff"],
+                "head_minus_string_prior_OUT": float(agg(od, "sel_eff")["mean"] - sp["sel_eff"]),
                 "headroom_above_floor_in": float((agg(idr, "sel_eff")["mean"] - floor) / (1 - floor)),
                 "headroom_above_floor_out": float((agg(od, "sel_eff")["mean"] - floor) / (1 - floor)),
             }
             r = art["results"][cname][d]
             print(f"  [{cname}] {d:22} floor {floor:.4f} | in {r['in_domain_sel_eff']['mean']:.4f} "
-                  f"| out {r['out_domain_sel_eff']['mean']:.4f} | penalty {gap:+.4f}", flush=True)
+                  f"| out {r['out_domain_sel_eff']['mean']:.4f} | penalty {gap:+.4f} "
+                  f"| strprior {sp['sel_eff']:.4f} | head-prior {r['head_minus_string_prior_OUT']:+.4f}",
+                  flush=True)
         json.dump(art, open(A.out, "w"), indent=1)
     print(f"\nwrote {A.out}")
 
