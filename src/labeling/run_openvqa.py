@@ -56,7 +56,7 @@ ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open
                 # kvasir_x1_open = the DISJOINT part of Kvasir-VQA-x1's official test split, built by
                 # src/data_prep/build_kvasir_x1_cell.py, which excludes the 1,052 images our own
                 # kvasir_open_1200 pool (and hence the head's training data) was drawn from.
-                "kvasir_x1_open", "omnimed_open", "quilt_open",
+                "kvasir_x1_open", "omnimed_open", "quilt_open", "vqamed_open",
                 # *_train = the datasets' OFFICIAL TRAIN splits, same open-ended filter. Added for the
                 # disjoint verifier retrain (src/training_methods/build_disjoint_verifier_split.py): the
                 # verifier must be trained on items that share no question and no image with the eval sets.
@@ -108,6 +108,11 @@ elif A.dataset == "radimagenet_open":
     for r in d:
         if os.path.exists(r["img_path"]):
             items.append((r["idx"], r["question"], r["answer"], r["img_path"]))
+elif A.dataset == "vqamed_open":
+    # ImageCLEF VQA-Med 2019, C4 Abnormality only -- the other three categories are closed sets
+    # (44/15/10 golds) and yes/no items are dropped at build time.
+    d = json.load(open("/data/dan/dataset/vqamed_cell/vqamed_open.json"))
+    items = [(r["idx"], r["question"], r["answer"], r["img_path"]) for r in d]
 elif A.dataset == "quilt_open":
     # Quilt-VQA OPEN split. Golds are VERBOSE (mean 20.4 words) but the verbosity is spoken-video
     # style, not extra content ("The image depicts a chordoma" == PathVQA's "chordoma"). Whether that

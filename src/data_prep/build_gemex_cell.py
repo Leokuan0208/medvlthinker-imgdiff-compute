@@ -115,6 +115,8 @@ def main():
         need = sorted({have[d] for d in df["did"].unique()})
         if A.max_images:
             need = need[:A.max_images]
+        import time as _t0
+        t_start = _t0.time()
         print(f"[4/4] pulling {len(need)} images from PhysioNet via ~/.netrc ...", flush=True)
         BASE = "https://physionet.org/files/mimic-cxr-jpg/2.1.0/files/"
 
@@ -131,12 +133,21 @@ def main():
                 return False
             return True
 
-        okn = 0
-        with cf.ThreadPoolExecutor(max_workers=12) as ex:
+        # PRINT OFTEN.  The supervisor's stall detector treats a log that stops growing as a hang,
+        # and on 2026-08-19 it correctly-by-its-own-rules killed a HEALTHY run of this job at 4,790s
+        # because 1,000 PhysioNet images take longer than the 3,600s stall threshold.  A heartbeat
+        # every 50 images and every 60 seconds keeps a slow-but-working job distinguishable from a
+        # hung one -- which is the whole point of the detector.
+        import time as _t
+        okn, last = 0, _t.time()
+        with cf.ThreadPoolExecutor(max_workers=16) as ex:
             for i, got in enumerate(ex.map(pull, need), 1):
                 okn += bool(got)
-                if i % 1000 == 0:
-                    print(f"   {i}/{len(need)}  ok={okn}", flush=True)
+                if i % 50 == 0 or _t.time() - last > 60:
+                    rate = i / max(_t.time() - t_start, 1e-9)
+                    print(f"   {i}/{len(need)}  ok={okn}  {rate:.1f} img/s  "
+                          f"eta {(len(need)-i)/max(rate,1e-9)/60:.0f} min", flush=True)
+                    last = _t.time()
         print(f"   pulled {okn}/{len(need)}", flush=True)
         keep = {d for d in df["did"].unique()
                 if os.path.exists(os.path.join(root, have[d]))}
