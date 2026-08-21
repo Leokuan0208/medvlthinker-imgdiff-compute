@@ -126,15 +126,22 @@ def main():
     base = np.zeros(len(Y), bool); base[:n0] = True
     evalmask = np.zeros(len(Y), bool); evalmask[n0:] = is_eval
 
+    # k values above the donor pool all collapse onto "use everything", and reporting them as
+    # distinct points overstates what was tested: vqamed's donor half holds 1,856 questions, so
+    # k=2000 and k=4000 were byte-identical runs and a verdict saying "never within 4000" was
+    # really "never, with every donor question we have".
+    ks_eff = sorted({min(k, len(donor_q)) for k in KS})
+
     art = {"title": f"Price of a new domain: {A.cell}", "date": "2026-08-21",
+           "donor_pool_questions": len(donor_q), "ks_effective": ks_eff,
            "no_fabricated_numbers": True,
            "endpoint": "judge-currency accuracy of the head's pick on a held-out IMAGE half of the "
                        "new cell, as labelled questions from the other half are added to the four "
                        "original training domains",
            "controls": ["string prior refitted at every k", "eval half split by image"],
-           "ks": KS, "results": {}}
+           "ks_requested": KS, "results": {}}
 
-    for k in KS:
+    for k in ks_eff:
         take = set(donor_q[:k])
         add = np.zeros(len(Y), bool)
         add[n0:] = np.array([(q in take) for q in qidc])
@@ -163,12 +170,14 @@ def main():
               f"head-prior {r['head_minus_string_prior']:+.4f}", flush=True)
         json.dump(art, open(A.out, "w"), indent=1)
 
-    cross = [k for k in KS if art["results"][str(k)]["head_minus_greedy"] > 0]
+    cross = [k for k in ks_eff if art["results"][str(k)]["head_minus_greedy"] > 0]
     art["crossover_k"] = min(cross) if cross else None
     art["VERDICT"] = (f"the head overtakes greedy on {A.cell} at ~{art['crossover_k']} labelled "
                       f"questions from that domain" if cross else
-                      f"the head NEVER overtakes greedy on {A.cell} within {max(KS)} labelled "
-                      f"questions -- the price of this domain is higher than we can pay here")
+                      f"the head NEVER overtakes greedy on {A.cell} with ALL {len(donor_q)} "
+                      f"donor questions available (the largest k tested, {max(ks_eff)}, is the "
+                      f"whole donor half) -- on this cell the binding constraint is sampling "
+                      f"COVERAGE, not selection")
     print(f"\n=> {art['VERDICT']}")
     json.dump(art, open(A.out, "w"), indent=1)
     print(f"wrote {A.out}")

@@ -104,6 +104,12 @@ def main():
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--draws", type=int, default=3, help="random domain subsets per k")
     ap.add_argument("--hidden", type=int, default=256)
+    ap.add_argument("--row_budget", type=int, default=20000,
+                    help="TOTAL training rows at EVERY k, drawn evenly across the k domains. "
+                         "Without this the curve confounds BREADTH with VOLUME -- k=6 would carry "
+                         "six times the rows of k=1, so a rising curve could be pure data scaling "
+                         "and could not answer the question the experiment was built for. 0 "
+                         "disables budgeting and restores the confounded variant.")
     ap.add_argument("--domains", nargs="*", default=None,
                     help="held-out domains this process is responsible for. The curve for one "
                          "held-out domain is independent of every other, so sharding over them is "
@@ -119,7 +125,8 @@ def main():
     art = {"title": "Does domain breadth fix the transfer wall? k-domain scaling curve",
            "date": "2026-08-19", "no_fabricated_numbers": True,
            "endpoint": "held-out-domain sel_eff MINUS the string prior fitted on the same training "
-                       "rows, as a function of how many OTHER domains the head saw",
+                       "rows, as a function of how many OTHER domains the head saw, AT A FIXED "
+                       "TOTAL ROW BUDGET so breadth is not confounded with volume",
            "domains": doms, "n_rows": int(len(y)), "results": {}}
     rng = np.random.default_rng(0)
 
@@ -137,6 +144,26 @@ def main():
                 tr = np.isin(ds, list(sub))
                 if tr.sum() < 200:
                     continue
+                if A.row_budget and tr.sum() > A.row_budget:
+                    # even quota per domain, by QUESTION so a pool is never split across the
+                    # budget boundary; leftover quota is redistributed to the domains that have it
+                    per = A.row_budget // len(sub)
+                    picked = np.zeros(len(ds), bool)
+                    short = 0
+                    for dsub in sub:
+                        qs = np.array(sorted({q for q, dd in zip(qid, ds) if dd == dsub}))
+                        rq = np.random.default_rng(abs(hash((dsub, k, len(sub)))) % (2 ** 31))
+                        rq.shuffle(qs)
+                        got, take = 0, set()
+                        for q in qs:
+                            if got >= per:
+                                break
+                            take.add(q); got += int((qid == q).sum())
+                        picked |= np.isin(qid, list(take))
+                        short += max(0, per - got)
+                    tr = picked
+                    if tr.sum() < 200:
+                        continue
                 priors.append(pick_sel_eff(string_prior(y, na, tr), y, qid, isH))
                 for s in range(A.seeds):
                     mu, sg = X[tr].mean(0), X[tr].std(0) + 1e-6
@@ -152,6 +179,7 @@ def main():
             hp = float(np.mean(vals) - np.mean(priors))
             art["results"][held][str(k)] = {
                 "n_train_domains": k, "n_subsets": len(subsets),
+                "row_budget": A.row_budget,
                 "out_sel_eff": float(np.mean(vals)), "sd": float(np.std(vals)),
                 "string_prior": float(np.mean(priors)), "head_minus_prior": hp}
             print(f"  [{held:20}] k={k}  sel_eff {np.mean(vals):.4f}  prior {np.mean(priors):.4f}"
