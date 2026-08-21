@@ -51,6 +51,9 @@
 > verbatim from this file on 2026-08-11 to keep the auto-loaded context small. Consult it before
 > reviving, re-deriving, or re-quoting an older number; the `+0.02xx` number family in particular has
 > four axes of ambiguity and is decoded in retrospective §10.3.
+> **`.../TRANSFER_WALL_2026-08-21.md`** — the open-text transfer wall: five closed routes, the
+> self-consistency sign-flip at the domain boundary, and **a correction to a router "WIN" that was
+> an anticonservative CI of my own**. Read before quoting any August open-text number.
 > **`.../LITERATURE_UPDATE_2026-08-11.md`** — field state, 142 citations. **`.../PRIOR_ART_2026-08-11.md`**
 > — four 2026 papers that overlap our claims.
 
@@ -135,6 +138,17 @@ outranks verifier work.
 - **±0.008 open-text reproducibility.** Regenerating the 32B greedy open arm under a different
   tensor-parallel config moves cells by ~±0.008 (±0.00183 macro) — **larger than the entire published
   vs-direct delta**. Every open-text comparison needs a MATCHED control arm in the SAME serving config.
+- **⚠️ CPU HEAD FITS SEGFAULT ON THREAD COUNT, NOT ON THE ADAM `_foreach` PATH (corrected
+  2026-08-21).** The earlier note here — "`_foreach` segfaults, `foreach=False` fixes it" — is
+  **wrong**. With `foreach=False` in place the crash simply moves to `_single_tensor_adam`
+  (`torch/optim/adam.py:535`). The reproducible variable is load: **10 threads dies in ~30 s, 4
+  threads runs clean**, while the identical fit in isolation at 10 threads completes 30 epochs in
+  38.5 s. Run every CPU head fit at **≤4–6 threads and shard for parallelism instead of threading**;
+  crashes give no traceback when the signal is uncatchable, so run them under
+  `src/reporting/supervisor.py` with retries. Details: `docs/current/TRANSFER_WALL_2026-08-21.md` §7.
+- **⚠️ A FAILED PRODUCER DEADLOCKS ITS CONSUMERS.** `run_campaign11_chained.sh` waited **21 hours**
+  on an artifact whose producing job had already failed, and nothing ran overnight. Any chain must
+  wait on "produced **or** failed", never on the artifact alone.
 - **⛔ vLLM 0.9.0.1 silently drops all 192 `visual.*` LoRA modules** — same adapter 0.775204 (HF) vs
   0.702997 (vLLM). **Never score a visual LoRA under vLLM.**
 - **Numerics landmines, each larger than most real effects:** TF32-by-default (−0.0089/+0.024), CPU thread

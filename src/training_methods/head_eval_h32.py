@@ -37,7 +37,8 @@ FROZEN_PUBLISHED = {"head_alone_sel_eff": 0.8010899182561307, "head_alone_acc": 
 
 # The regularisation sweep found a 32-unit head (115k params) matching a 1024-unit one
 # (REG_h32 0.70090 vs A_objbce_h1024 0.69742).  If that holds on eval it is an 8x smaller
-# deployable head, and it also sidesteps the AdamW _foreach fault entirely.
+# deployable head.  (It used to say this 'sidesteps the AdamW _foreach fault'; corrected
+# 2026-08-21 -- the fault is thread count, not the _foreach path.  See head_sweep.fit.)
 ARMS = {
     "control_bt_h256_REFIT": dict(HS.BASE),
     "reg_bce_h32": {**HS.BASE, "objective": "bce", "hidden": 32},

@@ -104,6 +104,10 @@ def main():
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--draws", type=int, default=3, help="random domain subsets per k")
     ap.add_argument("--hidden", type=int, default=256)
+    ap.add_argument("--domains", nargs="*", default=None,
+                    help="held-out domains this process is responsible for. The curve for one "
+                         "held-out domain is independent of every other, so sharding over them is "
+                         "exact -- 7 domains x 6 k-values x 9 fits on 142k rows is ~28h serial.")
     ap.add_argument("--out", default=os.path.join(HS.OUTDIR, "head_domain_scaling_2026-08-19.json"))
     A = ap.parse_args()
     HS.torch.set_num_threads(A.threads)
@@ -119,7 +123,9 @@ def main():
            "domains": doms, "n_rows": int(len(y)), "results": {}}
     rng = np.random.default_rng(0)
 
-    for held in doms:
+    todo = [d for d in doms if (A.domains is None or d in A.domains)]
+    print(f"this shard holds out: {todo}\n", flush=True)
+    for held in todo:
         isH = ds == held
         others = [d for d in doms if d != held]
         art["results"][held] = {}

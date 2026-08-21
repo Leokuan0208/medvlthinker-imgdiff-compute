@@ -149,10 +149,15 @@ def fit(Xtr, ytr, gtr, wtr=None, objective="bce", hidden=0, depth=1, drop=0.0, l
         wd=1e-2, lr=1e-3, epochs=30, bs=256, seed=0, sched="none", bt_margin=0.0, hybrid=0.0):
     torch.manual_seed(seed)
     m = MLP(Xtr.shape[1], hidden, depth, drop, ln)
-    # foreach=False forces the single-tensor Adam loop.  The default multi-tensor (_foreach)
-    # path segfaults on this CPU build once the parameter tensors get large -- faulthandler
-    # traced every crash of 2026-08-18 to torch/optim/adam.py.  Slower per step, and it does
-    # not take the process down.
+    # foreach=False forces the single-tensor Adam loop.
+    #
+    # CORRECTION 2026-08-21: this comment used to claim the multi-tensor (_foreach) path was the
+    # CAUSE of the 2026-08-18 segfaults and that foreach=False fixed them.  It does not.  With
+    # foreach=False in place the crash simply MOVES to _single_tensor_adam (adam.py:535), as
+    # faulthandler showed on head_finelayer.py.  The reproducible variable is THREAD COUNT: 10
+    # threads dies in ~30s, 4 threads runs clean, and the identical fit in isolation at 10 threads
+    # completes 30 epochs in 38.5s.  Keep foreach=False (it is harmless and marginally more
+    # predictable), but the real mitigation is to run at <=4-6 threads and shard for parallelism.
     opt = torch.optim.AdamW(m.parameters(), lr=lr, weight_decay=wd, foreach=False)
     X = torch.tensor(Xtr); y = torch.tensor(ytr)
     W = torch.tensor(wtr) if wtr is not None else None

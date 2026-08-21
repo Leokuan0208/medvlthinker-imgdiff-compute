@@ -20,15 +20,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threads", type=int, default=10)
     ap.add_argument("--seeds", type=int, default=3)
+    ap.add_argument("--layers", type=int, nargs="*", default=None,
+                    help="layers this process is responsible for; each layer is independent, so "
+                         "sharding over them is exact. Serial is ~5h for the eight.")
     ap.add_argument("--out", default=os.path.join(HS.OUTDIR, "head_finelayer_2026-08-19.json"))
     A = ap.parse_args()
     HS.torch.set_num_threads(A.threads)
 
+    # The shard tag is OPTIONAL by repo convention -- a single-shard run writes no _sKofN suffix,
+    # and the finelayer extraction was single-shard, so hard-coding _s0of2/_s1of2 found nothing.
+    stems = [os.path.join(HS.FEATS, f"generator_train_finelayer_s{sh}of2") for sh in (0, 1)]
+    stems = [s for s in stems if os.path.exists(s + ".npz")]
+    if not stems:
+        one = os.path.join(HS.FEATS, "generator_train_finelayer")
+        if not os.path.exists(one + ".npz"):
+            raise SystemExit("missing generator_train_finelayer[.npz|_sKofN.npz] -- "
+                             "run runners/run_finelayer_extract.sh first")
+        stems = [one]
     zs, rows = [], []
-    for sh in (0, 1):
-        p = os.path.join(HS.FEATS, f"generator_train_finelayer_s{sh}of2")
-        if not os.path.exists(p + ".npz"):
-            raise SystemExit(f"missing {p}.npz -- run runners/run_finelayer_extract.sh first")
+    for p in stems:
         zs.append(np.load(p + ".npz"))
         rows += json.load(open(p + ".meta.json"))["rows"]
     keep = [i for i, r in enumerate(rows) if r.get("n_tok", -1) > 0]
@@ -46,7 +56,9 @@ def main():
     fold = np.array([int(hashlib.md5(str(h).encode()).hexdigest(), 16) % 5 for h in img])
     art = {"title": "Fine layer sweep: CV and transfer", "date": "2026-08-19",
            "no_fabricated_numbers": True, "layers_tested": layers, "results": {}}
-    for li, L in enumerate(layers):
+    todo = [(i, L) for i, L in enumerate(layers) if (A.layers is None or L in A.layers)]
+    print(f"this shard does layers: {[L for _, L in todo]}", flush=True)
+    for li, L in todo:
         X = hs[:, li].astype(np.float32)
         cvs = []
         for f in range(5):

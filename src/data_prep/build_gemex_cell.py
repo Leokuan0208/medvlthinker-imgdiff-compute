@@ -44,9 +44,19 @@ def dicom_id(s):
 
 
 def pixel_md5(p):
+    """Decoded-RGB-pixel md5, or None when the file cannot be decoded.
+
+    2026-08-21: the PhysioNet pull produced a handful of truncated JPEGs and PIL raises OSError
+    from .load().  An undecodable image can be neither audited for contamination nor fed to the
+    generator, so the caller DROPS those rows rather than admit them unaudited -- letting the
+    exception escape instead threw away a completed 21,312-image pull.
+    """
     from PIL import Image
-    with Image.open(p) as im:
-        return hashlib.md5(im.convert("RGB").tobytes()).hexdigest()
+    try:
+        with Image.open(p) as im:
+            return hashlib.md5(im.convert("RGB").tobytes()).hexdigest()
+    except Exception:
+        return None
 
 
 def main():
@@ -161,18 +171,25 @@ def main():
                 for r in json.load(open(m))["rows"]:
                     ev.add(r["img_md5"])
 
-    rows, hits, seen = [], 0, {}
+    rows, hits, seen, bad = [], 0, {}, set()
     for i, r in enumerate(df.itertuples()):
         ip = os.path.join(root, have[r.did])
         if not os.path.exists(ip):
             continue
         if r.did not in seen:
             seen[r.did] = pixel_md5(ip) if A.audit_overlap else None
-            if A.audit_overlap and seen[r.did] in ev:
-                hits += 1
-                print(f"   COLLISION with an eval image: {ip}")
+            if A.audit_overlap:
+                if seen[r.did] is None:
+                    bad.add(r.did)
+                elif seen[r.did] in ev:
+                    hits += 1
+                    print(f"   COLLISION with an eval image: {ip}")
+        if r.did in bad:
+            continue
         rows.append({"idx": len(rows), "question": str(r.question), "answer": str(r.gold),
                      "img_path": ip, "img_md5": seen[r.did], "dicom_id": r.did})
+    if bad:
+        print(f"   dropped {len(bad)} undecodable (truncated) images and their questions")
     if hits:
         raise SystemExit(f"ABORT: {hits} images collide with the eval pools")
 
