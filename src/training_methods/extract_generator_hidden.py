@@ -245,6 +245,12 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--eval_ds", nargs="+", default=None,
                     help="eval cells to extract; default = the frozen three (EVAL_DS)")
+    ap.add_argument("--gen_tag", default=None,
+                    help="generation tag of the pool to read, i.e. the <TAG> in "
+                         "ckpt_<ds>_<TAG>_sc8.jsonl. Defaults to 'lingshu7b' (the T=0.7 pool). "
+                         "Set to e.g. lingshu7bT04 to extract a different-temperature pool; "
+                         "without this the module-level TAG silently pinned every extraction to "
+                         "the T=0.7 dumps regardless of which pool was intended.")
     ap.add_argument("--stem_tag", default="",
                     help="appended to the output stem so a new cell cannot overwrite the frozen cache")
     ap.add_argument("--max_train", type=int, default=10364,
@@ -262,6 +268,9 @@ def main():
     A = ap.parse_args()
     DEV = "cuda"
     outdir = os.path.join(ROOT, A.out); os.makedirs(outdir, exist_ok=True)
+    if A.gen_tag:
+        globals()["TAG"] = A.gen_tag
+        print(f"[gen_tag] reading pools tagged {A.gen_tag}", flush=True)
     stem = (f"{A.mode}_{A.split}" + (f"_{A.stem_tag}" if A.stem_tag else "")
             + (f"_s{A.shard}of{A.nshard}" if A.nshard > 1 else ""))
 
