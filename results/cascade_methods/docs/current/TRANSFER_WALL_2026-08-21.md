@@ -1,10 +1,20 @@
 # The transfer wall: what closed it, what survived, and one correction to a result of my own
 **2026-08-21** · every number below names the artifact it came from · no fabricated numbers
 
-> **One-line summary.** The head is a per-domain component. Five independent attempts to make it
-> domain-general all failed, a training-free signal we had been discarding beats it on exactly the
-> cells it was not trained on, and the one routing idea that survives is a **compute** claim, not an
-> accuracy claim — the accuracy version was an artifact of an anticonservative CI I computed myself.
+> ## ⚠️ SUPERSEDED IN PART BY GEMeX, 2026-08-22 — READ §10 BEFORE §3, §5 OR §6
+> GEMeX (8,000 q chest X-ray, built after this document) **falsifies two claims made below**:
+> the self-consistency sign-flip "at the domain boundary, with no exceptions" (§3) and the
+> "regime is partly detectable" detector result (§5), which in turn removes the basis for §6's
+> router. §10 carries the corrected picture. §1, §2, §4, §7 and §8 stand.
+
+> **One-line summary (rewritten 2026-08-22 after GEMeX).** Five independent attempts to make the
+> head domain-general all failed, and it still loses to plain greedy decoding on two of eight cells
+> — but it WINS on four, including the one cell where answer-vocabulary memorisation is least
+> available, so "per-domain" is too coarse and **we cannot yet say what separates the cells it helps
+> from the cells it hurts.** Two things this document originally claimed are now falsified by
+> GEMeX and corrected in §10: the self-consistency sign-flip at the domain boundary, and the
+> detectability of the regime. The router of §6 was also, separately, an anticonservative CI I
+> computed myself; clustered by cell it was already a tie before GEMeX removed its detector.
 
 ---
 
@@ -159,3 +169,92 @@ The honest framing is **"a per-domain selector"**, not "a verifier". The open qu
 `head_newdomain_curve.py` is measuring the crossover k at which the head overtakes greedy on
 omnimed and vqamed, with kvasir_x1 as the positive control. `head_domain_scaling.py` is separately
 testing whether breadth (k of 7 domains) lifts transfer at all.
+
+
+---
+
+# 10. GEMeX (2026-08-22) — what it falsifies, and what is left standing
+
+`artifacts/cell_gemex_open_2026-08-19.json`, `free_signal_bakeoff_2026-08-21.json`,
+`regime_detector_2026-08-21.json`. 8,000 questions / 3,514 chest X-ray images, subsampled by image
+from a 48,274-question PhysioNet build. Templating is the best in the project — 6,236 distinct
+questions, 4,316 distinct golds, top-10 gold coverage **12.7%** — so answer-vocabulary memorisation
+has the least to work with here of any cell we have.
+
+| arm | accuracy | vs greedy |
+|---|---:|---|
+| always-7B greedy | 0.3974 | — |
+| string prior | 0.3549 | **−0.0425 LOSS** |
+| self-consistency | 0.3794 | −0.0180 LOSS |
+| **frozen head** | **0.4121** | **+0.0148 [+0.0057, +0.0238] WIN** |
+| oracle@8 | 0.5864 | — |
+
+head vs string prior **+0.0573 [+0.0483, +0.0663] WIN**. This is the strongest evidence in the
+project that the head performs real verification: on the cell where a counter over answer strings
+has least to memorise, the counter **loses to greedy** while the head beats both.
+
+## 10.1 FALSIFIED — the self-consistency sign-flip (§3)
+
+§3 said the SC-minus-head sign flips "exactly at the domain boundary, with no exceptions". GEMeX is
+out of training and the **head beats SC by +0.0328 [+0.0238, +0.0419]**. The exception exists.
+
+| cell | domain | sc − head |
+|---|---|---|
+| pathvqa / slake / kvasir_x1 | IN | −0.0640 / −0.0295 / −0.0930 |
+| vqa_rad | IN | +0.0000 |
+| radimagenet | OUT | −0.0050 |
+| omnimed | OUT | **+0.0449** |
+| vqamed | OUT | **+0.0175** |
+| **gemex** | **OUT** | **−0.0328** |
+
+The true statement is narrower: **SC beats the head on omnimed and vqamed only.** Everything §3
+concluded from a clean boundary must be re-derived; the raw measurements in §3 are unaffected.
+
+## 10.2 FALSIFIED — "the regime is partly detectable" (§5), and §6's router with it
+
+GEMeX is the **most** out-of-distribution cell measured by both surviving detectors — largest kNN
+distance to the training rows (7.228, above omnimed's 6.967) and lowest domain-classifier confidence
+(0.693, below omnimed's 0.773) — **and the head wins on it.** Distance from the training
+distribution does not determine whether selection helps.
+
+| detector | cell Spearman, 7 cells | cell Spearman, 8 cells |
+|---|---:|---:|
+| knn_train | −0.821 | **−0.643** |
+| domclf_maxprob | +0.857 | **+0.667** |
+
+The artifact's verdict is now *"NO detector orders the cells; the regime is not identifiable at
+inference from anything tested."* One extra cell was enough — precisely the fragility §5 flagged
+when it recorded that ±0.85 at n=7 is p≈0.024 uncorrected and not significant across six detectors.
+It did not survive. **§6's router is therefore unsupported even as the compute claim**, because the
+detector it routes on no longer orders the cells.
+
+Re-run on all eight cells the router is not merely unsupported but **numerically worse than always
+selecting**: macro routed 0.3880 vs always-select 0.3921 vs always-greedy 0.3812, routed-vs-select
+−0.0041 [−0.0184,+0.0084] and routed-vs-greedy +0.0068 [−0.0117,+0.0250], both ties. The mechanism
+of the failure is legible and damning: GEMeX has the largest kNN distance of any cell, so the router
+sends **99% of it to greedy** (select rate 0.01) and throws away the +0.0148 win the head actually
+had there. A detector that routes confidently in the wrong direction on the newest cell is worse
+than no detector.
+
+## 10.3 What is left standing
+
+- **§1, §2, §4, §7, §8 are unaffected**: the wall itself, the five closed routes, SC's flatness in
+  N, the thread-count segfault, the infrastructure failures.
+- The head beats greedy on **4 of 8** cells (pathvqa +0.047, slake +0.039, kvasir_x1 +0.078,
+  gemex +0.015), ties on 2 (vqa_rad −0.025, radimagenet +0.009) and loses on 2 (omnimed −0.049,
+  vqamed −0.026).
+- **"Per-domain" is too coarse and OOD-ness does not explain the split — and neither does answer
+  kind.** `artifacts/answer_kind_2026-08-22.json` tested the obvious next hypothesis (the head
+  loses where answers are short category labels and wins where they are descriptive free text)
+  within cells, splitting each cell at its median mean-candidate-length so the cell's identity is
+  held fixed. **Refuted.** Longer answers favour the head in 6/8 cells but the mean is only
+  +0.0054, two cells go firmly the other way (pathvqa −0.0585 [−0.0971,−0.0175], vqa_rad −0.0910),
+  and the cell-level Spearman is +0.048. The premise was also simply wrong on the facts: omnimed's
+  mean candidate answer is **4.71 words**, LONGER than pathvqa's 1.99 and slake's 1.74, the two
+  cells where the head wins most — short golds do not imply short candidates.
+  **We do not currently know what separates the cells selection helps from the cells it hurts.**
+  Two hypotheses have now been measured and both failed; do not add a third to a document without
+  measuring it.
+- The honest deployment statement is still the **price curve** (§9 pointer): ~500 labelled
+  in-domain questions before the head does something a counter cannot, and on cells where sampling
+  COVERAGE binds (vqamed, oracle@8 0.2102 against greedy 0.0947) no amount of head training helps.

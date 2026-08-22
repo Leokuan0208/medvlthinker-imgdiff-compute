@@ -201,8 +201,26 @@ def main():
     print(f"  answer words mean {np.mean(ws):.2f} median {np.median(ws):.0f} p90 {np.percentile(ws,90):.0f}")
     print(f"  distinct golds {len({x['answer'].lower() for x in rows})}")
     print(f"  eval-pool pixel collisions: {hits}  (audited against {len(ev)} eval images)")
-    print(f"  LICENCE: images re-hosted from PhysioNet by a third party -- prototype only, "
-          f"re-pull via our own MIMIC-CXR-JPG credential before publishing.")
+    # PROVENANCE BUG FIXED 2026-08-21: this line printed the third-party re-hosting warning
+    # UNCONDITIONALLY, so a --source physionet run -- images pulled directly under our own
+    # credential -- reported a licence status that was simply not true of it.  Mislabelling
+    # provenance is the failure mode CLAUDE.md rule 7 names explicitly, and it is worse here than
+    # a missing warning would be: it would have sent us re-pulling images we had already pulled
+    # correctly.  The note now follows the source that was actually used, and both variants are
+    # written INTO the artifact rather than only to a log nobody re-reads.
+    lic = ("images pulled directly from PhysioNet under our own credentialed MIMIC-CXR-JPG access; "
+           "redistribution still requires PhysioNet credentialing, so do not ship the images."
+           if A.source == "physionet" else
+           "images re-hosted from PhysioNet by a third party -- that re-hosting does not transfer "
+           "the DUA to us. Prototype only; re-pull with --source physionet before publishing.")
+    print(f"  SOURCE: {A.source}")
+    print(f"  LICENCE: {lic}")
+    json.dump({"source": A.source, "licence": lic, "n_questions": len(rows),
+               "n_images": len({x['dicom_id'] for x in rows}),
+               "undecodable_images_dropped": len(bad),
+               "eval_pool_pixel_collisions": hits, "eval_images_audited": len(ev),
+               "built": "2026-08-21"},
+              open(os.path.join(A.out, "gemex_open.provenance.json"), "w"), indent=1)
 
 
 if __name__ == "__main__":

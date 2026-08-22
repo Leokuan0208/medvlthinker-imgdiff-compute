@@ -81,15 +81,45 @@ def main():
            "curves": res,
            "caveat": "per-shard MEAN_SLOPE/VERDICT lines are computed over that shard's domains "
                      "only and must not be quoted as global; this file is the only global verdict."}
+    # SENSITIVITY THAT DECIDES THIS RESULT.  kvasir_open and kvasir_x1_open are both Kvasir GI
+    # endoscopy -- the same underlying image source, split into two cells.  They are NOT two
+    # independent domains, and they happen to carry the two largest slopes AND the two largest
+    # per-k spreads (sd 0.0553 and 0.0545).  Counting them as 2 of 7 independent points inflates
+    # both the mean and the confidence, so the collapsed figure is reported beside the raw one and
+    # the verdict is required to hold under BOTH.
+    KVASIR = [d for d in slopes if d.startswith("kvasir")]
+    if len(KVASIR) > 1:
+        coll = {d: sl for d, sl in slopes.items() if not d.startswith("kvasir")}
+        coll["kvasir_family"] = float(np.mean([slopes[d] for d in KVASIR]))
+        cv = np.array(list(coll.values()))
+        cbs = np.array([np.mean(rng.choice(cv, len(cv), replace=True)) for _ in range(10000)])
+        clo, chi = np.percentile(cbs, [2.5, 97.5])
+        art["collapsed_kvasir_family"] = {
+            "why": "kvasir_open and kvasir_x1_open are the same GI-endoscopy source; they carry the "
+                   "two largest slopes and the two largest per-k spreads, so counting them twice "
+                   "inflates the mean and the confidence",
+            "per_domain_slope": coll, "n_domains": len(cv),
+            "mean_slope": float(cv.mean()), "ci": [float(clo), float(chi)],
+            "domains_with_positive_slope": f"{int((cv > 0).sum())}/{len(cv)}"}
+        print(f"  collapsing the Kvasir pair: mean slope {cv.mean():+.5f} [{clo:+.5f},{chi:+.5f}] "
+              f"over {len(cv)} sources ({int((cv > 0).sum())}/{len(cv)} positive)")
+    else:
+        clo = lo
+
+    both_positive = lo > 0 and clo > 0
     art["VERDICT"] = (
         f"mean slope {v.mean():+.5f} per added domain [{lo:+.5f},{hi:+.5f}] over {len(v)} held-out "
-        f"domains, {npos}/{len(v)} positive. " +
-        ("Breadth HELPS and the effect is separable from volume -- the head is a starved verifier."
-         if lo > 0.005 else
-         "Breadth does NOT reliably help once volume is held fixed: the interval includes zero, so "
-         "the method must be presented as per-domain." if lo <= 0 else
-         "Breadth helps weakly; the interval excludes zero but the effect is below the 0.005 "
-         "threshold the experiment was designed to detect."))
+        f"domains, {npos}/{len(v)} positive; collapsing the Kvasir pair gives "
+        f"[{clo:+.5f},...]. " +
+        ("Breadth HELPS and the effect survives both the volume control and the Kvasir collapse -- "
+         "the head is a starved verifier, not only a per-domain tool."
+         if both_positive and lo > 0.005 else
+         "Breadth helps only WEAKLY: the raw interval excludes zero but its lower bound is below "
+         "the 0.005-per-domain effect this design was built to detect, and the mean is carried by "
+         "two correlated Kvasir curves that are also the two noisiest. Do not present breadth as "
+         "the fix." if both_positive else
+         "Breadth does NOT reliably help once volume is held fixed and the duplicated Kvasir "
+         "source is collapsed: the method must be presented as per-domain."))
     print(f"\n  mean slope {v.mean():+.5f} [{lo:+.5f},{hi:+.5f}]  ({npos}/{len(v)} domains positive)")
     print(f"\n=> {art['VERDICT']}")
     json.dump(art, open(OUT, "w"), indent=1)

@@ -1,0 +1,46 @@
+[
+ {
+  "name": "gemex_gen_sc8",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7b_sc8 --dataset gemex_open --n_samples 8 --temp 0.7 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_gemex_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2400,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b_sc8.jsonl"
+ },
+ {
+  "name": "gemex_gen_greedy",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7b --dataset gemex_open --n_samples 1 --temp 0.0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_gemex_gen_greedy.log",
+  "timeout_s": 36000,
+  "stall_s": 2400,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b.jsonl"
+ },
+ {
+  "name": "gemex_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b_sc8_scexploded.jsonl ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b.jsonl",
+  "log": "logs/sv_gemex_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": [
+   "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b_sc8_scexploded.judge.jsonl",
+   "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7b.judge.jsonl"
+  ]
+ },
+ {
+  "name": "gemex_extract",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --mode generator --split eval --eval_ds gemex_open --stem_tag gemex_open --out feats_hidden",
+  "log": "logs/sv_gemex_extract.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "feats_hidden/generator_eval_gemex_open.npz",
+  "expect_min_bytes": 10000000
+ },
+ {
+  "name": "gemex_report",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4; python3 src/cascade_methods/new_cell_report.py --cell gemex_open",
+  "log": "logs/sv_gemex_report.log",
+  "timeout_s": 7200,
+  "stall_s": 1800,
+  "expect": "results/cascade_methods/artifacts/cell_gemex_open_2026-08-19.json"
+ }
+]
