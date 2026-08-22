@@ -1,0 +1,148 @@
+[
+ {
+  "name": "vqa_rad_open_lingshu7bT02_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT02_sc8 --dataset vqa_rad_open --n_samples 8 --temp 0.2 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_vqa_rad_open_lingshu7bT02_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT02_sc8.jsonl"
+ },
+ {
+  "name": "vqa_rad_open_lingshu7bT02_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT02_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT02_sc8_scexploded.jsonl",
+  "log": "logs/sv_vqa_rad_open_lingshu7bT02_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT02_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "radimagenet_open_lingshu7bT02_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT02_sc8 --dataset radimagenet_open --n_samples 8 --temp 0.2 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_radimagenet_open_lingshu7bT02_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7bT02_sc8.jsonl"
+ },
+ {
+  "name": "radimagenet_open_lingshu7bT02_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7bT02_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7bT02_sc8_scexploded.jsonl",
+  "log": "logs/sv_radimagenet_open_lingshu7bT02_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7bT02_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "vqamed_open_lingshu7bT02_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT02_sc8 --dataset vqamed_open --n_samples 8 --temp 0.2 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_vqamed_open_lingshu7bT02_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT02_sc8.jsonl"
+ },
+ {
+  "name": "vqamed_open_lingshu7bT02_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT02_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT02_sc8_scexploded.jsonl",
+  "log": "logs/sv_vqamed_open_lingshu7bT02_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT02_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "kvasir_x1_open_lingshu7bT02_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT02_sc8 --dataset kvasir_x1_open --n_samples 8 --temp 0.2 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_kvasir_x1_open_lingshu7bT02_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_lingshu7bT02_sc8.jsonl"
+ },
+ {
+  "name": "kvasir_x1_open_lingshu7bT02_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_lingshu7bT02_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_lingshu7bT02_sc8_scexploded.jsonl",
+  "log": "logs/sv_kvasir_x1_open_lingshu7bT02_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_lingshu7bT02_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "vqamed_open_lingshu7bT10_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset vqamed_open --n_samples 8 --temp 1.0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_vqamed_open_lingshu7bT10_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "vqamed_open_lingshu7bT10_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT10_sc8_scexploded.jsonl",
+  "log": "logs/sv_vqamed_open_lingshu7bT10_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqamed_open_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "vqa_rad_open_lingshu7bT10_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset vqa_rad_open --n_samples 8 --temp 1.0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_vqa_rad_open_lingshu7bT10_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "vqa_rad_open_lingshu7bT10_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT10_sc8_scexploded.jsonl",
+  "log": "logs/sv_vqa_rad_open_lingshu7bT10_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "pathvqa_open_lingshu7bT10_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset pathvqa_open --n_samples 8 --temp 1.0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_pathvqa_open_lingshu7bT10_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "pathvqa_open_lingshu7bT10_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7bT10_sc8_scexploded.jsonl",
+  "log": "logs/sv_pathvqa_open_lingshu7bT10_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "gemex_open_lingshu7bT10_sc8_gen",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset gemex_open --n_samples 8 --temp 1.0 --ckpt_dir ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096",
+  "log": "logs/sv_gemex_open_lingshu7bT10_sc8_gen.log",
+  "timeout_s": 36000,
+  "stall_s": 2700,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "gemex_open_lingshu7bT10_judge",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7bT10_sc8_scexploded.jsonl",
+  "log": "logs/sv_gemex_open_lingshu7bT10_judge.log",
+  "timeout_s": 54000,
+  "stall_s": 3600,
+  "expect": "ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "kvasir_x1_open_finelayer_kvasir_x1_open_extract",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --mode generator --split eval --eval_ds kvasir_x1_open --stem_tag finelayer_kvasir_x1_open --layers 10 12 16 18 20 22 24 26 --out feats_hidden",
+  "log": "logs/sv_kvasir_x1_open_finelayer_kvasir_x1_open_extract.log",
+  "timeout_s": 72000,
+  "stall_s": 4200,
+  "expect": "feats_hidden/generator_eval_finelayer_kvasir_x1_open.npz",
+  "expect_min_bytes": 10000000
+ },
+ {
+  "name": "vqamed_open_finelayer_vqamed_open_extract",
+  "cmd": "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=1 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --mode generator --split eval --eval_ds vqamed_open --stem_tag finelayer_vqamed_open --layers 10 12 16 18 20 22 24 26 --out feats_hidden",
+  "log": "logs/sv_vqamed_open_finelayer_vqamed_open_extract.log",
+  "timeout_s": 72000,
+  "stall_s": 4200,
+  "expect": "feats_hidden/generator_eval_finelayer_vqamed_open.npz",
+  "expect_min_bytes": 10000000
+ }
+]

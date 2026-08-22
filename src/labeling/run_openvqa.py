@@ -180,12 +180,35 @@ llm = LLM(model=A.model_path, tensor_parallel_size=A.tp, dtype="bfloat16", gpu_m
 sp = SamplingParams(temperature=A.temp, max_tokens=A.max_tokens, n=A.n_samples,
                     logprobs=5)   # capture top-5 token logprobs -> margin/confidence (cascade gate signal)
 ckpt = os.path.join(A.ckpt_dir, f"ckpt_{A.dataset}_{A.tag}.jsonl")
-done = set()
+done, ckpt_q = set(), {}
 if os.path.exists(ckpt):
     for l in open(ckpt):
         if l.strip():
-            try: done.add(json.loads(l)["idx"])
+            try:
+                _d = json.loads(l); done.add(_d["idx"]); ckpt_q[_d["idx"]] = _d.get("question")
             except Exception: pass
+
+# ---- STALE-CHECKPOINT GUARD (added 2026-08-22 after it silently corrupted omnimed_open) --------
+# Resume was keyed on idx ALONE.  When a cell is REBUILT it re-indexes 0..N-1 over a different set
+# of questions, so every idx looks "already done" and this script exits having generated nothing --
+# leaving the previous build's samples and judge labels attached to the new build's questions.
+# That is exactly what happened to omnimed_open: the cell went 15,831 -> 8,883 questions, the
+# regeneration "completed" in 160s, and every omnimed number downstream was computed by pairing new
+# questions with old answers.  idx is only a valid resume key if the QUESTION at that idx is
+# unchanged, so check it and refuse rather than resume.
+_stale = [it for it in items
+          if it[0] in done and ckpt_q.get(it[0]) is not None
+          and str(ckpt_q[it[0]]).strip() != str(it[1]).strip()]
+if _stale:
+    _i, _q = _stale[0][0], _stale[0][1]
+    raise SystemExit(
+        f"ABORT: {ckpt} is STALE -- {len(_stale)} of {len(items)} items have a different question "
+        f"at the same idx than the checkpoint recorded.\n"
+        f"  idx {_i}\n    cell now : {str(_q)[:90]}\n"
+        f"    checkpoint: {str(ckpt_q[_stale[0][0]])[:90]}\n"
+        f"  The cell was rebuilt and idx no longer identifies the same question, so resuming would "
+        f"attach the previous build's answers to the new questions. Move the checkpoint aside "
+        f"(and any *_scexploded* / *.judge.jsonl derived from it) and regenerate.")
 todo = [it for it in items if it[0] not in done]
 print(f"  {len(todo)} to run -> {ckpt}", flush=True)
 import time; t0 = time.time(); CH = 64

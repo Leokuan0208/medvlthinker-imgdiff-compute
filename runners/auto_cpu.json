@@ -1,0 +1,97 @@
+[
+ {
+  "name": "wait_for_omnimed_rebuild",
+  "cmd": "for i in $(seq 1 2400); do [ -s feats_hidden/generator_eval_omnimed_open.npz ] && [ -s ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b.judge.jsonl ] && exit 0; sleep 60; done; echo 'TIMED OUT waiting for the omnimed rebuild'; exit 1",
+  "log": "logs/sv_wait_omnimed.log",
+  "timeout_s": 150000,
+  "stall_s": 150000
+ },
+ {
+  "name": "redo_free_signal_bakeoff",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/free_signal_bakeoff.py --cells all",
+  "log": "logs/sv_redo_bakeoff.log",
+  "timeout_s": 36000,
+  "stall_s": 3600,
+  "expect": "results/cascade_methods/artifacts/free_signal_bakeoff_2026-08-21.json"
+ },
+ {
+  "name": "redo_regime_detector",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/regime_detector_bakeoff.py",
+  "log": "logs/sv_redo_detector.log",
+  "timeout_s": 36000,
+  "stall_s": 3600,
+  "expect": "results/cascade_methods/artifacts/regime_detector_2026-08-21_perquestion.npz"
+ },
+ {
+  "name": "redo_regime_router",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/regime_router.py",
+  "log": "logs/sv_redo_router.log",
+  "timeout_s": 36000,
+  "stall_s": 3600,
+  "expect": "results/cascade_methods/artifacts/regime_router_2026-08-21.json"
+ },
+ {
+  "name": "redo_answer_kind",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/answer_kind_analysis.py",
+  "log": "logs/sv_redo_answerkind.log",
+  "timeout_s": 36000,
+  "stall_s": 3600,
+  "expect": "results/cascade_methods/artifacts/answer_kind_2026-08-22.json"
+ },
+ {
+  "name": "redo_greedy_anchored",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/greedy_anchored_selector.py",
+  "log": "logs/sv_redo_anchored.log",
+  "timeout_s": 36000,
+  "stall_s": 3600,
+  "expect": "results/cascade_methods/artifacts/greedy_anchored_2026-08-22.json"
+ },
+ {
+  "name": "redo_newdomain_omnimed",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -X faulthandler -u src/training_methods/head_newdomain_curve.py --cell omnimed_open --threads 4 --seeds 3",
+  "log": "logs/sv_redo_newdomain_omnimed.log",
+  "timeout_s": 86400,
+  "stall_s": 7200,
+  "expect": "results/cascade_methods/artifacts/head_newdomain_omnimed_open_2026-08-21.json"
+ },
+ {
+  "name": "temperature_report",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -u src/cascade_methods/temperature_report.py",
+  "log": "logs/sv_temperature_report.log",
+  "timeout_s": 7200,
+  "stall_s": 1800,
+  "expect": "results/cascade_methods/artifacts/temperature_curve_2026-08-22.json"
+ },
+ {
+  "name": "finelayer_shard1",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -X faulthandler -u src/training_methods/head_finelayer.py --threads 4 --seeds 3 --layers 10 12 --out results/cascade_methods/artifacts/head_finelayer_shard1.json",
+  "log": "logs/sv_finelayer_shard1.log",
+  "timeout_s": 86400,
+  "stall_s": 7200,
+  "expect": "results/cascade_methods/artifacts/head_finelayer_shard1.json"
+ },
+ {
+  "name": "finelayer_shard2",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -X faulthandler -u src/training_methods/head_finelayer.py --threads 4 --seeds 3 --layers 16 18 --out results/cascade_methods/artifacts/head_finelayer_shard2.json",
+  "log": "logs/sv_finelayer_shard2.log",
+  "timeout_s": 86400,
+  "stall_s": 7200,
+  "expect": "results/cascade_methods/artifacts/head_finelayer_shard2.json"
+ },
+ {
+  "name": "finelayer_shard3",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -X faulthandler -u src/training_methods/head_finelayer.py --threads 4 --seeds 3 --layers 20 22 --out results/cascade_methods/artifacts/head_finelayer_shard3.json",
+  "log": "logs/sv_finelayer_shard3.log",
+  "timeout_s": 86400,
+  "stall_s": 7200,
+  "expect": "results/cascade_methods/artifacts/head_finelayer_shard3.json"
+ },
+ {
+  "name": "finelayer_shard4",
+  "cmd": "export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 HEAD_SWEEP_THREADS=4; python3 -X faulthandler -u src/training_methods/head_finelayer.py --threads 4 --seeds 3 --layers 24 26 --out results/cascade_methods/artifacts/head_finelayer_shard4.json",
+  "log": "logs/sv_finelayer_shard4.log",
+  "timeout_s": 86400,
+  "stall_s": 7200,
+  "expect": "results/cascade_methods/artifacts/head_finelayer_shard4.json"
+ }
+]
