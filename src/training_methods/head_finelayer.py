@@ -16,6 +16,18 @@ from head_domain_scaling import pick_sel_eff, string_prior, norm
 FINE = [10, 12, 16, 18, 20, 22, 24, 26]
 
 
+def dump_atomic(obj, path):
+    """Write JSON to a temp file and rename, so a failed encode never leaves a partial artifact.
+
+    The non-atomic version left a 126-byte stub that downstream tooling and the campaign planner
+    both read as "this job is done", which is worse than no file at all.
+    """
+    tmp = path + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(obj, fh, indent=1)
+    os.replace(tmp, path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threads", type=int, default=10)
@@ -54,8 +66,12 @@ def main():
 
     import hashlib
     fold = np.array([int(hashlib.md5(str(h).encode()).hexdigest(), 16) % 5 for h in img])
+    # int() because these come out of the npz as numpy int64, which json.dump cannot serialise --
+    # it raised AFTER each layer's fit, so every layer was computed and then thrown away and the
+    # artifact was left a 126-byte stub. Cast at the boundary.
     art = {"title": "Fine layer sweep: CV and transfer", "date": "2026-08-19",
-           "no_fabricated_numbers": True, "layers_tested": layers, "results": {}}
+           "no_fabricated_numbers": True, "layers_tested": [int(x) for x in layers],
+           "results": {}}
     todo = [(i, L) for i, L in enumerate(layers) if (A.layers is None or L in A.layers)]
     print(f"this shard does layers: {[L for _, L in todo]}", flush=True)
     for li, L in todo:
@@ -88,7 +104,7 @@ def main():
                                   "transfer_head_minus_prior": float(np.mean(tr_hp))}
         print(f"  layer {L:3}  CV {np.mean(cvs):.5f}   transfer head-prior {np.mean(tr_hp):+.5f}",
               flush=True)
-        json.dump(art, open(A.out, "w"), indent=1)
+        dump_atomic(art, A.out)
     print(f"wrote {A.out}")
 
 

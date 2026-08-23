@@ -155,7 +155,10 @@ def main():
                 "cmd": T + f"python3 -X faulthandler -u src/training_methods/head_finelayer.py "
                        f"--threads 4 --seeds 3 --layers {' '.join(map(str, ls))} --out {out}",
                 "log": f"logs/sv_finelayer_shard{i}_w{A.wave}.log",
-                "timeout_s": 86400, "stall_s": 7200, "expect": out})
+                "timeout_s": 86400, "stall_s": 7200, "expect": out,
+                # a 126-byte stub from a failed json encode counted as success and made the
+                # planner skip the job forever; require a real artifact
+                "expect_min_bytes": 400})
 
     # every GPU job goes behind its card's lock; drop the marker so the queue stays clean JSON
     for g in (0, 1):
