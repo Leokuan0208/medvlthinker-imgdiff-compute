@@ -52,10 +52,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=5)
-    ap.add_argument("--out", default=os.path.join(HS.OUTDIR,
-                                                  "head_pooled_alldomains_2026-08-24.json"))
+    ap.add_argument("--config_d", action="store_true",
+                    help="stack the two validated wins on top of pooled training: rank-ensemble "
+                         "over layers 18/20/22 with self-consistency as an input feature. "
+                         "head_best_config_2026-08-24.json shows they are additive with each other "
+                         "(+0.0168 over the deployed recipe); this asks whether they are also "
+                         "additive with the +0.0565 from pooling, which is the whole method.")
+    ap.add_argument("--out", default=None)
     A = ap.parse_args()
     HS.torch.set_num_threads(A.threads)
+    if A.out is None:
+        A.out = os.path.join(HS.OUTDIR, "head_pooled_configd_2026-08-24.json" if A.config_d
+                             else "head_pooled_alldomains_2026-08-24.json")
     from genframe_data import rank_avg
 
     # ---- the four original training domains -------------------------------------------------
