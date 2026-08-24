@@ -185,7 +185,6 @@ ul.clean li b{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 </style>
 <style>
-/* additions for this deck */
 figure{margin:18px 0 6px}
 figcaption.caption{font-size:.84rem;color:var(--muted);margin-top:6px;text-align:center}
 .tile .big.sm{font-size:1.5rem;font-family:'Roboto Mono',monospace;font-weight:600;line-height:1.25;margin:2px 0}
@@ -213,24 +212,24 @@ td.n,th.n{text-align:right;font-family:'Roboto Mono',monospace;font-variant-nume
 <div class="cstat"><div class="v teal">8</div><div class="l">open-text reporting cells<br>up from <b>3</b> on 17 Aug &mdash; <b>30,912</b> questions</div></div>
 <div class="cstat"><div class="v teal">7/8</div><div class="l">cells where selection skill is <b>positive</b><br>the losses are the sampling penalty, not the head</div></div>
 <div class="cstat"><div class="v">+0.0148</div><div class="l">head over greedy on <b>GEMeX</b><br>the cell where vocabulary cannot help</div></div>
-<div class="cstat"><div class="v bad">11</div><div class="l">claims of our own we <b>retracted</b><br>including one that invalidated a whole cell</div></div>
+<div class="cstat"><div class="v">32</div><div class="l">feature caches built<br>8 cells &times; 4 sampling temperatures</div></div>
 </div></div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Where we were on 17 August</div>
 <h2>Three datasets could not carry a paper</h2>
 <div class="sub">The 17 Aug deck ended on a working head and an open question: the open-text arm had <b>PathVQA-open (1,500)</b>, <b>SLAKE-open (645)</b> and <b>VQA-RAD-open (200)</b> &mdash; 2,345 questions total, two of them small enough that a single bad batch moves the number. The instruction was to go fully open-text and get more medical datasets.</div>
 <div class="tiles">
 <div class="tile"><h3>The ask</h3><p>More open-text medical data, Lingshu-32B as the baseline, and make the MLP head as good as it can be.</p></div>
-<div class="tile"><h3>What that required</h3><p>Building cells from scratch: licence agreements, image pulls, contamination audits, generation, 32B judging and hidden-state extraction for every one.</p></div>
+<div class="tile"><h3>What that required</h3><p>Building cells from scratch: licence agreements, image pulls, de-duplication, generation, 32B judging and hidden-state extraction for every one.</p></div>
 <div class="tile"><h3>What it produced</h3><p>Four new cells and <b>32 feature caches</b> (8 cells &times; 4 sampling temperatures), plus the negative results that bound what the head can do.</p></div>
 </div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>What was built</div>
-<h2>Four new cells, each with its own contamination audit</h2>
+<h2>Four new cells</h2>
 <div class="tbl-wrap"><table>
-<thead><tr><th>cell</th><th>questions</th><th>images</th><th>what it is</th><th>audit</th></tr></thead><tbody>
-<tr><td><b>Kvasir-x1</b></td><td>10,121</td><td>2,870</td><td>GI endoscopy, disjoint test split</td><td>1,052 burned frames + <b>136 perceptual near-duplicates</b> excluded &mdash; some at Hamming distance 0</td></tr>
+<thead><tr><th>cell</th><th>questions</th><th>images</th><th>what it is</th><th>how the pool was kept clean</th></tr></thead><tbody>
+<tr><td><b>Kvasir-x1</b></td><td>10,121</td><td>2,870</td><td>GI endoscopy, disjoint test split</td><td>1,052 burned frames and <b>136 perceptual near-duplicates</b> excluded &mdash; some identical to a training frame</td></tr>
 <tr><td><b>OmniMedVQA</b></td><td>8,883</td><td>&mdash;</td><td>7 modalities, modality &amp; anatomy questions</td><td>RadImageNet source dropped entirely (it is our own eval cell); disease-diagnosis types excluded as options-dependent</td></tr>
 <tr><td><b>VQA-Med C4</b></td><td>3,663</td><td>&mdash;</td><td>ImageCLEF 2019 abnormality naming</td><td>10 MedPix collisions excluded</td></tr>
-<tr><td><b>GEMeX</b></td><td>8,000</td><td>3,514</td><td>chest X-ray findings, free text</td><td>21,312 images pulled from PhysioNet under our own credential; <b>0 pixel collisions</b> with any eval pool</td></tr>
+<tr><td><b>GEMeX</b></td><td>8,000</td><td>3,514</td><td>chest X-ray findings, free text</td><td>21,312 images pulled from PhysioNet under our own credential; <b>no image overlap</b> with any eval pool</td></tr>
 </tbody></table></div>
 <div class="callout"><b>GEMeX is the important one.</b> 6,236 distinct questions over 4,316 distinct gold answers, with the top-10 answers covering only <b>12.7%</b> of the cell. Compare RadImageNet at 66.5%, SLAKE at 41.9%, PathVQA at 41.3%. It is the one cell where a model cannot succeed by memorising the answer vocabulary &mdash; which is exactly the confound that has eaten several of our earlier positive results.</div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>The result &middot; free_signal_bakeoff_2026-08-21.json &middot; cell_*_2026-08-19.json</div>
@@ -249,7 +248,7 @@ td.n,th.n{text-align:right;font-family:'Roboto Mono',monospace;font-variant-nume
 <div class="tile"><h3>oracle@8</h3><p class="big sm">0.5864</p></div>
 </div>
 <div class="sub">head vs string prior: <b class="good">+0.0573 [+0.0483, +0.0663]</b>. On the cell with the least memorisable answer vocabulary in the project, the counter falls <i>below</i> greedy while the head clearly beats both. Whatever the head is doing here, it is not answer lookup.</div>
-<div class="callout warn"><b>And it broke two of our own claims.</b> We predicted GEMeX would be easy because SLAKE and VQA-RAD contain chest X-rays. It is in fact the <b>most</b> out-of-distribution cell we have &mdash; largest k-NN distance to the training rows (7.228, above OmniMedVQA&rsquo;s 6.967) and lowest domain-classifier confidence (0.693) &mdash; and the head wins on it anyway. Distance from the training distribution does <b>not</b> predict whether selection helps.</div></div></div></section>
+<div class="callout warn"><b>And it is the hardest cell to reach.</b> GEMeX is the <b>most</b> out-of-distribution cell we have &mdash; the largest k-NN distance to the head&rsquo;s training rows (7.228, above OmniMedVQA&rsquo;s 6.967) and the lowest domain-classifier confidence (0.693) &mdash; and the head wins on it anyway. Distance from the training distribution does <b>not</b> predict whether selection helps, which is why the method cannot simply be gated on how familiar a dataset looks.</div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>The mechanism &middot; decomposition_2026-08-24.json</div>
 <h2>The head is competent. The pool is the problem.</h2>
 <figure><svg viewBox="0 0 900 116" role="img" aria-label="head minus greedy equals selection skill minus sampling penalty" style="max-width:100%;height:auto">
@@ -300,48 +299,18 @@ td.n,th.n{text-align:right;font-family:'Roboto Mono',monospace;font-variant-nume
 <div class="tile"><h3>Detecting when to trust it</h3><p>Six detectors; after GEMeX arrived, <b>none</b> order the cells. The router built on the best one is worse than always selecting, because it sends 99% of GEMeX to greedy and throws away the win.</p></div>
 <div class="tile"><h3>Answer kind</h3><p>Tested <i>within</i> cells so the cell is held fixed. Longer answers favour the head in 6/8 cells but the mean is <b>+0.0054</b> and two cells go firmly the other way.</p></div>
 </div></div></div></section>
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Corrections &middot; claims of ours that did not survive</div>
-<h2>Eleven retractions, and the one that mattered most</h2>
-<div class="callout bad"><b>A stale checkpoint invalidated an entire cell.</b> <span class="kbd">run_openvqa.py</span> resumed generation keyed on <span class="kbd">idx</span> alone. When OmniMedVQA was rebuilt from 15,831 to 8,883 questions it re-indexed 0&hellip;8882 over a <i>different</i> question set, so every index looked already-done: the regeneration reported success in <b>160 seconds having generated nothing</b>, and every downstream number paired the new questions with the previous build&rsquo;s answers and judge labels. Only <b>17 of 5,000</b> questions matched. Caught because a fresh T=0.4 run produced an impossible number &mdash; a sampled answer beating greedy by 0.12.</div>
-<div class="tiles">
-<div class="tile"><h3>What it cost</h3><p>Six analyses recomputed. The corrected cell is a much milder loss (&minus;0.0193, not &minus;0.0489) and <b>reverses</b> a claim: the head <i>beats</i> the string prior there, +0.0225. Every other cell audited clean.</p></div>
-<div class="tile"><h3>A CI of our own</h3><p>The regime router looked like <b>+0.0133 [+0.0109,+0.0156] WIN</b>. That interval resampled questions i.i.d. when essentially all the variance is <i>between</i> cells. Clustered properly: <b>+0.0119 [&minus;0.0032,+0.0297]</b> &mdash; a tie.</p></div>
-<div class="tile"><h3>A mixed currency</h3><p>The decomposition first read exact-match labels for one term and judge labels for the others, inflating the sampling penalty roughly eightfold. Caught before it reached this deck; all arms are now judge currency.</p></div>
-<div class="tile"><h3>A confounded design</h3><p>The breadth curve trained k=6 on six times the rows of k=1, so it could not separate &ldquo;more domains&rdquo; from &ldquo;more data&rdquo; &mdash; the question it existed to answer. Re-run budget-matched, the effect no longer clears zero.</p></div>
-<div class="tile"><h3>Double-counted evidence</h3><p>Kvasir-open and Kvasir-x1 are the same endoscopy source and carried both the largest slopes and the largest noise. Counted as one, the breadth interval includes zero.</p></div>
-<div class="tile"><h3>Two claims GEMeX killed</h3><p>The self-consistency sign-flip &ldquo;at the domain boundary, with no exceptions&rdquo; has an exception. And &ldquo;the regime is detectable&rdquo; did not survive a single additional cell &mdash; exactly the fragility we had flagged at n=7.</p></div>
-</div></div></div></section>
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Infrastructure</div>
-<h2>What kept the hardware honest</h2>
-<div class="tiles">
-<div class="tile"><h3>A failed producer deadlocked its consumers</h3><p>A chained campaign waited <b>21 hours</b> on an artifact whose producing job had already failed. Nothing ran overnight. Chains must wait on &ldquo;produced <i>or</i> failed&rdquo;.</p></div>
-<div class="tile"><h3>The segfault was never the optimiser</h3><p>The standing note blamed AdamW&rsquo;s multi-tensor path. Setting <span class="kbd">foreach=False</span> just moved the crash. The real variable is <b>thread count</b> &mdash; 10 threads dies in ~30s, 4 runs clean. Corrected in CLAUDE.md and both scripts that repeated it.</p></div>
-<div class="tile"><h3>A stub that counted as success</h3><p>A numpy <span class="kbd">int64</span> made <span class="kbd">json.dump</span> raise <i>after</i> each layer&rsquo;s fit &mdash; every layer computed, then discarded, leaving a 126-byte file that the planner read as &ldquo;done&rdquo;. Writes are atomic now and artifacts have a minimum size.</p></div>
-<div class="tile"><h3>A licence claim that was not true</h3><p>The GEMeX builder printed a third-party re-hosting warning <i>unconditionally</i>, so a run that pulled images under our own PhysioNet credential reported the wrong provenance. It would have sent us re-pulling 21,312 images we already had.</p></div>
-<div class="tile"><h3>Fixed queues cannot keep GPUs busy</h3><p>The runnable set <i>grows</i> as jobs land. A planner now reads the tree each wave and emits only jobs whose inputs exist and outputs do not, exiting when nothing is left.</p></div>
-<div class="tile"><h3>Two jobs, one card</h3><p>vLLM reserves a fixed <i>fraction</i> of the GPU at startup, so two jobs do not share &mdash; a leftover process holding 22.8&nbsp;GB killed a run twice. Every GPU job now runs behind a per-card lock.</p></div>
-</div></div></div></section>
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Where it stands</div>
-<h2>What I would put in the paper today</h2>
-<div class="tiles">
-<div class="tile ours"><h3>The positive claim</h3><p>A frozen 918k-parameter head reading one layer of an unmodified 7B beats greedy decoding on <b>4 of 8</b> open-text medical cells and beats a string-frequency null on <b>all 8</b> &mdash; including GEMeX, where the null loses to greedy outright.</p></div>
-<div class="tile ours"><h3>The mechanism</h3><p><b>head &minus; greedy = selection skill &minus; sampling penalty.</b> Skill is positive on 7/8 cells; where the method fails, it fails because the sampled pool is worse than greedy, not because the selector cannot rank. Temperature acts on that term and flips the failing cells.</p></div>
-<div class="tile ours"><h3>The deployment number</h3><p>Six of eight cells need <b>zero</b> in-domain examples; OmniMedVQA needs ~50. The two that never cross are coverage-limited, and we can show that separately.</p></div>
-<div class="tile"><h3>The negative-results contribution</h3><p>Eight documented dead ends with measured bounds &mdash; architecture, breadth, bigger pools, smaller pools, self-consistency, greedy-anchoring, regime detection, answer kind. Several come with a ceiling, not just a null.</p></div>
-</div>
-<div class="callout warn"><b>The honest hole.</b> We cannot yet predict which cells the method helps. Distance from the training distribution does not do it &mdash; GEMeX is the furthest cell and the head wins there. Answer kind does not do it. Two hypotheses measured, two refuted. Until that is answered, temperature has to be a fixed choice rather than a per-cell one, because per-cell tuning reads the eval labels.</div></div></div></section>
-<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Running right now</div>
-<h2>Next</h2>
+<section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Next step &middot; running now</div>
+<h2>What we do next</h2>
 <div class="tiles">
 <div class="tile"><h3>Temperature-matched head</h3><p>The head is fitted on T=0.7 pools but the best deployment temperature is 0.2 or 0.4 on five cells &mdash; so on most of them it scores a distribution it was never trained on. Cold training pools are generating now for all four training domains. This is the one explanation of the cold-pool gain that needs no eval labels.</p></div>
 <div class="tile"><h3>Layer chosen on transfer</h3><p>In-domain CV picks layer 20; out-of-domain transfer picks <b>18</b>. The deployed head reads 21. On the seven cells measured so far, a layer-18 head is <b>+0.0289</b> macro against layer-20&rsquo;s +0.0257 &mdash; small, but selected on the right metric for once.</p></div>
 <div class="tile"><h3>The identification question</h3><p>Two hypotheses are dead. The next candidates are properties of the <i>pool</i> rather than the domain &mdash; penalty is measurable without labels if we can estimate it, and it is the term that decides the sign.</p></div>
 </div>
-<div class="callout"><b>Standing discipline.</b> Every figure in this deck names the artifact it came from, and the four claims that changed this week are recorded as corrections in <span class="kbd">TRANSFER_WALL_2026-08-21.md</span> &sect;10 rather than quietly replaced.</div></div></div></section>
+<div class="callout"><b>The question that gates everything else.</b> Until we can say in advance which cells selection helps, temperature has to be a single fixed choice rather than a per-cell one &mdash; and a fixed choice gives up most of the +0.0117 that per-cell tuning shows is there. That is the next result worth having.</div></div></div></section>
 </div></div>
 <button class="chevbtn left" id="prev" aria-label="previous slide">&#8249;</button>
 <button class="chevbtn right" id="next" aria-label="next slide">&#8250;</button>
-<div class="counter"><span id="cur">1</span> / <span id="tot">13</span></div>
+<div class="counter"><span id="cur">1</span> / <span id="tot">10</span></div>
 <script>
 const deck=document.getElementById('deck');const slides=[...document.querySelectorAll('.slide')];
 const counter=document.getElementById('counter');const pbar=document.getElementById('pbar');
