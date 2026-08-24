@@ -147,6 +147,70 @@ def main():
                 "log": f"logs/sv_newdomain_{c}_w{A.wave}.log",
                 "timeout_s": 86400, "stall_s": 7200, "expect": out})
 
+    # ---- 4b. fine-layer extraction for the one cell still missing it -----------------------
+    for c in ["radimagenet_open"]:
+        if (nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc8_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_eval_finelayer_{c}.npz", mb=10)):
+            gpu[0].append({"name": f"finelayer_{c}_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES=0 python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                       f"--mode generator --split eval --eval_ds {c} "
+                       f"--layers 10 12 16 18 20 22 24 26 --stem_tag finelayer_{c} "
+                       f"--out feats_hidden",
+                "log": f"logs/sv_finelayer_{c}_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_eval_finelayer_{c}.npz",
+                "expect_min_bytes": 10_000_000, "_gpu": 0})
+
+    # ---- 4c. COLD POOLS FOR THE TRAINING SPLIT ---------------------------------------------
+    # The head is trained on T=0.7 pools and then deployed over pools of whatever temperature the
+    # generator ran at. head_temperature_2026-08-22.json shows the best deployment temperature is
+    # 0.2 on three cells and 0.4 on one, so on those cells the head is scoring a distribution it
+    # was never fitted to. These jobs build T=0.2 training pools so a temperature-MATCHED head can
+    # be fitted and the mismatch measured rather than assumed.
+    TRAIN_DS = ["vqa_rad_open_train", "slake_open_train", "kvasir_open", "pathvqa_open_train"]
+    for i, c in enumerate(TRAIN_DS):
+        g = i % 2
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7bT02_sc8.jsonl"):
+            gpu[g].append({"name": f"{c}_T02_gen",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {L7} --tag lingshu7bT02_sc8 --dataset {c} --n_samples 8 "
+                       f"--temp 0.2 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_{c}_T02_gen.log", "timeout_s": 36000, "stall_s": 2700,
+                "expect": f"{CK}/ckpt_{c}_lingshu7bT02_sc8.jsonl", "_gpu": g})
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7bT02_sc8_scexploded.judge.jsonl"):
+            gpu[g].append({"name": f"{c}_T02_judge",
+                "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                       f"{CK}/ckpt_{c}_lingshu7bT02_sc8.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                       f"{CK}/ckpt_{c}_lingshu7bT02_sc8_scexploded.jsonl",
+                "log": f"logs/sv_{c}_T02_judge.log", "timeout_s": 54000, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_lingshu7bT02_sc8_scexploded.judge.jsonl", "_gpu": g})
+    if all(nonempty(f"{CK}/ckpt_{c}_lingshu7bT02_sc8_scexploded.judge.jsonl") for c in TRAIN_DS) \
+            and not nonempty(f"{FEATS}/generator_train_T02.npz", mb=10):
+        gpu[1].append({"name": "train_T02_extract",
+            "cmd": E + "CUDA_VISIBLE_DEVICES=1 python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split train --gen_tag lingshu7bT02 --stem_tag T02 "
+                   f"--out feats_hidden",
+            "log": "logs/sv_train_T02_extract.log", "timeout_s": 86400, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_train_T02.npz", "expect_min_bytes": 10_000_000,
+            "_gpu": 1})
+
+    # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
+    if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
+        cpu.append({"name": f"pool_pruning_w{A.wave}",
+            "cmd": T + "python3 -u src/cascade_methods/pool_pruning.py",
+            "log": f"logs/sv_pool_pruning_w{A.wave}.log", "timeout_s": 36000, "stall_s": 3600,
+            "expect": f"{ART}/pool_pruning_2026-08-24.json"})
+    for lay in (18, 20, 21):
+        out = f"{ART}/head_layer{lay}_eval_2026-08-24.json"
+        if nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10) and not os.path.exists(out):
+            cpu.append({"name": f"head_layer{lay}_eval_w{A.wave}",
+                "cmd": T + f"python3 -X faulthandler -u src/training_methods/head_layer_eval.py "
+                       f"--layer {lay} --threads 4 --seeds 8",
+                "log": f"logs/sv_head_layer{lay}_w{A.wave}.log",
+                "timeout_s": 86400, "stall_s": 7200, "expect": out})
+
     # ---- 5. the fine-layer sweep shards (CPU) ---------------------------------------------
     for i, ls in enumerate([[10, 12], [16, 18], [20, 22], [24, 26]], 1):
         out = f"{ART}/head_finelayer_shard{i}.json"
