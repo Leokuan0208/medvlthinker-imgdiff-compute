@@ -30,13 +30,31 @@ import head_sweep as HS
 
 ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
 CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
-FL_EVAL = {"pathvqa_open": "generator_eval_finelayer", "slake_open": "generator_eval_finelayer",
-           "vqa_rad_open": "generator_eval_finelayer",
-           "kvasir_x1_open": "generator_eval_finelayer_kvasir_x1_open",
-           "vqamed_open": "generator_eval_finelayer_vqamed_open",
-           "omnimed_open": "generator_eval_finelayer_omnimed_open",
-           "gemex_open": "generator_eval_finelayer_gemex_open",
-           "radimagenet_open": "generator_eval_finelayer_radimagenet_open"}
+# Each cell may have its features in more than one cache, because the layer grids were extracted
+# in two passes: the even grid 10..26 as "finelayer", and the odd layers 19/21 as "oddlayer" so the
+# DEPLOYED layer 21 can be compared under the same training recipe rather than against the frozen
+# ensemble. Try each candidate stem and take the first that actually holds the requested layer --
+# asking for a layer that is not on disk is what made the layer-21 job fail in ~30 consecutive
+# waves before this.
+FL_EVAL = {c: [f"generator_eval_finelayer_{c}", f"generator_eval_oddlayer_{c}"]
+           for c in ("kvasir_x1_open", "vqamed_open", "omnimed_open", "gemex_open",
+                     "radimagenet_open")}
+for c in ("pathvqa_open", "slake_open", "vqa_rad_open"):
+    FL_EVAL[c] = ["generator_eval_finelayer", "generator_eval_oddlayer"]
+TRAIN_STEMS = ["generator_train_finelayer", "generator_train_oddlayer"]
+
+
+def stem_with_layer(cands, layer, feats):
+    """First candidate stem whose npz actually contains `layer`."""
+    for st in cands:
+        p = os.path.join(feats, st + ".npz")
+        if os.path.exists(p):
+            try:
+                if layer in [int(x) for x in np.load(p)["layers"]]:
+                    return st
+            except Exception:
+                pass
+    return None
 
 
 def norm(s):
@@ -56,11 +74,13 @@ def main():
     from genframe_data import rank_avg
 
     # ---- train an ensemble at the requested layer, on the frozen train pool ----------------
-    stems = [f"{HS.FEATS}/generator_train_finelayer"]
-    if not os.path.exists(stems[0] + ".npz"):
-        raise SystemExit("missing generator_train_finelayer.npz")
-    z = np.load(stems[0] + ".npz")
-    rows = json.load(open(stems[0] + ".meta.json"))["rows"]
+    tst = stem_with_layer(TRAIN_STEMS, A.layer, HS.FEATS)
+    if tst is None:
+        raise SystemExit(f"layer {A.layer} is in no training cache; extract it first "
+                         f"(candidates: {TRAIN_STEMS})")
+    base = f"{HS.FEATS}/{tst}"
+    z = np.load(base + ".npz")
+    rows = json.load(open(base + ".meta.json"))["rows"]
     keep = [i for i, r in enumerate(rows) if r.get("n_tok", -1) > 0]
     rows = [rows[i] for i in keep]
     layers = [int(x) for x in z["layers"]]
@@ -86,13 +106,17 @@ def main():
            "why": "in-domain CV picks layer 20 and out-of-domain transfer picks 18; the deployed "
                   "head reads 21, chosen on CV from a four-point grid",
            "cells": {}}
-    for cell, stem in FL_EVAL.items():
+    for cell, cands in FL_EVAL.items():
+        stem = stem_with_layer(cands, A.layer, HS.FEATS)
+        if stem is None:
+            continue
         p = f"{HS.FEATS}/{stem}"
         jp = f"{CK}/ckpt_{cell}_lingshu7b.judge.jsonl"
         if not (os.path.exists(p + ".npz") and os.path.exists(jp)):
             continue
         m = json.load(open(p + ".meta.json"))
-        dsf = cell if stem == "generator_eval_finelayer" else None
+        dsf = cell if stem in ("generator_eval_finelayer",
+                               "generator_eval_oddlayer") else None
         ki = [i for i, r in enumerate(m["rows"])
               if r.get("n_tok", -1) > 0 and (dsf is None or r.get("ds") == dsf)]
         if not ki:

@@ -196,15 +196,47 @@ def main():
             "expect": f"{FEATS}/generator_train_T02.npz", "expect_min_bytes": 10_000_000,
             "_gpu": 1})
 
+    # ---- 4c2. ODD-LAYER extraction (19, 21) ------------------------------------------------
+    # The fine-layer grid is even (10..26), so the DEPLOYED layer 21 could not be trained under the
+    # same recipe as 18 and 20 -- head_layer_eval kept failing on "layer 21 not extracted" and burned
+    # ~30 waves before the lookup was fixed. 19 comes along because the transfer peak sits at 18.
+    ODD = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
+           "kvasir_x1_open", "vqamed_open", "omnimed_open", "gemex_open"]
+    if not nonempty(f"{FEATS}/generator_train_oddlayer.npz", mb=10):
+        gpu[0].append({"name": "train_oddlayer_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=0 python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split train --layers 19 21 --stem_tag oddlayer "
+                   f"--out feats_hidden",
+            "log": "logs/sv_train_oddlayer_extract.log", "timeout_s": 86400, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_train_oddlayer.npz",
+            "expect_min_bytes": 10_000_000, "_gpu": 0})
+    todo_odd = [c for c in ODD
+                if nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc8_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_eval_oddlayer_{c}.npz", mb=5)]
+    todo_odd.sort(key=lambda c: SIZE.get(c, 99999))
+    for i, c in enumerate(todo_odd):
+        g = i % 2
+        gpu[g].append({"name": f"oddlayer_{c}_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split eval --eval_ds {c} --layers 19 21 "
+                   f"--stem_tag oddlayer_{c} --out feats_hidden",
+            "log": f"logs/sv_oddlayer_{c}_extract.log", "timeout_s": 86400, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_eval_oddlayer_{c}.npz",
+            "expect_min_bytes": 5_000_000, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",
             "cmd": T + "python3 -u src/cascade_methods/pool_pruning.py",
             "log": f"logs/sv_pool_pruning_w{A.wave}.log", "timeout_s": 36000, "stall_s": 3600,
             "expect": f"{ART}/pool_pruning_2026-08-24.json"})
-    for lay in (18, 20, 21):
+    for lay in (18, 19, 20, 21, 22):
         out = f"{ART}/head_layer{lay}_eval_2026-08-24.json"
-        if nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10) and not os.path.exists(out):
+        have = (nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10) if lay % 2 == 0
+                else nonempty(f"{FEATS}/generator_train_oddlayer.npz", mb=10))
+        if have and not os.path.exists(out):
             cpu.append({"name": f"head_layer{lay}_eval_w{A.wave}",
                 "cmd": T + f"python3 -X faulthandler -u src/training_methods/head_layer_eval.py "
                        f"--layer {lay} --threads 4 --seeds 8",

@@ -12,7 +12,7 @@
 set -u
 cd ~/medvlthinker-imgdiff-compute
 WAVE=${1:-2}
-MAXWAVE=40
+MAXWAVE=400
 while [ "$WAVE" -le "$MAXWAVE" ]; do
   echo "[$(date -u +%F\ %H:%M:%S)] === planning wave $WAVE ==="
   python3 src/reporting/plan_next_wave.py --wave "$WAVE" > "logs/plan_wave$WAVE.log" 2>&1
