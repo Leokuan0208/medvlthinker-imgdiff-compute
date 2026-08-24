@@ -1,0 +1,132 @@
+{
+ "title": "Do the representation and input-augmentation gains combine, end to end?",
+ "date": "2026-08-24",
+ "no_fabricated_numbers": true,
+ "seeds": 5,
+ "configs": {
+  "A": "layer 21, h_span (deployed recipe)",
+  "B": "rank-ensemble over layers 18/20/22",
+  "C": "layer 21, h_span + self-consistency feature",
+  "D": "B + C"
+ },
+ "endpoint": "verifier pick vs greedy decoding, judge currency, per benchmark",
+ "cells": {
+  "pathvqa_open": {
+   "n_layer21": 1500,
+   "n_finelayer": 1500,
+   "greedy": 0.3426666666666667,
+   "A_layer21": 0.396,
+   "B_ens": 0.3993333333333333,
+   "C_sc": 0.3953333333333333,
+   "D_ens_sc": 0.406,
+   "A_minus_greedy": 0.053333333333333344,
+   "B_minus_greedy": 0.05666666666666664,
+   "C_minus_greedy": 0.05266666666666664,
+   "D_minus_greedy": 0.06333333333333335
+  },
+  "slake_open": {
+   "n_layer21": 645,
+   "n_finelayer": 645,
+   "greedy": 0.7302325581395349,
+   "A_layer21": 0.7705426356589147,
+   "B_ens": 0.7767441860465116,
+   "C_sc": 0.7844961240310078,
+   "D_ens_sc": 0.7829457364341085,
+   "A_minus_greedy": 0.04031007751937976,
+   "B_minus_greedy": 0.046511627906976716,
+   "C_minus_greedy": 0.054263565891472854,
+   "D_minus_greedy": 0.05271317829457356
+  },
+  "vqa_rad_open": {
+   "n_layer21": 200,
+   "n_finelayer": 200,
+   "greedy": 0.49,
+   "A_layer21": 0.475,
+   "B_ens": 0.505,
+   "C_sc": 0.5,
+   "D_ens_sc": 0.52,
+   "A_minus_greedy": -0.015000000000000013,
+   "B_minus_greedy": 0.015000000000000013,
+   "C_minus_greedy": 0.010000000000000009,
+   "D_minus_greedy": 0.030000000000000027
+  },
+  "radimagenet_open": {
+   "n_layer21": 2000,
+   "n_finelayer": 2000,
+   "greedy": 0.321,
+   "A_layer21": 0.322,
+   "B_ens": 0.3305,
+   "C_sc": 0.3405,
+   "D_ens_sc": 0.3335,
+   "A_minus_greedy": 0.0010000000000000009,
+   "B_minus_greedy": 0.009500000000000008,
+   "C_minus_greedy": 0.019500000000000017,
+   "D_minus_greedy": 0.012500000000000011
+  },
+  "kvasir_x1_open": {
+   "n_layer21": 10121,
+   "n_finelayer": 10121,
+   "greedy": 0.2848532753680466,
+   "A_layer21": 0.36962750716332377,
+   "B_ens": 0.37585218851892105,
+   "C_sc": 0.3714059875506373,
+   "D_ens_sc": 0.37693903764450154,
+   "A_minus_greedy": 0.08477423179527716,
+   "B_minus_greedy": 0.09099891315087444,
+   "C_minus_greedy": 0.0865527121825907,
+   "D_minus_greedy": 0.09208576227645493
+  },
+  "omnimed_open": {
+   "n_layer21": 8883,
+   "n_finelayer": 8883,
+   "greedy": 0.5163796014859845,
+   "A_layer21": 0.510075424969042,
+   "B_ens": 0.5418214567150738,
+   "C_sc": 0.5218957559383092,
+   "D_ens_sc": 0.5383316447146235,
+   "A_minus_greedy": -0.0063041765169424835,
+   "B_minus_greedy": 0.02544185522908926,
+   "C_minus_greedy": 0.005516154452324673,
+   "D_minus_greedy": 0.021952043228638973
+  },
+  "vqamed_open": {
+   "n_layer21": 3663,
+   "n_finelayer": 3663,
+   "greedy": 0.09473109473109473,
+   "A_layer21": 0.07316407316407317,
+   "B_ens": 0.07452907452907453,
+   "C_sc": 0.07835107835107835,
+   "D_ens_sc": 0.07753207753207753,
+   "A_minus_greedy": -0.02156702156702156,
+   "B_minus_greedy": -0.020202020202020193,
+   "C_minus_greedy": -0.016380016380016377,
+   "D_minus_greedy": -0.017199017199017202
+  },
+  "gemex_open": {
+   "n_layer21": 8000,
+   "n_finelayer": 8000,
+   "greedy": 0.397375,
+   "A_layer21": 0.41975,
+   "B_ens": 0.433,
+   "C_sc": 0.42275,
+   "D_ens_sc": 0.435125,
+   "A_minus_greedy": 0.022375000000000034,
+   "B_minus_greedy": 0.03562500000000002,
+   "C_minus_greedy": 0.025375000000000036,
+   "D_minus_greedy": 0.037750000000000006
+  }
+ },
+ "macro_minus_greedy": {
+  "A": 0.01986518057050328,
+  "B": 0.03244275534394836,
+  "C": 0.02968676035162982,
+  "D": 0.03664191249174796
+ },
+ "cells_beating_greedy": {
+  "A": "5/8",
+  "B": "7/8",
+  "C": "7/8",
+  "D": "7/8"
+ },
+ "VERDICT": "end to end over 8 benchmarks: A +0.0199, B +0.0324, C +0.0297, D +0.0366 -- best is D. The two gains COMBINE: D beats both B (+0.0042) and C (+0.0070)."
+}
