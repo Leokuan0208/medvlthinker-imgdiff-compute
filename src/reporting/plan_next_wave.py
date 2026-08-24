@@ -232,6 +232,28 @@ def main():
             "cmd": T + "python3 -u src/cascade_methods/pool_pruning.py",
             "log": f"logs/sv_pool_pruning_w{A.wave}.log", "timeout_s": 36000, "stall_s": 3600,
             "expect": f"{ART}/pool_pruning_2026-08-24.json"})
+    # zero-GPU analyses that new caches unlock
+    EXTRA = [
+        ("head_temp_matched", "src/training_methods/head_temp_matched.py --threads 4 --seeds 5",
+         f"{ART}/head_temp_matched_2026-08-24.json",
+         lambda: nonempty(f"{FEATS}/generator_train_T02.npz", mb=10)),
+        ("head_representation", "src/training_methods/head_representation.py --threads 4 --seeds 3",
+         f"{ART}/head_representation_2026-08-24.json",
+         lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("head_input_augmentation",
+         "src/training_methods/head_input_augmentation.py --threads 4 --seeds 3",
+         f"{ART}/head_input_augmentation_2026-08-24.json",
+         lambda: nonempty(f"{FEATS}/generator_train_s0of2.npz", mb=10)),
+        ("decomposition_report", "src/cascade_methods/decomposition_report.py",
+         f"{ART}/decomposition_2026-08-24.json", lambda: True),
+    ]
+    for name, cmd, out, ready in EXTRA:
+        if ready() and not os.path.exists(out):
+            cpu.append({"name": f"{name}_w{A.wave}",
+                "cmd": T + f"python3 -X faulthandler -u {cmd}",
+                "log": f"logs/sv_{name}_w{A.wave}.log", "timeout_s": 86400, "stall_s": 7200,
+                "expect": out})
+
     for lay in (18, 19, 20, 21, 22):
         out = f"{ART}/head_layer{lay}_eval_2026-08-24.json"
         have = (nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10) if lay % 2 == 0
