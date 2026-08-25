@@ -226,6 +226,38 @@ def main():
             "expect": f"{FEATS}/generator_eval_oddlayer_{c}.npz",
             "expect_min_bytes": 5_000_000, "_gpu": g})
 
+    # ---- 4c3. BEST-OF-16 on the two benchmarks the verifier still loses --------------------
+    # vqa_rad and vqamed are coverage-limited, not selection-limited (vqamed oracle@8 0.2102 vs
+    # greedy 0.0947). More samples raise oracle@N; whether a trained verifier can convert that is
+    # the open question -- self-consistency provably cannot (flat at the floor as N grows).
+    for i, c in enumerate(["vqa_rad_open", "vqamed_open"]):
+        g = i % 2
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl"):
+            gpu[g].append({"name": f"{c}_sc16_gen",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {L7} --tag lingshu7b_sc16 --dataset {c} --n_samples 16 "
+                       f"--temp 0.7 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_{c}_sc16_gen.log", "timeout_s": 43200, "stall_s": 2700,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl", "_gpu": g})
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl"):
+            gpu[g].append({"name": f"{c}_sc16_judge",
+                "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.jsonl",
+                "log": f"logs/sv_{c}_sc16_judge.log", "timeout_s": 54000, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl", "_gpu": g})
+        if (nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_eval_{c}_sc16.npz", mb=5)):
+            gpu[g].append({"name": f"{c}_sc16_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                       f"--mode generator --split eval --eval_ds {c} --pool_tag _sc16 "
+                       f"--layers 18 19 20 21 22 --stem_tag {c}_sc16 --out feats_hidden",
+                "log": f"logs/sv_{c}_sc16_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_eval_{c}_sc16.npz",
+                "expect_min_bytes": 5_000_000, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",
@@ -240,6 +272,10 @@ def main():
         ("head_representation", "src/training_methods/head_representation.py --threads 4 --seeds 3",
          f"{ART}/head_representation_2026-08-24.json",
          lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("head_layer_ensemble_width",
+         "src/training_methods/head_ens_width.py --threads 4 --seeds 5",
+         f"{ART}/head_ens_width_2026-08-25.json",
+         lambda: nonempty(f"{FEATS}/generator_train_oddlayer.npz", mb=10)),
         ("head_input_augmentation",
          "src/training_methods/head_input_augmentation.py --threads 4 --seeds 3",
          f"{ART}/head_input_augmentation_2026-08-24.json",

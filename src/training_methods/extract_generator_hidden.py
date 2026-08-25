@@ -45,6 +45,7 @@ from PIL import Image
 ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
 CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
 TAG = "lingshu7b"
+POOL = "_sc8"          # candidate-set suffix; see --pool_tag
 HIGH_PX, MIN_PX = 1280 * 28 * 28, 4 * 28 * 28
 
 # verbatim from run_lora_verifier_disjoint.py / verifier_transfer_eval.py
@@ -127,9 +128,12 @@ def imgs_for_eval(ds):
 # ---------------------------------------------------------------- row construction
 def judged_answers(ds):
     """{item_idx: {normalized_answer: judge_ok}} and {item_idx: [surface preds in pool order]}"""
-    sc = loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8.jsonl")
-    exp = loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8_scexploded.jsonl")
-    jud = {k: v["judge_ok"] for k, v in loadj(f"{CK}/ckpt_{ds}_{TAG}_sc8_scexploded.judge.jsonl").items()}
+    # POOL is "_sc8" by default but must be settable: the candidate-set size is part of the
+    # filename, so a 16-sample pool lives at ckpt_<ds>_<TAG>_sc16*.jsonl and hardcoding _sc8 here
+    # would silently resolve --gen_tag lingshu7b_sc16 to ckpt_<ds>_lingshu7b_sc16_sc8.jsonl.
+    sc = loadj(f"{CK}/ckpt_{ds}_{TAG}{POOL}.jsonl")
+    exp = loadj(f"{CK}/ckpt_{ds}_{TAG}{POOL}_scexploded.jsonl")
+    jud = {k: v["judge_ok"] for k, v in loadj(f"{CK}/ckpt_{ds}_{TAG}{POOL}_scexploded.judge.jsonl").items()}
     aj = defaultdict(dict)
     for cid, r in exp.items():
         if cid in jud:
@@ -251,6 +255,9 @@ def main():
                          "Set to e.g. lingshu7bT04 to extract a different-temperature pool; "
                          "without this the module-level TAG silently pinned every extraction to "
                          "the T=0.7 dumps regardless of which pool was intended.")
+    ap.add_argument("--pool_tag", default="_sc8",
+                    help="candidate-set suffix in the dump filename, e.g. _sc8 or _sc16. The pool "
+                         "size is part of the path, so this cannot be folded into --gen_tag.")
     ap.add_argument("--stem_tag", default="",
                     help="appended to the output stem so a new cell cannot overwrite the frozen cache")
     ap.add_argument("--max_train", type=int, default=10364,
@@ -268,6 +275,7 @@ def main():
     A = ap.parse_args()
     DEV = "cuda"
     outdir = os.path.join(ROOT, A.out); os.makedirs(outdir, exist_ok=True)
+    globals()["POOL"] = A.pool_tag
     if A.gen_tag:
         globals()["TAG"] = A.gen_tag
         print(f"[gen_tag] reading pools tagged {A.gen_tag}", flush=True)
