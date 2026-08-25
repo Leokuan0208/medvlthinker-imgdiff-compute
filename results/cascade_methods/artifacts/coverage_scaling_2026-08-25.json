@@ -1,0 +1,62 @@
+{
+ "title": "Does a trained verifier convert extra coverage into accuracy?",
+ "date": "2026-08-25",
+ "no_fabricated_numbers": true,
+ "N_values": [
+  2,
+  4,
+  8,
+  16
+ ],
+ "draws_per_N": 8,
+ "verifier": "genframe_head_pooled_ens (24 heads)",
+ "eval": "held-out image halves only",
+ "cells": {
+  "vqa_rad_open": {
+   "n_questions": 97,
+   "greedy": 0.5051546391752577,
+   "mean_distinct_candidates": 5.298969072164948,
+   "curve": {
+    "2": {
+     "verifier": 0.2620967741935484,
+     "oracle": 0.3548387096774194,
+     "verifier_minus_greedy": -0.24305786498170934
+    },
+    "4": {
+     "verifier": 0.27638190954773867,
+     "oracle": 0.3969849246231156,
+     "verifier_minus_greedy": -0.22877272962751904
+    },
+    "8": {
+     "verifier": 0.3062015503875969,
+     "oracle": 0.4883720930232558,
+     "verifier_minus_greedy": -0.19895308878766083
+    },
+    "16": {
+     "verifier": 0.4536082474226804,
+     "oracle": 0.6185567010309279,
+     "verifier_minus_greedy": -0.0515463917525773
+    }
+   },
+   "matched_control_sc8": {
+    "n_questions": 97,
+    "verifier": 0.4845360824742268,
+    "greedy": 0.5051546391752577,
+    "verifier_minus_greedy": -0.02061855670103091,
+    "mean_distinct_candidates": 3.5463917525773194
+   },
+   "sc16_on_same_questions": {
+    "verifier": 0.4536082474226804,
+    "verifier_minus_greedy": -0.0515463917525773
+   },
+   "budget_8_to_16_gain": -0.030927835051546393,
+   "verifier_gain_2_to_16": 0.19151147322913203,
+   "oracle_gain_2_to_16": 0.2637179913535085,
+   "conversion_rate": 0.7261979823455234
+  }
+ },
+ "mean_conversion_rate": 0.7261979823455234,
+ "beats_greedy_at_N16": [],
+ "VERDICT": "MATCHED BUDGET (the number that answers the question): vqa_rad_open -0.0309 going from an 8-sample to a 16-sample pool on identical questions -- doubling the sampling budget makes it WORSE. Within-pool subsampling separately shows the verifier converting 72.6% of the oracle gain from N=2 to N=16, but that curve handicaps small N on coverage and does NOT license spending more samples. The coverage attack fails: extra candidates make ranking harder faster than extra coverage helps, which is the same effect the union-pool and pruning experiments found from the other two directions.",
+ "two_readings_note": "The within-pool N curve rises and the matched-budget comparison falls. They are not in conflict: subsampling N from a fixed 16-sample pool removes coverage that the pool already paid for, so small N is handicapped. Only the matched comparison of two real generation runs answers 'should we sample more'."
+}
