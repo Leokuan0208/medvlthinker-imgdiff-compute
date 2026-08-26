@@ -258,6 +258,29 @@ def main():
                 "expect": f"{FEATS}/generator_eval_{c}_sc16.npz",
                 "expect_min_bytes": 5_000_000, "_gpu": g})
 
+    # ---- 4c4. ensemble-layer features for the TEMPERATURE pools ----------------------------
+    # The T=0.2/0.4/1.0 caches hold layers [7,14,21,28] only, so every temperature result so far was
+    # measured with a SINGLE-LAYER layer-21 probe. The shipped verifier rank-ensembles 18/20/22 and
+    # has never been evaluated across temperature at all -- and pooling was shown to flatten the
+    # layer-choice effect, so the temperature preference may well differ for it.
+    TCELLS = ["vqa_rad_open", "slake_open", "pathvqa_open", "radimagenet_open",
+              "vqamed_open", "gemex_open", "omnimed_open", "kvasir_x1_open"]
+    TT = {"lingshu7bT02": "_T02", "lingshu7bT04": "_T04", "lingshu7bT10": "_T10"}
+    todo_t = [(c, tag, suf) for c in TCELLS for tag, suf in TT.items()
+              if nonempty(f"{CK}/ckpt_{c}_{tag}_sc8_scexploded.judge.jsonl")
+              and not nonempty(f"{FEATS}/generator_eval_ens{suf}_{c}.npz", mb=5)]
+    todo_t.sort(key=lambda x: SIZE.get(x[0], 99999))
+    for i, (c, tag, suf) in enumerate(todo_t):
+        g = i % 2
+        gpu[g].append({"name": f"ens{suf}_{c}_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split eval --eval_ds {c} --gen_tag {tag} "
+                   f"--layers 18 20 22 --stem_tag ens{suf}_{c} --out feats_hidden",
+            "log": f"logs/sv_ens{suf}_{c}_extract.log", "timeout_s": 86400, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_eval_ens{suf}_{c}.npz",
+            "expect_min_bytes": 5_000_000, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",

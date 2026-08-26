@@ -53,10 +53,74 @@
    "verifier_gain_2_to_16": 0.19151147322913203,
    "oracle_gain_2_to_16": 0.2637179913535085,
    "conversion_rate": 0.7261979823455234
+  },
+  "vqamed_open": {
+   "n_questions": 1807,
+   "greedy": 0.09131156613171001,
+   "mean_distinct_candidates": 11.247371333702269,
+   "curve": {
+    "2": {
+     "verifier": 0.05593623269472801,
+     "oracle": 0.07705216053698784,
+     "verifier_minus_greedy": -0.03537533343698201
+    },
+    "4": {
+     "verifier": 0.06821262932572245,
+     "oracle": 0.12921869425615412,
+     "verifier_minus_greedy": -0.02309893680598757
+    },
+    "8": {
+     "verifier": 0.06732267322673227,
+     "oracle": 0.1920459204592046,
+     "verifier_minus_greedy": -0.023988892904977743
+    },
+    "16": {
+     "verifier": 0.09352517985611511,
+     "oracle": 0.27061427780852243,
+     "verifier_minus_greedy": 0.0022136137244050946
+    }
+   },
+   "matched_control_sc8": {
+    "n_questions": 1807,
+    "verifier": 0.08799114554510237,
+    "greedy": 0.09131156613171001,
+    "verifier_minus_greedy": -0.003320420586607642,
+    "mean_distinct_candidates": 6.3641394576646375
+   },
+   "sc16_on_same_questions": {
+    "verifier": 0.09352517985611511,
+    "verifier_minus_greedy": 0.0022136137244050946
+   },
+   "budget_8_to_16_gain": 0.005534034311012737,
+   "verifier_gain_2_to_16": 0.0375889471613871,
+   "oracle_gain_2_to_16": 0.1935621172715346,
+   "conversion_rate": 0.19419578423321454
   }
  },
- "mean_conversion_rate": 0.7261979823455234,
- "beats_greedy_at_N16": [],
- "VERDICT": "MATCHED BUDGET (the number that answers the question): vqa_rad_open -0.0309 going from an 8-sample to a 16-sample pool on identical questions -- doubling the sampling budget makes it WORSE. Within-pool subsampling separately shows the verifier converting 72.6% of the oracle gain from N=2 to N=16, but that curve handicaps small N on coverage and does NOT license spending more samples. The coverage attack fails: extra candidates make ranking harder faster than extra coverage helps, which is the same effect the union-pool and pruning experiments found from the other two directions.",
- "two_readings_note": "The within-pool N curve rises and the matched-budget comparison falls. They are not in conflict: subsampling N from a fixed 16-sample pool removes coverage that the pool already paid for, so small N is handicapped. Only the matched comparison of two real generation runs answers 'should we sample more'."
+ "mean_conversion_rate": 0.4601968832893689,
+ "beats_greedy_at_N16": [
+  "vqamed_open"
+ ],
+ "VERDICT": "MATCHED BUDGET: vqa_rad -0.0309, vqamed +0.0055 going from an 8-sample to a 16-sample pool on identical questions. NEITHER direction is significant -- image-clustered CIs put vqamed at +0.0022 [-0.0105,+0.0155] and vqa_rad at -0.0515 [-0.1458,+0.0404] against greedy at N=16, both TIES. Doubling the sampling budget buys nothing measurable on either coverage-limited benchmark. The within-pool subsampling curve (verifier converts 46% of the oracle gain from N=2 to N=16) is real but does not license spending more samples: it handicaps small N on coverage the pool already paid for.",
+ "significance_clustered_by_image": {
+  "vqamed_open": {
+   "delta": 0.0022,
+   "ci": [
+    -0.0105,
+    0.0155
+   ],
+   "verdict": "TIE",
+   "discordant_questions": 142
+  },
+  "vqa_rad_open": {
+   "delta": -0.0515,
+   "ci": [
+    -0.1458,
+    0.0404
+   ],
+   "verdict": "TIE",
+   "discordant_questions": 19
+  },
+  "source": "coverage_sc16_ci_2026-08-25.json"
+ }
 }

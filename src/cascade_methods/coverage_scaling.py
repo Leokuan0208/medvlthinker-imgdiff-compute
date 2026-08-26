@@ -189,10 +189,13 @@ def main():
                + ", ".join(f"{c} {v['budget_8_to_16_gain']:+.4f}"
                            for c, v in cs.items() if "budget_8_to_16_gain" in v) + ". "
                if any("budget_8_to_16_gain" in v for v in cs.values()) else "") +
-            ("More samples DO fix the coverage-limited benchmarks -- unlike self-consistency, a "
-             "trained verifier converts the extra coverage." if beats else
-             "Even at N=16 the verifier still loses on these benchmarks: the extra coverage is "
-             "real but it cannot be converted, so this is a generator problem, not a selector one."))
+            # A SIGN IS NOT A RESULT. Counting how many benchmarks come out positive called this
+            # a fix on vqamed (+0.0022) and a regression on vqa_rad (-0.0309); image-clustered CIs
+            # put both at TIE (+0.0022 [-0.0105,+0.0155] and -0.0515 [-0.1458,+0.0404] against
+            # greedy at N=16, coverage_sc16_ci_2026-08-25.json). Report the interval, not the sign.
+            "Significance must be read from coverage_sc16_ci_2026-08-25.json, not from the sign "
+            "of these deltas: both benchmarks are TIES against greedy at N=16, so doubling the "
+            "sampling budget buys nothing measurable on either.")
         print(f"=> {art['VERDICT']}")
     json.dump(art, open(OUT, "w"), indent=1)
     print(f"wrote {OUT}")
