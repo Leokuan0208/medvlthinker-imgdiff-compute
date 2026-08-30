@@ -1,0 +1,107 @@
+[
+ {
+  "name": "slake_open_sc16_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --mode generator --split eval --eval_ds slake_open --pool_tag _sc16 --layers 18 20 22 --stem_tag slake_open_sc16 --out feats_hidden'",
+  "log": "logs/sv_slake_open_sc16_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_slake_open_sc16.npz",
+  "expect_min_bytes": 5000000
+ },
+ {
+  "name": "radimagenet_open_sc16_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7b_sc16 --dataset radimagenet_open --n_samples 16 --temp 0.7 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_radimagenet_open_sc16_gen.log",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc16.jsonl"
+ },
+ {
+  "name": "radimagenet_open_sc16_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc16.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc16_scexploded.jsonl'",
+  "log": "logs/sv_radimagenet_open_sc16_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_radimagenet_open_lingshu7b_sc16_scexploded.judge.jsonl"
+ },
+ {
+  "name": "omnimed_open_sc16_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7b_sc16 --dataset omnimed_open --n_samples 16 --temp 0.7 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_omnimed_open_sc16_gen.log",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b_sc16.jsonl"
+ },
+ {
+  "name": "omnimed_open_sc16_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b_sc16.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b_sc16_scexploded.jsonl'",
+  "log": "logs/sv_omnimed_open_sc16_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_omnimed_open_lingshu7b_sc16_scexploded.judge.jsonl"
+ },
+ {
+  "name": "vqa_rad_open_train_lingshu7bT04_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT04_sc8 --dataset vqa_rad_open_train --n_samples 8 --temp 0.4 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_vqa_rad_open_train_lingshu7bT04_gen.log",
+  "timeout_s": 43200,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_train_lingshu7bT04_sc8.jsonl"
+ },
+ {
+  "name": "vqa_rad_open_train_lingshu7bT04_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_train_lingshu7bT04_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_train_lingshu7bT04_sc8_scexploded.jsonl'",
+  "log": "logs/sv_vqa_rad_open_train_lingshu7bT04_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_train_lingshu7bT04_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "slake_open_train_lingshu7bT10_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset slake_open_train --n_samples 8 --temp 1.0 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_slake_open_train_lingshu7bT10_gen.log",
+  "timeout_s": 43200,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_train_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "slake_open_train_lingshu7bT10_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_train_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_train_lingshu7bT10_sc8_scexploded.jsonl'",
+  "log": "logs/sv_slake_open_train_lingshu7bT10_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_train_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "kvasir_open_lingshu7bT04_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT04_sc8 --dataset kvasir_open --n_samples 8 --temp 0.4 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_kvasir_open_lingshu7bT04_gen.log",
+  "timeout_s": 43200,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_open_lingshu7bT04_sc8.jsonl"
+ },
+ {
+  "name": "kvasir_open_lingshu7bT04_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_open_lingshu7bT04_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_open_lingshu7bT04_sc8_scexploded.jsonl'",
+  "log": "logs/sv_kvasir_open_lingshu7bT04_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_open_lingshu7bT04_sc8_scexploded.judge.jsonl"
+ },
+ {
+  "name": "pathvqa_open_train_lingshu7bT10_gen",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/ --tag lingshu7bT10_sc8 --dataset pathvqa_open_train --n_samples 8 --temp 1.0 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "log": "logs/sv_pathvqa_open_train_lingshu7bT10_gen.log",
+  "timeout_s": 43200,
+  "stall_s": 3600,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_train_lingshu7bT10_sc8.jsonl"
+ },
+ {
+  "name": "pathvqa_open_train_lingshu7bT10_judge",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_train_lingshu7bT10_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_train_lingshu7bT10_sc8_scexploded.jsonl'",
+  "log": "logs/sv_pathvqa_open_train_lingshu7bT10_judge.log",
+  "timeout_s": 86400,
+  "stall_s": 4200,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_train_lingshu7bT10_sc8_scexploded.judge.jsonl"
+ }
+]

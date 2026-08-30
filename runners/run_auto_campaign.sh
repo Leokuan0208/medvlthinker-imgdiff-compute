@@ -12,13 +12,27 @@
 set -u
 cd ~/medvlthinker-imgdiff-compute
 WAVE=${1:-2}
-MAXWAVE=400
+MAXWAVE=4000
+IDLE=0
+MAXIDLE=${MAXIDLE:-96}   # 96 x 15min = 24h of genuinely empty plans before stopping
 while [ "$WAVE" -le "$MAXWAVE" ]; do
   echo "[$(date -u +%F\ %H:%M:%S)] === planning wave $WAVE ==="
   python3 src/reporting/plan_next_wave.py --wave "$WAVE" > "logs/plan_wave$WAVE.log" 2>&1
   rc=$?
   tail -3 "logs/plan_wave$WAVE.log"
-  if [ "$rc" -eq 3 ]; then echo "[$(date -u +%H:%M:%S)] nothing left to run -- CAMPAIGN COMPLETE"; break; fi
+  if [ "$rc" -eq 3 ]; then
+    # DO NOT EXIT. The planner emits only jobs whose inputs exist, so "nothing to run" usually
+    # means "nothing to run YET" -- a long extraction is still producing the input that unlocks the
+    # next batch. Exiting here left both GPUs idle for four days. Sleep and re-plan instead, and
+    # only give up after a long stretch of genuinely empty plans.
+    IDLE=$((IDLE+1))
+    echo "[$(date -u +%H:%M:%S)] nothing runnable (idle check $IDLE/$MAXIDLE) -- re-planning in 15m"
+    if [ "$IDLE" -ge "$MAXIDLE" ]; then
+      echo "[$(date -u +%H:%M:%S)] $MAXIDLE consecutive empty plans -- CAMPAIGN COMPLETE"; break
+    fi
+    sleep 900; continue
+  fi
+  IDLE=0
   declare -A PID=()
   for lane in gpu0 gpu1 cpu; do
     q="runners/auto_${lane}_wave${WAVE}.json"

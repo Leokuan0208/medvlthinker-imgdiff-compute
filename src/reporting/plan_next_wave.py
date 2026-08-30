@@ -281,6 +281,63 @@ def main():
             "expect": f"{FEATS}/generator_eval_ens{suf}_{c}.npz",
             "expect_min_bytes": 5_000_000, "_gpu": g})
 
+    # ---- 4c5. 16-SAMPLE POOLS FOR EVERY BENCHMARK ------------------------------------------
+    # The matched-budget 8-vs-16 comparison exists for two benchmarks and is a TIE on both. Two
+    # points cannot separate "sampling more never helps" from "it helps where coverage binds", and
+    # the coverage-limited pair is exactly the pair least able to answer that. Run all eight.
+    SC16 = ["slake_open", "pathvqa_open", "radimagenet_open", "gemex_open",
+            "omnimed_open", "kvasir_x1_open"]
+    for i, c in enumerate(SC16):
+        g = i % 2
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl"):
+            gpu[g].append({"name": f"{c}_sc16_gen",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {L7} --tag lingshu7b_sc16 --dataset {c} --n_samples 16 "
+                       f"--temp 0.7 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_{c}_sc16_gen.log", "timeout_s": 86400, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl", "_gpu": g})
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl"):
+            gpu[g].append({"name": f"{c}_sc16_judge",
+                "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc16.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.jsonl",
+                "log": f"logs/sv_{c}_sc16_judge.log", "timeout_s": 86400, "stall_s": 4200,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl", "_gpu": g})
+        if (nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc16_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_eval_{c}_sc16.npz", mb=5)):
+            gpu[g].append({"name": f"{c}_sc16_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                       f"--mode generator --split eval --eval_ds {c} --pool_tag _sc16 "
+                       f"--layers 18 20 22 --stem_tag {c}_sc16 --out feats_hidden",
+                "log": f"logs/sv_{c}_sc16_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_eval_{c}_sc16.npz",
+                "expect_min_bytes": 5_000_000, "_gpu": g})
+
+    # ---- 4c6. cold/hot pools for the TRAINING domains --------------------------------------
+    # A temperature-matched POOLED verifier needs training pools at each temperature. T=0.2 exists;
+    # T=0.4 and T=1.0 do not, so the 2x2 could only ever be run at one cold point.
+    for i, c in enumerate(["vqa_rad_open_train", "slake_open_train", "kvasir_open",
+                           "pathvqa_open_train"]):
+        for tag, tv in (("lingshu7bT04", 0.4), ("lingshu7bT10", 1.0)):
+            g = (i + (0 if tv < 1 else 1)) % 2
+            if not nonempty(f"{CK}/ckpt_{c}_{tag}_sc8.jsonl"):
+                gpu[g].append({"name": f"{c}_{tag}_gen",
+                    "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                           f"--model_path {L7} --tag {tag}_sc8 --dataset {c} --n_samples 8 "
+                           f"--temp {tv} --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                    "log": f"logs/sv_{c}_{tag}_gen.log", "timeout_s": 43200, "stall_s": 3600,
+                    "expect": f"{CK}/ckpt_{c}_{tag}_sc8.jsonl", "_gpu": g})
+            if not nonempty(f"{CK}/ckpt_{c}_{tag}_sc8_scexploded.judge.jsonl"):
+                gpu[g].append({"name": f"{c}_{tag}_judge",
+                    "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                           f"{CK}/ckpt_{c}_{tag}_sc8.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                           f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                           f"{CK}/ckpt_{c}_{tag}_sc8_scexploded.jsonl",
+                    "log": f"logs/sv_{c}_{tag}_judge.log", "timeout_s": 86400, "stall_s": 4200,
+                    "expect": f"{CK}/ckpt_{c}_{tag}_sc8_scexploded.judge.jsonl", "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",
@@ -295,6 +352,14 @@ def main():
         ("head_representation", "src/training_methods/head_representation.py --threads 4 --seeds 3",
          f"{ART}/head_representation_2026-08-24.json",
          lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("head_price_from_lobo",
+         "src/training_methods/head_price_from_lobo.py --threads 4 --seeds 3",
+         f"{ART}/head_price_from_lobo_2026-08-30.json",
+         lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("head_temp_ensemble",
+         "src/cascade_methods/head_temp_ensemble.py",
+         f"{ART}/head_temp_ensemble_2026-08-30.json",
+         lambda: len(glob.glob(f"{FEATS}/generator_eval_ens_T*.npz")) >= 20),
         ("head_layer_ensemble_width",
          "src/training_methods/head_ens_width.py --threads 4 --seeds 5",
          f"{ART}/head_ens_width_2026-08-25.json",
