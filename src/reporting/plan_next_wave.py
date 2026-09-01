@@ -338,6 +338,104 @@ def main():
                     "log": f"logs/sv_{c}_{tag}_judge.log", "timeout_s": 86400, "stall_s": 4200,
                     "expect": f"{CK}/ckpt_{c}_{tag}_sc8_scexploded.judge.jsonl", "_gpu": g})
 
+    # ---- 4c7. training features at T=0.4 and T=1.0 -----------------------------------------
+    # The 2x2 temperature-mismatch test could only ever run at ONE cold point because only T=0.2
+    # training features existed. The pools for 0.4 and 1.0 are now judged, so the full 4x4 is
+    # reachable -- and it matters more now that head_temp_ensemble showed the SHIPPED verifier has
+    # a 0.0416 macro spread across temperature, i.e. pooling did NOT flatten that effect.
+    for i, (tag, suf) in enumerate((("lingshu7bT04", "T04"), ("lingshu7bT10", "T10"))):
+        if not nonempty(f"{FEATS}/generator_train_{suf}.npz", mb=10):
+            gpu[i % 2].append({"name": f"train_{suf}_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={i % 2} python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                       f"--mode generator --split train --gen_tag {tag} --layers 18 20 22 "
+                       f"--stem_tag {suf} --out feats_hidden",
+                "log": f"logs/sv_train_{suf}_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_train_{suf}.npz",
+                "expect_min_bytes": 10_000_000, "_gpu": i % 2})
+
+    # ---- 4c8. 32-sample pools, to extend the matched-budget curve beyond 8 vs 16 -----------
+    # 8 vs 16 was a TIE on both coverage-limited benchmarks. One more doubling says whether that is
+    # a plateau or just too small a step to resolve.
+    for i, c in enumerate(["vqamed_open", "vqa_rad_open"]):
+        g = i % 2
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc32.jsonl"):
+            gpu[g].append({"name": f"{c}_sc32_gen",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {L7} --tag lingshu7b_sc32 --dataset {c} --n_samples 32 "
+                       f"--temp 0.7 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_{c}_sc32_gen.log", "timeout_s": 86400, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc32.jsonl", "_gpu": g})
+        if not nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc32_scexploded.judge.jsonl"):
+            gpu[g].append({"name": f"{c}_sc32_judge",
+                "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc32.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                       f"{CK}/ckpt_{c}_lingshu7b_sc32_scexploded.jsonl",
+                "log": f"logs/sv_{c}_sc32_judge.log", "timeout_s": 86400, "stall_s": 4200,
+                "expect": f"{CK}/ckpt_{c}_lingshu7b_sc32_scexploded.judge.jsonl", "_gpu": g})
+        if (nonempty(f"{CK}/ckpt_{c}_lingshu7b_sc32_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_eval_{c}_sc32.npz", mb=5)):
+            gpu[g].append({"name": f"{c}_sc32_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                       f"--mode generator --split eval --eval_ds {c} --pool_tag _sc32 "
+                       f"--layers 18 20 22 --stem_tag {c}_sc32 --out feats_hidden",
+                "log": f"logs/sv_{c}_sc32_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_eval_{c}_sc32.npz",
+                "expect_min_bytes": 5_000_000, "_gpu": g})
+
+    # ---- 4c9. A SECOND GENERATOR: Qwen2.5-VL-7B --------------------------------------------
+    # Every result in this project is on Lingshu-7B, so nothing yet distinguishes "this method
+    # works" from "this method works on Lingshu". Qwen2.5-VL-7B-Instruct is the base model Lingshu
+    # was finetuned from: same architecture, so extract_generator_hidden runs unchanged (InternVL3
+    # was tried first and is INCOMPATIBLE -- AutoProcessor returns a bare tokenizer with no
+    # image_processor, and AutoModelForImageTextToText rejects InternVLChatConfig), and it asks the
+    # sharper question: does the method need the MEDICAL finetuning, or just a VLM?
+    QW = "/data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/"
+    QTAG = "qwen25vl7b"
+    QTRAIN = ["kvasir_open", "pathvqa_open_train", "slake_open_train", "vqa_rad_open_train"]
+    QEVAL = ["pathvqa_open", "slake_open", "vqa_rad_open", "kvasir_x1_open"]
+    for qi, c in enumerate(QTRAIN + QEVAL):
+        g = qi % 2
+        if not nonempty(f"{CK}/ckpt_{c}_{QTAG}_sc8.jsonl"):
+            gpu[g].append({"name": f"q_{c}_gen",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {QW} --tag {QTAG}_sc8 --dataset {c} --n_samples 8 "
+                       f"--temp 0.7 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_q_{c}_gen.log", "timeout_s": 86400, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_{QTAG}_sc8.jsonl", "_gpu": g})
+        if c in QEVAL and not nonempty(f"{CK}/ckpt_{c}_{QTAG}.jsonl"):
+            gpu[g].append({"name": f"q_{c}_greedy",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_openvqa.py "
+                       f"--model_path {QW} --tag {QTAG} --dataset {c} --n_samples 1 "
+                       f"--temp 0.0 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+                "log": f"logs/sv_q_{c}_greedy.log", "timeout_s": 43200, "stall_s": 3600,
+                "expect": f"{CK}/ckpt_{c}_{QTAG}.jsonl", "_gpu": g})
+        if (nonempty(f"{CK}/ckpt_{c}_{QTAG}_sc8.jsonl")
+                and not nonempty(f"{CK}/ckpt_{c}_{QTAG}_sc8_scexploded.judge.jsonl")):
+            extra = f" {CK}/ckpt_{c}_{QTAG}.jsonl" if c in QEVAL else ""
+            gpu[g].append({"name": f"q_{c}_judge",
+                "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py "
+                       f"{CK}/ckpt_{c}_{QTAG}_sc8.jsonl && CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds "
+                       f"{CK}/ckpt_{c}_{QTAG}_sc8_scexploded.jsonl" + extra,
+                "log": f"logs/sv_q_{c}_judge.log", "timeout_s": 86400, "stall_s": 4200,
+                "expect": f"{CK}/ckpt_{c}_{QTAG}_sc8_scexploded.judge.jsonl", "_gpu": g})
+        split = "train" if c in QTRAIN else "eval"
+        stem = f"qwen_{c}"
+        if (nonempty(f"{CK}/ckpt_{c}_{QTAG}_sc8_scexploded.judge.jsonl")
+                and not nonempty(f"{FEATS}/generator_{split}_{stem}.npz", mb=5)):
+            eds = f"--eval_ds {c} " if split == "eval" else ""
+            gpu[g].append({"name": f"q_{c}_extract",
+                "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                       f"src/training_methods/extract_generator_hidden.py --model_path {QW} "
+                       f"--mode generator --split {split} --gen_tag {QTAG} --layers 18 20 22 "
+                       + eds + f"--stem_tag {stem} --out feats_hidden",
+                "log": f"logs/sv_q_{c}_extract.log", "timeout_s": 86400, "stall_s": 5400,
+                "expect": f"{FEATS}/generator_{split}_{stem}.npz",
+                "expect_min_bytes": 5_000_000, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",
@@ -352,6 +450,10 @@ def main():
         ("head_representation", "src/training_methods/head_representation.py --threads 4 --seeds 3",
          f"{ART}/head_representation_2026-08-24.json",
          lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("coverage_scaling_all",
+         "src/cascade_methods/coverage_scaling.py --all",
+         f"{ART}/coverage_scaling_ALL_2026-09-01.json",
+         lambda: all(nonempty(f"{FEATS}/generator_eval_{c}_sc16.npz", mb=5) for c in CELLS)),
         ("head_price_from_lobo",
          "src/training_methods/head_price_from_lobo.py --threads 4 --seeds 3",
          f"{ART}/head_price_from_lobo_2026-08-30.json",

@@ -30,8 +30,16 @@ ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
 sys.path.insert(0, os.path.join(ROOT, "src/training_methods"))
 FEATS = os.path.join(ROOT, "feats_hidden")
 CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
-OUT = os.path.join(ROOT, "results/cascade_methods/artifacts/coverage_scaling_2026-08-25.json")
-CELLS = ["vqa_rad_open", "vqamed_open"]
+import argparse as _ap
+_p = _ap.ArgumentParser(); _p.add_argument("--all", action="store_true")
+_A, _ = _p.parse_known_args()
+OUT = os.path.join(ROOT, "results/cascade_methods/artifacts/"
+      + ("coverage_scaling_ALL_2026-09-01.json" if _A.all else "coverage_scaling_2026-08-25.json"))
+# 8 vs 16 was a TIE on both coverage-limited benchmarks; two points cannot separate "sampling more
+# never helps" from "it helps where coverage binds", and that pair is the least able to tell.
+CELLS = (["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open", "kvasir_x1_open",
+          "omnimed_open", "vqamed_open", "gemex_open"] if _A.all
+         else ["vqa_rad_open", "vqamed_open"])
 ENS = [18, 20, 22]
 NS = [2, 4, 8, 16]
 DRAWS = 8
