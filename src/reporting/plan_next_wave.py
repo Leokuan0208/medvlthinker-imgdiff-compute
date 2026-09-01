@@ -436,6 +436,39 @@ def main():
                 "expect": f"{FEATS}/generator_{split}_{stem}.npz",
                 "expect_min_bytes": 5_000_000, "_gpu": g})
 
+    # ---- 4c10. VISUAL FEATURES ---------------------------------------------------------------
+    # The probe reads h_span only: the mean hidden state over the ANSWER tokens. The image reaches
+    # it solely through whatever the LM already mixed in. The VLM-probing literature pools the image
+    # placeholder tokens directly and combines that with pooled text tokens ("Bridging Hidden States
+    # in Vision-Language Models", arXiv 2511.11526), reporting that image-token states carry
+    # localised visual information the text states do not expose. Measured on a 709-row slice,
+    # cos(h_img, h_span) = 0.62, so it is a genuinely different vector and not a re-encoding.
+    # h_q (question tokens) comes along as the CONTROL: it separates "visual information helps"
+    # from "any extra pooled context helps".
+    VIS = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
+           "kvasir_x1_open", "omnimed_open", "vqamed_open", "gemex_open"]
+    if not nonempty(f"{FEATS}/generator_train_vis.npz", mb=10):
+        gpu[0].append({"name": "vis_train_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=0 python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split train --layers 18 20 22 --visual_feats "
+                   f"--stem_tag vis --out feats_hidden",
+            "log": "logs/sv_vis_train_extract.log", "timeout_s": 172800, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_train_vis.npz",
+            "expect_min_bytes": 10_000_000, "_gpu": 0})
+    todo_v = [c for c in VIS if not nonempty(f"{FEATS}/generator_eval_vis_{c}.npz", mb=5)]
+    todo_v.sort(key=lambda c: SIZE.get(c, 99999))
+    for i, c in enumerate(todo_v):
+        g = (i + 1) % 2
+        gpu[g].append({"name": f"vis_{c}_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES={g} python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split eval --eval_ds {c} --layers 18 20 22 "
+                   f"--visual_feats --stem_tag vis_{c} --out feats_hidden",
+            "log": f"logs/sv_vis_{c}_extract.log", "timeout_s": 172800, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_eval_vis_{c}.npz",
+            "expect_min_bytes": 5_000_000, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",
@@ -450,6 +483,11 @@ def main():
         ("head_representation", "src/training_methods/head_representation.py --threads 4 --seeds 3",
          f"{ART}/head_representation_2026-08-24.json",
          lambda: nonempty(f"{FEATS}/generator_train_finelayer.npz", mb=10)),
+        ("head_visual_features",
+         "src/training_methods/head_visual_features.py --threads 4 --seeds 3",
+         f"{ART}/head_visual_features_2026-09-01.json",
+         lambda: nonempty(f"{FEATS}/generator_train_vis.npz", mb=10)
+                 and len(glob.glob(f"{FEATS}/generator_eval_vis_*.npz")) >= 4),
         ("coverage_scaling_all",
          "src/cascade_methods/coverage_scaling.py --all",
          f"{ART}/coverage_scaling_ALL_2026-09-01.json",

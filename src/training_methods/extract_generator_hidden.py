@@ -255,6 +255,11 @@ def main():
                          "Set to e.g. lingshu7bT04 to extract a different-temperature pool; "
                          "without this the module-level TAG silently pinned every extraction to "
                          "the T=0.7 dumps regardless of which pool was intended.")
+    ap.add_argument("--visual_feats", action="store_true",
+                    help="additionally save h_img (mean over the image placeholder tokens) and "
+                         "h_q (mean over the question tokens). Same forward pass, ~2x the npz "
+                         "size. h_q is the control: it says whether a gain from h_img is VISUAL "
+                         "or merely from giving the probe more context.")
     ap.add_argument("--pool_tag", default="_sc8",
                     help="candidate-set suffix in the dump filename, e.g. _sc8 or _sc16. The pool "
                          "size is part of the path, so this cannot be folded into --gen_tag.")
@@ -334,6 +339,19 @@ def main():
     n = len(rows)
     h_last = np.zeros((n, len(A.layers), H), dtype=np.float16)
     h_span = np.zeros((n, len(A.layers), H), dtype=np.float16)
+    # VISUAL FEATURES (--visual_feats). The probe has only ever read h_span -- the mean hidden state
+    # over the ANSWER tokens -- so the image reaches it only through whatever the LM already mixed
+    # in. The VLM-probing literature pools the image placeholder tokens directly and combines that
+    # with the pooled text tokens ("Bridging Hidden States in Vision-Language Models",
+    # arXiv 2511.11526), and reports that image-token representations carry localised visual
+    # information that text-token states do not expose. Both extra pools are free: same forward
+    # pass, different slices of the same hidden states.
+    #   h_img[L]  mean over the <|image_pad|> positions
+    #   h_q[L]    mean over the question tokens, i.e. between the image block and the answer --
+    #             the control that says whether any gain is VISUAL or just "more context"
+    h_img = np.zeros((n, len(A.layers), H), dtype=np.float16) if A.visual_feats else None
+    h_q = np.zeros((n, len(A.layers), H), dtype=np.float16) if A.visual_feats else None
+    n_img_tok = np.zeros(n, dtype=np.int32)
     yesno = np.full((n, 2), np.nan, dtype=np.float32)
     meta, bad = [], 0
     t0 = time.time()
@@ -378,10 +396,22 @@ def main():
                 # span = the assistant answer tokens; readout = last answer token
                 s0 = max(0, ids.shape[0] - n_ans_tok)
                 readout = ids.shape[0] - 1
+            imask = (ids == IMG_TOK)
+            n_img_tok[r_i] = int(imask.sum().item())
+            if A.visual_feats:
+                ipos = imask.nonzero().squeeze(-1)
+                # question span = after the image block, before the answer
+                qs0 = int(ipos[-1].item()) + 1 if len(ipos) else 0
+                qs1 = max(qs0, s0)
             for li, L in enumerate(A.layers):
                 h = hs[L][0]
                 h_last[r_i, li] = h[readout].float().cpu().numpy().astype(np.float16)
                 h_span[r_i, li] = h[s0:].float().mean(0).cpu().numpy().astype(np.float16)
+                if A.visual_feats:
+                    if len(ipos):
+                        h_img[r_i, li] = h[ipos].float().mean(0).cpu().numpy().astype(np.float16)
+                    if qs1 > qs0:
+                        h_q[r_i, li] = h[qs0:qs1].float().mean(0).cpu().numpy().astype(np.float16)
             meta.append({"split": r["split"], "ds": r["ds"], "idx": r["idx"], "na": r["na"], "ans": r["ans"],
                          "y": r["y"], "in_draw": r.get("in_draw", 1),
                          "img_md5": md5, "n_tok": int(ids.shape[0])})
@@ -396,7 +426,9 @@ def main():
             print(f"  {r_i+1}/{n}  {el/60:.1f}min  {(el/(r_i+1)):.3f}s/row  eta {(n-r_i-1)*el/(r_i+1)/60:.1f}min",
                   flush=True)
 
+    extra = {"h_img": h_img, "h_q": h_q} if A.visual_feats else {}
     np.savez(os.path.join(outdir, f"{stem}.npz"), h_last=h_last, h_span=h_span, yesno=yesno,
+             n_img_tok=n_img_tok, **extra,
              layers=np.array(A.layers))
     json.dump({"mode": A.mode, "split": A.split, "layers": A.layers, "n": n, "n_failed": bad,
                "model": A.model_path, "adapter": None, "max_pixels": HIGH_PX,
