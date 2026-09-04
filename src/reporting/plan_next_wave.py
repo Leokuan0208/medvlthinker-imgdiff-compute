@@ -395,7 +395,13 @@ def main():
     QW = "/data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/"
     QTAG = "qwen25vl7b"
     QTRAIN = ["kvasir_open", "pathvqa_open_train", "slake_open_train", "vqa_rad_open_train"]
-    QEVAL = ["pathvqa_open", "slake_open", "vqa_rad_open", "kvasir_x1_open"]
+    # EXTENDED to all eight 2026-09-04. The replication was scoped to four benchmarks to get a
+    # first answer; a second generator that reproduces on four of the eight is a weaker claim than
+    # one measured on the same set as the Lingshu result, and "does the method need Lingshu" is the
+    # single most consequential open question here -- it decides whether every other number is a
+    # statement about a method or about one checkpoint.
+    QEVAL = ["pathvqa_open", "slake_open", "vqa_rad_open", "kvasir_x1_open",
+             "radimagenet_open", "omnimed_open", "vqamed_open", "gemex_open"]
     for qi, c in enumerate(QTRAIN + QEVAL):
         g = qi % 2
         if not nonempty(f"{CK}/ckpt_{c}_{QTAG}_sc8.jsonl"):
