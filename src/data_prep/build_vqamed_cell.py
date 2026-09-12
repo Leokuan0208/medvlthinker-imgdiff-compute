@@ -22,7 +22,13 @@ from collections import Counter
 
 SRC = "/data/dan/dataset/vqamed2019/x/VQA-Med-2019"
 OUT = "/data/dan/dataset/vqamed_cell"
-EVAL_META = ["feats_hidden/generator_eval_s0of2.meta.json",
+EVAL_META = [
+    # 2026-09-12: the TRAIN pool was never audited against. A new cell could silently share images
+    # with the probe's own training data -- which is exactly what happened to vqamed (19 MedPix
+    # images from vqa_rad_open_train). Measured 0 overlap for gemex and omnimed, so this closes a
+    # latent gap for them and a realised one for vqamed.
+    "feats_hidden/generator_train_s0of2.meta.json",
+    "feats_hidden/generator_train_s1of2.meta.json","feats_hidden/generator_eval_s0of2.meta.json",
              "feats_hidden/generator_eval_s1of2.meta.json",
              "feats_hidden/generator_eval_radimagenet.meta.json"]
 
@@ -97,8 +103,15 @@ def main():
                 for r in json.load(open(m))["rows"]:
                     ev.add(r["img_md5"])
         vqarad = set()
-        for p in glob.glob("/data/dan/dataset/vqa_rad/**/*.jpg", recursive=True)[:4000]:
-            vqarad.add(pixel_md5(p))
+        # BUGFIX 2026-09-12: this globbed "*.jpg" and every VQA-RAD image on disk is ".png"
+        # (2,249 png, 0 jpg), so this arm of the contamination audit hashed an EMPTY SET and
+        # printed "0 VQA-RAD images" without anyone noticing. 19 MedPix images shared with
+        # vqa_rad_open_train reached the shipped cell as a result. Extension-agnostic now.
+        for p in glob.glob("/data/dan/dataset/vqa_rad/**/*", recursive=True)[:20000]:
+            if p.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")):
+                h = pixel_md5(p)
+                if h:
+                    vqarad.add(h)
         print(f"  [audit] {len(ev)} eval images, {len(vqarad)} VQA-RAD images", flush=True)
         # MEASURED 2026-08-19: 10 VQA-Med images are pixel-identical to images already in our eval
         # pools.  Both VQA-Med 2019 and VQA-RAD are MedPix-derived, so this overlap is expected and

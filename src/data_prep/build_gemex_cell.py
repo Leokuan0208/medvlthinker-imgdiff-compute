@@ -34,7 +34,13 @@ import numpy as np
 from collections import Counter
 
 OUT = "/data/dan/dataset/gemex_cell"
-EVAL_META = ["feats_hidden/generator_eval_s0of2.meta.json",
+EVAL_META = [
+    # 2026-09-12: the TRAIN pool was never audited against. A new cell could silently share images
+    # with the probe's own training data -- which is exactly what happened to vqamed (19 MedPix
+    # images from vqa_rad_open_train). Measured 0 overlap for gemex and omnimed, so this closes a
+    # latent gap for them and a realised one for vqamed.
+    "feats_hidden/generator_train_s0of2.meta.json",
+    "feats_hidden/generator_train_s1of2.meta.json","feats_hidden/generator_eval_s0of2.meta.json",
              "feats_hidden/generator_eval_s1of2.meta.json",
              "feats_hidden/generator_eval_radimagenet.meta.json"]
 

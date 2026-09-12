@@ -475,6 +475,69 @@ def main():
             "expect": f"{FEATS}/generator_eval_vis_{c}.npz",
             "expect_min_bytes": 5_000_000, "_gpu": g})
 
+    # ---- 4c11. COMPLETE PATHVQA -------------------------------------------------------------
+    # AUDIT 2026-09-12: pathvqa_open is a 3,357-question benchmark but its T=0.7 sc8 and greedy dumps
+    # hold only 1,500 -- run_openvqa.py:158 does items = items[:A.n] and those runs were launched with
+    # a cap. Every other tag on this benchmark (T02/T04/T10/sc16/qwen) has all 3,357.
+    # The cut is a clean idx prefix (0..2854 kept, 2855..6717 dropped) and the dropped half is HARDER:
+    # exact-match 0.2645 vs 0.3132, gold 2.65 vs 2.36 words, 3.37 vs 3.15 distinct candidates. So every
+    # pathvqa number we report sits on an easier-than-average prefix, and pathvqa is load-bearing.
+    # Resume is safe here: the question text matches at all 1,500 shared idx, so the stale-checkpoint
+    # guard passes and generation only fills in the missing 1,857.
+    _pv = "pathvqa_open"
+    _pv_n = sum(1 for _ in open(f"{CK}/ckpt_{_pv}_lingshu7b_sc8.jsonl")) if os.path.exists(
+        f"{CK}/ckpt_{_pv}_lingshu7b_sc8.jsonl") else 0
+    _pv_full = sum(1 for _ in open(f"{CK}/ckpt_{_pv}_lingshu7bT04_sc8.jsonl")) if os.path.exists(
+        f"{CK}/ckpt_{_pv}_lingshu7bT04_sc8.jsonl") else 0
+    if _pv_full and _pv_n < _pv_full:
+        gpu[0].append({"name": "pathvqa_complete_sc8",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py "
+                   f"--model_path {L7} --tag lingshu7b_sc8 --dataset {_pv} --n_samples 8 "
+                   f"--temp 0.7 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+            "log": "logs/sv_pathvqa_complete_sc8.log", "timeout_s": 86400, "stall_s": 3600,
+            "expect": f"{CK}/ckpt_{_pv}_lingshu7b_sc8.jsonl", "_gpu": 0})
+        gpu[1].append({"name": "pathvqa_complete_greedy",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=1 python3 src/labeling/run_openvqa.py "
+                   f"--model_path {L7} --tag lingshu7b --dataset {_pv} --n_samples 1 "
+                   f"--temp 0.0 --ckpt_dir {CK} --tp 1 --max_model_len 4096",
+            "log": "logs/sv_pathvqa_complete_greedy.log", "timeout_s": 86400, "stall_s": 3600,
+            "expect": f"{CK}/ckpt_{_pv}_lingshu7b.jsonl", "_gpu": 1})
+    # The pathvqa judge step is NOT handled here: rule 4c12 below re-explodes and re-judges
+    # ANY dump whose judge file is short of it, which covers this case. Two rules emitting
+    # jobs that write the same file would race on two GPUs.
+
+    # ---- 4c12. RE-EXPLODE ANY JUDGE FILE THAT DOES NOT COVER ITS DUMP -----------------------
+    # AUDIT 2026-09-12. explode_sc_for_judge.py can run BEFORE generation finishes, leaving a judge
+    # file that silently covers only part of the cell -- ckpt_kvasir_x1_open_lingshu7bT10_sc8 was
+    # exploded 4 minutes before its base dump finished and covers 8,064 of 10,121 questions (79.7%),
+    # so every T=1.0 kvasir_x1 number computed from it is on four fifths of the benchmark. Nothing
+    # downstream notices, because a judge file that exists looks finished. This is a general rule
+    # rather than a one-off: it re-explodes and re-judges any (benchmark, tag) whose judged question
+    # count is short of its dump, which also covers pathvqa once its backfill lands.
+    import glob as _g
+    for _dump in sorted(_g.glob(f"{CK}/ckpt_*_sc*.jsonl")):
+        if "scexploded" in _dump or ".judge." in _dump:
+            continue
+        _base = _dump[:-6]                                    # strip .jsonl
+        _jud = f"{_base}_scexploded.judge.jsonl"
+        if not os.path.exists(_jud):
+            continue
+        try:
+            _have = {json.loads(l)["idx"] for l in open(_dump) if l.strip()}
+            _done = {str(json.loads(l)["idx"]).rsplit("#", 1)[0] for l in open(_jud) if l.strip()}
+        except Exception:
+            continue
+        if len(_done) >= len(_have):
+            continue
+        _nm = os.path.basename(_base).replace("ckpt_", "")
+        g = abs(hash(_nm)) % 2
+        gpu[g].append({"name": f"reexplode_{_nm}",
+            "cmd": E + f"python3 src/cascade_methods/explode_sc_for_judge.py {_dump} && "
+                   f"CUDA_VISIBLE_DEVICES={g} python3 src/labeling/run_judge.py --tp 1 "
+                   f"--gpu_mem 0.92 --preds {_base}_scexploded.jsonl",
+            "log": f"logs/sv_reexplode_{_nm}.log", "timeout_s": 86400, "stall_s": 4200,
+            "expect": _jud, "_gpu": g})
+
     # ---- 4d. CPU analyses unlocked by what already exists ----------------------------------
     if not os.path.exists(f"{ART}/pool_pruning_2026-08-24.json"):
         cpu.append({"name": f"pool_pruning_w{A.wave}",

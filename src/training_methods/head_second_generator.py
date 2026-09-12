@@ -33,7 +33,12 @@ ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
 CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
 TAG = "qwen25vl7b"
 TRAIN_DOMAINS = {"kvasir_open", "pathvqa_open_train", "slake_open_train", "vqa_rad_open_train"}
-EVAL = ["pathvqa_open", "slake_open", "vqa_rad_open", "kvasir_x1_open"]
+# EXTENDED to all eight 2026-09-12. The Qwen pipeline finished every benchmark during the week; this
+# list was still the four it was scoped to for a first answer, so the artifact reported a 4-benchmark
+# replication when 8-benchmark data was already on disk. Scoring the same set as the Lingshu result
+# makes the replication claim directly comparable instead of a subset.
+EVAL = ["pathvqa_open", "slake_open", "vqa_rad_open", "kvasir_x1_open",
+        "radimagenet_open", "omnimed_open", "vqamed_open", "gemex_open"]
 ENS = [18, 20, 22]
 
 
