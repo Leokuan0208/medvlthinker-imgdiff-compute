@@ -506,6 +506,24 @@ def main():
     # ANY dump whose judge file is short of it, which covers this case. Two rules emitting
     # jobs that write the same file would race on two GPUs.
 
+    # ---- 4c11b. PATHVQA FEATURES FOR THE RESTORED QUESTIONS ---------------------------------
+    # The backfill took pathvqa_open from 1,500 to 3,357 judged questions, but its hidden-state
+    # features still cover only the original 1,500 -- and they live in the SHARED shard caches
+    # (generator_eval_s{0,1}of2, which also hold slake and vqa_rad) and in generator_eval_finelayer.
+    # Re-extracting those in place would rebuild three benchmarks to fix one. Instead extract
+    # pathvqa alone into a dedicated stem so the truncation's impact can be MEASURED before
+    # deciding whether the shared caches are worth rebuilding.
+    if (nonempty(f"{CK}/ckpt_pathvqa_open_lingshu7b_sc8_scexploded.judge.jsonl")
+            and not nonempty(f"{FEATS}/generator_eval_pathvqa_full.npz", mb=10)):
+        gpu[0].append({"name": "pathvqa_full_extract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=0 python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split eval --eval_ds pathvqa_open "
+                   f"--layers 18 20 21 22 --stem_tag pathvqa_full --out feats_hidden",
+            "log": "logs/sv_pathvqa_full_extract.log", "timeout_s": 172800, "stall_s": 5400,
+            "expect": f"{FEATS}/generator_eval_pathvqa_full.npz",
+            "expect_min_bytes": 10_000_000, "_gpu": 0})
+
     # ---- 4c12. RE-EXPLODE ANY JUDGE FILE THAT DOES NOT COVER ITS DUMP -----------------------
     # AUDIT 2026-09-12. explode_sc_for_judge.py can run BEFORE generation finishes, leaving a judge
     # file that silently covers only part of the cell -- ckpt_kvasir_x1_open_lingshu7bT10_sc8 was

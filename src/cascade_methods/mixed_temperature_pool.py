@@ -95,7 +95,19 @@ def main():
                 pools[r["idx"]].setdefault(a, (int(r["y"]), L[:, i]))
         if len(temps) < 2:
             continue
-        qs = [q for q in pools if q in gok and len(pools[q]) >= 1]
+        # CLUSTER BUGFIX 2026-09-12: boot() was called with UNIQUE QUESTION IDS as the cluster
+        # key, so every group was a singleton and the cluster machinery collapsed to i.i.d. --
+        # while reading as clustered. These benchmarks put up to 21 questions on one image, so the
+        # unit has to be the image. 8 WIN/LOSS verdicts in mixed_temperature_2026-08-22.json were
+        # published on that degenerate interval.
+        q_img = {}
+        for _t, (_T, _suf) in TAGS.items():
+            _st = f"{FEATS}/generator_eval_{cell}{_suf}"
+            if os.path.exists(_st + ".meta.json"):
+                for _r in json.load(open(_st + ".meta.json"))["rows"]:
+                    if _r.get("n_tok", -1) > 0:
+                        q_img.setdefault(_r["idx"], _r["img_md5"])
+        qs = [q for q in pools if q in gok and len(pools[q]) >= 1 and q in q_img]
         if len(qs) < 50:
             continue
 
@@ -149,9 +161,9 @@ def main():
             "best_single_T_in_sample": best_single_T,
             "union_head": float(uni_hd.mean()), "union_oracle": float(uni_or.mean()),
             "union_sub8_head": float(sub_hd.mean()), "union_sub8_oracle": float(sub_or.mean()),
-            "union_vs_greedy": boot(uni_hd, gr, [str(q) for q in qs]),
+            "union_vs_greedy": boot(uni_hd, gr, [q_img[q] for q in qs]),
             "union_vs_best_single_T": float(uni_hd.mean() - single[best_single_T]["head"]),
-            "sub8_vs_greedy": boot(sub_hd, gr, [str(q) for q in qs]),
+            "sub8_vs_greedy": boot(sub_hd, gr, [q_img[q] for q in qs]),
             "sub8_vs_T07": (float(sub_hd.mean() - single["0.7"]["head"])
                             if "0.7" in single else None)}
         c = art["cells"][cell]

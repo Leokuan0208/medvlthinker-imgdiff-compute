@@ -86,6 +86,23 @@ def main():
             for l in open(rawp):
                 if l.strip():
                     d = json.loads(l); raw[d["idx"]] = d
+            # exploded judge labels, keyed question -> normalised answer -> judge_ok. The exploded
+            # file dedups identical (question, answer) pairs, so it has one row per DISTINCT answer;
+            # multiplicity has to come from the raw preds list above.
+            lab = {}
+            expp = rawp.replace(".jsonl", "_scexploded.jsonl")
+            judp = rawp.replace(".jsonl", "_scexploded.judge.jsonl")
+            if os.path.exists(expp) and os.path.exists(judp):
+                _j = {}
+                for l in open(judp):
+                    if l.strip():
+                        _d = json.loads(l); _j[_d["idx"]] = int(_d["judge_ok"])
+                for l in open(expp):
+                    if l.strip():
+                        _d = json.loads(l)
+                        if _d["idx"] in _j:
+                            lab.setdefault(str(_d["idx"]).rsplit("#", 1)[0], {})[
+                                norm(_d["modal_pred"])] = _j[_d["idx"]]
             L = sel.head_logits(H)
             sp = np.array([(pos[a] + gp * 2) / (tot[a] + 2) if tot[a] else gp for a in na])
             sc = np.zeros(len(rows), np.float32)
@@ -94,7 +111,7 @@ def main():
                 if d:
                     c = Counter(norm(p) for p in d["preds"])
                     sc[i] = c.get(na[i], 0) / max(len(d["preds"]), 1)
-            hd, sd_, pr, orc, gr, one = [], [], [], [], [], []
+            hd, sd_, pr, orc, gr = [], [], [], [], []
             for q in sorted(byq, key=lambda k: (len(str(k)), str(k))):
                 if q not in gok:
                     continue
@@ -104,26 +121,28 @@ def main():
                 sd_.append(int(y[ii][int(np.argmax(rank_avg(sc[ii])))]))
                 pr.append(int(y[ii][int(np.argmax(sp[ii]))]))
                 orc.append(int(y[ii].max())); gr.append(gok[q])
-                d = raw.get(q)
-                one.append(float(np.mean(d["oks"])) if d and d.get("oks") is not None
-                           else float(y[ii].mean()))
             if len(hd) < 50:
                 continue
-            hd, sd_, pr, orc, gr, one = map(np.array, (hd, sd_, pr, orc, gr, one))
+            hd, sd_, pr, orc, gr = map(np.array, (hd, sd_, pr, orc, gr))
             art["cells"][cell][str(T)] = {
                 "n_questions": int(len(hd)), "greedy": float(gr.mean()),
-                "one_sample": float(one.mean()), "head": float(hd.mean()),
+                "head": float(hd.mean()),
                 "self_consistency": float(sd_.mean()), "string_prior": float(pr.mean()),
                 "oracle_at_8": float(orc.mean()),
                 "head_minus_greedy": float(hd.mean() - gr.mean()),
-                "selection_skill": float(hd.mean() - one.mean()),
-                "sampling_penalty": float(gr.mean() - one.mean()),
+                # selection_skill and sampling_penalty are NOT computed here any more.
+                # 2026-09-12: this script and decomposition_report.py both derived them and
+                # disagreed on all 8 benchmarks even after the currency fix, because this one fell
+                # back to a distinct-answer mean whenever an exploded judge label was missing while
+                # the other skipped those questions. One quantity, two implementations, two answers
+                # is the bug class. decomposition_2026-08-24.json is the single source of truth for
+                # the skill/penalty decomposition; this file owns head-vs-greedy across temperature.
+                "one_sample_NOT_COMPUTED_see": "decomposition_2026-08-24.json",
                 "headroom_above_greedy": float(orc.mean() - gr.mean()),
                 "mean_distinct_candidates": float(len(rows) / max(len(byq), 1))}
             r = art["cells"][cell][str(T)]
             print(f"  {cell:17} T={T:<4} head {r['head']:.4f} greedy {r['greedy']:.4f} "
-                  f"h-g {r['head_minus_greedy']:+.4f}  skill {r['selection_skill']:+.4f} "
-                  f"penalty {r['sampling_penalty']:+.4f} oracle {r['oracle_at_8']:.4f}", flush=True)
+                  f"h-g {r['head_minus_greedy']:+.4f}  oracle {r['oracle_at_8']:.4f}", flush=True)
             json.dump({**art, "cells": dict(art["cells"])}, open(OUT, "w"), indent=1)
 
     art["cells"] = dict(art["cells"])

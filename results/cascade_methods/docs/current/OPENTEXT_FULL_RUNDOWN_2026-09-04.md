@@ -1,6 +1,9 @@
 # The open-text arm, 17 August – 4 September 2026: full rundown
 **Every figure names the artifact it came from. Nothing here is estimated or interpolated.**
 
+> ⚠️ **Audited 2026-09-12. Read `AUDIT_2026-09-12.md` first.** 175 of 182 checkable claims verified
+> exact; the corrections below are applied in place, and the audit file is the supersession record.
+
 ---
 
 ## 0. What the method is, in the field's terms
@@ -20,7 +23,7 @@ Terminology follows `TERMINOLOGY_2026-08-24.md`: *benchmark* not "cell", *probe*
 | | 17 Aug | 4 Sep |
 |---|---|---|
 | open-ended benchmarks | 3 | **8** |
-| questions | 2,345 | **30,912** |
+| questions | 2,345 | **35,012** |
 | probe training rows | 31,439 | **108,126** |
 | feature caches | 2 | 40+ (8 benchmarks × 4 temperatures, + fine-layer, + visual, + Qwen) |
 | generators tested | 1 | 2 (Qwen2.5-VL-7B in flight) |
@@ -100,7 +103,7 @@ end-to-end validation** — which the layer sweep did not.
 | **pooled + layer ensemble** | **+0.0802** |
 | pooled + ensemble + SC | +0.0797 |
 
-The SC feature is worth +0.0098 from the four-domain base and **−0.0005 once pooled** — it was
+The SC feature is worth +0.0098 from the four-domain base and **−0.0004 once pooled** — it was
 compensating for missing training data, not adding independent signal. Not shipped.
 
 ### 3.4 Doubling the sample budget — **+0.0164**
@@ -124,10 +127,10 @@ other image half of each.
 | 1 | **Architecture** (7 variants) | plain `raw` wins at +0.0734; domadv +0.0558, poolnorm+raw +0.0527, poolnorm +0.0409, pca32 +0.0386, pca128 +0.0339, rankonly +0.0302 — **all six alternatives worse** | `head_arch_transfer_2026-08-19` |
 | 2 | **Domain breadth**, budget-matched | mean slope +0.00868 **[−0.00143, +0.01997]** with the duplicated Kvasir source collapsed — includes zero | `head_domain_scaling_MERGED_2026-08-21` |
 | 3 | **Breadth on unseen benchmarks (LOBO)** | **−0.0008** | `head_lobo_pooled_2026-08-25` |
-| 4 | **Union pools over temperature** | loses to the best single temperature on **6 of 7** | `mixed_temperature_2026-08-22` |
+| 4 | **Union pools over temperature** | loses to the best single temperature on **6 of 8** | `mixed_temperature_2026-08-22` |
 | 5 | **Pool pruning** (5 pruners × k∈{2,3,4,6}) | best fixed rule **−0.0000** | `pool_pruning_2026-08-24` |
 | 6 | **Self-consistency as a scorer** | flat at the random floor, and **does not improve with N** (0.0933 at N=2, 0.0800 at N=16 while oracle climbs 0.156→0.418) | §4 of `TRANSFER_WALL_2026-08-21` |
-| 7 | **Greedy-anchored veto** | +0.0007; **ceiling +0.0022** even with τ fitted in-sample | `greedy_anchored_2026-08-22` |
+| 7 | **Greedy-anchored veto** | +0.0006; **ceiling +0.0023** even with τ fitted in-sample | `greedy_anchored_2026-08-22` |
 | 8 | **Regime detection** (6 detectors) | none order the benchmarks once GEMeX is added (knn −0.548, domclf +0.548) | `regime_detector_2026-08-21` |
 | 9 | **Answer kind** | within-benchmark, long answers favour the verifier in 6/8 but mean only **+0.0045** | `answer_kind_2026-08-22` |
 | 10 | **Train/deploy temperature matching** | no diagonal advantage; best cell is the *mismatched* one | `head_temp_matched_2026-08-24` |
@@ -148,7 +151,7 @@ VQA-RAD has +0.0244 of genuine skill and still loses because its penalty is 0.04
 **Breadth −0.0008, own data +0.0500.** The method needs a labelled split per benchmark.
 
 ### 5.3 The price of onboarding a benchmark — **~100 labelled questions**
-`head_price_from_lobo_2026-08-30.json`, from the deployable base. 6/8 already beat greedy at k=0;
+`head_price_from_lobo_2026-08-30.json`, from the deployable base. 5/8 already beat greedy at k=0 (OmniMedVQA crosses at k=50);
 the first hundred questions carry most of the gain (OmniMedVQA −0.0004→+0.0986, RadImageNet
 +0.0010→+0.0528, GEMeX +0.0224→+0.0857). Then it flattens.
 
@@ -224,7 +227,7 @@ probe the spread collapses to 0.003 — pooling makes layer choice nearly irrele
 ## 9. What I would claim today
 
 **Positive.** A frozen 918k-parameter MLP probe reading one layer of an unmodified 7B beats greedy
-decoding on 4 of 8 open-ended medical VQA benchmarks and beats an answer-frequency baseline on
+decoding on 5 of 8 (4 of them significantly) open-ended medical VQA benchmarks and beats an answer-frequency baseline on
 **all 8** — including GEMeX, where that baseline loses to greedy outright. Retrained on all eight
 and rank-ensembled over three layers it reaches **+0.0802** macro against **+0.0243** for the
 original recipe.
@@ -233,7 +236,9 @@ original recipe.
 failures are the candidate set, not the ranker.
 
 **Deployment.** The method needs a labelled split per benchmark — breadth alone buys nothing — and
-that split costs **~100 labelled questions**.
+that split costs **~100 labelled questions** measured from the LOBO base (trained on the other
+seven). TRANSFER_WALL's "~500" was measured from the four-domain base and is a different baseline,
+not a contradiction.
 
 **The honest hole.** We cannot predict *which* benchmarks the method helps. OOD distance doesn't do
 it, answer kind doesn't, and no detector orders the benchmarks. Twelve documented dead ends bound
