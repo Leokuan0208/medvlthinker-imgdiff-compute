@@ -100,6 +100,31 @@ GENERATORS = {
         # [18,20,22] is extracted too and is a robustness check, NOT the headline.
         "ens": [22, 24, 27],
     },
+    # MATCHED CONTROLS for the MedGemma comparison. MedGemma has no dedicated train-domain caches
+    # and only four benchmarks, so its probe is fitted on 20,102 rows against Lingshu's 112,770 --
+    # a 5.6x gap that confounds "different LM family" with "less training data". These two run the
+    # OTHER generators under MedGemma's exact protocol: no train-domain cache, the same four
+    # benchmarks, trained only on their by-image train halves. Any remaining difference is then
+    # attributable to the generator rather than to the data volume.
+    "lingshu_matched": {
+        "tag": "lingshu7b",
+        "train_stems": [],
+        "eval_stem": lambda c: ("generator_eval_finelayer" if c in SHARED
+                                else f"generator_eval_finelayer_{c}"),
+        "eval_dsfilter": lambda c: ({c} if c in SHARED else None),
+        "out": "head_final_stack_lingshu_matched_2026-09-13.json",
+        "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
+        "ens": None,
+    },
+    "qwen_matched": {
+        "tag": "qwen25vl7b",
+        "train_stems": [],
+        "eval_stem": lambda c: f"generator_eval_qwen_{c}",
+        "eval_dsfilter": lambda c: None,
+        "out": "head_final_stack_qwen_matched_2026-09-13.json",
+        "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
+        "ens": None,
+    },
 }
 GEN = GENERATORS["lingshu"]
 
