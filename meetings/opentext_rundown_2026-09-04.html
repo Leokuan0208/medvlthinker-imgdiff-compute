@@ -178,11 +178,20 @@ re-measured. Restated on this page, from
 <tr><td>doubling the sample budget, macro</td><td class="n">+0.0164</td><td class="n">+0.0147</td></tr>
 <tr><td>&nbsp;&nbsp;&mdash; PathVQA&rsquo;s own share of it</td><td class="n">+0.0157</td><td class="n">+0.0018</td></tr>
 </tbody></table></div>
-<p><b>Not yet re-fitted, so still on the truncated PathVQA and NOT to be quoted as current:</b> the
-temperature-sweep macro row in &sect;3 (+0.0401 / +0.0573 / +0.0816 / +0.0759), the
-<b>+0.0125</b> layer-ensemble and <b>+0.0098</b> self-consistency component figures, and the
-<b>+0.0500</b> in-domain-training number in &sect;5. Those re-fits are queued; this banner will name
-them until they land.</p>
+<p><b>Re-fitted since, on the full PathVQA</b> &mdash; the temperature row in &sect;3 restates
+<b>+0.0401 / +0.0573 / +0.0816 / +0.0759 &rarr; +0.0393 / +0.0539 / +0.0773 / +0.0710</b>
+(<code>head_temp_ensemble_2026-08-30.json</code>). The component gains barely moved even though
+their base did: layer ensembling <b>+0.0125 &rarr; +0.0125</b>, self-consistency
+<b>+0.0098 &rarr; +0.0100</b>, both together <b>+0.0168 &rarr; +0.0161</b>, measured off a
+four-domain base that itself fell +0.0243 &rarr; +0.0182
+(<code>head_best_config_2026-08-24.json</code>). Still re-fitting: the <b>+0.0500</b>
+in-domain-training figure in &sect;5.</p>
+<p><b>Read every small difference on this page against a measured noise floor.</b> Running the same
+fit twice on identical inputs moves the macro by up to <b>&plusmn;0.0029</b> and can reverse which
+arm wins, so gaps of a few thousandths &mdash; including the shipped choice of the layer ensemble
+over the self-consistency variant &mdash; are ties, not wins. The large effects (pooled training
+<b>+0.0554</b>, the headline <b>+0.0736</b> over greedy) are roughly twenty times that floor and
+stand. See TRANSFER_WALL &sect;13.</p>
 <p>The shipped artifact is now <code>ckpts/train/genframe_head_pooled_ens_v2/</code>.</p>
 </div>
 </section>
@@ -329,7 +338,7 @@ them until they land.</p>
 <h3>5.4 &nbsp;Temperature &mdash; the shipped verifier wants T=0.7</h3>
 <div class="tw"><table>
 <thead><tr><th>T</th><th class="n">0.2</th><th class="n">0.4</th><th class="n">0.7</th><th class="n">1.0</th></tr></thead>
-<tbody><tr><td>macro</td><td class="n">+0.0401</td><td class="n">+0.0573</td><td class="n pos">+0.0816</td><td class="n">+0.0759</td></tr></tbody></table></div>
+<tbody><tr><td>macro</td><td class="n">+0.0393</td><td class="n">+0.0539</td><td class="n pos">+0.0773</td><td class="n">+0.0710</td></tr></tbody></table></div>
 <p>Unlike the layer effect, pooling did <i>not</i> flatten this &mdash; the spread is 0.0416. This retires the earlier per-benchmark cold-temperature finding as an artifact of the weaker four-domain probe. Mechanistically it fits: a stronger verifier prefers <b>more</b> diverse candidate sets because it can exploit the extra coverage.</p>
 
 <h3>5.5 &nbsp;GEMeX &mdash; the cleanest evidence of real verification</h3>
