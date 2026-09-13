@@ -303,6 +303,18 @@ def main():
         rows = rows[:A.limit]
     rows = rows[A.shard::A.nshard]
     print(f"[build] {len(rows)} rows (shard {A.shard}/{A.nshard})", flush=True)
+    if not rows:
+        # 2026-09-13. This used to fall through, load the model, write a 1,286-byte npz with zero
+        # rows and print "saved ... (0 rows, 0 failed)" -- which a supervisor job asserting
+        # expect_grep "saved" reports as SUCCESS. Four MedGemma caches were produced that way:
+        # the extraction had taken the GPU lock BEFORE the judging that produces the labels
+        # build_eval_rows() needs, because flock does not grant in launch order and I had assumed
+        # it did. An empty cache is never a result -- fail loudly instead.
+        raise SystemExit(
+            f"[build] NO ROWS for split={A.split} eval_ds={A.eval_ds} gen_tag={A.gen_tag} "
+            f"pool_tag={A.pool_tag}. Rows are built by joining the candidate pool with its JUDGE "
+            f"labels, so the usual cause is that the judge file does not exist yet: check for "
+            f"ckpt_<ds>_<gen_tag>{A.pool_tag}_scexploded.judge.jsonl. Refusing to write an empty cache.")
 
     proc = AutoProcessor.from_pretrained(A.model_path)
     tok = proc.tokenizer

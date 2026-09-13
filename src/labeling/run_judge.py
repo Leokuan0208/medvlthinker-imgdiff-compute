@@ -59,4 +59,30 @@ for pf in A.preds:
                 ok = int(py >= pn) if (py+pn) > 0 else int(o.outputs[0].text.strip().lower().startswith("yes"))
                 fh.write(json.dumps({"idx": r["idx"], "judge_ok": ok}) + "\n")
             fh.flush(); print(f"   [{min(c0+256,len(todo))}/{len(todo)}]", flush=True)
+
+    # 2026-09-13. `out` is opened in APPEND mode so a resumed run keeps what it already judged --
+    # but that also means anything writing here twice leaves duplicate idx behind silently. It
+    # happened: ckpt_pathvqa_open_medgemma4b_sc8_scexploded.judge.jsonl came out of a single
+    # REPORTED run holding 26,822 rows for 22,499 inputs, with duplicates spaced exactly one
+    # 256-prompt chunk apart. The loop above provably emits at most len(todo) rows, so a second
+    # writer is implied; I did not pin which, and this pass makes the state recoverable regardless.
+    #
+    # Of those 4,323 duplicated rows, 18 -- 0.42% -- carried a DIFFERENT judge_ok for the same
+    # (question, answer) pair. The judge runs at temperature 0.0, so that is not sampling: it is
+    # vLLM batch composition moving the numerics enough to flip an argmax on a near-tie. Take 0.42%
+    # as this judge's label-noise floor on re-judging, and never assume a re-judge reproduces.
+    raw = [json.loads(l) for l in open(out) if l.strip()]
+    seen, order = {}, []
+    for d in raw:
+        if d["idx"] in seen:
+            continue                      # FIRST occurrence wins: deterministic and order-stable
+        seen[d["idx"]] = d; order.append(d["idx"])
+    if len(order) != len(raw):
+        print(f"  [dedup] {os.path.basename(out)}: {len(raw)} rows -> {len(order)} unique "
+              f"({len(raw)-len(order)} duplicates dropped)", flush=True)
+        tmp = out + ".tmp"
+        with open(tmp, "w") as g:
+            for i in order:
+                g.write(json.dumps(seen[i]) + "\n")
+        os.replace(tmp, out)
 print("DONE judge", flush=True)
