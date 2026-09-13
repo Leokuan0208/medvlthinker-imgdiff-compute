@@ -1,0 +1,37 @@
+{
+ "title": "Did truncating PathVQA to 1,500 of 3,357 questions bias the reported number?",
+ "date": "2026-09-13",
+ "no_fabricated_numbers": true,
+ "probe": "genframe_head_ens8 (frozen incumbent, layer 21) -- trained on pathvqa_open_TRAIN, never on pathvqa_open, so all 3,357 are clean for it",
+ "reported_subset": {
+  "n_questions": 1500,
+  "verifier": 0.3913333333333333,
+  "greedy": 0.3426666666666667,
+  "oracle_at_8": 0.5166666666666667,
+  "verifier_minus_greedy": 0.048666666666666636,
+  "ci_image_clustered": [
+   0.023190205161365614,
+   0.07449668725583358
+  ]
+ },
+ "restored_only": {
+  "n_questions": 1857,
+  "verifier": 0.3080236941303177,
+  "greedy": 0.29079159935379645,
+  "oracle_at_8": 0.4518039849219171,
+  "verifier_minus_greedy": 0.017232094776521267
+ },
+ "full_benchmark": {
+  "n_questions": 3357,
+  "verifier": 0.3452487339886804,
+  "greedy": 0.3139708072683944,
+  "oracle_at_8": 0.48078641644325293,
+  "verifier_minus_greedy": 0.03127792672028601,
+  "ci_image_clustered": [
+   0.016441573693482092,
+   0.0458309309087325
+  ]
+ },
+ "bias": -0.017388739946380627,
+ "VERDICT": "the reported 1,500-question subset gives verifier-minus-greedy +0.0487; the full 3,357-question benchmark gives +0.0313 (-0.0174). The 1,857 restored questions are harder -- greedy 0.2908 against 0.3427 -- and the verifier's measured gain moves materially, so every PathVQA delta in the project must be restated on the full benchmark."
+}
