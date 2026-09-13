@@ -55,7 +55,7 @@ loses to greedy.
 | **VQA-Med C4** | 3,663 | — | ImageCLEF 2019 abnormality naming | 10 MedPix collisions excluded at build time |
 | **GEMeX** | 8,000 | 3,514 | chest X-ray findings, free text | 21,312 images pulled from PhysioNet under our own credential; no image overlap with any evaluation pool |
 
-**GEMeX is the least memorisable benchmark in the project**: 6,236 distinct questions, 4,316
+**GEMeX is the least memorisable benchmark in the project**: 6,236 distinct questions, 4,315
 distinct golds, top-10 gold coverage **12.7%** (RadImageNet 66.5%, SLAKE 41.9%, PathVQA 41.3%).
 
 ---
@@ -127,7 +127,7 @@ other image half of each.
 | 1 | **Architecture** (7 variants) | plain `raw` wins at +0.0734; domadv +0.0558, poolnorm+raw +0.0527, poolnorm +0.0409, pca32 +0.0386, pca128 +0.0339, rankonly +0.0302 — **all six alternatives worse** | `head_arch_transfer_2026-08-19` |
 | 2 | **Domain breadth**, budget-matched | mean slope +0.00868 **[−0.00143, +0.01997]** with the duplicated Kvasir source collapsed — includes zero | `head_domain_scaling_MERGED_2026-08-21` |
 | 3 | **Breadth on unseen benchmarks (LOBO)** | **−0.0008** | `head_lobo_pooled_2026-08-25` |
-| 4 | **Union pools over temperature** | loses to the best single temperature on **6 of 8** | `mixed_temperature_2026-08-22` |
+| 4 | **Union pools over temperature** | loses to the best single temperature on **7 of 8** | `mixed_temperature_2026-08-22` |
 | 5 | **Pool pruning** (5 pruners × k∈{2,3,4,6}) | best fixed rule **−0.0000** | `pool_pruning_2026-08-24` |
 | 6 | **Self-consistency as a scorer** | flat at the random floor, and **does not improve with N** (0.0933 at N=2, 0.0800 at N=16 while oracle climbs 0.156→0.418) | §4 of `TRANSFER_WALL_2026-08-21` |
 | 7 | **Greedy-anchored veto** | +0.0006; **ceiling +0.0023** even with τ fitted in-sample | `greedy_anchored_2026-08-22` |
@@ -164,7 +164,7 @@ Unlike the layer effect, pooling did *not* flatten this (spread 0.0416). A stron
 verifier +0.0148 [+0.0057, +0.0238] over greedy, and **+0.0573 [+0.0483, +0.0663] over the answer
 prior** — where the prior itself *loses* to greedy by 0.0425. It is also the **most**
 out-of-distribution benchmark (largest kNN distance 7.228, lowest domain-classifier confidence
-0.693) and the verifier wins on it anyway, so OOD-ness does not predict where the method helps.
+0.686) and the verifier wins on it anyway, so OOD-ness does not predict where the method helps.
 
 ### 5.6 Layer choice — three metrics, three answers, all within ~0.013
 In-domain CV picks 20, the transfer proxy picks 18, end-to-end picks 19 (L18 +0.0275, L19 +0.0331,

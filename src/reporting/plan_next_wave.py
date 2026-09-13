@@ -524,6 +524,33 @@ def main():
             "expect": f"{FEATS}/generator_eval_pathvqa_full.npz",
             "expect_min_bytes": 10_000_000, "_gpu": 0})
 
+    # ---- 4c11c. PATHVQA BASE CACHE, AT THE LAYERS THE PIPELINE ACTUALLY READS ---------------
+    # VERIFICATION 2026-09-13 caught the previous attempt failing. The backfill was extracted into
+    # generator_eval_pathvqa_full at layers [18,20,21,22], but every analysis reads
+    # generator_eval_<cell><SUF> at layers [7,14,21,28] -- a different stem AND a different layer
+    # set -- so NOT ONE reported number moved. Worse, head_temperature_2026-08-22.json was
+    # regenerated after the backfill and is now internally inconsistent: pathvqa reads n=1,500 at
+    # T=0.7 and n=3,357 at 0.2/0.4/1.0, so best_T for that benchmark compares different question
+    # sets. Re-extract into the CANONICAL stem at the CANONICAL layers so the fix actually lands.
+    # generator_eval_pathvqa_open.npz currently holds 1,500 idx; it is a regeneratable cache and
+    # the copy on disk is the truncated one, so overwriting it is the correction.
+    _pvbase = f"{FEATS}/generator_eval_pathvqa_open"
+    _pv_need = True
+    if nonempty(_pvbase + ".npz", mb=10):
+        try:
+            _mm = json.load(open(_pvbase + ".meta.json"))
+            _pv_need = len({r["idx"] for r in _mm["rows"]}) < 3000
+        except Exception:
+            _pv_need = True
+    if _pv_need and nonempty(f"{CK}/ckpt_pathvqa_open_lingshu7b_sc8_scexploded.judge.jsonl"):
+        gpu[1].append({"name": "pathvqa_base_reextract",
+            "cmd": E + f"CUDA_VISIBLE_DEVICES=1 python3 "
+                   f"src/training_methods/extract_generator_hidden.py --model_path {L7} "
+                   f"--mode generator --split eval --eval_ds pathvqa_open --layers 7 14 21 28 "
+                   f"--stem_tag pathvqa_open --out feats_hidden",
+            "log": "logs/sv_pathvqa_base_reextract.log", "timeout_s": 172800, "stall_s": 5400,
+            "expect": _pvbase + ".npz", "expect_min_bytes": 100_000_000, "_gpu": 1})
+
     # ---- 4c12. RE-EXPLODE ANY JUDGE FILE THAT DOES NOT COVER ITS DUMP -----------------------
     # AUDIT 2026-09-12. explode_sc_for_judge.py can run BEFORE generation finishes, leaving a judge
     # file that silently covers only part of the cell -- ckpt_kvasir_x1_open_lingshu7bT10_sc8 was

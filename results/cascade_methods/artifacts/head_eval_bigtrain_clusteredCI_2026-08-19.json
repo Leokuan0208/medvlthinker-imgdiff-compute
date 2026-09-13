@@ -1,0 +1,167 @@
+{
+ "title": "One-shot eval of the CV-selected head objective",
+ "date": "2026-08-18",
+ "no_fabricated_numbers": true,
+ "selection": "configs chosen on 5-fold image-grouped CV inside the TRAIN pool only (head_sweep round 1, 74 configs). Eval was read for the first time here.",
+ "multiplicity": "THREE arms are scored on eval, not one: the CV winner, the CV runner-up at a deployable width, and the deployed objective refit as a matched control. Declared rather than hidden.",
+ "readout": "8 seeds; per-seed within-question rank_avg (ties averaged); mean over seeds; argmax with first-index tie-break -- the frozen deployed convention.",
+ "frozen_artifact_published": {
+  "head_alone_sel_eff": 0.8010899182561307,
+  "head_alone_acc": 0.5014925373134328
+ },
+ "train_pool": "bigtrain: every judged row",
+ "threads": 6,
+ "seeds": 8,
+ "arms": {
+  "control_bt_h256_REFIT": {
+   "n_q": 2345,
+   "acc": 0.518550106609808,
+   "sel_eff": 0.8283378746594006,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.7875968992248062,
+     "sel_eff": 0.8959435626102292
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.47,
+     "sel_eff": 0.746031746031746
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.4093333333333333,
+     "sel_eff": 0.792258064516129
+    }
+   },
+   "config": {
+    "objective": "bt",
+    "hidden": 256,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  },
+  "cv_winner_bce_h1024": {
+   "n_q": 2345,
+   "acc": 0.5215351812366738,
+   "sel_eff": 0.8331062670299727,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.8077519379844961,
+     "sel_eff": 0.9188712522045855
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.505,
+     "sel_eff": 0.8015873015873016
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.40066666666666667,
+     "sel_eff": 0.775483870967742
+    }
+   },
+   "config": {
+    "objective": "bce",
+    "hidden": 1024,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  },
+  "cv_runnerup_bce_h256": {
+   "n_q": 2345,
+   "acc": 0.5257995735607676,
+   "sel_eff": 0.8399182561307902,
+   "oracle": 0.6260127931769722,
+   "per_ds": {
+    "slake_open": {
+     "n": 645,
+     "acc": 0.8093023255813954,
+     "sel_eff": 0.9206349206349206
+    },
+    "vqa_rad_open": {
+     "n": 200,
+     "acc": 0.52,
+     "sel_eff": 0.8253968253968254
+    },
+    "pathvqa_open": {
+     "n": 1500,
+     "acc": 0.4046666666666667,
+     "sel_eff": 0.7832258064516129
+    }
+   },
+   "config": {
+    "objective": "bce",
+    "hidden": 256,
+    "layers": [
+     21
+    ],
+    "pools": [
+     "span"
+    ],
+    "epochs": 30,
+    "wd": 0.01,
+    "lr": 0.001
+   }
+  }
+ },
+ "deltas_vs_refit_control": {
+  "cv_winner_bce_h1024": {
+   "d_acc": 0.0029850746268657025,
+   "d_acc_ci": [
+    -0.006754118693593399,
+    0.012510920148670399
+   ],
+   "d_sel_eff": 0.004768392370572139,
+   "d_sel_eff_ci": [
+    -0.01091423808836467,
+    0.019795390801878823
+   ],
+   "verdict": "TIE",
+   "bootstrap": "image-clustered (528 images / 2,345 questions)",
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": 0.022927689594356315,
+    "vqa_rad_open": 0.05555555555555558,
+    "pathvqa_open": -0.01677419354838705
+   }
+  },
+  "cv_runnerup_bce_h256": {
+   "d_acc": 0.0072494669509595155,
+   "d_acc_ci": [
+    -0.0017072311986974676,
+    0.016521826514165845
+   ],
+   "d_sel_eff": 0.011580381471389622,
+   "d_sel_eff_ci": [
+    -0.0027644835910385357,
+    0.02610984002225155
+   ],
+   "verdict": "TIE",
+   "bootstrap": "image-clustered (528 images / 2,345 questions)",
+   "guardrail_clean_sel_eff": false,
+   "per_ds_d_sel_eff": {
+    "slake_open": 0.024691358024691357,
+    "vqa_rad_open": 0.0793650793650793,
+    "pathvqa_open": -0.00903225806451613
+   }
+  }
+ }
+}
