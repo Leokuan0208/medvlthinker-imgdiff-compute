@@ -25,23 +25,23 @@ Source: `artifacts/free_signal_bakeoff_2026-08-21.json`.
 
 | cell | head trained on it? | greedy | head | oracle@8 |
 |---|---|---:|---:|---:|
-| pathvqa_open | IN | 0.3427 | **0.3900** | 0.5167 |
+| pathvqa_open | IN | 0.3140 | **0.3452** | 0.4808 |
 | slake_open | IN | 0.7302 | **0.7690** | 0.8791 |
 | vqa_rad_open | IN | 0.4900 | 0.4650 | 0.6300 |
 | kvasir_x1_open | IN | 0.2849 | **0.3629** | 0.4696 |
 | radimagenet_open | OUT | 0.3210 | 0.3295 | 0.5120 |
-| omnimed_open | OUT | **0.3885** | 0.3396 | 0.5759 |
+| omnimed_open | OUT | **0.5164** | 0.4971 | 0.7007 |
 | vqamed_open | OUT | **0.0947** | 0.0688 | 0.2102 |
 
-In domain the head is worth +0.039 to +0.078 over greedy. Out of domain it is worth −0.026 to
-−0.049 — the 8× sampling spend **buys negative accuracy**.
+In domain the head is worth +0.031 to +0.078 over greedy. Out of domain it is worth −0.019 to
+−0.026 — the 8× sampling spend **buys negative accuracy**.
 
 ## 2. Five closed routes
 
 | route | result | artifact |
 |---|---|---|
-| **capacity** | h32 0.70090 ≈ h1024 0.69742 — irrelevant | `head_curve_bce_2026-08-18.json` |
-| **regularisation** | does not rescue it; only data does | `head_reg_2026-08-18.json` |
+| **capacity** | h32 0.70090 ≈ h1024 0.69742 — irrelevant | `_head_sweep_journal_reg_s0of1.jsonl`, `_head_sweep_journal_main_s4of6.jsonl` |
+| **regularisation** | does not rescue it; only data does | `_head_sweep_journal_reg_s0of1.jsonl` |
 | **architecture** | all 6 alternatives transfer WORSE than plain | `head_arch_transfer_2026-08-19.json` |
 | **more samples** | self-consistency is flat in N at the random floor | §4 below |
 | **routing (accuracy)** | tie once the CI is clustered correctly | `regime_router_2026-08-21.json` |
@@ -70,7 +70,7 @@ Recovered (`free_signal_bakeoff_2026-08-21.json`), SC minus head:
 | IN-domain | | OUT-of-domain | |
 |---|---:|---|---:|
 | pathvqa_open | −0.0640 LOSS | radimagenet_open | −0.0050 TIE |
-| slake_open | −0.0295 LOSS | **omnimed_open** | **+0.0449 WIN** |
+| slake_open | −0.0295 LOSS | **omnimed_open** | **+0.0190 WIN** |
 | vqa_rad_open | +0.0000 TIE | **vqamed_open** | **+0.0175 WIN** |
 | kvasir_x1_open | −0.0930 LOSS | | |
 
@@ -78,7 +78,7 @@ Recovered (`free_signal_bakeoff_2026-08-21.json`), SC minus head:
 count — no answer vocabulary, nothing to overfit — beats a trained 918k-parameter head precisely
 where that head has no training data.
 
-**Do not overstate it: out of domain neither beats greedy.** SC merely loses less (−0.004 vs −0.049
+**Do not overstate it: out of domain neither beats greedy.** SC merely loses less (−0.0002 vs −0.0193
 on omnimed). This diagnoses the wall; it does not break it.
 
 ## 4. Self-consistency does not scale with N
@@ -104,23 +104,34 @@ N=16 generation on the failing cells was cancelled rather than run.
 
 | detector | cell Spearman | pooled per-question AUROC |
 |---|---:|---:|
-| **knn_train** | **−0.821** | 0.296 (0.704 sign-flipped) |
-| **domclf_maxprob** | **+0.857** | 0.670 |
-| vocab_coverage | +0.571 | 0.540 |
-| head_spread | −0.429 | 0.517 |
-| maha_pca64 | +0.214 | 0.485 |
-| sc_entropy | +0.000 | 0.546 |
+| **knn_train** | **−0.679** | 0.309 (0.691 sign-flipped) |
+| **domclf_maxprob** | **+0.679** | 0.630 |
+| vocab_coverage | +0.464 | 0.614 |
+| head_spread | −0.536 | 0.540 |
+| maha_pca64 | +0.179 | 0.508 |
+| sc_entropy | +0.000 | 0.538 |
 
-Mechanically sensible: omnimed, the worst cell, has the largest kNN distance (6.967 vs 2.6–3.3
-in-domain) and the lowest domain-classifier confidence (0.767 vs 0.994–0.998).
+Mechanically sensible: omnimed, the worst cell, has the largest kNN distance (6.822 vs 2.6–5.4
+in-domain) and the lowest domain-classifier confidence (0.754 vs 0.994–0.998).
 
-**Caveats that must travel with these numbers.** With 7 cells, Spearman ±0.85 is p≈0.024
-uncorrected and **not significant across six detectors tested**. Within-cell AUROC is only 0.551
+**Caveats that must travel with these numbers.** With 7 cells, Spearman ±0.68 is p≈0.094
+uncorrected and **not significant across six detectors tested**. Within-cell AUROC is only 0.564
 [0.456, 0.686], so the signal orders **datasets, not questions**. And `domclf_maxprob`, the best
 cell-orderer, **fails as a router** (−0.0134 LOSS vs always-select) — cell ordering does not imply
 routing performance.
 
-## 6. ⚠️ CORRECTION TO A RESULT OF MY OWN — the router "WIN" was my CI, not the data
+## 6. ⚠️ SUPERSEDED — this section reports a SEVEN-CELL RUN that no longer exists
+
+> **Read `AUDIT_2026-09-12.md` §5 instead.** Every number in this section comes from a
+> seven-benchmark `regime_router` fit made before GEMeX existed. That artifact was regenerated with
+> eight benchmarks and the seven-cell values are **not re-derivable from anything on disk** — the run
+> is gone. The current artifact reads pooled routed-vs-greedy **+0.0215 [+0.0181,+0.0250]** i.i.d.
+> and **+0.0215 [−0.0087,+0.0587]** cell-clustered, against the +0.0133/+0.0119 quoted below.
+> The *methodological* point — that an i.i.d. interval on benchmark-clustered data is
+> anticonservative, and that correcting it turns this WIN into a TIE — still stands and is why the
+> section is kept. The specific figures do not.
+
+## 6. (superseded) CORRECTION TO A RESULT OF MY OWN — the router "WIN" was my CI, not the data
 
 Leave-one-cell-out router on `knn_train` (`artifacts/regime_router_2026-08-21.json`), macro:
 
@@ -178,7 +189,7 @@ testing whether breadth (k of 7 domains) lifts transfer at all.
 `artifacts/cell_gemex_open_2026-08-19.json`, `free_signal_bakeoff_2026-08-21.json`,
 `regime_detector_2026-08-21.json`. 8,000 questions / 3,514 chest X-ray images, subsampled by image
 from a 48,274-question PhysioNet build. Templating is the best in the project — 6,236 distinct
-questions, 4,316 distinct golds, top-10 gold coverage **12.7%** — so answer-vocabulary memorisation
+questions, 4,315 distinct golds, top-10 gold coverage **12.7%** — so answer-vocabulary memorisation
 has the least to work with here of any cell we have.
 
 | arm | accuracy | vs greedy |
@@ -203,7 +214,7 @@ out of training and the **head beats SC by +0.0328 [+0.0238, +0.0419]**. The exc
 | pathvqa / slake / kvasir_x1 | IN | −0.0640 / −0.0295 / −0.0930 |
 | vqa_rad | IN | +0.0000 |
 | radimagenet | OUT | −0.0050 |
-| omnimed | OUT | **+0.0449** |
+| omnimed | OUT | **+0.0190** |
 | vqamed | OUT | **+0.0175** |
 | **gemex** | **OUT** | **−0.0328** |
 
@@ -213,26 +224,26 @@ concluded from a clean boundary must be re-derived; the raw measurements in §3 
 ## 10.2 FALSIFIED — "the regime is partly detectable" (§5), and §6's router with it
 
 GEMeX is the **most** out-of-distribution cell measured by both surviving detectors — largest kNN
-distance to the training rows (7.228, above omnimed's 6.967) and lowest domain-classifier confidence
-(0.693, below omnimed's 0.773) — **and the head wins on it.** Distance from the training
+distance to the training rows (7.228, above omnimed's 6.822) and lowest domain-classifier confidence
+(0.686, below omnimed's 0.754) — **and the head wins on it.** Distance from the training
 distribution does not determine whether selection helps.
 
 | detector | cell Spearman, 7 cells | cell Spearman, 8 cells |
 |---|---:|---:|
-| knn_train | −0.821 | **−0.643** |
-| domclf_maxprob | +0.857 | **+0.667** |
+| knn_train | −0.679 | **−0.548** |
+| domclf_maxprob | +0.679 | **+0.548** |
 
 The artifact's verdict is now *"NO detector orders the cells; the regime is not identifiable at
 inference from anything tested."* One extra cell was enough — precisely the fragility §5 flagged
-when it recorded that ±0.85 at n=7 is p≈0.024 uncorrected and not significant across six detectors.
+when it recorded that ±0.68 at n=7 is p≈0.094 uncorrected and not significant across six detectors.
 It did not survive. **§6's router is therefore unsupported even as the compute claim**, because the
 detector it routes on no longer orders the cells.
 
 Re-run on all eight cells the router is not merely unsupported but **numerically worse than always
-selecting**: macro routed 0.3880 vs always-select 0.3921 vs always-greedy 0.3812, routed-vs-select
-−0.0041 [−0.0184,+0.0084] and routed-vs-greedy +0.0068 [−0.0117,+0.0250], both ties. The mechanism
+selecting**: macro routed 0.4107 vs always-select 0.4118 vs always-greedy 0.3972, routed-vs-select
+−0.0011 [−0.0049,+0.0030] and routed-vs-greedy +0.0136 [−0.0095,+0.0384], both ties. The mechanism
 of the failure is legible and damning: GEMeX has the largest kNN distance of any cell, so the router
-sends **99% of it to greedy** (select rate 0.01) and throws away the +0.0148 win the head actually
+sends **68% of it to greedy** (select rate 0.32) and throws away the +0.0148 win the head actually
 had there. A detector that routes confidently in the wrong direction on the newest cell is worse
 than no detector.
 
@@ -240,17 +251,17 @@ than no detector.
 
 - **§1, §2, §4, §7, §8 are unaffected**: the wall itself, the five closed routes, SC's flatness in
   N, the thread-count segfault, the infrastructure failures.
-- The head beats greedy on **4 of 8** cells (pathvqa +0.047, slake +0.039, kvasir_x1 +0.078,
-  gemex +0.015), ties on 2 (vqa_rad −0.025, radimagenet +0.009) and loses on 2 (omnimed −0.049,
+- The head beats greedy on **4 of 8** cells (pathvqa +0.031, slake +0.039, kvasir_x1 +0.078,
+  gemex +0.015), ties on 2 (vqa_rad −0.025, radimagenet +0.009) and loses on 2 (omnimed −0.019,
   vqamed −0.026).
 - **"Per-domain" is too coarse and OOD-ness does not explain the split — and neither does answer
   kind.** `artifacts/answer_kind_2026-08-22.json` tested the obvious next hypothesis (the head
   loses where answers are short category labels and wins where they are descriptive free text)
   within cells, splitting each cell at its median mean-candidate-length so the cell's identity is
   held fixed. **Refuted.** Longer answers favour the head in 6/8 cells but the mean is only
-  +0.0054, two cells go firmly the other way (pathvqa −0.0585 [−0.0971,−0.0175], vqa_rad −0.0910),
-  and the cell-level Spearman is +0.048. The premise was also simply wrong on the facts: omnimed's
-  mean candidate answer is **4.71 words**, LONGER than pathvqa's 1.99 and slake's 1.74, the two
+  +0.0045, two cells go firmly the other way (pathvqa −0.0585 [−0.0971,−0.0175], vqa_rad −0.0910),
+  and the cell-level Spearman is +0.238. The premise was also simply wrong on the facts: omnimed's
+  mean candidate answer is **3.12 words**, LONGER than pathvqa's 1.99 and slake's 1.74, the two
   cells where the head wins most — short golds do not imply short candidates.
   **We do not currently know what separates the cells selection helps from the cells it hurts.**
   Two hypotheses have now been measured and both failed; do not add a third to a document without

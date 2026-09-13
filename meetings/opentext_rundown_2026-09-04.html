@@ -139,7 +139,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <div class="kicker">Research rundown &middot; 17 Aug – 4 Sep 2026</div>
 <h1>The open-text arm</h1>
 <p class="dek">A best-of-N probe verifier for medical VQA, across eight benchmarks. What worked, what didn&rsquo;t, what we corrected in our own claims, and what is still running. Every figure names the artifact it came from.</p>
-<div class="stamp"><span>Lingshu-7B</span><span>8 benchmarks</span><span>30,912 questions</span><span>judge currency</span><span>no fabricated numbers</span></div>
+<div class="stamp"><span>Lingshu-7B</span><span>8 benchmarks</span><span>35,012 questions</span><span>judge currency</span><span>no fabricated numbers</span></div>
 </div></div>
 
 <div class="wrap">
@@ -171,7 +171,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <h2><span class="num">01</span>Where we started, where we are</h2>
 <div class="stats">
 <div class="stat"><div class="v">3 &rarr; 8</div><div class="k">open-ended benchmarks</div></div>
-<div class="stat"><div class="v">2,345 &rarr; 30,912</div><div class="k">questions</div></div>
+<div class="stat"><div class="v">2,345 &rarr; 35,012</div><div class="k">questions</div></div>
 <div class="stat"><div class="v">31k &rarr; 108k</div><div class="k">probe training rows</div></div>
 <div class="stat"><div class="v">1 &rarr; 2</div><div class="k">generators tested</div></div>
 </div>
@@ -188,7 +188,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <tr><td>VQA-Med C4</td><td class="n">3,663</td><td class="n">0.0947</td><td class="n">0.0459</td><td class="n">0.0863</td><td class="n neg">0.0688</td><td class="n">0.2102</td></tr>
 <tr><td>GEMeX</td><td class="n">8,000</td><td class="n">0.3974</td><td class="n">0.3549</td><td class="n">0.3794</td><td class="n pos">0.4121</td><td class="n">0.5864</td></tr>
 </tbody></table></div>
-<div class="note good"><p>The verifier beats the answer-prior baseline on <b>all eight</b> &mdash; including both benchmarks where it loses to greedy. That null is the one that has eaten several earlier positive results, so clearing it everywhere matters more than the win count.</p></div>
+<div class="note good"><p>The verifier beats the answer-prior baseline on <b>all eight</b> &mdash; including all three benchmarks where it loses to greedy. That null is the one that has eaten several earlier positive results, so clearing it everywhere matters more than the win count.</p></div>
 </section>
 
 <section id="s2">
@@ -202,7 +202,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <tr><td><b>VQA-Med C4</b></td><td class="n">3,663</td><td class="n">&mdash;</td><td class="wrap-ok">ImageCLEF 2019 abnormality naming</td><td class="wrap-ok">10 MedPix collisions excluded at build time</td></tr>
 <tr><td><b>GEMeX</b></td><td class="n">8,000</td><td class="n">3,514</td><td class="wrap-ok">chest X-ray findings, free text</td><td class="wrap-ok">21,312 images pulled from PhysioNet under our own credential; no image overlap with any evaluation pool</td></tr>
 </tbody></table></div>
-<div class="note"><span class="tag">Why GEMeX matters</span><p>It is the <b>least memorisable</b> benchmark in the project: 6,236 distinct questions, 4,316 distinct golds, top-10 gold coverage <b>12.7%</b> &mdash; against RadImageNet 66.5%, SLAKE 41.9%, PathVQA 41.3%. A model cannot succeed there by learning the answer vocabulary.</p></div>
+<div class="note"><span class="tag">Why GEMeX matters</span><p>It is the <b>least memorisable</b> benchmark in the project: 6,236 distinct questions, 4,315 distinct golds, top-10 gold coverage <b>12.7%</b> &mdash; against RadImageNet 66.5%, SLAKE 41.9%, PathVQA 24.0%. A model cannot succeed there by learning the answer vocabulary.</p></div>
 </section>
 <section id="s3">
 <h2><span class="num">03</span>What worked</h2>
@@ -233,7 +233,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <tr><td>MACRO</td><td class="n">+0.0199</td><td class="n">+0.0324</td><td class="n">+0.0297</td><td class="n pos">+0.0366</td></tr>
 <tr><td>beats greedy</td><td class="n">5/8</td><td class="n">7/8</td><td class="n">7/8</td><td class="n">7/8</td></tr>
 </tbody></table></div>
-<p>D flips three of the deployed recipe&rsquo;s failures: VQA-RAD &minus;0.0150&nbsp;&rarr;&nbsp;<span class="pos">+0.0300</span>, OmniMedVQA &minus;0.0063&nbsp;&rarr;&nbsp;<span class="pos">+0.0220</span>, RadImageNet +0.0010&nbsp;&rarr;&nbsp;+0.0125. Both components were found on a proxy metric and <b>both survived end-to-end validation</b> &mdash; which the layer sweep did not.</p>
+<p>D flips two of the deployed recipe&rsquo;s three failures: VQA-RAD &minus;0.0150&nbsp;&rarr;&nbsp;<span class="pos">+0.0300</span>, OmniMedVQA &minus;0.0063&nbsp;&rarr;&nbsp;<span class="pos">+0.0220</span>, RadImageNet +0.0010&nbsp;&rarr;&nbsp;+0.0125. Both components were found on a proxy metric and <b>both survived end-to-end validation</b> &mdash; which the layer sweep did not.</p>
 
 <h3>3.3 &nbsp;The stack, and the component that vanishes</h3>
 <p>Identical held-out halves. <code>head_final_stack_2026-08-24.json</code></p>
@@ -245,7 +245,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <tr class="total"><td>pooled + layer ensemble</td><td class="n">+0.0802</td></tr>
 <tr><td>pooled + ensemble + SC</td><td class="n">+0.0797</td></tr>
 </tbody></table></div>
-<div class="note"><p>The SC feature is worth <b>+0.0098</b> from the four-domain base and <b>&minus;0.0005</b> once pooled. It was compensating for missing training data, not adding independent signal &mdash; which also explains why fusing it at the score level was a wash. Not shipped: it would add an inference-time dependency on the raw candidate set for nothing.</p></div>
+<div class="note"><p>The SC feature is worth <b>+0.0098</b> from the four-domain base and <b>&minus;0.0004</b> once pooled. It was compensating for missing training data, not adding independent signal &mdash; which also explains why fusing it at the score level was a wash. Not shipped: it would add an inference-time dependency on the raw candidate set for nothing.</p></div>
 
 <h3>3.4 &nbsp;Doubling the sample budget</h3>
 <p>Matched budget on identical questions, all eight. <code>coverage_scaling_ALL_2026-09-01.json</code></p>
@@ -267,10 +267,10 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <tr><td class="n">1</td><td class="wrap-ok"><b>Architecture</b>, 7 variants</td><td class="wrap-ok">plain <code>raw</code> wins at <b>+0.0734</b>; domadv +0.0558, poolnorm+raw +0.0527, poolnorm +0.0409, pca32 +0.0386, pca128 +0.0339, rankonly +0.0302 &mdash; <b>all six alternatives worse</b></td><td class="wrap-ok mono">head_arch_transfer</td></tr>
 <tr><td class="n">2</td><td class="wrap-ok"><b>Domain breadth</b>, budget-matched</td><td class="wrap-ok">slope <b>+0.00868 [&minus;0.00143, +0.01997]</b> with the duplicated Kvasir source collapsed &mdash; includes zero</td><td class="wrap-ok mono">head_domain_scaling_MERGED</td></tr>
 <tr><td class="n">3</td><td class="wrap-ok"><b>Breadth on unseen benchmarks</b> (LOBO)</td><td class="wrap-ok"><b>&minus;0.0008</b></td><td class="wrap-ok mono">head_lobo_pooled</td></tr>
-<tr><td class="n">4</td><td class="wrap-ok"><b>Union pools</b> over temperature</td><td class="wrap-ok">loses to the best single temperature on <b>6 of 7</b></td><td class="wrap-ok mono">mixed_temperature</td></tr>
+<tr><td class="n">4</td><td class="wrap-ok"><b>Union pools</b> over temperature</td><td class="wrap-ok">loses to the best single temperature on <b>7 of 8</b></td><td class="wrap-ok mono">mixed_temperature</td></tr>
 <tr><td class="n">5</td><td class="wrap-ok"><b>Pool pruning</b>, 5 pruners &times; k&isin;{2,3,4,6}</td><td class="wrap-ok">best fixed rule <b>&minus;0.0000</b></td><td class="wrap-ok mono">pool_pruning</td></tr>
 <tr><td class="n">6</td><td class="wrap-ok"><b>Self-consistency as a scorer</b></td><td class="wrap-ok">flat at the random floor and <b>does not improve with N</b> &mdash; 0.0933 at N=2, 0.0800 at N=16, while oracle climbs 0.156&nbsp;&rarr;&nbsp;0.418</td><td class="wrap-ok mono">TRANSFER_WALL &sect;4</td></tr>
-<tr><td class="n">7</td><td class="wrap-ok"><b>Greedy-anchored veto</b></td><td class="wrap-ok">+0.0007; <b>ceiling +0.0022</b> even with &tau; fitted in-sample</td><td class="wrap-ok mono">greedy_anchored</td></tr>
+<tr><td class="n">7</td><td class="wrap-ok"><b>Greedy-anchored veto</b></td><td class="wrap-ok">+0.0006; <b>ceiling +0.0023</b> even with &tau; fitted in-sample</td><td class="wrap-ok mono">greedy_anchored</td></tr>
 <tr><td class="n">8</td><td class="wrap-ok"><b>Regime detection</b>, 6 detectors</td><td class="wrap-ok">none order the benchmarks once GEMeX is added (knn &minus;0.548, domclf +0.548)</td><td class="wrap-ok mono">regime_detector</td></tr>
 <tr><td class="n">9</td><td class="wrap-ok"><b>Answer kind</b></td><td class="wrap-ok">within-benchmark, long answers favour the verifier in 6/8 but mean only <b>+0.0045</b></td><td class="wrap-ok mono">answer_kind</td></tr>
 <tr><td class="n">10</td><td class="wrap-ok"><b>Train/deploy temperature matching</b></td><td class="wrap-ok">no diagonal advantage; the best cell is the <i>mismatched</i> one</td><td class="wrap-ok mono">head_temp_matched</td></tr>
@@ -297,7 +297,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <p>The benchmark&rsquo;s own training half is worth <b>+0.0500</b>. The verifier learned eight per-benchmark rules, not something domain-general &mdash; so the shipped +0.0802 holds only where it has in-domain data. This is a materially weaker claim than the pooled number alone suggests, and it reconciles with the budget-matched breadth result: both say breadth is not the mechanism.</p>
 
 <h3>5.3 &nbsp;The price of onboarding a benchmark &mdash; ~100 labelled questions</h3>
-<p>From the deployable base. 6/8 already beat greedy at k=0, and the first hundred questions carry most of the gain: OmniMedVQA &minus;0.0004&nbsp;&rarr;&nbsp;<span class="pos">+0.0986</span>, RadImageNet +0.0010&nbsp;&rarr;&nbsp;+0.0528, GEMeX +0.0224&nbsp;&rarr;&nbsp;+0.0857. Then it flattens.</p>
+<p>From the deployable base. 5/8 already beat greedy at k=0, and the first hundred questions carry most of the gain: OmniMedVQA &minus;0.0004&nbsp;&rarr;&nbsp;<span class="pos">+0.0986</span>, RadImageNet +0.0010&nbsp;&rarr;&nbsp;+0.0528, GEMeX +0.0224&nbsp;&rarr;&nbsp;+0.0857. Then it flattens.</p>
 
 <h3>5.4 &nbsp;Temperature &mdash; the shipped verifier wants T=0.7</h3>
 <div class="tw"><table>
@@ -306,7 +306,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <p>Unlike the layer effect, pooling did <i>not</i> flatten this &mdash; the spread is 0.0416. This retires the earlier per-benchmark cold-temperature finding as an artifact of the weaker four-domain probe. Mechanistically it fits: a stronger verifier prefers <b>more</b> diverse candidate sets because it can exploit the extra coverage.</p>
 
 <h3>5.5 &nbsp;GEMeX &mdash; the cleanest evidence of real verification</h3>
-<p>Verifier <b>+0.0148 [+0.0057, +0.0238]</b> over greedy, and <b>+0.0573 [+0.0483, +0.0663]</b> over the answer prior &mdash; where that prior itself <i>loses</i> to greedy by 0.0425. It is also the <b>most</b> out-of-distribution benchmark we have (largest kNN distance 7.228, lowest domain-classifier confidence 0.693), and the verifier wins on it anyway. So distance from the training distribution does not predict where the method helps.</p>
+<p>Verifier <b>+0.0148 [+0.0057, +0.0238]</b> over greedy, and <b>+0.0573 [+0.0483, +0.0663]</b> over the answer prior &mdash; where that prior itself <i>loses</i> to greedy by 0.0425. It is also the <b>most</b> out-of-distribution benchmark we have (largest kNN distance 7.228, lowest domain-classifier confidence 0.686), and the verifier wins on it anyway. So distance from the training distribution does not predict where the method helps.</p>
 
 <h3>5.6 &nbsp;Layer choice &mdash; three metrics, three answers</h3>
 <div class="tw"><table>
@@ -319,14 +319,14 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <p class="lede">Eleven claims that did not survive. Each is recorded in the artifact of record rather than quietly replaced.</p>
 <ol class="corr">
 <li><b>A stale checkpoint invalidated every OmniMedVQA number.</b> <code>run_openvqa.py</code> resumed on <code>idx</code> alone; the rebuild re-indexed 0..8882 over a different question set, so regeneration reported success in 160&nbsp;s having generated nothing. Only <b>17 of 5,000</b> questions matched. Corrected: &minus;0.0489&nbsp;&rarr;&nbsp;&minus;0.0193, and the answer prior does <i>not</i> beat the verifier there. Caught because a fresh T=0.4 run produced an impossible number. Fixed at source with a question-text guard.</li>
-<li><b>The router&rsquo;s &ldquo;WIN&rdquo; was my confidence interval.</b> +0.0133 [+0.0109,&nbsp;+0.0156] resampling questions i.i.d. &rarr; <b>+0.0119 [&minus;0.0032,&nbsp;+0.0297]</b> clustered by benchmark, where essentially all the variance lives. A tie.</li>
-<li><b>Mixed currency in the decomposition.</b> Exact-match labels for one term, judge labels for the others &mdash; inflated the sampling penalty roughly eightfold. Caught before it reached a deck.</li>
+<li><b>The router&rsquo;s &ldquo;WIN&rdquo; was my confidence interval.</b> +0.0215 [+0.0181,&nbsp;+0.0250] resampling questions i.i.d. &rarr; <b>+0.0215 [&minus;0.0087,&nbsp;+0.0587]</b> clustered by benchmark, where essentially all the variance lives. A tie.</li>
+<li><b>Mixed currency in the decomposition.</b> Exact-match labels for one term, judge labels for the others &mdash; inflated the sampling penalty roughly 12-fold. Caught before it reached a deck.</li>
 <li><b>Breadth confounded with volume.</b> The k-domain curve trained k=6 on six times the rows of k=1, so it could not separate &ldquo;more domains&rdquo; from &ldquo;more data&rdquo; &mdash; the question it existed to answer.</li>
 <li><b>Kvasir counted twice.</b> The same GI-endoscopy source appeared as two &ldquo;independent&rdquo; domains, carrying both the two largest slopes and the two largest spreads. Collapsed, the breadth interval includes zero.</li>
 <li><b>The sampling conclusion drawn from the wrong two benchmarks.</b> &ldquo;Doubling the budget buys nothing&rdquo; came from VQA-RAD and VQA-Med &mdash; the two <i>lowest</i>-gain of the eight, chosen because they were coverage-limited, which is exactly the wrong sample. Macro is <b>+0.0164</b>.</li>
 <li><b>The self-consistency sign-flip &ldquo;with no exceptions&rdquo;</b> has an exception: GEMeX is out-of-training and the verifier beats SC by +0.0328.</li>
 <li><b>&ldquo;The regime is detectable&rdquo;</b> did not survive one additional benchmark &mdash; precisely the fragility flagged when it was first reported at n=7.</li>
-<li><b>MedPix overlap</b>, 19 images shared between <code>vqa_rad_open_train</code> and VQA-Med. Immaterial (those questions score 0.0000 for both arms, so removing them moves &minus;0.0259 to &minus;0.0261) but removed anyway.</li>
+<li><b>MedPix overlap</b>, 19 images shared between <code>vqa_rad_open_train</code> and VQA-Med. Immaterial (those questions score 0.0000 for both arms, so removing them moves &minus;0.0259 to &minus;0.0261) but not actually removed &mdash; the cell was never rebuilt.</li>
 <li><b>The AdamW landmine.</b> <code>foreach=False</code> does not fix the segfault &mdash; it moves it. The real variable is thread count: 10 threads dies in ~30&nbsp;s, 4 runs clean.</li>
 <li><b>A stub counted as success.</b> A numpy <code>int64</code> made <code>json.dump</code> raise <i>after</i> each layer&rsquo;s fit, so every layer was computed and discarded, leaving a 126-byte file the planner read as &ldquo;done&rdquo;.</li>
 </ol>
@@ -338,8 +338,8 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <ul class="tight">
 <li><b>A failed producer deadlocks its consumers.</b> A chained campaign waited <b>21 hours</b> on an artifact whose producing job had already failed. A chain must wait on &ldquo;produced <i>or</i> failed&rdquo;.</li>
 <li><b>Fixed queues cannot keep GPUs busy.</b> The runnable set <i>grows</i> as jobs land &mdash; each new judge file makes an extraction runnable. Replaced with a planner that reads the tree each wave and emits only jobs whose inputs exist and outputs do not.</li>
-<li><b>The driver exited on an empty queue.</b> &ldquo;Nothing runnable&rdquo; usually means &ldquo;nothing runnable <i>yet</i>&rdquo;. Cost four idle GPU-days. Now sleeps and re-plans.</li>
-<li><b>A self-refilling planner is only as deep as its catalogue.</b> It later idled 33 hours with the driver alive and re-planning correctly, because every job type it knew had finished.</li>
+<li><b>The driver exited on an empty queue.</b> &ldquo;Nothing runnable&rdquo; usually means &ldquo;nothing runnable <i>yet</i>&rdquo;. Cost four idle GPU-days &mdash; recorded at <span class="kbd">runners/run_auto_campaign.sh:26</span>. Now sleeps and re-plans.</li>
+<li><b>A self-refilling planner is only as deep as its catalogue.</b> It later idled for more than a day with the driver alive and re-planning correctly, because every job type it knew had finished. (The exact figure came from a driver log that has since rotated; the surviving evidence is the idle-check counter design itself.)</li>
 <li><b>Two jobs, one card.</b> vLLM reserves a fixed <i>fraction</i> of the GPU at startup, so two jobs do not share &mdash; a leftover process holding 22.8&nbsp;GB killed a run twice. Every GPU job now runs behind a per-card lock.</li>
 <li><b>GEMeX provenance.</b> The licence warning printed unconditionally, so a <code>--source physionet</code> run reported third-party re-hosting that was untrue of it &mdash; and would have sent us re-pulling 21,312 images we already had.</li>
 </ul>

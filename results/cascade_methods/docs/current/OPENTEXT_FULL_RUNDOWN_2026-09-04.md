@@ -205,8 +205,8 @@ probe the spread collapses to 0.003 — pooling makes layer choice nearly irrele
   producing job had already failed.
 - **Fixed queues cannot keep GPUs busy** — the runnable set *grows* as jobs land. Replaced with a
   planner that reads the tree each wave.
-- **The driver exited on an empty queue** — cost four idle GPU-days. Now sleeps and re-plans.
-- **A self-refilling planner is only as deep as its catalogue** — it later idled 33 h because every
+- **The driver exited on an empty queue** — cost four idle GPU-days (recorded at runners/run_auto_campaign.sh:26, written from the incident). Now sleeps and re-plans.
+- **A self-refilling planner is only as deep as its catalogue** — it later idled for more than a day because every
   job type it knew was finished.
 - **Per-GPU `flock`** — vLLM reserves a fixed *fraction* of the card, so two jobs do not share.
 - **GEMeX provenance** — the licence warning printed unconditionally, so a `--source physionet` run
