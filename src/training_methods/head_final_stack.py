@@ -66,6 +66,7 @@ GENERATORS = {
                                 else f"generator_eval_finelayer_{c}"),
         "eval_dsfilter": lambda c: ({c} if c in SHARED else None),
         "out": "head_final_stack_2026-08-24.json",
+        "bench": None,          # None = the full BENCH list
     },
     "qwen": {
         "tag": "qwen25vl7b",
@@ -76,6 +77,20 @@ GENERATORS = {
         "eval_stem": lambda c: f"generator_eval_qwen_{c}",
         "eval_dsfilter": lambda c: None,
         "out": "head_final_stack_qwen_2026-09-13.json",
+        "bench": None,
+    },
+    "medgemma": {
+        # THIRD GENERATOR, and the first from a different LM family: Gemma 3 + SigLIP, medically
+        # trained. Lingshu is a Qwen2.5-VL finetune, so lingshu-vs-qwen is a within-family
+        # replication. There are no dedicated *_train caches here -- the pooled set is the
+        # by-image TRAIN HALVES of the four benchmarks, which is all the claim needs: does a probe
+        # fitted on this generator's own hidden states beat this generator's own greedy decoding?
+        "tag": "medgemma4b",
+        "train_stems": [],
+        "eval_stem": lambda c: f"generator_eval_medgemma_{c}",
+        "eval_dsfilter": lambda c: None,
+        "out": "head_final_stack_medgemma_2026-09-13.json",
+        "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
     },
 }
 GEN = GENERATORS["lingshu"]
@@ -140,17 +155,20 @@ def main():
         for L in ENS:
             Xparts[L].append(Xs_[L][k])
         rows_o += [r for r, kk in zip(rs_, k) if kk]
-    if not rows_o:
+    if not rows_o and GEN["train_stems"]:
         raise SystemExit(f"no training cache found for generator {A.generator}")
-    Xtr_o = {L: np.concatenate(Xparts[L]) for L in ENS}
+    Xtr_o = {L: np.concatenate(Xparts[L]) for L in ENS} if rows_o else None
     if n_dup:
         print(f"deduped {n_dup:,} duplicate training rows across "
               f"{len(GEN['train_stems'])} overlapping caches -> {len(rows_o):,} unique", flush=True)
     src_o = [r["ds"] for r in rows_o]
-    Xadd = {L: [Xtr_o[L]] for L in ENS}
+    # With no dedicated train-domain cache (medgemma) the pool is seeded empty rather than with a
+    # zero-row array -- the hidden width differs per generator (3584 Qwen/Lingshu, 2560 Gemma 3),
+    # so a hard-coded empty shape would break the concatenate.
+    Xadd = {L: ([Xtr_o[L]] if rows_o else []) for L in ENS}
     rows_all, src_all = list(rows_o), list(src_o)
     ev = {}
-    for cell in BENCH:
+    for cell in (GEN["bench"] or BENCH):
         stem = GEN["eval_stem"](cell)
         gjp = f"{CK}/ckpt_{cell}_{GEN['tag']}.judge.jsonl"
         if not (os.path.exists(f"{HS.FEATS}/{stem}.npz") and os.path.exists(gjp)):
@@ -201,6 +219,10 @@ def main():
             ("pooled_singlelayer", allrows, [20], False),
             ("pooled_ens", allrows, ENS, False),
             ("pooled_ens_sc", allrows, ENS, True)):
+        if not sub.any():
+            print(f"skipping {nm}: no training rows for this arm "
+                  f"(generator {A.generator} has no dedicated train-domain cache)", flush=True)
+            continue
         print(f"fitting {nm} ...", flush=True)
         ARMS[nm] = {L: fit(np.concatenate([Xpool[L], sc[:, None]], 1) if use_sc else Xpool[L], sub)
                     for L in layers}

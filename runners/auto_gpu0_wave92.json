@@ -1,0 +1,19 @@
+[
+ {"name": "judge_greedy_pathvqa_open",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_medgemma4b.jsonl'",
+  "timeout_s": 21600, "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_medgemma4b.judge.jsonl"},
+ {"name": "judge_pool_pathvqa_open",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_medgemma4b_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_medgemma4b_sc8_scexploded.jsonl'",
+  "timeout_s": 43200, "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_medgemma4b_sc8_scexploded.judge.jsonl"}
+,
+ {"name": "judge_greedy_slake_open",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_medgemma4b.jsonl'",
+  "timeout_s": 21600, "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_medgemma4b.judge.jsonl"},
+ {"name": "judge_pool_slake_open",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_medgemma4b_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_medgemma4b_sc8_scexploded.jsonl'",
+  "timeout_s": 43200, "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_medgemma4b_sc8_scexploded.judge.jsonl"}
+]

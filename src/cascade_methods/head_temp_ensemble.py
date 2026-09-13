@@ -98,6 +98,13 @@ def main():
         art["cells"][cell]["best_T"] = best
         print(f"  {cell:17} " + "  ".join(f"T{t} {rec[str(t)]['minus_greedy']:+.4f}" for t in Ts)
               + f"   best {best}", flush=True)
+        # PROGRESS WRITE, NOT A RESULT. Every benchmark's row is flushed so a crash keeps what
+        # already ran -- but a flushed file is valid JSON with a plausible-looking "cells" block,
+        # so a reader cannot tell it from a finished run. On 2026-09-13 a supervisor retry (my
+        # `expect` named the wrong artifact date) restarted this script and its first progress
+        # write replaced a COMPLETE eight-benchmark artifact with a one-benchmark one. The flag
+        # below is what makes that distinguishable; nothing should quote this file while it is set.
+        art["COMPLETE"] = False
         json.dump(art, open(OUT, "w"), indent=1)
 
     cs = art["cells"]
@@ -127,8 +134,9 @@ def main():
              "fixed temperature is within noise of per-benchmark tuning, so the deployed system "
              "does not need to choose one per dataset."))
         print(f"\n=> {art['VERDICT']}")
+    art["COMPLETE"] = True
     json.dump(art, open(OUT, "w"), indent=1)
-    print(f"wrote {OUT}")
+    print(f"wrote {OUT}  COMPLETE")
 
 
 if __name__ == "__main__":
