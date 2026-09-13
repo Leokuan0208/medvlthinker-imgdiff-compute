@@ -25,7 +25,11 @@ ROOT = os.path.expanduser("~/medvlthinker-imgdiff-compute")
 CKDIR = os.path.join(ROOT, "ckpts/train/genframe_head_pooled_ens")
 CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
 ENS = [18, 20, 22]
-SHARED = {"pathvqa_open", "slake_open", "vqa_rad_open"}
+# 2026-09-13: pathvqa_open REMOVED from the shared set. It lived in the combined
+# generator_eval_finelayer cache alongside slake and vqa_rad, and that cache covers only
+# the truncated 1,500-question pathvqa. It now has its own complete 3,357-question cache at
+# generator_eval_finelayer_pathvqa_open, so it is read per-benchmark like every other cell.
+SHARED = {"slake_open", "vqa_rad_open"}
 
 
 class PooledSelector:

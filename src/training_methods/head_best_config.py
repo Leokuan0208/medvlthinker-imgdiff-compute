@@ -41,7 +41,11 @@ TRAIN_DOMAINS = {"kvasir_open", "pathvqa_open_train", "slake_open_train", "vqa_r
 BENCH = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
          "kvasir_x1_open", "omnimed_open", "vqamed_open", "gemex_open"]
 ENS_LAYERS = [18, 20, 22]
-SHARED = {"pathvqa_open", "slake_open", "vqa_rad_open"}   # live in the combined finelayer cache
+# 2026-09-13: pathvqa_open REMOVED from the shared set. It lived in the combined
+# generator_eval_finelayer cache alongside slake and vqa_rad, and that cache covers only
+# the truncated 1,500-question pathvqa. It now has its own complete 3,357-question cache at
+# generator_eval_finelayer_pathvqa_open, so it is read per-benchmark like every other cell.
+SHARED = {"slake_open", "vqa_rad_open"}   # live in the combined finelayer cache
 
 
 def sc_for(rows, ds_of_row, tag="lingshu7b"):

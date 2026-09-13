@@ -29,7 +29,11 @@ TT = {0.2: ("_T02", "lingshu7bT02"), 0.4: ("_T04", "lingshu7bT04"),
       0.7: ("", "lingshu7b"), 1.0: ("_T10", "lingshu7bT10")}
 BENCH = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
          "kvasir_x1_open", "omnimed_open", "vqamed_open", "gemex_open"]
-SHARED = {"pathvqa_open", "slake_open", "vqa_rad_open"}
+# 2026-09-13: pathvqa_open REMOVED from the shared set. It lived in the combined
+# generator_eval_finelayer cache alongside slake and vqa_rad, and that cache covers only
+# the truncated 1,500-question pathvqa. It now has its own complete 3,357-question cache at
+# generator_eval_finelayer_pathvqa_open, so it is read per-benchmark like every other cell.
+SHARED = {"slake_open", "vqa_rad_open"}
 
 
 def half(img):

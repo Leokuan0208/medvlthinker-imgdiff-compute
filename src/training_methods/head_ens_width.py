@@ -33,7 +33,11 @@ CK = os.path.join(ROOT, "ckpts/openvqa/cheap_lingshu7b")
 TRAIN_DOMAINS = {"kvasir_open", "pathvqa_open_train", "slake_open_train", "vqa_rad_open_train"}
 BENCH = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
          "kvasir_x1_open", "omnimed_open", "vqamed_open", "gemex_open"]
-SHARED = {"pathvqa_open", "slake_open", "vqa_rad_open"}
+# 2026-09-13: pathvqa_open REMOVED from the shared set. It lived in the combined
+# generator_eval_finelayer cache alongside slake and vqa_rad, and that cache covers only
+# the truncated 1,500-question pathvqa. It now has its own complete 3,357-question cache at
+# generator_eval_finelayer_pathvqa_open, so it is read per-benchmark like every other cell.
+SHARED = {"slake_open", "vqa_rad_open"}
 SETS = {"L18": [18], "L19": [19], "L20": [20], "L21": [21], "L22": [22],
         "shipped_18_20_22": [18, 20, 22], "all5_18_22": [18, 19, 20, 21, 22],
         "narrow_19_20_21": [19, 20, 21]}

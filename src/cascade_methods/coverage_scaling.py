@@ -120,7 +120,11 @@ def main():
         # the 8-sample features for these three live in the SHARED finelayer cache, not in a
         # per-benchmark one, and the per-benchmark generator_eval_<cell>.npz holds layers
         # [7,14,21,28] which do not contain the ensemble's 18/20/22
-        SHARED = {"pathvqa_open", "slake_open", "vqa_rad_open"}
+        # 2026-09-13: pathvqa_open REMOVED from the shared set. It lived in the combined
+        # generator_eval_finelayer cache alongside slake and vqa_rad, and that cache covers only
+        # the truncated 1,500-question pathvqa. It now has its own complete 3,357-question cache at
+        # generator_eval_finelayer_pathvqa_open, so it is read per-benchmark like every other cell.
+        SHARED = {"slake_open", "vqa_rad_open"}
         s8 = (f"{FEATS}/generator_eval_finelayer" if cell in SHARED
               else f"{FEATS}/generator_eval_finelayer_{cell}")
         if os.path.exists(s8 + ".npz"):

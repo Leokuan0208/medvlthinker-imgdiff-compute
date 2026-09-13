@@ -54,7 +54,11 @@ LAYERS = [7, 14, 21, 28]
 
 # cell -> (feature stem, ds filter or None). The three original open cells share two shard caches.
 CELLS = {
-    "pathvqa_open":   (["generator_eval_s0of2", "generator_eval_s1of2"], "pathvqa_open"),
+    # 2026-09-13: pathvqa now reads its OWN complete cache. The s*of2 shards hold only the
+    # truncated 1,500 questions (run_openvqa.py:158 capped that run); generator_eval_pathvqa_open
+    # was re-extracted at the same layers [7,14,21,28] and covers all 3,357. Measured bias of the
+    # truncation on this benchmark: +0.0174 overstated (pathvqa_truncation_2026-09-13.json).
+    "pathvqa_open":   (["generator_eval_pathvqa_open"], None),
     "slake_open":     (["generator_eval_s0of2", "generator_eval_s1of2"], "slake_open"),
     "vqa_rad_open":   (["generator_eval_s0of2", "generator_eval_s1of2"], "vqa_rad_open"),
     "radimagenet_open": (["generator_eval_radimagenet"], None),
