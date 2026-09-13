@@ -141,6 +141,13 @@ def main():
         for nm, names in (("four_domain", ["__orig__"]),
                           ("lobo", ["__orig__"] + others),
                           ("pooled", ["__orig__"] + list(ev))):
+            # HEARTBEAT. This script used to print only once per TARGET, but each target costs
+            # 3 arms x 3 layers x 5 seeds = 45 fits on up to 112k rows, so nothing reached the log
+            # for well over an hour. On 2026-09-13 the supervisor's stall detector -- which reads a
+            # silent log as a hung process -- killed it twice at 40 min, and the queue then passed
+            # its `expect` check against a stale artifact from that morning and reported success.
+            # A long job must say something while it works.
+            print(f"    [{target}] fitting {nm} ...", flush=True)
             a, g, n, ntr = fit_score(names, target)
             r[nm] = a; r[nm + "_rows"] = ntr; r["greedy"] = g; r["n_questions"] = n
             r[nm + "_minus_greedy"] = a - g

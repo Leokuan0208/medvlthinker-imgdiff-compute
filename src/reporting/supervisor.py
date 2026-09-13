@@ -65,7 +65,7 @@ def kill_tree(p):
             time.sleep(0.5)
 
 
-def verify(job, logpath):
+def verify(job, logpath, t0=None):
     """Exit status alone is not trusted; check the artefacts the job promised."""
     problems = []
     # `expect` may be a path or a list of paths; expect_min_bytes guards against the failure that
@@ -83,6 +83,17 @@ def verify(job, logpath):
             sz = os.path.getsize(p)
             if sz < floor:
                 problems.append(f"expected file too small: {exp} is {sz}B < {floor}B")
+            # FRESHNESS. Existence and size both pass on an artifact a PREVIOUS run left behind.
+            # 2026-09-13: head_lobo_pooled was killed by the stall detector twice, wrote nothing,
+            # and the queue still reported OK because head_lobo_pooled_2026-08-25.json was already
+            # on disk from that morning -- so a job that produced no output at all was recorded as
+            # a success, and its stale numbers stayed live. An expected artifact must have been
+            # written by THIS run.
+            elif t0 is not None and os.path.getmtime(p) < t0 - 1:
+                age = t0 - os.path.getmtime(p)
+                problems.append(f"expected file is STALE: {exp} was last written "
+                                f"{age/60:.1f} min before this job started -- this run did not "
+                                f"produce it")
     g = job.get("expect_grep")
     if g:
         try:
@@ -128,7 +139,7 @@ def run_job(job, retries=1):
             time.sleep(10)
 
         rc = p.returncode
-        problems = verify(job, logpath)
+        problems = verify(job, logpath, t0)
         ok = (outcome == "exited" and rc == 0 and not problems)
         rec = {"name": name, "attempt": attempt, "outcome": outcome, "rc": rc,
                "secs": round(time.time() - t0, 1), "problems": problems, "ok": ok,
