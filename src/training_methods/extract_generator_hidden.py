@@ -379,8 +379,17 @@ def main():
         return enc, md5
 
     n = len(rows)
-    h_last = np.zeros((n, len(A.layers), H), dtype=np.float16)
-    h_span = np.zeros((n, len(A.layers), H), dtype=np.float16)
+    # STORAGE DTYPE IS ARCH-DEPENDENT. Qwen/Lingshu hidden states sit far inside float16 and every
+    # existing cache is float16 -- do not change that, or the caches stop being comparable. Gemma 3
+    # does not sit inside it. Measured on MedGemma-4b over 8 real SLAKE rows, max |h_span| runs
+    # 36,480 at layer 18 to 58,240 at layer 27 against float16's ceiling of 65,504, and the first
+    # extraction raised "RuntimeWarning: overflow encountered in cast" -- so some rows DO exceed it
+    # and would have been stored as inf. Layer 27 is in the depth-matched ensemble [22,24,27] this
+    # generator is to be judged on, so the overflow would have landed on the headline arm itself.
+    DT = np.float16 if A.arch == "qwen" else np.float32
+    print(f"[dtype] storing hidden states as {np.dtype(DT).name} (arch={A.arch})", flush=True)
+    h_last = np.zeros((n, len(A.layers), H), dtype=DT)
+    h_span = np.zeros((n, len(A.layers), H), dtype=DT)
     # VISUAL FEATURES (--visual_feats). The probe has only ever read h_span -- the mean hidden state
     # over the ANSWER tokens -- so the image reaches it only through whatever the LM already mixed
     # in. The VLM-probing literature pools the image placeholder tokens directly and combines that
@@ -391,8 +400,8 @@ def main():
     #   h_img[L]  mean over the <|image_pad|> positions
     #   h_q[L]    mean over the question tokens, i.e. between the image block and the answer --
     #             the control that says whether any gain is VISUAL or just "more context"
-    h_img = np.zeros((n, len(A.layers), H), dtype=np.float16) if A.visual_feats else None
-    h_q = np.zeros((n, len(A.layers), H), dtype=np.float16) if A.visual_feats else None
+    h_img = np.zeros((n, len(A.layers), H), dtype=DT) if A.visual_feats else None
+    h_q = np.zeros((n, len(A.layers), H), dtype=DT) if A.visual_feats else None
     n_img_tok = np.zeros(n, dtype=np.int32)
     yesno = np.full((n, 2), np.nan, dtype=np.float32)
     meta, bad = [], 0
@@ -447,13 +456,13 @@ def main():
                 qs1 = max(qs0, s0)
             for li, L in enumerate(A.layers):
                 h = hs[L][0]
-                h_last[r_i, li] = h[readout].float().cpu().numpy().astype(np.float16)
-                h_span[r_i, li] = h[s0:].float().mean(0).cpu().numpy().astype(np.float16)
+                h_last[r_i, li] = h[readout].float().cpu().numpy().astype(DT)
+                h_span[r_i, li] = h[s0:].float().mean(0).cpu().numpy().astype(DT)
                 if A.visual_feats:
                     if len(ipos):
-                        h_img[r_i, li] = h[ipos].float().mean(0).cpu().numpy().astype(np.float16)
+                        h_img[r_i, li] = h[ipos].float().mean(0).cpu().numpy().astype(DT)
                     if qs1 > qs0:
-                        h_q[r_i, li] = h[qs0:qs1].float().mean(0).cpu().numpy().astype(np.float16)
+                        h_q[r_i, li] = h[qs0:qs1].float().mean(0).cpu().numpy().astype(DT)
             meta.append({"split": r["split"], "ds": r["ds"], "idx": r["idx"], "na": r["na"], "ans": r["ans"],
                          "y": r["y"], "in_draw": r.get("in_draw", 1),
                          "img_md5": md5, "n_tok": int(ids.shape[0])})
@@ -469,6 +478,11 @@ def main():
                   flush=True)
 
     extra = {"h_img": h_img, "h_q": h_q} if A.visual_feats else {}
+    for _nm, _a in (("h_span", h_span), ("h_last", h_last)):
+        _bad = int((~np.isfinite(_a)).sum())
+        if _bad:
+            raise SystemExit(f"{_nm} holds {_bad} non-finite values -- the storage dtype cannot "
+                             f"represent this model's hidden states. Refusing to save.")
     np.savez(os.path.join(outdir, f"{stem}.npz"), h_last=h_last, h_span=h_span, yesno=yesno,
              n_img_tok=n_img_tok, **extra,
              layers=np.array(A.layers))

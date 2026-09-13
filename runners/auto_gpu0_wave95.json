@@ -1,0 +1,20 @@
+[
+ {
+  "name": "extract_medgemma_pathvqa_open_f32",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--google--medgemma-4b-it/snapshots/290cda5eeccbee130f987c4ad74a59ae6f196408/ --arch gemma3 --mode generator --split eval --eval_ds pathvqa_open --gen_tag medgemma4b --pool_tag _sc8 --layers 18 20 22 24 27 --stem_tag medgemma_pathvqa_open --out feats_hidden'",
+  "timeout_s": 43200,
+  "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_medgemma_pathvqa_open.npz",
+  "expect_grep": "saved",
+  "expect_min_bytes": 10000000
+ },
+ {
+  "name": "extract_medgemma_slake_open_f32",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--google--medgemma-4b-it/snapshots/290cda5eeccbee130f987c4ad74a59ae6f196408/ --arch gemma3 --mode generator --split eval --eval_ds slake_open --gen_tag medgemma4b --pool_tag _sc8 --layers 18 20 22 24 27 --stem_tag medgemma_slake_open --out feats_hidden'",
+  "timeout_s": 43200,
+  "stall_s": 2700,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_medgemma_slake_open.npz",
+  "expect_grep": "saved",
+  "expect_min_bytes": 10000000
+ }
+]
