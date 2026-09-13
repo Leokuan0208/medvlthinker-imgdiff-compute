@@ -67,6 +67,7 @@ GENERATORS = {
         "eval_dsfilter": lambda c: ({c} if c in SHARED else None),
         "out": "head_final_stack_2026-08-24.json",
         "bench": None,          # None = the full BENCH list
+        "ens": None,            # None = the module-default ENS
     },
     "qwen": {
         "tag": "qwen25vl7b",
@@ -78,6 +79,7 @@ GENERATORS = {
         "eval_dsfilter": lambda c: None,
         "out": "head_final_stack_qwen_2026-09-13.json",
         "bench": None,
+        "ens": None,            # Qwen2.5-VL-7B is 28-layer like Lingshu, so [18,20,22] transfers
     },
     "medgemma": {
         # THIRD GENERATOR, and the first from a different LM family: Gemma 3 + SigLIP, medically
@@ -91,6 +93,12 @@ GENERATORS = {
         "eval_dsfilter": lambda c: None,
         "out": "head_final_stack_medgemma_2026-09-13.json",
         "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
+        # DEPTH-MATCHED, pre-specified before any MedGemma probe was fitted. Gemma 3 here is
+        # 34-layer against Lingshu's 28, so the shipped [18,20,22] -- relative depth
+        # 0.643/0.714/0.786 on Lingshu -- would sit at 0.529/0.588/0.647 here, materially
+        # shallower. [22,24,27] is 0.647/0.706/0.794, the actual analogue. The absolute-matched
+        # [18,20,22] is extracted too and is a robustness check, NOT the headline.
+        "ens": [22, 24, 27],
     },
 }
 GEN = GENERATORS["lingshu"]
@@ -126,9 +134,11 @@ def main():
     ap.add_argument("--out", default=None)
     A = ap.parse_args()
     globals()["GEN"] = GENERATORS[A.generator]
+    if GEN.get("ens"):
+        globals()["ENS"] = GEN["ens"]
     if A.out is None:
         A.out = os.path.join(HS.OUTDIR, GEN["out"])
-    print(f"generator={A.generator} tag={GEN['tag']}", flush=True)
+    print(f"generator={A.generator} tag={GEN['tag']} layers={ENS}", flush=True)
     HS.torch.set_num_threads(A.threads)
     from genframe_data import rank_avg
 
