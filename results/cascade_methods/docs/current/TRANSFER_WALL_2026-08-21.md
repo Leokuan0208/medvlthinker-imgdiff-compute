@@ -417,3 +417,63 @@ it.
 ("threading is nondeterministic") from two samples, and a single-threaded control that was
 consistent with it but did not discriminate between hypotheses. Four more samples reversed it. Two
 runs cannot separate *nondeterminism* from *two deterministic code paths*; only replication can.
+
+---
+
+## 14. A third generator, from a different language-model family (2026-09-13)
+
+§12's Qwen replication is weaker than it reads: **Lingshu-7B is a Qwen2.5-VL finetune**, so
+Lingshu-vs-Qwen compares two *training recipes over one language model*. InternVL3-8B would not
+have fixed that — a load probe confirms its LM is Qwen2.5-7B (hidden 3584). **MedGemma-4b-it**
+does: Gemma 3 (hidden 2560, 34 layers) plus a SigLIP tower, medically trained.
+
+Generated, judged with the same 32B judge, extracted and fitted through the same
+`head_final_stack.py`. Ensemble layers **pre-registered before any probe was fitted**: Lingshu and
+Qwen are both 28-layer so `[18,20,22]` transferred between them with no choice to make, but on 34
+layers those indices sit at relative depth 0.529/0.588/0.647 against Lingshu's 0.643/0.714/0.786,
+so the **depth-matched `[22,24,27]` is the primary** and `[18,20,22]` a declared secondary.
+
+### The first reading was a data-volume artifact
+
+| | training rows | macro over these 4 |
+|---|---:|---:|
+| MedGemma | 20,102 | **+0.0248** |
+| Lingshu, *full* protocol | 112,770 | +0.0433 |
+| Qwen, *full* protocol | 145,085 | +0.0547 |
+
+MedGemma has no dedicated train-domain caches and only four benchmarks, so its probe saw **5.6×
+less training data**. Family and data volume were confounded, and "three times weaker on Gemma"
+would have been the wrong conclusion. Running the other two generators through **MedGemma's exact
+protocol** — no train-domain cache, the same four benchmarks, trained only on their by-image train
+halves — separates them:
+
+| benchmark | MedGemma | Lingshu (matched) | Qwen (matched) |
+|---|---:|---:|---:|
+| PathVQA | +0.0246 | +0.0320 | +0.0302 |
+| SLAKE | +0.0182 | +0.0152 | +0.0333 |
+| VQA-RAD | −0.0103 | −0.0206 | −0.0619 |
+| RadImageNet | +0.0667 | +0.1235 | +0.0697 |
+| **macro** | **+0.0248** | **+0.0375** | **+0.0178** |
+| training rows | 20,102 | 13,304 | 14,436 |
+| distinct candidates / question | 6.58 | 4.36 | 4.73 |
+
+**MedGemma lands between the two same-family generators.** The gap in the first table was the
+training set, not the architecture. Note the row counts are *not* equalised — the protocol is
+matched, but generators differ in how many distinct candidates they produce per question, and
+MedGemma produces the most (6.58), so if anything this favours it slightly. All three lose on
+VQA-RAD (n=97), which loses on every generator and every protocol we have run.
+
+**The pre-registered layer choice was also right, and can be said so because it was declared
+first:** the depth-matched primary gives **+0.0248** against the absolute-matched secondary's
+**+0.0185**.
+
+### What the claim now is
+
+The probe verifier is **not a property of Lingshu, of medical finetuning, or of the Qwen language
+model**. On a different LM family, a different vision tower and a different pretraining corpus, the
+same recipe produces an effect inside the range spanned by the two same-family generators.
+
+**Caveat that travels with it:** four benchmarks, not eight, and a 4B generator whose absolute
+accuracy is much lower on PathVQA (greedy 6.6% in judge currency against Lingshu's 31.4% — verified
+to be real capability, not strict scoring: the judge rescues 85 exact-match misses and rejects 92
+exact-match hits that the `contains` fallback had wrongly allowed).
