@@ -269,3 +269,46 @@ than no detector.
 - The honest deployment statement is still the **price curve** (§9 pointer): ~500 labelled
   in-domain questions before the head does something a counter cannot, and on cells where sampling
   COVERAGE binds (vqamed, oracle@8 0.2102 against greedy 0.0947) no amount of head training helps.
+
+---
+
+## 11. The readout is not order-invariant (2026-09-13)
+
+Found while chasing a **two-question** disagreement between `free_signal_bakeoff.py` and
+`head_temperature_sweep.py` on `slake_open`: frozen head **0.768992** vs **0.772093**, a gap of
+exactly 2/645. Both scripts compute the same quantity from the same frozen selector.
+
+**Cause.** They read two different feature caches for the same benchmark —
+`generator_eval_s{0,1}of2` filtered to slake, versus the per-benchmark `generator_eval_slake_open`.
+The two hold an **identical multiset** of `(idx, answer, label)` (1,313 rows both; verified), but
+**219 of the 645 questions list their candidates in a different row order**. `rank_avg` produces
+integer ranks averaged over heads, so it ties exactly; `np.argmax` breaks a tie by taking the
+first row. Which cache the analysis happened to open therefore decided the answer on the tied
+questions. This is the "feature row order" landmine in CLAUDE.md §0 appearing in a *reported
+number* rather than in a fit.
+
+**Size of it** (`artifacts/tiebreak_2026-09-13.json`, all 8 benchmarks, frozen selector, T=0.7):
+
+| | |
+|---|---:|
+| questions whose pick is decided by a tie | **2.62%** (0.6% slake → 3.5% omnimed) |
+| ambiguity band — every tie broken best vs worst | **+0.0061** macro |
+| spread across four deterministic tie-break rules | **+0.0010** macro |
+| best rule (`selfcons`) minus status quo (`first_row`) | **+0.00018** |
+
+Rules compared, all with a deterministic inner fallback: `lexical` (lowest normalised answer
+string — uses no signal), `selfcons` (most-sampled candidate in the pool), `longest` (a verbosity
+control), against `first_row` (the status quo). Per-benchmark clustered CIs on the best rule minus
+`first_row` span zero on every benchmark; on four of them the best rule *is* `first_row`.
+
+**Conclusion — a reproducibility fix, not an accuracy one.** No tie-break rule is worth adopting
+for accuracy: the whole ambiguity is +0.0061 and no rule captures a significant share of it. But
+`first_row` is not a rule, it is whichever cache was read, and that is what made two artifacts
+disagree. The fix applied is the minimal one: **`free_signal_bakeoff.py` now reads the
+per-benchmark cache for `slake_open` and `vqa_rad_open`** like every other analysis, so there is
+one cache per benchmark and the ordering question does not arise. The shipped readout is
+unchanged; the +0.0736 headline does not move.
+
+**Standing caveat this adds.** Any two analyses that read the same rows from different caches can
+differ by up to the ambiguity band (+0.0061 macro, and more on a single small benchmark) without
+either being wrong. Quote the cache, not just the benchmark.

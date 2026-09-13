@@ -106,10 +106,10 @@ end-to-end validation** — which the layer sweep did not.
 The SC feature is worth +0.0098 from the four-domain base and **−0.0004 once pooled** — it was
 compensating for missing training data, not adding independent signal. Not shipped.
 
-### 3.4 Doubling the sample budget — **+0.0164**
+### 3.4 Doubling the sample budget — **+0.0147**
 `coverage_scaling_ALL_2026-09-01.json`, matched budget on identical questions, all eight:
-OmniMedVQA +0.0460, GEMeX +0.0365, Kvasir-x1 +0.0316, RadImageNet +0.0299, PathVQA +0.0157,
-VQA-Med +0.0055, SLAKE −0.0030, VQA-RAD −0.0309. **MACRO +0.0164, 6/8 positive.**
+OmniMedVQA +0.0460, GEMeX +0.0365, Kvasir-x1 +0.0316, RadImageNet +0.0299, PathVQA +0.0018,
+VQA-Med +0.0055, SLAKE −0.0030, VQA-RAD −0.0309. **MACRO +0.0147, 6/8 positive.** (Restated 2026-09-13: PathVQA was +0.0157 on the truncated 700-question half and is +0.0018 on the full 1,623, which moves the macro from +0.0164.)
 
 ### 3.5 The shipped artifact
 `ckpts/train/genframe_head_pooled_ens/` — 24 heads (3 layers × 8 seeds), 108,126 rows, BCE,
@@ -188,7 +188,7 @@ probe the spread collapses to 0.003 — pooling makes layer choice nearly irrele
 5. **Kvasir counted twice.** Same GI-endoscopy source as two "independent" domains, carrying the
    two largest slopes and the two largest spreads.
 6. **The sampling conclusion drawn from the wrong two benchmarks.** "Doubling the budget buys
-   nothing" came from VQA-RAD and VQA-Med — the two *lowest*-gain of the eight. Macro is **+0.0164**.
+   nothing" came from VQA-RAD and VQA-Med — the two *lowest*-gain of the eight. Macro is **+0.0147**.
 7. **The self-consistency sign-flip "with no exceptions"** — GEMeX is the exception.
 8. **"The regime is detectable"** — did not survive one added benchmark.
 9. **MedPix overlap**, 19 images between `vqa_rad_open_train` and VQA-Med. Immaterial (those

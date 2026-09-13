@@ -160,6 +160,33 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 </nav>
 
 <main>
+<section id="s-restate">
+<div class="note warn"><span class="tag">Restated 13 Sep 2026 &mdash; read before quoting</span>
+<p><b>PathVQA was reported on 1,500 of its 3,357 questions</b> when this page was written, and the
+omitted half is harder. It has since been re-extracted in full and every figure that depends on it
+re-measured. Restated on this page, from
+<code>head_final_stack_PVFIXED_2026-09-13.json</code> and
+<code>coverage_scaling_ALL_2026-09-01.json</code>:</p>
+<div class="tw"><table><thead><tr><th>figure</th><th class="n">was</th><th class="n">now</th></tr></thead>
+<tbody>
+<tr><td>four-domain, single layer</td><td class="n">+0.0243</td><td class="n">+0.0182</td></tr>
+<tr><td>pooled, single layer</td><td class="n">+0.0765</td><td class="n">+0.0729</td></tr>
+<tr><td>pooled + layer ensemble (shipped)</td><td class="n">+0.0802</td><td class="n">+0.0736</td></tr>
+<tr><td>pooled + ensemble + self-consistency</td><td class="n">+0.0797</td><td class="n">+0.0720</td></tr>
+<tr><td>training rows</td><td class="n">108,126</td><td class="n">112,770</td></tr>
+<tr><td>reload-verified from disk</td><td class="n">+0.0816</td><td class="n">+0.0737</td></tr>
+<tr><td>doubling the sample budget, macro</td><td class="n">+0.0164</td><td class="n">+0.0147</td></tr>
+<tr><td>&nbsp;&nbsp;&mdash; PathVQA&rsquo;s own share of it</td><td class="n">+0.0157</td><td class="n">+0.0018</td></tr>
+</tbody></table></div>
+<p><b>Not yet re-fitted, so still on the truncated PathVQA and NOT to be quoted as current:</b> the
+temperature-sweep macro row in &sect;3 (+0.0401 / +0.0573 / +0.0816 / +0.0759), the
+<b>+0.0125</b> layer-ensemble and <b>+0.0098</b> self-consistency component figures, and the
+<b>+0.0500</b> in-domain-training number in &sect;5. Those re-fits are queued; this banner will name
+them until they land.</p>
+<p>The shipped artifact is now <code>ckpts/train/genframe_head_pooled_ens_v2/</code>.</p>
+</div>
+</section>
+
 <section id="s0">
 <h2><span class="num">00</span>What the method is</h2>
 <p class="lede">Stated in the field&rsquo;s vocabulary, since two of our habitual terms were internal coinages.</p>
@@ -179,7 +206,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <div class="tw"><table>
 <thead><tr><th>benchmark</th><th class="n">n</th><th class="n">greedy</th><th class="n">answer prior</th><th class="n">self-consistency</th><th class="n">verifier</th><th class="n">oracle@8</th></tr></thead>
 <tbody>
-<tr><td>PathVQA</td><td class="n">1,500</td><td class="n">0.3427</td><td class="n">0.3333</td><td class="n">0.3260</td><td class="n pos">0.3900</td><td class="n">0.5167</td></tr>
+<tr><td>PathVQA</td><td class="n">3,357</td><td class="n">0.3140</td><td class="n">0.2943</td><td class="n">0.2833</td><td class="n pos">0.3452</td><td class="n">0.5167</td></tr>
 <tr><td>SLAKE</td><td class="n">645</td><td class="n">0.7302</td><td class="n">0.7287</td><td class="n">0.7395</td><td class="n pos">0.7690</td><td class="n">0.8791</td></tr>
 <tr><td>VQA-RAD</td><td class="n">200</td><td class="n">0.4900</td><td class="n">0.4350</td><td class="n">0.4650</td><td class="n">0.4650</td><td class="n">0.6300</td></tr>
 <tr><td>RadImageNet</td><td class="n">2,000</td><td class="n">0.3210</td><td class="n">0.2825</td><td class="n">0.3245</td><td class="n">0.3295</td><td class="n">0.5120</td></tr>
@@ -209,7 +236,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <p class="lede">Four things, in order of size. Every one was validated end-to-end, not on the proxy metric that found it.</p>
 
 <h3>3.1 &nbsp;Retraining on all eight benchmarks &mdash; the largest lever</h3>
-<p>The probe had never been trained on the four new benchmarks; every number on them was zero-shot transfer. Fitting on the training half of all eight (108,126 rows against 31,439), strict by-image split, evaluated on held-out halves. <code>head_pooled_alldomains_2026-08-24.json</code></p>
+<p>The probe had never been trained on the four new benchmarks; every number on them was zero-shot transfer. Fitting on the training half of all eight (112,770 rows against 31,439), strict by-image split, evaluated on held-out halves. <code>head_pooled_alldomains_2026-08-24.json</code></p>
 <div class="tw"><table>
 <thead><tr><th>benchmark</th><th class="n">greedy</th><th class="n">4-domain</th><th class="n">pooled</th><th class="n">gain</th></tr></thead>
 <tbody>
@@ -240,10 +267,10 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <div class="tw"><table>
 <thead><tr><th>arm</th><th class="n">macro</th></tr></thead>
 <tbody>
-<tr><td>four-domain, single layer</td><td class="n">+0.0243</td></tr>
-<tr><td>pooled, single layer</td><td class="n">+0.0765</td></tr>
-<tr class="total"><td>pooled + layer ensemble</td><td class="n">+0.0802</td></tr>
-<tr><td>pooled + ensemble + SC</td><td class="n">+0.0797</td></tr>
+<tr><td>four-domain, single layer</td><td class="n">+0.0182</td></tr>
+<tr><td>pooled, single layer</td><td class="n">+0.0729</td></tr>
+<tr class="total"><td>pooled + layer ensemble</td><td class="n">+0.0736</td></tr>
+<tr><td>pooled + ensemble + SC</td><td class="n">+0.0720</td></tr>
 </tbody></table></div>
 <div class="note"><p>The SC feature is worth <b>+0.0098</b> from the four-domain base and <b>&minus;0.0004</b> once pooled. It was compensating for missing training data, not adding independent signal &mdash; which also explains why fusing it at the score level was a wash. Not shipped: it would add an inference-time dependency on the raw candidate set for nothing.</p></div>
 
@@ -251,11 +278,11 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <p>Matched budget on identical questions, all eight. <code>coverage_scaling_ALL_2026-09-01.json</code></p>
 <div class="tw"><table>
 <thead><tr><th>benchmark</th><th class="n">OmniMed</th><th class="n">GEMeX</th><th class="n">Kvasir-x1</th><th class="n">RadImNet</th><th class="n">PathVQA</th><th class="n">VQA-Med</th><th class="n">SLAKE</th><th class="n">VQA-RAD</th><th class="n">MACRO</th></tr></thead>
-<tbody><tr><td>8&nbsp;&rarr;&nbsp;16 samples</td><td class="n pos">+0.0460</td><td class="n pos">+0.0365</td><td class="n pos">+0.0316</td><td class="n pos">+0.0299</td><td class="n pos">+0.0157</td><td class="n pos">+0.0055</td><td class="n neg">&minus;0.0030</td><td class="n neg">&minus;0.0309</td><td class="n pos">+0.0164</td></tr></tbody></table></div>
+<tbody><tr><td>8&nbsp;&rarr;&nbsp;16 samples</td><td class="n pos">+0.0460</td><td class="n pos">+0.0365</td><td class="n pos">+0.0316</td><td class="n pos">+0.0299</td><td class="n pos">+0.0018</td><td class="n pos">+0.0055</td><td class="n neg">&minus;0.0030</td><td class="n neg">&minus;0.0309</td><td class="n pos">+0.0147</td></tr></tbody></table></div>
 <p>6 of 8 positive. Unlike the other three, this one costs double the generation &mdash; a real Pareto point rather than a free win.</p>
 
 <h3>3.5 &nbsp;The shipped artifact</h3>
-<p><code>ckpts/train/genframe_head_pooled_ens/</code> &mdash; 24 heads (3 layers &times; 8 seeds), 108,126 rows, BCE, per-layer frozen standardizers. <b>Reload-verified at +0.0816 from disk</b> against the incumbent recipe&rsquo;s +0.0243 on the same halves.</p>
+<p><code>ckpts/train/genframe_head_pooled_ens_v2/</code> &mdash; 24 heads (3 layers &times; 8 seeds), 112,770 rows, BCE, per-layer frozen standardizers. <b>Reload-verified at +0.0737 from disk</b> against the incumbent recipe&rsquo;s +0.0182 on the same halves.</p>
 <div class="note warn"><span class="tag">Two constraints that travel with it</span><p>The incumbent <code>genframe_head_ens8</code> is byte-intact and the freeze script hard-refuses to target it &mdash; it remains the artifact of record for every number published before 24 Aug.</p><p>The new artifact <b>must not be evaluated on full benchmarks</b>: it has seen the other image half of each, so the held-out halves are its only clean test set. That is written into its README, not just recorded here.</p></div>
 </section>
 <section id="s4">
@@ -294,7 +321,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <div class="stat"><div class="v">+0.0803</div><div class="k">pooled &mdash; all eight</div></div>
 <div class="stat"><div class="v neg">&minus;0.0008</div><div class="k">what breadth alone buys</div></div>
 </div>
-<p>The benchmark&rsquo;s own training half is worth <b>+0.0500</b>. The verifier learned eight per-benchmark rules, not something domain-general &mdash; so the shipped +0.0802 holds only where it has in-domain data. This is a materially weaker claim than the pooled number alone suggests, and it reconciles with the budget-matched breadth result: both say breadth is not the mechanism.</p>
+<p>The benchmark&rsquo;s own training half is worth <b>+0.0500</b>. The verifier learned eight per-benchmark rules, not something domain-general &mdash; so the shipped +0.0736 holds only where it has in-domain data. This is a materially weaker claim than the pooled number alone suggests, and it reconciles with the budget-matched breadth result: both say breadth is not the mechanism.</p>
 
 <h3>5.3 &nbsp;The price of onboarding a benchmark &mdash; ~100 labelled questions</h3>
 <p>From the deployable base. 5/8 already beat greedy at k=0, and the first hundred questions carry most of the gain: OmniMedVQA &minus;0.0004&nbsp;&rarr;&nbsp;<span class="pos">+0.0986</span>, RadImageNet +0.0010&nbsp;&rarr;&nbsp;+0.0528, GEMeX +0.0224&nbsp;&rarr;&nbsp;+0.0857. Then it flattens.</p>
@@ -323,7 +350,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 <li><b>Mixed currency in the decomposition.</b> Exact-match labels for one term, judge labels for the others &mdash; inflated the sampling penalty roughly 12-fold. Caught before it reached a deck.</li>
 <li><b>Breadth confounded with volume.</b> The k-domain curve trained k=6 on six times the rows of k=1, so it could not separate &ldquo;more domains&rdquo; from &ldquo;more data&rdquo; &mdash; the question it existed to answer.</li>
 <li><b>Kvasir counted twice.</b> The same GI-endoscopy source appeared as two &ldquo;independent&rdquo; domains, carrying both the two largest slopes and the two largest spreads. Collapsed, the breadth interval includes zero.</li>
-<li><b>The sampling conclusion drawn from the wrong two benchmarks.</b> &ldquo;Doubling the budget buys nothing&rdquo; came from VQA-RAD and VQA-Med &mdash; the two <i>lowest</i>-gain of the eight, chosen because they were coverage-limited, which is exactly the wrong sample. Macro is <b>+0.0164</b>.</li>
+<li><b>The sampling conclusion drawn from the wrong two benchmarks.</b> &ldquo;Doubling the budget buys nothing&rdquo; came from VQA-RAD and VQA-Med &mdash; the two <i>lowest</i>-gain of the eight, chosen because they were coverage-limited, which is exactly the wrong sample. Macro is <b>+0.0147</b>.</li>
 <li><b>The self-consistency sign-flip &ldquo;with no exceptions&rdquo;</b> has an exception: GEMeX is out-of-training and the verifier beats SC by +0.0328.</li>
 <li><b>&ldquo;The regime is detectable&rdquo;</b> did not survive one additional benchmark &mdash; precisely the fragility flagged when it was first reported at n=7.</li>
 <li><b>MedPix overlap</b>, 19 images shared between <code>vqa_rad_open_train</code> and VQA-Med. Immaterial (those questions score 0.0000 for both arms, so removing them moves &minus;0.0259 to &minus;0.0261) but not actually removed &mdash; the cell was never rebuilt.</li>
@@ -358,7 +385,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 0; margin-top:40px;
 
 <section id="s9">
 <h2><span class="num">09</span>What I would claim today</h2>
-<div class="note good"><span class="tag">Positive</span><p>A frozen 918k-parameter MLP probe reading one layer of an unmodified 7B beats greedy decoding on <b>4 of 8</b> open-ended medical VQA benchmarks and beats an answer-frequency baseline on <b>all 8</b> &mdash; including GEMeX, where that baseline loses to greedy outright. Retrained on all eight and rank-ensembled over three layers it reaches <b>+0.0802</b> macro against <b>+0.0243</b> for the original recipe.</p></div>
+<div class="note good"><span class="tag">Positive</span><p>A frozen 918k-parameter MLP probe reading one layer of an unmodified 7B beats greedy decoding on <b>4 of 8</b> open-ended medical VQA benchmarks and beats an answer-frequency baseline on <b>all 8</b> &mdash; including GEMeX, where that baseline loses to greedy outright. Retrained on all eight and rank-ensembled over three layers it reaches <b>+0.0736</b> macro against <b>+0.0182</b> for the original recipe.</p></div>
 <div class="note"><span class="tag">Mechanism</span><p><code>verifier &minus; greedy = selection skill &minus; sampling penalty</code>. Skill is positive on 7 of 8 benchmarks, so where the method fails it fails because the sampled candidate set is worse than greedy decoding &mdash; not because the ranker is bad.</p></div>
 <div class="note"><span class="tag">Deployment</span><p>The method needs a labelled split per benchmark &mdash; breadth alone buys nothing &mdash; and that split costs <b>~100 labelled questions</b>.</p></div>
 <div class="note warn"><span class="tag">The honest hole</span><p>We cannot predict <i>which</i> benchmarks the method helps. Distance from the training distribution does not do it (GEMeX is the furthest and the verifier wins there), answer kind does not, and no detector orders the benchmarks. Twelve documented dead ends bound the alternatives, several with measured ceilings rather than mere nulls &mdash; which is the contribution that survives regardless of how the positive claim lands.</p></div>

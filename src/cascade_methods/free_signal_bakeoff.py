@@ -59,8 +59,16 @@ CELLS = {
     # was re-extracted at the same layers [7,14,21,28] and covers all 3,357. Measured bias of the
     # truncation on this benchmark: +0.0174 overstated (pathvqa_truncation_2026-09-13.json).
     "pathvqa_open":   (["generator_eval_pathvqa_open"], None),
-    "slake_open":     (["generator_eval_s0of2", "generator_eval_s1of2"], "slake_open"),
-    "vqa_rad_open":   (["generator_eval_s0of2", "generator_eval_s1of2"], "vqa_rad_open"),
+    # 2026-09-13: slake and vqa_rad now read their OWN caches too, not the s*of2 shards.
+    # The shards and the per-benchmark caches hold an IDENTICAL multiset of (idx, answer, label)
+    # -- verified 1,313 and 709 rows -- but list the candidates of a question in a DIFFERENT ROW
+    # ORDER (219 of slake's 645 questions).  rank_avg ties exactly on ~2.6% of questions and
+    # np.argmax breaks a tie by row position, so which cache an analysis happened to read moved the
+    # reported frozen head on slake by exactly 2/645 (0.768992 here vs 0.772093 in
+    # head_temperature_sweep.py).  One cache per benchmark removes the ambiguity.
+    # Size of the effect and the tie-break bake-off: tiebreak_2026-09-13.json.
+    "slake_open":     (["generator_eval_slake_open"], None),
+    "vqa_rad_open":   (["generator_eval_vqa_rad_open"], None),
     "radimagenet_open": (["generator_eval_radimagenet"], None),
     "kvasir_x1_open": (["generator_eval_kvasir_x1_open"], None),
     "omnimed_open":   (["generator_eval_omnimed_open"], None),

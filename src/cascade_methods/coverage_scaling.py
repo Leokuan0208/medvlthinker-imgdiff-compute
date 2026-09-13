@@ -205,9 +205,17 @@ def main():
             # a fix on vqamed (+0.0022) and a regression on vqa_rad (-0.0309); image-clustered CIs
             # put both at TIE (+0.0022 [-0.0105,+0.0155] and -0.0515 [-0.1458,+0.0404] against
             # greedy at N=16, coverage_sc16_ci_2026-08-25.json). Report the interval, not the sign.
-            "Significance must be read from coverage_sc16_ci_2026-08-25.json, not from the sign "
-            "of these deltas: both benchmarks are TIES against greedy at N=16, so doubling the "
-            "sampling budget buys nothing measurable on either.")
+            # 2026-09-13: this sentence used to end "both benchmarks are TIES ... so doubling the
+            # sampling budget buys nothing measurable on either" -- two-benchmark text emitted
+            # verbatim onto an eight-benchmark run, which is the retracted conclusion (the two are
+            # the WORST-suited benchmarks for sampling). It now names its own scope.
+            "Significance must be read from coverage_sc16_ci_2026-08-25.json, which covers "
+            "vqamed_open (+0.0022 [-0.0105,+0.0155]) and vqa_rad_open (-0.0515 [-0.1458,+0.0404]) "
+            "ONLY: both are TIES against greedy at N=16, so doubling the sampling budget buys "
+            "nothing measurable ON THOSE TWO. The other benchmarks in this artifact have no "
+            "clustered CI at N=16 and their signs above must not be read as significance -- and "
+            "these two are the least sampling-responsive of the eight, so they do not stand in "
+            "for the rest.")
         print(f"=> {art['VERDICT']}")
     json.dump(art, open(OUT, "w"), indent=1)
     print(f"wrote {OUT}")

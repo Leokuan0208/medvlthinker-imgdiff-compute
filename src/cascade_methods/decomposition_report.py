@@ -7,8 +7,10 @@ CURRENCY BUG THIS FIXES (found 2026-08-24, before the numbers reached a deck).  
 this decomposition read `oks` out of the raw sc8 dump for the one-sample term.  That field is
 EXACT MATCH, computed at generation time, while `greedy` and `head` are 32B-JUDGE labels: on
 gemex_open the same 117 questions score 0.0288 by exact match and 0.3718 by judge.  Mixing them
-inflated the sampling penalty roughly eightfold (gemex read penalty +0.2288 instead of +0.0285) and
-made the skill term meaningless.  Every arm here is judge currency.
+inflated the sampling penalty 12.4x (gemex read penalty +0.2288 instead of the correct +0.018484,
+this file's own artifact) and made the skill term meaningless.  Every arm here is judge currency.
+The "roughly eightfold / +0.0285" this docstring used to claim was itself never read off an artifact
+-- corrected 2026-09-13 against decomposition_2026-08-24.json cells.gemex_open["0.7"].
 
 MULTIPLICITY MATTERS TOO.  explode_sc_for_judge.py dedups identical (question, answer) pairs before
 judging -- the judge is text-only, so identical strings tie -- which means the judge file has one
@@ -40,6 +42,7 @@ def main():
     art = {"title": "Selection skill vs sampling penalty, all arms in judge currency",
            "date": "2026-08-24", "no_fabricated_numbers": True,
            "identity": "head - greedy = (head - one sample) - (greedy - one sample)",
+           "head_is": "FROZEN incumbent verifier, read from free_signal_bakeoff arms_judge.frozen_head. head_temperature_sweep.py reports a head REFITTED per temperature under the same name -- the two agree exactly on 7 of 8 benchmarks and differ by 2 questions on slake_open",
            "cells": defaultdict(dict)}
     for cell in CELLS:
         gjp = f"{CK}/ckpt_{cell}_lingshu7b.judge.jsonl"
