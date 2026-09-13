@@ -62,6 +62,20 @@ def half(img):
     return int(hashlib.md5(("nd" + str(img)).encode()).hexdigest(), 16) % 2
 
 
+def _measured():
+    """Pull the measured macro from the most recent head_final_stack artifact on disk."""
+    import glob
+    cand = sorted(glob.glob(os.path.join(ROOT, "results/cascade_methods/artifacts",
+                                         "head_final_stack*.json")), key=os.path.getmtime)
+    if not cand:
+        return {"note": "no head_final_stack artifact found; run it before freezing"}
+    a = json.load(open(cand[-1]))
+    return {"macro_verifier_minus_greedy": a["macro"]["pooled_ens"],
+            "benchmarks_beaten": a["beats_greedy"]["pooled_ens"],
+            "four_domain_single_layer_baseline": a["macro"]["deployed_4dom_L21ish"],
+            "source": os.path.relpath(cand[-1], ROOT)}
+
+
 def load_fine(stem, dsf=None):
     z = np.load(f"{HS.FEATS}/{stem}.npz"); m = json.load(open(f"{HS.FEATS}/{stem}.meta.json"))
     lay = [int(x) for x in z["layers"]]
@@ -140,10 +154,11 @@ def main():
         "training_rows": int(len(y)), "original_domain_rows": int(n_orig),
         "rows_per_benchmark_half": per_bench, "leaking_rows_dropped": n_dropped,
         "split": 'md5("nd"+img_md5) % 2 == 1 is TRAIN, == 0 is held out',
-        "measured_on_held_out_halves": {
-            "macro_verifier_minus_greedy": 0.0802, "benchmarks_beaten": "6/8",
-            "four_domain_single_layer_baseline": 0.0243,
-            "source": "results/cascade_methods/artifacts/head_final_stack_2026-08-24.json"},
+        # READ, never hardcode. 2026-09-13: these three were literals, so when the PathVQA
+        # backfill moved the real macro to +0.0736 the recipe kept asserting +0.0802 and
+        # pooled_selector.verify() correctly reported MISMATCH against the artifact it describes.
+        # A recipe that states a number it did not measure is the fabrication risk rule 7 exists for.
+        "measured_on_held_out_halves": _measured(),
         "excluded": "self-consistency input feature -- worth +0.0098 from the four-domain base "
                     "but -0.0005 once pooled, so it was compensating for missing data",
         "MAY_NOT_BE_EVALUATED_ON": "the full benchmarks -- this probe has seen the other image "

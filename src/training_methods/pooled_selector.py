@@ -74,10 +74,10 @@ def half(img):
     return int(hashlib.md5(("nd" + str(img)).encode()).hexdigest(), 16) % 2
 
 
-def verify():
+def verify(ckdir=CKDIR):
     from collections import defaultdict
-    S = PooledSelector.load()
-    print(f"loaded {sum(len(v) for v in S.heads.values())} heads from {CKDIR}")
+    S = PooledSelector.load(ckdir)
+    print(f"loaded {sum(len(v) for v in S.heads.values())} heads from {ckdir}")
     print(f"recipe claims macro {S.recipe['measured_on_held_out_halves']['macro_verifier_minus_greedy']:+.4f}")
     deltas = {}
     for cell in ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
@@ -129,4 +129,5 @@ def verify():
 
 
 if __name__ == "__main__":
-    verify()
+    import sys as _s
+    verify(_s.argv[1] if len(_s.argv) > 1 else CKDIR)
