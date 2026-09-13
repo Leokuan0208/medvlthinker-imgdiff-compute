@@ -260,6 +260,12 @@ def main():
                          "h_q (mean over the question tokens). Same forward pass, ~2x the npz "
                          "size. h_q is the control: it says whether a gain from h_img is VISUAL "
                          "or merely from giving the probe more context.")
+    ap.add_argument("--arch", choices=["qwen", "gemma3"], default="qwen",
+                    help="generator architecture. qwen: Qwen2.5-VL / Lingshu -- dynamic image grid, "
+                         "<|image_pad|>, qwen_vl_utils. gemma3: Gemma 3 / MedGemma -- a FIXED 256 "
+                         "soft-image tokens per image and a plain AutoProcessor call, so none of the "
+                         "grid/merge_size machinery applies. Everything downstream (span, layers, "
+                         "h_span) is identical; only how an image becomes tokens differs.")
     ap.add_argument("--pool_tag", default="_sc8",
                     help="candidate-set suffix in the dump filename, e.g. _sc8 or _sc16. The pool "
                          "size is part of the path, so this cannot be folded into --gen_tag.")
@@ -302,10 +308,17 @@ def main():
     tok = proc.tokenizer
     YES = tok.encode("Yes", add_special_tokens=False)[0]
     NO = tok.encode("No", add_special_tokens=False)[0]
-    IMG_TOK = tok.convert_tokens_to_ids("<|image_pad|>")
+    IMG_TOK = tok.convert_tokens_to_ids(
+        "<|image_pad|>" if A.arch == "qwen" else "<image_soft_token>")
+    assert IMG_TOK is not None and IMG_TOK >= 0, f"no image token for arch {A.arch}"
     print(f"loading base {A.model_path} (NO adapter) ...", flush=True)
     model = AutoModelForImageTextToText.from_pretrained(
-        A.model_path, torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2").to(DEV)
+        A.model_path, torch_dtype=torch.bfloat16,
+        # Gemma 3 interleaves sliding-window and full attention and pairs the LM with a SigLIP
+        # tower; sdpa is the safe implementation across both. Qwen keeps flash-attention-2, which
+        # is what every existing cache was extracted under -- do not change it, the caches would
+        # no longer be comparable.
+        attn_implementation=("flash_attention_2" if A.arch == "qwen" else "sdpa")).to(DEV)
     model.eval()
     H = model.config.text_config.hidden_size if hasattr(model.config, "text_config") else model.config.hidden_size
     print(f"hidden={H}; layers={A.layers}", flush=True)
@@ -314,26 +327,43 @@ def main():
     # consecutive and share one image: resize + patchify + pixel-md5 are done ONCE per item instead
     # of once per candidate (~4x fewer image ops on eval, ~5x on train). The text still varies per
     # row. Verified byte-identical to the unmemoized path (see --verify_memo).
-    MERGE = proc.image_processor.merge_size
+    MERGE = proc.image_processor.merge_size if A.arch == "qwen" else None
     memo = {"key": None}
 
     def image_inputs(r):
         k = (r["ds"], r["idx"])
         if memo["key"] != k:
-            msgs_img = [{"role": "user", "content": [{"type": "image", "image": r["img"],
-                                                      "max_pixels": HIGH_PX, "min_pixels": MIN_PX}]}]
-            igs, _ = process_vision_info(msgs_img)
-            ip = proc.image_processor(images=igs, return_tensors="pt")
-            memo.update({"key": k, "pv": ip["pixel_values"], "grid": ip["image_grid_thw"],
-                         "md5": img_md5(r["img"])})
-        return memo["pv"], memo["grid"], memo["md5"]
+            if A.arch == "qwen":
+                msgs_img = [{"role": "user", "content": [{"type": "image", "image": r["img"],
+                                                          "max_pixels": HIGH_PX, "min_pixels": MIN_PX}]}]
+                igs, _ = process_vision_info(msgs_img)
+                ip = proc.image_processor(images=igs, return_tensors="pt")
+                memo.update({"key": k, "pv": ip["pixel_values"], "grid": ip["image_grid_thw"],
+                             "md5": img_md5(r["img"])})
+            else:
+                # Gemma 3 emits a FIXED 256-soft-token block per image, but the CHAT TEMPLATE does
+                # not expand it -- apply_chat_template leaves a bare <start_of_image> and the full
+                # processor substitutes the block (and builds token_type_ids marking those
+                # positions). So the gemma3 path calls the processor whole rather than splicing
+                # text by hand, and the memo caches the DECODED IMAGE instead of pixel values --
+                # which is where the per-item saving actually is, since the candidates of one
+                # question would otherwise re-open and re-decode the same file 3-8 times.
+                im = r["img"] if isinstance(r["img"], Image.Image) else Image.open(r["img"])
+                memo.update({"key": k, "im": im.convert("RGB"), "grid": None,
+                             "md5": img_md5(r["img"])})
+        return memo.get("pv"), memo["grid"], memo["md5"]
 
     def encode(text, r):
         pv, grid, md5 = image_inputs(r)
-        npad = int(grid.prod().item()) // (MERGE ** 2)
-        t = text.replace("<|image_pad|>", "<|placeholder|>" * npad).replace("<|placeholder|>", "<|image_pad|>")
-        enc = proc.tokenizer([t], return_tensors="pt", padding=True)
-        enc["pixel_values"] = pv; enc["image_grid_thw"] = grid
+        if A.arch == "qwen":
+            npad = int(grid.prod().item()) // (MERGE ** 2)
+            t = text.replace("<|image_pad|>", "<|placeholder|>" * npad).replace("<|placeholder|>", "<|image_pad|>")
+            enc = proc.tokenizer([t], return_tensors="pt", padding=True)
+            enc["pixel_values"] = pv; enc["image_grid_thw"] = grid
+        else:
+            enc = proc(text=[text], images=[memo["im"]], return_tensors="pt")
+            assert int((enc["input_ids"][0] == IMG_TOK).sum()) == proc.image_seq_length, (
+                "gemma3: image-token count does not match processor.image_seq_length")
         return enc, md5
 
     n = len(rows)
@@ -375,7 +405,7 @@ def main():
                 n_ans_tok = len(tok.encode(r["ans"], add_special_tokens=False))
                 text = text + r["ans"]
             enc, md5 = encode(text, r)
-            if A.verify_memo:
+            if A.verify_memo and A.arch == "qwen":
                 igs, vids = process_vision_info(msgs)
                 ref = proc(text=[text], images=igs, videos=vids, return_tensors="pt", padding=True)
                 assert torch.equal(ref["input_ids"], enc["input_ids"]), "memo: input_ids differ"

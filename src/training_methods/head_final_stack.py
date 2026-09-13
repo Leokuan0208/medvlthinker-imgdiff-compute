@@ -18,7 +18,23 @@ md5("nd" + img_md5) % 2, so the deployed recipe is re-measured on exactly the qu
 one is scored on rather than quoted from a run over the full benchmark.  Question counts are
 therefore about half the usual and are printed.
 
+SECOND GENERATOR (added 2026-09-13).  --generator qwen runs the identical arm ladder on
+Qwen2.5-VL-7B, so "does pooled training replicate on a second generator?" is answered by ONE
+implementation rather than by a sibling script that drifts.  head_second_generator.py answered the
+four-domain half of that question and had a defect this path does not:
+
+  ITS TRAINING SET WAS UP TO 4x DUPLICATED.  The Qwen train features were extracted in four runs
+  named generator_train_qwen_{kvasir_open,pathvqa_open_train,slake_open_train,vqa_rad_open_train},
+  but each of those caches holds an OVERLAPPING MIXTURE of all four domains, not the one in its
+  name (pathvqa_open_train and kvasir_open are byte-identical, 1,365,111,910 bytes each).
+  head_second_generator.py:75 concatenated all four, so the same (ds, idx, candidate) entered
+  training up to four times, pathvqa was overweighted ~4x and slake -- absent from two of the four
+  caches -- was underweighted.  Its reported train_rows 170,014 is that inflation; the deduplicated
+  count is printed by this script.  Here the four caches are merged and DEDUPED on
+  (ds, idx, normalised answer) before anything is fitted.
+
   python3 src/training_methods/head_final_stack.py --threads 4 --seeds 5
+  python3 src/training_methods/head_final_stack.py --generator qwen --threads 4 --seeds 5
 """
 import argparse, hashlib, json, os, sys
 import numpy as np
@@ -41,12 +57,36 @@ BENCH = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
 SHARED = {"slake_open", "vqa_rad_open"}
 ENS = [18, 20, 22]
 
+# Per-generator cache layout. The Lingshu entry is the original hard-coded behaviour verbatim.
+GENERATORS = {
+    "lingshu": {
+        "tag": "lingshu7b",
+        "train_stems": ["generator_train_finelayer"],
+        "eval_stem": lambda c: ("generator_eval_finelayer" if c in SHARED
+                                else f"generator_eval_finelayer_{c}"),
+        "eval_dsfilter": lambda c: ({c} if c in SHARED else None),
+        "out": "head_final_stack_2026-08-24.json",
+    },
+    "qwen": {
+        "tag": "qwen25vl7b",
+        # four overlapping caches, deduped on (ds, idx, na) -- see the module docstring
+        "train_stems": [f"generator_train_qwen_{c}" for c in
+                        ("kvasir_open", "pathvqa_open_train",
+                         "slake_open_train", "vqa_rad_open_train")],
+        "eval_stem": lambda c: f"generator_eval_qwen_{c}",
+        "eval_dsfilter": lambda c: None,
+        "out": "head_final_stack_qwen_2026-09-13.json",
+    },
+}
+GEN = GENERATORS["lingshu"]
+
 
 def half(img):
     return int(hashlib.md5(("nd" + str(img)).encode()).hexdigest(), 16) % 2
 
 
-def sc_of(rows, ds_of, tag="lingshu7b"):
+def sc_of(rows, ds_of, tag=None):
+    tag = tag or GEN["tag"]
     raw = {}
     for ds in sorted({ds_of(r) for r in rows}):
         p = f"{CK}/ckpt_{ds}_{tag}_sc8.jsonl"
@@ -67,8 +107,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=5)
-    ap.add_argument("--out", default=os.path.join(HS.OUTDIR, "head_final_stack_2026-08-24.json"))
+    ap.add_argument("--generator", choices=sorted(GENERATORS), default="lingshu")
+    ap.add_argument("--out", default=None)
     A = ap.parse_args()
+    globals()["GEN"] = GENERATORS[A.generator]
+    if A.out is None:
+        A.out = os.path.join(HS.OUTDIR, GEN["out"])
+    print(f"generator={A.generator} tag={GEN['tag']}", flush=True)
     HS.torch.set_num_threads(A.threads)
     from genframe_data import rank_avg
 
@@ -80,18 +125,37 @@ def main():
         rr = [m["rows"][i] for i in keep]
         return {L: z["h_span"][keep, lay.index(L)].astype(np.float32) for L in ENS}, rr
 
-    Xtr_o, rows_o = load_fine("generator_train_finelayer", TRAIN_DOMAINS)
+    # Merge this generator's train caches, deduped on (ds, idx, normalised answer). Lingshu has a
+    # single cache so the dedup is a no-op there; Qwen has four overlapping ones (docstring).
+    seen, Xparts, rows_o, n_dup = set(), {L: [] for L in ENS}, [], 0
+    for st in GEN["train_stems"]:
+        if not os.path.exists(f"{HS.FEATS}/{st}.npz"):
+            print(f"  [skip] train cache {st} absent", flush=True); continue
+        Xs_, rs_ = load_fine(st, TRAIN_DOMAINS)
+        k = np.array([(r["ds"], r["idx"], norm(r["na"])) not in seen for r in rs_])
+        for r, kk in zip(rs_, k):
+            if kk:
+                seen.add((r["ds"], r["idx"], norm(r["na"])))
+        n_dup += int((~k).sum())
+        for L in ENS:
+            Xparts[L].append(Xs_[L][k])
+        rows_o += [r for r, kk in zip(rs_, k) if kk]
+    if not rows_o:
+        raise SystemExit(f"no training cache found for generator {A.generator}")
+    Xtr_o = {L: np.concatenate(Xparts[L]) for L in ENS}
+    if n_dup:
+        print(f"deduped {n_dup:,} duplicate training rows across "
+              f"{len(GEN['train_stems'])} overlapping caches -> {len(rows_o):,} unique", flush=True)
     src_o = [r["ds"] for r in rows_o]
     Xadd = {L: [Xtr_o[L]] for L in ENS}
     rows_all, src_all = list(rows_o), list(src_o)
     ev = {}
     for cell in BENCH:
-        stem = ("generator_eval_finelayer" if cell in SHARED
-                else f"generator_eval_finelayer_{cell}")
-        gjp = f"{CK}/ckpt_{cell}_lingshu7b.judge.jsonl"
+        stem = GEN["eval_stem"](cell)
+        gjp = f"{CK}/ckpt_{cell}_{GEN['tag']}.judge.jsonl"
         if not (os.path.exists(f"{HS.FEATS}/{stem}.npz") and os.path.exists(gjp)):
             continue
-        Xc, rr = load_fine(stem, {cell} if cell in SHARED else None)
+        Xc, rr = load_fine(stem, GEN["eval_dsfilter"](cell))
         istr = np.array([half(r["img_md5"]) == 1 for r in rr])
         for L in ENS:
             Xadd[L].append(Xc[L][istr])
@@ -143,7 +207,8 @@ def main():
         ARMS[nm]["_sc"] = use_sc; ARMS[nm]["_layers"] = layers
 
     art = {"title": "Everything that worked, stacked", "date": "2026-08-24",
-           "no_fabricated_numbers": True, "seeds": A.seeds,
+           "no_fabricated_numbers": True, "seeds": A.seeds, "generator": A.generator,
+           "generator_tag": GEN["tag"], "duplicate_training_rows_dropped": int(n_dup),
            "pooled_rows": int(len(y)), "original_rows": int(n_orig), "cells": {}}
     for cell, d in ev.items():
         rr, gok = d["rows"], d["gok"]
