@@ -1,0 +1,82 @@
+{
+ "title": "Is the head fit reproducible? Threading, not seeds.",
+ "date": "2026-09-13",
+ "no_fabricated_numbers": true,
+ "question": "head_final_stack.py run twice on identical inputs did not reproduce, and the best arm flipped. torch.manual_seed fixes the seed draw and the permutation, so what moves?",
+ "four_thread_pair": {
+  "arms": {
+   "deployed_4dom_L21ish": {
+    "run1": 0.018238794267665736,
+    "run2": 0.02007866598965492,
+    "diff": 0.0018398717219891836
+   },
+   "pooled_singlelayer": {
+    "run1": 0.07292498228300595,
+    "run2": 0.07116878308179177,
+    "diff": -0.0017561992012141842
+   },
+   "pooled_ens": {
+    "run1": 0.07360735025242765,
+    "run2": 0.07074683988766922,
+    "diff": -0.0028605103647584285
+   },
+   "pooled_ens_sc": {
+    "run1": 0.07197227887643215,
+    "run2": 0.07394603054420501,
+    "diff": 0.0019737516677728606
+   }
+  },
+  "best_arm_run1": "pooled_ens",
+  "best_arm_run2": "pooled_ens_sc",
+  "max_abs_move": 0.0028605103647584285
+ },
+ "one_thread_pair": {
+  "arm": "pooled_singlelayer",
+  "per_benchmark": {
+   "pathvqa_open": {
+    "a": 0.3567467652495379,
+    "b": 0.3567467652495379,
+    "identical": true
+   },
+   "slake_open": {
+    "a": 0.7575757575757576,
+    "b": 0.7575757575757576,
+    "identical": true
+   },
+   "vqa_rad_open": {
+    "a": 0.4742268041237113,
+    "b": 0.4742268041237113,
+    "identical": true
+   },
+   "radimagenet_open": {
+    "a": 0.4581673306772908,
+    "b": 0.4581673306772908,
+    "identical": true
+   },
+   "kvasir_x1_open": {
+    "a": 0.4029503105590062,
+    "b": 0.4029503105590062,
+    "identical": true
+   },
+   "omnimed_open": {
+    "a": 0.676754091010984,
+    "b": 0.676754091010984,
+    "identical": true
+   },
+   "vqamed_open": {
+    "a": 0.08854454897620365,
+    "b": 0.08854454897620365,
+    "identical": true
+   },
+   "gemex_open": {
+    "a": 0.5155857214680744,
+    "b": 0.5155857214680744,
+    "identical": true
+   }
+  },
+  "macro_a": 0.07261520664016133,
+  "macro_b": 0.07261520664016133,
+  "bitwise_identical": true
+ },
+ "VERDICT": "At 4 threads two runs on identical inputs differ by up to 0.0029 macro and the arm ranking reverses. At 1 thread two independent runs are BITWISE IDENTICAL on every benchmark and on the macro (0.072615206640161 both). The nondeterminism is entirely multithreaded float reduction order -- not seeds, not data, not row order. Consequence: any arm comparison decided by less than ~0.003 macro is a tie unless the fits were single-threaded. The shipped recipe was chosen over its runner-up by +0.0016."
+}

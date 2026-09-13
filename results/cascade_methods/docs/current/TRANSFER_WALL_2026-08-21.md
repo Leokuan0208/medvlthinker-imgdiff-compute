@@ -372,5 +372,20 @@ stands. What does **not** survive is any claim that one arm beats another by a f
 including the shipped choice of `pooled_ens` over `pooled_ens_sc` (+0.0016), and "layer ensembling
 is worth +0.0007 over a single layer". Those are ties, and must be reported as ties.
 
-Quantification in flight: four full-ladder replicates for a per-arm sd and range, and two
-single-threaded replicates of one arm to test whether single-threading is bitwise reproducible.
+**The cause is settled: threading, not seeds** (`artifacts/repro_threading_2026-09-13.json`). Two
+independent **single-threaded** runs of the pooled single-layer arm are **bitwise identical** — on
+every one of the eight benchmarks and on the macro, `0.072615206640161` both times. The same fit at
+four threads moves by up to 0.0029 and reverses the arm ranking. So nothing about the seed draw,
+the data, the row order or the split is at fault; it is purely multithreaded float reduction order.
+
+**What follows.**
+1. **Any arm comparison decided by less than ~0.003 macro is a tie** unless both fits were
+   single-threaded. That covers `pooled_ens` vs `pooled_ens_sc` (+0.0016) and layer ensembling
+   over a single layer (+0.0007) at the stacked endpoint.
+2. **A single-threaded fit is exactly reproducible**, so the artifact of record can be made
+   reproducible at the cost of wall-clock — the honest option for anything that gets frozen.
+3. It does **not** touch the large effects: pooled training (+0.0554 Lingshu, +0.0594 Qwen) and the
+   +0.0736 headline are ~20× this floor.
+
+Four full-ladder replicates are still running for a per-arm standard deviation; the floor above is
+from the two runs in hand and the single-threaded pair.

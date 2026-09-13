@@ -285,9 +285,12 @@ def main():
         for k, v in art["macro"].items():
             print(f"  MACRO {k:24} {v:+.4f}  ({art['beats_greedy'][k]})")
         best = max(art["macro"], key=art["macro"].get)
-        art["VERDICT"] = (f"best is {best} at {art['macro'][best]:+.4f} macro, "
-                          f"{art['macro'][best]-art['macro']['deployed_4dom_L21ish']:+.4f} over the "
-                          f"four-domain single-layer probe on the same held-out halves.")
+        # --only_arm runs can omit the four-domain baseline entirely; the verdict must not assume it
+        base = art["macro"].get("deployed_4dom_L21ish")
+        art["VERDICT"] = (f"best is {best} at {art['macro'][best]:+.4f} macro" +
+                          (f", {art['macro'][best]-base:+.4f} over the four-domain single-layer "
+                           f"probe on the same held-out halves." if base is not None else
+                           " (four-domain baseline not fitted in this run)."))
         print(f"\n=> {art['VERDICT']}")
     json.dump(art, open(A.out, "w"), indent=1)
     print(f"wrote {A.out}")
