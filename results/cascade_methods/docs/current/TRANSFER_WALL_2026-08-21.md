@@ -349,43 +349,49 @@ rows of the table above.
 
 ## 13. The reproducibility floor of the fit itself (2026-09-13)
 
-Running `head_final_stack.py` twice on **identical inputs** — 112,770 pooled rows, 31,439 original,
-59 leaking rows dropped, `--seeds 5`, same caches, same code path — does not reproduce:
+> **⚠️ CORRECTED THE SAME DAY, BEFORE ANYTHING WAS BUILT ON IT.** The first version of this section
+> claimed the fit is nondeterministic because of multithreaded float reduction order, on the
+> strength of **two** runs that disagreed. Four more replicates settled it the other way: **five
+> post-refactor runs at four threads are BITWISE IDENTICAL** — every arm, every benchmark, every
+> digit. The fit is *deterministic*. The claim below is what the six runs actually support; the
+> retracted version is kept in the commit history, not restated here.
 
-| arm | run 1 | run 2 | move |
+Running `head_final_stack.py` six times on identical inputs — 112,770 pooled rows, 31,439 original,
+59 leaking rows dropped, `--seeds 5` — gives **two** distinct answers, not six:
+
+| arm | five runs (post-refactor) | one run (pre-refactor) | gap |
 |---|---:|---:|---:|
-| four-domain, single layer | +0.0182 | +0.0201 | +0.0018 |
-| pooled, single layer | +0.0729 | +0.0712 | −0.0018 |
-| pooled + ensemble | +0.0736 | +0.0707 | −0.0029 |
-| + self-consistency | +0.0720 | +0.0739 | +0.0020 |
+| four-domain, single layer | +0.020079 | +0.018239 | +0.001840 |
+| pooled, single layer | +0.071169 | +0.072925 | −0.001756 |
+| pooled + ensemble | +0.070747 | **+0.073607** | −0.002861 |
+| + self-consistency | +0.073946 | +0.071972 | +0.001974 |
 
-and **the best arm flips**, from `pooled_ens` to `pooled_ens_sc`. Per-benchmark moves reach −0.0103
-(VQA-RAD, n=97). `torch.manual_seed` fixes the seed draw and the permutation, so the seed path is
-not the source; the remaining candidate is that multithreaded float reduction order in torch CPU
-ops is not deterministic run to run **even at a fixed thread count**. That is the CLAUDE.md "CPU
-thread count (+0.0048)" landmine generalised — not merely that a *different* thread count moves the
-number, but that the *same* one does not pin it.
+The five agree **bitwise**; the sixth is the run that produced the shipped **+0.0736** headline,
+made earlier the same day with `head_final_stack.py` as it stood *before* it was parameterised over
+the generator. Two single-threaded runs are also bitwise identical to each other. So there is no
+run-to-run randomness to measure: **something differs between the two code paths or their
+invocation, and it moves the macro by up to 0.0029.** Every per-benchmark value differs, so it is
+not one benchmark misbehaving.
 
-**What this does and does not threaten.** The large effects are ~20× this floor and are safe:
-pooled training is +0.0554 on Lingshu and +0.0594 on Qwen, and the headline +0.0736 over greedy
-stands. What does **not** survive is any claim that one arm beats another by a few thousandths —
-including the shipped choice of `pooled_ens` over `pooled_ens_sc` (+0.0016), and "layer ensembling
-is worth +0.0007 over a single layer". Those are ties, and must be reported as ties.
+**What this does and does not change.**
 
-**The cause is settled: threading, not seeds** (`artifacts/repro_threading_2026-09-13.json`). Two
-independent **single-threaded** runs of the pooled single-layer arm are **bitwise identical** — on
-every one of the eight benchmarks and on the macro, `0.072615206640161` both times. The same fit at
-four threads moves by up to 0.0029 and reverses the arm ranking. So nothing about the seed draw,
-the data, the row order or the split is at fault; it is purely multithreaded float reduction order.
+- The **direction** of the earlier caution stands, for a different reason. The shipped recipe was
+  chosen over its runner-up by +0.0016, and on five of six runs `pooled_ens_sc` is the better arm,
+  not `pooled_ens`. That choice is **not** robust and must not be reported as a win.
+- The **magnitude** is real: ±0.0029 separates two code paths that were meant to be identical, and
+  until the cause is found, no arm comparison below ~0.003 macro should be quoted from either.
+- It does **not** license calling anything random. The fit reproduces exactly; a number from it is
+  reproducible *given the same code and invocation*, which is the stronger position.
+- The large effects are untouched — pooled training (+0.0554 Lingshu, +0.0594 Qwen) and the headline
+  over greedy are ~20× this gap.
 
-**What follows.**
-1. **Any arm comparison decided by less than ~0.003 macro is a tie** unless both fits were
-   single-threaded. That covers `pooled_ens` vs `pooled_ens_sc` (+0.0016) and layer ensembling
-   over a single layer (+0.0007) at the stacked endpoint.
-2. **A single-threaded fit is exactly reproducible**, so the artifact of record can be made
-   reproducible at the cost of wall-clock — the honest option for anything that gets frozen.
-3. It does **not** touch the large effects: pooled training (+0.0554 Lingshu, +0.0594 Qwen) and the
-   +0.0736 headline are ~20× this floor.
+**Open, and being run down:** whether the gap is the refactor (the dedup pass reports zero duplicates
+for Lingshu's single train cache, so the training set should be identical) or the thread count of
+the earlier run, which was not recorded in its log. CLAUDE.md already prices a thread-count change
+at +0.0048, which is larger than this gap and would explain it entirely. Two tests are running: the
+current code at a different thread count, and the pre-refactor code at four threads.
 
-Four full-ladder replicates are still running for a per-arm standard deviation; the floor above is
-from the two runs in hand and the single-threaded pair.
+**The methodological lesson, which is the part that generalises.** I published a causal claim
+("threading is nondeterministic") from two samples, and a single-threaded control that was
+consistent with it but did not discriminate between hypotheses. Four more samples reversed it. Two
+runs cannot separate *nondeterminism* from *two deterministic code paths*; only replication can.

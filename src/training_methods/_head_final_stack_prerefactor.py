@@ -18,23 +18,7 @@ md5("nd" + img_md5) % 2, so the deployed recipe is re-measured on exactly the qu
 one is scored on rather than quoted from a run over the full benchmark.  Question counts are
 therefore about half the usual and are printed.
 
-SECOND GENERATOR (added 2026-09-13).  --generator qwen runs the identical arm ladder on
-Qwen2.5-VL-7B, so "does pooled training replicate on a second generator?" is answered by ONE
-implementation rather than by a sibling script that drifts.  head_second_generator.py answered the
-four-domain half of that question and had a defect this path does not:
-
-  ITS TRAINING SET WAS UP TO 4x DUPLICATED.  The Qwen train features were extracted in four runs
-  named generator_train_qwen_{kvasir_open,pathvqa_open_train,slake_open_train,vqa_rad_open_train},
-  but each of those caches holds an OVERLAPPING MIXTURE of all four domains, not the one in its
-  name (pathvqa_open_train and kvasir_open are byte-identical, 1,365,111,910 bytes each).
-  head_second_generator.py:75 concatenated all four, so the same (ds, idx, candidate) entered
-  training up to four times, pathvqa was overweighted ~4x and slake -- absent from two of the four
-  caches -- was underweighted.  Its reported train_rows 170,014 is that inflation; the deduplicated
-  count is printed by this script.  Here the four caches are merged and DEDUPED on
-  (ds, idx, normalised answer) before anything is fitted.
-
   python3 src/training_methods/head_final_stack.py --threads 4 --seeds 5
-  python3 src/training_methods/head_final_stack.py --generator qwen --threads 4 --seeds 5
 """
 import argparse, hashlib, json, os, sys
 import numpy as np
@@ -57,59 +41,12 @@ BENCH = ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open",
 SHARED = {"slake_open", "vqa_rad_open"}
 ENS = [18, 20, 22]
 
-# Per-generator cache layout. The Lingshu entry is the original hard-coded behaviour verbatim.
-GENERATORS = {
-    "lingshu": {
-        "tag": "lingshu7b",
-        "train_stems": ["generator_train_finelayer"],
-        "eval_stem": lambda c: ("generator_eval_finelayer" if c in SHARED
-                                else f"generator_eval_finelayer_{c}"),
-        "eval_dsfilter": lambda c: ({c} if c in SHARED else None),
-        "out": "head_final_stack_2026-08-24.json",
-        "bench": None,          # None = the full BENCH list
-        "ens": None,            # None = the module-default ENS
-    },
-    "qwen": {
-        "tag": "qwen25vl7b",
-        # four overlapping caches, deduped on (ds, idx, na) -- see the module docstring
-        "train_stems": [f"generator_train_qwen_{c}" for c in
-                        ("kvasir_open", "pathvqa_open_train",
-                         "slake_open_train", "vqa_rad_open_train")],
-        "eval_stem": lambda c: f"generator_eval_qwen_{c}",
-        "eval_dsfilter": lambda c: None,
-        "out": "head_final_stack_qwen_2026-09-13.json",
-        "bench": None,
-        "ens": None,            # Qwen2.5-VL-7B is 28-layer like Lingshu, so [18,20,22] transfers
-    },
-    "medgemma": {
-        # THIRD GENERATOR, and the first from a different LM family: Gemma 3 + SigLIP, medically
-        # trained. Lingshu is a Qwen2.5-VL finetune, so lingshu-vs-qwen is a within-family
-        # replication. There are no dedicated *_train caches here -- the pooled set is the
-        # by-image TRAIN HALVES of the four benchmarks, which is all the claim needs: does a probe
-        # fitted on this generator's own hidden states beat this generator's own greedy decoding?
-        "tag": "medgemma4b",
-        "train_stems": [],
-        "eval_stem": lambda c: f"generator_eval_medgemma_{c}",
-        "eval_dsfilter": lambda c: None,
-        "out": "head_final_stack_medgemma_2026-09-13.json",
-        "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
-        # DEPTH-MATCHED, pre-specified before any MedGemma probe was fitted. Gemma 3 here is
-        # 34-layer against Lingshu's 28, so the shipped [18,20,22] -- relative depth
-        # 0.643/0.714/0.786 on Lingshu -- would sit at 0.529/0.588/0.647 here, materially
-        # shallower. [22,24,27] is 0.647/0.706/0.794, the actual analogue. The absolute-matched
-        # [18,20,22] is extracted too and is a robustness check, NOT the headline.
-        "ens": [22, 24, 27],
-    },
-}
-GEN = GENERATORS["lingshu"]
-
 
 def half(img):
     return int(hashlib.md5(("nd" + str(img)).encode()).hexdigest(), 16) % 2
 
 
-def sc_of(rows, ds_of, tag=None):
-    tag = tag or GEN["tag"]
+def sc_of(rows, ds_of, tag="lingshu7b"):
     raw = {}
     for ds in sorted({ds_of(r) for r in rows}):
         p = f"{CK}/ckpt_{ds}_{tag}_sc8.jsonl"
@@ -130,34 +67,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=5)
-    ap.add_argument("--generator", choices=sorted(GENERATORS), default="lingshu")
-    ap.add_argument("--only_arm", default=None,
-                    help="fit just this one arm. For reproducibility replicates: the full ladder is "
-                         "~2.5 h, one arm is ~25 min, so a spread can be measured in a morning.")
-    ap.add_argument("--out", default=None)
+    ap.add_argument("--out", default=os.path.join(HS.OUTDIR, "head_final_stack_2026-08-24.json"))
     A = ap.parse_args()
-    globals()["GEN"] = GENERATORS[A.generator]
-    if GEN.get("ens"):
-        globals()["ENS"] = GEN["ens"]
-    if A.out is None:
-        A.out = os.path.join(HS.OUTDIR, GEN["out"])
-    # RECORD THE INVOCATION. The 2026-09-13 gap between two runs of this script could not be
-    # attributed because the earlier run's log did not say how many threads it used, and thread
-    # count is a documented +0.0048 lever (CLAUDE.md section 0). A number is only reproducible if
-    # the conditions that produced it are written down beside it.
-    import subprocess
-    try:
-        _sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
-                              text=True, timeout=10).stdout.strip()[:12]
-    except Exception:
-        _sha = "unknown"
-    PROV = {"argv": " ".join(sys.argv), "threads": A.threads, "seeds": A.seeds,
-            "torch_threads": HS.torch.get_num_threads(),
-            "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
-            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
-            "torch": HS.torch.__version__, "numpy": np.__version__, "git": _sha}
-    print(f"generator={A.generator} tag={GEN['tag']} layers={ENS}", flush=True)
-    print(f"[provenance] {PROV}", flush=True)
     HS.torch.set_num_threads(A.threads)
     from genframe_data import rank_avg
 
@@ -169,40 +80,18 @@ def main():
         rr = [m["rows"][i] for i in keep]
         return {L: z["h_span"][keep, lay.index(L)].astype(np.float32) for L in ENS}, rr
 
-    # Merge this generator's train caches, deduped on (ds, idx, normalised answer). Lingshu has a
-    # single cache so the dedup is a no-op there; Qwen has four overlapping ones (docstring).
-    seen, Xparts, rows_o, n_dup = set(), {L: [] for L in ENS}, [], 0
-    for st in GEN["train_stems"]:
-        if not os.path.exists(f"{HS.FEATS}/{st}.npz"):
-            print(f"  [skip] train cache {st} absent", flush=True); continue
-        Xs_, rs_ = load_fine(st, TRAIN_DOMAINS)
-        k = np.array([(r["ds"], r["idx"], norm(r["na"])) not in seen for r in rs_])
-        for r, kk in zip(rs_, k):
-            if kk:
-                seen.add((r["ds"], r["idx"], norm(r["na"])))
-        n_dup += int((~k).sum())
-        for L in ENS:
-            Xparts[L].append(Xs_[L][k])
-        rows_o += [r for r, kk in zip(rs_, k) if kk]
-    if not rows_o and GEN["train_stems"]:
-        raise SystemExit(f"no training cache found for generator {A.generator}")
-    Xtr_o = {L: np.concatenate(Xparts[L]) for L in ENS} if rows_o else None
-    if n_dup:
-        print(f"deduped {n_dup:,} duplicate training rows across "
-              f"{len(GEN['train_stems'])} overlapping caches -> {len(rows_o):,} unique", flush=True)
+    Xtr_o, rows_o = load_fine("generator_train_finelayer", TRAIN_DOMAINS)
     src_o = [r["ds"] for r in rows_o]
-    # With no dedicated train-domain cache (medgemma) the pool is seeded empty rather than with a
-    # zero-row array -- the hidden width differs per generator (3584 Qwen/Lingshu, 2560 Gemma 3),
-    # so a hard-coded empty shape would break the concatenate.
-    Xadd = {L: ([Xtr_o[L]] if rows_o else []) for L in ENS}
+    Xadd = {L: [Xtr_o[L]] for L in ENS}
     rows_all, src_all = list(rows_o), list(src_o)
     ev = {}
-    for cell in (GEN["bench"] or BENCH):
-        stem = GEN["eval_stem"](cell)
-        gjp = f"{CK}/ckpt_{cell}_{GEN['tag']}.judge.jsonl"
+    for cell in BENCH:
+        stem = ("generator_eval_finelayer" if cell in SHARED
+                else f"generator_eval_finelayer_{cell}")
+        gjp = f"{CK}/ckpt_{cell}_lingshu7b.judge.jsonl"
         if not (os.path.exists(f"{HS.FEATS}/{stem}.npz") and os.path.exists(gjp)):
             continue
-        Xc, rr = load_fine(stem, GEN["eval_dsfilter"](cell))
+        Xc, rr = load_fine(stem, {cell} if cell in SHARED else None)
         istr = np.array([half(r["img_md5"]) == 1 for r in rr])
         for L in ENS:
             Xadd[L].append(Xc[L][istr])
@@ -248,22 +137,14 @@ def main():
             ("pooled_singlelayer", allrows, [20], False),
             ("pooled_ens", allrows, ENS, False),
             ("pooled_ens_sc", allrows, ENS, True)):
-        if A.only_arm and nm != A.only_arm:
-            continue
-        if not sub.any():
-            print(f"skipping {nm}: no training rows for this arm "
-                  f"(generator {A.generator} has no dedicated train-domain cache)", flush=True)
-            continue
         print(f"fitting {nm} ...", flush=True)
         ARMS[nm] = {L: fit(np.concatenate([Xpool[L], sc[:, None]], 1) if use_sc else Xpool[L], sub)
                     for L in layers}
         ARMS[nm]["_sc"] = use_sc; ARMS[nm]["_layers"] = layers
 
     art = {"title": "Everything that worked, stacked", "date": "2026-08-24",
-           "no_fabricated_numbers": True, "seeds": A.seeds, "generator": A.generator,
-           "generator_tag": GEN["tag"], "duplicate_training_rows_dropped": int(n_dup),
-           "pooled_rows": int(len(y)), "original_rows": int(n_orig),
-           "provenance": PROV, "cells": {}}
+           "no_fabricated_numbers": True, "seeds": A.seeds,
+           "pooled_rows": int(len(y)), "original_rows": int(n_orig), "cells": {}}
     for cell, d in ev.items():
         rr, gok = d["rows"], d["gok"]
         ye = np.array([r["y"] for r in rr], dtype=int)
@@ -302,12 +183,9 @@ def main():
         for k, v in art["macro"].items():
             print(f"  MACRO {k:24} {v:+.4f}  ({art['beats_greedy'][k]})")
         best = max(art["macro"], key=art["macro"].get)
-        # --only_arm runs can omit the four-domain baseline entirely; the verdict must not assume it
-        base = art["macro"].get("deployed_4dom_L21ish")
-        art["VERDICT"] = (f"best is {best} at {art['macro'][best]:+.4f} macro" +
-                          (f", {art['macro'][best]-base:+.4f} over the four-domain single-layer "
-                           f"probe on the same held-out halves." if base is not None else
-                           " (four-domain baseline not fitted in this run)."))
+        art["VERDICT"] = (f"best is {best} at {art['macro'][best]:+.4f} macro, "
+                          f"{art['macro'][best]-art['macro']['deployed_4dom_L21ish']:+.4f} over the "
+                          f"four-domain single-layer probe on the same held-out halves.")
         print(f"\n=> {art['VERDICT']}")
     json.dump(art, open(A.out, "w"), indent=1)
     print(f"wrote {A.out}")
