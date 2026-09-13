@@ -385,11 +385,33 @@ not one benchmark misbehaving.
 - The large effects are untouched — pooled training (+0.0554 Lingshu, +0.0594 Qwen) and the headline
   over greedy are ~20× this gap.
 
-**Open, and being run down:** whether the gap is the refactor (the dedup pass reports zero duplicates
-for Lingshu's single train cache, so the training set should be identical) or the thread count of
-the earlier run, which was not recorded in its log. CLAUDE.md already prices a thread-count change
-at +0.0048, which is larger than this gap and would explain it entirely. Two tests are running: the
-current code at a different thread count, and the pre-refactor code at four threads.
+**It is the thread count.** Same code, same data, same seeds, one arm (`pooled_singlelayer`), only
+the thread count varied:
+
+| threads | macro | reproducible at that count? |
+|---:|---:|---|
+| 1 | +0.072615 | bitwise, over 2 runs |
+| 2 | +0.074448 | — |
+| 4 | +0.071169 | **bitwise, over 5 runs** |
+| 8 | +0.071660 | — |
+| *the pre-refactor run that shipped* | *+0.072925* | *thread count not recorded* |
+
+**The spread across thread counts is 0.0033 — larger than the 0.0029 gap being explained, and it
+contains the shipped run's value.** So the macro is a *deterministic function of the invocation*,
+and the invocation was not written down. CLAUDE.md prices a thread-count change at +0.0048
+elsewhere in the project; on this endpoint it is 0.0033, the same phenomenon.
+
+Note what this does **not** excuse: within any single run all four arms are fitted at one thread
+count, so an arm comparison *inside* a run is fair. What is not fair is comparing an arm from one
+run against an arm from another run fitted at a different thread count — which is exactly how the
+shipped recipe came to be preferred. A final check is running (the pre-refactor code at four
+threads) to confirm the refactor itself is innocent.
+
+**The rule this produces.** Pin and record the thread count for anything that will be compared or
+frozen. `head_final_stack.py` now stamps every artifact with `argv`, `--threads`,
+`torch.get_num_threads()`, the OMP/MKL environment, torch and numpy versions and the git sha,
+because the whole of this investigation was only necessary because an earlier run recorded none of
+it.
 
 **The methodological lesson, which is the part that generalises.** I published a causal claim
 ("threading is nondeterministic") from two samples, and a single-threaded control that was
