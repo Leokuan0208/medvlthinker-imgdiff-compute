@@ -76,5 +76,6 @@
   "lingshu_pooled_macro_on_8_benchmarks": 0.0802,
   "source": "head_final_stack_2026-08-24.json"
  },
- "VERDICT": "on Qwen2.5-VL-7B the same recipe gives +0.0788 macro over Qwen's own greedy decoding, beating it on 8/8 benchmarks. The method REPLICATES on a second generator -- it is not a property of Lingshu or of medical finetuning."
+ "VERDICT": "on Qwen2.5-VL-7B the same recipe gives +0.0788 macro over Qwen's own greedy decoding, beating it on 8/8 benchmarks. The method REPLICATES on a second generator -- it is not a property of Lingshu or of medical finetuning.",
+ "SUPERSEDED_2026-09-13": "Its training set was up to 4x duplicated. head_second_generator.py concatenates four Qwen train caches named generator_train_qwen_{kvasir_open,pathvqa_open_train,slake_open_train,vqa_rad_open_train}, but each holds an OVERLAPPING MIXTURE of all four domains rather than the one in its name; two are byte-identical. The train_rows 222,154 recorded here contains ~77,000 duplicate (ds, idx, candidate) rows -- the deduplicated count is 145,085. Superseded by head_final_stack_qwen_2026-09-13.json, which dedupes on (ds, idx, normalised answer) and runs the SAME implementation as the Lingshu ladder rather than a sibling script. The corrected macro is +0.0820 (8/8), so the duplication was slightly DEPRESSING the result, not inflating it."
 }

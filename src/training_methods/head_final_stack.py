@@ -131,6 +131,9 @@ def main():
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--generator", choices=sorted(GENERATORS), default="lingshu")
+    ap.add_argument("--only_arm", default=None,
+                    help="fit just this one arm. For reproducibility replicates: the full ladder is "
+                         "~2.5 h, one arm is ~25 min, so a spread can be measured in a morning.")
     ap.add_argument("--out", default=None)
     A = ap.parse_args()
     globals()["GEN"] = GENERATORS[A.generator]
@@ -229,6 +232,8 @@ def main():
             ("pooled_singlelayer", allrows, [20], False),
             ("pooled_ens", allrows, ENS, False),
             ("pooled_ens_sc", allrows, ENS, True)):
+        if A.only_arm and nm != A.only_arm:
+            continue
         if not sub.any():
             print(f"skipping {nm}: no training rows for this arm "
                   f"(generator {A.generator} has no dedicated train-domain cache)", flush=True)

@@ -312,3 +312,65 @@ unchanged; the +0.0736 headline does not move.
 **Standing caveat this adds.** Any two analyses that read the same rows from different caches can
 differ by up to the ambiguity band (+0.0061 macro, and more on a single small benchmark) without
 either being wrong. Quote the cache, not just the benchmark.
+
+---
+
+## 12. Pooled training replicates on a second generator, at the same size (2026-09-13)
+
+The largest lever we have — retraining the probe on the training half of all eight benchmarks
+instead of the four July domains — was measured only on Lingshu. Running the **identical
+implementation** on Qwen2.5-VL-7B (`head_final_stack.py --generator qwen`, artifact
+`head_final_stack_qwen_2026-09-13.json`):
+
+| arm | Lingshu-7B | Qwen2.5-VL-7B |
+|---|---:|---:|
+| four-domain, single layer | +0.0182 (6/8) | +0.0227 (6/8) |
+| pooled, single layer | +0.0729 (6/8) | +0.0814 (**8/8**) |
+| pooled + layer ensemble | **+0.0736** (6/8) | **+0.0820** (**8/8**) |
+| + self-consistency feature | +0.0720 (7/8) | +0.0783 (8/8) |
+| **the pooled lever** (ensemble − four-domain) | **+0.0554** | **+0.0594** |
+
+The lever is the same size on both generators, and on Qwen the pooled probe beats greedy on
+**every one of the eight benchmarks** — where on Lingshu it loses on VQA-RAD and VQA-Med. Pooled
+training is a property of the method, not of Lingshu or of medical finetuning.
+
+**This corrects the previous Qwen number as a side effect.** `head_second_generator.py` built its
+training set by concatenating four caches named `generator_train_qwen_{kvasir_open,
+pathvqa_open_train, slake_open_train, vqa_rad_open_train}` — but each of those holds an
+**overlapping mixture of all four domains**, not the one in its name (two are byte-identical,
+1,365,111,910 bytes each). The same `(ds, idx, candidate)` entered training up to four times;
+`train_rows: 222,154` is that inflation against a deduplicated **145,085**. Worth stating plainly:
+the duplication was **depressing** the result, not inflating it — deduplicated, the macro goes
+**+0.0788 → +0.0820**. The fix was to delete the sibling script's role rather than repair it:
+`head_final_stack.py` is now parameterised over the generator, so one implementation produces both
+rows of the table above.
+
+**Read the small differences in that table against §13, not against zero.**
+
+## 13. The reproducibility floor of the fit itself (2026-09-13)
+
+Running `head_final_stack.py` twice on **identical inputs** — 112,770 pooled rows, 31,439 original,
+59 leaking rows dropped, `--seeds 5`, same caches, same code path — does not reproduce:
+
+| arm | run 1 | run 2 | move |
+|---|---:|---:|---:|
+| four-domain, single layer | +0.0182 | +0.0201 | +0.0018 |
+| pooled, single layer | +0.0729 | +0.0712 | −0.0018 |
+| pooled + ensemble | +0.0736 | +0.0707 | −0.0029 |
+| + self-consistency | +0.0720 | +0.0739 | +0.0020 |
+
+and **the best arm flips**, from `pooled_ens` to `pooled_ens_sc`. Per-benchmark moves reach −0.0103
+(VQA-RAD, n=97). `torch.manual_seed` fixes the seed draw and the permutation, so the seed path is
+not the source; the remaining candidate is that multithreaded float reduction order in torch CPU
+ops is not deterministic run to run **even at a fixed thread count**. That is the CLAUDE.md "CPU
+thread count (+0.0048)" landmine generalised — not merely that a *different* thread count moves the
+number, but that the *same* one does not pin it.
+
+**What this does and does not threaten.** The large effects are ~20× this floor and are safe:
+pooled training is +0.0554 on Lingshu and +0.0594 on Qwen, and the headline +0.0736 over greedy
+stands. What does **not** survive is any claim that one arm beats another by a few thousandths —
+including the shipped choice of `pooled_ens` over `pooled_ens_sc` (+0.0016), and "layer ensembling
+is worth +0.0007 over a single layer". Those are ties, and must be reported as ties.
+
+Quantification in flight: four full-ladder replicates for a per-arm sd and range, and two
+single-threaded replicates of one arm to test whether single-threading is bitwise reproducible.
