@@ -244,8 +244,12 @@ def main():
     allrows = np.ones(len(y), bool)
     ARMS = {}
     for nm, sub, layers, use_sc in (
-            ("deployed_4dom_L21ish", isorig, [20], False),   # single layer, four domains
-            ("pooled_singlelayer", allrows, [20], False),
+            # The single-layer arms take the MIDDLE of the ensemble, not a hard-coded 20. For
+            # Lingshu and Qwen that IS 20 (ENS = [18,20,22]), so nothing changes for them; for a
+            # generator whose ensemble is depth-matched elsewhere -- MedGemma's [22,24,27] -- the
+            # hard-coded index is simply not in the cache and the arm cannot be built.
+            ("deployed_4dom_L21ish", isorig, [ENS[1]], False),   # single layer, four domains
+            ("pooled_singlelayer", allrows, [ENS[1]], False),
             ("pooled_ens", allrows, ENS, False),
             ("pooled_ens_sc", allrows, ENS, True)):
         if A.only_arm and nm != A.only_arm:
