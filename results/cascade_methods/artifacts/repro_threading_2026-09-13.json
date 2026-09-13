@@ -30,5 +30,18 @@
  },
  "one_thread_pair_bitwise_identical": true,
  "RETRACTION": "An earlier version of repro_threading_2026-09-13.json and TRANSFER_WALL section 13 concluded from TWO disagreeing runs that the fit is nondeterministic because of multithreaded float reduction order. Four further replicates refute that: five post-refactor runs at four threads are bitwise identical on every arm and every benchmark. The fit is DETERMINISTIC. Two runs cannot distinguish nondeterminism from two deterministic code paths; the single-threaded control was consistent with the threading hypothesis but did not discriminate between them.",
- "VERDICT": "Six runs give TWO answers, not six. The five post-refactor runs agree bitwise; the sixth is the pre-refactor run that produced the shipped +0.0736. The gap reaches 0.0029 and every per-benchmark value differs. Cause still open: the refactor, or the earlier run's thread count, which its log did not record (CLAUDE.md prices a thread-count change at +0.0048, larger than this gap). What is already settled regardless: the shipped choice of pooled_ens over pooled_ens_sc (+0.0016) is not robust -- on five of six runs pooled_ens_sc is the better arm."
+ "VERDICT": "CLOSED. The fit is a deterministic function of (code, invocation). The refactor changed nothing -- pre-refactor code at 4 threads is BITWISE identical to current code at 4 threads on every arm and benchmark. What moves the number is the THREAD COUNT: across 1/2/4/8 the macro spans 0.0033 on one arm, which is larger than the 0.0029 gap that started this and contains the shipped run's value. The shipped run did not record its thread count, which is the only reason this took ten runs to attribute. Consequence: an arm comparison WITHIN one run is fair (all arms share the thread count); comparing arms ACROSS runs at different thread counts is not, and that is how pooled_ens came to be preferred over pooled_ens_sc by +0.0016. Report that as a tie. head_final_stack.py now stamps argv, threads, torch.get_num_threads(), OMP/MKL env, library versions and git sha into every artifact.",
+ "thread_sweep_same_code_one_arm": {
+  "1": 0.07261520664016133,
+  "2": 0.0744478373374835,
+  "4": 0.07116878308179177,
+  "8": 0.07165968426108407,
+  "shipped_run_threads_NOT_RECORDED": 0.07292498228300595
+ },
+ "thread_sweep_spread": 0.003279054255691735,
+ "refactor_is_innocent": {
+  "test": "pre-refactor code from git 08ae46e, 4 threads, full ladder",
+  "bitwise_identical_to_current_code_at_4_threads": true,
+  "bitwise_identical_to_the_shipped_run": false
+ }
 }

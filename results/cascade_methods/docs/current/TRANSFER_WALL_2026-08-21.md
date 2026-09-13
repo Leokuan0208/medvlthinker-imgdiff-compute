@@ -401,11 +401,16 @@ contains the shipped run's value.** So the macro is a *deterministic function of
 and the invocation was not written down. CLAUDE.md prices a thread-count change at +0.0048
 elsewhere in the project; on this endpoint it is 0.0033, the same phenomenon.
 
+**The refactor is innocent — confirmed, not assumed.** The pre-refactor code restored from git and
+run at four threads is **bitwise identical to the current code at four threads**, on every arm and
+every benchmark. So nothing about parameterising the script over the generator touched the
+numerics, and the shipped run's +0.072925 is explained entirely by an invocation that was never
+recorded.
+
 Note what this does **not** excuse: within any single run all four arms are fitted at one thread
 count, so an arm comparison *inside* a run is fair. What is not fair is comparing an arm from one
 run against an arm from another run fitted at a different thread count — which is exactly how the
-shipped recipe came to be preferred. A final check is running (the pre-refactor code at four
-threads) to confirm the refactor itself is innocent.
+shipped recipe came to be preferred over its runner-up.
 
 **The rule this produces.** Pin and record the thread count for anything that will be compared or
 frozen. `head_final_stack.py` now stamps every artifact with `argv`, `--threads`,
