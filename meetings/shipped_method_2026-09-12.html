@@ -314,6 +314,15 @@ td.wrap-ok,th.wrap-ok{white-space:normal;min-width:230px}
 <div class="tiles">
 <div class="tile"><h3>Clean</h3><p><b>380,677</b> question-text comparisons across 100 dumps and <b>1,366,424</b> judged-slot comparisons: zero mismatches, zero orphans. All 32 train&times;eval image-overlap pairs clean bar one known case. By-image splits disjoint on all 8. <b>175 of 182</b> checkable claims in the written record verified exact.</p></div>
 <div class="tile"><h3>Fixed</h3><p>A live currency bug producing penalties up to <b>12.4&times;</b> wrong. A cluster bootstrap that had collapsed to i.i.d. while reading as clustered. A contamination check that globbed <span class="kbd">*.jpg</span> against a directory of <span class="kbd">*.png</span> and hashed an empty set. A judge file that covered 79.7% of a benchmark and looked finished.</p></div>
+<div class="tile warn"><h3>Pin the thread count</h3><p>The fit is <b>deterministic</b> &mdash;
+five runs on identical inputs agree bitwise, and the pre-refactor code agrees with the current code
+bitwise too. What moves it is the <b>thread count</b>: across 1/2/4/8 threads the macro spans
+<b>0.0033</b> on one arm. All four arms inside a single run share that count, so the ladder above is
+internally fair; comparing arms <i>across</i> runs at different counts is not. Consequence for the
+shipped choice: <b>pooled + ensemble beats pooled + ensemble + self-consistency by +0.0016</b>, and
+on five of six runs the self-consistency variant is the <i>better</i> arm. Treat those two as a
+<b>tie</b> and pick on cost, not on the third decimal. Every artifact now records its own argv,
+thread count and git sha.</p></div>
 <div class="tile warn"><h3>Restated since</h3><p><b>PathVQA was reported on 1,500 of 3,357 questions</b> and the omitted half is harder. Now backfilled, re-extracted and restated everywhere: the headline moves <b>+0.0802 &rarr; +0.0736</b>. I had predicted &minus;0.0022 from that benchmark&rsquo;s row alone; the real cost is <b>&minus;0.0065</b>, three times larger, because the restored questions also enter TRAINING (108,126 &rarr; 112,770 rows) and move every other benchmark slightly. Every figure in this deck is the restated one.</p></div>
 <div class="tile"><h3>Measured, not assumed</h3><p>The one real train/eval image overlap &mdash; 19 MedPix images &mdash; moves the affected delta by <b>&minus;0.00014</b>. Those questions score 0.0000 for both arms, so it could not have inflated anything. It was an estimate in a code comment; it is now an artifact.</p></div>
 </div>
