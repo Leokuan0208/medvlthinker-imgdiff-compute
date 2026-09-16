@@ -146,9 +146,14 @@ Best-of-N Gains</a></li>
 <li><a href="#35-training-free-selection-self-consistency-majority-vote-minimum-bayes-risk-consensus-and-logit-based-scores" id="toc-35-training-free-selection-self-consistency-majority-vote-minimum-bayes-risk-consensus-and-logit-based-scores">3.5
 Training-free selection: self-consistency, majority vote, minimum Bayes
 risk, consensus, and logit-based scores</a></li>
+<li><a href="#36-uncertainty-calibration-and-hallucination-detection-in-llms-and-vlms----with-the-medical-evidence" id="toc-36-uncertainty-calibration-and-hallucination-detection-in-llms-and-vlms----with-the-medical-evidence">3.6
+Uncertainty, Calibration, and Hallucination Detection in LLMs and VLMs
+-- with the Medical Evidence</a></li>
 <li><a href="#37-medical-vision-language-models-the-generators-we-use-and-the-ones-we-compare-against" id="toc-37-medical-vision-language-models-the-generators-we-use-and-the-ones-we-compare-against">3.7
 Medical Vision-Language Models: The Generators We Use and the Ones We
 Compare Against</a></li>
+<li><a href="#38-medical-vqa-benchmarks-datasets-and-the-evaluation-protocol" id="toc-38-medical-vqa-benchmarks-datasets-and-the-evaluation-protocol">3.8
+Medical VQA benchmarks, datasets, and the evaluation protocol</a></li>
 <li><a href="#39-the-older-lineage-n-best-rescoring-discriminative-reranking-and-confidence-models-in-other-fields" id="toc-39-the-older-lineage-n-best-rescoring-discriminative-reranking-and-confidence-models-in-other-fields">3.9
 The older lineage: n-best rescoring, discriminative reranking, and
 confidence models in other fields</a></li>
@@ -181,8 +186,8 @@ Terminology substitutions to make before the next report</a></li>
 comparison tables to put in the report</a></li>
 <li><a href="#55-the-claim-to-make-and-the-four-claims-not-to-make" id="toc-55-the-claim-to-make-and-the-four-claims-not-to-make">5.5 The
 claim to make, and the four claims not to make</a></li>
-<li><a href="#56-five-questions-to-expect-with-the-answer-and-its-source" id="toc-56-five-questions-to-expect-with-the-answer-and-its-source">5.6
-Five questions to expect, with the answer and its source</a></li>
+<li><a href="#56-six-questions-to-expect-with-the-answer-and-its-source" id="toc-56-six-questions-to-expect-with-the-answer-and-its-source">5.6
+Six questions to expect, with the answer and its source</a></li>
 <li><a href="#57-a-suggested-report-structure" id="toc-57-a-suggested-report-structure">5.7 A suggested report
 structure</a></li>
 <li><a href="#58-two-structural-suggestions-both-cpu-only" id="toc-58-two-structural-suggestions-both-cpu-only">5.8 Two structural
@@ -207,7 +212,15 @@ package</a></li>
 <p>A single catch-up guide for the research domain around the
 <strong>live</strong> method in this project: a small probe that reads a
 frozen medical vision-language model&#39;s own hidden states and picks the
-best of eight sampled free-text answers. It has five jobs:</p>
+best of eight sampled free-text answers.</p>
+<blockquote>
+<p><strong>194 paper cards covering 186 unique papers, in 9 categories,
+with 34 core PDFs in <code>papers/</code>.</strong> Every arXiv
+identifier was checked against the arXiv API on 2026-09-16 — including
+all 156 cited across this project&#39;s own documents, every one of which
+resolved.</p>
+</blockquote>
+<p>It has five jobs:</p>
 <ol type="1">
 <li><strong>Teach the vocabulary</strong> the field actually uses (§1),
 so a report never again says &quot;MLP head&quot; when the reader expects &quot;MLP
@@ -373,7 +386,7 @@ literature.</td>
 (selected − greedy)/(oracle@N − greedy). Not a standard name — define it
 at first use. The published analogue is Hu&#39;s <em>signal fidelity</em> /
 <em>conditional selection quality</em> (card <code>hu2026oracle</code>,
-§3.D).</td>
+§3.4).</td>
 <td>&quot;sel_eff&quot;</td>
 </tr>
 </tbody>
@@ -469,11 +482,11 @@ Two axes: <em>parallel</em> (sample N in parallel — us) and
 per budget, how to split compute between model size and test-time
 methods. The result that a small model + TTS can beat a bigger model
 <em>on questions where the small model has non-trivial success</em>
-(Snell et al., §3.A).</li>
+(Snell et al., §3.1).</li>
 <li><strong>Self-consistency (SC) / majority vote.</strong> Sample N,
 return the most frequent answer. Needs answers that can be canonicalised
 (a number, a letter); on free text it needs normalisation or semantic
-clustering (<em>universal self-consistency</em>, MBR decoding, §3.E). On
+clustering (<em>universal self-consistency</em>, MBR decoding, §3.5). On
 our benchmarks it sits at the random-pick floor and does not improve
 with N (<code>TRANSFER_WALL_2026-08-21.md</code> §4).</li>
 <li><strong>Answer-prior baseline.</strong> Our control that scores a
@@ -494,15 +507,15 @@ no steps.</li>
 generative-style (read P(&quot;Yes&quot;) from a fine-tuned 7B).</li>
 <li><strong>Self-verification.</strong> The generator judges its own
 answer, zero-shot. Shown unreliable on medical VQA (<em>Verification
-Mirage</em>, §3.B) — the motivation for training a verifier.</li>
+Mirage</em>, §3.2) — the motivation for training a verifier.</li>
 <li><strong>Reward hacking / over-optimisation.</strong> Picking the
 candidate with the highest <em>imperfect</em> score starts selecting for
 the scorer&#39;s errors as N grows; accuracy can <em>fall</em> with N
-(§3.D).</li>
+(§3.4).</li>
 <li><strong>Weak verifier / verifier ensembling.</strong> Combining
-several unreliable scorers (Weaver, FUSE, §3.B).</li>
+several unreliable scorers (Weaver, FUSE, §3.2).</li>
 <li><strong>Best-of-Majority (BoM).</strong> Take the frequent answers
-first, then the reward-maximal among them (§3.B/§3.D).</li>
+first, then the reward-maximal among them (§3.2/§3.4).</li>
 </ul>
 <h2 id="14-the-walls-limits-and-how-they-are-measured">1.4 The walls
 (limits) and how they are measured</h2>
@@ -514,7 +527,7 @@ at N = 8 (CLAUDE.md §0; 40.8 % of 1,064 held-out questions in
 help there.</li>
 <li><strong>Selection wall.</strong> The gap between what a selector
 picks and oracle@N; a <em>selection efficiency</em> of 0.78–0.81 was our
-LoRA-era value and is close to what other groups report (§3.D).</li>
+LoRA-era value and is close to what other groups report (§3.4).</li>
 <li><strong>Oracle gap.</strong> oracle@N − single-answer accuracy: the
 most any selector can add.</li>
 <li><strong>Recoverable mass, conditional quality, conditional
@@ -547,7 +560,7 @@ open-ended medical-VQA papers report EM, F1, BLEU and/or recall.</li>
 free-text prediction matches the gold. Ours is
 <strong>Lingshu-32B</strong> judging Lingshu-7B&#39;s outputs — a
 <em>same-family judge</em>, which the judge literature flags for
-<strong>self-preference bias</strong> (§3.H). Our measured symptom is
+<strong>self-preference bias</strong> (§3.8). Our measured symptom is
 <strong>paraphrase drift</strong>: a newly trained verifier gains
 ~0.006–0.009 under the judge before doing anything useful (CLAUDE.md
 §0). Therefore every verifier comparison is to be reported in
@@ -608,7 +621,7 @@ axes; a method can win on one and lose on another. Report all measured
 ones and name the batch size (ours: batch 1).</li>
 <li><strong>&quot;Verification is free&quot;.</strong> Our probe adds ~1.8 MFLOP
 per candidate per probe on vectors already computed — but this
-<em>argument</em> is already in print (HSRM, CASE, Q-Probe; §3.C). State
+<em>argument</em> is already in print (HSRM, CASE, Q-Probe; §3.3). State
 the cost as a property, not a discovery.</li>
 </ul>
 <h2 id="17-model-and-architecture-vocabulary">1.7 Model and architecture
@@ -708,7 +721,7 @@ image. POPE-style yes/no probing measures it.</li>
 <li><strong>Probe-based confidence</strong> (what we do, applied to
 <em>one</em> answer rather than to a set): a probe on hidden states
 predicting correctness — DualRead does this on our benchmarks
-(§3.C).</li>
+(§3.3).</li>
 </ul>
 <h2 id="19-terms-introduced-by-individual-papers">1.9 Terms introduced
 by individual papers</h2>
@@ -742,6 +755,13 @@ width 256&quot;, never just &quot;a 2-layer MLP&quot;.</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>activation-based classifier / probe</strong></td>
+<td>A small supervised model trained to predict a target property (here,
+truthfulness) from a larger model&#39;s internal hidden-layer activations
+rather than from its text output.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>Active learning (for reward-model labeling)</strong></td>
 <td>Choosing which examples (here, which reasoning steps) to get human
 labels for based on where the model is currently most uncertain or most
@@ -770,6 +790,37 @@ stopping rule is met.</td>
 <td>§3.5</td>
 </tr>
 <tr>
+<td><strong>ALFA (Alignment Ratio of Atomic Facts)</strong></td>
+<td>A metric that decomposes a generated report/answer into individual
+atomic factual claims and measures what fraction are consistent with
+ground truth, used to derive hallucination labels without subjective
+human judgment.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>anchor regularizer</strong></td>
+<td>A loss term that discourages a model&#39;s predicted confidence from
+collapsing to the extremes (always near 0 or always near 1), which would
+otherwise trivially minimize some calibration losses without being
+informative.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>answer derivability</strong></td>
+<td>Whether a benchmark&#39;s annotated gold answer can actually be
+logically derived from its paired knowledge-base entry -- if not, no
+model, however capable, could be scored correct via genuine
+reasoning.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>answer-position / option bias</strong></td>
+<td>A dataset flaw where the correct answer&#39;s letter/position (A/B/C/D)
+is not uniformly distributed, letting a model score above chance by
+exploiting the position alone rather than the content.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>attention head</strong></td>
 <td>One of several parallel sub-units inside a transformer&#39;s attention
 layer, each computing its own weighted combination of other tokens&#39;
@@ -779,11 +830,25 @@ hallucination-relevant signal than others).</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>AUARC</strong></td>
+<td>Area Under the Accuracy-Rejection Curve -- summarizes how much
+accuracy improves as increasingly low-confidence answers are
+withheld.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>AUC / AP</strong></td>
 <td>Area under the ROC curve and average precision; threshold-free
 measures of a binary classifier&#39;s ranking quality (0.5 AUC =
 chance).</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>AURAC</strong></td>
+<td>Accuracy-Rejection-curve Area -- area under a curve of accuracy on
+the remaining answered questions as increasingly uncertain ones are
+rejected.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>Automatic process labeling (for PRMs)</strong></td>
@@ -908,6 +973,14 @@ ties among equally-correct candidates).</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>Brier score / Brier-style loss</strong></td>
+<td>A proper scoring rule measuring the mean squared difference between
+a predicted probability and the actual binary outcome
+(correct/incorrect); minimizing it as a training loss directly optimizes
+calibration.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>budget forcing</strong></td>
 <td>Forcing a model to keep thinking (or stop) by manipulating its
 reasoning tokens at inference.</td>
@@ -938,11 +1011,27 @@ it.</td>
 <td>§3.2</td>
 </tr>
 <tr>
+<td><strong>canonical-order exchangeability</strong></td>
+<td>A text-side contamination signal: if a model&#39;s output likelihood for
+a sequence changes when items in it are reordered relative to a fixed
+&#39;canonical&#39; training order, that can indicate the model memorized the
+specific ordering seen during training.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>canonicalizable answer</strong></td>
 <td>An answer that can be reduced to a small fixed set of equivalent
 strings (e.g. a number, a multiple-choice letter) so that two
 generations can be checked for exact agreement.</td>
 <td>§3.5</td>
+</tr>
+<tr>
+<td><strong>CEUR-WS working notes</strong></td>
+<td>CEUR-WS.org is an open-access repository that publishes &#39;working
+notes&#39; (informal proceedings) for workshops and shared-task campaigns
+like CLEF; these are citable but not peer-reviewed in the same way as a
+conference paper.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>Chain-of-thought (CoT) verification</strong></td>
@@ -960,6 +1049,14 @@ at inference.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>classifier-free guidance (CFG)</strong></td>
+<td>A technique (originally from diffusion image models) that steers a
+model&#39;s output distribution toward a desired condition by contrasting
+conditioned and unconditioned predictions; repurposed here to steer a
+MedVLM&#39;s token embeddings toward expert-highlighted content.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>closed- vs open-ended VQA</strong></td>
 <td>Closed-ended: the question has a small fixed answer set (e.g.
 yes/no, or a short list of organs) and is scored as accuracy.
@@ -974,11 +1071,23 @@ weights; no reasoning can derive it.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>closed-ended vs open-ended VQA</strong></td>
+<td>Closed-ended answers are constrained (e.g. yes/no or a fixed option
+set); open-ended answers are free text.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>co-failure rate (beta)</strong></td>
 <td>The fraction of queries on which every model in a pool gives a wrong
 answer simultaneously — a hard ceiling of 1−beta on any policy that must
 output one model&#39;s answer.</td>
 <td>§3.4</td>
+</tr>
+<tr>
+<td><strong>complexity stratification</strong></td>
+<td>Grouping generated questions into difficulty tiers so a benchmark
+can separately report performance on easy vs. hard questions.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>compound inference system</strong></td>
@@ -1015,6 +1124,20 @@ router&#39;s scores are — contrasted with plain AUC.</td>
 <td>§3.4</td>
 </tr>
 <tr>
+<td><strong>confabulation</strong></td>
+<td>This paper&#39;s term for hallucinations caused by the model lacking the
+relevant knowledge, as opposed to other causes -- the class semantic
+entropy targets.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>confidence elicitation</strong></td>
+<td>Getting a model to output a usable confidence score, whether by
+prompting for a verbalized number, sampling and measuring agreement, or
+reading internal states.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>confidence estimation module (CEM)</strong></td>
 <td>In ASR, a small auxiliary network trained on top of a (typically
 frozen or jointly fine-tuned) sequence model to predict whether each
@@ -1029,6 +1152,21 @@ diffusion-sampled ligand pose for how likely it is to be a good
 (accurate) docking prediction, used to rank and select among the sampled
 poses — the docking field&#39;s name for a candidate-scoring verifier.</td>
 <td>§3.9</td>
+</tr>
+<tr>
+<td><strong>conformal prediction</strong></td>
+<td>A distribution-free statistical framework for producing prediction
+sets/intervals with a guaranteed coverage probability, used here as a
+black-box VLM uncertainty measure.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>Contrast-Consistent Search (CCS)</strong></td>
+<td>An unsupervised method for finding a &#39;truth direction&#39; in hidden
+activations by requiring a statement and its negation get logically
+consistent probabilities (summing to ~1), with no labels or the model&#39;s
+own stated answers.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>control task</strong></td>
@@ -1054,6 +1192,15 @@ how correlated repeated draws are for the same question, governed by the
 intraclass correlation ρ; reached quickly even if the raw sample count n
 keeps growing.</td>
 <td>§3.4</td>
+</tr>
+<tr>
+<td><strong>counterfactual entity perturbation</strong></td>
+<td>Deliberately altering a specific entity mentioned in a model&#39;s
+output (e.g. swapping &#39;left lung&#39; for &#39;right lung&#39;) and re-checking
+whether the visual grounding model still finds equally strong evidence
+for it, to test whether the original grounding was genuinely
+evidence-based or spurious.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>coverage (pass@k)</strong></td>
@@ -1097,6 +1244,13 @@ from whether the final answer itself is correct.</td>
 (typically easy-to-hard or coarse-to-fine), rather than presenting all
 training data in one undifferentiated pass.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>data synthesis (for leakage mitigation)</strong></td>
+<td>Generating new question variants (rather than reusing scraped exam
+questions verbatim) specifically to reduce the chance a benchmark item
+was already seen during a model&#39;s pretraining.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>data-processing inequality</strong></td>
@@ -1143,6 +1297,22 @@ probe/verifier can read directly.</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>discrete semantic entropy (DSE)</strong></td>
+<td>Semantic entropy computed from discrete counts of how many of N
+sampled responses fall into each meaning-cluster (rather than from
+continuous log-probabilities), which works for black-box models where
+only text output, not logits, is available.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>discriminative quality / AUROC</strong></td>
+<td>How well a confidence score separates correct from incorrect
+predictions (area under the ROC curve); distinct from calibration, which
+measures whether the confidence value matches the true probability of
+correctness.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>discriminative reranking</strong></td>
 <td>Training a separate model to re-score/re-order a fixed list of
 candidates from a generative model, using features or supervision the
@@ -1158,6 +1328,12 @@ label), with no generated text. Our MLP probe is discriminative.</td>
 <td>§3.2</td>
 </tr>
 <tr>
+<td><strong>discriminative vs. text-generative VLM</strong></td>
+<td>A discriminative model selects from a closed label set; a
+text-generative model writes free-text output token by token.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>distillation (training)</strong></td>
 <td>Training a model to match the output distribution of a
 larger/stronger &#39;teacher&#39; model, rather than (or in addition to)
@@ -1170,6 +1346,13 @@ matching raw ground-truth labels.</td>
 then used as training targets to teach a smaller/weaker &#39;student&#39; model
 to reason similarly.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>distribution-free guarantee</strong></td>
+<td>An error bound that holds without assuming a specific data
+distribution, typically via conformal-style calibration on held-out
+data.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>dORM / dPRM / gORM / gPRM</strong></td>
@@ -1222,11 +1405,34 @@ clinical notes, lab reports, etc. -- as opposed to imaging.</td>
 <td>§3.7</td>
 </tr>
 <tr>
+<td><strong>EigenScore</strong></td>
+<td>A hallucination-detection score computed from the eigenvalues of the
+covariance matrix of multiple sampled responses&#39; internal-state
+embeddings, measuring how semantically consistent or diverse the
+responses are directly in embedding space.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>Embedding-Based Agreement (EBA)</strong></td>
 <td>A training-free method that clusters sampled generations by their
 embedding vectors and returns the one nearest the centroid of the
 largest (most agreed-upon) cluster.</td>
 <td>§3.5</td>
+</tr>
+<tr>
+<td><strong>evidence magnitude</strong></td>
+<td>How much a model&#39;s per-token predictions shift when the image is
+included versus a text-only version of the same prompt -- large shifts
+indicate the model is actually using visual evidence rather than relying
+on language priors.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>exact match (EM) scoring</strong></td>
+<td>Scoring an answer correct only if it matches the gold answer&#39;s text
+exactly (often after light normalization), as opposed to a softer
+LLM-judge score.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>exact replay vs distributional reproducibility</strong></td>
@@ -1242,6 +1448,20 @@ a correctness signal, instead of a trained model&#39;s prediction. Available
 in code generation because programs are executable; not available for
 free-text medical answers, which lack an executable ground truth.</td>
 <td>§3.9</td>
+</tr>
+<tr>
+<td><strong>expected calibration error (ECE)</strong></td>
+<td>A single number summarizing miscalibration: split predictions into
+confidence bins, average the gap between mean confidence and actual
+accuracy per bin, weighted by bin size.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>expert AGI (framing)</strong></td>
+<td>The paper&#39;s stated goal: benchmarking progress toward multimodal
+models that can perform at the level of a human expert across many
+academic disciplines, as a step toward general intelligence.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>exponentiated power law</strong></td>
@@ -1263,6 +1483,32 @@ answers.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>F1 inter-annotator agreement</strong></td>
+<td>A score combining precision and recall used here to measure how
+consistently different human annotators agreed on paraphrased questions
+or ratings.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>failure prediction</strong></td>
+<td>Using a confidence score to predict, in advance, whether a specific
+answer will turn out to be wrong.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>FAIR data principles</strong></td>
+<td>Findable, Accessible, Interoperable, Reusable -- a standard for
+making research datasets properly documented and machine-usable.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>feature clipping</strong></td>
+<td>Truncating unusually large activation values in a model&#39;s internal
+states at inference time, used here to reduce overconfident (and often
+hallucinated) generations.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>FLOPs-matched comparison</strong></td>
 <td>Comparing two systems only after equalising their total
 floating-point operations, so a small model with many samples is charged
@@ -1277,6 +1523,14 @@ rather than freely generating or choosing among many; running it with
 the two options in both orders (swapped) checks whether the model&#39;s
 choice is driven by content or by position.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>four-quadrant diagnostic map</strong></td>
+<td>A classification of each generated statement by two axes -- is the
+text itself factually plausible, and is it actually grounded in the
+image evidence -- yielding four categories used to separate different
+hallucination types.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>Fréchet mean</strong></td>
@@ -1301,6 +1555,13 @@ and how well it can recognize a correct one it is shown — the
 theoretical quantity that makes self-improvement or best-of-N selection
 possible at all.</td>
 <td>§3.4</td>
+</tr>
+<tr>
+<td><strong>generative VQA (vs. classification-style VQA)</strong></td>
+<td>Answering by generating free text token-by-token, as opposed to
+treating VQA as a classification problem over a fixed answer
+vocabulary.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>Generator-verifier coupling</strong></td>
@@ -1329,6 +1590,12 @@ tracking real quality.</td>
 <td>§3.2</td>
 </tr>
 <tr>
+<td><strong>groundable / grounding explanation</strong></td>
+<td>An explanation that points to the specific image region (a bounding
+box or mask) supporting an answer, not just a text justification.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>GRPO</strong></td>
 <td>Group Relative Policy Optimization, a reinforcement-learning
 fine-tuning method (used e.g. by DeepSeek-R1 and many recent reasoning
@@ -1342,6 +1609,14 @@ separately-trained value/critic model.</td>
 <td>8.5K grade-school math word problems; the standard early benchmark
 for verifier work.</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>hallucination-aware calibration (HAC)</strong></td>
+<td>This paper&#39;s method of feeding a separate vision-grounding
+hallucination-detection score into the calibration function alongside
+raw model confidence, improving both calibration and ranking
+quality.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>HedgeTune</strong></td>
@@ -1364,11 +1639,32 @@ internal, non-text representation at that point.</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>hierarchical hallucination categorization</strong></td>
+<td>Classifying hallucinations by type and severity (e.g. minor phrasing
+error vs a clinically dangerous false finding) rather than treating
+every hallucination as equally bad.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>HyperKvasir / Kvasir-Instrument</strong></td>
+<td>Earlier public GI-endoscopy image datasets (from the same
+Simula/Kvasir group) that Kvasir-VQA annotated with question-answer
+pairs.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>identifiability gap</strong></td>
 <td>Coverage minus achieved selection accuracy — the fraction of
 questions where a correct answer exists somewhere in the sample pool but
 the selector could not identify it as correct.</td>
 <td>§3.4</td>
+</tr>
+<tr>
+<td><strong>ImageCLEF</strong></td>
+<td>A long-running annual shared-task/benchmark evaluation campaign
+(part of the CLEF initiative) covering image retrieval and analysis
+tasks, including a recurring medical VQA track.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>importance-weighted policy gradient</strong></td>
@@ -1386,6 +1682,13 @@ which a question&#39;s activations predict whether the model&#39;s eventual
 answer to it will be correct — estimated before the answer is
 generated.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>inference-time intervention</strong></td>
+<td>Modifying a model&#39;s internal activations at generation time (e.g.
+shifting along a learned direction) to change its output behavior, as
+opposed to only reading activations to produce a score.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>inference-time scaling</strong></td>
@@ -1442,6 +1745,13 @@ match.</td>
 <td>§3.5</td>
 </tr>
 <tr>
+<td><strong>judge alignment (score vs. rank)</strong></td>
+<td>Two different senses in which a judge can &#39;agree&#39; with humans:
+assigning similar absolute scores, versus placing models in the same
+relative order -- a judge can be good at one and bad at the other.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>Kaplan FLOPs formula</strong></td>
 <td>The convention of counting roughly 2 x parameters floating-point
 operations per processed token (6 x parameters per training token).</td>
@@ -1455,6 +1765,13 @@ natural outputs.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>knowledge base / knowledge graph grounding</strong></td>
+<td>Questions that require looking up a structured fact (e.g. &#39;which
+organ system does X belong to&#39;) from an external knowledge base, not
+just reading the image.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>knowledge erasure (linear orthogonalization)</strong></td>
 <td>Removing a specific piece of information from a representation by
 projecting the representation so that it has zero component along a
@@ -1462,6 +1779,13 @@ learned direction associated with that information (here, a
 &quot;hallucinated object&quot; direction) — mathematically, subtracting the
 component of the vector that points along the unwanted direction.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>knowledge-based VQA (KB-VQA)</strong></td>
+<td>A VQA variant where answering correctly requires retrieving and
+reasoning over an external structured knowledge base, not just
+perceiving the image.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>KV cache</strong></td>
@@ -1476,6 +1800,13 @@ tokens, kept in memory so a transformer doesn&#39;t recompute them at every
 new generation step; its size grows with context length and is a major
 memory cost for long-context models.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>language prior</strong></td>
+<td>A model&#39;s learned tendency to answer based on what&#39;s statistically
+likely from the text/question alone, rather than genuinely attending to
+the image -- a major cause of LVLM hallucination and yes-bias.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>latent verifier</strong></td>
@@ -1508,12 +1839,31 @@ scaling with an argmax-over-verifier reducer.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>leniency bias</strong></td>
+<td>A judge&#39;s systematic tendency to rate outputs more favorably than a
+strict/human standard would.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>linear separability</strong></td>
 <td>Whether classes can be separated by a straight line/hyperplane in a
 given representation space. Higher linear separability means a simple
 linear probe can already tell the classes apart, without needing a
 non-linear model.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>linguistic invariance</strong></td>
+<td>The property that many different surface strings express the same
+underlying meaning; semantic entropy exploits this by clustering before
+measuring uncertainty.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>LLM-as-a-judge</strong></td>
+<td>Using a strong LLM to score or compare the outputs of other
+models/systems, as a cheaper substitute for human evaluation.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>LMM-as-a-Judge / LLM-as-judge</strong></td>
@@ -1563,6 +1913,13 @@ is about specific objects, before any text is generated.</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>LVLM (large vision-language model)</strong></td>
+<td>A large neural network that takes both images and text as input and
+generates text output; synonym used interchangeably with VLM in much of
+this literature.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>M-RoPE (Multimodal Rotary Position Embedding)</strong></td>
 <td>An extension of rotary position embeddings (a way transformers
 encode token order) so that position information is shared coherently
@@ -1598,10 +1955,24 @@ datasets (originally 28x28) used for lightweight benchmarking.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>MedPix</strong></td>
+<td>A public, freely searchable database of radiology teaching-file
+images (with case info) maintained by NLM/AFIP; the image source for
+VQA-RAD.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>MedSigLIP</strong></td>
 <td>A medically fine-tuned version of the SigLIP vision encoder (see the
 SigLIP card), used as MedGemma&#39;s image-understanding backbone.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>MedVInT</strong></td>
+<td>The generative medical-VQA model proposed alongside PMC-VQA: a
+vision encoder aligned to a pretrained LLM so the model writes free-text
+answers instead of picking from a fixed label set.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>meta-generation</strong></td>
@@ -1609,6 +1980,14 @@ SigLIP card), used as MedGemma&#39;s image-understanding backbone.</td>
 whole sequences (best-of-N, self-consistency, refinement, tree
 search).</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>Min-K%++</strong></td>
+<td>A membership-inference technique that flags training-set membership
+by looking at whether a model assigns unusually high probability to the
+lowest-probability (tail) tokens of a text, relative to what a model
+that never saw the text would do.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>Minimum Bayes Risk (MBR) decoding</strong></td>
@@ -1688,10 +2067,33 @@ later &#39;bolting on&#39; vision (post-hoc adaptation).</td>
 <td>§3.7</td>
 </tr>
 <tr>
+<td><strong>near-neighbour overlap (embedding-space)</strong></td>
+<td>Detecting likely-duplicate images by checking whether an evaluation
+image&#39;s embedding (e.g. from SigLIP) has an extremely close match in a
+pretraining-adjacent corpus.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>negative / pre-domain control</strong></td>
+<td>Running the same detector on a model known not to have plausible
+exposure to the target domain (here, BLIP-2 for medical VQA) to check
+whether the detector&#39;s &#39;positive&#39; signal is meaningful or just an
+artifact of the method.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>non-monotone scaling</strong></td>
 <td>Performance that first improves then degrades as you add more
 calls/samples.</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>NOTA (None-Of-The-Above) perturbation</strong></td>
+<td>A stress test for multiple-choice VQA that removes/hides the correct
+answer option, forcing the model to pick a wrong one, to see whether its
+confidence/uncertainty score reacts appropriately to being forced into
+an error.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>number of layers</strong></td>
@@ -1708,12 +2110,30 @@ at fixed intervals.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>o1-like reasoning model</strong></td>
+<td>A model trained to produce extended step-by-step reasoning before
+its final answer, in the style of OpenAI&#39;s o1.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>object hallucination</strong></td>
+<td>An LVLM describing an object as present in an image when it is not
+actually there.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>object hallucination (OH)</strong></td>
 <td>When a vision-language model describes or claims an object is
 present in an image that is not actually there (or gets its
 attributes/relations wrong) — a specific, well-studied failure mode
 distinct from general answer incorrectness.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>open-ended VQA</strong></td>
+<td>A visual question answering format where the model must produce free
+text as its answer, rather than selecting from given options.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>oracle gap</strong></td>
@@ -1765,6 +2185,20 @@ correct/incorrect. Our probe is ORM-style.</td>
 final answer&#39;s correctness (outcome-based) or reward/penalize each
 individual reasoning step (process-based).</td>
 <td>§3.2</td>
+</tr>
+<tr>
+<td><strong>P(IK) / &quot;I know&quot;</strong></td>
+<td>The model&#39;s predicted probability that it will be able to answer a
+question correctly at all, estimated before/without seeing any specific
+candidate answer.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>P(True)</strong></td>
+<td>The model&#39;s own predicted probability that a specific proposed
+answer is correct, elicited by prompting it to judge its own (or
+another) answer.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>pairwise error correlation (rho)</strong></td>
@@ -1847,6 +2281,13 @@ perception-heavy.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>Platt scaling</strong></td>
+<td>A post-hoc calibration method that fits a logistic regression from a
+model&#39;s raw confidence score to P(correct) using held-out labelled data;
+rescales confidence without changing which candidate ranks highest.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>pointwise vs listwise vs pairwise scoring</strong></td>
 <td>Three ways to rank candidates: pointwise scores each one alone;
 pairwise compares two at a time; listwise looks at the whole set
@@ -1880,10 +2321,32 @@ word comes from reinforcement learning.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>polygenic risk score</strong></td>
+<td>A single number summarizing an individual&#39;s genetic predisposition
+to a disease, computed by combining the effects of many genetic
+variants.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>POPE (Polling-based Object Probing Evaluation)</strong></td>
+<td>An evaluation protocol that asks a model direct yes/no questions
+(&#39;Is there a <object> in the image?&#39;) instead of parsing free-form
+generated captions, giving a more stable and less prompt-sensitive
+measurement of object hallucination.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>position bias</strong></td>
 <td>A judge&#39;s tendency to favor a candidate because of where it appears
 in the list it is shown, rather than its actual quality.</td>
 <td>§3.5</td>
+</tr>
+<tr>
+<td><strong>position bias (judging)</strong></td>
+<td>A judge model&#39;s tendency to favor whichever answer is shown first
+(or second) in a pairwise comparison, independent of actual
+quality.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>post-hoc selector</strong></td>
@@ -1944,6 +2407,21 @@ probe is trained.</td>
 <td>§3.3</td>
 </tr>
 <tr>
+<td><strong>probing evaluation (negation questions)</strong></td>
+<td>Pairing a normal question with a variant that negates or falsifies
+an attribute (e.g. asking about a finding that is not actually present)
+to check whether the model is really grounding its answer in the image
+or just pattern-matching.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>procedural diagnosis</strong></td>
+<td>Requiring a model to answer a structured sequence of sub-questions
+(modality, organ, finding, abnormality, location) for one image, rather
+than one free-standing question.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>process reward model (PRM)</strong></td>
 <td>A verifier that scores each intermediate step of a solution, giving
 &#39;a prediction of the correctness of each intermediate step in a
@@ -1956,6 +2434,13 @@ solution, rather than just the final answer&#39;.</td>
 space into the language model&#39;s token-embedding space, so image features
 can be fed into the LLM alongside text tokens.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>prompt tuning</strong></td>
+<td>Learning a small number of continuous &#39;prompt&#39; vectors prepended to
+the input while keeping the rest of the model&#39;s weights frozen, as a
+lightweight alternative to full fine-tuning.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>proposal coverage</strong></td>
@@ -2046,6 +2531,12 @@ rather than the stricter statistical technique of the same name.</td>
 <td>Best-of-n: sample n, keep the top reward-model pick, discard the
 rest.</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>reliability diagram</strong></td>
+<td>A plot of predicted confidence (binned) against observed accuracy
+per bin; a perfectly calibrated model lies on the diagonal.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>repeated sampling</strong></td>
@@ -2139,6 +2630,13 @@ multiple &#39;agents&#39;.</td>
 <td>§3.5</td>
 </tr>
 <tr>
+<td><strong>selective prediction</strong></td>
+<td>A framework where a model can withhold a prediction on some inputs
+(defer them) for lower error on the rest; used here only as an
+evaluation lens.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>selectivity</strong></td>
 <td>The gap between a probe&#39;s accuracy on the real task and its accuracy
 on the matched control task. A selective probe is accurate on the real
@@ -2168,6 +2666,19 @@ answer (majority vote). A training-free selector; our baseline.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>self-enhancement / self-preference bias</strong></td>
+<td>A judge model&#39;s tendency to rate outputs it (or a closely related
+model) generated more favorably than equally-good outputs from
+elsewhere.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>self-recognition (of own generations)</strong></td>
+<td>A model&#39;s above-chance ability to identify which text it (vs.
+another model or a human) produced.</td>
+<td>§3.8</td>
+</tr>
+<tr>
 <td><strong>self-refinement</strong></td>
 <td>Ask the model to critique and rewrite its own answer for several
 rounds (sequential scaling).</td>
@@ -2186,6 +2697,29 @@ a cheap alternative to a trained verifier.</td>
 via mutual entailment) instead of over exact answer strings, so that
 paraphrases of the same correct answer count as agreement.</td>
 <td>§3.5</td>
+</tr>
+<tr>
+<td><strong>semantic entropy probe (SEP)</strong></td>
+<td>A small probe trained on a single generation&#39;s hidden states to
+predict what semantic entropy (normally requiring many sampled
+generations plus NLI clustering) would have been, at near-zero extra
+inference cost.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>semantic hierarchy (of class labels)</strong></td>
+<td>A tree/taxonomy relating class labels at different granularities
+(e.g. &#39;dog&#39; under &#39;animal&#39;), used here to generate harder follow-up
+questions that a merely-coarse-correct answer would fail.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>semi-automated dataset construction</strong></td>
+<td>Building a dataset by combining an automatic pipeline (e.g. NLP
+QA-pair generation from text) with a manual verification pass, rather
+than either fully automatic templating or fully manual human
+authoring.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>sequential vs parallel scaling</strong></td>
@@ -2221,6 +2755,13 @@ repeated.</td>
 superficial cue (e.g. answer-format patterns) rather than the intended
 reasoning process -- looks correct on the metric but is not robust.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>side-by-side expert evaluation</strong></td>
+<td>Human experts (here, radiologists) compare two candidate outputs
+(e.g. an AI report vs. the original human report) directly against each
+other rather than scoring each in isolation.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>sigmoid loss (vs. softmax contrastive)</strong></td>
@@ -2310,6 +2851,28 @@ different-class examples apart, in embedding space.</td>
 <td>§3.5</td>
 </tr>
 <tr>
+<td><strong>surrogate model</strong></td>
+<td>Using a separate, accessible model to estimate the confidence of a
+closed/inaccessible target model when its internals or logits aren&#39;t
+available.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>system-mediated attention</strong></td>
+<td>Attention allocated to the system prompt/instruction tokens (as
+opposed to the image or the user&#39;s text), proposed here as a hidden
+driver of yes-bias when it crowds out attention to the actual
+evidence-bearing inputs.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>temperature scaling</strong></td>
+<td>Dividing a model&#39;s pre-softmax logits by a single learned scalar
+before softmax, so confidence values better match true accuracy, without
+changing which class ranks highest.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>test-time compute / inference-time scaling</strong></td>
 <td>Spending extra computation when answering a question (more samples,
 longer reasoning, search) instead of making the model bigger or training
@@ -2323,6 +2886,21 @@ candidates, searching more reasoning paths) to improve accuracy, as
 opposed to spending compute during training. Best-of-N is one form of
 test-time scaling.</td>
 <td>§3.2</td>
+</tr>
+<tr>
+<td><strong>text-only / language-only ablation</strong></td>
+<td>Re-running a model with the image removed (or blanked) to check
+whether it can still &#39;answer&#39; from question text alone -- a high score
+here indicates a dataset shortcut, not real vision.</td>
+<td>§3.8</td>
+</tr>
+<tr>
+<td><strong>Tissue Source Site (TSS)</strong></td>
+<td>The institution/site that originally collected a tissue sample in a
+resource like TCGA; different cases from the same TSS can share
+scanner/staining artifacts that a model could exploit as a
+shortcut.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>token budget</strong></td>
@@ -2355,6 +2933,20 @@ pass.</td>
 <td>§3.2</td>
 </tr>
 <tr>
+<td><strong>training-free logit baseline</strong></td>
+<td>A confidence score computed directly from the model&#39;s own output
+token probabilities (e.g. max softmax probability), with no extra
+training.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>trustworthiness benchmark</strong></td>
+<td>An evaluation suite measuring multiple independent axes of model
+reliability (factual correctness, fairness, robustness, privacy) rather
+than accuracy alone.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>truthful direction</strong></td>
 <td>A single direction (vector) in a model&#39;s hidden-state space along
 which moving representations makes outputs more truthful/less
@@ -2378,6 +2970,15 @@ universal direction that works everywhere.</td>
 <td>§3.1</td>
 </tr>
 <tr>
+<td><strong>uncertainty as diagnostic vs safety net</strong></td>
+<td>This paper&#39;s distinction between using uncertainty to catch a
+specific failure live at inference time (safety net -- found not to work
+here) versus using clean-input uncertainty to identify which cases are
+generally fragile/failure-prone ahead of time (diagnostic -- found to
+work here).</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>understanding vs. reasoning (as evaluated
 here)</strong></td>
 <td>This paper&#39;s split of VQA performance into tasks needing mainly
@@ -2385,6 +2986,14 @@ visual recognition/fact retrieval (&quot;understanding&quot;) versus tasks needi
 multi-step inference over that information (&quot;reasoning&quot;), scored as
 separate sub-metrics.</td>
 <td>§3.7</td>
+</tr>
+<tr>
+<td><strong>unified experimental setup (reproducibility)</strong></td>
+<td>Evaluating multiple models under identical, fixed conditions (same
+prompts, decoding settings, data splits) so that reported score
+differences reflect real model differences, not incidental setup
+differences.</td>
+<td>§3.8</td>
 </tr>
 <tr>
 <td><strong>universal self-consistency (USC)</strong></td>
@@ -2402,6 +3011,13 @@ information the compressed representation retains about the
 (nuisance-heavy) input. It is a way to make a probe focus on
 task-relevant signal instead of memorizing irrelevant details.</td>
 <td>§3.3</td>
+</tr>
+<tr>
+<td><strong>VASE metric</strong></td>
+<td>The paper&#39;s robust hallucination/uncertainty metric within the HEDGE
+pipeline, found most reliable when paired with embedding-based
+clustering (full definition not extracted from the abstract).</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>verbal vs. visual reflection</strong></td>
@@ -2465,12 +3081,42 @@ architecture used for text.</td>
 <td>§3.7</td>
 </tr>
 <tr>
+<td><strong>Vision-Amplified Semantic Entropy (VASE)</strong></td>
+<td>A variant of semantic entropy that amplifies the contribution of
+vision-conditioned uncertainty, used here as a baseline that CEBaG beats
+by 8 AUC points on average.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>vision-conditioned entropy</strong></td>
+<td>Computing semantic entropy twice -- once for the true image, once
+for a visually distorted version -- and using the contrast between them
+as the hallucination signal, so the score reflects reliance on actual
+visual evidence rather than just general overconfidence.</td>
+<td>§3.6</td>
+</tr>
+<tr>
+<td><strong>Visual Dependency Probing (VDP)</strong></td>
+<td>A method for identifying which decoder layers in an LVLM rely most
+heavily on visual (as opposed to purely textual) tokens when generating
+each output token.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>Visual premise verification</strong></td>
 <td>Explicitly checking whether the visual facts (premises) a model&#39;s
 reasoning step relies on are actually true of the image, separately from
 checking whether the logical reasoning built on top of those premises is
 valid.</td>
 <td>§3.2</td>
+</tr>
+<tr>
+<td><strong>visual prompt perturbation</strong></td>
+<td>Creating semantically-equivalent but visually altered versions of
+the input image (e.g. crops, augmentations) to test whether the model&#39;s
+answer stays consistent -- inconsistency signals
+uncertainty/hallucination.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>visual token dominance</strong></td>
@@ -2544,6 +3190,14 @@ Our probe is white-box; this paper&#39;s PRM is deliberately NOT
 <td>§3.2</td>
 </tr>
 <tr>
+<td><strong>white-box vs black-box confidence estimation</strong></td>
+<td>White-box methods need access to model internals (logits, hidden
+states, attention); black-box methods only need text outputs (e.g. via
+an API) -- prompting for a verbalized confidence, or checking agreement
+across repeated samples.</td>
+<td>§3.6</td>
+</tr>
+<tr>
 <td><strong>whole-slide image (WSI)</strong></td>
 <td>A gigapixel-scale digitized microscope slide of a tissue sample used
 in pathology, far larger than a typical photo, usually processed in
@@ -2555,6 +3209,13 @@ tiles/patches.</td>
 <td>Probability that a sample from one policy is preferred to a sample
 from another.</td>
 <td>§3.1</td>
+</tr>
+<tr>
+<td><strong>yes-bias</strong></td>
+<td>A VLM&#39;s tendency to answer &#39;yes&#39; to yes/no questions regardless of
+whether the image actually supports a &#39;yes&#39; answer, a common and
+well-documented VLM hallucination pattern.</td>
+<td>§3.6</td>
 </tr>
 <tr>
 <td><strong>zero-shot accuracy</strong></td>
@@ -3270,7 +3931,7 @@ claim is &quot;+0.0736 under a Lingshu-32B judge&quot;.</li>
 (LOBO); the method needs ~100 labelled questions per new benchmark. Say
 this before the headline, not after.</li>
 <li><strong>The mechanism is not novel.</strong> Hidden-state probes as
-best-of-N verifiers exist under several names (§3.C, §4); &quot;verification
+best-of-N verifiers exist under several names (§3.3, §4); &quot;verification
 is free&quot; is in print. What is ours is the vision-language / medical
 transfer and the breadth of the characterisation.</li>
 <li><strong>Reproducibility floor.</strong> Thread count moves the macro
@@ -3291,7 +3952,7 @@ before 2026-09-12 on that benchmark; the backfill moved the headline
 <code>pathvqa_truncation_2026-09-13.json</code>).</li>
 <li><strong>No control task has ever been run.</strong> The probing
 literature&#39;s standard hygiene check (Hewitt &amp; Liang 2019,
-arXiv:1909.03368, §3.C) is to train the same probe on a
+arXiv:1909.03368, §3.3) is to train the same probe on a
 <em>randomised</em> version of the labels: a probe with enough capacity
 can fit anything, so the reported metric must be paired with
 <strong>selectivity</strong> — real-task performance minus control-task
@@ -3401,9 +4062,10 @@ Bayes risk, consensus, and logit-based scores</td>
 </tr>
 <tr>
 <td>3.6</td>
-<td><em>(category F — not built)</em></td>
-<td style="text-align: right;">–</td>
-<td>–</td>
+<td>Uncertainty, Calibration, and Hallucination Detection in LLMs and
+VLMs -- with the Medical Evidence</td>
+<td style="text-align: right;">32</td>
+<td>4</td>
 </tr>
 <tr>
 <td>3.7</td>
@@ -3414,9 +4076,9 @@ We Compare Against</td>
 </tr>
 <tr>
 <td>3.8</td>
-<td><em>(category H — not built)</em></td>
-<td style="text-align: right;">–</td>
-<td>–</td>
+<td>Medical VQA benchmarks, datasets, and the evaluation protocol</td>
+<td style="text-align: right;">23</td>
+<td>4</td>
 </tr>
 <tr>
 <td>3.9</td>
@@ -7770,6 +8432,1187 @@ other samples); our probe instead uses a metric trained against
 ground-truth labels, so it doesn&#39;t depend on the pool containing
 consensus.</small></li>
 </ul>
+<h2 id="36-uncertainty-calibration-and-hallucination-detection-in-llms-and-vlms----with-the-medical-evidence">3.6
+Uncertainty, Calibration, and Hallucination Detection in LLMs and VLMs
+-- with the Medical Evidence</h2>
+<p>This category covers how to tell whether a model&#39;s answer should be
+trusted, and the closely related problem of hallucination -- confident
+but wrong or ungrounded output. Confidence/uncertainty signals split
+into four broad families: verbalized (ask the model to state a
+confidence in words), logit-based (read the model&#39;s own token
+probabilities), sampling-based / semantic entropy (generate several
+answers and measure how much they agree once paraphrases are grouped by
+meaning), and internal-state / probing-based (train a small classifier
+on the model&#39;s hidden activations). In vision-language models this gets
+harder: hallucination includes object hallucination (describing things
+not in the image), driven by language priors and training-set
+co-occurrence statistics, and &#39;yes-bias&#39; (a default tendency to answer
+yes regardless of evidence). Medical VLMs make it harder still -- models
+are shown to be overconfident regardless of scale or prompting, semantic
+entropy needs to be vision-conditioned to work at all, and uncertainty
+quality tracks accuracy rather than being an intrinsic property of the
+method, degrading exactly where it is needed most. For our project,
+these are the alternative confidence signals a reviewer will expect us
+to compare our trained hidden-state MLP probe against, and the
+vocabulary (calibration, ECE, AUROC/discrimination, verbalized vs
+white-box, semantic entropy) a reviewer will expect Leo to use
+correctly.</p>
+<h4 id="-calibrated-triage-not-autonomy-confidence-estimation-for-medical-vision-language-models">★
+Calibrated Triage, Not Autonomy: Confidence Estimation for Medical
+Vision-Language Models</h4>
+<p><em>Reza Khanmohammadi et al. · 2026 · arXiv preprint · <a href="https://arxiv.org/abs/2606.15910">arXiv:2606.15910</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> A head-to-head benchmark of nine
+confidence estimators (training-free logit, verbalized prompting,
+trained internal probes) across five LVLMs and three medical VQA
+datasets finds no estimator reliably best, and even the strongest safely
+triages only ~25% of radiology cases at 20% error tolerance, and almost
+nothing in pathology.</p>
+<ul>
+<li><strong>Models.</strong> Five open-weight LVLMs (names not given in
+the abstract/abs page -- &quot;not extracted&quot;); probes are trained only on
+natural (non-medical) images and applied to medicine with no
+adaptation.</li>
+<li><strong>Method.</strong> Evaluates nine confidence estimators across
+three families -- training-free logit baselines, prompt-based
+self-reports, and trained internal probes -- recast as bounded selective
+prediction: given a score and an error-tolerance budget, how much of the
+workload can be deferred while keeping error under budget.</li>
+<li><strong>Datasets.</strong> Three medical VQA datasets covering broad
+clinical imaging, radiology, and pathology (specific names not
+extracted).</li>
+<li><strong>Experiments.</strong> Compares the nine estimators&#39;
+discrimination and calibration across 5 LVLMs x 3 datasets; measures
+safe-deferral fraction under (a) a distribution-free guarantee and (b) a
+held-out threshold, at a fixed 20% error tolerance.</li>
+<li><strong>Results.</strong> &quot;Discrimination barely separates the
+estimators&quot; and &quot;a fixed high-confidence cutoff separates them far less
+than it appears, because their scores sit on incomparable scales&quot;
+[abstract]. &quot;At a 20% error tolerance the strongest estimator defers
+about a quarter of radiology cases under a distribution-free guarantee
+and a third under a held-out threshold, and little to none of pathology&quot;
+[abstract].</li>
+<li><strong>Conclusions.</strong> No estimator is reliably best across
+domains or models; base-model competence sets a ceiling on safe deferral
+and the confidence layer only determines how much of that ceiling is
+reachable. The authors frame the useful role as &quot;calibrated triage under
+clinical oversight, not autonomous deferral.&quot;</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Direct comparison set for our
+probe -- it is exactly their &quot;trained internal probe&quot; family, but
+frozen/off-the-shelf and trained on natural images, vs. ours trained
+in-domain on our own 3-layer x candidate hidden states. Their transfer
+failure is a caution against assuming our probe generalizes beyond its
+trained benchmark, and their &quot;incomparable scales&quot; finding supports
+reporting our probe rank-averaged (which we already do). Its
+abstention/triage component is out of scope for us by standing rule.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="-overconfidence-and-calibration-in-medical-vqa-empirical-findings-and-hallucination-aware-mitigation">★
+Overconfidence and Calibration in Medical VQA: Empirical Findings and
+Hallucination-Aware Mitigation</h4>
+<p><em>Ji Young Byun et al. · 2026 · arXiv preprint · <a href="https://arxiv.org/abs/2604.02543">arXiv:2604.02543</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Across three VLM families (2B-38B) and
+three medical VQA benchmarks, overconfidence persists regardless of
+scale or prompting (CoT, verbalized confidence); Platt scaling reliably
+beats prompt-based calibration but doesn&#39;t improve AUROC; adding
+hallucination-detection signals (their HAC method) improves both,
+especially on open-ended questions.</p>
+<ul>
+<li><strong>Models.</strong> Three VLM families across scales 2B-38B:
+Qwen3-VL, InternVL3, LLaVA-NeXT.</li>
+<li><strong>Method.</strong> Compares raw confidence, chain-of-thought
+and verbalized-confidence prompting, and post-hoc calibration (Platt
+scaling) for calibration error and AUROC; proposes Hallucination-Aware
+Calibration (HAC), adding vision-grounded hallucination-detection
+signals as extra inputs to the calibration function.</li>
+<li><strong>Datasets.</strong> Three medical VQA benchmarks (names not
+extracted from the abstract/abs page).</li>
+<li><strong>Experiments.</strong> Measures calibration error and AUROC
+per model/scale/prompting-strategy; ablates post-hoc calibration
+methods; evaluates HAC vs both prompting-based and plain post-hoc
+calibration, separately for closed- and open-ended questions.</li>
+<li><strong>Results.</strong> &quot;Overconfidence persists across model
+families and is not resolved by scaling or prompting, such as
+chain-of-thought and verbalized confidence variants&quot; [abstract]. &quot;Simple
+post-hoc calibration approaches, such as Platt scaling, reduce
+calibration error and consistently outperform the prompt-based strategy&quot;
+but are &quot;inherently limited in improving the discriminative quality of
+predictions, leaving AUROC at the same level&quot; [abstract; confirmed via
+WebFetch of abs page, no new numbers surfaced]. HAC &quot;improves both
+calibration and AUROC, with the largest gains on open-ended questions&quot;
+[abstract]. No exact ECE/AUROC point values recoverable -- &quot;not
+extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Recommend post-hoc calibration (e.g.
+Platt scaling) as standard practice for medical VLM deployment over
+raw/prompted confidence, and highlight hallucination-detection signals
+as a useful complementary calibration input, particularly for open-ended
+VQA.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Platt scaling / post-hoc
+calibration is the cheap competitor to our probe, and their finding that
+it caps out on AUROC (recalibrates but can&#39;t improve ranking) is exactly
+why our probe&#39;s job -- ranking/selecting among candidates, not just
+recalibrating a scalar -- is a different, harder task. Their &quot;largest
+gains on open-ended questions&quot; for a hallucination-aware signal supports
+our choice to work on open-ended medical VQA, where routing signals
+behave differently than on MCQ.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="-detecting-hallucinations-in-large-language-models-using-semantic-entropy">★
+Detecting hallucinations in large language models using semantic
+entropy</h4>
+<p><em>Sebastian Farquhar et al. · 2024 · Nature 630, 625-630 (2024) ·
+<a href="https://www.nature.com/articles/s41586-024-07421-0">doi:10.1038/s41586-024-07421-0</a>
+· read priority 1 · <strong>PDF in
+<code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Introduces semantic entropy --
+clustering sampled generations by bidirectional textual entailment and
+computing entropy over the resulting meaning-clusters -- as an
+unsupervised, training-free hallucination detector that beats naive
+token entropy and P(True) baselines.</p>
+<ul>
+<li><strong>Models.</strong> LLaMA 2 Chat (7B/13B/70B), Falcon Instruct
+(7B/40B), Mistral Instruct (7B), GPT-4 (biography experiments);
+entailment judged with DeBERTa-Large-MNLI or GPT-3.5/GPT-4 as the NLI
+judge.</li>
+<li><strong>Method.</strong> Sample multiple free-form answers per
+question at temperature&gt;0; cluster answers into semantic-equivalence
+classes via bidirectional entailment (A entails B and B entails A);
+compute Shannon entropy over the cluster-probability distribution
+instead of over raw token sequences. A discrete variant works from
+cluster counts alone (no token log-probs needed), so it applies to
+black-box/API models.</li>
+<li><strong>Datasets.</strong> TriviaQA, SQuAD 1.1, BioASQ, NQ-Open,
+SVAMP, plus a new FactualBio biography-generation dataset.</li>
+<li><strong>Experiments.</strong> Sentence-length QA (30 model-task
+combinations): semantic entropy vs naive predictive entropy, P(True),
+and embedding-regression baselines, scored by AUROC for detecting wrong
+answers. Paragraph-length biography generation: discrete semantic
+entropy vs self-check and P(True) via AUROC/AURAC.</li>
+<li><strong>Results.</strong> &quot;AUROC value of 0.790&quot; for semantic
+entropy averaged over 30 model-task combinations, vs 0.691 (naive
+entropy), 0.698 (P(True)), 0.687 (embedding regression) [Nature, via
+WebFetch summary of Fig. 2]; performance &quot;ranged between 0.78 and 0.81
+AUROC&quot; across model families/scales [same]. On biographies, discrete
+semantic entropy had the highest AUROC/AURAC; &quot;at 80%+ questions
+answered, semantic entropy maintained highest accuracy&quot; [Nature, via
+WebFetch summary of Fig. 3].</li>
+<li><strong>Conclusions.</strong> Semantic entropy needs no labels or
+fine-tuning and detects hallucinations caused by the model&#39;s lack of
+knowledge (&quot;confabulations&quot;) better than logit-only or single-sample
+self-report methods. The authors note this could let a system &quot;refuse to
+answer questions likely to cause confabulations.&quot;</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Founding paper for the
+sampling-based/semantic-entropy family -- the natural training-free
+competitor to our trained MLP probe. Both sample N candidates, but
+semantic entropy scores agreement across the whole set (a question-level
+uncertainty) where our probe scores each candidate individually (a
+per-candidate correctness score) for selection. Gives us the term
+&quot;semantic entropy&quot; and a self-consistency-at-N=8 baseline we should name
+explicitly. Its abstention/triage component is out of scope for us by
+standing rule.</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="-a-survey-of-confidence-estimation-and-calibration-in-large-language-models">★
+A Survey of Confidence Estimation and Calibration in Large Language
+Models</h4>
+<p><em>Jiahui Geng et al. · 2023 · arXiv preprint · <a href="https://arxiv.org/abs/2311.08298">arXiv:2311.08298</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Survey organizing LLM
+confidence-estimation methods into white-box (logit-based,
+internal-state-based, semantic) and black-box (verbalized,
+consistency-based, surrogate-model) families, cataloging calibration
+metrics and applications including hallucination detection and selective
+generation.</p>
+<ul>
+<li><strong>Models.</strong> Survey -- covers methods applied across
+many LLMs, no single model evaluated.</li>
+<li><strong>Method.</strong> Literature survey and taxonomy paper; no
+new empirical method proposed.</li>
+<li><strong>Datasets.</strong> N/A (survey).</li>
+<li><strong>Experiments.</strong> N/A (survey); summarizes techniques,
+metrics and applications from the literature it covers.</li>
+<li><strong>Results.</strong> Descriptive, not numeric. Taxonomy:
+white-box = &quot;logit-based methods&quot; (token-level probabilities/entropy),
+&quot;internal state-based methods&quot; (hidden layer activations, attention),
+and semantic approaches; black-box = &quot;linguistic confidence (verbalized
+method)&quot;, &quot;consistency-based estimation&quot; (agreement across samples), and
+&quot;surrogate models&quot; [arXiv HTML, via WebFetch]. Calibration metrics
+covered: ECE (&quot;weighted average of the discrepancies between the mean
+predicted probability and the actual accuracy&quot;), reliability diagrams,
+AUROC, AUARC, and a token-level ECE variant for sequence generation
+[arXiv HTML, via WebFetch].</li>
+<li><strong>Conclusions.</strong> LLMs pose &quot;unique challenges&quot; for
+confidence estimation beyond classical classifier calibration; calls for
+comprehensive cross-domain benchmarks, extending methods to multi-modal
+LLMs, and calibration that accounts for legitimate human disagreement
+rather than a single ground truth.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The map we use to name the
+four families of confidence/uncertainty signal in this category -- our
+probe is a &quot;white-box, internal-state-based&quot; method in this taxonomy,
+alongside semantic entropy probes and INSIDE; best-of-N + verifier is
+closest to their &quot;consistency-based/surrogate&quot; black-box family but ours
+reads internal states, not just output agreement. Its explicit call to
+&quot;extend methods to multi-modal LLMs&quot; is the gap our medical-VLM
+open-text work fills.</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="deterministic-hallucination-detection-in-medical-vqa-via-confidence-evidence-bayesian-gain">Deterministic
+Hallucination Detection in Medical VQA via Confidence-Evidence Bayesian
+Gain</h4>
+<p><em>Mohammad Asadi et al. · 2026 · arXiv preprint · <a href="https://arxiv.org/abs/2603.21693">arXiv:2603.21693</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Proposes Confidence-Evidence Bayesian
+Gain (CEBaG), a fully deterministic (no sampling, no external NLI model)
+hallucination detector for medical VQA combining token-level
+predictive-variance and image-evidence-magnitude signals, beating
+semantic-entropy-style methods (VASE) by 8 AUC points on average across
+16 settings while being far cheaper.</p>
+<ul>
+<li><strong>Models.</strong> Four medical MLLMs.</li>
+<li><strong>Method.</strong> Combines two signals read directly from
+token log-probabilities during a single forward pass: token-level
+predictive variance (inconsistent confidence across the response&#39;s
+tokens) and evidence magnitude (how much the image shifts per-token
+predictions relative to a text-only version of the same query) -- no
+stochastic sampling, no external NLI model, no task-specific
+hyperparameters.</li>
+<li><strong>Datasets.</strong> Three VQA benchmarks (names not extracted
+from the abstract).</li>
+<li><strong>Experiments.</strong> Evaluates CEBaG against Semantic
+Entropy (SE) and Vision-Amplified Semantic Entropy (VASE) baselines
+across 4 MLLMs x 3 benchmarks = 16 experimental settings, measuring AUC
+for hallucination detection.</li>
+<li><strong>Results.</strong> &quot;CEBaG achieves the highest AUC in 13 of
+16 settings and improves over VASE by 8 AUC points on average, while
+being fully deterministic and self-contained&quot; [abstract].</li>
+<li><strong>Conclusions.</strong> A deterministic, single-forward-pass,
+logit-only signal (no sampling, no external model) can beat 10-20x more
+expensive sampling-based semantic-entropy methods for medical VQA
+hallucination detection -- a strong efficiency and accuracy result
+against the &quot;more sampling is better&quot; assumption in this
+literature.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> An important efficiency
+counterpoint: CEBaG needs zero extra sampling and no probe training, yet
+beats semantic-entropy variants by a large margin (8 AUC points) --
+worth directly comparing against our probe&#39;s own cost/accuracy tradeoff,
+since our probe is also read during generation with &quot;no extra forward
+pass&quot; but does need training, whereas CEBaG needs neither training nor
+extra sampling. Likely the single most relevant training-free competitor
+baseline in this category for our efficiency argument.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="uncertainty-is-not-a-safety-net-for-clinical-vqa-but-can-it-anticipate-model-failure">Uncertainty
+Is Not a Safety Net for Clinical VQA, but Can It Anticipate Model
+Failure?</h4>
+<p><em>Arnisa Fazla et al. · 2026 · Findings of EMNLP 2026 · <a href="https://arxiv.org/abs/2606.16583">arXiv:2606.16583</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Benchmarking 8 uncertainty-estimation
+methods across 12 clinical VLMs finds UE quality is not intrinsic to the
+method but tracks the base model&#39;s accuracy (degrading exactly where
+reliability is most needed), and that hiding the correct MCQ option
+(NOTA perturbation) collapses accuracy while uncertainty barely moves --
+yet uncertainty on the unperturbed input still predicts which cases will
+later collapse under NOTA.</p>
+<ul>
+<li><strong>Models.</strong> 12 clinical VLMs.</li>
+<li><strong>Method.</strong> Benchmarks 8 uncertainty-estimation (UE)
+methods on clinical VQA; introduces a stress test -- None-Of-The-Above
+(NOTA) perturbation, hiding the correct option among the multiple-choice
+answers -- to test whether UE degrades gracefully or stays miscalibrated
+when the model is forced to fail; also tests whether UE scores on the
+clean/unperturbed input predict which cases will collapse under
+NOTA.</li>
+<li><strong>Datasets.</strong> Clinical VQA benchmarks, multiple-choice
+format (specific names not extracted from the abstract).</li>
+<li><strong>Experiments.</strong> Evaluates all 8 UE methods x 12 VLMs
+on standard clinical VQA (accuracy vs UE quality correlation with
+base-model competence); applies NOTA perturbations and measures accuracy
+collapse vs UE-score shift; tests UE-on-clean-input as a predictor of
+NOTA collapse.</li>
+<li><strong>Results.</strong> &quot;UE quality is not an intrinsic property
+of the UE method: it tracks model accuracy, degrading precisely where
+the model performance is weakest&quot; [abstract]. &quot;When we stress-test
+models by hiding the correct option among the multiple-choice answers
+(NOTA perturbations), accuracy collapses while uncertainty barely
+changes, leaving models systematically miscalibrated&quot; [abstract].
+&quot;Uncertainty on the unperturbed input reliably anticipates which
+predictions will collapse under NOTA, indicating that UE in current VLMs
+carries diagnostic information about model fragility&quot; [abstract].</li>
+<li><strong>Conclusions.</strong> This is a negative result for using UE
+as a real-time &quot;safety net&quot; (it fails exactly when needed most, and
+doesn&#39;t react to a scenario engineered to make the model wrong) but a
+positive result for UE as an offline diagnostic -- clean-input
+uncertainty predicts which questions are fragile to adversarial-style
+perturbation, useful for identifying weak spots before deployment rather
+than catching failures live.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> FLAGGED PAPER: the title
+suggests a blanket negative result about clinical VQA uncertainty, but
+the actual finding is nuanced, not &quot;uncertainty is useless&quot;: UE fails as
+a live safety net (doesn&#39;t react to NOTA-induced failure) but succeeds
+as an offline fragility diagnostic (predicts which cases will later fail
+under stress). This nuance matters for us because our probe is used
+offline, at selection time over an already-sampled pool of 8 candidates,
+not as a live pre-answer safety net -- so the paper&#39;s negative finding
+(UE ignoring induced failure) is less directly damaging to our use case
+than its positive finding (UE-as-fragility-diagnostic) is validating.
+Its &quot;safety net&quot; / &quot;escalate to a clinician&quot; framing is an
+abstention/triage application. Its abstention/triage component is out of
+scope for us by standing rule. We card only its UE-benchmarking and
+NOTA-stress-test findings.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="just-how-sure-are-you-improving-verbalized-uncertainty-calibration-in-medical-vqa">Just
+how sure are you? Improving Verbalized Uncertainty Calibration in
+Medical VQA</h4>
+<p><em>Eren Senoglu et al. · 2026 · arXiv preprint · <a href="https://arxiv.org/abs/2606.27023">arXiv:2606.27023</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Proposes a training-based framework
+that fine-tunes MLLMs with a composite loss (Brier-style calibration
+term, anchor regularizer, contrastive image-text alignment term, KL
+stabilization term) to improve verbalized-confidence calibration in
+medical VQA, cutting calibration error by 60%+ and improving
+discrimination by 26%+ while preserving accuracy.</p>
+<ul>
+<li><strong>Models.</strong> MedGemma 4B IT, Qwen2-VL 7B Instruct.</li>
+<li><strong>Method.</strong> Fine-tunes with a composite loss combining:
+a Brier-style calibration term, an anchor regularizer (prevents
+confidence collapsing to extreme 0/1 values), a contrastive image-text
+alignment term (derived from a 2x2 factorial design crossing image
+presence with text integrity, to probe reliance on vision vs language
+priors), and a top-K KL-divergence regularizer (protects answering
+ability/accuracy during fine-tuning).</li>
+<li><strong>Datasets.</strong> Three medical VQA benchmarks (names not
+extracted from the abstract).</li>
+<li><strong>Experiments.</strong> Compares against prompting-based,
+sampling-based, and other training-based calibration approaches across 3
+benchmarks x 2 architectures; ablates each loss component.</li>
+<li><strong>Results.</strong> &quot;Our method reduces calibration error by
+60% or more, and improves discrimination by 26% or more, while
+preserving predictive accuracy&quot; [abstract]; &quot;outperforms prompting
+based, sampling based, and training based approaches&quot; on average across
+benchmarks [abstract]; &quot;ablation experiments confirm that each component
+of the loss function is indeed necessary&quot; [abstract].</li>
+<li><strong>Conclusions.</strong> A composite training-based calibration
+loss -- that explicitly probes and corrects for image-vs-language-prior
+reliance via the 2x2 factorial alignment term -- substantially improves
+both calibration and discrimination for verbalized confidence in medical
+VQA, beating black-box (prompting/sampling) alternatives.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> A trained calibration baseline
+directly on our target task (medical VQA; MedGemma is one of our own
+backbone families) -- a reviewer will ask why we didn&#39;t instead
+fine-tune the generator itself for calibrated verbalized confidence
+rather than training a separate probe. This paper shows such fine-tuning
+works but changes the generator&#39;s weights, a heavier, more invasive
+intervention than our frozen-backbone probe. Its 2x2
+image/text-integrity factorial design is also a useful diagnostic
+technique we could reuse to check whether our probe exploits genuine
+visual evidence or text-only shortcuts.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="system-mediated-attention-imbalances-make-vision-language-models-say-yes">System-Mediated
+Attention Imbalances Make Vision-Language Models Say Yes</h4>
+<p><em>Tsan Tsai Chan et al. · 2026 · ACL Findings 2026 · <a href="https://arxiv.org/abs/2601.12430">arXiv:2601.12430</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Attributes the VLM &#39;yes-bias&#39;
+(indiscriminately answering &#39;yes&#39;) to functionally redundant attention
+weight on the system-prompt modality crowding out attention to image and
+text, and shows causally redistributing attention away from the system
+modality substantially suppresses yes-bias, often beating existing
+mitigation methods.</p>
+<ul>
+<li><strong>Models.</strong> Multiple VLMs (specific names not extracted
+from the abstract).</li>
+<li><strong>Method.</strong> Analyzes attention allocation across three
+input modalities (system prompt, image, text) rather than just
+image-vs-text; proposes a &quot;system-mediated&quot; account of hallucination
+attributing yes-bias to redundant system-weight attention; causally
+intervenes by redistributing attention away from the system modality
+toward image and text.</li>
+<li><strong>Datasets.</strong> Yes/no-style VQA evaluation setups
+(specific benchmark names not extracted from the abstract).</li>
+<li><strong>Experiments.</strong> Measures yes-bias before/after causal
+attention redistribution; compares against existing (image-centric)
+mitigation strategies that only boost image attention.</li>
+<li><strong>Results.</strong> &quot;Causally redistributing attention from
+the system modality to image and textual inputs substantially suppresses
+this bias, often outperforming existing approaches&quot; [abstract]. No
+specific numeric yes-bias-rate values given -- &quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> The yes-bias failure mode is better
+explained by a three-way (system/image/text) attention account than the
+usual two-way (image/text) one; system-prompt attention is itself a
+lever for mitigating hallucination, not just image attention as prior
+work assumed.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Directly relevant to any
+yes/no or binary-judgment component in our pipeline (e.g. our 32B
+LLM-judge that labels correctness, or any yes/no-formatted sub-question
+in our 8 benchmarks) -- a caution that judge or generator yes/no outputs
+may be systematically biased toward &quot;yes&quot; for reasons unrelated to
+genuine evidence, worth checking for as a confound in our exact-match
+and judge-based correctness labels, especially on any yes/no
+sub-questions.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="hallucination-filtering-in-radiology-vision-language-models-using-discrete-semantic-entropy">Hallucination
+Filtering in Radiology Vision-Language Models Using Discrete Semantic
+Entropy</h4>
+<p><em>Patrick Wienholt et al. · 2025 · European Radiology (2026) · <a href="https://arxiv.org/abs/2510.09256">arXiv:2510.09256</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Applies discrete semantic entropy to
+filter out radiology VQA questions likely to be hallucinated for
+black-box GPT-4o/GPT-4.1, raising accuracy on the retained subset from a
+51.7%/54.8% baseline to 76.3%/63.8% at a DSE&gt;0.3 threshold, at the
+cost of dropping roughly half the questions.</p>
+<ul>
+<li><strong>Models.</strong> GPT-4o, GPT-4.1 (via API, black-box).</li>
+<li><strong>Method.</strong> Discrete semantic entropy (DSE): sample
+each question&#39;s answer 15 times at temperature 1.0, group
+meaning-equivalent responses via bidirectional entailment checks,
+compute entropy over the resulting clusters, and reject/filter out
+questions above an entropy threshold before scoring accuracy on the
+retained subset (vs a low-temperature/greedy baseline).</li>
+<li><strong>Datasets.</strong> VQA-Med 2019 (500 images with clinical
+questions and short-text answers) and a diagnostic radiology dataset of
+206 cases (60 CT, 60 MRI, 60 radiograph, 26 angiogram) with ground-truth
+diagnoses.</li>
+<li><strong>Experiments.</strong> Computes baseline accuracy at low
+temperature (0.1); recalculates accuracy after excluding questions with
+DSE&gt;0.6 or DSE&gt;0.3, across 706 total image-question pairs;
+statistical testing via bootstrap resampling with Bonferroni correction
+(p&lt;.004).</li>
+<li><strong>Results.</strong> &quot;Baseline accuracy was 51.7% for GPT-4o
+and 54.8% for GPT-4.1&quot; [abstract]. &quot;After filtering out high-entropy
+questions (DSE &gt; 0.3), accuracy on the remaining questions was 76.3%
+(retained questions: 334/706) for GPT-4o and 63.8% (retained questions:
+499/706) for GPT-4.1 (both p &lt; .001)&quot; [abstract]. &quot;Accuracy gains
+were observed across both datasets and largely remained statistically
+significant after Bonferroni correction&quot; [abstract].</li>
+<li><strong>Conclusions.</strong> DSE reliably flags questions likely to
+be answered wrong in black-box radiology VQA and, used as a filter,
+substantially raises accuracy on the retained set -- at a real coverage
+cost (roughly half the questions dropped at the DSE&gt;0.3
+threshold).</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Its tested method IS a
+reject-option/selective-prediction application (excluding/filtering out
+questions rather than answering them), so per standing rule we card only
+its underlying signal here: discrete semantic entropy as a
+training-free, sampling-based baseline applied to black-box radiology
+VQA, plus its accuracy-vs-coverage numbers as a directly comparable
+medical-VQA reference point (51.7-54.8% baseline accuracy). Its
+abstention/triage component is out of scope for us by standing rule.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="a-survey-on-hallucination-in-large-vision-language-models">A
+Survey on Hallucination in Large Vision-Language Models</h4>
+<p><em>Hanchao Liu et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2402.00253">arXiv:2402.00253</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Survey establishing the standard
+taxonomy of LVLM hallucination (types, unique multimodal challenges vs
+text-only LLMs, causes in training data and model components) and
+cataloging evaluation benchmarks and mitigation methods.</p>
+<ul>
+<li><strong>Models.</strong> Survey -- no single model.</li>
+<li><strong>Method.</strong> Literature survey; taxonomizes
+hallucination symptoms, root causes (training data, vision encoder,
+cross-modal alignment, LLM backbone), benchmarks, and mitigation
+methods.</li>
+<li><strong>Datasets.</strong> N/A (survey; catalogs many
+benchmarks).</li>
+<li><strong>Experiments.</strong> N/A (survey).</li>
+<li><strong>Results.</strong> Descriptive -- &quot;clarification of the
+concept of hallucinations in LVLMs, presenting a variety of
+hallucination symptoms and highlighting the unique challenges inherent
+in LVLM hallucinations&quot; [abstract]. No numeric results -- survey paper,
+&quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> LVLM hallucination has
+multimodal-specific causes distinct from text-only LLM hallucination
+(e.g. vision-language misalignment, over-reliance on language priors),
+requiring dedicated benchmarks and mitigation strategies; open questions
+and future directions are discussed.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Standard reference for
+defining &quot;hallucination&quot; and its LVLM-specific taxonomy/causes for Leo&#39;s
+reports -- gives him the vocabulary (object hallucination, language
+priors, root-cause categories) a reviewer expects, and frames why
+medical VLM hallucination (CARES, Med-HallMark, etc., also in this
+category) needed dedicated benchmarks rather than reusing general-domain
+ones.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="inside-llms-internal-states-retain-the-power-of-hallucination-detection">INSIDE:
+LLMs&#39; Internal States Retain the Power of Hallucination Detection</h4>
+<p><em>Chao Chen et al. · 2024 · ICLR 2024 · <a href="https://arxiv.org/abs/2402.03744">arXiv:2402.03744</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Proposes EigenScore, a
+hallucination-detection metric computed from the eigenvalues of the
+covariance matrix of an LLM&#39;s internal-state embeddings across multiple
+sampled responses, plus a feature-clipping trick to reduce overconfident
+generations.</p>
+<ul>
+<li><strong>Models.</strong> Several popular LLMs (names not extracted
+from the abstract).</li>
+<li><strong>Method.</strong> EigenScore: sample multiple responses,
+embed via internal states, compute the covariance matrix of those
+embeddings, and use its eigenvalues to measure semantic
+consistency/diversity directly in the dense embedding space (rather than
+discrete NLI clustering as in semantic entropy); also proposes test-time
+feature clipping to truncate extreme activations and reduce
+overconfident hallucinations.</li>
+<li><strong>Datasets.</strong> Several popular QA benchmarks (names not
+extracted from the abstract).</li>
+<li><strong>Experiments.</strong> Extensive experiments and ablations
+comparing EigenScore-based hallucination detection to logit-level and
+self-consistency baselines; ablates the feature-clipping
+intervention.</li>
+<li><strong>Results.</strong> &quot;Showing the effectiveness of our
+proposal&quot; [abstract] -- no specific numeric AUROC/accuracy values given
+in the abstract -- &quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Internal-state embeddings retain dense
+semantic information (beyond what survives token decoding) that a
+covariance/eigenvalue-based metric can exploit for hallucination
+detection more effectively than logit-only or naive self-consistency,
+without needing an external NLI model.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> A close relative of semantic
+entropy computed in continuous embedding space from internal states
+rather than discrete NLI-based clustering -- another internal-state,
+sampling-based hybrid baseline. Its &quot;no external NLI model needed&quot;
+framing is a practical advantage worth weighing against our probe (also
+needs no external model, just the frozen backbone&#39;s own hidden states)
+when discussing compute overhead of alternative confidence signals.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="cares-a-comprehensive-benchmark-of-trustworthiness-in-medical-vision-language-models">CARES:
+A Comprehensive Benchmark of Trustworthiness in Medical Vision Language
+Models</h4>
+<p><em>Peng Xia et al. · 2024 · NeurIPS 2024 Datasets and Benchmarks
+Track · <a href="https://arxiv.org/abs/2406.06007">arXiv:2406.06007</a>
+· read priority 2</em></p>
+<p><strong>In one line.</strong> A 41K-question, 5-dimension
+trustworthiness benchmark for medical LVLMs
+(trustfulness/fairness/safety/privacy/robustness) across 16 imaging
+modalities and 27 anatomical regions, finding consistent factual
+inaccuracies, fairness gaps across demographics, attack vulnerability,
+and poor privacy awareness.</p>
+<ul>
+<li><strong>Models.</strong> Multiple Med-LVLMs evaluated (specific
+model list not given in the abstract -- &quot;not extracted&quot;).</li>
+<li><strong>Method.</strong> Benchmark construction and evaluation
+across five trustworthiness dimensions (trustfulness, fairness, safety,
+privacy, robustness), with both closed- and open-ended question
+formats.</li>
+<li><strong>Datasets.</strong> CARES: ~41K QA pairs, 16 medical image
+modalities, 27 anatomical regions (their own constructed
+benchmark).</li>
+<li><strong>Experiments.</strong> Evaluates Med-LVLMs on each of the
+five trustworthiness dimensions; analyzes fairness across demographic
+groups; tests robustness to attacks and privacy-awareness behavior.</li>
+<li><strong>Results.</strong> &quot;The models consistently exhibit concerns
+regarding trustworthiness, often displaying factual inaccuracies and
+failing to maintain fairness across different demographic groups&quot; and
+are &quot;vulnerable to attacks&quot; and show &quot;a lack of privacy awareness&quot;
+[abstract]. No specific numeric scores given -- &quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Current Med-LVLMs are not trustworthy
+along multiple independent axes simultaneously; CARES is offered as a
+public benchmark/toolkit to measure this going forward.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Establishes &quot;trustfulness&quot;
+(factual correctness under a trust lens) as one of five axes reviewers
+may expect us to at least acknowledge, even though our work only targets
+the correctness/selection axis via best-of-N + probe. Useful for
+explicitly scoping our probe (&quot;we address trustfulness via correctness
+selection; CARES&#39;s other four axes are out of scope for this work&quot;) and
+as a possible future open+closed-format medical VQA eval set.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="detecting-and-evaluating-medical-hallucinations-in-large-vision-language-models">Detecting
+and Evaluating Medical Hallucinations in Large Vision Language
+Models</h4>
+<p><em>Jiawei Chen et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2406.10185">arXiv:2406.10185</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Introduces Med-HallMark, the first
+dedicated medical-LVLM hallucination benchmark, plus the MediHall Score
+(a hierarchical severity/type-aware metric) and MediHallDetector, a
+multitask-trained model for hallucination detection.</p>
+<ul>
+<li><strong>Models.</strong> Popular LVLMs evaluated as baselines, plus
+the paper&#39;s own MediHallDetector (&quot;a novel Medical LVLM engineered for
+precise hallucination detection&quot;).</li>
+<li><strong>Method.</strong> Constructs Med-HallMark (multi-task,
+multifaceted, hierarchically-categorized hallucination data); proposes
+MediHall Score, a hierarchical scoring metric weighting hallucination
+severity and type; trains MediHallDetector via multitask training.</li>
+<li><strong>Datasets.</strong> Med-HallMark (their own new
+benchmark).</li>
+<li><strong>Experiments.</strong> Establishes baselines for popular
+LVLMs on Med-HallMark using MediHall Score; evaluates MediHallDetector&#39;s
+detection performance against baselines.</li>
+<li><strong>Results.</strong> &quot;MediHall Score provides a more nuanced
+understanding of hallucination impacts compared to traditional metrics&quot;
+and demonstrates &quot;the enhanced performance of MediHallDetector&quot;
+[abstract]. No specific numeric scores given -- &quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Medical hallucination needs its own
+benchmark and a severity/type-aware metric (not a single flat
+hallucination rate), and a dedicated detector trained for this task
+outperforms general baselines.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> A benchmark/metric-design
+precedent for reporting hallucination severity rather than a flat rate
+-- relevant if we ever want to weight our probe&#39;s misses by clinical
+severity rather than treating all wrong answers equally. Also another
+example (alongside our own verifier) of a purpose-trained detector
+beating generic/zero-shot baselines in the medical domain, reinforcing
+our &quot;training, not size, is the active ingredient&quot; finding.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="semantic-entropy-probes-robust-and-cheap-hallucination-detection-in-llms">Semantic
+Entropy Probes: Robust and Cheap Hallucination Detection in LLMs</h4>
+<p><em>Jannik Kossen et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2406.15927">arXiv:2406.15927</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Trains a cheap probe on a single
+generation&#39;s hidden states to approximate semantic entropy directly (no
+multiple generations, no external NLI model needed), retaining most of
+semantic entropy&#39;s hallucination-detection power at near-zero extra cost
+and generalizing better OOD than probes that directly predict
+accuracy.</p>
+<ul>
+<li><strong>Models.</strong> Not named specifically in the abstract
+beyond &quot;LLMs&quot; (generic -- &quot;not extracted&quot;).</li>
+<li><strong>Method.</strong> Semantic Entropy Probes (SEPs): a probe
+trained on the hidden states of a single generation to predict the
+semantic entropy that would otherwise require 5-10x more compute
+(multiple samples + NLI clustering) to compute directly.</li>
+<li><strong>Datasets.</strong> Multiple models and tasks (specific
+benchmark names &quot;not extracted&quot; from the abstract).</li>
+<li><strong>Experiments.</strong> Compares SEP hallucination-detection
+performance to full semantic entropy and to probes trained to directly
+predict model accuracy; studies OOD generalization; ablates which token
+positions and model layers best capture semantic entropy.</li>
+<li><strong>Results.</strong> &quot;SEPs retain high performance for
+hallucination detection and generalize better to out-of-distribution
+data than previous probing methods that directly predict model accuracy&quot;
+[abstract]. No specific numeric AUROC values given -- &quot;not
+extracted&quot;.</li>
+<li><strong>Conclusions.</strong> A single generation&#39;s hidden states
+already capture (an approximation of) semantic entropy, so a cheap probe
+recovers most of its hallucination-detection value without the 5-10x
+sampling+NLI overhead; probing for the uncertainty signal itself
+generalizes OOD better than probing directly for correctness.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The closest methodological
+relative to our own probe in this whole category -- both are small
+probes reading hidden states of a single generation (specific
+layers/token positions tapped during generation, no extra forward pass)
+to avoid expensive sampling-based signals. Key difference: SEPs are
+trained to predict semantic entropy (an uncertainty proxy) whereas ours
+is trained directly on BCE correctness labels -- their finding that
+entropy-target probes generalize OOD better than accuracy-target probes
+is a concrete, citable caution about our probe&#39;s known OOD-transfer
+weakness (per-benchmark retraining requirement, &quot;OOD-ness does not
+predict where it helps&quot;).</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="semantic-uncertainty-linguistic-invariances-for-uncertainty-estimation-in-natural-language-generation-1">Semantic
+Uncertainty: Linguistic Invariances for Uncertainty Estimation in
+Natural Language Generation</h4>
+<p><em>Lorenz Kuhn et al. · 2023 · ICLR 2023 (Spotlight) · <a href="https://arxiv.org/abs/2302.09664">arXiv:2302.09664</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> The ICLR predecessor to the Nature
+semantic-entropy paper -- introduces semantic entropy for NLG, showing
+it predicts model accuracy on QA better than comparable baselines by
+clustering generations via shared meaning before computing entropy.</p>
+<ul>
+<li><strong>Models.</strong> Not specified by name in the abstract
+(&quot;large language models,&quot; generic -- &quot;not extracted&quot;).</li>
+<li><strong>Method.</strong> Same core idea as Farquhar et al. 2024
+(semantic entropy over meaning-clusters built via
+linguistic-invariance/entailment), introduced here first: unsupervised,
+single-model, no fine-tuning.</li>
+<li><strong>Datasets.</strong> Question-answering datasets used for
+ablation (not named in the abstract -- &quot;not extracted&quot;).</li>
+<li><strong>Experiments.</strong> Comprehensive ablation studies
+comparing semantic entropy&#39;s predictiveness of model accuracy to
+comparable uncertainty baselines.</li>
+<li><strong>Results.</strong> &quot;The semantic entropy is more predictive
+of model accuracy on question answering data sets than comparable
+baselines&quot; [abstract]. No specific numbers given in the abstract -- &quot;not
+extracted&quot; (see the Farquhar Nature 2024 card for the follow-up work&#39;s
+numeric AUROC values).</li>
+<li><strong>Conclusions.</strong> Semantic equivalence must be accounted
+for when measuring uncertainty in free-form text generation; semantic
+entropy is a practical unsupervised way to do this.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The original semantic-entropy
+paper; pair with the Farquhar Nature 2024 card -- cite this one for
+priority/originality, the Nature paper for the larger-scale numbers.
+Same relation to us as that card: a training-free, whole-question
+uncertainty baseline distinct from our per-candidate correctness
+probe.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="the-internal-state-of-an-llm-knows-when-its-lying-1">The
+Internal State of an LLM Knows When It&#39;s Lying</h4>
+<p><em>Amos Azaria and Tom Mitchell · 2023 · arXiv preprint · <a href="https://arxiv.org/abs/2304.13734">arXiv:2304.13734</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Trains a classifier on an LLM&#39;s
+hidden-layer activations to predict whether a statement (given or
+self-generated) is true or false, reaching 71-83% accuracy and beating a
+baseline that uses the LLM&#39;s own assigned sentence probability.</p>
+<ul>
+<li><strong>Models.</strong> Multiple unspecified LLM base models
+(accuracy &quot;depending on the LLM base model&quot;; names &quot;not
+extracted&quot;).</li>
+<li><strong>Method.</strong> Supervised classifier trained on
+hidden-layer activations captured while the LLM reads/generates a
+statement, predicting P(statement is truthful); compared against a
+baseline using the LLM&#39;s own assigned sentence probability.</li>
+<li><strong>Datasets.</strong> A curated set of true/false test
+sentences (half true, half false; dataset name &quot;not extracted&quot;).</li>
+<li><strong>Experiments.</strong> Trains/evaluates the activation-based
+classifier per base model; analyzes the relationship between classifier
+performance and LLM-assigned sentence probability, including the
+probability&#39;s dependence on sentence length and word frequency.</li>
+<li><strong>Results.</strong> &quot;Our trained classifier achieves an
+average of 71% to 83% accuracy labeling which sentences are true versus
+false, depending on the LLM base model&quot; [abstract]; sentence probability
+&quot;is also dependent on sentence length and the frequencies of words in
+the sentence,&quot; making the trained classifier &quot;a more reliable approach&quot;
+[abstract].</li>
+<li><strong>Conclusions.</strong> LLM hidden states linearly encode a
+truthfulness signal that a small trained probe extracts more reliably
+than raw output probability, which is confounded by length/frequency --
+direct precedent for hidden-state probing as a correctness signal.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Closest early precedent to our
+own method&#39;s mechanism -- a small supervised classifier reading hidden
+activations to predict correctness/truthfulness, exactly analogous to
+our 918k-parameter MLP probe reading mean hidden states over generated
+tokens. Prior art that trained hidden-state probes beat raw-probability
+baselines, which is also one of our own findings (a trained 7B verifier
+beats zero-shot signals).</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="just-ask-for-calibration-strategies-for-eliciting-calibrated-confidence-scores-from-language-models-fine-tuned-with-human-feedback">Just
+Ask for Calibration: Strategies for Eliciting Calibrated Confidence
+Scores from Language Models Fine-Tuned with Human Feedback</h4>
+<p><em>Katherine Tian et al. · 2023 · EMNLP 2023 (Camera Ready) · <a href="https://arxiv.org/abs/2305.14975">arXiv:2305.14975</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Finds verbalized confidence (asking
+RLHF-tuned LLMs like ChatGPT/GPT-4/Claude to state their confidence in
+words) is better calibrated than their raw conditional token
+probabilities, often halving expected calibration error.</p>
+<ul>
+<li><strong>Models.</strong> RLHF-tuned LLMs: ChatGPT, GPT-4,
+Claude.</li>
+<li><strong>Method.</strong> Evaluates and compares strategies for
+extracting confidence from RLHF-tuned LMs: raw conditional probability
+vs verbalized (&quot;say a number/word for your confidence&quot;) elicitation,
+across several prompting variants.</li>
+<li><strong>Datasets.</strong> TriviaQA, SciQ, TruthfulQA.</li>
+<li><strong>Experiments.</strong> Measures calibration of verbalized vs
+conditional-probability confidence on the three QA benchmarks for each
+of the three RLHF-tuned model families.</li>
+<li><strong>Results.</strong> &quot;Verbalized confidences emitted as output
+tokens are typically better-calibrated than the model&#39;s conditional
+probabilities on the TriviaQA, SciQ, and TruthfulQA benchmarks, often
+reducing the expected calibration error by a relative 50%&quot;
+[abstract].</li>
+<li><strong>Conclusions.</strong> For RLHF-tuned LLMs specifically
+(where raw token probabilities are known to be poorly calibrated
+post-RLHF), asking the model to verbalize confidence in natural language
+is a simple, effective calibration strategy. The abstract frames
+calibration&#39;s purpose partly as &quot;enabling deferral to an expert in cases
+of low-confidence predictions,&quot; but no deferral mechanism is built or
+evaluated -- the paper&#39;s actual method and results are
+calibration-only.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Names and quantifies the
+&quot;verbalized confidence&quot; baseline family precisely -- a reviewer will ask
+why we didn&#39;t just prompt Lingshu-7B to state its own confidence instead
+of training a probe; this paper is evidence both for (verbalized
+confidence is a real, cheap alternative) and against (it&#39;s a black-box
+heuristic, not a trained per-candidate ranker) that choice, and gives us
+the relative-50%-ECE-reduction figure to cite as the bar a verbalized
+baseline would need to clear.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="can-llms-express-their-uncertainty-an-empirical-evaluation-of-confidence-elicitation-in-llms">Can
+LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence
+Elicitation in LLMs</h4>
+<p><em>Miao Xiong et al. · 2023 · ICLR 2024 · <a href="https://arxiv.org/abs/2306.13063">arXiv:2306.13063</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> A systematic black-box benchmark of
+prompting/sampling/aggregation confidence-elicitation strategies finds
+LLMs are overconfident when verbalizing, calibration improves with
+scale, and white-box methods only narrowly beat the best black-box ones
+(0.522 to 0.605 AUROC).</p>
+<ul>
+<li><strong>Models.</strong> Five widely-used LLMs including GPT-4 and
+LLaMA 2 Chat.</li>
+<li><strong>Method.</strong> Defines a black-box confidence-elicitation
+framework with three components: prompting strategies for verbalized
+confidence, sampling methods for generating multiple responses, and
+aggregation techniques for computing consistency across them.</li>
+<li><strong>Datasets.</strong> Five dataset types spanning commonsense
+and arithmetic reasoning (specific benchmark names &quot;not
+extracted&quot;).</li>
+<li><strong>Experiments.</strong> Benchmarks calibration and
+failure-prediction performance for prompting/sampling/aggregation
+combinations across 5 datasets x 5 LLMs; compares against white-box
+(logit-access) methods.</li>
+<li><strong>Results.</strong> &quot;LLMs, when verbalizing their confidence,
+tend to be overconfident&quot; [abstract]; &quot;as model capability scales up,
+both calibration and failure prediction performance improve&quot; [abstract];
+&quot;comparisons with white-box methods indicate that while white-box
+methods perform better, the gap is narrow, e.g., 0.522 to 0.605 in
+AUROC&quot; [abstract]; &quot;none of these techniques consistently outperform
+others, and all investigated methods struggle in challenging tasks, such
+as those requiring professional knowledge&quot; [abstract].</li>
+<li><strong>Conclusions.</strong> Black-box confidence elicitation can
+approach white-box performance, but overconfidence and task-difficulty
+(especially professional-knowledge tasks) remain unsolved; no single
+strategy dominates.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The &quot;professional knowledge&quot;
+failure mode they flag is exactly our setting (medical VQA); their
+finding that black-box consistency methods only narrowly trail white-box
+(logit/internal-state) ones calibrates how much our white-box probe
+should be expected to gain over a well-tuned black-box (e.g.
+self-consistency) baseline -- the 0.522-&gt;0.605 AUROC gap (~0.08) is a
+concrete &quot;white-box premium&quot; number to cite.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="evaluating-object-hallucination-in-large-vision-language-models">Evaluating
+Object Hallucination in Large Vision-Language Models</h4>
+<p><em>Yifan Li et al. · 2023 · EMNLP 2023 · <a href="https://arxiv.org/abs/2305.10355">arXiv:2305.10355</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> The first systematic study of object
+hallucination in LVLMs, showing most LVLMs frequently describe objects
+not present in the image (especially ones that co-occur often with real
+image objects in the training distribution), and introducing POPE, a
+polling-based yes/no querying method for more stable, prompt-robust
+hallucination evaluation.</p>
+<ul>
+<li><strong>Models.</strong> Several representative LVLMs (specific
+names not extracted from the abstract).</li>
+<li><strong>Method.</strong> Systematic evaluation of object
+hallucination in LVLM image captioning/description; analysis of how
+visual-instruction object frequency and object co-occurrence with real
+image content predict hallucination; proposes POPE (Polling-based Object
+Probing Evaluation) -- asking the model direct yes/no questions about
+whether specific objects are present, rather than parsing free-form
+captions.</li>
+<li><strong>Datasets.</strong> Built on existing LVLM
+captioning/instruction benchmarks (specific dataset names &quot;not
+extracted&quot; from the abstract).</li>
+<li><strong>Experiments.</strong> Evaluates object hallucination rate
+across representative LVLMs; studies correlation between hallucination
+and (a) object frequency in visual instructions and (b) object
+co-occurrence with actual image content; compares POPE&#39;s
+stability/flexibility to prior caption-based hallucination metrics.</li>
+<li><strong>Results.</strong> &quot;They mostly suffer from severe object
+hallucination issue&quot; [abstract]; &quot;objects that frequently occur in the
+visual instructions or co-occur with the image objects, are obviously
+prone to be hallucinated by LVLMs&quot; [abstract]; &quot;existing evaluation
+methods might be affected by the input instructions and generation
+styles of LVLMs&quot; [abstract]; POPE &quot;can evaluate the object hallucination
+in a more stable and flexible way&quot; [abstract]. No specific numeric
+hallucination rates given -- &quot;not extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Object hallucination in LVLMs is
+driven substantially by training-distribution statistics
+(frequency/co-occurrence bias), not just genuine visual misperception,
+and evaluating it robustly requires a polling-based yes/no protocol
+(POPE) rather than parsing free-form generated captions.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The canonical
+object-hallucination benchmark and the origin of &quot;yes-bias&quot;-style
+evaluation methodology that later medical-yes-bias papers (e.g. Chan
+2026 in this category) build on; also a caution that the
+co-occurrence-bias mechanism it identifies (hallucinating
+statistically-likely-but-absent objects) is a language-prior effect
+distinct from, but possibly compounding, our own project&#39;s &quot;reasoning
+hurts perception&quot; finding. Gives Leo the terms &quot;object hallucination&quot;
+and &quot;POPE&quot; a reviewer will expect him to know.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="language-models-mostly-know-what-they-know">Language Models
+(Mostly) Know What They Know</h4>
+<p><em>Saurav Kadavath et al. · 2022 · arXiv preprint · <a href="https://arxiv.org/abs/2207.05221">arXiv:2207.05221</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Shows large LMs are well-calibrated on
+MCQ/true-false in the right format, and can self-evaluate their own
+answers via P(True) and predict in advance whether they&#39;ll know an
+answer via P(IK).</p>
+<ul>
+<li><strong>Models.</strong> Anthropic LM family across a range of sizes
+(specific sizes not in abstract -- &quot;not extracted&quot;).</li>
+<li><strong>Method.</strong> Sample an answer, then ask the model to
+predict P(True) that its own answer is correct; separately train models
+to predict P(IK) (&quot;I know&quot;) the probability of getting a question right,
+without seeing any proposed answer.</li>
+<li><strong>Datasets.</strong> Diverse multiple choice and true/false
+questions, plus open-ended sampling tasks including math word problems
+(specific benchmark names not in abstract -- &quot;not extracted&quot;).</li>
+<li><strong>Experiments.</strong> Calibration of raw MCQ/true-false
+probabilities vs model scale; P(True) self-evaluation with/without
+showing the model several of its own other samples first; P(IK) training
+and cross-task generalization, plus response to relevant
+context/hints.</li>
+<li><strong>Results.</strong> &quot;Larger models are well-calibrated on
+diverse multiple choice and true/false questions when they are provided
+in the right format&quot; [abstract]; &quot;encouraging performance, calibration,
+and scaling for P(True)&quot; that &quot;further improves when we allow models to
+consider many of their own samples before predicting the validity of one
+specific possibility&quot; [abstract]; P(IK) &quot;partially generalize[s] across
+tasks, though they struggle with calibration of P(IK) on new tasks&quot;
+[abstract]. No specific numeric values in the abstract -- &quot;not
+extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Self-evaluation
+(verbalized/introspective confidence) is a viable, scalable confidence
+signal, especially when the model sees multiple of its own samples first
+-- a precursor to sampling-based/consistency confidence methods.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Early evidence for letting a
+model see multiple of its own samples before judging correctness,
+directly analogous to our best-of-N setup -- except we read hidden
+states with a trained probe rather than asking the model to verbalize
+P(True). Names the zero-training alternative baseline: &quot;ask the
+generator itself, self-evaluating over its own N samples.&quot;</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="on-calibration-of-modern-neural-networks">On Calibration of
+Modern Neural Networks</h4>
+<p><em>Chuan Guo et al. · 2017 · ICML 2017 · <a href="https://arxiv.org/abs/1706.04599">arXiv:1706.04599</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Shows modern deep classifiers are
+poorly calibrated despite high accuracy, and that a single-parameter
+temperature scaling fixes most of the miscalibration cheaply.</p>
+<ul>
+<li><strong>Models.</strong> Modern CNN image/document classifiers of
+the era (specific architectures not named in the abstract -- &quot;not
+extracted&quot;).</li>
+<li><strong>Method.</strong> Empirically measures calibration
+(reliability diagrams, ECE) across architectures/training choices, then
+evaluates post-hoc calibration methods, showing temperature scaling --
+one learned scalar dividing the logits before softmax -- is the simplest
+effective fix.</li>
+<li><strong>Datasets.</strong> Image and document classification
+datasets (not named in the abstract -- &quot;not extracted&quot;).</li>
+<li><strong>Experiments.</strong> Studies effect of depth, width, weight
+decay, and batch normalization on calibration; compares post-hoc
+calibration methods on state-of-the-art architectures.</li>
+<li><strong>Results.</strong> &quot;We discover that modern neural networks,
+unlike those from a decade ago, are poorly calibrated&quot; and temperature
+scaling is &quot;surprisingly effective at calibrating predictions&quot;
+[abstract]. No specific ECE numbers given in the abstract -- &quot;not
+extracted&quot;.</li>
+<li><strong>Conclusions.</strong> Calibration degrades with modern
+architectural trends (depth/width/no weight decay/batch norm), but one
+learned temperature parameter recovers most of the loss cheaply -- the
+standard baseline for post-hoc calibration cited across the field.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> The foundational reference for
+&quot;calibration&quot; and for temperature scaling as the default cheap baseline;
+whenever we report our probe&#39;s calibration (not just its ranking/AUROC),
+this is the citation and the comparison method (temperature-scale our
+probe&#39;s raw score) a reviewer will expect.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="also-in-this-area-11-in-brief">Also in this area (11), in
+brief</h4>
+<ul>
+<li><strong>VIHD: Visual Intervention-based Hallucination Detection for
+Medical Visual Question Answering</strong> — Jiayi Chen et al. (2026),
+<a href="https://arxiv.org/abs/2605.20772">arXiv:2605.20772</a>.
+Improves on generic prompt-perturbation hallucination detection by
+locating the decoder layers most dependent on visual tokens, masking
+visual tokens specifically at those layers to calibrate the
+semantic-entropy distribution, and beating prior state-of-the-art on
+three medical VQA benchmarks.<br><small><em>For us:</em> Same family as
+UniVRSE (vision-grounded semantic entropy for medical VLMs) but locates
+the mechanism inside the decoder layers rather than only contrasting
+input pairs -- relevant prior art if we ever want to argue our probe&#39;s
+choice of layers 18/20/22 is principled (they use a data-driven
+layer-selection step, VDP, whereas we picked 3 fixed layers); worth a
+closer read for how they justify layer selection.</small></li>
+<li><strong>Hallucination Detection and Correction in Medical VLMs via
+Counter-Evidence Verification</strong> — Nan Zhou et al. (2026), <a href="https://arxiv.org/abs/2606.18609">arXiv:2606.18609</a>. A
+training-free, plug-and-play framework (CoEV) that verifies whether each
+generated statement is actually supported by grounded visual evidence,
+both detecting and correcting medical VLM hallucinations, improving
+detection PR-AUC/ROC-AUC by ~3% and cutting hallucination rate by
+&gt;11.9% on report generation.<br><small><em>For us:</em> A
+training-free alternative worth naming when justifying why we trained a
+probe instead: CoEV needs no training but does need a visual-grounding
+module and evidence-region localizer (extra machinery per inference), a
+different cost tradeoff than our fixed, cheap forward-pass probe. Also
+gives a concrete external hallucination-rate reduction (&gt;11.9%) and
+VQA-accuracy boost to compare our own +0.0736/+0.0820 macro gains
+against, in the same medical-VQA space.</small></li>
+<li><strong>Detecting Clinical Hallucinations in LVLMs via
+Counterfactual Visual Grounding Uncertainty</strong> — Xiao Song et al.
+(2026), <a href="https://arxiv.org/abs/2606.28520">arXiv:2606.28520</a>.
+A training/access-free hallucination detector for LVLM clinical outputs
+that grounds extracted entities on the image via a medical-adapted
+Qwen-VL grounder, then contrasts factual vs counterfactual
+(perturbed-entity) grounding confidence and overlap to produce an
+entity-level uncertainty score, without needing the target LVLM&#39;s hidden
+states.<br><small><em>For us:</em> A &quot;black-box, external verifier&quot;
+contrast to our own &quot;white-box, internal-state&quot; probe -- it needs no
+access to the target model&#39;s hidden states at all (uses a separate
+grounding model instead), an important axis to contrast when describing
+our probe&#39;s requirement of hidden-state access as a deployment
+constraint (we need the generator&#39;s own activations; this method works
+even for closed/API-only target models).</small></li>
+<li><strong>UniVRSE: Unified Vision-conditioned Response Semantic
+Entropy for Hallucination Detection in Medical Vision-Language
+Models</strong> — Zehui Liao et al. (2025), <a href="https://arxiv.org/abs/2503.20504">arXiv:2503.20504</a>. Adapts
+semantic entropy for medical VLMs by contrasting the semantic
+distribution from the original image-text pair against a
+visually-distorted counterpart (since plain semantic entropy is
+unreliable in medical VLMs due to strong language-prior overconfidence),
+and introduces ALFA, a fine-grained factual-consistency metric for
+building ground-truth hallucination labels.<br><small><em>For us:</em>
+Independently confirms that generic (text-domain) uncertainty methods
+degrade in medical VLMs due to language-prior overconfidence --
+consonant with our own &quot;reasoning hurts perception&quot; and &quot;training, not
+size, is the active ingredient&quot; findings, and adds a concrete mechanism
+(visual-distortion contrasting) other than training a probe for making
+an uncertainty signal medical-domain-aware.</small></li>
+<li><strong>HEDGE: Hallucination Estimation via Dense Geometric Entropy
+for VQA with Vision-Language Models</strong> — Sushant Gautam et al.
+(2025), <a href="https://arxiv.org/abs/2511.12693">arXiv:2511.12693</a>.
+A unified hallucination-detection pipeline (HEDGE) combining visual
+perturbation, semantic clustering (NLI- and embedding-based), and
+uncertainty metrics, tested on VQA-RAD and KvasirVQA-x1 with
+LLaVA-Med/MedGemma/Qwen2.5-VL, finding the VASE metric with embedding
+clustering most robust and that architecture (dense vs restricted visual
+tokenization) strongly affects detectability.<br><small><em>For us:</em>
+Directly relevant since it evaluates on Qwen2.5-VL and includes VQA-RAD,
+both overlapping our own setup (we replicate on Qwen2.5-VL-7B and use
+VQA-RAD-open as one of our 8 benchmarks) -- worth a closer read to see
+if their per-architecture detectability finding (Qwen2.5-VL easiest to
+detect hallucinations in) predicts anything about where our own probe
+should work best. Their n~10-15 &quot;moderate sampling budget&quot; finding is a
+useful cross-check against our own N=8 best-of-N choice.</small></li>
+<li><strong>Uncertainty-Driven Expert Control: Enhancing the Reliability
+of Medical Vision-Language Models</strong> — Xiao Liang et al. (2025),
+<a href="https://arxiv.org/abs/2507.09209">arXiv:2507.09209</a>.
+Proposes Expert-CFG, a training-free expert-in-the-loop framework that
+uses uncertainty estimation to flag unreliable MedVLM outputs, retrieves
+references so a human expert can highlight key terms, then applies
+classifier-free guidance to steer token embeddings toward the expert&#39;s
+highlights -- a 4.2B-parameter model with this framework beats 13B
+state-of-the-art models on three medical VQA
+benchmarks.<br><small><em>For us:</em> Uses uncertainty estimation only
+as a trigger/flag for when to bring in an expert and additional
+reference retrieval -- this is a human-in-the-loop escalation design
+(uncertainty estimation triggering expert intervention), so its
+expert-escalation component is out of scope for us by standing rule; we
+card only its uncertainty-flagging mechanism as a training-free
+&quot;unreliable output&quot; detector, distinct from our own always-answering
+cascade (which escalates to a bigger frozen model, never a
+human).</small></li>
+<li><strong>Calibration-Aware Prompt Learning for Medical
+Vision-Language Models</strong> — Abhishek Basu et al. (2025), <a href="https://arxiv.org/abs/2509.15226">arXiv:2509.15226</a>.
+CalibPrompt, the first prompt-tuning framework to calibrate medical
+VLMs, optimizes a small set of learnable prompts under scarce labelled
+data using an accuracy-confidence alignment regularizer plus an
+angular-separation loss on text features, consistently improving
+calibration without hurting clean accuracy across four Med-VLMs and five
+medical imaging datasets.<br><small><em>For us:</em> A
+lightweight-adaptation calibration baseline (prompt tuning only,
+backbone frozen) analogous in spirit to our own frozen-backbone approach
+-- worth naming alongside Platt scaling and verbalized-confidence
+fine-tuning (Senoglu 2026) as the spectrum of &quot;how much of the model do
+you have to touch to get good confidence,&quot; with our probe sitting at
+&quot;touch nothing, train only a tiny external head&quot; -- even lighter than
+prompt tuning since we add no prompt tokens and don&#39;t touch the frozen
+generator at inference beyond reading its already-computed hidden
+states.</small></li>
+<li><strong>Uncertainty-Aware Evaluation for Vision-Language
+Models</strong> — Vasily Kostumov et al. (2024), <a href="https://arxiv.org/abs/2402.14418">arXiv:2402.14418</a>. Benchmarks
+20+ VLMs on multiple-choice VQA using conformal prediction for
+uncertainty quantification, finding model uncertainty is not aligned
+with accuracy -- the most accurate models can also be the most uncertain
+-- and that uncertainty correlates with the underlying LLM
+component.<br><small><em>For us:</em> A caution against any claim that
+our probe&#39;s gains simply track the strong model&#39;s accuracy gains -- this
+paper&#39;s headline finding (accuracy and uncertainty can be uncorrelated
+or even inversely related) argues for always reporting our probe&#39;s
+calibration/AUROC separately from raw accuracy deltas. Also relevant to
+our multi-backbone replication (Lingshu-7B, Qwen2.5-VL-7B, MedGemma-4b),
+since it suggests probe behavior could shift with the LLM backbone even
+at fixed vision setup.</small></li>
+<li><strong>VL-Uncertainty: Detecting Hallucination in Large
+Vision-Language Model via Uncertainty Estimation</strong> — Ruiyang
+Zhang et al. (2024), <a href="https://arxiv.org/abs/2411.11919">arXiv:2411.11919</a>. First
+uncertainty-based (no ground-truth/pseudo-label needed) LVLM
+hallucination detector, measuring response variance across
+semantically-perturbed visual and textual prompts and clustering by
+semantic content to compute entropy, outperforming strong baselines
+across 10 LVLMs and 4 benchmarks.<br><small><em>For us:</em> A
+training-free, multimodal semantic-entropy baseline worth citing; it
+explicitly tests both MCQ and free-form formats, giving it direct
+bearing on our own &quot;answer format determines whether routing signals
+work at all&quot; finding (AUROC ~0.6 MCQ vs ~0.87 free text) -- worth
+checking in a full read whether VL-Uncertainty shows the same format
+split.</small></li>
+<li><strong>Inference-Time Intervention: Eliciting Truthful Answers from
+a Language Model</strong> — Kenneth Li et al. (2023), <a href="https://arxiv.org/abs/2306.03341">arXiv:2306.03341</a>. Shows
+LLaMA models have internal directions encoding truthfulness that, when
+nudged at inference time across a limited set of attention heads,
+substantially raise TruthfulQA performance (Alpaca 32.5%-&gt;65.1%) with
+minimal added cost and little training data.<br><small><em>For us:</em>
+An internal-state method, but an intervention (changes model behavior)
+rather than a detector (scores an existing candidate) -- worth
+distinguishing explicitly from our probe, which only scores/selects
+among already-generated candidates and never edits activations. Useful
+as a &quot;what else you could do with hidden states&quot; contrast in related
+work.</small></li>
+<li><strong>Discovering Latent Knowledge in Language Models Without
+Supervision</strong> — Collin Burns et al. (2022), <a href="https://arxiv.org/abs/2212.03827">arXiv:2212.03827</a>. Introduces
+Contrast-Consistent Search (CCS), an unsupervised probe that finds a
+hidden-activation direction tracking truth by enforcing logical
+consistency between a statement and its negation, recovering latent
+&quot;knowledge&quot; without labels.<br><small><em>For us:</em> Prior art for
+internal-state probing and for the core premise our probe relies on --
+hidden states carry a linearly recoverable correctness/truth signal
+separate from the generated text. CCS is unsupervised while our probe is
+supervised (BCE-trained on labelled correct/incorrect); worth citing as
+the unsupervised end of the same spectrum our probe sits
+on.</small></li>
+</ul>
 <h2 id="37-medical-vision-language-models-the-generators-we-use-and-the-ones-we-compare-against">3.7
 Medical Vision-Language Models: The Generators We Use and the Ones We
 Compare Against</h2>
@@ -8562,6 +10405,874 @@ connector both use -- a supporting citation for the projector/connector
 part of the architecture-teaching goal, not a direct comparison point
 for our benchmarks.</small></li>
 </ul>
+<h2 id="38-medical-vqa-benchmarks-datasets-and-the-evaluation-protocol">3.8
+Medical VQA benchmarks, datasets, and the evaluation protocol</h2>
+<p>This category maps the empirical ground our project&#39;s numbers stand
+on: the eight open-ended medical-VQA benchmarks we evaluate on (their
+provenance, how each was actually built, and known construction flaws),
+plus the separate question of how you score free-text medical answers at
+all once you have them. Two threads run through it. First, dataset
+quality: several benchmarks here are not independently authored test
+sets but are templated from figure captions or classification labels
+(PathVQA, SLAKE, OmniMedVQA, VQA-Med), and recent audits show that
+&#39;authentic image&#39; provenance does not rule out pretraining contamination
+(SLAKE image overlap, whole-slide-image benchmark leakage) or
+answer-position shortcuts (PMC-VQA&#39;s own ~31%-vs-25% skew toward option
+B). Second, evaluation protocol: because our method scores best-of-N
+candidates with a Lingshu-32B LLM-judge, the LLM-as-a-judge literature
+(MT-Bench, self-preference, judging-the-judges) is not background
+reading but a direct methodological risk assessment of our own pipeline,
+especially the same-model-family judge/generator pairing. Both threads
+matter because a headline accuracy number is only as trustworthy as the
+benchmark and the scorer behind it.</p>
+<h4 id="-a-controlled-audit-of-pretraining-contamination-in-public-medical-vision-language-benchmarks">★
+A Controlled Audit of Pretraining Contamination in Public Medical
+Vision-Language Benchmarks</h4>
+<p><em>Bruce Changlong Xu et al. · 2026 · arXiv preprint · <a href="https://arxiv.org/abs/2606.10066">arXiv:2606.10066</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Audits SLAKE-En, PathVQA, VQA-RAD and
+an OmniMedVQA mirror for pretraining contamination using 4 detector
+families; finds real image-side overlap on SLAKE-En but shows two of the
+four detector families are unreliable (a non-medical control model,
+BLIP-2, &#39;reproduces&#39; their positive signals).</p>
+<ul>
+<li><strong>Models.</strong> Audits open VLMs including Qwen2.5-VL and
+BLIP-2 (used as an out-of-domain negative control) [abstract].</li>
+<li><strong>Method.</strong> Four detector families: (1) image-side
+near-neighbour overlap against PMC-OA-beta via SigLIP embeddings, (2)
+canonical-order exchangeability (text-side), (3) cohort-relative
+Min-K%++ tail enrichment, (4) cross-model top-K overlap [abstract].</li>
+<li><strong>Datasets.</strong> SLAKE-En, PathVQA, VQA-RAD, and an
+&#39;auxiliary public OmniMedVQA mirror&#39; [abstract].</li>
+<li><strong>Experiments.</strong> Runs all 4 detectors per
+dataset/model; manual adjudication of flagged image pairs; an ordering
+ablation; and an external non-medical/pre-domain baseline (BLIP-2) to
+test whether detectors merely fire on generic structure [abstract].</li>
+<li><strong>Results.</strong> &#39;19.8% of images are flagged under
+SigLIP-B-16 and 4.2% under SigLIP-SO400M&#39; on SLAKE-En, &#39;while
+out-of-domain controls produce 0/2000 flags&#39; [abstract]. Manual check:
+&#39;same-modality, same-projection matches to different patients rather
+than verified pixel-level duplicates&#39; [abstract] -- so the authors
+interpret this as source/distributional overlap, not confirmed per-image
+memorization. &#39;On the text side, Qwen2.5-VL on SLAKE-En shows a
+canonical-order exchangeability signal that survives ordering ablation
+and external non-medical baselines&#39; [abstract]. &#39;Min-K%++ tail
+enrichment and cross-model top-K overlap collapse under an external
+pre-domain baseline: BLIP-2 reproduces the apparent positive signals
+despite lacking plausible medical-VQA exposure&#39; [abstract].</li>
+<li><strong>Conclusions.</strong> &#39;these cohort-relative detectors are
+unreliable as standalone membership-inference signals on small
+medical-VLM cohorts&#39; [abstract] -- i.e. 2 of the 4 detector families are
+false-positive-prone and should not be trusted alone; the image-overlap
+and exchangeability signals on SLAKE-En are the more credible
+findings.</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> One of our four core picks.
+Directly informs whether our SLAKE-open results (one of our 8
+benchmarks) reflect genuine capability or memorization; the 19.8%/4.2%
+SLAKE-En image-overlap finding is already flagged as &#39;important&#39; in our
+own task brief. Also a methodological caution: two of the four
+contamination-detection techniques used across the field (Min-K%++,
+cross-model top-K overlap) are shown here to be unreliable on small
+model cohorts like ours, which should make us skeptical of using those
+two methods ourselves without an equivalent negative-control
+ablation.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="-omnimedvqa-a-new-large-scale-comprehensive-evaluation-benchmark-for-medical-lvlm">★
+OmniMedVQA: A New Large-Scale Comprehensive Evaluation Benchmark for
+Medical LVLM</h4>
+<p><em>Yutao Hu et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2402.09181">arXiv:2402.09181</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> A 73-source, 12-modality,
+&gt;20-anatomical-region medical VQA benchmark built entirely from
+authentic (non-synthetic) clinical images, showing medical-specialized
+LVLMs can underperform general-domain ones.</p>
+<ul>
+<li><strong>Models.</strong> Evaluates existing LVLMs, contrasting
+medical-specialized models against general-domain LVLMs [abstract];
+specific model names not extracted -- two WebFetch attempts (abs page)
+returned only abstract-level content, not the results table, within this
+run&#39;s budget.</li>
+<li><strong>Method.</strong> Collects and curates images from 73
+distinct existing medical datasets across 12 imaging modalities and more
+than 20 anatomical regions, framed as a VQA benchmark using authentic
+clinical images (not synthetic/rendered) [abstract].</li>
+<li><strong>Datasets.</strong> OmniMedVQA itself, sourced from 73
+medical datasets, 12 modalities, &gt;20 anatomical regions [abstract].
+Exact total QA-pair count: not extracted (not stated in the abstract;
+full-text table was not reached within budget).</li>
+<li><strong>Experiments.</strong> &#39;Extensive experiments&#39; evaluating
+LVLMs&#39; medical VQA ability [abstract]; design details beyond this not
+extracted.</li>
+<li><strong>Results.</strong> &#39;existing LVLMs struggle to address these
+medical VQA problems effectively&#39; [abstract]; &#39;medical-specialized LVLMs
+even exhibit inferior performance to those general-domain models&#39;
+[abstract]. No numeric accuracy figures were extracted (not present in
+the abstract; the full-text results table was not reached).</li>
+<li><strong>Conclusions.</strong> Calls for &#39;a more versatile and robust
+LVLM in the biomedical field&#39;; current LVLM understanding of real
+medical images is limited even for medically fine-tuned models
+[abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> OmniMedVQA (with MCQ options
+stripped) is one of our 8 open-ended eval benchmarks -- we deliberately
+convert its native multiple-choice format to open-ended, directly
+exploiting the format axis this category is about. Its own finding that
+medical-specialized LVLMs can lag general ones is a caution for us:
+Lingshu-7B/32B being &#39;medical&#39; finetunes does not guarantee they beat
+general Qwen2.5-VL, worth checking against our own Qwen2.5-VL
+replication.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="llm-evaluators-recognize-and-favor-their-own-generations">LLM
+Evaluators Recognize and Favor Their Own Generations</h4>
+<p><em>Arjun Panickssery et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2404.13076">arXiv:2404.13076</a> · read
+priority 1</em></p>
+<p><strong>In one line.</strong> Shows LLM judges (GPT-4, Llama 2) can
+recognize their own outputs above chance, and that this self-recognition
+ability correlates linearly with the strength of their self-preference
+scoring bias.</p>
+<ul>
+<li><strong>Models.</strong> GPT-4 and Llama 2, used as both generators
+and judges; fine-tuned variants used to strengthen/probe
+self-recognition [abstract].</li>
+<li><strong>Method.</strong> Measures self-recognition accuracy (can a
+model tell its own output apart from others&#39;/humans&#39;) and
+self-preference bias (does it score its own output higher despite equal
+human-judged quality); fine-tunes models to test the causal link between
+the two, with controlled experiments against confounders
+[abstract].</li>
+<li><strong>Datasets.</strong> not extracted (no specific named dataset
+in the abstract beyond generated-text comparisons)</li>
+<li><strong>Experiments.</strong> Out-of-the-box self-recognition
+measurement; fine-tuning to strengthen self-recognition and observe the
+effect on self-preference; confound-controlled causal experiments
+[abstract].</li>
+<li><strong>Results.</strong> &#39;LLMs such as GPT-4 and Llama 2 have
+non-trivial accuracy at distinguishing themselves from other LLMs and
+humans&#39; [abstract]; &#39;a linear correlation between self-recognition
+capability and the strength of self-preference bias&#39; [abstract]. No
+specific numeric accuracy/correlation values are given in the
+abstract.</li>
+<li><strong>Conclusions.</strong> Self-recognition capability is a
+partial, causally-implicated driver of self-preference bias in LLM
+evaluators, with implications for AI safety and any pipeline using an
+LLM to judge outputs, including its own [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Our correctness labels come
+from Lingshu-32B judging Lingshu-7B outputs -- same model family (not
+literally &#39;self&#39;, but a closely related generation/lineage). This
+paper&#39;s finding that self-preference scales with self-recognition
+ability suggests a nonzero, family-correlated risk that our 32B judge is
+not perfectly neutral toward Lingshu-7B-style phrasing relative to, say,
+Qwen2.5-VL or MedGemma candidates -- a possible confound for any
+judge-based cross-model comparison (e.g. our 6/8 vs. 8/8 headline gain
+being partly a judge-family effect) that we have not controlled for and
+should flag as an open risk.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="-pmc-vqa-visual-instruction-tuning-for-medical-visual-question-answering">★
+PMC-VQA: Visual Instruction Tuning for Medical Visual Question
+Answering</h4>
+<p><em>Xiaoman Zhang et al. · 2023 · arXiv preprint · <a href="https://arxiv.org/abs/2305.10415">arXiv:2305.10415</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Introduces PMC-VQA (227k generative QA
+pairs from 149k images) and MedVInT, plus a manually-verified 2,000-pair
+test set; the paper&#39;s own data analysis shows the correct MCQ answer is
+skewed toward option B (~31% vs. 25% expected).</p>
+<ul>
+<li><strong>Models.</strong> MedVInT: a vision encoder aligned to a
+pretrained LLM, using a generative (not classification) VQA formulation
+[abstract]. Pretrained on PMC-VQA then fine-tuned on VQA-RAD, SLAKE, and
+ImageCLEF-2019 [abstract].</li>
+<li><strong>Method.</strong> Reframes MedVQA as text generation by
+aligning a pretrained vision encoder with an LLM; builds a scalable
+pipeline to construct PMC-VQA at scale from PMC figure-caption pairs
+[abstract].</li>
+<li><strong>Datasets.</strong> PMC-VQA training set: &#39;226,946
+question-answer pairs corresponding to 149,075 images&#39; [html, section
+4.1]. Manually-verified test set (&#39;PMC-VQA-test&#39;): 2,000 QA pairs [html,
+section 4.1 / Table 3]. Also fine-tuned/evaluated on VQA-RAD, SLAKE,
+ImageCLEF-2019 [abstract].</li>
+<li><strong>Experiments.</strong> Data-quality/bias analysis of the
+correct-answer letter distribution (section 2.1 of the paper); a
+language-only (no-image) baseline to test how guessable the answers are
+(section 2.3) [html].</li>
+<li><strong>Results.</strong> &#39;The correct options were distributed as
+follows: A (24.07%), B (30.87%), C (29.09%), D (15.97%)&#39; [html, section
+2.1] -- option B is overrepresented (~31% vs. 25% chance) and D
+underrepresented (~16%). &#39;around 30% of the questions have &quot;B&quot; answers,
+making the 30.8% score nearly equivalent to the highest possible score
+attainable through guessing&#39; [html, section 2.3] -- i.e. an
+always-answer-B, language-only baseline scores ~30.8%, near the ceiling
+achievable by guessing alone.</li>
+<li><strong>Conclusions.</strong> PMC-VQA/MedVInT significantly
+outperforms prior MedVQA models on free-form answer generation across
+VQA-RAD/SLAKE/ImageCLEF-2019 [abstract]; the paper documents but does
+not correct the training-set answer-position imbalance [html].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Central provenance paper:
+PMC-VQA is our project&#39;s historical training/eval benchmark from the
+June MedVLThinker era (CLAUDE.md SS0), and &#39;PMC_VQA test_2.csv&#39; is a
+MedEvalKit-era eval cell in the live method. This paper&#39;s own admission
+of a ~31%-vs-25% option-B skew in its training data is exactly the kind
+of answer-position/format bias our project&#39;s finding #2 (AUROC ~0.6 on
+MCQ vs. ~0.87 on free text; option discreteness, not length, is the
+cause) would predict creates spuriously &#39;easy&#39; MCQ signal -- a
+paper-verified instance of the same phenomenon, independent of our own
+results.</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="-judging-llm-as-a-judge-with-mt-bench-and-chatbot-arena">★
+Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</h4>
+<p><em>Lianmin Zheng et al. · 2023 · NeurIPS 2023 Datasets and
+Benchmarks Track · <a href="https://arxiv.org/abs/2306.05685">arXiv:2306.05685</a> · read
+priority 1 · <strong>PDF in <code>papers/</code></strong></em></p>
+<p><strong>In one line.</strong> Establishes and validates
+LLM-as-a-judge (e.g. GPT-4 scoring model outputs) against human
+preference, while explicitly naming position, verbosity, and
+self-enhancement bias as failure modes to correct for.</p>
+<ul>
+<li><strong>Models.</strong> GPT-4 (and other strong LLMs) used as
+judges, scoring LLaMA/Vicuna variants as exam-takers [abstract].</li>
+<li><strong>Method.</strong> Introduces MT-Bench (a multi-turn question
+set) and Chatbot Arena (crowdsourced pairwise battles); studies
+LLM-judge/human agreement and catalogs judge biases -- position bias,
+verbosity bias, self-enhancement (self-preference) bias, and limited
+reasoning ability -- proposing mitigations for some [abstract].</li>
+<li><strong>Datasets.</strong> MT-bench questions, 3K expert votes, and
+30K Chatbot Arena conversations with human preference labels, all
+released publicly [abstract].</li>
+<li><strong>Experiments.</strong> Compares LLM-judge scores/rankings to
+human preference on both benchmarks; evaluates several LLaMA/Vicuna
+variants [abstract].</li>
+<li><strong>Results.</strong> &#39;strong LLM judges like GPT-4 can match
+both controlled and crowdsourced human preferences well, achieving over
+80% agreement, the same level of agreement between humans&#39;
+[abstract].</li>
+<li><strong>Conclusions.</strong> LLM-as-a-judge is &#39;a scalable and
+explainable way to approximate human preferences&#39; but requires
+bias-awareness (position/verbosity/self-enhancement); MT-Bench and
+human-preference benchmarks complement traditional NLP benchmarks
+[abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Direct methodological ancestor
+of our own evaluation design: we use a Lingshu-32B LLM-judge to label
+correctness of Lingshu-7B best-of-N candidates. This paper coins
+&#39;self-enhancement/self-preference bias,&#39; which is exactly the risk
+2404.13076 (also in this category) measures for a same-family
+judge/generator pairing like ours. Cite this paper for the terminology
+and the &gt;80%-agreement sanity bar, and 2404.13076 for the specific
+same-family risk.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="a-dataset-of-clinically-generated-visual-questions-and-answers-about-radiology-images">A
+dataset of clinically generated visual questions and answers about
+radiology images</h4>
+<p><em>Jason J. Lau et al. · 2018 · Scientific Data · <a href="https://www.nature.com/articles/sdata2018251">doi:10.1038/sdata.2018.251</a>
+· read priority 1</em></p>
+<p><strong>In one line.</strong> The original clinician-authored (not
+templated) radiology VQA dataset: physicians wrote free-form questions
+about MedPix CT/MRI/X-ray images, later paraphrased by lay
+participants.</p>
+<ul>
+<li><strong>Models.</strong> not extracted as a list; the paper&#39;s own
+baseline, MCB-RAD, is reported at 25.4% accuracy on open-ended questions
+[fetched].</li>
+<li><strong>Method.</strong> Two-phase construction: (1) clinicians
+write free-form questions about randomized images, phrased naturally as
+if &#39;asking a colleague or another physician&#39;; (2) paired participants
+generate &#39;rephrased&#39; and &#39;framed&#39; versions of others&#39; questions. All
+pairs are manually validated, with disagreements resolved by expert
+radiologists [fetched].</li>
+<li><strong>Datasets.</strong> VQA-RAD itself: 315 radiological images
+from MedPix (104 head axial CT/MRI, 107 chest X-ray, 104 abdominal axial
+CT) [fetched]; 3,515 total questions (1,515 free-form, 733 rephrased,
+1,267 framed), averaging ~10 questions/image [fetched]. Test set: 300
+randomly chosen free-form questions plus 151 corresponding paraphrased
+questions; the remainder is training [fetched].</li>
+<li><strong>Experiments.</strong> Scored with simple/mean accuracy,
+human inter-annotator F1 agreement (range 0.78-0.95, mean 0.85), BLEU
+(flagged by the authors as problematic for this task), and manual
+evaluation allowing partial credit [fetched].</li>
+<li><strong>Results.</strong> Of the free-form subset: &#39;42% (637)
+open-ended answer types and 58% (878) close-ended&#39; [fetched]; &#39;Yes/no
+questions represent 92% of the close-ended QA pairs&#39; [fetched]. Baseline
+MCB-RAD: 25.4% accuracy on open-ended questions [fetched].</li>
+<li><strong>Conclusions.</strong> The authors state BLEU &#39;penalizes
+answers with varying lengths&#39; and &#39;is not useful for medical VQA where
+there are many ways to phrase an answer&#39;; contemporary (2018) models
+needed &#39;more data&#39; and better learning of medical terminology, given the
+poor open-ended scores [fetched].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> VQA-RAD-open is one of our 8
+eval benchmarks. Unlike SLAKE/PathVQA it is NOT templated -- genuinely
+clinician-authored free-form questions -- making it our
+closest-to-real-world open-text source. Its 92% yes/no skew within the
+closed-ended half is a reminder that &#39;closed-ended&#39; in this older
+literature usually means yes/no, a different axis from our project&#39;s MCQ
+vs. open-text split. 2405.03162 (Med-Gemini, also in this category) is
+cited in our task brief as motivating a contamination-free VQA-RAD
+re-split -- worth checking directly before relying on any VQA-RAD
+re-split claim (see that card&#39;s flag).</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="medevalkit">MedEvalKit</h4>
+<p><em>Alibaba DAMO Academy · None · read priority 1</em></p>
+<p><strong>In one line.</strong> The GitHub evaluation harness our
+project&#39;s live method uses; supports 26+ benchmarks including
+PMC_VQA/SLAKE/VQA-RAD/PathVQA/OmniMedVQA/MMMU-Medical and 16+ models,
+scoring by exact match with optional LLM-judge -- but its README does
+not state which PMC-VQA file/CSV it loads.</p>
+<ul>
+<li><strong>Models.</strong> &#39;16+ models&#39; listed, including Qwen2.5-VL,
+Qwen2-VL, BiMediX2, LLaVA-Med, HuatuoGPT-vision, InternVL,
+Llama-3.2-vision, LLaVA, Janus, HealthGPT, BiomedGPT, MedGemma,
+Med_Flamingo, MedDr [github README, fetched].</li>
+<li><strong>Method.</strong> A &#39;comprehensive evaluation framework for
+Large Medical Models (LMMs/LLMs)&#39; with configurable generation settings
+(temperature, top_p, repetition penalty, max_new_tokens) [github README,
+fetched].</li>
+<li><strong>Datasets.</strong> &#39;26+ benchmarks&#39; including PMC_VQA,
+SLAKE, VQA-RAD, PATH-VQA, OmniMedVQA, MMMU-Medical (test/val), IU XRAY,
+CheXpert Plus, MIMIC-CXR, MedFrameQA, plus text-only benchmarks
+(MedQA-USMLE, MedMCQA, PubMedQA, CMB, etc.) [github README, fetched].
+PMC-VQA&#39;s source is given only as &#39;RadGenome/PMC-VQA&#39; on HuggingFace,
+with NO specific file (test.csv / test_2.csv / test_clean.csv) named --
+confirmed not stated in the README [github README, fetched].</li>
+<li><strong>Experiments.</strong> N/A (this is a software repository,
+not a paper)</li>
+<li><strong>Results.</strong> N/A (this is a software repository, not a
+paper)</li>
+<li><strong>Conclusions.</strong> N/A (this is a software repository,
+not a paper)</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> This IS our project&#39;s live
+evaluation harness (CLAUDE.md SS0/SS8: &#39;MedEvalKit... is the faithful
+harness every current paper number comes from&#39;). The README&#39;s silence on
+which PMC-VQA file is loaded corroborates CLAUDE.md&#39;s own landmine note
+that PMC-VQA test_2.csv (v2, 33,430 items, &#39;zero published
+verification&#39;) is hard-coded at MedEvalKit/utils/PMC_VQA/PMC_VQA.py:39
+rather than documented in the README -- i.e. this silence is itself the
+finding the task brief anticipated: which file gets loaded is a
+code-level fact, not a documented or reviewable one.</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="radimagenet-vqa-a-large-scale-ct-and-mri-dataset-for-radiologic-visual-question-answering">RadImageNet-VQA:
+A Large-Scale CT and MRI Dataset for Radiologic Visual Question
+Answering</h4>
+<p><em>Léo Butsanets et al. · 2025 · arXiv preprint · <a href="https://arxiv.org/abs/2512.17396">arXiv:2512.17396</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Large-scale (750K image / 7.5M QA)
+CT/MRI VQA benchmark from expert-curated annotations, explicitly
+designed and tested to resist text-only shortcut solving.</p>
+<ul>
+<li><strong>Models.</strong> not extracted (abstract does not name the
+specific VLMs evaluated)</li>
+<li><strong>Method.</strong> Built from expert-curated annotations
+across 8 anatomical regions and 97 pathology categories spanning 3 tasks
+(abnormality detection, anatomy recognition, pathology identification);
+supports open-ended, closed-ended and multiple-choice question formats;
+includes a text-only (no-image) ablation to test for linguistic
+shortcuts [abstract].</li>
+<li><strong>Datasets.</strong> RadImageNet-VQA itself: 750K images, 7.5M
+QA pairs, 8 anatomical regions, 97 pathology categories [abstract].</li>
+<li><strong>Experiments.</strong> &#39;Extensive experiments&#39; with
+state-of-the-art VLMs, including fine-tuning, plus a text-only ablation
+[abstract].</li>
+<li><strong>Results.</strong> &#39;state-of-the-art vision-language models
+still struggle with fine-grained pathology identification, particularly
+in open-ended settings and even after fine-tuning&#39; [abstract]; &#39;model
+performance collapses to near-random without image inputs, confirming
+that RadImageNet-VQA is free from linguistic shortcuts&#39; [abstract]. No
+specific numeric accuracy figures given in the abstract.</li>
+<li><strong>Conclusions.</strong> Existing medical VQA datasets are
+limited in scale/modality diversity and prone to text shortcuts;
+RadImageNet-VQA is offered as a much larger, shortcut-resistant CT/MRI
+benchmark [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> RadImageNet-VQA (open-ended
+form) is one of our 8 eval benchmarks. Its own reported finding -- that
+current VLMs specifically struggle on open-ended (vs. MCQ/closed)
+fine-grained pathology ID -- is direct external support for our finding
+#2 (answer format determines whether routing signals work; open-text is
+harder and more informative than MCQ) and for why our best-of-N +
+verifier method targets the open-ended setting.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="kvasir-vqa-x1-a-multimodal-dataset-for-medical-reasoning-and-robust-medvqa-in-gastrointestinal-endoscopy">Kvasir-VQA-x1:
+A Multimodal Dataset for Medical Reasoning and Robust MedVQA in
+Gastrointestinal Endoscopy</h4>
+<p><em>Sushant Gautam et al. · 2025 · arXiv preprint · <a href="https://arxiv.org/abs/2506.09958">arXiv:2506.09958</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> LLM-generated, complexity-stratified
+expansion of Kvasir-VQA (GI endoscopy) adding 159,549 new QA pairs plus
+a separate robustness track using synthetic visual-artifact
+augmentations.</p>
+<ul>
+<li><strong>Models.</strong> not extracted (abstract does not name the
+VLMs evaluated)</li>
+<li><strong>Method.</strong> QA pairs generated by a &#39;systematic method
+using large language models,&#39; stratified by complexity to test deeper
+clinical reasoning; visual augmentations mimicking common imaging
+artifacts define a second, robustness-focused evaluation track
+[abstract].</li>
+<li><strong>Datasets.</strong> Kvasir-VQA-x1 itself: 159,549 new QA
+pairs added on top of the original Kvasir-VQA GI-endoscopy image pool
+[abstract]. Two eval tracks: standard VQA performance, and robustness
+under visual perturbation [abstract].</li>
+<li><strong>Experiments.</strong> not extracted beyond the two-track
+design stated in the abstract</li>
+<li><strong>Results.</strong> not extracted (no accuracy numbers given
+in the abstract)</li>
+<li><strong>Conclusions.</strong> Aims to provide a more clinically
+complex and visually diverse GI-endoscopy MedVQA benchmark than the
+original Kvasir-VQA, following FAIR data principles [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Kvasir-VQA-x1 (open-ended) is
+one of our 8 eval benchmarks. Its LLM-generated-question construction is
+a relevant methodological parallel to our own use of an LLM
+(Lingshu-32B) as judge: both put an LLM inside the benchmark/evaluation
+loop, so the self-preference / judge-bias literature in this category
+(2404.13076, 2306.05685) is relevant to how its questions -- and our
+correctness labels -- were produced.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="gemex-a-large-scale-groundable-and-explainable-medical-vqa-benchmark-for-chest-x-ray-diagnosis">GEMeX:
+A Large-Scale, Groundable, and Explainable Medical VQA Benchmark for
+Chest X-ray Diagnosis</h4>
+<p><em>Bo Liu et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2411.16778">arXiv:2411.16778</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> The largest chest-X-ray VQA dataset to
+date (151,025 images / 1.6M questions) with four question types and
+built-in visual+textual explanations for every answer.</p>
+<ul>
+<li><strong>Models.</strong> Evaluates 12 representative LVLMs; also
+fine-tunes an existing LVLM on GEMeX&#39;s training set as a strong baseline
+[abstract]. Specific model names not extracted from the abstract.</li>
+<li><strong>Method.</strong> Provides, per QA pair, a &#39;multi-modal
+explainability mechanism&#39; with detailed visual (grounding) and textual
+explanations; supports four question types -- open-ended, closed-ended,
+single-choice, and multiple-choice [abstract].</li>
+<li><strong>Datasets.</strong> GEMeX itself: 151,025 images, 1,605,575
+questions [abstract], chest X-ray only.</li>
+<li><strong>Experiments.</strong> 12 representative LVLMs evaluated; one
+LVLM fine-tuned on the GEMeX training set for comparison
+[abstract].</li>
+<li><strong>Results.</strong> &#39;Evaluation of 12 representative large
+vision language models (LVLMs) on GEMeX reveals suboptimal performance,
+underscoring the dataset&#39;s complexity&#39; [abstract]; the fine-tuned model
+shows &#39;substantial performance improvement&#39; (no specific numeric deltas
+given in the abstract) [abstract].</li>
+<li><strong>Conclusions.</strong> Positions GEMeX as filling two gaps in
+Med-VQA benchmarks: lack of answer explanations, and narrow
+question-format coverage [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> GEMeX-open is one of our 8
+eval benchmarks. Its four-question-type design
+(open/closed/single-choice/multi-choice) makes it one of the few source
+benchmarks natively spanning both format axes we study; worth checking
+whether its open-ended subset behaves like our other open-text
+benchmarks or is closer to its own closed-choice subset (relevant to our
+finding #2 on format-dependent routing-signal quality).</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="judging-the-judges-evaluating-alignment-and-vulnerabilities-in-llms-as-judges">Judging
+the Judges: Evaluating Alignment and Vulnerabilities in
+LLMs-as-Judges</h4>
+<p><em>Aman Singh Thakur et al. · 2024 · Proceedings of the Fourth
+Workshop on Generation, Evaluation and Metrics (GEM^2) 2025 · <a href="https://arxiv.org/abs/2406.12624">arXiv:2406.12624</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> A systematic study of 13 judge LLMs
+scoring 9 exam-taker models finds only the largest judges reasonably
+align with humans, and identifies leniency and prompt-sensitivity as
+systematic judge vulnerabilities.</p>
+<ul>
+<li><strong>Models.</strong> 13 judge models of varying size/family,
+judging 9 exam-taker models (base and instruction-tuned)
+[abstract].</li>
+<li><strong>Method.</strong> Compares LLM-judge scores to human scores
+in a high-inter-human-agreement setting; separately studies score
+calibration vs. ranking ability, and probes vulnerabilities via error
+analysis [abstract].</li>
+<li><strong>Datasets.</strong> not extracted (no dataset name given
+beyond the judge/exam-taker model pairing setup)</li>
+<li><strong>Experiments.</strong> Judge-vs-human absolute-score
+alignment; judge-vs-human ranking-of-models alignment (including smaller
+judges and a lexical-overlap metric); vulnerability probes for prompt
+complexity/length sensitivity and leniency [abstract].</li>
+<li><strong>Results.</strong> &#39;only the best (and largest) models
+achieve reasonable alignment with humans&#39; but &#39;are still quite far
+behind inter-human agreement&#39; with scores that &#39;may still differ with up
+to 5 points from human-assigned scores&#39; [abstract]. For ranking
+exam-takers (not absolute scoring), &#39;smaller models and even the lexical
+metric... may provide a reasonable signal&#39; [abstract].</li>
+<li><strong>Conclusions.</strong> Judge quality depends heavily on the
+task (absolute scoring vs. relative ranking) and on judge size/family;
+judges are sensitive to prompt complexity/length and biased toward
+leniency; high percent-agreement can mask large score-magnitude
+disagreement, so alignment metrics beyond percent-agreement are needed
+[abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> Directly bears on our choice
+of a single 32B judge model and threshold-style correctness labeling:
+the finding that even large judges assign scores up to 5 points off from
+humans, and that &#39;leniency&#39; is a systematic bias, is a reason to
+sanity-check our exact-match currency alongside the judge currency
+(already mandated in CLAUDE.md SS0 for verifier claims) rather than
+trust judge-only correctness labels.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="open-ended-vqa-benchmarking-of-vision-language-models-by-exploiting-classification-datasets-and-their-semantic-hierarchy">Open-ended
+VQA benchmarking of Vision-Language models by exploiting Classification
+datasets and their semantic hierarchy</h4>
+<p><em>Simon Ging et al. · 2024 · ICLR 2024 (Spotlight) · <a href="https://arxiv.org/abs/2402.07270">arXiv:2402.07270</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Proposes turning existing
+visual-classification datasets into an open-ended VQA benchmark, using
+label semantic hierarchy to auto-generate follow-up questions, and
+validates NLP-metric vs. LLM-based scoring against human judgement.</p>
+<ul>
+<li><strong>Models.</strong> Evaluates &#39;a suite of vision-language
+models&#39; (text-generative), compared against discriminative VLMs
+[abstract]; specific model names not extracted.</li>
+<li><strong>Method.</strong> Builds a VQA benchmark from
+classification-dataset labels; uses the label space&#39;s semantic hierarchy
+to auto-generate follow-up questions probing whether a
+coarse-but-technically-correct answer reflects real fine-grained
+understanding; compares traditional NLP metrics vs. LLM-based scoring
+against a human evaluation study to pick the final metric
+[abstract].</li>
+<li><strong>Datasets.</strong> Built on &#39;well-known visual
+classification datasets&#39; -- general-domain object/action/attribute
+classification, not medical [abstract].</li>
+<li><strong>Experiments.</strong> Human evaluation study to validate the
+metric choice; benchmark applied across VLMs comparing
+object/action/attribute classification ability [abstract].</li>
+<li><strong>Results.</strong> not extracted (no specific numeric results
+given in the abstract)</li>
+<li><strong>Conclusions.</strong> Argues for benchmark designs that
+reuse classification datasets&#39; scale/reliability and validate metric
+choice against human judgement rather than assuming it, as a foundation
+for more precise text-generative VQA evaluation [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> A methodological parallel, not
+medical: like our project, it must solve &#39;how do you score a free-text
+open-ended answer against a short gold label.&#39; Its finding that metric
+choice (NLP vs. LLM-based) needs human validation rather than assumption
+supports our own practice of reporting both an LLM-judge and normalized
+exact-match currency (CLAUDE.md SS0 standing caveat) rather than
+trusting one scorer.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="advancing-multimodal-medical-capabilities-of-gemini">Advancing
+Multimodal Medical Capabilities of Gemini</h4>
+<p><em>Lin Yang et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2405.03162">arXiv:2405.03162</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Introduces the Med-Gemini family (2D/3D
+radiology, histopathology, ophthalmology, dermatology, genomics),
+reporting CXR report-generation and VQA gains over prior SoTA.</p>
+<ul>
+<li><strong>Models.</strong> Med-Gemini-2D, Med-Gemini-3D, and
+Med-Gemini-Polygenic, built on Gemini and fine-tuned on 2D/3D radiology,
+histopathology, ophthalmology, dermatology, and genomic data
+[abstract].</li>
+<li><strong>Method.</strong> Fine-tunes Gemini&#39;s multimodal models on
+medical modalities; evaluated via expert (radiologist) side-by-side
+comparison for report generation, and via standard VQA/classification
+benchmarks [abstract].</li>
+<li><strong>Datasets.</strong> Two (unnamed in the abstract) CXR
+report-generation datasets; CXR VQA benchmarks (&#39;17 of 20 tasks&#39;,
+unnamed); histopathology/ophthalmology/dermatology classification
+benchmarks (&#39;20 tasks&#39;, unnamed) [abstract].</li>
+<li><strong>Experiments.</strong> Expert evaluation of AI vs.
+radiologist CXR/CT reports; VQA/classification benchmark comparison
+against SoTA/baselines [abstract].</li>
+<li><strong>Results.</strong> Med-Gemini-2D CXR report generation
+&#39;exceeding previous best results... by an absolute margin of 1% and 12%&#39;
+across two datasets, with &#39;57% and 96%... on normal cases, and 43% and
+65% on abnormal cases... evaluated as equivalent or better than the
+original radiologists&#39; reports&#39; [abstract]. Med-Gemini-3D: &#39;53% of AI
+reports considered clinically acceptable&#39; [abstract]. &#39;Med-Gemini-2D
+surpasses the previous best performance in CXR visual question answering
+(VQA)... exceeding SoTA or baselines on 17 of 20 tasks&#39; [abstract];
+&#39;surpasses baselines across 18 out of 20 tasks&#39; in
+histopathology/ophthalmology/dermatology classification [abstract].</li>
+<li><strong>Conclusions.</strong> Broad gains across medical
+imaging/genomic tasks, but the authors caveat that &#39;further development
+and evaluation are necessary in the safety-critical medical domain&#39;
+[abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> FLAG: our task brief describes
+this paper as &#39;the paper MedGemma cites for a contamination-free VQA-RAD
+re-split,&#39; but the fetched abstract (abstract-only provenance -- the
+full body text was not reached within this run&#39;s WebFetch budget) does
+not itself mention VQA-RAD or a re-split. We report this as not
+extracted / not confirmed rather than assert it, per the no-fabrication
+rule. If a contamination-free VQA-RAD split is needed for our pipeline,
+verify it directly in the full PDF (or the MedGemma technical report)
+before relying on this claim.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="worse-than-random-an-embarrassingly-simple-probing-evaluation-of-large-multimodal-models-in-medical-vqa">Worse
+than Random? An Embarrassingly Simple Probing Evaluation of Large
+Multimodal Models in Medical VQA</h4>
+<p><em>Qianqi Yan et al. · 2024 · arXiv preprint · <a href="https://arxiv.org/abs/2405.20421">arXiv:2405.20421</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Introduces ProbMed, showing top LMMs
+(GPT-4o, GPT-4V, Gemini Pro) score below random-guess on negation-probed
+/ hallucinated-attribute medical diagnosis questions.</p>
+<ul>
+<li><strong>Models.</strong> GPT-4o, GPT-4V, Gemini Pro, LLaVA-Med,
+CheXagent [abstract].</li>
+<li><strong>Method.</strong> &#39;Probing evaluation&#39; pairs original
+questions with negation questions containing hallucinated attributes;
+&#39;procedural diagnosis&#39; requires reasoning across modality recognition,
+organ identification, clinical findings, abnormalities, and positional
+grounding for each image [abstract].</li>
+<li><strong>Datasets.</strong> ProbMed (Probing Evaluation for Medical
+Diagnosis), newly introduced [abstract]; size/splits not extracted (not
+stated in the abstract).</li>
+<li><strong>Experiments.</strong> Compares top LMM performance on
+probing (original + negation) questions and on procedural
+multi-dimension diagnosis per image [abstract].</li>
+<li><strong>Results.</strong> &#39;top-performing models like GPT-4o,
+GPT-4V, and Gemini Pro perform worse than random guessing on specialized
+diagnostic questions&#39; [abstract]; &#39;models like LLaVA-Med struggle even
+with more general questions&#39; [abstract]; CheXagent&#39;s results
+&#39;demonstrate the transferability of expertise across different
+modalities of the same organ&#39; [abstract]. No specific numeric accuracy
+figures are given in the abstract.</li>
+<li><strong>Conclusions.</strong> Current LMMs are &#39;still far from
+applicable&#39; to medical diagnosis under rigorous
+(negation/hallucination-probed) evaluation, even when standard benchmark
+accuracy looks high [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> A strong external warning
+about benchmark inflation via standard accuracy on medical VQA --
+directly relevant to why our project reports macro accuracy alongside a
+suite of walls/ceilings (coverage, selection, recoverability) rather
+than a single top-line accuracy number, and to why CLAUDE.md flags
+MMMU-Medical contamination as consequential. Suggests a possible future
+stress-test (negation-probing our own best-of-N pool) that we have not
+run.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="mmmu-a-massive-multi-discipline-multimodal-understanding-and-reasoning-benchmark-for-expert-agi">MMMU:
+A Massive Multi-discipline Multimodal Understanding and Reasoning
+Benchmark for Expert AGI</h4>
+<p><em>Xiang Yue et al. · 2023 · CVPR 2024 (Oral) · <a href="https://arxiv.org/abs/2311.16502">arXiv:2311.16502</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> General (not medical-only) massive
+multimodal benchmark spanning six disciplines including Health &amp;
+Medicine, from which the field&#39;s &#39;MMMU-Medical&#39; subset (our excluded,
+contaminated cell) is drawn.</p>
+<ul>
+<li><strong>Models.</strong> 14 open-source LMMs, plus GPT-4V(ision) and
+Gemini evaluated [abstract].</li>
+<li><strong>Method.</strong> 11.5K multimodal questions collected from
+college exams/quizzes/textbooks across 6 disciplines / 30 subjects / 183
+subfields / 30 heterogeneous image types, testing &#39;advanced perception
+and reasoning with domain-specific knowledge&#39; [abstract].</li>
+<li><strong>Datasets.</strong> MMMU itself: 11.5K questions [abstract];
+Health &amp; Medicine is one of six top-level disciplines.</li>
+<li><strong>Experiments.</strong> Benchmarks 14 open-source LMMs plus
+GPT-4V and Gemini Ultra [abstract].</li>
+<li><strong>Results.</strong> &#39;Even the advanced GPT-4V and Gemini Ultra
+only achieve accuracies of 56% and 59% respectively&#39; [abstract].</li>
+<li><strong>Conclusions.</strong> Substantial headroom remains even for
+the strongest proprietary multimodal models on expert-level,
+college-exam-style multimodal reasoning [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> MMMU-Medical is the subset our
+project EXCLUDES from its 8-benchmark pool on contamination grounds
+(Lingshu-7B scores 0.80 vs. its own published 54.0 on MMMU, per
+CLAUDE.md SS0). This is the parent paper defining that subset&#39;s
+construction (exam/quiz/textbook sourced, expert-level,
+cross-disciplinary) -- useful for precisely describing what was excluded
+and why its provenance (public exam material, plausibly crawled
+pre-training) makes contamination plausible.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="slake-a-semantically-labeled-knowledge-enhanced-dataset-for-medical-visual-question-answering">SLAKE:
+A Semantically-Labeled Knowledge-Enhanced Dataset for Medical Visual
+Question Answering</h4>
+<p><em>Bo Liu et al. · 2021 · ISBI 2021 · <a href="https://arxiv.org/abs/2102.09542">arXiv:2102.09542</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Bilingual (EN/ZH), physician-annotated
+medical VQA dataset with segmentation masks and a structured medical
+knowledge base for knowledge-grounded questions.</p>
+<ul>
+<li><strong>Models.</strong> not extracted (baseline VQA models are
+evaluated; accuracy ranges given below, but specific model names were
+not in the fetched excerpt)</li>
+<li><strong>Method.</strong> Physicians used an annotation system with
+pre-defined question templates per content type (modality, position,
+color, shape, size, plus knowledge-graph-triplet questions) and could
+choose, amend, or fully rewrite candidate questions [html,
+dataset-construction section].</li>
+<li><strong>Datasets.</strong> SLAKE itself: 642 images (282 CT, 181
+MRI, 179 X-ray) [html]; 14,028 QA pairs (&#39;14K&#39;) [html]; official split
+450 train / 96 val / 96 test images [html]. Bilingual: English and
+Chinese [html].</li>
+<li><strong>Experiments.</strong> Baselines evaluated separately on
+vision-only vs. knowledge-based (KG-augmented) question subsets, and on
+open- vs. closed-ended questions [html].</li>
+<li><strong>Results.</strong> Accuracy &#39;for vision-only tasks (ranging
+72.73%-75.36%)&#39; and &#39;for knowledge-based tasks (70.27%-75.01%)&#39; [html,
+results table]. Paper notes baselines around 73% are &#39;still far away
+from practical use in the medical domain&#39; [html].</li>
+<li><strong>Conclusions.</strong> SLAKE is proposed as a richer
+alternative to VQA-RAD (bilingual, more modalities/body parts,
+segmentation masks, knowledge-base grounding) to facilitate Med-VQA
+development and evaluation [abstract+html].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> SLAKE-open is one of our 8
+eval benchmarks. It is templated (predefined per-content-type question
+templates, physician-edited) rather than free clinical dialogue like
+VQA-RAD, so it is structurally distinct from VQA-RAD despite sitting in
+the same &#39;closed/open&#39; bucket. Directly relevant: 2606.10066
+(contamination audit, core in this category) flags 19.8% of SLAKE-En
+images as near-neighbours of PMC-OA under one detector -- a live
+question for whether our Lingshu SLAKE-open results reflect memorization
+rather than genuine capability.</p>
+</blockquote>
+<p><small>Read from: html.</small></p>
+<h4 id="pathvqa-30000-questions-for-medical-visual-question-answering">PathVQA:
+30000+ Questions for Medical Visual Question Answering</h4>
+<p><em>Xuehai He et al. · 2020 · arXiv preprint · <a href="https://arxiv.org/abs/2003.10286">arXiv:2003.10286</a> · read
+priority 2</em></p>
+<p><strong>In one line.</strong> Introduces PathVQA, the first
+pathology-image VQA dataset, built by semi-automatically mining textbook
+figure captions into QA pairs.</p>
+<ul>
+<li><strong>Models.</strong> not extracted (dataset paper; early VQA
+baselines are evaluated but not named in the abstract)</li>
+<li><strong>Method.</strong> Semi-automated pipeline: extract pathology
+images and captions from textbooks/online digital libraries, generate QA
+pairs from captions with NLP, then manually check every question for
+correctness [abstract].</li>
+<li><strong>Datasets.</strong> PathVQA itself: &#39;32,799 open-ended
+questions from 4,998 pathology images&#39; [abstract]. Source material:
+pathology textbooks and online digital libraries, chosen because
+pathology images are otherwise private/inaccessible.</li>
+<li><strong>Experiments.</strong> not extracted (abstract-only; no
+experiment table described in the abstract)</li>
+<li><strong>Results.</strong> &#39;32,799 open-ended questions from 4,998
+pathology images where each question is manually checked to ensure
+correctness&#39; [abstract]. No accuracy or split numbers given in the
+abstract.</li>
+<li><strong>Conclusions.</strong> First dataset for pathology VQA,
+released publicly to promote research toward an &#39;AI Pathologist&#39; able to
+pass board-certification-style exams [abstract].</li>
+</ul>
+<blockquote>
+<p><strong>Why it matters to us.</strong> PathVQA-open is one of our 8
+eval benchmarks. Knowing it is caption-derived (templated from textbook
+figure captions via NLP, not independently authored) rather than free
+clinician dialogue matters: it is structurally closer to
+SLAKE/OmniMedVQA than to VQA-RAD, and caption-derived answers can carry
+stylistic/text shortcuts unrelated to genuine image reasoning. Official
+train/val/test split sizes and any stated quality problems (e.g. yes/no
+skew) were not recoverable from the abstract alone within this run&#39;s
+fetch budget; flagged as &#39;not extracted&#39; rather than guessed from
+memory.</p>
+</blockquote>
+<p><small>Read from: abstract-only.</small></p>
+<h4 id="also-in-this-area-6-in-brief">Also in this area (6), in
+brief</h4>
+<ul>
+<li><strong>Auditing Data Leakage in Whole-Slide Image Multimodal
+Benchmarks</strong> — Wenhao Zhang et al. (2026), <a href="https://arxiv.org/abs/2607.12278">arXiv:2607.12278</a>. Finds
+92.3-100% case-level train/test overlap on TCGA-derived
+whole-slide-image (pathology) VQA benchmarks, meaning reported
+&#39;zero-shot&#39; WSI-VLM performance largely reflects memorized
+patient/institution artifacts, not reasoning.<br><small><em>For us:</em>
+Not one of our 8 benchmarks (we have no whole-slide-image benchmark;
+PathVQA is figure/caption-derived, not WSI) -- included as field context
+for how severe contamination/leakage can get in medical VLM benchmarking
+(92-100%, an order of magnitude worse than the 19.8% SLAKE finding in
+2606.10066), useful for calibrating how seriously to take our own
+MMMU-Medical exclusion and SLAKE caution.</small></li>
+<li><strong>Identifying and Resolving Pitfalls of Knowledge-Based VQA
+Benchmarks: Auditing, Repairing, and Augmenting</strong> — Qian Ma et
+al. (2026), <a href="https://arxiv.org/abs/2607.00159">arXiv:2607.00159</a>. Audits
+knowledge-based VQA (KB-VQA, general-domain, not medical) benchmarks and
+finds systematic answer-derivability, question-underspecification, and
+visually-trivial-scene flaws that inflate/distort model rankings;
+proposes an audit-and-repair protocol.<br><small><em>For us:</em> Not
+medical and not one of our 8 benchmarks, but directly analogous in
+spirit to our own benchmark-quality concerns (SLAKE contamination,
+PMC-VQA answer-position skew, MMMU-Medical exclusion): another field
+example of &#39;accuracy on a flawed benchmark overstates a real
+capability,&#39; reinforcing why our project treats per-cell/per-benchmark
+auditing (not just pooled macro accuracy) as necessary.</small></li>
+<li><strong>MedXpertQA: Benchmarking Expert-Level Medical Reasoning and
+Understanding</strong> — Yuxin Zuo et al. (2025), <a href="https://arxiv.org/abs/2501.18362">arXiv:2501.18362</a>. A
+4,460-question expert-level medical benchmark (Text and multimodal MM
+subsets) built with explicit data-synthesis steps to mitigate
+leakage.<br><small><em>For us:</em> MedXpertQA-MM is one of the six
+MedVLThinker-Eval-era benchmarks per CLAUDE.md SS8, though it is not in
+this task&#39;s explicit list of our current 8 live open-ended benchmarks
+(PathVQA/SLAKE/VQA-RAD/RadImageNet-VQA/Kvasir-VQA-x1/OmniMedVQA/VQA-Med-C4/GEMeX)
+-- worth double-checking whether MedXpertQA-MM is still in the live pool
+or was superseded. Its explicit anti-leakage data-synthesis design is a
+useful methodological contrast to the contamination problems documented
+elsewhere in this category (2606.10066, 2607.12278) for benchmarks that
+did not take that precaution.</small></li>
+<li><strong>Kvasir-VQA: A Text-Image Pair GI Tract Dataset</strong> —
+Sushant Gautam et al. (2024), <a href="https://arxiv.org/abs/2409.01437">arXiv:2409.01437</a>. The
+original GI-tract VQA dataset (derived from HyperKvasir +
+Kvasir-Instrument) that Kvasir-VQA-x1 later expanded roughly 25x with
+harder, LLM-generated questions.<br><small><em>For us:</em> Not itself
+one of our 8 benchmarks (we use its successor, Kvasir-VQA-x1) but is its
+direct ancestor dataset -- useful for provenance: the underlying images
+trace back to HyperKvasir/Kvasir-Instrument, and Kvasir-VQA-x1&#39;s 159,549
+new QA pairs were added on top of this original 6,500-image
+pool.</small></li>
+<li><strong>BESTMVQA: A Benchmark Evaluation System for Medical Visual
+Question Answering</strong> — Xiaojie Hong et al. (2023), <a href="https://arxiv.org/abs/2312.07867">arXiv:2312.07867</a>. A
+tool/system (not a new dataset) for auto-generating Med-VQA datasets
+from raw clinical data and running a library of SOTA models under one
+unified experimental setup, aimed at the field&#39;s data-scarcity and
+reproducibility problems.<br><small><em>For us:</em> A direct analogue,
+at the tooling level, to what MedEvalKit is for our own project (a
+&#39;unified experimental setup&#39; harness) -- though BESTMVQA&#39;s
+differentiator is also auto-generating new datasets from raw clinical
+data, which we do not do (we only reformat/subset existing public
+benchmarks). The reproducibility problem it names -- &#39;many existing
+models have not been thoroughly evaluated in a unified experimental
+setup&#39; [abstract] -- is the same problem CLAUDE.md SS0/SS8 describes our
+project having solved for Lingshu by adopting MedEvalKit.</small></li>
+<li><strong>VQA-Med: Overview of the Medical Visual Question Answering
+Task at ImageCLEF 2019</strong> — Asma Ben Abacha et al. (2019), .
+Overview of the ImageCLEF 2019 shared task organizing radiology VQA into
+four categories (Modality, Plane, Organ system, Abnormality) over a
+3,200-image training set.<br><small><em>For us:</em> Our project uses
+&#39;VQA-Med 2019 C4-Abnormality&#39; as one of our 8 open-ended eval benchmarks
+-- i.e. specifically the hardest, generation-style category
+(Abnormality), not the classification-style Modality/Plane/Organ
+categories this overview paper also defines. That distinction matters:
+our benchmark is a curated subset of the full 2019 shared task, not the
+whole thing.</small></li>
+</ul>
 <h2 id="39-the-older-lineage-n-best-rescoring-discriminative-reranking-and-confidence-models-in-other-fields">3.9
 The older lineage: n-best rescoring, discriminative reranking, and
 confidence models in other fields</h2>
@@ -8856,7 +11567,7 @@ second, independent-of-ASR confirmation that this recipe predates our
 project by two decades.</p>
 </blockquote>
 <p><small>Read from: html.</small></p>
-<h4 id="also-in-this-area-11-in-brief">Also in this area (11), in
+<h4 id="also-in-this-area-11-in-brief-1">Also in this area (11), in
 brief</h4>
 <ul>
 <li><strong>The Evolution of Reranking Models in Information Retrieval:
@@ -9028,7 +11739,7 @@ model</strong>, <strong>latent verifier</strong>, <strong>intrinsic
 reward from hidden states</strong>, <strong>confidence estimation
 module</strong> (speech), <strong>model quality assessment</strong>
 (structural biology), <strong>confidence model</strong> (docking). The
-nearest instances, each carded in §3.C:</p>
+nearest instances, each carded in §3.3:</p>
 <table>
 <thead>
 <tr>
@@ -9082,7 +11793,7 @@ additional generator forward passes&quot;</td>
 </tbody>
 </table>
 <p><strong>Two papers match all four dimensions</strong>, confirmed by
-independent re-reading (§3.C): <strong>ELHSR/SWIFT</strong>
+independent re-reading (§3.3): <strong>ELHSR/SWIFT</strong>
 (arXiv:2505.12225) and <strong>HSRM</strong> (arXiv:2608.30841). HSRM
 states the no-extra-forward-pass claim most explicitly; <strong>ELHSR
 pools over <em>all</em> generated tokens, which is closer to our
@@ -9101,7 +11812,7 @@ is measured — as a property, not a discovery.</li>
 <h2 id="42-the-lineage-is-older-than-llms">4.2 The lineage is older than
 LLMs</h2>
 <p>Worth one slide, because showing you know it is what separates a
-re-instantiation from a reinvention (all carded in §3.I):</p>
+re-instantiation from a reinvention (all carded in §3.9):</p>
 <ul>
 <li><strong>Speech recognition, 2021 — the true ancestor.</strong>
 <strong>R-EBM</strong> (arXiv:2103.14152): a <strong>2-layer, 512-unit
@@ -9179,7 +11890,7 @@ vision-language and to medical VQA, with the image in the loop. Narrow,
 but nothing found contradicts it.</li>
 <li><strong>The empirical map.</strong> Eight benchmarks, 36,869
 questions, four temperatures, three generator families, ~24 measured
-negatives with bounds rather than nulls. No paper in §3.C evaluates on
+negatives with bounds rather than nulls. No paper in §3.3 evaluates on
 more than a handful of datasets; ELHSR, ReProbe and HSRM are
 mathematical reasoning, CASE is text-only medical, MedProb&#39;s
 demonstration is 100 examples. <strong>This is the strongest thing we
@@ -9287,7 +11998,7 @@ The three defects, and what each one actually requires</h2>
 <td>a method presented as if invented from nothing</td>
 <td>a named lineage: say which published family this belongs to and cite
 the five or six nearest papers <em>by name</em> in the first minute</td>
-<td>§3.C and §4.1</td>
+<td>§3.3 and §4.1</td>
 </tr>
 <tr>
 <td><strong>no comparisons</strong></td>
@@ -9484,14 +12195,18 @@ macro</strong> over the model&#39;s own greedy decoding across eight
 benchmarks (18,452 held-out questions, judge currency,
 <code>head_final_stack_PVFIXED_2026-09-13.json</code>), beating greedy
 on 6 of 8 and an answer-frequency baseline on all 8, at no additional
-forward pass for verification. It replicates on Qwen2.5-VL-7B (+0.0820,
-8/8) and, on a matched four-benchmark protocol, on MedGemma-4b-it
-(+0.0248) — a different language-model family.</p>
+forward pass for verification. It replicates on
+<strong>Qwen2.5-VL-7B</strong> (+0.0820, 8/8,
+<code>head_final_stack_qwen_2026-09-13.json</code>) and on
+<strong>MedGemma-4b-it</strong> — a Gemma-3 model from a different
+language-model family — at <strong>+0.0481, 8/8</strong> across the same
+eight benchmarks
+(<code>head_final_stack_medgemma_ALL8_2026-09-16.json</code>).</p>
 </blockquote>
 <p><strong>Do not make these four:</strong></p>
 <ol type="1">
 <li>❌ <em>&quot;We invented verification from hidden states&quot;</em> — Q-Probe,
-LiLaVe, ELHSR, ReProbe, CASE, HSRM (§3.C). Concede the family
+LiLaVe, ELHSR, ReProbe, CASE, HSRM (§3.3). Concede the family
 explicitly; it makes the rest credible.</li>
 <li>❌ <em>&quot;Verification is free&quot;</em> as the contribution — HSRM, CASE
 and Q-Probe make that argument in their abstracts. State the cost; don&#39;t
@@ -9510,8 +12225,8 @@ trained verifier gets a free +0.006–0.009 under a same-family judge.
 Until the eight-benchmark probe is re-scored in exact match, every
 headline says &quot;under a Lingshu-32B judge&quot;.</li>
 </ol>
-<h2 id="56-five-questions-to-expect-with-the-answer-and-its-source">5.6
-Five questions to expect, with the answer and its source</h2>
+<h2 id="56-six-questions-to-expect-with-the-answer-and-its-source">5.6
+Six questions to expect, with the answer and its source</h2>
 <table>
 <thead>
 <tr>
@@ -9808,6 +12523,40 @@ Introduces self-consistency: sample multiple chain-of-thought reasoning
 paths and take a majority vote over the final answers instead of greedy
 decoding, for large gains on closed-form reasoning tasks.</li>
 </ul>
+<p><strong>§3.6 — Uncertainty, Calibration, and Hallucination Detection
+in LLMs and VLMs -- with the Medical Evidence</strong></p>
+<ul>
+<li><strong>Calibrated Triage, Not Autonomy: Confidence Estimation for
+Medical Vision-Language Models</strong> — Reza Khanmohammadi et al.
+(2026), arXiv:2606.15910. A head-to-head benchmark of nine confidence
+estimators (training-free logit, verbalized prompting, trained internal
+probes) across five LVLMs and three medical VQA datasets finds no
+estimator reliably best, and even the strongest safely triages only ~25%
+of radiology cases at 20% error tolerance, and almost nothing in
+pathology.</li>
+<li><strong>Overconfidence and Calibration in Medical VQA: Empirical
+Findings and Hallucination-Aware Mitigation</strong> — Ji Young Byun et
+al. (2026), arXiv:2604.02543. Across three VLM families (2B-38B) and
+three medical VQA benchmarks, overconfidence persists regardless of
+scale or prompting (CoT, verbalized confidence); Platt scaling reliably
+beats prompt-based calibration but doesn&#39;t improve AUROC; adding
+hallucination-detection signals (their HAC method) improves both,
+especially on open-ended questions.</li>
+<li><strong>Detecting hallucinations in large language models using
+semantic entropy</strong> — Sebastian Farquhar et al. (2024),
+10.1038/s41586-024-07421-0. Introduces semantic entropy -- clustering
+sampled generations by bidirectional textual entailment and computing
+entropy over the resulting meaning-clusters -- as an unsupervised,
+training-free hallucination detector that beats naive token entropy and
+P(True) baselines.</li>
+<li><strong>A Survey of Confidence Estimation and Calibration in Large
+Language Models</strong> — Jiahui Geng et al. (2023), arXiv:2311.08298.
+Survey organizing LLM confidence-estimation methods into white-box
+(logit-based, internal-state-based, semantic) and black-box (verbalized,
+consistency-based, surrogate-model) families, cataloging calibration
+metrics and applications including hallucination detection and selective
+generation.</li>
+</ul>
 <p><strong>§3.7 — Medical Vision-Language Models: The Generators We Use
 and the Ones We Compare Against</strong></p>
 <ul>
@@ -9834,6 +12583,35 @@ medically-specialized VLMs (3B-72B): general models often match or beat
 medical-specific ones, reasoning consistently underperforms
 understanding, and no model reaches a clinical-deployment reliability
 bar.</li>
+</ul>
+<p><strong>§3.8 — Medical VQA benchmarks, datasets, and the evaluation
+protocol</strong></p>
+<ul>
+<li><strong>A Controlled Audit of Pretraining Contamination in Public
+Medical Vision-Language Benchmarks</strong> — Bruce Changlong Xu et al.
+(2026), arXiv:2606.10066. Audits SLAKE-En, PathVQA, VQA-RAD and an
+OmniMedVQA mirror for pretraining contamination using 4 detector
+families; finds real image-side overlap on SLAKE-En but shows two of the
+four detector families are unreliable (a non-medical control model,
+BLIP-2, &#39;reproduces&#39; their positive signals).</li>
+<li><strong>OmniMedVQA: A New Large-Scale Comprehensive Evaluation
+Benchmark for Medical LVLM</strong> — Yutao Hu et al. (2024),
+arXiv:2402.09181. A 73-source, 12-modality, &gt;20-anatomical-region
+medical VQA benchmark built entirely from authentic (non-synthetic)
+clinical images, showing medical-specialized LVLMs can underperform
+general-domain ones.</li>
+<li><strong>PMC-VQA: Visual Instruction Tuning for Medical Visual
+Question Answering</strong> — Xiaoman Zhang et al. (2023),
+arXiv:2305.10415. Introduces PMC-VQA (227k generative QA pairs from 149k
+images) and MedVInT, plus a manually-verified 2,000-pair test set; the
+paper&#39;s own data analysis shows the correct MCQ answer is skewed toward
+option B (~31% vs. 25% expected).</li>
+<li><strong>Judging LLM-as-a-Judge with MT-Bench and Chatbot
+Arena</strong> — Lianmin Zheng et al. (2023), arXiv:2306.05685.
+Establishes and validates LLM-as-a-judge (e.g. GPT-4 scoring model
+outputs) against human preference, while explicitly naming position,
+verbosity, and self-enhancement bias as failure modes to correct
+for.</li>
 </ul>
 <p><strong>§3.9 — The older lineage: n-best rescoring, discriminative
 reranking, and confidence models in other fields</strong></p>
@@ -9870,24 +12648,24 @@ papers of discriminative reranking in NLP.</li>
 </ul>
 <h2 id="63-reading-order-by-purpose">6.3 Reading order by purpose</h2>
 <p><strong>&quot;I need to defend the method&#39;s novelty.&quot;</strong> §4, then
-§3.C in full (every hidden-state-probe paper), then MedProb and DualRead
+§3.3 in full (every hidden-state-probe paper), then MedProb and DualRead
 specifically.</p>
-<p><strong>&quot;I need baselines for the results table.&quot;</strong> §3.E
+<p><strong>&quot;I need baselines for the results table.&quot;</strong> §3.5
 (self-consistency, MBR, universal self-consistency, consensus scoring)
-and §3.B (verifiers and reward models). These are what a reviewer will
+and §3.2 (verifiers and reward models). These are what a reviewer will
 say we should have compared against.</p>
-<p><strong>&quot;I need to explain why the gains stop.&quot;</strong> §3.D in
+<p><strong>&quot;I need to explain why the gains stop.&quot;</strong> §3.4 in
 full. Coverage, selection efficiency, reward-model over-optimisation,
 the modal and correlation ceilings.</p>
 <p><strong>&quot;I need to justify the datasets and the judge.&quot;</strong>
-§3.H, especially the contamination audits and the LLM-as-a-judge
+§3.8, especially the contamination audits and the LLM-as-a-judge
 self-preference papers — the latter bears directly on our
 Lingshu-32B-judging- Lingshu-7B protocol.</p>
 <p><strong>&quot;I need to place our generator among medical VLMs.&quot;</strong>
-§3.G, starting with the Lingshu report&#39;s benchmark table and the
+§3.7, starting with the Lingshu report&#39;s benchmark table and the
 independent benchmarking studies.</p>
 <p><strong>&quot;I want to know where the idea really came from.&quot;</strong>
-§3.I — speech recognition n-best rescoring, AlphaFold&#39;s pLDDT, docking
+§3.9 — speech recognition n-best rescoring, AlphaFold&#39;s pLDDT, docking
 confidence models. Short cards, big perspective.</p>
 <h2 id="64-how-to-keep-this-current">6.4 How to keep this current</h2>
 <p>The domain moves monthly and four of the closest papers appeared in

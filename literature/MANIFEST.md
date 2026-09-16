@@ -24,10 +24,18 @@ Generated 2026-09-16. The PDFs in `papers/` are the ★ core papers only; every 
 | `papers/E_wang2023selfconsistency.pdf` | Xuezhi Wang et al. (2022). *Self-Consistency Improves Chain of Thought Reasoning in Language Models*. arXiv:2203.11171 | §3.5 |
 | `papers/E_chen2023usc.pdf` | Xinyun Chen et al. (2023). *Universal Self-Consistency for Large Language Model Generation*. arXiv:2311.17311 | §3.5 |
 | `papers/E_ontalvilla2026eba.pdf` | Paula Ontalvilla et al. (2026). *Agreement in Representation Space for Open-Ended Self-Consistency*. arXiv:2606.12003 | §3.5 |
+| `papers/F_farquhar2024semanticentropy.pdf` | Sebastian Farquhar et al. (2024). *Detecting hallucinations in large language models using semantic entropy*. 10.1038/s41586-024-07421-0 | §3.6 |
+| `papers/F_khanmohammadi2026triage.pdf` | Reza Khanmohammadi et al. (2026). *Calibrated Triage, Not Autonomy: Confidence Estimation for Medical Vision-Language Models*. arXiv:2606.15910 | §3.6 |
+| `papers/F_byun2026overconfidence.pdf` | Ji Young Byun et al. (2026). *Overconfidence and Calibration in Medical VQA: Empirical Findings and Hallucination-Aware Mitigation*. arXiv:2604.02543 | §3.6 |
+| `papers/F_geng2023survey.pdf` | Jiahui Geng et al. (2023). *A Survey of Confidence Estimation and Calibration in Large Language Models*. arXiv:2311.08298 | §3.6 |
 | `papers/G_xu2025lingshu.pdf` | LASA Team et al. (2025). *Lingshu: A Generalist Foundation Model for Unified Multimodal Medical Understanding and Reasoning*. arXiv:2506.07044 | §3.7 |
 | `papers/G_sellergren2025medgemma.pdf` | Andrew Sellergren et al. (2025). *MedGemma Technical Report*. arXiv:2507.05201 | §3.7 |
 | `papers/G_bai2025qwen25vl.pdf` | Shuai Bai et al. (2025). *Qwen2.5-VL Technical Report*. arXiv:2502.13923 | §3.7 |
 | `papers/G_liu2025how.pdf` | Che Liu et al. (2025). *How Far Have Medical Vision-Language Models Come? A Comprehensive Benchmarking Study*. arXiv:2507.11200 | §3.7 |
+| `papers/H_hu2024omnimedvqa.pdf` | Yutao Hu et al. (2024). *OmniMedVQA: A New Large-Scale Comprehensive Evaluation Benchmark for Medical LVLM*. arXiv:2402.09181 | §3.8 |
+| `papers/H_zhang2023pmcvqa.pdf` | Xiaoman Zhang et al. (2023). *PMC-VQA: Visual Instruction Tuning for Medical Visual Question Answering*. arXiv:2305.10415 | §3.8 |
+| `papers/H_zheng2023mtbench.pdf` | Lianmin Zheng et al. (2023). *Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena*. arXiv:2306.05685 | §3.8 |
+| `papers/H_xu2026contaminationaudit.pdf` | Bruce Changlong Xu et al. (2026). *A Controlled Audit of Pretraining Contamination in Public Medical Vision-Language Benchmarks*. arXiv:2606.10066 | §3.8 |
 | `papers/I_li2021rebm.pdf` | Qiujia Li et al. (2021). *Residual Energy-Based Models for End-to-End Speech Recognition*. arXiv:2103.14152 | §3.9 |
 | `papers/I_li2020cem.pdf` | Qiujia Li et al. (2020). *Confidence Estimation for Attention-based Sequence-to-sequence Models for Speech Recognition*. arXiv:2010.11428 | §3.9 |
 | `papers/I_jumper2021alphafold.pdf` | John Jumper et al. (2021). *Highly accurate protein structure prediction with AlphaFold*. 10.1038/s41586-021-03819-2 | §3.9 |
@@ -139,6 +147,38 @@ Generated 2026-09-16. The PDFs in `papers/` are the ★ core papers only; every 
 | `wang2024soft` | Soft Self-Consistency Improves Language Model Agents | §3.5 |  |
 | `wang2025ranked` | Ranked Voting based Self-Consistency of Large Language Models | §3.5 |  |
 | `zhang2024bdg` | Truth or Deceit? A Bayesian Decoding Game Enhances Consistency and Reliability | §3.5 |  |
+| `asadi2026cebag` | Deterministic Hallucination Detection in Medical VQA via Confidence-Evidence Bayesian Gain | §3.6 |  |
+| `azaria2023lying` | The Internal State of an LLM Knows When It's Lying | §3.6 |  |
+| `basu2025calibprompt` | Calibration-Aware Prompt Learning for Medical Vision-Language Models | §3.6 |  |
+| `burns2022ccs` | Discovering Latent Knowledge in Language Models Without Supervision | §3.6 |  |
+| `byun2026overconfidence` | Overconfidence and Calibration in Medical VQA: Empirical Findings and Hallucination-Aware Mitigation | §3.6 | ★ |
+| `chan2026yesbias` | System-Mediated Attention Imbalances Make Vision-Language Models Say Yes | §3.6 |  |
+| `chen2024inside` | INSIDE: LLMs' Internal States Retain the Power of Hallucination Detection | §3.6 |  |
+| `chen2024medhallmark` | Detecting and Evaluating Medical Hallucinations in Large Vision Language Models | §3.6 |  |
+| `chen2026vihd` | VIHD: Visual Intervention-based Hallucination Detection for Medical Visual Question Answering | §3.6 |  |
+| `farquhar2024semanticentropy` | Detecting hallucinations in large language models using semantic entropy | §3.6 | ★ |
+| `fazla2026safetynet` | Uncertainty Is Not a Safety Net for Clinical VQA, but Can It Anticipate Model Failure? | §3.6 |  |
+| `gautam2025hedge` | HEDGE: Hallucination Estimation via Dense Geometric Entropy for VQA with Vision-Language Models | §3.6 |  |
+| `geng2023survey` | A Survey of Confidence Estimation and Calibration in Large Language Models | §3.6 | ★ |
+| `guo2017calibration` | On Calibration of Modern Neural Networks | §3.6 |  |
+| `kadavath2022knowwhatknow` | Language Models (Mostly) Know What They Know | §3.6 |  |
+| `khanmohammadi2026triage` | Calibrated Triage, Not Autonomy: Confidence Estimation for Medical Vision-Language Models | §3.6 | ★ |
+| `kossen2024sep` | Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs | §3.6 |  |
+| `kostumov2024uncertaintyaware` | Uncertainty-Aware Evaluation for Vision-Language Models | §3.6 |  |
+| `kuhn2023semanticuncertainty` | Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation in Natural Language Generation | §3.6 |  |
+| `li2023iti` | Inference-Time Intervention: Eliciting Truthful Answers from a Language Model | §3.6 |  |
+| `li2023pope` | Evaluating Object Hallucination in Large Vision-Language Models | §3.6 |  |
+| `liang2025expertcfg` | Uncertainty-Driven Expert Control: Enhancing the Reliability of Medical Vision-Language Models | §3.6 |  |
+| `liao2025univrse` | UniVRSE: Unified Vision-conditioned Response Semantic Entropy for Hallucination Detection in Medical Vision-Language Models | §3.6 |  |
+| `liu2024hallucinationsurvey` | A Survey on Hallucination in Large Vision-Language Models | §3.6 |  |
+| `senoglu2026verbalized` | Just how sure are you? Improving Verbalized Uncertainty Calibration in Medical VQA | §3.6 |  |
+| `song2026countervhd` | Detecting Clinical Hallucinations in LVLMs via Counterfactual Visual Grounding Uncertainty | §3.6 |  |
+| `tian2023justask` | Just Ask for Calibration: Strategies for Eliciting Calibrated Confidence Scores from Language Models Fine-Tuned with Human Feedback | §3.6 |  |
+| `wienholt2025dse` | Hallucination Filtering in Radiology Vision-Language Models Using Discrete Semantic Entropy | §3.6 |  |
+| `xia2024cares` | CARES: A Comprehensive Benchmark of Trustworthiness in Medical Vision Language Models | §3.6 |  |
+| `xiong2023express` | Can LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence Elicitation in LLMs | §3.6 |  |
+| `zhang2024vluncertainty` | VL-Uncertainty: Detecting Hallucination in Large Vision-Language Model via Uncertainty Estimation | §3.6 |  |
+| `zhou2026coev` | Hallucination Detection and Correction in Medical VLMs via Counter-Evidence Verification | §3.6 |  |
 | `bai2025qwen25vl` | Qwen2.5-VL Technical Report | §3.7 | ★ |
 | `bao2026medrcube` | MedRCube: A Multidimensional Framework for Fine-Grained and In-Depth Evaluation of MLLMs in Medical Imaging | §3.7 |  |
 | `chen2024chexagent` | A Vision-Language Foundation Model to Enhance Efficiency of Chest X-ray Interpretation | §3.7 |  |
@@ -160,6 +200,29 @@ Generated 2026-09-16. The PDFs in `papers/` are the ★ core papers only; every 
 | `zhai2023siglip` | Sigmoid Loss for Language Image Pre-Training | §3.7 |  |
 | `zhang2023biomedgpt` | BiomedGPT: A Generalist Vision-Language Foundation Model for Diverse Biomedical Tasks | §3.7 |  |
 | `zhu2025internvl3` | InternVL3: Exploring Advanced Training and Test-Time Recipes for Open-Source Multimodal Models | §3.7 |  |
+| `benabacha2019vqamed` | VQA-Med: Overview of the Medical Visual Question Answering Task at ImageCLEF 2019 | §3.8 |  |
+| `butsanets2025radimagenetvqa` | RadImageNet-VQA: A Large-Scale CT and MRI Dataset for Radiologic Visual Question Answering | §3.8 |  |
+| `gautam2024kvasirvqa` | Kvasir-VQA: A Text-Image Pair GI Tract Dataset | §3.8 |  |
+| `gautam2025kvasirvqax1` | Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy | §3.8 |  |
+| `ging2024openendedvqa` | Open-ended VQA benchmarking of Vision-Language models by exploiting Classification datasets and their semantic hierarchy | §3.8 |  |
+| `he2020pathvqa` | PathVQA: 30000+ Questions for Medical Visual Question Answering | §3.8 |  |
+| `hong2023bestmvqa` | BESTMVQA: A Benchmark Evaluation System for Medical Visual Question Answering | §3.8 |  |
+| `hu2024omnimedvqa` | OmniMedVQA: A New Large-Scale Comprehensive Evaluation Benchmark for Medical LVLM | §3.8 | ★ |
+| `lau2018vqarad` | A dataset of clinically generated visual questions and answers about radiology images | §3.8 |  |
+| `liu2021slake` | SLAKE: A Semantically-Labeled Knowledge-Enhanced Dataset for Medical Visual Question Answering | §3.8 |  |
+| `liu2024gemex` | GEMeX: A Large-Scale, Groundable, and Explainable Medical VQA Benchmark for Chest X-ray Diagnosis | §3.8 |  |
+| `ma2026kbvqapitfalls` | Identifying and Resolving Pitfalls of Knowledge-Based VQA Benchmarks: Auditing, Repairing, and Augmenting | §3.8 |  |
+| `medevalkit_harness` | MedEvalKit | §3.8 |  |
+| `panickssery2024selfpreference` | LLM Evaluators Recognize and Favor Their Own Generations | §3.8 |  |
+| `thakur2024judgingjudges` | Judging the Judges: Evaluating Alignment and Vulnerabilities in LLMs-as-Judges | §3.8 |  |
+| `xu2026contaminationaudit` | A Controlled Audit of Pretraining Contamination in Public Medical Vision-Language Benchmarks | §3.8 | ★ |
+| `yan2024worsethanrandom` | Worse than Random? An Embarrassingly Simple Probing Evaluation of Large Multimodal Models in Medical VQA | §3.8 |  |
+| `yang2024medgemini` | Advancing Multimodal Medical Capabilities of Gemini | §3.8 |  |
+| `yue2023mmmu` | MMMU: A Massive Multi-discipline Multimodal Understanding and Reasoning Benchmark for Expert AGI | §3.8 |  |
+| `zhang2023pmcvqa` | PMC-VQA: Visual Instruction Tuning for Medical Visual Question Answering | §3.8 | ★ |
+| `zhang2026wsileakage` | Auditing Data Leakage in Whole-Slide Image Multimodal Benchmarks | §3.8 |  |
+| `zheng2023mtbench` | Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena | §3.8 | ★ |
+| `zuo2025medxpertqa` | MedXpertQA: Benchmarking Expert-Level Medical Reasoning and Understanding | §3.8 |  |
 | `bradley1952paired` | Rank Analysis of Incomplete Block Designs: I. The Method of Paired Comparisons | §3.9 |  |
 | `chen2021codex` | Evaluating Large Language Models Trained on Code | §3.9 |  |
 | `collins2005reranking` | Discriminative Reranking for Natural Language Parsing | §3.9 | ★ |
@@ -177,4 +240,4 @@ Generated 2026-09-16. The PDFs in `papers/` are the ★ core papers only; every 
 | `shen2004mtreranking` | Discriminative Reranking for Machine Translation | §3.9 |  |
 | `zhu2023llmir` | Large Language Models for Information Retrieval: A Survey | §3.9 |  |
 
-**139 papers carded, 26 core PDFs.**
+**194 cards covering 186 unique papers (8 deliberately cross-listed in two categories), 34 core PDFs.**

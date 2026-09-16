@@ -28,9 +28,18 @@ comparisons, and non-standard vocabulary. The guide fixes all three.
 - `DOMAIN_GUIDE_2026-09-16.{md,html,docx}` — the guide.
 - `references.bib` — one BibTeX entry per carded paper, ready for the paper draft.
 - `MANIFEST.md` — filename → citation → which section cites it.
-- `papers/` — the ★ core PDFs. **This is a symlink** to
+- `papers/` — the 34 ★ core PDFs (76 MB). **This is a symlink** to
   `/data/dan/literature/domain_package_2026-09-16/papers/`, because the main disk must stay under
   75 %. The PDFs are not in git; everything else here is.
+
+  The symlink itself is gitignored, so if you merge this branch into another checkout, recreate it
+  once with:
+
+  ```bash
+  ln -sfn /data/dan/literature/domain_package_2026-09-16/papers ~/medvlthinker-imgdiff-compute/literature/papers
+  ```
+
+  The PDFs live outside the repo and outside any worktree, so they survive regardless.
 
 ## Provenance
 
