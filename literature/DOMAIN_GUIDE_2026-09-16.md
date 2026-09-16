@@ -938,7 +938,7 @@ Test-time (inference-time) scaling means spending extra computation when a quest
 
 #### ★ On Test-Time Scaling for Vision-Language Models
 
-*Fawaz Sammani et al. · 2026 · ECCV 2026 · [arXiv:2606.28864](https://arxiv.org/abs/2606.28864) · read priority 1 · **PDF in `papers/`***
+*Fawaz Sammani et al. · 2026 · ECCV 2026 · [arXiv:2606.28864](https://arxiv.org/abs/2606.28864) · read priority 1 · **[PDF: papers/A_sammani2026vlmtts.pdf](papers/A_sammani2026vlmtts.pdf)***
 
 **In one line.** First broad study of LLM-style test-time scaling on vision-language models: small, good models gain the most (up to ~30 points via self-consistency), perception benchmarks often get worse, and the image stops mattering after roughly 200 generated tokens.
 
@@ -972,7 +972,7 @@ Test-time (inference-time) scaling means spending extra computation when a quest
 
 #### ★ Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters
 
-*Charlie Snell et al. · 2024 · arXiv preprint · [arXiv:2408.03314](https://arxiv.org/abs/2408.03314) · read priority 1 · **PDF in `papers/`***
+*Charlie Snell et al. · 2024 · arXiv preprint · [arXiv:2408.03314](https://arxiv.org/abs/2408.03314) · read priority 1 · **[PDF: papers/A_snell2024scaling.pdf](papers/A_snell2024scaling.pdf)***
 
 **In one line.** Per-prompt, difficulty-aware allocation of test-time compute (search against a verifier, or sequential revision) beats a fixed best-of-N budget by up to 4x and, FLOPs-matched, lets a small model beat one ~14x larger on easy/medium prompts.
 
@@ -989,7 +989,7 @@ Test-time (inference-time) scaling means spending extra computation when a quest
 
 #### ★ Large Language Monkeys: Scaling Inference Compute with Repeated Sampling
 
-*Bradley Brown et al. · 2024 · arXiv preprint · [arXiv:2407.21787](https://arxiv.org/abs/2407.21787) · read priority 1 · **PDF in `papers/`***
+*Bradley Brown et al. · 2024 · arXiv preprint · [arXiv:2407.21787](https://arxiv.org/abs/2407.21787) · read priority 1 · **[PDF: papers/A_brown2024monkeys.pdf](papers/A_brown2024monkeys.pdf)***
 
 **In one line.** Repeated sampling raises 'coverage' (any-sample-correct) log-linearly over four orders of magnitude, but without an automatic verifier the common selectors (majority vote, reward model) plateau far below coverage — the origin of the 'selection wall'.
 
@@ -1006,7 +1006,7 @@ Test-time (inference-time) scaling means spending extra computation when a quest
 
 #### ★ Training Verifiers to Solve Math Word Problems
 
-*Karl Cobbe et al. · 2021 · arXiv preprint · [arXiv:2110.14168](https://arxiv.org/abs/2110.14168) · read priority 1 · **PDF in `papers/`***
+*Karl Cobbe et al. · 2021 · arXiv preprint · [arXiv:2110.14168](https://arxiv.org/abs/2110.14168) · read priority 1 · **[PDF: papers/A_cobbe2021verifiers.pdf](papers/A_cobbe2021verifiers.pdf)***
 
 **In one line.** Introduces GSM8K and the learned-verifier best-of-N recipe: sample 100 solutions, train a model to predict correctness, return the top-scored one — a 6B model with a verifier slightly beats a fine-tuned 175B model.
 
@@ -1184,7 +1184,7 @@ A 'verifier' or 'reward model' is a second model (or a small scoring head) that 
 
 #### ★ Best-of-Evidence: Best-of-N Selection under Partial Verification
 
-*Cenwei Zhang et al. · 2026 · arXiv preprint · [arXiv:2607.20950](https://arxiv.org/abs/2607.20950) · read priority 1 · **PDF in `papers/`***
+*Cenwei Zhang et al. · 2026 · arXiv preprint · [arXiv:2607.20950](https://arxiv.org/abs/2607.20950) · read priority 1 · **[PDF: papers/B_zhang2026bestofevidence.pdf](papers/B_zhang2026bestofevidence.pdf)***
 
 **In one line.** Best-of-N selection for medical VQA when no single reliable whole-answer verifier exists, only partial/claim-level checkable evidence; formalizes this as a candidate-factor graph with a budgeted evidence controller, and measures only modest, often not-significant gains over plain majority-vote/BoN.
 
@@ -1201,7 +1201,7 @@ A 'verifier' or 'reward model' is a second model (or a small scoring head) that 
 
 #### ★ Verification Mirage: Mapping the Reliability Boundary of Self-Verification in Medical VQA
 
-*Ruinan Jin et al. · 2026 · arXiv preprint · [arXiv:2605.10850](https://arxiv.org/abs/2605.10850) · read priority 1 · **PDF in `papers/`***
+*Ruinan Jin et al. · 2026 · arXiv preprint · [arXiv:2605.10850](https://arxiv.org/abs/2605.10850) · read priority 1 · **[PDF: papers/B_jin2026verificationmirage.pdf](papers/B_jin2026verificationmirage.pdf)***
 
 **In one line.** Shows that self-verification (re-invoking the same or a similar VLM in a fresh context to judge its own answer) is systematically unreliable in medical VQA — the verifier inherits the generator's blind spots ('verification mirage') and under-attends to the image ('lazy verifier'); Lingshu is one of the six tested models.
 
@@ -1235,7 +1235,7 @@ A 'verifier' or 'reward model' is a second model (or a small scoring head) that 
 
 #### ★ Generative Verifiers: Reward Modeling as Next-Token Prediction
 
-*Lunjun Zhang et al. · 2024 · ICLR 2025 · [arXiv:2408.15240](https://arxiv.org/abs/2408.15240) · read priority 1 · **PDF in `papers/`***
+*Lunjun Zhang et al. · 2024 · ICLR 2025 · [arXiv:2408.15240](https://arxiv.org/abs/2408.15240) · read priority 1 · **[PDF: papers/B_zhang2024genrm.pdf](papers/B_zhang2024genrm.pdf)***
 
 **In one line.** Proposes GenRM: train the verifier to emit its correctness judgment as generated text (next-token prediction, optionally with chain-of-thought) instead of a single discriminative scalar score, and shows this beats discriminative verifiers and LLM-as-judge on best-of-N.
 
@@ -1252,7 +1252,7 @@ A 'verifier' or 'reward model' is a second model (or a small scoring head) that 
 
 #### ★ Training Verifiers to Solve Math Word Problems
 
-*Karl Cobbe et al. · 2021 · arXiv preprint · [arXiv:2110.14168](https://arxiv.org/abs/2110.14168) · read priority 1 · **PDF in `papers/`***
+*Karl Cobbe et al. · 2021 · arXiv preprint · [arXiv:2110.14168](https://arxiv.org/abs/2110.14168) · read priority 1 · **[PDF: papers/A_cobbe2021verifiers.pdf](papers/A_cobbe2021verifiers.pdf)***
 
 **In one line.** Introduces the outcome reward model (ORM): sample many candidate solutions, score each with a trained verifier, and keep the top-scoring one — the origin of best-of-N verification.
 
@@ -1489,7 +1489,7 @@ This category traces one continuous idea across nine years: attach a small, sepa
 
 #### ★ HSRM: Hidden-State Reward Models for Test-Time Verification
 
-*Xianzhi Li and Xiaodan Zhu · 2026 · EMNLP 2026 [comment] · [arXiv:2608.30841](https://arxiv.org/abs/2608.30841) · read priority 1 · **PDF in `papers/`***
+*Xianzhi Li and Xiaodan Zhu · 2026 · EMNLP 2026 [comment] · [arXiv:2608.30841](https://arxiv.org/abs/2608.30841) · read priority 1 · **[PDF: papers/C_li2026hsrm.pdf](papers/C_li2026hsrm.pdf)***
 
 **In one line.** HSRM extracts hidden states at reasoning-step boundaries from a frozen generator, mean-pools them through a tiny (~2M-parameter) Transformer encoder to rank candidates, and explicitly verifies it needs zero extra generator forward passes because it reuses representations already computed during generation.
 
@@ -1506,7 +1506,7 @@ This category traces one continuous idea across nine years: attach a small, sepa
 
 #### ★ MedProb: Probing Internal Representations of Vision-Language Models for Medical Question Answering
 
-*Erfan Nourbakhsh et al. · 2026 · EMNLP Findings 2026 [comment] · [arXiv:2609.04336](https://arxiv.org/abs/2609.04336) · read priority 1 · **PDF in `papers/`***
+*Erfan Nourbakhsh et al. · 2026 · EMNLP Findings 2026 [comment] · [arXiv:2609.04336](https://arxiv.org/abs/2609.04336) · read priority 1 · **[PDF: papers/C_nourbakhsh2026medprob.pdf](papers/C_nourbakhsh2026medprob.pdf)***
 
 **In one line.** MedProb's MAIN method is a multinomial logistic-regression probe on a frozen medical VLM's LAST-INPUT-TOKEN hidden state that predicts a multiple-choice answer WITHOUT any free-text generation at all; only a secondary Appendix-H extension applies the probe to open-ended generations, and it re-feeds the candidate text back into the model to score it, i.e. a second forward pass.
 
@@ -1557,7 +1557,7 @@ This category traces one continuous idea across nine years: attach a small, sepa
 
 #### ★ Mining Intrinsic Rewards from LLM Hidden States for Efficient Best-of-N Sampling (SWIFT)
 
-*Jizhou Guo et al. · 2025 · KDD 2026 (Research Track) [comment] · [arXiv:2505.12225](https://arxiv.org/abs/2505.12225) · read priority 1 · **PDF in `papers/`***
+*Jizhou Guo et al. · 2025 · KDD 2026 (Research Track) [comment] · [arXiv:2505.12225](https://arxiv.org/abs/2505.12225) · read priority 1 · **[PDF: papers/C_guo2025elhsr.pdf](papers/C_guo2025elhsr.pdf)***
 
 **In one line.** SWIFT is a token-level linear gate+reward head on a frozen LLM's own per-token hidden states (concatenated across all layers), trained with BCE, that computes a gated weighted-average reward per candidate and picks the argmax candidate for best-of-N — the closest architectural sibling to our probe we found.
 
@@ -1574,7 +1574,7 @@ This category traces one continuous idea across nine years: attach a small, sepa
 
 #### ★ Q-Probe: A Lightweight Approach to Reward Maximization for Language Models
 
-*Kenneth Li et al. · 2024 · arXiv preprint · [arXiv:2402.14688](https://arxiv.org/abs/2402.14688) · read priority 1 · **PDF in `papers/`***
+*Kenneth Li et al. · 2024 · arXiv preprint · [arXiv:2402.14688](https://arxiv.org/abs/2402.14688) · read priority 1 · **[PDF: papers/C_li2024qprobe.pdf](papers/C_li2024qprobe.pdf)***
 
 **In one line.** Learns a 1-layer LINEAR probe on a frozen model's embeddings to reweight (softmax-sample, not hard-argmax) sampled completions toward higher reward, trainable via reward-modeling loss or a novel importance-weighted policy-gradient objective.
 
@@ -1757,7 +1757,7 @@ Best-of-N sampling — draw N candidate answers from a model and pick one — on
 
 #### ★ Oracle Gap and Signal Fidelity: A Fixed-Pool Diagnostic for Test-Time Collaboration
 
-*Jie Hu · 2026 · arXiv preprint · [arXiv:2607.17531](https://arxiv.org/abs/2607.17531) · read priority 1 · **PDF in `papers/`***
+*Jie Hu · 2026 · arXiv preprint · [arXiv:2607.17531](https://arxiv.org/abs/2607.17531) · read priority 1 · **[PDF: papers/D_hu2026oraclegap.pdf](papers/D_hu2026oraclegap.pdf)***
 
 **In one line.** Independently derives essentially our own decomposition of best-of-N/verifier gain into an oracle gap, a coverage term, a conditional-selection-quality term, and a conditional-harm term, and shows gains are bounded first by oracle gap, then by signal fidelity.
 
@@ -1774,7 +1774,7 @@ Best-of-N sampling — draw N candidate answers from a model and pick one — on
 
 #### ★ When More Sampling Hurts: The Modal Ceiling and Correlation Ceiling of Test-Time Scaling
 
-*Yong Yi Bay and Kathleen A. Yearick · 2026 · arXiv preprint · [arXiv:2606.28661](https://arxiv.org/abs/2606.28661) · read priority 1 · **PDF in `papers/`***
+*Yong Yi Bay and Kathleen A. Yearick · 2026 · arXiv preprint · [arXiv:2606.28661](https://arxiv.org/abs/2606.28661) · read priority 1 · **[PDF: papers/D_bay2026sampling.pdf](papers/D_bay2026sampling.pdf)***
 
 **In one line.** New (2026) paper directly on-point for why more sampling stops helping: defines a modal ceiling and a correlation ceiling, both reached within a few dozen draws and both independent of sample budget, and proves self-consistency accuracy can fall toward 0 as coverage rises to 1.
 
@@ -1791,7 +1791,7 @@ Best-of-N sampling — draw N candidate answers from a model and pick one — on
 
 #### ★ Large Language Monkeys: Scaling Inference Compute with Repeated Sampling
 
-*Bradley Brown et al. · 2024 · arXiv preprint · [arXiv:2407.21787](https://arxiv.org/abs/2407.21787) · read priority 1 · **PDF in `papers/`***
+*Bradley Brown et al. · 2024 · arXiv preprint · [arXiv:2407.21787](https://arxiv.org/abs/2407.21787) · read priority 1 · **[PDF: papers/A_brown2024monkeys.pdf](papers/A_brown2024monkeys.pdf)***
 
 **In one line.** Foundational empirical demonstration that coverage (pass@k / oracle accuracy) scales log-linearly over four+ orders of magnitude in sample count, while majority-vote/reward-model selection plateaus far below coverage once no automatic verifier exists.
 
@@ -1808,7 +1808,7 @@ Best-of-N sampling — draw N candidate answers from a model and pick one — on
 
 #### ★ The Limits of Inference Scaling Through Resampling
 
-*Benedikt Stroebl et al. · 2024 · arXiv preprint · [arXiv:2411.17501](https://arxiv.org/abs/2411.17501) · read priority 1 · **PDF in `papers/`***
+*Benedikt Stroebl et al. · 2024 · arXiv preprint · [arXiv:2411.17501](https://arxiv.org/abs/2411.17501) · read priority 1 · **[PDF: papers/D_stroebl2024limits.pdf](papers/D_stroebl2024limits.pdf)***
 
 **In one line.** Proves that an imperfect verifier's non-zero false-positive rate imposes a hard upper bound on resampling-based inference scaling that no amount of additional compute can lift, and finds compute-optimal sample counts are typically single digits.
 
@@ -1973,7 +1973,7 @@ Training-free selection covers methods that pick (or fuse) a final answer from m
 
 #### ★ Wasserstein Equilibrium Decoding for Reliable Medical Visual Question Answering
 
-*Luca Hagen et al. · 2026 · arXiv preprint · [arXiv:2605.18313](https://arxiv.org/abs/2605.18313) · read priority 1 · **PDF in `papers/`***
+*Luca Hagen et al. · 2026 · arXiv preprint · [arXiv:2605.18313](https://arxiv.org/abs/2605.18313) · read priority 1 · **[PDF: papers/E_hagen2026wed.pdf](papers/E_hagen2026wed.pdf)***
 
 **In one line.** Extends game-theoretic Bayesian Decoding Game equilibrium search to open-ended medical VQA with a Wasserstein/optimal-transport stopping criterion over a biomedical embedding space, beating greedy decoding on VQA-RAD and PathVQA with small VLMs — the closest published neighbour to our best-of-N probe.
 
@@ -1990,7 +1990,7 @@ Training-free selection covers methods that pick (or fuse) a final answer from m
 
 #### ★ Agreement in Representation Space for Open-Ended Self-Consistency
 
-*Paula Ontalvilla et al. · 2026 · arXiv preprint · [arXiv:2606.12003](https://arxiv.org/abs/2606.12003) · read priority 1 · **PDF in `papers/`***
+*Paula Ontalvilla et al. · 2026 · arXiv preprint · [arXiv:2606.12003](https://arxiv.org/abs/2606.12003) · read priority 1 · **[PDF: papers/E_ontalvilla2026eba.pdf](papers/E_ontalvilla2026eba.pdf)***
 
 **In one line.** Reframes open-ended self-consistency as a geometric property: cluster sampled generations in embedding space and return the one closest to the dominant cluster's centroid (Embedding-Based Agreement, EBA), beating USC/random-selection baselines on code, math, and summarization.
 
@@ -2024,7 +2024,7 @@ Training-free selection covers methods that pick (or fuse) a final answer from m
 
 #### ★ Universal Self-Consistency for Large Language Model Generation
 
-*Xinyun Chen et al. · 2023 · arXiv preprint · [arXiv:2311.17311](https://arxiv.org/abs/2311.17311) · read priority 1 · **PDF in `papers/`***
+*Xinyun Chen et al. · 2023 · arXiv preprint · [arXiv:2311.17311](https://arxiv.org/abs/2311.17311) · read priority 1 · **[PDF: papers/E_chen2023usc.pdf](papers/E_chen2023usc.pdf)***
 
 **In one line.** Extends self-consistency to free-form generation by asking the LLM itself to pick the most consistent candidate from the concatenated sample set, instead of exact-match voting.
 
@@ -2041,7 +2041,7 @@ Training-free selection covers methods that pick (or fuse) a final answer from m
 
 #### ★ Self-Consistency Improves Chain of Thought Reasoning in Language Models
 
-*Xuezhi Wang et al. · 2022 · ICLR 2023 · [arXiv:2203.11171](https://arxiv.org/abs/2203.11171) · read priority 1 · **PDF in `papers/`***
+*Xuezhi Wang et al. · 2022 · ICLR 2023 · [arXiv:2203.11171](https://arxiv.org/abs/2203.11171) · read priority 1 · **[PDF: papers/E_wang2023selfconsistency.pdf](papers/E_wang2023selfconsistency.pdf)***
 
 **In one line.** Introduces self-consistency: sample multiple chain-of-thought reasoning paths and take a majority vote over the final answers instead of greedy decoding, for large gains on closed-form reasoning tasks.
 
@@ -2161,7 +2161,7 @@ This category covers how to tell whether a model's answer should be trusted, and
 
 #### ★ Calibrated Triage, Not Autonomy: Confidence Estimation for Medical Vision-Language Models
 
-*Reza Khanmohammadi et al. · 2026 · arXiv preprint · [arXiv:2606.15910](https://arxiv.org/abs/2606.15910) · read priority 1 · **PDF in `papers/`***
+*Reza Khanmohammadi et al. · 2026 · arXiv preprint · [arXiv:2606.15910](https://arxiv.org/abs/2606.15910) · read priority 1 · **[PDF: papers/F_khanmohammadi2026triage.pdf](papers/F_khanmohammadi2026triage.pdf)***
 
 **In one line.** A head-to-head benchmark of nine confidence estimators (training-free logit, verbalized prompting, trained internal probes) across five LVLMs and three medical VQA datasets finds no estimator reliably best, and even the strongest safely triages only ~25% of radiology cases at 20% error tolerance, and almost nothing in pathology.
 
@@ -2178,7 +2178,7 @@ This category covers how to tell whether a model's answer should be trusted, and
 
 #### ★ Overconfidence and Calibration in Medical VQA: Empirical Findings and Hallucination-Aware Mitigation
 
-*Ji Young Byun et al. · 2026 · arXiv preprint · [arXiv:2604.02543](https://arxiv.org/abs/2604.02543) · read priority 1 · **PDF in `papers/`***
+*Ji Young Byun et al. · 2026 · arXiv preprint · [arXiv:2604.02543](https://arxiv.org/abs/2604.02543) · read priority 1 · **[PDF: papers/F_byun2026overconfidence.pdf](papers/F_byun2026overconfidence.pdf)***
 
 **In one line.** Across three VLM families (2B-38B) and three medical VQA benchmarks, overconfidence persists regardless of scale or prompting (CoT, verbalized confidence); Platt scaling reliably beats prompt-based calibration but doesn't improve AUROC; adding hallucination-detection signals (their HAC method) improves both, especially on open-ended questions.
 
@@ -2195,7 +2195,7 @@ This category covers how to tell whether a model's answer should be trusted, and
 
 #### ★ Detecting hallucinations in large language models using semantic entropy
 
-*Sebastian Farquhar et al. · 2024 · Nature 630, 625-630 (2024) · [doi:10.1038/s41586-024-07421-0](https://www.nature.com/articles/s41586-024-07421-0) · read priority 1 · **PDF in `papers/`***
+*Sebastian Farquhar et al. · 2024 · Nature 630, 625-630 (2024) · [doi:10.1038/s41586-024-07421-0](https://www.nature.com/articles/s41586-024-07421-0) · read priority 1 · **[PDF: papers/F_farquhar2024semanticentropy.pdf](papers/F_farquhar2024semanticentropy.pdf)***
 
 **In one line.** Introduces semantic entropy -- clustering sampled generations by bidirectional textual entailment and computing entropy over the resulting meaning-clusters -- as an unsupervised, training-free hallucination detector that beats naive token entropy and P(True) baselines.
 
@@ -2212,7 +2212,7 @@ This category covers how to tell whether a model's answer should be trusted, and
 
 #### ★ A Survey of Confidence Estimation and Calibration in Large Language Models
 
-*Jiahui Geng et al. · 2023 · arXiv preprint · [arXiv:2311.08298](https://arxiv.org/abs/2311.08298) · read priority 1 · **PDF in `papers/`***
+*Jiahui Geng et al. · 2023 · arXiv preprint · [arXiv:2311.08298](https://arxiv.org/abs/2311.08298) · read priority 1 · **[PDF: papers/F_geng2023survey.pdf](papers/F_geng2023survey.pdf)***
 
 **In one line.** Survey organizing LLM confidence-estimation methods into white-box (logit-based, internal-state-based, semantic) and black-box (verbalized, consistency-based, surrogate-model) families, cataloging calibration metrics and applications including hallucination detection and selective generation.
 
@@ -2537,7 +2537,7 @@ A vision-language model (VLM) answers a text question about an image by chaining
 
 #### ★ Lingshu: A Generalist Foundation Model for Unified Multimodal Medical Understanding and Reasoning
 
-*LASA Team et al. · 2025 · arXiv preprint (Technical Report, 53 pages) [comment field] · [arXiv:2506.07044](https://arxiv.org/abs/2506.07044) · read priority 1 · **PDF in `papers/`***
+*LASA Team et al. · 2025 · arXiv preprint (Technical Report, 53 pages) [comment field] · [arXiv:2506.07044](https://arxiv.org/abs/2506.07044) · read priority 1 · **[PDF: papers/G_xu2025lingshu.pdf](papers/G_xu2025lingshu.pdf)***
 
 **In one line.** Lingshu (7B/32B), a medical MLLM built on Qwen2.5-VL via a 4-stage pipeline (shallow align -> deep align -> instruction tuning -> GRPO RL), plus MedEvalKit, the unified medical eval harness the whole project depends on.
 
@@ -2554,7 +2554,7 @@ A vision-language model (VLM) answers a text question about an image by chaining
 
 #### ★ MedGemma Technical Report
 
-*Andrew Sellergren et al. · 2025 · arXiv preprint [comment field: "Fix references"] · [arXiv:2507.05201](https://arxiv.org/abs/2507.05201) · read priority 1 · **PDF in `papers/`***
+*Andrew Sellergren et al. · 2025 · arXiv preprint [comment field: "Fix references"] · [arXiv:2507.05201](https://arxiv.org/abs/2507.05201) · read priority 1 · **[PDF: papers/G_sellergren2025medgemma.pdf](papers/G_sellergren2025medgemma.pdf)***
 
 **In one line.** MedGemma (Gemma 3 4B/27B + MedSigLIP) technical report: explicitly removed PathVQA and MedVQA from training over data-quality concerns and re-split VQA-RAD to fix train/test image contamination.
 
@@ -2571,7 +2571,7 @@ A vision-language model (VLM) answers a text question about an image by chaining
 
 #### ★ Qwen2.5-VL Technical Report
 
-*Shuai Bai et al. · 2025 · arXiv preprint · [arXiv:2502.13923](https://arxiv.org/abs/2502.13923) · read priority 1 · **PDF in `papers/`***
+*Shuai Bai et al. · 2025 · arXiv preprint · [arXiv:2502.13923](https://arxiv.org/abs/2502.13923) · read priority 1 · **[PDF: papers/G_bai2025qwen25vl.pdf](papers/G_bai2025qwen25vl.pdf)***
 
 **In one line.** Technical report for Qwen2.5-VL, the general-domain backbone Lingshu-7B/32B are medically fine-tuned from; defines the ViT -> MLP-merger -> LLM architecture and confirms the 7B config (hidden 3584, 28 LLM layers).
 
@@ -2588,7 +2588,7 @@ A vision-language model (VLM) answers a text question about an image by chaining
 
 #### ★ How Far Have Medical Vision-Language Models Come? A Comprehensive Benchmarking Study
 
-*Che Liu et al. · 2025 · arXiv preprint (Technical report [comment field]) · [arXiv:2507.11200](https://arxiv.org/abs/2507.11200) · read priority 1 · **PDF in `papers/`***
+*Che Liu et al. · 2025 · arXiv preprint (Technical report [comment field]) · [arXiv:2507.11200](https://arxiv.org/abs/2507.11200) · read priority 1 · **[PDF: papers/G_liu2025how.pdf](papers/G_liu2025how.pdf)***
 
 **In one line.** Independent benchmarking of general-purpose vs medically-specialized VLMs (3B-72B): general models often match or beat medical-specific ones, reasoning consistently underperforms understanding, and no model reaches a clinical-deployment reliability bar.
 
@@ -2790,7 +2790,7 @@ This category maps the empirical ground our project's numbers stand on: the eigh
 
 #### ★ A Controlled Audit of Pretraining Contamination in Public Medical Vision-Language Benchmarks
 
-*Bruce Changlong Xu et al. · 2026 · arXiv preprint · [arXiv:2606.10066](https://arxiv.org/abs/2606.10066) · read priority 1 · **PDF in `papers/`***
+*Bruce Changlong Xu et al. · 2026 · arXiv preprint · [arXiv:2606.10066](https://arxiv.org/abs/2606.10066) · read priority 1 · **[PDF: papers/H_xu2026contaminationaudit.pdf](papers/H_xu2026contaminationaudit.pdf)***
 
 **In one line.** Audits SLAKE-En, PathVQA, VQA-RAD and an OmniMedVQA mirror for pretraining contamination using 4 detector families; finds real image-side overlap on SLAKE-En but shows two of the four detector families are unreliable (a non-medical control model, BLIP-2, 'reproduces' their positive signals).
 
@@ -2807,7 +2807,7 @@ This category maps the empirical ground our project's numbers stand on: the eigh
 
 #### ★ OmniMedVQA: A New Large-Scale Comprehensive Evaluation Benchmark for Medical LVLM
 
-*Yutao Hu et al. · 2024 · arXiv preprint · [arXiv:2402.09181](https://arxiv.org/abs/2402.09181) · read priority 1 · **PDF in `papers/`***
+*Yutao Hu et al. · 2024 · arXiv preprint · [arXiv:2402.09181](https://arxiv.org/abs/2402.09181) · read priority 1 · **[PDF: papers/H_hu2024omnimedvqa.pdf](papers/H_hu2024omnimedvqa.pdf)***
 
 **In one line.** A 73-source, 12-modality, >20-anatomical-region medical VQA benchmark built entirely from authentic (non-synthetic) clinical images, showing medical-specialized LVLMs can underperform general-domain ones.
 
@@ -2841,7 +2841,7 @@ This category maps the empirical ground our project's numbers stand on: the eigh
 
 #### ★ PMC-VQA: Visual Instruction Tuning for Medical Visual Question Answering
 
-*Xiaoman Zhang et al. · 2023 · arXiv preprint · [arXiv:2305.10415](https://arxiv.org/abs/2305.10415) · read priority 1 · **PDF in `papers/`***
+*Xiaoman Zhang et al. · 2023 · arXiv preprint · [arXiv:2305.10415](https://arxiv.org/abs/2305.10415) · read priority 1 · **[PDF: papers/H_zhang2023pmcvqa.pdf](papers/H_zhang2023pmcvqa.pdf)***
 
 **In one line.** Introduces PMC-VQA (227k generative QA pairs from 149k images) and MedVInT, plus a manually-verified 2,000-pair test set; the paper's own data analysis shows the correct MCQ answer is skewed toward option B (~31% vs. 25% expected).
 
@@ -2858,7 +2858,7 @@ This category maps the empirical ground our project's numbers stand on: the eigh
 
 #### ★ Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
 
-*Lianmin Zheng et al. · 2023 · NeurIPS 2023 Datasets and Benchmarks Track · [arXiv:2306.05685](https://arxiv.org/abs/2306.05685) · read priority 1 · **PDF in `papers/`***
+*Lianmin Zheng et al. · 2023 · NeurIPS 2023 Datasets and Benchmarks Track · [arXiv:2306.05685](https://arxiv.org/abs/2306.05685) · read priority 1 · **[PDF: papers/H_zheng2023mtbench.pdf](papers/H_zheng2023mtbench.pdf)***
 
 **In one line.** Establishes and validates LLM-as-a-judge (e.g. GPT-4 scoring model outputs) against human preference, while explicitly naming position, verbosity, and self-enhancement bias as failure modes to correct for.
 
@@ -3093,7 +3093,7 @@ Long before anyone trained a probe on a vision-language model's hidden states, s
 
 #### ★ Residual Energy-Based Models for End-to-End Speech Recognition
 
-*Qiujia Li et al. · 2021 · Interspeech 2021 · [arXiv:2103.14152](https://arxiv.org/abs/2103.14152) · read priority 1 · **PDF in `papers/`***
+*Qiujia Li et al. · 2021 · Interspeech 2021 · [arXiv:2103.14152](https://arxiv.org/abs/2103.14152) · read priority 1 · **[PDF: papers/I_li2021rebm.pdf](papers/I_li2021rebm.pdf)***
 
 **In one line.** A 2-layer BLSTM reranker reads an existing autoregressive ASR model's decoder hidden state, attention context, token embeddings and top-K softmax probabilities, mean-pools them over each hypothesis's own output tokens, and is BCE-trained to rerank an n-best list — architecturally the closest ancestor of our probe, five years earlier.
 
@@ -3110,7 +3110,7 @@ Long before anyone trained a probe on a vision-language model's hidden states, s
 
 #### ★ Highly accurate protein structure prediction with AlphaFold
 
-*John Jumper et al. · 2021 · Nature 596, 583–589 (2021) · [doi:10.1038/s41586-021-03819-2](https://www.nature.com/articles/s41586-021-03819-2) · read priority 1 · **PDF in `papers/`***
+*John Jumper et al. · 2021 · Nature 596, 583–589 (2021) · [doi:10.1038/s41586-021-03819-2](https://www.nature.com/articles/s41586-021-03819-2) · read priority 1 · **[PDF: papers/I_jumper2021alphafold.pdf](papers/I_jumper2021alphafold.pdf)***
 
 **In one line.** AlphaFold's pLDDT confidence head is a small per-residue network computed on the network's own final activations, in the same forward pass, and is used to estimate per-residue accuracy and to rank/select among predicted structures — model quality assessment folded directly into the generator.
 
@@ -3127,7 +3127,7 @@ Long before anyone trained a probe on a vision-language model's hidden states, s
 
 #### ★ Confidence Estimation for Attention-based Sequence-to-sequence Models for Speech Recognition
 
-*Qiujia Li et al. · 2020 · Submitted to ICASSP 2021 [comment field] · [arXiv:2010.11428](https://arxiv.org/abs/2010.11428) · read priority 1 · **PDF in `papers/`***
+*Qiujia Li et al. · 2020 · Submitted to ICASSP 2021 [comment field] · [arXiv:2010.11428](https://arxiv.org/abs/2010.11428) · read priority 1 · **[PDF: papers/I_li2020cem.pdf](papers/I_li2020cem.pdf)***
 
 **In one line.** A single fully-connected layer (256 units) reads the decoder state, attention context and token embedding of an existing seq2seq ASR model and is BCE-trained on edit-distance-derived correct/incorrect token labels, beating raw softmax probability as a confidence signal on AUC and normalized cross entropy (NCE).
 
@@ -3161,7 +3161,7 @@ Long before anyone trained a probe on a vision-language model's hidden states, s
 
 #### ★ Discriminative Reranking for Natural Language Parsing
 
-*Michael Collins and Terry Koo · 2005 · Computational Linguistics 31(1), pp. 25–70 · [doi:10.1162/0891201053630273](https://aclanthology.org/J05-1003/) · read priority 2 · **PDF in `papers/`***
+*Michael Collins and Terry Koo · 2005 · Computational Linguistics 31(1), pp. 25–70 · [doi:10.1162/0891201053630273](https://aclanthology.org/J05-1003/) · read priority 2 · **[PDF: papers/I_collins2005reranking.pdf](papers/I_collins2005reranking.pdf)***
 
 **In one line.** A boosting-based discriminative reranker rescores an n-best list of candidate parse trees from a baseline generative parser, combining the baseline's log-likelihood with hundreds of thousands of additional tree features — one of the two founding papers of discriminative reranking in NLP.
 
