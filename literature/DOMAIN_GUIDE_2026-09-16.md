@@ -62,6 +62,18 @@ is deliberately out of scope here and is covered by `LITERATURE_UPDATE_2026-08-1
   normalised exact match. Where only one is available, it is named.
 - ★ marks a *core* paper (PDF included in `papers/`). Priority 1/2/3 is the reading order within a
   category.
+- ⛔ **FLOP-eq never travels alone.** Standing rule set 2026-09-17: every FLOP-equivalent figure is
+  reported with the **actual FLOP count** beside it, and with the serving path named. If the actual
+  number is not available, it gets measured before the ratio is published. The denominator is
+  **5,831.42 GFLOPs** = one Lingshu-7B forward+generate at cap320 (§1.6). This rule exists because a
+  bare ratio hid a 7.1× error for a month — see §2.4.6.
+
+## 0.5 Revision history
+
+| version | date | what changed |
+|---|---|---|
+| v1 | 2026-09-16 | first build — 194 cards, 9 categories, 34 core PDFs |
+| **v2** | **2026-09-17** | Leo's 14 review comments answered and folded in. New: §1.6 FLOP-eq with actual GFLOPs and the standing rule · §2.3.1 image multiplicity · **§2.4.6 a 7.1× cost error found in review** · §5.8b second judge and adaptive sampling · §8 the full response log. Expanded: dropout, probe counts, hyperparameter provenance, BCE-vs-BT, rank averaging, reward hacking, i.i.d. and confidence intervals, sampling controls, thread count. Fixed: old-style figures in tables, a "same/same" table row. |
 
 
 ---
@@ -97,11 +109,53 @@ Linear(3584 → 256)  →  GELU  →  Dropout(0.0)  →  Linear(256 → 1)
 
 **918,017 parameters each** — verified by loading `ckpts/train/genframe_head_pooled_ens_v2/head_L18_seed0.pt`:
 `f.0.weight` (256, 3584) = 917,504 · `f.0.bias` 256 · `f.3.weight` (1, 256) = 256 · `f.3.bias` 1.
-(The dropout sits at index 2 with probability 0, which is why the output layer is `f.3` and not
-`f.2`; it is a no-op at inference.) We ship 24 of them (3 layers × 8 seeds), 22.05 M parameters,
-88.2 MB in float32. The recipe of record is `genframe_head_pooled_ens_v2/recipe.json`:
-objective **BCE**, **AdamW lr 1e-3, weight decay 1e-2, 30 epochs, batch 256**, 8 seeds per layer,
-112,770 training rows, 59 leaking rows dropped.
+We ship 24 of them (3 layers × 8 seeds), 22.05 M parameters, 88.2 MB in float32. The recipe of
+record is `genframe_head_pooled_ens_v2/recipe.json`: objective **BCE**, **AdamW lr 1e-3, weight
+decay 1e-2, 30 epochs, batch 256**, 8 seeds per layer, 112,770 training rows, 59 leaking rows
+dropped.
+
+> **Why is there a `Dropout(0.0)` if it does nothing?** Because it is a **vestigial no-op** left by
+> the hyperparameter sweep's parameterisation — `nn.Dropout(0.0)` is the identity function, and it is
+> the only reason the output layer is indexed `f.3` rather than `f.2`. Dropout was genuinely
+> **tested and lost**: in `_head_sweep_journal_*.jsonl`, at the deployed width (hidden 256, depth 1)
+> CV selection efficiency goes **0.6785 at dropout 0.0 → 0.67692 at 0.1 → 0.67465 at 0.3**, and
+> *every* configuration in the sweep's top ten has dropout 0.0. So 0.0 is an empirical choice, not an
+> oversight — but the layer should be deleted from the module for clarity, since it currently invites
+> exactly this question. (Deleting it would change the state-dict key names, so it must be done with
+> a checkpoint migration, not casually.)
+
+> **How many probes were trained, as opposed to shipped?** Twenty-four ship. Far more were fitted:
+> the architecture/optimisation sweep alone covers **147 distinct configurations**
+> (`_head_sweep_journal_*.jsonl`), each fitted with 5 cross-validation folds, and that is one round
+> among several — the layer sweep, the temperature sweep, the LOBO curves and the three-generator
+> replication each refit the whole ensemble. The 24 are the survivors of a selection process, which
+> is precisely why the seed-averaging matters (§1.7) and why arm differences below ~0.003 macro are
+> not trustworthy (§2.5.4).
+
+> **Were the hyperparameters made up?** No — and this is worth being able to answer precisely,
+> because "we used lr 1e-3" with no provenance is what makes a method look arbitrary. The sweep
+> (`src/training_methods/head_sweep.py`) grids **objective** {BCE, Bradley–Terry, listwise, hybrid} ×
+> **width** {0, 128, 256, 512, 1024} × **depth** {1, 2} × **dropout** {0.0, 0.1, 0.3} ×
+> **epochs** {15, 30, 60, 120} × **schedule** {none, cosine} × **learning rate** {3e-4, 1e-3, 3e-3} ×
+> **weight decay** {1e-3, 1e-2, 1e-1}, plus normalisation, set-awareness and per-dataset reweighting.
+> **Two honest caveats.** (i) The shipped recipe is **not** the sweep's winner: the best cell is
+> `R2_ep60_cos` (hidden 1024, 60 epochs, cosine) at CV 0.70598 ± 0.00939, against the deployed
+> hidden-256 / 30-epoch / no-schedule configuration — a gap of roughly one standard deviation, i.e.
+> inside the noise, which is why it was not chased. (ii) Those CV numbers come from the **four-domain,
+> layer-21 era**; the shipped probe is pooled over eight benchmarks and three layers, so the sweep
+> *informed* the recipe rather than selecting it. Say that, rather than implying a clean search.
+
+> **Why BCE rather than a ranking loss?** Three reasons, in descending order of how well they are
+> evidenced. (1) **Measured, but confounded:** in the same sweep, BCE at hidden 256 scores 0.6898
+> against Bradley–Terry's 0.6785. ⚠️ `OPENTEXT_CORRECTIONS_2026-08-19.md` §3b establishes that this
+> comparison is **not clean** — BT trains on only 38.9 % of the rows (it needs a correct *and* an
+> incorrect candidate in the same question) and gets 3.26× fewer optimiser steps at equal `epochs`,
+> and a data deficit that size alone predicts the whole gap. On held-out evaluation every BCE-vs-BT
+> delta is a tie. **Do not claim BCE beats BT.** (2) **Coverage:** BCE uses every row, including
+> questions where all eight candidates are right or all eight are wrong; BT must discard them. On our
+> data that is a large fraction. (3) **Fit to the label:** the judge gives a per-candidate binary
+> correct/incorrect label, which is literally what BCE consumes; a ranking loss would require
+> inventing an ordering within the correct and within the incorrect group.
 
 ⚠️ The *older* artifact's docstring (`src/training_methods/genframe_selector.py`) prints **918,529**
 for the same nominal shape and uses a **Bradley–Terry** objective; that number is 512 higher than the
@@ -141,6 +195,46 @@ Two recipe details that the field will ask about because they are load-bearing:
   *rank-average ensembling*; getting it wrong (averaging raw logits) is worth 0.008
   (`meetings/shipped_method_2026-09-12.html`).
 
+  **What the rank actually is, precisely** (`genframe_data.py:635`, `rank_avg`): it is an **ordinal
+  position within that one question's candidate set**, *not* anything proportional to the score. For
+  a set of *n* candidates the ranks are 0, 1, … , n−1, **divided by n−1** so they land in [0, 1].
+  Ties take the **average** of the positions they span — which is load-bearing rather than cosmetic,
+  because stored scores are 5-decimal rounded and duplicate answers get identical scores, so exact
+  ties are routine. Using `argsort` ranks instead (which break ties by row position) scores
+  **0.798365** against average ranks' **0.806540** on the same two score vectors. The magnitude of a
+  score gap is deliberately discarded: a probe that is 0.9 vs 0.1 confident and one that is 0.51 vs
+  0.49 confident contribute the same rank vector.
+
+  > **"Could rank-averaging pick a candidate whose combined score is higher?"** — **Yes, and that is
+  > the intended behaviour, not a bug.** This is the classic difference between a **Borda count**
+  > (average of ranks) and a **score sum**, and they genuinely disagree. A worked case with two
+  > probes and three candidates:
+  >
+  > | candidate | probe 1 | probe 2 | score sum | rank (p1) | rank (p2) | mean rank |
+  > |---|---:|---:|---:|---:|---:|---:|
+  > | A | 0.95 | 0.10 | **1.05** | 1.0 | 0.0 | 0.50 |
+  > | B | 0.55 | 0.52 | 1.07 | 0.5 | 1.0 | **0.75** |
+  > | C | 0.10 | 0.11 | 0.21 | 0.0 | 0.5 | 0.25 |
+  >
+  > Score-sum picks **B** here too, but flip probe 1's A to 0.99 and the sum picks **A** while the
+  > mean rank still picks **B**. Rank averaging deliberately refuses to let one probe's large,
+  > possibly miscalibrated margin override the other probe's ordering.
+  >
+  > **Why we accept that trade.** The 24 probes are fitted independently, so their raw outputs are
+  > *not on a common scale* — one may output ±0.05 and another ±8 (`shipped_method_2026-09-12.html`).
+  > Summing those scores does not compute "the combined score"; it computes "whichever probe happened
+  > to have the widest output range decides". Ranks are scale-free, and since selection is an argmax
+  > **inside one question**, only the within-question ordering can matter. The cost is real — we
+  > throw away confidence magnitude, so a probe that is *certain* cannot outvote three that are
+  > lukewarm — and the measured price of getting this choice wrong in the other direction is 0.008.
+  >
+  > ⚠️ **The honest caveat:** the alternative was never tested *properly*. A calibrated score-average —
+  > z-scoring or Platt-scaling each probe's outputs on the training split first, so the scales *are*
+  > comparable, then averaging — is the obvious third option and is **not in any artifact**. It is a
+  > CPU-only experiment on cached features. `rank_avg` itself was also selected on evaluation data
+  > (`OPENTEXT_CORRECTIONS_2026-08-19.md` §7 item 4), which is a further reason not to treat it as
+  > settled.
+
 **One sentence to use everywhere:** *"A lightweight MLP probe (one hidden layer of 256, GELU) reads
 the frozen hidden states of Lingshu-7B — the mean over each candidate's own generated tokens at
 layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with binary cross-entropy;
@@ -171,6 +265,37 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   VQA (*Verification Mirage*, §3.2) — the motivation for training a verifier.
 - **Reward hacking / over-optimisation.** Picking the candidate with the highest *imperfect* score
   starts selecting for the scorer's errors as N grows; accuracy can *fall* with N (§3.4).
+
+  **Worked through, because this one is genuinely counter-intuitive.** Our probe is not a perfect
+  judge of correctness — it is a *proxy* for it. Write a candidate's probe score as
+  `score = true_correctness + error`. Best-of-N takes an **argmax**, and an argmax over N draws does
+  not just find the largest `true_correctness` — it finds the largest `true_correctness + error`. So
+  it is actively hunting for candidates where the probe's **error happens to be large and positive**:
+  the answers the probe most overrates.
+  
+  Now increase N. Two things grow at once: the chance that the set contains a genuinely correct
+  answer (good — this is *coverage*), and the chance that it contains a wrong answer the probe
+  badly overrates (bad). Early on the first effect dominates and accuracy rises. Past some N the
+  second catches up, and accuracy can **peak and then decline** even though the candidate set is
+  strictly getting better. The selector is over-fitting to its own noise, at inference time, with no
+  training involved.
+  
+  An everyday analogy: interview 5 candidates with a noisy interview process and you will probably
+  hire a good one. Interview 5,000 with the *same* noisy process and you will reliably hire whoever
+  is best at *interviewing* rather than at the job — the noise has more chances to produce an
+  extreme outlier than the signal does.
+  
+  **Why we have not been bitten by it, and where we might be.** The effect is a property of *large*
+  N against an imperfect scorer; at N = 8 we are far from the regime where it dominates, and the
+  measured 8 → 16 result is **positive** (+0.0167 macro, 4 WIN / 0 LOSS / 4 TIE, §2.4.5). But the
+  project *has* seen the shape: the older LoRA-era selection efficiency falls monotonically
+  1.000 → 0.914 → 0.841 → 0.770 (N=8) → 0.717 (N=16) as N grows (retrospective §8.2 item 12) — the
+  selector converts a steadily *smaller share* of a growing oracle gap, which is exactly the
+  predicted signature. Khalaf et al. (arXiv:2506.19248) prove the rise-then-fall pattern is
+  unavoidable for a broad class of inference-time selection mechanisms, and Stroebl et al.
+  (arXiv:2411.17501) show an imperfect verifier's false-positive rate puts a hard ceiling on
+  resampling that no extra compute can lift. **Consequence for us: never assume "more samples is
+  monotonically better" — measure the 16 → 32 step rather than extrapolating it.**
 - **Weak verifier / verifier ensembling.** Combining several unreliable scorers (Weaver, FUSE, §3.2).
 - **Best-of-Majority (BoM).** Take the frequent answers first, then the reward-maximal among them
   (§3.2/§3.4).
@@ -214,6 +339,56 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   resamples *images* or *benchmarks*, never questions i.i.d.: an i.i.d. interval on benchmark-clustered
   data was ~8× too narrow and turned a tie into a "win" (`TRANSFER_WALL_2026-08-21.md` §6). Field
   term: *cluster bootstrap*.
+
+  **The whole idea, from the start, because this is the most-used and least-explained number we
+  report.**
+
+  *The question a CI answers.* We measure the probe beating greedy by +0.0736 **on these particular
+  questions**. If we had drawn a different sample of questions, we would have got a different number.
+  A 95 % confidence interval is the range of values consistent with what we saw — loosely, "if the
+  true effect were outside this range, we would have been unlikely to observe what we did". If the
+  interval **excludes zero**, the effect is unlikely to be a fluke of which questions we happened to
+  test ("significant"); if it **includes zero**, we cannot rule out that the true effect is nothing,
+  and we call it a tie.
+
+  *What the bootstrap does.* We cannot re-run the experiment on fresh questions, so we simulate it.
+  Take the evaluation set of n items and draw n of them **at random with replacement** — some items
+  appear twice, some not at all. Recompute the delta on that resample. Repeat 10,000 times. You now
+  have 10,000 plausible deltas; the 2.5th and 97.5th percentiles are the 95 % interval. It is a way
+  of asking "how much would this number have moved if the sample had been slightly different?"
+  without needing any formula for the sampling distribution.
+
+  *What i.i.d. means, and why it is the crux.* **i.i.d.** = *independent and identically
+  distributed*: every item is an independent draw from the same population, so knowing one tells you
+  nothing about another. The plain bootstrap above assumes this. **Our data violates it, twice
+  over:**
+  - **Questions sharing an image are not independent.** SLAKE's held-out half has 330 questions over
+    just **49 images** — about 6.7 questions per image (`coverage_sc16_ci_ALL_2026-09-16.json`). If
+    the probe handles a particular chest X-ray well, it likely handles all six questions about that
+    X-ray well. They are close to one observation, not six.
+  - **Benchmarks are not independent either**, and this is the bigger effect. Within a benchmark the
+    behaviour is near-constant, and it differs enormously *between* benchmarks (+0.157 on OmniMedVQA,
+    −0.041 on VQA-RAD). Almost all the variance is *between* benchmarks.
+
+  *Why that makes an i.i.d. interval lie.* Treating 18,452 correlated questions as 18,452
+  independent ones tells the arithmetic you have far more evidence than you do, so the interval comes
+  out **too narrow** — and a too-narrow interval excludes zero when it should not, manufacturing a
+  "significant win". That is not hypothetical here: the regime router read **+0.0133 [+0.0109,
+  +0.0156] WIN** i.i.d. and **+0.0119 [−0.0032, +0.0297] TIE** once clustered by benchmark. Same data,
+  same point estimate, opposite conclusion; the i.i.d. interval was roughly **8× too narrow**
+  (`TRANSFER_WALL_2026-08-21.md` §6).
+
+  *The fix.* Resample the **cluster**, not the item: draw whole images (or whole benchmarks) with
+  replacement and take all their questions along. This keeps the within-cluster correlation intact
+  and widens the interval honestly. Our rule is images within a benchmark for per-benchmark
+  intervals, and benchmarks for macro claims. **Reassurance worth carrying:** image-level clustering
+  is worth only 0–23 % of the interval width and flipped **0 of 16** verdicts tested — it is
+  *benchmark*-level clustering that does the damage (`AUDIT_2026-09-12.md` §1).
+
+  *How to read one in a table.* `+0.0329 [+0.0149, +0.0518]` means the best estimate is +0.0329 and
+  the data are consistent with anything from +0.0149 to +0.0518. Both ends are positive → a real
+  improvement. `+0.0044 [−0.0066, +0.0155]` straddles zero → could genuinely be nothing → tie.
+  A *wide* interval usually means a small benchmark: VQA-RAD's ±0.064 comes from 97 questions.
 - **WIN / TIE / LOSS.** Our shorthand for "95 % CI excludes zero on the positive side / includes
   zero / excludes zero on the negative side". Say "significant at 95 %" in a report.
 - **Leave-one-benchmark-out (LOBO).** Train on seven, test on the eighth: the test of whether the
@@ -228,18 +403,58 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
 
 ## 1.6 Cost vocabulary
 
-- **FLOP-equivalent (FLOP-eq).** Our unit: one Lingshu-7B forward+generate on one question = 1.0.
-  Best-of-8 with a shared image/prompt prefill measures **1.13 FLOP-eq** by forward-token count
-  (`bestofn_vllm_2026-09-16.json`), versus **8.0** under the naive "charge every sample fully"
-  convention. Say which convention.
-- **Prefill vs decode.** *Prefill* = processing the prompt + image tokens (the expensive part for us:
-  ~323 prompt tokens vs ~6 generated); *decode* = generating output tokens one at a time.
+- **FLOP-equivalent (FLOP-eq), and the actual FLOPs behind it.**
+
+  > ⛔ **STANDING RULE (Leo, 2026-09-17): never report FLOP-eq on its own.** Every FLOP-eq figure must
+  > carry the actual FLOP number beside it. If we do not have the actual number, we get it before
+  > publishing the ratio. A ratio with no denominator is unauditable, and it hid a 7× error — see the
+  > correction in §2.4.6.
+
+  **The denominator, measured.** One Lingshu-7B forward+generate on one question at cap320 geometry
+  is **5,831.42 GFLOPs** — vision tower 1,479.1 + LM prefill 4,285.0 + decode 67.3
+  (`cost_decomposition_2026-08-12.json`, null test N2, rebuilt from parameter counts and reproduced
+  to 0.01 GFLOPs). One Lingshu-32B forward is **22,250.43 GFLOPs**. That is what "1.0 FLOP-eq" and
+  the 7B:32B ratio actually mean.
+
+  **The numbers we use, in both currencies** (`bestofn_vllm_2026-09-16.json`):
+
+  | arm | forward tokens/question | FLOP-eq | **actual GFLOPs** |
+  |---|---:|---:|---:|
+  | greedy (1 sample) | 328.5 | 1.00× | **5,831** |
+  | best-of-8, vLLM shared prefill — *the path our pools were generated on* | 371.2 | **1.13×** | **6,589** |
+  | best-of-8, HF `repeat-8` — *a different serving path* | 2,630.1 | 8.01× | **46,689** |
+  | best-of-8, "as charged" convention (charge every sample fully) | — | 8.00× | **46,651** |
+
+  The gap between rows 2 and 3 is **7.1×** for the *same method*, and it is entirely a property of
+  how the samples are served: vLLM's `SamplingParams(n=8)` encodes the image and prompt **once** and
+  forks 8 continuations, while HuggingFace's `num_return_sequences=8` repeats the whole prompt eight
+  times. Since ~98 % of our forward tokens are prompt+image and only ~6 are generated, sharing the
+  prefill is almost the entire cost. **Always say which serving path and which convention.**
+
+- **Prefill vs decode, and why it dominates here.** *Prefill* processes the prompt and image tokens;
+  *decode* generates output tokens one at a time. For us prefill is ~323 of ~328 forward tokens, so
+  decode-side optimisations cannot matter much — measured shares are LM prefill 73.5 %, vision tower
+  25.4 %, all decode 1.2 % of the 5,831 GFLOPs.
 - **Prefix caching / shared prefill.** vLLM computes the prompt once and forks N samples; HF's
-  `num_return_sequences` repeats the prompt N times. The two serving paths give different costs for the
-  *same* method (2.74× vs 1.99× latency, `bestofn_vllm_2026-09-16.json`,
-  `bestofn_latency_energy_2026-08-03.json`).
+  `num_return_sequences` repeats the prompt N times. This is the single largest source of
+  disagreement in our cost numbers — see the table above and the correction in §2.4.6.
 - **Latency / energy / VRAM / FLOPs** are four different axes; a method can win on one and lose on
-  another. Report all measured ones and name the batch size (ours: batch 1).
+  another. Report all measured ones and name the batch size (ours: batch 1). Measured at batch 1 on
+  one A100 80GB, 20 timed calls after 3 warmups, NVML power integrated over the call
+  (`bestofn_vllm_2026-09-16.json`):
+
+  | path | greedy | best-of-8 | ratio |
+  |---|---:|---:|---:|
+  | latency, vLLM | 174.0 ms | 476.6 ms | 2.74× |
+  | latency, HF repeat-8 | 360.4 ms | 716.8 ms | 1.99× |
+  | energy, vLLM | 34.3 J | 123.2 J | 3.59× |
+  | energy, HF repeat-8 | 55.9 J | 165.1 J | 2.95× |
+
+  ⚠️ Read that table carefully before quoting a ratio: **vLLM is roughly twice as fast in absolute
+  terms on both arms, yet its *ratio* is worse.** Serving eight samples efficiently makes the
+  single-sample baseline proportionally cheaper too, so the ratio grows while every absolute number
+  falls. Quoting "1.99× latency" as if it were the better system is exactly backwards — it is the
+  slower path's ratio. Report absolute milliseconds and joules, then the ratio.
 - **"Verification is free".** Our probe adds ~1.8 MFLOP per candidate per probe on vectors already
   computed — but this *argument* is already in print (HSRM, CASE, Q-Probe; §3.3). State the cost as a
   property, not a discovery.
@@ -252,7 +467,7 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   | generator | language model | hidden size | LM layers | vision tower | source of these numbers |
   |---|---|---:|---:|---|---|
   | Lingshu-7B | Qwen2.5-7B | **3584** | **28** | Qwen2.5-VL ViT (hidden 1280, 32 layers) | Qwen2.5-VL report, Table 1 (§3.7) |
-  | Qwen2.5-VL-7B | Qwen2.5-7B | 3584 | 28 | same | same |
+  | Qwen2.5-VL-7B | Qwen2.5-7B | 3584 | 28 | Qwen2.5-VL ViT (hidden 1280, 32 layers) | Qwen2.5-VL report, Table 1 (§3.7) |
   | MedGemma-4b-it | Gemma 3 (`gemma3_text`) | **2560** | **34** | SigLIP (hidden 1152, 27 layers, 896 px) | **the model's own `config.json`** |
 
   ⚠️ The MedGemma row is read from
@@ -270,13 +485,63 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
 - **LoRA (low-rank adaptation).** Small trainable matrices added to a frozen model. Cheap to *train*,
   but *inference* still runs the whole model — which is why the July LoRA verifier cost a full 7B
   forward per candidate and the probe replaced it.
-- **Temperature, top-p (nucleus), min-p, repetition penalty.** Sampling controls. We use T = 0.7 for
-  the shipped verifier.
+- **Sampling controls — all four, since we name them.** At each step the model produces a probability
+  over the whole vocabulary; these knobs decide how that distribution is turned into a token. They
+  matter to us because they set how *diverse* the eight candidates are, and diversity is what a
+  verifier has to work with.
+  - **Temperature (T).** Divides the logits before the softmax. `T → 0` is greedy (always the top
+    token, zero diversity, identical candidates); `T = 1.0` is the model's raw distribution; above 1
+    flattens it further. **We ship T = 0.7**, measured as the optimum for the pooled probe: T = 0.2
+    +0.0401, T = 0.4 +0.0573, **T = 0.7 +0.0816**, T = 1.0 +0.0759
+    (`head_temp_ensemble_2026-08-30.json`). The shape is a trade — raising T raises oracle@8 (more
+    chance some candidate is right) and lowers each individual sample's accuracy; the product peaks
+    in the middle.
+  - **Top-p (nucleus sampling).** Keep the smallest set of tokens whose probabilities sum to *p*
+    (e.g. 0.9), renormalise, sample from those. It adapts to the distribution's shape: where the
+    model is confident, few tokens qualify; where it is unsure, many do. Cuts off the unlikely tail
+    without the hard cutoff of top-k.
+  - **Min-p.** Keep tokens whose probability is at least *p* × (the top token's probability). Same
+    goal as top-p, anchored to the *peak* rather than to a cumulative mass, so it tends to be more
+    stable at high temperature. Measured here as **weakly positive** and not adopted
+    (`decoding_sweep_2026-08-13.json`).
+  - **Repetition penalty.** Down-weights tokens already generated, to stop loops. ⚠️ **In this project
+    it is a trap, not a knob:** it wins under the 32B judge and *loses* under exact match, and was
+    diagnosed as **verbosity harvesting** — longer answers give a lenient judge more to accept — not
+    a real gain (`decoding_sweep_2026-08-13.json`). A textbook case for why we report both
+    currencies.
+  - **Top-k**, for completeness: keep only the k most likely tokens. The blunt ancestor of top-p.
 - **Seed.** The random initialisation of a probe fit. A single seed spans [0.8025, 0.8140] selection
   efficiency across 16 seeds (`meetings/shipped_method_2026-09-12.html`); 8 seeds are averaged for
   stability. Report seed counts and spreads.
-- **Thread count.** CPU fits are deterministic *given* the thread count, but the thread count moves
-  the macro by 0.0033 (`repro_threading_2026-09-13.json`). Pin it.
+- **Thread count.** The number of CPU threads PyTorch uses to fit the probe.
+
+  **"What macro, and do more threads mean better accuracy?"** *Macro* here means the headline
+  endpoint — the macro-average of (verifier accuracy − greedy accuracy) over the eight benchmarks,
+  the +0.0736 number. And **no, more threads is not better — there is no trend at all**, which is
+  the whole point (`repro_threading_2026-09-13.json`, one arm, same code, same data, same seeds,
+  only the thread count varied):
+
+  | threads | macro | reproducible at that count? |
+  |---:|---:|---|
+  | 1 | +0.072615 | bitwise over 2 runs |
+  | 2 | **+0.074448** | — |
+  | 4 | +0.071169 | bitwise over 5 runs |
+  | 8 | +0.071660 | — |
+
+  Two threads is the best and one thread beats four — that is not a pattern, it is **noise with a
+  spread of 0.0033**. The mechanism is that multithreading changes the *order* in which floating-point
+  values are summed, and floating-point addition is not associative, so a different thread count
+  gives genuinely different (equally valid) numbers. Each count is perfectly **deterministic** — five
+  runs at four threads agree *bitwise* — so this is not randomness, it is a deterministic function of
+  an invocation detail nobody was recording.
+
+  **Why it matters more than 0.0033 sounds.** The shipped recipe was chosen over its runner-up by
+  **+0.0016**, which is half the thread-count spread — and on five of six runs the runner-up is
+  actually the better arm. So that choice is not robust and must not be reported as a win. Comparing
+  two arms *inside* one run is fair (they share a thread count); comparing across runs at different
+  thread counts is not. Every artifact now stamps its own `argv`, thread count, environment and git
+  SHA, because this entire investigation was only necessary because an earlier run recorded none of
+  them.
 
 ## 1.8 Uncertainty and calibration vocabulary (for comparisons a reviewer will ask for)
 
@@ -699,6 +964,57 @@ The three originals also have official training splits (PathVQA 9,903 · SLAKE 2
 Only the three originals are MedEvalKit loaders; the other five are our own harness
 (`OPENTEXT_CELL_SURVEY_2026-08-18.md` §0) — say so in any paper.
 
+### 2.3.1 One image, many questions — is that a training-distribution problem?
+
+Yes, partly, and here are the actual magnitudes rather than an impression.
+
+**How the rows are built.** A training row is one **(question, distinct candidate answer)** pair, not
+one question and not one image. At N = 8 with duplicate strings collapsed, a question yields **4.42
+rows on average** across the pooled set (81,331 rows over 18,417 training-half questions).
+
+**So an image contributes (questions on it) × (~4.4) rows**, and questions-per-image varies a lot
+(held-out halves, `coverage_sc16_ci_ALL_2026-09-16.json`):
+
+| benchmark | questions | images | questions/image | ⇒ rows per image (≈) |
+|---|---:|---:|---:|---:|
+| SLAKE | 330 | 49 | **6.73** | ~30 |
+| PathVQA | 1,623 | 420 | 3.86 | ~17 |
+| Kvasir-x1 | 5,152 | 1,447 | 3.56 | ~16 |
+| GEMeX | 3,978 | 1,742 | 2.28 | ~10 |
+| RadImageNet | 1,004 | 502 | 2.00 | ~9 |
+| VQA-RAD | 97 | 58 | 1.67 | ~7 |
+| OmniMedVQA | 4,461 | 4,151 | 1.07 | ~5 |
+| VQA-Med | 1,807 | 1,807 | **1.00** | ~4 |
+
+So your reading is right: on SLAKE the probe sees the same image in ~30 training rows per epoch —
+six or seven different questions about it, each with its own set of candidates — while on VQA-Med it
+sees each image about four times. The image is identical across those rows; the **question text and
+the candidate text are not**, and since `h_span` is the mean hidden state over *the candidate's own
+tokens* in a context that includes the question, the 30 rows are 30 genuinely different vectors. They
+are correlated, not duplicated.
+
+**Does it bias training?** Three separate imbalances, with what is known about each:
+
+1. **Benchmark size dominates everything else.** Kvasir-x1 contributes 23,221 rows and SLAKE 635 — a
+   **36× imbalance**, far larger than any image-multiplicity effect
+   (`genframe_head_pooled_ens_v2/recipe.json`). This is the one to worry about.
+2. **It was tested.** The sweep includes per-dataset reweighting (`head_sweep.py`, grid H, "pool is
+   71 % PathVQA"). Result: `H_rwper_ds_bce` **0.68975** against the unweighted control
+   `ctl_bce_h256` **0.68980** — a difference of **0.00005**, i.e. *exactly nothing*. Reweighting the
+   pool to equalise datasets bought no accuracy.
+3. **The split protects the evaluation, which is the part that would actually invalidate a result.**
+   Because the split is by image (`md5("nd"+img_md5) % 2`), every question about a given image lands
+   on the same side. Splitting by *question* would put question 1 about an X-ray in training and
+   question 2 about the same X-ray in the held-out set — which is how you leak. That is why the split
+   is by image, and the audit confirmed 0 images straddling on all eight benchmarks
+   (`AUDIT_2026-09-12.md` §1).
+
+**What is genuinely unresolved.** Reweighting was tested for *accuracy* and found neutral; it was not
+tested for whether the probe's behaviour is *dominated* by the two largest benchmarks in a way that
+hurts the small ones — and the per-benchmark results are consistent with that worry (VQA-RAD, with
+365 training rows, is one of the two losses). The clean experiment is a row-capped fit — cap every
+benchmark at, say, 4,000 rows — which is CPU-only on cached features and has not been run.
+
 ## 2.4 Results
 
 ### 2.4.1 The headline (shipped recipe, held-out halves)
@@ -768,6 +1084,45 @@ than memorisation.
 | **probe verifier (today)** | **0.5015** | **0.8011** | 8.00× | 1.99× | 2.95× |
 | both, ranks averaged | 0.5075 | 0.8106 | 15.18× | 3.68× | 5.77× |
 | oracle@8 | 0.6260 | 1.0000 | — | — | — |
+
+> ### ⚠️ 2.4.6 The cost columns above are wrong for the system we actually run
+>
+> **Raised in review, 2026-09-17, and it is a real error — do not quote that table's cost columns.**
+> The accuracy and selection-efficiency columns stand. The three cost columns do not, for two
+> independent reasons, and the same defect is in the 14 September deck.
+>
+> **(1) The FLOP-eq column charges best-of-8 as 8.00×. It is 1.13×.** That column uses the
+> "as charged" convention — pay a full forward per sample — which corresponds to HuggingFace's
+> `num_return_sequences=8`, where the prompt and image are encoded eight times. **Every candidate
+> pool in this project was generated under vLLM with `SamplingParams(n=8)`**, which encodes the image
+> and prompt **once** and forks eight continuations. Measured by forward tokens per question
+> (`bestofn_vllm_2026-09-16.json`):
+>
+> | arm | forward tokens | FLOP-eq | **actual GFLOPs** |
+> |---|---:|---:|---:|
+> | greedy | 328.5 | 1.00× | **5,831** |
+> | best-of-8, vLLM shared prefill (**what we run**) | 371.2 | **1.13×** | **6,589** |
+> | best-of-8, HF repeat-8 (**what the table charges**) | 2,630.1 | 8.01× | **46,689** |
+>
+> **The table overstates the method's compute by 7.1×.** Since ~98 % of our forward tokens are
+> prompt and image and only ~6 are generated, sharing the prefill is nearly the whole cost, so
+> sampling eight answers is close to free in FLOPs — which strengthens the method's cost story
+> rather than weakening it.
+>
+> **(2) The latency and energy columns are from a different machine path than the FLOP column.**
+> 1.99× and 2.95× are HuggingFace `repeat-8` ratios (`bestofn_latency_energy_2026-08-03.json`). On
+> the vLLM path the same method measures **2.74× latency and 3.59× energy** — *worse ratios* but
+> much better absolute numbers (174.0 → 476.6 ms and 34.3 → 123.2 J, against HF's 360.4 → 716.8 ms
+> and 55.9 → 165.1 J). Efficient serving makes the one-sample baseline proportionally cheaper too, so
+> the ratio rises while every absolute number falls. **Quote absolute ms and J first, then the ratio,
+> and name the serving path.**
+>
+> **What is safe to say from that table today:** the probe verifier beats the July LoRA verifier by
+> **+0.0162 accuracy** on identical questions, and it does so **without the LoRA's extra forward pass
+> per candidate** — the LoRA re-encoded the image once per candidate, the probe reads states already
+> computed. The *magnitude* of the cost saving needs restating on one serving path with actual
+> GFLOPs beside every ratio, and that restatement has not been done. It is the first thing to fix if
+> the cost claim is going into a paper.
 
 ### 2.4.4 Replication on other generators
 
@@ -3514,6 +3869,56 @@ judges, splits and generators, a shared table is context, never a ranking. Label
 6. **What is next** — the third generator on all eight benchmarks, exact-match currency, N=32 on the
    coverage-limited benchmarks (§2.6).
 
+## 5.8b Two directions raised in review (2026-09-17)
+
+**A second judge, from a different model family.** Our correctness labels come from Lingshu-32B
+judging Lingshu-7B's outputs — a same-family judge, which the LLM-as-a-judge literature flags for
+**self-preference bias** (§3.8), and which our own paraphrase-drift measurement puts at a free
++0.006–0.009 for a newly trained verifier (§2.5.1). The fix is a cross-family judge, and **three are
+already downloaded**:
+
+| candidate | family | why it is or is not a good control |
+|---|---|---|
+| **MedGemma-27B-it** | Gemma 3 + SigLIP | **The best choice.** Different LM family, different vision tower, medically trained. Genuinely independent of Lingshu. |
+| InternVL3-38B | InternVL | Also independent, and larger. ⚠️ Shares the known `tp=2` NCCL hang (CLAUDE.md §8) — check before committing GPU time. |
+| Qwen2.5-VL-32B-Instruct-AWQ | Qwen2.5-VL | Weakest control: Lingshu *is* a Qwen2.5-VL finetune, so this is nearly the same family. Useful as a middle point, not as the independence test. |
+
+The experiment that settles it: re-judge one fixed candidate set — GEMeX is the right benchmark,
+being the least memorisable and the cleanest verifier win — with MedGemma-27B, and report the probe's
+gain in **three** currencies (Lingshu-32B judge, MedGemma-27B judge, normalised exact match). If the
+gain survives all three, the same-family objection is closed permanently. If it shrinks under the
+cross-family judge, we have found a real bias and should say so first. Either outcome is publishable;
+the current state — one same-family judge — is the only one that is not defensible.
+
+**Dynamic (adaptive) sampling.** Your reading of the 8 → 16 table is right, and it points somewhere
+specific. The benefit is **wildly uneven**: OmniMedVQA +0.0462, GEMeX +0.0359, RadImageNet +0.0329
+and Kvasir-x1 +0.0309 are all significant wins, while PathVQA, SLAKE, VQA-RAD and VQA-Med are flat
+ties (§2.4.5). Spending 16 samples everywhere pays double on four benchmarks to buy nothing. That is
+the exact shape that adaptive-N is for: **draw more samples only where more samples help.**
+
+Two things make this more attractive than it looks:
+
+- **The machinery already exists in this repo.** The Weitzman "Pandora's box" optimal-stopping
+  controller was built for the open-text arm and measured at **iso-accuracy for 11.74 against 16.0
+  FLOP-eq — a 27 % cut in the open arm's sampling cost** at a mean of 4.37–6.63 draws instead of a
+  fixed 8 (`weitzman_T04_2026-08-15.json`, `src/cascade_methods/weitzman_T04.py`,
+  `REPORT_SCAFFOLD.md` §5). It has never been re-run against the *pooled probe* or at N up to 16.
+- **The stopping signal is free.** Weitzman needs a per-candidate value estimate to decide whether
+  another draw is worth its cost — and the probe already produces exactly that, at no extra forward
+  pass. A rising probe score across the first few candidates says the pool is productive; a flat one
+  says stop.
+
+⚠️ **The one thing that would kill it**, and it must be checked first: §2.4.5 shows the *benefit* of
+more samples is predictable **per benchmark**, but §2.5 hole 3 records that no detector we have
+tested can order benchmarks at inference time, and the regime router that tried to route on OOD
+distance was **worse than always-selecting** because it confidently routed the wrong way on the
+newest benchmark. Adaptive-N that keys off a *within-question* signal (the probe's own scores) is a
+different and more promising thing than a router keyed off *benchmark identity* — but the distinction
+has to be respected, not blurred.
+
+**Recommended order:** re-run the existing Weitzman controller against the pooled probe with a budget
+ceiling of 16, on the four benchmarks that gained. It reuses generated pools, so it is CPU-only.
+
 ## 5.8 Two structural suggestions, both CPU-only
 
 Neither is a new method; both close a hole a reviewer will otherwise open, and everything needed for
@@ -3565,69 +3970,7 @@ medical reality — enough to hold a conversation about the domain.
 Read each category's ★ papers, in the order the category lists them. PDFs are in `papers/`,
 named `<category letter>_<key>.pdf`.
 
-**§3.1 — Test-time compute scaling and best-of-N: the foundations**
-
-- **On Test-Time Scaling for Vision-Language Models** — Fawaz Sammani et al. (2026), arXiv:2606.28864. First broad study of LLM-style test-time scaling on vision-language models: small, good models gain the most (up to ~30 points via self-consistency), perception benchmarks often get worse, and the image stops mattering after roughly 200 generated tokens.
-- **Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters** — Charlie Snell et al. (2024), arXiv:2408.03314. Per-prompt, difficulty-aware allocation of test-time compute (search against a verifier, or sequential revision) beats a fixed best-of-N budget by up to 4x and, FLOPs-matched, lets a small model beat one ~14x larger on easy/medium prompts.
-- **Large Language Monkeys: Scaling Inference Compute with Repeated Sampling** — Bradley Brown et al. (2024), arXiv:2407.21787. Repeated sampling raises 'coverage' (any-sample-correct) log-linearly over four orders of magnitude, but without an automatic verifier the common selectors (majority vote, reward model) plateau far below coverage — the origin of the 'selection wall'.
-- **Training Verifiers to Solve Math Word Problems** — Karl Cobbe et al. (2021), arXiv:2110.14168. Introduces GSM8K and the learned-verifier best-of-N recipe: sample 100 solutions, train a model to predict correctness, return the top-scored one — a 6B model with a verifier slightly beats a fine-tuned 175B model.
-
-**§3.2 — Verifiers and Reward Models: Outcome vs Process, Discriminative vs Generative, and Verification in Medical VQA**
-
-- **Best-of-Evidence: Best-of-N Selection under Partial Verification** — Cenwei Zhang et al. (2026), arXiv:2607.20950. Best-of-N selection for medical VQA when no single reliable whole-answer verifier exists, only partial/claim-level checkable evidence; formalizes this as a candidate-factor graph with a budgeted evidence controller, and measures only modest, often not-significant gains over plain majority-vote/BoN.
-- **Verification Mirage: Mapping the Reliability Boundary of Self-Verification in Medical VQA** — Ruinan Jin et al. (2026), arXiv:2605.10850. Shows that self-verification (re-invoking the same or a similar VLM in a fresh context to judge its own answer) is systematically unreliable in medical VQA — the verifier inherits the generator's blind spots ('verification mirage') and under-attends to the image ('lazy verifier'); Lingshu is one of the six tested models.
-- **Generative Verifiers: Reward Modeling as Next-Token Prediction** — Lunjun Zhang et al. (2024), arXiv:2408.15240. Proposes GenRM: train the verifier to emit its correctness judgment as generated text (next-token prediction, optionally with chain-of-thought) instead of a single discriminative scalar score, and shows this beats discriminative verifiers and LLM-as-judge on best-of-N.
-- **Training Verifiers to Solve Math Word Problems** — Karl Cobbe et al. (2021), arXiv:2110.14168. Introduces the outcome reward model (ORM): sample many candidate solutions, score each with a trained verifier, and keep the top-scoring one — the origin of best-of-N verification.
-
-**§3.3 — Probing frozen hidden states: from probing classifiers to hidden-state verifiers**
-
-- **HSRM: Hidden-State Reward Models for Test-Time Verification** — Xianzhi Li and Xiaodan Zhu (2026), arXiv:2608.30841. HSRM extracts hidden states at reasoning-step boundaries from a frozen generator, mean-pools them through a tiny (~2M-parameter) Transformer encoder to rank candidates, and explicitly verifies it needs zero extra generator forward passes because it reuses representations already computed during generation.
-- **MedProb: Probing Internal Representations of Vision-Language Models for Medical Question Answering** — Erfan Nourbakhsh et al. (2026), arXiv:2609.04336. MedProb's MAIN method is a multinomial logistic-regression probe on a frozen medical VLM's LAST-INPUT-TOKEN hidden state that predicts a multiple-choice answer WITHOUT any free-text generation at all; only a secondary Appendix-H extension applies the probe to open-ended generations, and it re-feeds the candidate text back into the model to score it, i.e. a second forward pass.
-- **Mining Intrinsic Rewards from LLM Hidden States for Efficient Best-of-N Sampling (SWIFT)** — Jizhou Guo et al. (2025), arXiv:2505.12225. SWIFT is a token-level linear gate+reward head on a frozen LLM's own per-token hidden states (concatenated across all layers), trained with BCE, that computes a gated weighted-average reward per candidate and picks the argmax candidate for best-of-N — the closest architectural sibling to our probe we found.
-- **Q-Probe: A Lightweight Approach to Reward Maximization for Language Models** — Kenneth Li et al. (2024), arXiv:2402.14688. Learns a 1-layer LINEAR probe on a frozen model's embeddings to reweight (softmax-sample, not hard-argmax) sampled completions toward higher reward, trainable via reward-modeling loss or a novel importance-weighted policy-gradient objective.
-
-**§3.4 — The Walls: Coverage vs. Selection, Imperfect Verifiers, and Bounded Best-of-N Gains**
-
-- **Oracle Gap and Signal Fidelity: A Fixed-Pool Diagnostic for Test-Time Collaboration** — Jie Hu (2026), arXiv:2607.17531. Independently derives essentially our own decomposition of best-of-N/verifier gain into an oracle gap, a coverage term, a conditional-selection-quality term, and a conditional-harm term, and shows gains are bounded first by oracle gap, then by signal fidelity.
-- **When More Sampling Hurts: The Modal Ceiling and Correlation Ceiling of Test-Time Scaling** — Yong Yi Bay and Kathleen A. Yearick (2026), arXiv:2606.28661. New (2026) paper directly on-point for why more sampling stops helping: defines a modal ceiling and a correlation ceiling, both reached within a few dozen draws and both independent of sample budget, and proves self-consistency accuracy can fall toward 0 as coverage rises to 1.
-- **Large Language Monkeys: Scaling Inference Compute with Repeated Sampling** — Bradley Brown et al. (2024), arXiv:2407.21787. Foundational empirical demonstration that coverage (pass@k / oracle accuracy) scales log-linearly over four+ orders of magnitude in sample count, while majority-vote/reward-model selection plateaus far below coverage once no automatic verifier exists.
-- **The Limits of Inference Scaling Through Resampling** — Benedikt Stroebl et al. (2024), arXiv:2411.17501. Proves that an imperfect verifier's non-zero false-positive rate imposes a hard upper bound on resampling-based inference scaling that no amount of additional compute can lift, and finds compute-optimal sample counts are typically single digits.
-
-**§3.5 — Training-free selection: self-consistency, majority vote, minimum Bayes risk, consensus, and logit-based scores**
-
-- **Wasserstein Equilibrium Decoding for Reliable Medical Visual Question Answering** — Luca Hagen et al. (2026), arXiv:2605.18313. Extends game-theoretic Bayesian Decoding Game equilibrium search to open-ended medical VQA with a Wasserstein/optimal-transport stopping criterion over a biomedical embedding space, beating greedy decoding on VQA-RAD and PathVQA with small VLMs — the closest published neighbour to our best-of-N probe.
-- **Agreement in Representation Space for Open-Ended Self-Consistency** — Paula Ontalvilla et al. (2026), arXiv:2606.12003. Reframes open-ended self-consistency as a geometric property: cluster sampled generations in embedding space and return the one closest to the dominant cluster's centroid (Embedding-Based Agreement, EBA), beating USC/random-selection baselines on code, math, and summarization.
-- **Universal Self-Consistency for Large Language Model Generation** — Xinyun Chen et al. (2023), arXiv:2311.17311. Extends self-consistency to free-form generation by asking the LLM itself to pick the most consistent candidate from the concatenated sample set, instead of exact-match voting.
-- **Self-Consistency Improves Chain of Thought Reasoning in Language Models** — Xuezhi Wang et al. (2022), arXiv:2203.11171. Introduces self-consistency: sample multiple chain-of-thought reasoning paths and take a majority vote over the final answers instead of greedy decoding, for large gains on closed-form reasoning tasks.
-
-**§3.6 — Uncertainty, Calibration, and Hallucination Detection in LLMs and VLMs -- with the Medical Evidence**
-
-- **Calibrated Triage, Not Autonomy: Confidence Estimation for Medical Vision-Language Models** — Reza Khanmohammadi et al. (2026), arXiv:2606.15910. A head-to-head benchmark of nine confidence estimators (training-free logit, verbalized prompting, trained internal probes) across five LVLMs and three medical VQA datasets finds no estimator reliably best, and even the strongest safely triages only ~25% of radiology cases at 20% error tolerance, and almost nothing in pathology.
-- **Overconfidence and Calibration in Medical VQA: Empirical Findings and Hallucination-Aware Mitigation** — Ji Young Byun et al. (2026), arXiv:2604.02543. Across three VLM families (2B-38B) and three medical VQA benchmarks, overconfidence persists regardless of scale or prompting (CoT, verbalized confidence); Platt scaling reliably beats prompt-based calibration but doesn't improve AUROC; adding hallucination-detection signals (their HAC method) improves both, especially on open-ended questions.
-- **Detecting hallucinations in large language models using semantic entropy** — Sebastian Farquhar et al. (2024), 10.1038/s41586-024-07421-0. Introduces semantic entropy -- clustering sampled generations by bidirectional textual entailment and computing entropy over the resulting meaning-clusters -- as an unsupervised, training-free hallucination detector that beats naive token entropy and P(True) baselines.
-- **A Survey of Confidence Estimation and Calibration in Large Language Models** — Jiahui Geng et al. (2023), arXiv:2311.08298. Survey organizing LLM confidence-estimation methods into white-box (logit-based, internal-state-based, semantic) and black-box (verbalized, consistency-based, surrogate-model) families, cataloging calibration metrics and applications including hallucination detection and selective generation.
-
-**§3.7 — Medical Vision-Language Models: The Generators We Use and the Ones We Compare Against**
-
-- **Lingshu: A Generalist Foundation Model for Unified Multimodal Medical Understanding and Reasoning** — LASA Team et al. (2025), arXiv:2506.07044. Lingshu (7B/32B), a medical MLLM built on Qwen2.5-VL via a 4-stage pipeline (shallow align -> deep align -> instruction tuning -> GRPO RL), plus MedEvalKit, the unified medical eval harness the whole project depends on.
-- **MedGemma Technical Report** — Andrew Sellergren et al. (2025), arXiv:2507.05201. MedGemma (Gemma 3 4B/27B + MedSigLIP) technical report: explicitly removed PathVQA and MedVQA from training over data-quality concerns and re-split VQA-RAD to fix train/test image contamination.
-- **Qwen2.5-VL Technical Report** — Shuai Bai et al. (2025), arXiv:2502.13923. Technical report for Qwen2.5-VL, the general-domain backbone Lingshu-7B/32B are medically fine-tuned from; defines the ViT -> MLP-merger -> LLM architecture and confirms the 7B config (hidden 3584, 28 LLM layers).
-- **How Far Have Medical Vision-Language Models Come? A Comprehensive Benchmarking Study** — Che Liu et al. (2025), arXiv:2507.11200. Independent benchmarking of general-purpose vs medically-specialized VLMs (3B-72B): general models often match or beat medical-specific ones, reasoning consistently underperforms understanding, and no model reaches a clinical-deployment reliability bar.
-
-**§3.8 — Medical VQA benchmarks, datasets, and the evaluation protocol**
-
-- **A Controlled Audit of Pretraining Contamination in Public Medical Vision-Language Benchmarks** — Bruce Changlong Xu et al. (2026), arXiv:2606.10066. Audits SLAKE-En, PathVQA, VQA-RAD and an OmniMedVQA mirror for pretraining contamination using 4 detector families; finds real image-side overlap on SLAKE-En but shows two of the four detector families are unreliable (a non-medical control model, BLIP-2, 'reproduces' their positive signals).
-- **OmniMedVQA: A New Large-Scale Comprehensive Evaluation Benchmark for Medical LVLM** — Yutao Hu et al. (2024), arXiv:2402.09181. A 73-source, 12-modality, >20-anatomical-region medical VQA benchmark built entirely from authentic (non-synthetic) clinical images, showing medical-specialized LVLMs can underperform general-domain ones.
-- **PMC-VQA: Visual Instruction Tuning for Medical Visual Question Answering** — Xiaoman Zhang et al. (2023), arXiv:2305.10415. Introduces PMC-VQA (227k generative QA pairs from 149k images) and MedVInT, plus a manually-verified 2,000-pair test set; the paper's own data analysis shows the correct MCQ answer is skewed toward option B (~31% vs. 25% expected).
-- **Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena** — Lianmin Zheng et al. (2023), arXiv:2306.05685. Establishes and validates LLM-as-a-judge (e.g. GPT-4 scoring model outputs) against human preference, while explicitly naming position, verbosity, and self-enhancement bias as failure modes to correct for.
-
-**§3.9 — The older lineage: n-best rescoring, discriminative reranking, and confidence models in other fields**
-
-- **Residual Energy-Based Models for End-to-End Speech Recognition** — Qiujia Li et al. (2021), arXiv:2103.14152. A 2-layer BLSTM reranker reads an existing autoregressive ASR model's decoder hidden state, attention context, token embeddings and top-K softmax probabilities, mean-pools them over each hypothesis's own output tokens, and is BCE-trained to rerank an n-best list — architecturally the closest ancestor of our probe, five years earlier.
-- **Highly accurate protein structure prediction with AlphaFold** — John Jumper et al. (2021), 10.1038/s41586-021-03819-2. AlphaFold's pLDDT confidence head is a small per-residue network computed on the network's own final activations, in the same forward pass, and is used to estimate per-residue accuracy and to rank/select among predicted structures — model quality assessment folded directly into the generator.
-- **Confidence Estimation for Attention-based Sequence-to-sequence Models for Speech Recognition** — Qiujia Li et al. (2020), arXiv:2010.11428. A single fully-connected layer (256 units) reads the decoder state, attention context and token embedding of an existing seq2seq ASR model and is BCE-trained on edit-distance-derived correct/incorrect token labels, beating raw softmax probability as a confidence signal on AUC and normalized cross entropy (NCE).
-- **Discriminative Reranking for Natural Language Parsing** — Michael Collins and Terry Koo (2005), 10.1162/0891201053630273. A boosting-based discriminative reranker rescores an n-best list of candidate parse trees from a baseline generative parser, combining the baseline's log-likelihood with hundreds of thousands of additional tree features — one of the two founding papers of discriminative reranking in NLP.
-
+<!-- CORE_READING_LIST -->
 
 ## 6.3 Reading order by purpose
 
@@ -3689,3 +4032,142 @@ is lost by not having its PDF.
 156 cited across the project's own documents (all 156 resolved) plus everything the category sweeps
 added. Papers that could not be verified are listed in each category's *considered and not carded*
 block, with the reason.
+
+
+---
+
+# 8. Response log — the 14 review comments (2026-09-17)
+
+Your comments on `DOMAIN_GUIDE_2026-09-16-commented-v1.docx`, each with the answer and where the
+document changed. **Two of them found real errors** (9/13 the cost convention, 10 the table row);
+one found a real gap in the method (4, the untested calibrated score-average); several are now
+recorded as standing rules.
+
+| # | your comment | verdict | where it landed |
+|---|---|---|---|
+| 1 | Why have the dropout? | **Vestigial** | §1.2 |
+| 2 | How many did we train? | Answered: 24 ship, 147+ fitted | §1.2 |
+| 3 | Are the hyperparameters made up? Why BCE? | Answered; two caveats conceded | §1.2 |
+| 4 | Rank averaging — can it pick a lower combined score? | **Yes, by design** — and an untested alternative exists | §1.2 |
+| 5 | Reward hacking — elaborate | Answered | §1.3 |
+| 6 | Let's try a different judge | **Actionable now** — 3 models on disk | §5.8b |
+| 7 | 5 questions per image — distribution problem? | Partly; measured; the bigger imbalance is elsewhere | §2.3.1 |
+| 8 | What is i.i.d.? Explain the CI | Answered from first principles | §1.5 |
+| 9 | Never use FLOP-eq without actual FLOPs | **Adopted as a standing rule** | §0.4, §1.6 |
+| 10 | Don't write "same" in a table | **Fixed** | §1.7 |
+| 11 | You only explained temperature | **Fixed** — all four, plus top-k | §1.7 |
+| 12 | Thread count — what macro? More threads better? | Answered: **no trend, it is noise** | §1.7 |
+| 13 | Are the cost numbers correct? | **No — a 7.1× error** | §2.4.6 |
+| 14 | Fonts look bad; dynamic sampling? | **Fixed**; and yes, with a precedent | CSS, §5.8b |
+
+---
+
+## The two that changed a result
+
+**#13 + #9 — the cost columns were wrong, by 7.1×.** You asked whether the FLOP-eq / latency / energy
+numbers in §2.4.3 were right. They are not, and your rule in #9 is what exposes it: a bare ratio with
+no denominator cannot be audited. The table charges best-of-8 at **8.00× FLOP-eq**, which is the
+"pay a full forward per sample" convention — true of HuggingFace's `num_return_sequences=8`, which
+re-encodes the prompt and image eight times. But **every candidate pool in this project was generated
+under vLLM**, which encodes once and forks eight continuations: **1.13× FLOP-eq, 6,589 GFLOPs against
+greedy's 5,831**. Because ~98 % of our forward tokens are prompt and image, sharing the prefill is
+nearly the entire cost.
+
+Separately, the latency and energy columns (1.99×, 2.95×) come from the HuggingFace path while the
+FLOP column uses a third convention — so the row mixed two machines and three conventions. The vLLM
+path measures 2.74× latency and 3.59× energy, *worse ratios but roughly half the absolute time and
+energy*, because efficient serving makes the baseline cheaper too.
+
+This makes the method look **better**, not worse — but it was wrong, it is in the 14 September deck
+too, and it needs restating on one path before any cost claim goes into a paper. Full correction in
+§2.4.6; the standing rule is in §0.4.
+
+**#4 — rank averaging, and a gap you found.** Short answer: the rank is a plain ordinal position
+within one question's candidate set (0 … n−1, divided by n−1, ties averaged), **not** anything
+proportional to the score. And yes — rank-averaging can and does pick a candidate whose summed score
+is lower. That is deliberate: the 24 probes are fitted independently and are not on a common scale
+(one may output ±0.05, another ±8), so summing raw scores just lets the widest-scaled probe decide.
+Ranks are scale-free, and since selection is an argmax *inside* one question, only ordering can
+matter.
+
+But your instinct points at something real. The proper third option — **calibrate each probe's scores
+first** (z-score or Platt-scale on the training split), *then* average the scores, so the magnitudes
+are genuinely comparable — is **not in any artifact**. It is the obvious middle ground between "throw
+magnitude away" and "let the loudest probe win", and it is a CPU-only experiment on cached features.
+Worth running. Worked example and the full argument in §1.2.
+
+---
+
+## The rest, in brief
+
+**#1 Dropout.** It is a no-op (`nn.Dropout(0.0)` is the identity) left behind by the sweep's
+parameterisation — and the only reason the output layer is indexed `f.3`. Dropout was tested and
+lost: at the deployed width, CV selection efficiency runs 0.6785 (dropout 0) → 0.67692 (0.1) →
+0.67465 (0.3), and every top-ten sweep configuration uses 0.0. It should be deleted from the module,
+but that renames state-dict keys, so it needs a checkpoint migration rather than a casual edit.
+
+**#2 How many probes.** 24 ship. The architecture/optimisation sweep alone fitted **147 distinct
+configurations** at 5 folds each, and that is one round among several. The 24 are survivors of a
+selection process — which is why seed-averaging matters and why arm gaps under ~0.003 are not
+trustworthy.
+
+**#3 Hyperparameters.** Not made up: a 147-cell grid over objective, width, depth, dropout, epochs,
+schedule, learning rate, weight decay, normalisation, set-awareness and reweighting. Two honest
+caveats now stated in §1.2 — the shipped recipe is **not** the sweep's winner (the winner is ~1 sd
+better, so it was not chased), and those CV numbers come from the four-domain, layer-21 era, so the
+sweep *informed* rather than *selected* the shipped recipe. On **BCE**: it wins in the sweep, but
+`OPENTEXT_CORRECTIONS` §3b shows that comparison is confounded (Bradley–Terry sees 38.9 % of the rows
+and 3.26× fewer optimiser steps), so the defensible reasons are that BCE uses every row — including
+questions where all candidates are right or all wrong, which BT must discard — and that it consumes
+the binary label the judge actually produces.
+
+**#5 Reward hacking.** Argmax over N does not find the largest *correctness*, it finds the largest
+*correctness + scorer error* — so it actively hunts for answers the probe overrates. Raise N and two
+things grow: the chance a correct answer is present (good) and the chance of a badly overrated wrong
+one (bad). Past some N the second can win and accuracy *falls* while the candidate set is still
+improving. We are not in that regime at N = 8 — the measured 8 → 16 step is positive — but the
+project has seen the signature: LoRA-era selection efficiency decayed 1.000 → 0.914 → 0.841 → 0.770
+→ 0.717 as N grew. Never extrapolate "more samples is better"; measure the next step. Full
+explanation with the analogy in §1.3.
+
+**#6 A different judge.** Agreed, and it is the single best answer to the self-preference objection.
+**MedGemma-27B-it is already on disk** and is genuinely independent (Gemma 3 + SigLIP, medically
+trained); InternVL3-38B is also there but shares the known `tp=2` NCCL hang; the Qwen2.5-VL-32B is a
+weak control because Lingshu *is* a Qwen2.5-VL finetune. Proposed experiment, currencies and the
+reason either outcome is publishable: §5.8b.
+
+**#7 One image, many questions.** Yes — on SLAKE the probe sees each image in ~30 training rows per
+epoch (6.73 questions/image × ~4.4 candidate rows/question), on VQA-Med about 4. Those rows are
+correlated, not duplicated: the image is the same but the question and candidate text differ, and
+`h_span` is pooled over the candidate's own tokens. Three imbalances are separated in §2.3.1, and
+the honest finding is that **benchmark size dominates** (Kvasir-x1 23,221 rows vs SLAKE 635 — 36×),
+that per-dataset reweighting **was** tested and changed the result by 0.00005, and that the
+by-image split is what protects the *evaluation* from leaking. What is still unrun: a row-capped fit
+to test whether the two largest benchmarks dominate the probe's behaviour.
+
+**#8 i.i.d. and confidence intervals.** Rewritten from first principles in §1.5: what a CI claims,
+what the bootstrap does and why, what independent-and-identically-distributed means, the two ways our
+data violates it (≈6.7 questions share one SLAKE image; benchmarks behave very differently from each
+other), why that makes a naive interval **too narrow** and therefore manufactures false wins, the
+worked case where it turned a tie into a "win" with an interval ~8× too narrow, and how to read one
+in a table.
+
+**#10 "same/same".** Fixed — the Qwen2.5-VL row now spells out its vision tower and its source.
+
+**#11 Sampling controls.** Fixed — temperature (with our measured curve and *why* it peaks in the
+middle), top-p, min-p, repetition penalty (flagged as a currency trap: it wins under the judge and
+loses under exact match, diagnosed as verbosity harvesting) and top-k.
+
+**#12 Thread count.** The *macro* is the headline +0.0736 endpoint. And no — more threads is **not**
+better: 1 → +0.072615, 2 → +0.074448, 4 → +0.071169, 8 → +0.071660. Two beats one beats eight beats
+four is not a trend, it is a 0.0033 spread caused by floating-point summation order. Each count is
+bitwise deterministic. It matters because the shipped recipe was picked over its runner-up by
++0.0016 — half the spread — so that choice is not robust.
+
+**#14 Fonts and dynamic sampling.** The font problem was real: the body typeface (Charter/Georgia)
+uses **old-style figures**, where digits have varying heights and some sit below the baseline, which
+is what made the tables look ragged. Tables and all numerals are now forced to **lining, tabular
+figures**, so digits are uniform height and align in columns. On dynamic sampling — see §5.8b; you
+are reading the table correctly, the gain is concentrated in four of eight benchmarks, and this repo
+already contains a Weitzman optimal-stopping controller that hit iso-accuracy at 11.74 against 16.0
+FLOP-eq and has never been re-run against the pooled probe.

@@ -1,6 +1,6 @@
 # MANIFEST — what is in this package
 
-Generated 2026-09-16. The PDFs in `papers/` are the ★ core papers only; every other paper is cited with a working link in the guide and in `references.bib`.
+Generated 2026-09-17. The PDFs in `papers/` are the ★ core papers only; every other paper is cited with a working link in the guide and in `references.bib`.
 
 ## Core PDFs
 
