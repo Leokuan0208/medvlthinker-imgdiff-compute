@@ -92,7 +92,8 @@ GENERATORS = {
         "eval_stem": lambda c: f"generator_eval_medgemma_{c}",
         "eval_dsfilter": lambda c: None,
         "out": "head_final_stack_medgemma_2026-09-13.json",
-        "bench": ["pathvqa_open", "slake_open", "vqa_rad_open", "radimagenet_open"],
+        # 2026-09-16: all eight extracted (wave 97), so this is no longer a 4-benchmark subset.
+        "bench": None,
         # DEPTH-MATCHED, pre-specified before any MedGemma probe was fitted. Gemma 3 here is
         # 34-layer against Lingshu's 28, so the shipped [18,20,22] -- relative depth
         # 0.643/0.714/0.786 on Lingshu -- would sit at 0.529/0.588/0.647 here, materially

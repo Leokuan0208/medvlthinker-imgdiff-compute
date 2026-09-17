@@ -1,0 +1,64 @@
+{
+ "title": "Does extra sampling budget convert into accuracy, or only into oracle?",
+ "date": "2026-09-17",
+ "no_fabricated_numbers": true,
+ "verifier": "genframe_head_pooled_ens_v2 (the shipped pooled probe)",
+ "eval": "held-out image halves only",
+ "currency": "32B judge",
+ "pools": "REAL N=8 / N=16 / N=32 candidate sets, not subsamples of one pool",
+ "cells": {
+  "radimagenet_open": {
+   "8": {
+    "greedy": 0.3337,
+    "verifier": 0.4552,
+    "oracle": 0.5159,
+    "verifier_minus_greedy": 0.1215,
+    "headroom_above_greedy": 0.1823,
+    "converted_pct": 66.7
+   },
+   "16": {
+    "greedy": 0.3337,
+    "verifier": 0.488,
+    "oracle": 0.5916,
+    "verifier_minus_greedy": 0.1544,
+    "headroom_above_greedy": 0.258,
+    "converted_pct": 59.8
+   },
+   "32": {
+    "greedy": 0.3337,
+    "verifier": 0.5269,
+    "oracle": 0.6992,
+    "verifier_minus_greedy": 0.1932,
+    "headroom_above_greedy": 0.3655,
+    "converted_pct": 52.9
+   }
+  },
+  "vqamed_open": {
+   "8": {
+    "greedy": 0.0913,
+    "verifier": 0.088,
+    "oracle": 0.1987,
+    "verifier_minus_greedy": -0.0033,
+    "headroom_above_greedy": 0.1074,
+    "converted_pct": -3.1
+   },
+   "16": {
+    "greedy": 0.0913,
+    "verifier": 0.0924,
+    "oracle": 0.2706,
+    "verifier_minus_greedy": 0.0011,
+    "headroom_above_greedy": 0.1793,
+    "converted_pct": 0.6
+   },
+   "32": {
+    "greedy": 0.0913,
+    "verifier": 0.0957,
+    "oracle": 0.3475,
+    "verifier_minus_greedy": 0.0044,
+    "headroom_above_greedy": 0.2562,
+    "converted_pct": 1.7
+   }
+  }
+ },
+ "VERDICT": "Extra budget converts where the probe already has selection skill and is wasted where it does not. radimagenet_open: verifier-greedy +0.1215 -> +0.1932 going 8->32, i.e. +0.0717 more accuracy on one benchmark, comparable to the entire shipped macro. vqamed_open: oracle rises +0.1488 over the same range and the probe converts 1.7% of it. So 'spend more samples where accuracy is lowest' is exactly backwards; spend them where selection skill is positive."
+}

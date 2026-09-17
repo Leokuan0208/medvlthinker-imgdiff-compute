@@ -1,0 +1,82 @@
+{
+ "title": "Best-of-8 cost on the vLLM serving path (shared prefill), the stack the pools were generated with",
+ "date": "2026-09-16",
+ "no_fabricated_numbers": true,
+ "harness": "vLLM, ONE request in flight, enable_prefix_caching=False, cap320 (max_pixels=1280*28*28//4), real vqa_rad open items, NVML power integrated over the timed call across visible GPUs, warmup discarded. Prompt construction is byte-identical to src/labeling/run_openvqa.py:build().",
+ "why": "bestofn_latency_energy_2026-08-03.json measured HF num_return_sequences=8, which repeat_interleaves the input and therefore encodes the prompt and image EIGHT times. Every candidate-set pool in this project was generated under vLLM with n=8, which forks after ONE shared prefill. This measures the path we actually use.",
+ "NOT_measured": "the July LoRA verifier arm. vLLM 0.9.0.1 silently drops all 192 visual.* LoRA modules (CLAUDE.md section 0), so a LoRA number from this harness would be wrong. That arm keeps its HF figures and the comparison across the two rows is therefore across two serving stacks -- stated, not hidden.",
+ "model": "/data/dan/hf_cache/hub/models--lingshu-medical-mllm--Lingshu-7B/snapshots/b98aecd41dfd9d7545a6b8e2f4743ae8471bd7a9/",
+ "k": 8,
+ "temperature": 0.7,
+ "max_new": 32,
+ "gpus": [
+  "NVIDIA A100 80GB PCIe"
+ ],
+ "power_limit_w": [
+  300.0
+ ],
+ "idle_w_model_resident": 84.1,
+ "n_kept": 20,
+ "warmup": 3,
+ "measured": {
+  "gen1": {
+   "lat_ms": {
+    "n": 20,
+    "mean": 173.99,
+    "median": 179.86,
+    "sd": 27.68
+   },
+   "energy_j": {
+    "n": 20,
+    "mean": 34.27,
+    "median": 35.25,
+    "sd": 6.6
+   }
+  },
+  "gen8": {
+   "lat_ms": {
+    "n": 20,
+    "mean": 476.61,
+    "median": 479.99,
+    "sd": 80.65
+   },
+   "energy_j": {
+    "n": 20,
+    "mean": 123.17,
+    "median": 116.77,
+    "sd": 25.98
+   }
+  }
+ },
+ "tokens": {
+  "gen1": {
+   "prompt_mean": 322.7,
+   "generated_total_mean": 5.8
+  },
+  "gen8": {
+   "prompt_mean": 322.7,
+   "generated_total_mean": 48.5
+  }
+ },
+ "ratios_vs_greedy": {
+  "latency": 2.739,
+  "energy": 3.594
+ },
+ "forward_tokens_per_question": {
+  "greedy": 328.5,
+  "vllm_shared_prefill_bo8": 371.2,
+  "hf_repeat8_bo8": 2630.1,
+  "flopeq_shared": 1.13,
+  "flopeq_as_charged": 8.0,
+  "note": "forward-tokens is a proxy for FLOPs in a dense transformer (~2*params*tokens). flopeq_shared is what vLLM's within-request n-way fork actually costs; flopeq_as_charged is the HF repeat-8 convention the 2026-08-03 artifact used."
+ },
+ "HF_COMPARISON": {
+  "source": "bestofn_latency_energy_2026-08-03.json (HF num_return_sequences=8)",
+  "hf_gen1_lat_ms": 360.4,
+  "hf_gen1_energy_j": 55.89,
+  "hf_gen8_lat_ms": 716.8,
+  "hf_gen8_energy_j": 165.09,
+  "hf_ratio_latency": 1.99,
+  "hf_ratio_energy": 2.95
+ }
+}
