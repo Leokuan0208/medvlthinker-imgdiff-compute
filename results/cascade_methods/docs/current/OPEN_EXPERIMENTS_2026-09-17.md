@@ -1,7 +1,15 @@
 # Open experiments — the backlog as of 2026-09-17
 
-**Status: NOTHING HERE IS RUNNING.** This is a parked list, written while Leo finishes reading the
-domain guide. Decide what to run *after* the read, not from this file.
+**Status: nothing here is running yet. One item is decided.**
+
+- **§1.0 — regenerate the open-text pools at full resolution — is DECIDED** (Leo, 2026-09-17:
+  *"worth running the inference again at full res since our goal is not speed anymore"*). It is not
+  started, and it has a cheap CPU precursor (§0.9) that should run first because it sizes the job.
+- Everything else is parked, written while Leo finishes reading the domain guide.
+
+**Read §1.0 before starting anything else**, because regenerating the pools invalidates every cached
+feature — some items are worth doing before it, and some are worth deferring until after. The
+ordering section at the end says which.
 
 Each item states: what the question is, why it is worth answering, **what it costs**, what it would
 change if it came out either way, and where the inputs already are. Items are grouped by cost, then
@@ -160,7 +168,29 @@ the thread-count spread alone is 0.0033.
 
 ---
 
-### 0.9 Housekeeping: delete the vestigial `Dropout(0.0)`
+### 0.9 Measure image geometry on all eight benchmarks — the precursor to 1.0
+**Question.** On how many of our images does the cap320 ceiling actually bind, and how many vision
+tokens would fullres cost?
+
+**Why it must come first.** The August resolution sweep measured geometry on the **three original
+benchmarks only** — 2,345 of 36,869 questions. The five added in August (RadImageNet, Kvasir-x1,
+OmniMedVQA, VQA-Med, GEMeX) are **80 % of the corpus and their image sizes have never been looked
+at.** If their images are small, the cap never binds and regenerating them changes nothing; if they
+are large, they are where the gain is. Right now we cannot size item 1.0 without this.
+
+Known, for the three that were measured:
+
+| benchmark | n | median px | images above cap320 | tokens @cap320 | @fullres | @native |
+|---|---:|---:|---:|---:|---:|---:|
+| SLAKE | 645 | 262,144 | 78.3 % | 244.0 | 616.5 | 671.6 |
+| VQA-RAD | 200 | 590,850 | 85.0 % | 285.7 | 750.3 | 840.5 |
+| PathVQA | 1,500 | 418,176 | 86.3 % | 285.5 | **487.3** | **487.3** |
+
+**Cost.** CPU, minutes. Read image dimensions off disk; no model, no GPU.
+
+---
+
+### 0.10 Housekeeping: delete the vestigial `Dropout(0.0)`
 It is the identity function and the only reason the output layer is indexed `f.3` rather than `f.2`.
 Dropout was tested and lost (0.6785 → 0.67692 → 0.67465 at the deployed width). **Needs a checkpoint
 migration**, since removing it renames state-dict keys — not a casual edit. Low value, do it when
@@ -169,6 +199,94 @@ touching that file for another reason.
 ---
 
 ## Tier 1 — needs GPU
+
+### 1.0 ✅ DECIDED — regenerate the open-text pools at full resolution
+**Leo, 2026-09-17: "worth running the inference again at full res since our goal is not speed
+anymore."** This is a decision, not a candidate. What follows is scope, cost and the one thing that
+would invalidate the result if we get it wrong.
+
+#### The finding that prompted it
+
+`cap320` is an inherited default from the **visual-token-pruning era** — the ladder
+`{fullres:1, cap640:2, cap320:4, cap160:8, cap80:16}` divides `HIGH_PX = 1280×28×28`, and the
+checkpoints it was written against are literally `ckpts/gate_7b_prune/cap320`. CLAUDE.md §9.5 files
+it as *"the chosen **cheap-leg** operating point"* — a cascade-era rationale for making the cheap
+model cheap so escalation to the 32B paid off. **There is no 32B leg any more.** The 32B is only the
+judge.
+
+Nobody is choosing it now. `src/labeling/run_openvqa.py:65` sets `--cap default="cap320"`, and the
+September runners **do not pass `--cap` at all** — e.g. `auto_gpu1_wave51.json` generating
+`gemex_open` and `kvasir_x1_open` at N=16 inherits it silently. Every pool across all eight
+benchmarks, N=8 and N=16, is at 320 vision tokens by default.
+
+**And it costs accuracy** (`resolution_sweep_2026-08-13.json`, 2,345 questions, generator-only,
+verifier held fixed):
+
+| cap | vision tokens | oracle@8 | selected | sel_eff | GFLOPs/candidate |
+|---|---:|---:|---:|---:|---:|
+| cap80 | 69.0 | 0.5925 | 0.4659 | 0.7863 | 1,909 |
+| **cap320 — current** | 274.1 | 0.6154 | 0.4829 | 0.7847 | **5,693** |
+| native (MedEvalKit default) | 568.1 | **0.6320** | **0.4878** | 0.7719 | 11,186 |
+
+Native over cap320: **+0.0166 oracle@8, +0.0049 selected.** And on plain greedy decoding, with no
+sampling involved: **judge 0.460554 → 0.486994 (+0.0264)** and **exact match 0.455011 → 0.472495
+(+0.0175)**. A free +0.026 on the baseline is larger than several effects this project has spent
+GPU-weeks on.
+
+#### Use `--cap fullres`, not the MedEvalKit default
+
+Three reasons, and this is the main design call in the item:
+
+1. **It captures nearly all the benefit.** Fullres (1,003,520 px) reaches 616.5 of native's 671.6
+   tokens on SLAKE (91.8 %), 750.3 of 840.5 on VQA-RAD (89.3 %), and on **PathVQA it *is* native** —
+   487.3 either way, because no PathVQA image exceeds 1,003,520 px.
+2. **It kills the train/deploy mismatch.** `extract_generator_hidden.py` already extracts the probe's
+   features at `HIGH_PX = 1,003,520`. Generating at cap320 while extracting at fullres means the probe
+   is trained on features from a resolution the generator never ran at. Generating at fullres aligns
+   them for the first time.
+3. **It is cheaper than native**, and the sweep's headline complaint — that the pipeline runs at
+   *three* different resolutions — collapses to two.
+
+⚠️ **The honest caveat: fullres has no accuracy point.** The table above measures `cap320` and
+`native`; `fullres` was measured for **geometry only**. Choosing it interpolates. If we want the
+number rather than the inference, add a fullres arm on the 2,345-question set first — that is cheap
+and it is the difference between a measured claim and an assumed one.
+
+#### Cost
+
+**About 1.97× the generator compute** at native, somewhat less at fullres — *not* the 50× the pixel
+ratio suggests, because the cap is a **ceiling**, not a resize: an image already under it is
+untouched. Per candidate, 5,693 → 11,186 GFLOPs.
+
+Two further cost items that are easy to forget and are probably larger than the generation itself:
+
+- **Re-judging.** New resolution produces new answer strings, and judge labels are cached by
+  `(ds, idx, normalised answer)`. Reuse will be partial at best — the sweep's null test N3 found that
+  merely re-running the *same* config in a different serving config reproduced only 96.9 % of answer
+  strings, and changing resolution will churn far more. Budget for re-judging most of
+  ~36,869 × ~3.7 distinct candidates on a 32B.
+- **Re-extraction and refit.** Every hidden-state feature cache is invalidated, and the probe must be
+  refit from scratch. That is the full pipeline, not a patch.
+
+#### ⚠️ The one thing that would invalidate this
+
+**Regenerate a matched cap320 control in the same session.** This project's standing caveat is that
+re-running an arm under a different serving configuration moves cells by **±0.008** — larger than the
+effect we are chasing on `selected`. Comparing a freshly-generated fullres arm against the *stored*
+cap320 pools would confound resolution with serving-configuration drift, and we would not be able to
+tell them apart afterwards. The comparison must be fullres-vs-cap320 **both generated in the same
+session, same vLLM build, same seeds.** This has bitten the project before; do not skip it.
+
+#### Suggested sequence
+
+1. **0.9 first** — image geometry on all eight benchmarks (CPU, minutes). If the five new benchmarks'
+   images are mostly under the cap, the gain is concentrated in the three originals and the job
+   shrinks dramatically.
+2. Add a **fullres accuracy arm on the 2,345-question set**, against a same-session cap320 control, so
+   the operating point is measured rather than interpolated.
+3. Only then regenerate all eight at fullres, with the matched control, and re-judge, re-extract, refit.
+
+---
 
 ### 1.1 Re-judge with MedGemma-27B — a judge from a different family ⭐ closes a reviewer objection
 **Question.** Does the probe's gain survive a judge that is not a Lingshu?
@@ -246,12 +364,30 @@ controller should key on.
 
 ---
 
-## Suggested order, if we do nothing else
+## Suggested order
 
-1. **0.1** exact-match re-scoring — it gates how every other result may be described.
-2. **0.6** within-question AUROC — near-zero cost, removes a wrong number.
-3. **0.2 + 0.3** the cost restatement and the FLOPs-vs-latency gap — one investigation, and it
-   decides which axis we claim on.
-4. **1.1** the MedGemma judge — the only item that permanently closes a reviewer objection.
-5. **1.2** adaptive sampling — the most interesting *result* on the list, and the one most likely to
-   be a contribution rather than a correction.
+**1.0 is decided and reorders the rest**, because regenerating the pools invalidates every cached
+feature. Anything that reads the current caches should either run *before* the regeneration or be
+deliberately deferred until *after* it — running it in between wastes the work.
+
+1. **0.9** image geometry, all eight benchmarks — CPU, minutes, and it sizes 1.0. Do this first.
+2. **0.1** exact-match re-scoring — it gates how every other result may be described, and it runs on
+   the *current* pools. Worth doing now rather than waiting, so we have the dual-currency baseline to
+   compare the regenerated arm against.
+3. **0.6** within-question AUROC — near-zero cost, removes a wrong number.
+4. **1.0** the fullres regeneration, staged as in its own section: measured fullres arm on the
+   2,345-question set with a same-session cap320 control, *then* all eight.
+5. **0.2 + 0.3** the cost restatement and the FLOPs-vs-latency gap. Deliberately after 1.0 — the
+   whole cost table changes when the generator's resolution changes, so restating it first means
+   doing it twice.
+6. **1.1** the MedGemma judge — the only item that permanently closes a reviewer objection. Re-judging
+   is already required by 1.0, so **fold the cross-family judge into that pass**: if we are paying to
+   re-label the pools anyway, label them with both judges and get item 1.1 nearly free.
+7. **0.4, 0.5, 0.7, 0.8** the probe-side experiments — all refit on the new features after 1.0.
+8. **1.2** adaptive sampling — the most interesting *result* on the list, and the one most likely to
+   be a contribution rather than a correction. Needs the new pools to be worth doing once.
+
+**The one piece of leverage worth noticing:** items 1.0 and 1.1 both require a re-judging pass over
+the whole corpus. Doing them as one pass — regenerate at fullres, then label every candidate with
+*both* Lingshu-32B and MedGemma-27B — costs barely more than 1.0 alone and delivers the cross-family
+judge result as a by-product.
