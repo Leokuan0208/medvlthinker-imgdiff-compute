@@ -1,0 +1,20 @@
+[
+ {
+  "name": "q_radimagenet_open_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/ --mode generator --split eval --gen_tag qwen25vl7b --layers 18 20 22 --eval_ds radimagenet_open --stem_tag qwen_radimagenet_open --out feats_hidden'",
+  "log": "logs/sv_q_radimagenet_open_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qwen_radimagenet_open.npz",
+  "expect_min_bytes": 5000000
+ },
+ {
+  "name": "q_vqamed_open_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/ --mode generator --split eval --gen_tag qwen25vl7b --layers 18 20 22 --eval_ds vqamed_open --stem_tag qwen_vqamed_open --out feats_hidden'",
+  "log": "logs/sv_q_vqamed_open_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qwen_vqamed_open.npz",
+  "expect_min_bytes": 5000000
+ }
+]

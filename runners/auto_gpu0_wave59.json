@@ -1,0 +1,29 @@
+[
+ {
+  "name": "q_slake_open_train_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/ --mode generator --split train --gen_tag qwen25vl7b --layers 18 20 22 --stem_tag qwen_slake_open_train --out feats_hidden'",
+  "log": "logs/sv_q_slake_open_train_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_train_qwen_slake_open_train.npz",
+  "expect_min_bytes": 5000000
+ },
+ {
+  "name": "q_pathvqa_open_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/ --mode generator --split eval --gen_tag qwen25vl7b --layers 18 20 22 --eval_ds pathvqa_open --stem_tag qwen_pathvqa_open --out feats_hidden'",
+  "log": "logs/sv_q_pathvqa_open_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qwen_pathvqa_open.npz",
+  "expect_min_bytes": 5000000
+ },
+ {
+  "name": "q_vqa_rad_open_extract",
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/cc594898137f460bfe9f0759e9844b3ce807cfb5/ --mode generator --split eval --gen_tag qwen25vl7b --layers 18 20 22 --eval_ds vqa_rad_open --stem_tag qwen_vqa_rad_open --out feats_hidden'",
+  "log": "logs/sv_q_vqa_rad_open_extract.log",
+  "timeout_s": 86400,
+  "stall_s": 5400,
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qwen_vqa_rad_open.npz",
+  "expect_min_bytes": 5000000
+ }
+]
