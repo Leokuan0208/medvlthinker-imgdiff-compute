@@ -1104,10 +1104,39 @@ than memorisation.
 > | best-of-8, vLLM shared prefill (**what we run**) | 371.2 | **1.13×** | **6,589** |
 > | best-of-8, HF repeat-8 (**what the table charges**) | 2,630.1 | 8.01× | **46,689** |
 >
-> **The table overstates the method's compute by 7.1×.** Since ~98 % of our forward tokens are
-> prompt and image and only ~6 are generated, sharing the prefill is nearly the whole cost, so
-> sampling eight answers is close to free in FLOPs — which strengthens the method's cost story
-> rather than weakening it.
+> **What exactly is wrong here, stated precisely.** The **1.13× is correct** — it is measured, and it
+> is realistic. What was wrong is **the number this document published**: the table said 8.00×. The
+> error is in our write-up, not in the new figure. Worth saying plainly because corrections normally
+> move a result in the unflattering direction and this one does the opposite: the honest number is
+> **7.1× lower** than what we printed. That is not a reason to feel relieved — we published a wrong
+> number for a month — but it does mean the method's compute story is better than we have been
+> telling it. Since ~98 % of our forward tokens are prompt and image and only ~6 are generated,
+> sharing the prefill is nearly the whole cost, so sampling eight answers is close to free *in
+> arithmetic*.
+>
+> **⚠️ And now the catch, which is the more interesting half: 1.13× is a true statement about FLOPs
+> and a false statement about cost.** On the same measured run:
+>
+> | accounting | greedy → best-of-8 | ratio |
+> |---|---|---:|
+> | dense-matmul FLOPs (forward tokens) | 5,831 → 6,589 GFLOPs | **1.13×** |
+> | wall-clock latency (vLLM, batch 1) | 174.0 → 476.6 ms | **2.74×** |
+> | energy (vLLM, batch 1) | 34.3 → 123.2 J | **3.59×** |
+>
+> Sampling eight answers costs **2.74× the time and 3.59× the energy**, not 1.13× of anything a user
+> would notice. Arithmetic is simply not the binding resource at batch 1. Mean power also rises
+> **197 W → 258 W** (against 84.1 W idle with the model resident, on a 300 W cap), so best-of-8 works
+> the card *harder as well as longer* — the extra cost is real work, not idle waiting.
+>
+> **So quoting "1.13×" on its own would be a new error, in the opposite direction to the one we just
+> fixed** — which is exactly what the standing rule in §0.4 is for. The ~2.4× that the FLOP model
+> does not account for is **explained in no artifact**: candidate causes are per-step scheduler and
+> sampling overhead paid eight times, KV-cache fork cost, decode being memory-bandwidth-bound rather
+> than compute-bound, and detokenisation. None is verified. It is item 0.3 in
+> `OPEN_EXPERIMENTS_2026-09-17.md`, and it matters beyond curiosity: our "verification is free"
+> framing rests on a FLOP argument, and if the binding resource is bandwidth or fixed overhead then
+> the honest story is a latency-and-energy story, with the FLOP number the least relevant of the
+> three.
 >
 > **(2) The latency and energy columns are from a different machine path than the FLOP column.**
 > 1.99× and 2.95× are HuggingFace `repeat-8` ratios (`bestofn_latency_energy_2026-08-03.json`). On
@@ -4078,9 +4107,23 @@ FLOP column uses a third convention — so the row mixed two machines and three 
 path measures 2.74× latency and 3.59× energy, *worse ratios but roughly half the absolute time and
 energy*, because efficient serving makes the baseline cheaper too.
 
-This makes the method look **better**, not worse — but it was wrong, it is in the 14 September deck
-too, and it needs restating on one path before any cost claim goes into a paper. Full correction in
-§2.4.6; the standing rule is in §0.4.
+**Which number is "wrong", precisely** (asked in follow-up, 2026-09-17): the **1.13× is correct and
+realistic**. What was wrong is **the figure this document published** — the table said 8.00×. The
+error is in the write-up, not in the new measurement. The correction happens to move our cost *down*
+by 7.1×, which is the flattering direction; that is worth naming rather than quietly enjoying,
+because we still published a wrong number for a month, and the same defect is in the 14 September
+deck.
+
+**And the more interesting half: 1.13× is a true statement about FLOPs and a false statement about
+cost.** On the same run, best-of-8 costs **2.74× the latency** (174.0 → 476.6 ms) and **3.59× the
+energy** (34.3 → 123.2 J), with mean power rising 197 W → 258 W. Arithmetic is not the binding
+resource at batch 1. **Quoting 1.13× alone would be a new error in the opposite direction** — which
+is exactly what your rule in #9 prevents. The ~2.4× the FLOP model does not account for is explained
+in no artifact and is now item **0.3** in `OPEN_EXPERIMENTS_2026-09-17.md`; it matters because our
+"verification is free" framing rests on a FLOP argument, and if the real constraint is memory
+bandwidth or per-step overhead then the honest claim is a latency-and-energy one.
+
+Full correction in §2.4.6; the standing rule is in §0.4.
 
 **#4 — rank averaging, and a gap you found.** Short answer: the rank is a plain ordinal position
 within one question's candidate set (0 … n−1, divided by n−1, ties averaged), **not** anything
