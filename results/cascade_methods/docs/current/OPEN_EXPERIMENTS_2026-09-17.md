@@ -78,7 +78,9 @@ continuations decode in a batch, the GPU should be doing barely more work than g
 the card *harder as well as longer*, which means the extra cost is real work, not idle waiting.
 Candidate explanations, none verified: per-step scheduler and sampling overhead paid eight times;
 KV-cache fork cost; decode being memory-bandwidth-bound so eight sequences do not batch as cleanly as
-the FLOP model assumes; detokenisation. **Nothing in any artifact explains it.**
+the FLOP model assumes; detokenisation. **Nothing in any artifact explains it.** (Commit `999fd68`
+proposes the memory-bound-decode explanation; that is a hypothesis consistent with the numbers, not a
+measurement — the decode/prefill split below is what would test it.)
 
 **Why it matters beyond curiosity.** Our whole "verification is free" framing rests on a FLOP
 argument. If the binding resource is bandwidth or per-step overhead rather than arithmetic, then the
@@ -340,14 +342,25 @@ this repeats a known failure.
 
 **Start with:** the four benchmarks that gained, ceiling 16, against the pooled probe.
 
+**Update 2026-09-18 — the design rule.** 1.3 (below) and the per-benchmark temperature table
+(`head_temp_ensemble_2026-08-30.json`) agree: extra diversity pays only where the probe already has
+selection skill. Benchmarks where it selects well prefer T = 1.0 and keep gaining at N = 32; the two
+it loses prefer T = 0.2–0.4 and gain almost nothing from more samples. Key both N and T on a
+within-question selection-skill signal, never on low accuracy. Guide §2.4.5 and §5.8b.
+
 ---
 
-### 1.3 N=32 on the coverage-limited benchmarks
-Already partly in flight — `lingshu7b_sc32T07` extraction was running on GPU 1 for `vqamed_open` on
-2026-09-16. The question is whether more samples can rescue a **coverage** failure (VQA-Med:
-oracle@8 0.2102 against greedy 0.0913 — most candidate sets contain no correct answer at all). Pairs
-naturally with 1.2: if 32 helps only where coverage binds, that is exactly the signal an adaptive
-controller should key on.
+### 1.3 ✅ DONE (2026-09-17) — N=32 on the coverage-limited benchmarks
+The question was whether more samples can rescue a **coverage** failure (VQA-Med: oracle@8 0.2102
+against greedy 0.0913 — most candidate sets contain no correct answer at all).
+
+**Answer: they rescue coverage but not accuracy, unless the probe can select.** Real N = 8/16/32
+pools, shipped pooled probe, held-out halves, judge currency (`budget_conversion_sc32_2026-09-17.json`,
+commit `999fd68`): VQA-Med's oracle rises 0.1987 → 0.3475 and verifier − greedy goes only
+−0.0033 → +0.0044 (1.7 % of the headroom converted); RadImageNet goes +0.1215 → +0.1932 over greedy.
+So the premise of the original framing ("if 32 helps only where coverage binds") came out the other
+way round: 32 helps where **selection skill** exists. That is the signal 1.2 should key on. Guide
+§2.4.5.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "The Domain Guide — probe verifiers, best-of-N and medical VQA"
 subtitle: "Where the field is, where our method sits, and every paper you need to read"
-author: "Prepared for Li-Wen (Leo) Kuan · medvlthinker-imgdiff-compute · 2026-09-16"
+author: "Prepared for Li-Wen (Leo) Kuan · medvlthinker-imgdiff-compute · 2026-09-16 · v3 2026-09-18"
 ---
 
 # 0. How to use this document
@@ -74,6 +74,19 @@ is deliberately out of scope here and is covered by `LITERATURE_UPDATE_2026-08-1
 |---|---|---|
 | v1 | 2026-09-16 | first build — 194 cards, 9 categories, 34 core PDFs |
 | **v2** | **2026-09-17** | Leo's 14 review comments answered and folded in. New: §1.6 FLOP-eq with actual GFLOPs and the standing rule · §2.3.1 image multiplicity · **§2.4.6 a 7.1× cost error found in review** · §5.8b second judge and adaptive sampling · §8 the full response log. Expanded: dropout, probe counts, hyperparameter provenance, BCE-vs-BT, rank averaging, reward hacking, i.i.d. and confidence intervals, sampling controls, thread count. Fixed: old-style figures in tables, a "same/same" table row. |
+| **v3** | **2026-09-18** | Experiment results since v2 folded in — see §0.6. New: §2.4.5 the N = 32 budget result and the per-benchmark temperature table · §1.3 the 16 → 32 step, now measured · §5.8b the design rule for adaptive sampling. Corrected: temperature curve (+0.0816 → **+0.0773** at T = 0.7), onboarding cost (+0.0251 → **+0.0196**), MedGemma's benchmark count in §2.5 hole 6, §2.6 status. |
+
+## 0.6 What changed in v3, in one paragraph
+
+**Extra sampling diversity pays only where the probe already has selection skill.** Two new
+measurements say the same thing. *More samples:* on real N = 8/16/32 pools, RadImageNet's gain over
+greedy grows +0.1215 → +0.1544 → +0.1932, while VQA-Med's oracle rises by 0.1488 and its verifier
+accuracy by only +0.0077 (`budget_conversion_sc32_2026-09-17.json`). *Higher temperature:* the three
+biggest winners prefer T = 1.0, the two benchmarks the probe loses prefer T = 0.4 and 0.2
+(`head_temp_ensemble_2026-08-30.json`). So "spend more samples where accuracy is lowest" is backwards:
+key extra samples and temperature on selection skill. Two v2 numbers also moved — the temperature
+curve (it predated the PathVQA backfill) and the onboarding cost (re-fitted on the full PathVQA).
+Details in §2.4.5; nothing is running as of this version (§2.6).
 
 
 ---
@@ -295,7 +308,14 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   unavoidable for a broad class of inference-time selection mechanisms, and Stroebl et al.
   (arXiv:2411.17501) show an imperfect verifier's false-positive rate puts a hard ceiling on
   resampling that no extra compute can lift. **Consequence for us: never assume "more samples is
-  monotonically better" — measure the 16 → 32 step rather than extrapolating it.**
+  monotonically better" — measure each step rather than extrapolating it.**
+  
+  **v3: the 16 → 32 step is now measured**, on real pools for two benchmarks
+  (`budget_conversion_sc32_2026-09-17.json`, §2.4.5). On RadImageNet accuracy is still rising
+  (verifier − greedy +0.1215 → +0.1544 → +0.1932 at N = 8 / 16 / 32) while the share of the oracle
+  gap it converts falls 66.7 % → 59.8 % → 52.9 % — the predicted signature, not yet the fall. On
+  VQA-Med the probe has almost no selection skill, so more samples raise the oracle and not the
+  accuracy.
 - **Weak verifier / verifier ensembling.** Combining several unreliable scorers (Weaver, FUSE, §3.2).
 - **Best-of-Majority (BoM).** Take the frequent answers first, then the reward-maximal among them
   (§3.2/§3.4).
@@ -304,7 +324,10 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
 
 - **Coverage wall.** The fraction of questions for which *no* candidate in the set is correct. Ours:
   37.4 % of questions at N = 8 (CLAUDE.md §0; 40.8 % of 1,064 held-out questions in
-  `PROJECT_RETROSPECTIVE_2026-07-29.md` §5.5). No selector can help there.
+  `PROJECT_RETROSPECTIVE_2026-07-29.md` §5.5). No selector can help there. **It is a property of
+  the budget, not a fixed limit of the model:** VQA-Med's held-out oracle rises 0.1987 → 0.3475 from
+  N = 8 to 32 (`budget_conversion_sc32_2026-09-17.json`) — the right answer is in the model's
+  distribution, just rarely sampled. Whether a larger budget *helps* depends on the selector (§2.4.5).
 - **Selection wall.** The gap between what a selector picks and oracle@N; a *selection efficiency* of
   0.78–0.81 was our LoRA-era value and is close to what other groups report (§3.4).
 - **Oracle gap.** oracle@N − single-answer accuracy: the most any selector can add.
@@ -315,7 +338,9 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   `verifier − greedy = (verifier − one random sample) − (greedy − one random sample)`. The first
   term is skill; the second is the price of sampling at temperature > 0. Not standard; define it.
 - **Sampling penalty / temperature.** Higher temperature increases diversity (more distinct candidates,
-  higher oracle) but lowers each sample's accuracy. The verifier wants T = 0.7 (§2.4).
+  higher oracle) but lowers each sample's accuracy. Averaged over all eight benchmarks the verifier
+  wants T = 0.7, but the preference is per benchmark: T = 1.0 where it selects well, T = 0.2–0.4
+  where it does not (§2.4.5).
 
 ## 1.5 Evaluation vocabulary
 
@@ -491,11 +516,13 @@ layers 18/20/22 — and acts as a pointwise best-of-8 verifier trained with bina
   verifier has to work with.
   - **Temperature (T).** Divides the logits before the softmax. `T → 0` is greedy (always the top
     token, zero diversity, identical candidates); `T = 1.0` is the model's raw distribution; above 1
-    flattens it further. **We ship T = 0.7**, measured as the optimum for the pooled probe: T = 0.2
-    +0.0401, T = 0.4 +0.0573, **T = 0.7 +0.0816**, T = 1.0 +0.0759
-    (`head_temp_ensemble_2026-08-30.json`). The shape is a trade — raising T raises oracle@8 (more
-    chance some candidate is right) and lowers each individual sample's accuracy; the product peaks
-    in the middle.
+    flattens it further. **We ship T = 0.7**, measured as the best single temperature for the pooled
+    probe: T = 0.2 +0.0393, T = 0.4 +0.0539, **T = 0.7 +0.0773**, T = 1.0 +0.0710 macro over greedy
+    (`head_temp_ensemble_2026-08-30.json`; v2 printed +0.0401 / +0.0573 / +0.0816 / +0.0759, which
+    predate the PathVQA backfill). The shape is a trade — raising T raises oracle@8 (more chance some
+    candidate is right) and lowers each individual sample's accuracy; the product peaks in the
+    middle. **Where it peaks depends on the benchmark:** OmniMedVQA, GEMeX and RadImageNet peak at
+    T = 1.0, VQA-Med at 0.4 and VQA-RAD at 0.2 (table in §2.4.5).
   - **Top-p (nucleus sampling).** Keep the smallest set of tokens whose probabilities sum to *p*
     (e.g. 0.9), renormalise, sample from those. It adapts to the distribution's shape: where the
     model is confident, few tokens qualify; where it is unsure, many do. Cuts off the unlikely tail
@@ -1132,7 +1159,10 @@ than memorisation.
 > fixed** — which is exactly what the standing rule in §0.4 is for. The ~2.4× that the FLOP model
 > does not account for is **explained in no artifact**: candidate causes are per-step scheduler and
 > sampling overhead paid eight times, KV-cache fork cost, decode being memory-bandwidth-bound rather
-> than compute-bound, and detokenisation. None is verified. It is item 0.3 in
+> than compute-bound, and detokenisation. None is verified. *(v3:* commit `999fd68` proposes the
+> third — best-of-N's marginal cost is decode, "which is memory-bound and untouched by prefix
+> sharing". That fits 1.13× FLOPs against 2.74× latency, but no profile has yet split prefill from
+> decode, so it is a hypothesis, not a measurement.*)* It is item 0.3 in
 > `OPEN_EXPERIMENTS_2026-09-17.md`, and it matters beyond curiosity: our "verification is free"
 > framing rests on a FLOP argument, and if the binding resource is bandwidth or fixed overhead then
 > the honest story is a latency-and-energy story, with the FLOP number the least relevant of the
@@ -1188,9 +1218,11 @@ than memorisation.
 - **The verifier is per-benchmark.** LOBO: four-domain +0.0279 → leave-one-benchmark-out +0.0223 →
   pooled +0.0707; **breadth alone −0.0056, own training half +0.0485**
   (`head_lobo_pooled_2026-08-25.json`). The +0.0736 holds only where a labelled split exists.
-- **Onboarding a benchmark.** From a verifier trained on the other seven: zero-shot macro +0.0251,
+- **Onboarding a benchmark.** From a verifier trained on the other seven: zero-shot macro **+0.0196**,
   6/8 already cross greedy at k = 0, median crossover k = 0; the first ~100 labelled questions carry
-  most of the gain (`head_price_from_lobo_2026-08-30.json`).
+  most of the gain (`head_price_from_lobo_2026-08-30.json`, re-fitted 2026-09-17 on the full
+  PathVQA — 1,623 evaluation questions instead of the truncated 700; v2 printed +0.0251 from the
+  truncated run, commit `e2aa6f0`).
 - 🆕 **More samples — now settled with intervals on all eight (2026-09-16).**
   `coverage_sc16_ci_ALL_2026-09-16.json` (10,000 bootstrap resamples, **clustered by image within
   benchmark**, held-out halves, pooled verifier) supersedes the two-benchmark read that every earlier
@@ -1212,8 +1244,66 @@ than memorisation.
   unlike everything else in §2.4.1. (The earlier read — macro +0.0147, 6/8 positive, 66.3 % of the
   oracle gain converted N = 2 → 16 — is `coverage_scaling_ALL_2026-09-01.json`, restated in
   `AUDIT_2026-09-12.md` §6.)
-- **Temperature.** Pooled verifier: T = 0.2 +0.0401, 0.4 +0.0573, **0.7 +0.0816**, 1.0 +0.0759 —
-  a stronger verifier prefers a more diverse candidate set (`head_temp_ensemble_2026-08-30.json`).
+- 🆕 **More samples, again — N = 32, and where the extra samples pay (2026-09-17).**
+  `budget_conversion_sc32_2026-09-17.json`: **real** N = 8 / 16 / 32 pools (not subsamples of one
+  pool), shipped pooled probe `genframe_head_pooled_ens_v2`, held-out halves, judge currency, on a
+  benchmark where the probe has strong selection skill (RadImageNet) and the one where coverage is
+  worst (VQA-Med):
+
+  | benchmark | N | greedy | verifier | oracle@N | verifier − greedy | headroom converted |
+  |---|---:|---:|---:|---:|---:|---:|
+  | RadImageNet | 8 | 0.3337 | 0.4552 | 0.5159 | +0.1215 | 66.7 % |
+  | RadImageNet | 16 | 0.3337 | 0.4880 | 0.5916 | +0.1544 | 59.8 % |
+  | RadImageNet | 32 | 0.3337 | 0.5269 | 0.6992 | **+0.1932** | 52.9 % |
+  | VQA-Med | 8 | 0.0913 | 0.0880 | 0.1987 | −0.0033 | −3.1 % |
+  | VQA-Med | 16 | 0.0913 | 0.0924 | 0.2706 | +0.0011 | 0.6 % |
+  | VQA-Med | 32 | 0.0913 | 0.0957 | 0.3475 | +0.0044 | 1.7 % |
+
+  *Headroom converted* = (verifier − greedy) / (oracle − greedy). Three readings:
+  1. **The coverage wall is not a fixed capability limit.** VQA-Med's oracle rises by 0.1488 from
+     N = 8 to 32 — the right answer *is* in the model's distribution, just rarely sampled.
+  2. **But extra coverage converts only where the probe can already select.** Over that 0.1488 oracle
+     rise VQA-Med's verifier accuracy moves +0.0077 (0.0880 → 0.0957), converting 1.7 % of the
+     headroom at N = 32; RadImageNet turns the same budget increase into +0.0717 more accuracy on one
+     benchmark, comparable to the entire shipped macro. "Spend more samples where accuracy is lowest"
+     is exactly backwards.
+  3. **The over-optimisation signature has appeared, the fall has not.** RadImageNet's converted share
+     falls 66.7 % → 59.8 % → 52.9 % while its accuracy still rises — the shape §1.3 predicts for an
+     imperfect selector at growing N. Do not extrapolate the rise beyond N = 32.
+
+  **A trap caught before it was reported.** The first 8 → 16 run scored the older *incumbent* probe on
+  *all* questions and gave a macro of −0.0046 with three significant losses — the wrong arm, since the
+  pooled probe must be scored on held-out halves. Re-run correctly it gives the +0.0167 above and
+  reproduces the earlier point estimates (PathVQA +0.0012 vs +0.0018, RadImageNet +0.0329 vs +0.0299;
+  commit `999fd68`).
+  The wrong run is kept as `coverage_sc16_ci_ALL_incumbent_2026-09-16.json`, and the script now
+  asserts on its verifier argument.
+- **Temperature — and it is per benchmark (corrected in v3).** Pooled ensemble
+  `genframe_head_pooled_ens` (the pre-v2 build of the shipped probe), held-out halves, judge currency
+  (`head_temp_ensemble_2026-08-30.json`, regenerated 2026-09-13 after the PathVQA backfill). One fixed
+  T across all eight: T = 0.2 **+0.0393**, 0.4 **+0.0539**, **0.7 +0.0773**, 1.0 **+0.0710**. *(v2
+  printed +0.0401 / +0.0573 / +0.0816 / +0.0759; those predate the PathVQA backfill.)* The macro hides
+  the real finding, which is per benchmark:
+
+  | benchmark | best T | gain at best T | gain at T = 0.7 |
+  |---|---:|---:|---:|
+  | OmniMedVQA | 1.0 | +0.1675 | +0.1571 |
+  | GEMeX | 1.0 | +0.1350 | +0.1199 |
+  | RadImageNet | 1.0 | +0.1325 | +0.1245 |
+  | Kvasir-x1 | 0.7 | +0.1258 | +0.1258 |
+  | SLAKE | 0.7 | +0.0667 | +0.0667 |
+  | PathVQA | 0.7 | +0.0487 | +0.0487 |
+  | VQA-Med | 0.4 | +0.0149 | −0.0033 |
+  | VQA-RAD | 0.2 | +0.0103 | −0.0206 |
+
+  **The three biggest winners want the hottest temperature; the two benchmarks the probe loses want
+  the coldest.** At their preferred T both losers turn positive — as point estimates only, with no
+  interval, and VQA-RAD has 97 held-out questions. Choosing T per benchmark gives a macro
+  of +0.0877, but that +0.0103 over the fixed T = 0.7 is chosen on the evaluation half, so it is an
+  upper bound, not a result. The older four-domain probe shows the same pattern
+  (`head_temperature_2026-08-22.json`). Together with the N = 32 table: **more diversity — more samples
+  or hotter sampling — pays only where selection skill is already positive**, and costs accuracy
+  where it is not.
 - **Two failures, diagnosed.** VQA-Med C4: coverage (oracle@8 0.2102 vs greedy 0.0913 — most sets have
   no correct answer). VQA-RAD: 365 training rows, and sampling at T = 0.7 costs it 0.0494 despite
   +0.0244 of genuine skill (`shipped_method_2026-09-12.html`).
@@ -1252,7 +1342,8 @@ one deployed system (CLAUDE.md §0 standing caveat).
 5. **Only three benchmarks are harness-faithful** (MedEvalKit loaders); five are our own builds, one
    (OmniMedVQA) converted from multiple choice with 51.7 % disease-diagnosis over 224 golds.
 6. **One generator family dominates.** Lingshu and Qwen2.5-VL share a language model; MedGemma is a
-   single 4B replication on four benchmarks.
+   single 4B replication — now on all eight benchmarks (+0.0481, 8/8, §2.4.4), but still one model,
+   and a much weaker one in absolute accuracy.
 7. **PathVQA truncation** invalidated every number printed before 2026-09-12 on that benchmark; the
    backfill moved the headline +0.0802 → +0.0736 (`AUDIT_2026-09-12.md` §3, `pathvqa_truncation_2026-09-13.json`).
 8. **No control task has ever been run.** The probing literature's standard hygiene check
@@ -1282,18 +1373,20 @@ one deployed system (CLAUDE.md §0 standing caveat).
     probe works there too (+0.0820, 8/8) — but this should be stated deliberately rather than left
     for someone else to raise.
 
-## 2.6 What is in flight (as of 2026-09-16, 18:00)
+## 2.6 What is in flight (as of 2026-09-18)
 
-**Landed today**, and folded into §2.4 above: the MedGemma all-eight-benchmark run
-(`head_final_stack_medgemma_ALL8_2026-09-16.json`) and the image-clustered N=16 intervals on all
-eight (`coverage_sc16_ci_ALL_2026-09-16.json`). Both are improvements on what the 14 September deck
-says, so **the deck is now behind the artifacts** on those two points.
+**Landed since v2**, and folded into §2.4 above: the N = 32 budget-conversion run on RadImageNet and
+VQA-Med (`budget_conversion_sc32_2026-09-17.json`, commit `999fd68`) and the onboarding re-fit on
+the full PathVQA (`head_price_from_lobo_2026-08-30.json`, commit `e2aa6f0`). Landed on 2026-09-16:
+the MedGemma all-eight-benchmark run and the image-clustered N = 16 intervals on all eight. All four
+are improvements on what the 14 September deck says, so **the deck is behind the artifacts**.
 
-**Still running:** 32-sample pool extraction for `vqamed_open` (`lingshu7b_sc32T07`, layers 18/20/22,
-on GPU 1) — the coverage-limited benchmark, which is the right place to test whether more samples can
-rescue a coverage failure; a re-run of `head_price_from_lobo.py`; and the automated campaign
-(`runners/auto_{cpu,gpu0,gpu1}_wave*.json`) via `src/reporting/supervisor.py`. Full 4×4 train/deploy
-temperature matching remains queued (`OPENTEXT_FULL_RUNDOWN_2026-09-04.md` §8).
+**Nothing is running.** Every planning pass of the automated campaign (`src/reporting/supervisor.py`)
+logged on 2026-09-18 found zero jobs for both GPUs and the CPU (`logs/auto_campaign_driver.log`,
+wave 104). The next experiments are parked in
+`results/cascade_methods/docs/current/OPEN_EXPERIMENTS_2026-09-17.md`, waiting on your choice; item
+1.0 — regenerating the open-text pools at full resolution instead of cap320 — is already decided.
+Full 4×4 train/deploy temperature matching remains queued (`OPENTEXT_FULL_RUNDOWN_2026-09-04.md` §8).
 
 
 ---
@@ -3895,8 +3988,10 @@ judges, splits and generators, a shared table is context, never a ranking. Label
 4. **Limits, stated by us first** — LOBO, currency, coverage. Volunteering these is what separates a
    report that survives questioning from one that does not.
 5. **External context** — Table 3, with its protocol caveat.
-6. **What is next** — the third generator on all eight benchmarks, exact-match currency, N=32 on the
-   coverage-limited benchmarks (§2.6).
+6. **What is next** — exact-match currency, a cross-family judge, full-resolution pools, and adaptive
+   sampling keyed on selection skill (§2.6, §5.8b). The third generator on all eight benchmarks and
+   N = 32 on the coverage-limited benchmarks are **done** (§2.4.4, §2.4.5) and belong in *results*,
+   not in *next*.
 
 ## 5.8b Two directions raised in review (2026-09-17)
 
@@ -3947,6 +4042,16 @@ has to be respected, not blurred.
 
 **Recommended order:** re-run the existing Weitzman controller against the pooled probe with a budget
 ceiling of 16, on the four benchmarks that gained. It reuses generated pools, so it is CPU-only.
+
+**v3 — the design rule now has two more measurements behind it.** The N = 32 run and the
+per-benchmark temperature table (both §2.4.5) point the same way: **extra diversity pays only where
+the probe already has selection skill.** RadImageNet turns 8 → 32 samples into +0.0717 more
+accuracy; VQA-Med turns the same increase into +0.0077 while its oracle rises 0.1488. And the
+benchmarks where the probe selects well want the *hottest* sampling (T = 1.0), the ones where it does
+not want the *coldest* (T = 0.2–0.4). So an adaptive controller should key both the number of samples
+and the temperature on a selection-skill signal — never on low accuracy, which is the instinctive
+choice and exactly backwards. The ⚠️ above still applies: that signal has to be computable inside a
+question at inference time.
 
 ## 5.8 Two structural suggestions, both CPU-only
 
