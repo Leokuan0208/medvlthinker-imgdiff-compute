@@ -207,6 +207,24 @@ td.n,th.n{text-align:right;font-family:'Roboto Mono',monospace;font-variant-nume
 <div class="progress"><div class="progress-bar" id="pbar"></div></div>
 <div class="deck-viewport"><div class="deck" id="deck">
 <section class="slide"><div class="swrap"><div class="card"><div class="cover">
+<div style="border:2px solid #c0392b;padding:12px 16px;margin:0 0 18px;font:14px/1.55 system-ui,sans-serif;background:#fff3f0;color:#222">
+<b style="color:#c0392b">SUPERSEDED &mdash; read this first (added 20 Sep 2026).</b>
+This deck&rsquo;s numbers were re-checked against the artifacts and <b>no numeric error was found</b>
+&mdash; all five applicable corrections from <code>AUDIT_2026-09-12.md</code> &sect;5 are already
+applied here, and the eight-benchmark table already carries the corrected PathVQA (n=3,357,
+greedy 0.3140). <b>But the recipe this deck is built on has been superseded.</b>
+<ul style="margin:8px 0 0 18px;padding:0">
+<li>Three days after this deck, pooled training across all eight benchmarks replaced the recipe shown
+    here. The current headline is <b>+0.0736 macro, 6 of 8</b>
+    (<code>head_final_stack_PVFIXED_2026-09-13.json</code>), against this deck&rsquo;s &ldquo;4 wins,
+    2 ties, 2 losses&rdquo; single-temperature read.</li>
+<li><b>The judge is MedVLThinker-32B</b> (<code>src/labeling/run_judge.py:21</code>), text-only and it
+    sees the gold &mdash; not Lingshu-32B. Every accuracy here is <b>judge currency</b>; under lenient
+    exact match the shipped probe&rsquo;s gain is a <b>tie</b> (+0.0047 [&minus;0.0077,+0.0171]).</li>
+<li>Current account: <code>results/cascade_methods/docs/current/AUDIT_2026-09-18.md</code>; current
+    rundown: <code>OPENTEXT_FULL_RUNDOWN_2026-09-04.md</code> (itself bannered).</li>
+</ul>
+</div>
 <div class="eyebrow"><span class="dot"></span>Progress &middot; 17 &ndash; 24 August 2026</div>
 <div class="big">We now have eight open-ended benchmarks<br><span class="accent">and we know when the method works.</span></div>
 <div class="note"><b>What the method is, in the field&rsquo;s terms.</b> A lightweight <b>MLP probe</b> reads the frozen hidden states of an unmodified Lingshu-7B and acts as a <b>best-of-N verifier</b>: the 7B samples 8 candidate answers, the probe scores each one, and the top-scoring answer is returned. We compare it against <b>greedy decoding</b>, an <b>answer-prior baseline</b> (a counter over answer strings &mdash; no image, no hidden state) and <b>self-consistency</b>, on the open-ended split of eight medical VQA benchmarks.</div>

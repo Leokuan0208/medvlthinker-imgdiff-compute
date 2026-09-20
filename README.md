@@ -1,5 +1,12 @@
 # medvlthinker-imgdiff-compute
 
+> **2026-09-20 — the live work is the hidden-state probe verifier, and it is not described below.**
+> Since mid-August the open-text arm has been an MLP probe on the frozen hidden states of
+> Lingshu-7B, used as a best-of-8 verifier across eight open-ended medical VQA benchmarks.
+> **Start at `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`** (its §2 carries the
+> headline in four currencies; the judge is MedVLThinker-32B, not Lingshu-32B).
+> **The numbers in this file are from the cascade era and are not current for the open-text arm.**
+
 **Test-time compute for medical vision-language models: what actually helps.**
 
 The accuracy–cost tension in medical VQA is not a law — it is a consequence of spending test-time

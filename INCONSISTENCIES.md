@@ -1,5 +1,12 @@
 # Consistency audit + resolutions
 
+> **2026-09-20 — a third era exists and this file does not cover it.** The live work is the
+> hidden-state **probe verifier** on the open-text arm (an MLP probe on frozen Lingshu-7B states,
+> used as a best-of-8 verifier over eight benchmarks).
+> **Its own consistency audits are `results/cascade_methods/docs/current/AUDIT_2026-09-12.md` and
+> — current — `AUDIT_2026-09-18.md`**, which supersedes it.
+> **The numbers resolved below are from the cascade era and are not current for the open-text arm.**
+
 > **Two eras, two sections.** Part 1 below is the original **2026-06-27** audit of the MedVLThinker/ACC
 > numbers (X1–X10); its resolutions are still valid *for that era*. **Part 2 (added 2026-07-29)** covers the
 > July / Lingshu era — the `+0.02xx` number family, the 0.5632 baseline mislabel, and the MMMU decision.

@@ -198,13 +198,37 @@ td.wrap-ok,th.wrap-ok{white-space:normal;min-width:230px}
 <div class="progress"><div class="progress-bar" id="pbar"></div></div>
 <div class="deck-viewport"><div class="deck" id="deck">
 <section class="slide"><div class="swrap"><div class="card"><div class="cover">
+<div style="border:2px solid #c0392b;padding:12px 16px;margin:0 0 18px;font:14px/1.55 system-ui,sans-serif;background:#fff3f0;color:#222">
+<b style="color:#c0392b">CORRECTIONS &mdash; 20 Sep 2026.</b> Read
+<code>results/cascade_methods/docs/current/AUDIT_2026-09-18.md</code> before quoting this deck.
+<ol style="margin:8px 0 0 18px;padding:0">
+<li><b>The Qwen replication number on this cover was already superseded when the deck was saved:</b>
+    <b>+0.0820 over 145,085 deduplicated training rows</b>, not +0.0788 over 222,154 &mdash; that row
+    count contained ~77,000 duplicate <code>(ds, idx, candidate)</code> rows
+    (<code>head_final_stack_qwen_2026-09-13.json</code>). Fixed in both places below. &ldquo;8 of
+    8&rdquo; is correct either way.</li>
+<li><b>The judge is MedVLThinker-32B</b> (<code>src/labeling/run_judge.py:21</code>; no runner overrides
+    it), text-only and it sees the gold &mdash; <b>not</b> Lingshu-32B. This deck says &ldquo;judge
+    currency throughout&rdquo; but never names the model.</li>
+<li><b>Judge currency is not the only currency.</b> On identical picks: judge <b>+0.0737</b>,
+    cross-family judge (MedGemma-27B-it) <b>+0.0679</b>, token-F1 <b>+0.0156</b>, lenient exact match
+    <b>+0.0047 [&minus;0.0077,+0.0171] &mdash; a TIE</b>.</li>
+<li><b>&ldquo;No extra forward pass over the image&rdquo; describes the design, not the code as run.</b>
+    Features come from a separate teacher-forced HuggingFace pass
+    (<code>extract_generator_hidden.py:437-439</code>) at <code>max_pixels=1,003,520</code>, while
+    generation ran under vLLM at <code>cap320 = 250,880</code>.</li>
+<li><b>Qwen is not a second model family</b> &mdash; Lingshu-7B is a Qwen2.5-VL-7B fine-tune. The
+    MedGemma arm that was meant to supply one has been <b>withdrawn</b> (broken candidate sets), so
+    there is currently <b>no valid cross-family replication</b>.</li>
+</ol>
+</div>
 <div class="eyebrow"><span class="dot"></span>The shipped method &middot; 12 September 2026</div>
 <div class="big">A 918k-parameter probe makes<br><span class="accent">a 7B answer like a better 7B.</span></div>
 <div class="sub">Lingshu-7B samples 8 candidate answers. A small MLP reads the frozen hidden states it already produced and picks one. No fine-tuning of the generator, no second model, no extra forward pass over the image &mdash; the hidden states are a by-product of generation we were throwing away.</div>
 <div class="cover-stats">
 <div class="cstat"><div class="v teal">+0.0736</div><div class="l">macro over the 7B&rsquo;s own greedy decoding<br>on held-out images, <b>6 of 8</b> benchmarks</div></div>
 <div class="cstat"><div class="v">+0.0182</div><div class="l">what the previous recipe got<br>on the <b>same</b> held-out questions</div></div>
-<div class="cstat"><div class="v teal">+0.0788</div><div class="l">same recipe on a <b>different</b> generator<br>beating its own greedy on <b>8 of 8</b></div></div>
+<div class="cstat"><div class="v teal">+0.0820</div><div class="l">same recipe on a <b>different</b> generator<br>beating its own greedy on <b>8 of 8</b><br><span style="color:#c0392b">(was +0.0788 &mdash; corrected 20 Sep 2026)</span></div></div>
 <div class="cstat"><div class="v">0</div><div class="l">extra passes over the image<br>24 MLPs &times; ~1.8 MFLOP each</div></div>
 </div></div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>End to end</div>
@@ -307,7 +331,7 @@ td.wrap-ok,th.wrap-ok{white-space:normal;min-width:230px}
 <tr class="total"><td>MACRO</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">+0.0525</td></tr>
 </tbody></table></div>
 <div class="callout"><b>Read this as a shape, not a number.</b> Qwen is far weaker at medical VQA &mdash; PathVQA greedy 0.0715 against Lingshu&rsquo;s 0.3214 &mdash; so the absolute deltas are not comparable across the two generators. What replicates is that <i>a probe on frozen hidden states beats its own generator&rsquo;s greedy decoding</i>, which is the claim that matters. The medical finetuning is not what makes the states probe-able.</div>
-<div class="callout good"><b>Updated 13 Sep &mdash; the 8-benchmark run finished.</b> Macro <b>+0.0788</b>, beating Qwen&rsquo;s own greedy on <b>8 of 8</b>, over 222,154 training rows. The two benchmarks the Lingshu probe loses on are both positive here &mdash; but that is because Qwen&rsquo;s greedy is far weaker (VQA-Med 0.0133 against Lingshu&rsquo;s 0.0913), leaving more headroom for selection. It is not evidence those benchmarks are fixed; it is evidence the method scales with the room the generator leaves.</div>
+<div class="callout good"><b>Updated 13 Sep &mdash; the 8-benchmark run finished.</b> Macro <b>+0.0820</b> (corrected 20 Sep 2026 from +0.0788), beating Qwen&rsquo;s own greedy on <b>8 of 8</b>, over <b>145,085</b> deduplicated training rows (corrected from 222,154, which double-counted ~77,000 rows; <code>head_final_stack_qwen_2026-09-13.json</code>). The two benchmarks the Lingshu probe loses on are both positive here &mdash; but that is because Qwen&rsquo;s greedy is far weaker (VQA-Med 0.0133 against Lingshu&rsquo;s 0.0913), leaving more headroom for selection. It is not evidence those benchmarks are fixed; it is evidence the method scales with the room the generator leaves.</div>
 <div class="sub sm muted">InternVL3-8B was the first choice and is architecturally incompatible (its processor exposes no image processor and <span class="kbd">AutoModelForImageTextToText</span> rejects its config). Tested before committing GPU time. An 8-benchmark Qwen run is fitting now.</div></div></div></section>
 <section class="slide"><div class="swrap"><div class="card"><div class="eyebrow"><span class="dot"></span>Provenance</div>
 <h2>What was audited before this deck</h2>

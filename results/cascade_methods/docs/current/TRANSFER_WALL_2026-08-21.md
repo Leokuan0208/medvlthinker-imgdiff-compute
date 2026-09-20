@@ -6,6 +6,21 @@
 > the self-consistency sign-flip "at the domain boundary, with no exceptions" (§3) and the
 > "regime is partly detectable" detector result (§5), which in turn removes the basis for §6's
 > router. §10 carries the corrected picture. §1, §2, §4, §7 and §8 stand.
+>
+> ## ⚠️ AND MORE BROADLY — `AUDIT_2026-09-12.md` §5: **treat §1, §3, §5, §6 and §10 as superseded**
+> The banner above is insufficient and has been since 2026-09-12. `AUDIT_2026-09-12.md` §5 states
+> plainly: *"TRANSFER_WALL_2026-08-21.md's banner is insufficient… Treat §1, §3, §5, §6 and §10 as
+> superseded by this file."* That correction was never applied to this banner; it is applied now
+> (2026-09-20). §10.3's own line "§1, §2, §4, §7, §8 are unaffected" is written against the older,
+> narrower list and should be read with this one.
+>
+> ## ⚠️ 2026-09-20 — `AUDIT_2026-09-18.md` supersedes this file on three further points
+> 1. **The judge is MedVLThinker-32B**, not Lingshu-32B (`src/labeling/run_judge.py:21`; no runner
+>    overrides it). Every "32B judge" in this document means that model. It is text-only and sees
+>    the gold.
+> 2. **§14 (MedGemma, the "third generator from a different LM family") is WITHDRAWN** — see the
+>    banner on that section.
+> 3. **§12 (Qwen) stands numerically but is not a cross-family replication** — see the banner there.
 
 > **One-line summary (rewritten 2026-08-22 after GEMeX).** Five independent attempts to make the
 > head domain-general all failed, and it still loses to plain greedy decoding on two of eight cells
@@ -317,6 +332,20 @@ either being wrong. Quote the cache, not just the benchmark.
 
 ## 12. Pooled training replicates on a second generator, at the same size (2026-09-13)
 
+> ⚠️ **2026-09-20 — the numbers in this section are verified exact, but the framing needs two
+> additions** (`AUDIT_2026-09-18.md` §3, `replication_currency_2026-09-20.json`).
+> **(a) It is not a cross-family replication.** Lingshu-7B *is* a Qwen2.5-VL-7B fine-tune, so this
+> compares two training recipes over one language model. With MedGemma withdrawn (§14), **there is
+> currently no valid cross-family replication in this project.**
+> **(b) An independent refit reproduces `head_final_stack_qwen_2026-09-13.json` bitwise on all
+> eight benchmarks, and Qwen is a WIN in every currency** — judge **+0.0814 [+0.0708, +0.0924]**,
+> lenient EM **+0.0276**, strict EM **+0.0187**, token-F1 **+0.0317** (macro over the same eight
+> held-out halves). Under EM only 3/8 benchmarks are individually significant, Qwen's greedy is
+> weak on PathVQA (0.0715) and VQA-Med (0.0133) — though benchmarks with greedy < 0.10 contribute
+> only 5.3 % of the macro — and after best-of-8 Qwen is still below plain Lingshu greedy on 4/8.
+> **Qwen is the stronger of the two generators in every currency, which is worth stating: the
+> currency collapse Lingshu shows under exact match does not repeat here.**
+
 The largest lever we have — retraining the probe on the training half of all eight benchmarks
 instead of the four July domains — was measured only on Lingshu. Running the **identical
 implementation** on Qwen2.5-VL-7B (`head_final_stack.py --generator qwen`, artifact
@@ -427,6 +456,27 @@ runs cannot separate *nondeterminism* from *two deterministic code paths*; only 
 
 ## 14. A third generator, from a different language-model family (2026-09-13)
 
+> ## ⛔ WITHDRAWN 2026-09-20 — THIS ENTIRE SECTION RESTS ON BROKEN CANDIDATE SETS
+> Verified independently by the 2026-09-18 audit (`AUDIT_2026-09-18.md` §3, `replication.md`,
+> `replication_currency_2026-09-20.json`): **MedGemma-4b-it's *sampled* candidates are degenerate.**
+> - **Every** sampled candidate hits `gen_tokens = 64`, the cap, on **every** benchmark — while
+>   MedGemma's *greedy* decode stops at 4–10 tokens and Lingshu/Qwen samples hit the cap ≤ 0.64 %
+>   of the time. The strings look like `"Lungs\n\n\nmodel\nLungs\n\nmodel\n…"`: the sampled arm did
+>   not honour `<end_of_turn>` (`src/labeling/run_openvqa.py:180` passes no `stop_token_ids`).
+> - **58.5 % of candidates are chat-template garbage; 92.6 % of questions contain at least one.**
+>   The probe's picks average 16.9 words against greedy's 2.6.
+> - On the questions whose whole candidate set is clean the judge gain falls **+0.0436 → +0.0096**;
+>   in strict exact match the arm is **−0.0751, 0/8 positive**.
+> - Separately, the "+0.0481, 8/8" figure that circulated is the **`pooled_singlelayer`** arm; the
+>   **shipped** `pooled_ens` recipe gives **+0.0447, 7/8**, so the two generators were not compared
+>   under the same recipe either.
+>
+> **Consequence: there is currently NO valid cross-family replication of the probe verifier.** The
+> claim at the end of this section — "not a property of Lingshu, of medical finetuning, or of the
+> Qwen language model" — **does not hold today.** The section is kept unrewritten as the record.
+> It can only be revived by regenerating MedGemma's pools (with a 10-question stop-token check
+> first), re-judging, re-extracting and refitting (`AUDIT_2026-09-18.md` §9 item 5).
+
 §12's Qwen replication is weaker than it reads: **Lingshu-7B is a Qwen2.5-VL finetune**, so
 Lingshu-vs-Qwen compares two *training recipes over one language model*. InternVL3-8B would not
 have fixed that — a load probe confirms its LM is Qwen2.5-7B (hidden 3584). **MedGemma-4b-it**
@@ -443,8 +493,17 @@ so the **depth-matched `[22,24,27]` is the primary** and `[18,20,22]` a declared
 | | training rows | macro over these 4 |
 |---|---:|---:|
 | MedGemma | 20,102 | **+0.0248** |
-| Lingshu, *full* protocol | 112,770 | +0.0433 |
+| Lingshu, *full* protocol | 112,770 | +0.0433 ⚠️ **does not reproduce — see note** |
 | Qwen, *full* protocol | 145,085 | +0.0547 |
+
+> ⚠️ **The Lingshu row does not reproduce from the artifact (flagged 2026-09-20; value left as
+> printed rather than silently changed).** The equal-weight mean of `pooled_ens_minus_greedy` over
+> the four benchmarks in `head_final_stack_PVFIXED_2026-09-13.json` is
+> (0.052988 + 0.054545 − 0.041237 + 0.125498) / 4 = **+0.0479**, a 0.0046 gap from the +0.0433
+> printed here. The same computation reproduces the Qwen row (+0.054689 → +0.0547) and MedGemma's
+> +0.0248 **exactly**, so it is this row specifically. `pooled_singlelayer` (+0.0487) and
+> `pooled_ens_sc` (+0.0424) do not match +0.0433 either. §13's own ±0.0029–0.0033 reproducibility
+> floor is smaller than the gap. **Re-derive before quoting.**
 
 MedGemma has no dedicated train-domain caches and only four benchmarks, so its probe saw **5.6×
 less training data**. Family and data volume were confounded, and "three times weaker on Gemma"

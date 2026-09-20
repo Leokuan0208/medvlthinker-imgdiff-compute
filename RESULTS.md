@@ -1,5 +1,12 @@
 # RESULTS — where every number lives
 
+> **2026-09-20 — the live work is the hidden-state probe verifier, and it is indexed nowhere below.**
+> The open-text arm is now an MLP probe on frozen Lingshu-7B hidden states used as a best-of-8
+> verifier over eight open-ended benchmarks.
+> **Start at `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`**; the artifact index for
+> that era is the new September section of `results/cascade_methods/README.md`.
+> **Every number in this file is from the cascade era and is not current for the open-text arm.**
+
 > **Updated 2026-07-29.** This file is an **index**, not a numbers source. Its job is to tell you which
 > file to open for a given figure. The definitive account of the project — arc, method, results with
 > CIs, negatives, holes, corrections — is

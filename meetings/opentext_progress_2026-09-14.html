@@ -173,7 +173,7 @@ figcaption b{color:var(--body)}
   <span class="mark">Open-text arm</span>
   <span class="ttl">The Free Verifier &mdash; progress since 27 July</span>
   <span class="sp"></span>
-  <span class="meta">Lingshu-7B &middot; best-of-8 &middot; 32B judge</span>
+  <span class="meta">Lingshu-7B &middot; best-of-8 &middot; MedVLThinker-32B judge</span>
 </div>
 <div class="prog"><span id="pbar"></span></div>
 
@@ -181,6 +181,42 @@ figcaption b{color:var(--body)}
 
 <!-- 1 COVER -->
 <section class="slide"><div class="wrap cov">
+  <div style="border:2px solid #c0392b;padding:12px 16px;margin:0 0 18px;font:14px/1.55 system-ui,sans-serif;background:#fff3f0;color:#222">
+    <b style="color:#c0392b">CORRECTIONS &mdash; 20 Sep 2026.</b> Read
+    <code>results/cascade_methods/docs/current/AUDIT_2026-09-18.md</code> before quoting this deck.
+    <b>Numbers are corrected in place below; the framing is left for the author to decide.</b>
+    <ol style="margin:8px 0 0 18px;padding:0">
+      <li><b>The judge is MedVLThinker-32B, not Lingshu-32B</b> (<code>src/labeling/run_judge.py:21</code>;
+          no runner overrides it). It is text-only and sees the gold answer.</li>
+      <li><b>&ldquo;+0.0736, 6/8&rdquo; is judge currency.</b> On identical picks the same probe is
+          <b>+0.0737 [+0.0608,+0.0864]</b> under that judge, <b>+0.0679</b> under an independent
+          cross-family judge (MedGemma-27B-it), <b>+0.0156</b> token-F1, and
+          <b>+0.0047 [&minus;0.0077,+0.0171] &mdash; a TIE</b> under lenient exact match. A 2&times;2 shows
+          7&ndash;30% of the judge-currency gain is judge-specific, so <b>+0.06 is the cross-judge figure</b>.
+          Exact match is not a valid currency where golds are sentences.</li>
+      <li><b>The cost slide&rsquo;s 8.00&times; FLOP-eq is the HF-repeat-8 &ldquo;as-charged&rdquo; convention,
+          not the path these pools were generated on.</b> Measured on the vLLM shared-prefill path that
+          actually produced every candidate set: <b>1.13&times; FLOP-eq, 2.74&times; latency
+          (174.0&rarr;476.6 ms), 3.59&times; energy (34.3&rarr;123.2 J)</b>
+          (<code>bestofn_vllm_2026-09-16.json</code>, measured two days after this deck).</li>
+      <li><b>&ldquo;Free&rdquo; / &ldquo;0&times; extra cost&rdquo; is a property of the design, not of the
+          code as run, and it is not ours to claim.</b> The probe&rsquo;s features come from a
+          <i>separate teacher-forced HuggingFace pass</i>
+          (<code>extract_generator_hidden.py:437-439</code>) at <code>max_pixels=1,003,520</code>, while the
+          candidates were generated under vLLM at <code>cap320 = 250,880</code> &mdash; so the states were
+          never produced by the generation pass, and at a different resolution. Separately,
+          <code>PRIOR_ART_PROBE_VERIFIER_2026-09-14.md</code> &mdash; written 26 minutes before this deck
+          was saved &mdash; says to retire &ldquo;verification is free&rdquo; as the contribution: it is
+          HSRM&rsquo;s, CASE&rsquo;s and Q-Probe&rsquo;s argument, in those words. <b>The title and the
+          closing line are left unchanged for the author.</b></li>
+      <li><b>The MedGemma row is WITHDRAWN</b> &mdash; its sampled candidate sets are broken (100% at the
+          64-token cap, 58.5% chat-template garbage). <b>There is currently no valid cross-family
+          replication</b>, so &ldquo;it holds across three generator families&rdquo; does not hold.</li>
+      <li><b>The coverage-wall percentages 71.5% and 21.2%</b> come from a 3-benchmark, 2,345-question
+          study (<code>coverage_diagnosis_2026-08-10.json</code>), not the 36,869-question pool the slide
+          attributes them to; the selection-wall cluster (+0.1650 / 0.686 / 0.579 / 0.997) is unsourced.</li>
+    </ol>
+  </div>
   <div class="eye">Progress report &middot; 27 Jul &rarr; 14 Sep 2026</div>
   <h1>The Free Verifier</h1>
   <p class="sub">Since the last report the open-text arm went from <b>3 benchmarks and 2,345 questions</b> to
@@ -190,8 +226,8 @@ figcaption b{color:var(--body)}
   <div class="figs">
     <div class="fig"><div class="v acc">8</div><div class="k">open-text benchmarks, from 3</div></div>
     <div class="fig"><div class="v acc">36,869</div><div class="k">evaluation questions, from 2,345</div></div>
-    <div class="fig"><div class="v pos">+0.0736</div><div class="k">macro over the 7B&rsquo;s own greedy decoding</div></div>
-    <div class="fig"><div class="v pos">6 / 8</div><div class="k">benchmarks beaten</div></div>
+    <div class="fig"><div class="v pos">+0.0736</div><div class="k">macro over the 7B&rsquo;s own greedy decoding &mdash; <b>judge currency</b>; +0.0047 (a tie) under exact match</div></div>
+    <div class="fig"><div class="v pos">6 / 8</div><div class="k">benchmarks beaten, judge currency</div></div>
     <div class="fig"><div class="v acc">0&times;</div><div class="k">extra cost for verification itself</div></div>
   </div>
 </div></section>
@@ -242,7 +278,7 @@ figcaption b{color:var(--body)}
   <p class="cap"><b>Sample count</b> is the number of questions, one image each. <b>Held out</b> and
   <b>train half</b> split those <i>by image</i>, not by question &mdash;
   <code>md5("nd" + image_md5) % 2</code> &mdash; so no image appears on both sides. Every question carries
-  a 32B-judge label on the greedy answer and on each of 8 sampled candidates. The three originals
+  a MedVLThinker-32B-judge label on the greedy answer and on each of 8 sampled candidates. The three originals
   additionally have their datasets&rsquo; official train splits (PathVQA 9,903 &middot; SLAKE 2,976
   &middot; VQA-RAD 853). <span class="src">counted from ckpts/openvqa/cheap_lingshu7b/</span></p>
 
@@ -353,7 +389,16 @@ figcaption b{color:var(--body)}
   answers the same way. The July path spends a second full forward pass per candidate &mdash; re-encoding
   the image every time &mdash; to read one probability. Today&rsquo;s path taps states the generator has
   already computed, so the scoring step adds no forward pass at all. Costs are measured, relative to a
-  single greedy answer.</figcaption>
+  single greedy answer.
+  <b style="color:#c0392b">Corrected 20 Sep 2026:</b> the <b>8.00&times; FLOP-eq</b> on the TODAY lane is
+  the HF-repeat-8 <i>as-charged</i> convention. On the vLLM shared-prefill path every candidate set in
+  this project was actually generated on, best-of-8 measures <b>1.13&times; FLOP-eq, 2.74&times; latency
+  (174.0&rarr;476.6 ms) and 3.59&times; energy (34.3&rarr;123.2 J)</b>
+  (<code>bestofn_vllm_2026-09-16.json</code>). And the probe does <i>not</i> in fact tap states produced
+  during generation: they come from a separate teacher-forced pass at a higher image resolution
+  (<code>max_pixels=1,003,520</code>) than generation used (<code>cap320 = 250,880</code>) &mdash;
+  &ldquo;adds no forward pass&rdquo; is a property of the design, not of what was run
+  (<code>AUDIT_2026-09-18.md</code> &sect;4).</figcaption>
   </figure>
   <div class="call good"><div class="cl">the central change</div><div class="cr">
     <p>The July method scored a candidate by running a LoRA-adapted 7B over (image, question, candidate)
@@ -410,7 +455,7 @@ figcaption b{color:var(--body)}
   <h2>Both verifiers, identical questions</h2>
   <p class="dek">The July method and today&rsquo;s, scoring <b>the same candidate sets on the same
   questions</b> &mdash; the full SLAKE (645), VQA-RAD (200) and PathVQA (1,500) evaluation sets, n=2,345,
-  in 32B-judge currency. Re-running both verifiers on one common set is the only way to attribute the
+  in MedVLThinker-32B-judge currency. Re-running both verifiers on one common set is the only way to attribute the
   difference to the method rather than to the sample.</p>
   <div class="tw"><table>
     <thead><tr><th>selector</th><th class="n">accuracy</th><th class="n">sel. efficiency</th>
@@ -454,7 +499,7 @@ figcaption b{color:var(--body)}
     <thead><tr><th>arm</th><th class="n">FLOP-eq</th><th class="n">latency</th><th class="n">energy</th><th class="w">what it includes</th></tr></thead>
     <tbody>
       <tr><td>greedy, one answer</td><td class="n">1.00&times;<br><span class="src">5,692 GFLOP</span></td><td class="n">1.00&times;<br><span class="src">360 ms</span></td><td class="n">1.00&times;<br><span class="src">55.9 J</span></td><td class="w">one image encode, one prefill, ~6 decoded tokens</td></tr>
-      <tr class="ship"><td>best-of-8 + probe &mdash; today</td><td class="n">8.00&times;<br><span class="src">45,538 GFLOP</span></td><td class="n">1.99&times;<br><span class="src">717 ms</span></td><td class="n">2.95&times;<br><span class="src">165.1 J</span></td><td class="w">8 sampled answers; the probe itself adds ~0.001 FLOP-eq</td></tr>
+      <tr class="ship"><td>best-of-8 + probe &mdash; today</td><td class="n">8.00&times;<br><span class="src">45,538 GFLOP</span><br><b>1.13&times;</b><br><span class="src">vLLM shared prefill</span></td><td class="n">1.99&times;<br><span class="src">717 ms</span><br><b>2.74&times;</b><br><span class="src">174.0&rarr;476.6 ms, vLLM</span></td><td class="n">2.95&times;<br><span class="src">165.1 J</span><br><b>3.59&times;</b><br><span class="src">34.3&rarr;123.2 J, vLLM</span></td><td class="w">8 sampled answers; the probe itself adds ~0.001 FLOP-eq. <b>Two conventions, both measured:</b> the first row is HF <code>num_return_sequences=8</code> (the prompt and image encoded eight times, &ldquo;as charged&rdquo;); the second is the <b>vLLM shared-prefill path every candidate set in this project was generated on</b> &mdash; <code>bestofn_vllm_2026-09-16.json</code>, added 20 Sep 2026</td></tr>
       <tr><td>best-of-8 + LoRA &mdash; July</td><td class="n">15.18&times;<br><span class="src">86,435 GFLOP</span></td><td class="n">3.68&times;<br><span class="src">1,326 ms</span></td><td class="n">5.77&times;<br><span class="src">322.7 J</span></td><td class="w">the above, plus a full re-encode of image+question+candidate, 3.8&times; per question</td></tr>
       <tr class="tot"><td>probe vs LoRA</td><td class="n">&minus;47%</td><td class="n">&minus;46%</td><td class="n">&minus;49%</td><td class="w">three independent currencies, one answer: about half</td></tr>
     </tbody>
@@ -466,6 +511,16 @@ figcaption b{color:var(--body)}
     running the eight samples as one batch amortises weight reads and raises utilisation. So the same job is
     <b>8.00&times;</b> the arithmetic, <b>2.95&times;</b> the energy and <b>1.99&times;</b> the wall-clock.
     Measured batch-8 speedup over eight sequential calls is ~4.1&times;, not 8&times;.</p>
+    <p><b style="color:#c0392b">Corrected 20 Sep 2026 &mdash; there is a third convention, and it is the
+    one that describes us.</b> The 8.00&times; above charges eight full forward passes because the
+    2026-08-03 measurement used HuggingFace <code>num_return_sequences=8</code>, which re-encodes the
+    prompt and the image eight times. <b>Every candidate set in this project was generated under vLLM
+    with <code>n=8</code>, which forks after ONE shared prefill.</b> Measured on that path:
+    <b>1.13&times; FLOP-eq, 2.74&times; latency (174.0&rarr;476.6 ms), 3.59&times; energy
+    (34.3&rarr;123.2 J)</b> &mdash; <code>bestofn_vllm_2026-09-16.json</code>, one request in flight,
+    prefix caching off, NVML integrated, 20 timed questions. So the honest headline cost of best-of-8 as
+    we run it is <b>1.13&times;</b>, not 8&times;; quote 8.00&times; only when explicitly naming the
+    HF as-charged convention.</p>
     <p><b>Quote FLOPs for a hardware-independent comparison and the measured pair for deployment cost</b>
     &mdash; but never mix conventions. An earlier internal model applied perfect parallelism to latency and
     none to energy; taken literally it required <b>1,089 W from a 300 W card</b>, which is how we caught it.</p>
@@ -570,7 +625,7 @@ figcaption b{color:var(--body)}
     <tbody>
       <tr><td>Lingshu-7B</td><td class="w">the deployed generator</td><td class="n pos">+0.0736</td><td class="n">6 / 8</td><td class="n">112,770</td></tr>
       <tr><td>Qwen2.5-VL-7B</td><td class="w">same language model, no medical fine-tuning</td><td class="n pos">+0.0820</td><td class="n">8 / 8</td><td class="n">145,085</td></tr>
-      <tr><td>MedGemma-4B <span class="neg">&mdash; incomplete</span></td><td class="w">different LM family, different vision tower &mdash; <b>4 of 8 benchmarks so far</b></td><td class="n">+0.0248</td><td class="n">3 / 4</td><td class="n">20,102</td></tr>
+      <tr><td>MedGemma-4B <span class="neg">&mdash; WITHDRAWN 20 Sep 2026</span></td><td class="w"><b style="color:#c0392b">Withdrawn:</b> its sampled candidate sets are broken &mdash; 100% of sampled candidates ran to the 64-token cap and 58.5% are chat-template garbage (92.6% of questions contain one). On questions whose whole candidate set is clean the judge gain falls <b>+0.0436 &rarr; +0.0096</b>; in strict exact match the arm is <b>&minus;0.0751, 0/8</b>. <b>There is currently no valid cross-family replication.</b> <code>AUDIT_2026-09-18.md</code> &sect;3</td><td class="n">+0.0248</td><td class="n">3 / 4</td><td class="n">20,102</td></tr>
     </tbody>
   </table></div>
   <div class="call"><div class="cl">read carefully</div><div class="cr">
@@ -582,7 +637,13 @@ figcaption b{color:var(--body)}
     judging and feature extraction for the other four are running now. Until those land this is a
     suggestive replication, not a finished claim &mdash; the direction is clear, the final number is not.</p>
     <p>On the evidence so far, the probe verifier is not a property of Lingshu, of medical fine-tuning, or
-    of the Qwen language model.</p></div></div>
+    of the Qwen language model.
+    <b style="color:#c0392b">&mdash; Withdrawn 20 Sep 2026.</b> With MedGemma withdrawn, the only
+    replication is Qwen2.5-VL-7B, and <b>Lingshu-7B <i>is</i> a Qwen2.5-VL-7B fine-tune</b>: that is a
+    second training recipe over one language model, not a second family. Qwen itself is solid &mdash; an
+    independent refit is bitwise identical to its artifact and it wins in every currency (judge +0.0814,
+    lenient EM +0.0276, strict EM +0.0187, token-F1 +0.0317) &mdash; but the sentence above is not
+    supported today.</p></div></div>
 </div></section>
 
 <!-- 14 LIMITS -->
@@ -601,13 +662,28 @@ figcaption b{color:var(--body)}
       8-candidate set</b> &mdash; 12.1% on SLAKE to 79.0% on VQA-Med. Not a diversity problem: on 71.5% of
       them not one gold token appears anywhere in the set, and tripling the budget rescues only 21.2%.
       Decomposing verifier &minus; greedy into selection skill minus sampling penalty, skill is positive on
-      <b>7 of 8</b> (mean +0.0387 against penalty +0.0257).</p></div></div>
+      <b>7 of 8</b> (mean +0.0387 against penalty +0.0257).
+      <b style="color:#c0392b">Scope correction, 20 Sep 2026:</b> the <b>71.5%</b> and <b>21.2%</b> are
+      from the <b>3-benchmark, 2,345-question study</b>
+      (<code>coverage_diagnosis_2026-08-10.json</code>, PathVQA-1,500 + SLAKE + VQA-RAD, built before the
+      five new benchmarks existed), <b>not</b> the current 36,869-question pool this sentence attributes
+      them to; 44.1% / 12.1% / 79.0% were not traced to any artifact. The selection-skill pair
+      (+0.0387 / +0.0257, 7 of 8) <i>is</i> exact against
+      <code>decomposition_2026-08-24.json</code>.</p></div></div>
     <div class="row"><div class="row-l">Selection converts about 45%<span class="tag">wall 3 &mdash; selection</span></div>
       <div class="row-r"><p>Mean oracle headroom above greedy is <span class="num">+0.1650</span>; we convert
       <span class="num">+0.0736</span>. Macro selection efficiency is <span class="num">0.686</span> against a
       random-pick floor of <span class="num">0.579</span>. Fitting the same probe <i>on the evaluation labels
       themselves</i> reaches 0.997 &mdash; the features can express the answer, so the wall is
-      <b>generalisation</b>, not the feature space and not the loss.</p></div></div>
+      <b>generalisation</b>, not the feature space and not the loss.
+      <b style="color:#c0392b">Unsourced, 20 Sep 2026:</b> none of +0.1650 / 0.686 / 0.579 / 0.997 could be
+      traced to an artifact; recomputing mean oracle headroom from
+      <code>head_final_stack_PVFIXED_2026-09-13.json</code> and
+      <code>coverage_scaling_ALL_2026-09-01.json</code> gives <b>+0.1098</b>, not +0.1650, and the only
+      artifact-backed 0.686 in the project is GEMeX&rsquo;s domain-classifier confidence &mdash; a
+      single-benchmark OOD metric, not a macro selection efficiency. Separately, on the shipped probe
+      macro selection efficiency measures <b>0.51</b> (the random floor), ranging 0.16&ndash;0.88
+      (<code>AUDIT_2026-09-18.md</code> &sect;5). <b>Recompute before quoting this row.</b></p></div></div>
   </div>
   <div class="call"><div class="cl">about the two losses</div><div class="cr">
     <p>Neither benchmark the shipped probe loses on reproduces as a loss on a different generator: the
@@ -655,7 +731,16 @@ figcaption b{color:var(--body)}
   <div class="call good"><div class="cl">in one line</div><div class="cr">
     <p>Verification is now free and better than the version we showed in July, and it holds across three
     generator families. What it still needs is in-domain labels; what it cannot fix is a candidate set that
-    never contained the answer.</p></div></div>
+    never contained the answer.</p>
+    <p><b style="color:#c0392b">Corrected 20 Sep 2026.</b> Two clauses of that line do not survive the
+    audit. <b>&ldquo;Free&rdquo;</b> describes the design, not the code as run (the features come from a
+    separate teacher-forced pass at a different image resolution), and the argument is already
+    HSRM&rsquo;s, CASE&rsquo;s and Q-Probe&rsquo;s in print. <b>&ldquo;Three generator
+    families&rdquo;</b> is now <b>one language model, two training recipes</b> &mdash; MedGemma is
+    withdrawn and Lingshu is a Qwen2.5-VL fine-tune. What does survive: <b>better than the July verifier,
+    at lower cost, in judge currency (+0.0737), and it keeps +0.0679 under an independent judge from a
+    different model family</b> &mdash; but it is a tie under exact match. See
+    <code>AUDIT_2026-09-18.md</code>.</p></div></div>
 </div></section>
 
 </div></div>

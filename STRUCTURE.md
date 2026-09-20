@@ -15,6 +15,20 @@
 > layout groups code by pipeline stage; **always launch scripts from the repo root** (paths inside them are
 > resolved relative to the launch directory — see CLAUDE.md §7).
 >
+> ## ⚠️ Coverage note (added 2026-09-20) — this index is **about one third complete**
+> The header above says "a one-line purpose for every script". That has not been true since roughly
+> August 2026. Counted on disk: **401 of 600 `.py` files under `src/` are not mentioned here**
+> (`cascade_methods` 256, `training_methods` 110, `analysis` 9, `cascade` 8, `data_prep` 6,
+> `verifier_arch` 6, `labeling` 3, `reporting` 3), and **141 of 147 `runners/*.sh`** are not either.
+> The gap is concentrated in `src/training_methods/` — **110 of its 123 files (89 %)**, which is where
+> the September probe-verifier code lives (`head_final_stack.py`, `extract_generator_hidden.py`,
+> `freeze_pooled_selector.py`, `head_sweep.py`, …). Five paths this file names no longer exist as
+> written (`detection.json`, `paper/cvgip2026_draft.md`, `paper/manuscript_final_2026-07.md`,
+> `rt_cascade_cap320.json`, `subset.csv`). **Treat this file as a partial index of the cascade-era
+> code, not a complete one**; for the live open-text arm start from
+> `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`. Evidence:
+> `results/cascade_methods/docs/current/AUDIT_2026-09-18_appendix/docs-top.md`, items 3–4.
+
 > **Naming note.** Most folders already use descriptive `lowercase_with_underscores` names. The exception is
 > `src/cascade_methods/` — the research-loop working directory, where names are terse (`compare.py`,
 > `frontier.py`, `ceiling.py`). These are **deliberately not renamed**: each is referenced by the paper's
@@ -34,10 +48,10 @@ medvlthinker-imgdiff-compute/
 ├── PROJECT_OVERVIEW.md  READING_GUIDE.md   plain-language overview + guided reading order
 ├── INCONSISTENCIES.md   dated (2026-06-27) numeric-consistency audit + canonical resolutions
 │
-├── progress/            13 dated daily progress logs (the paper trail; June 17 → July 8)
+├── progress/            24 dated daily progress logs (the paper trail; June 17 → August 17)  [was "13 … → July 8"; counted 2026-09-20]
 ├── meetings/            meeting/presentation exports (dated .html decks) + report_template.html
 ├── src/                 ALL active Python, grouped by pipeline stage (see sections below)
-├── runners/             38 shell launchers (.sh) that drive the src/ scripts (each cd's to repo root)
+├── runners/             147 shell launchers (.sh) that drive the src/ scripts (each cd's to repo root)  [was "38"; counted 2026-09-20, and only 6 of them are indexed below]
 ├── paper/               the CURRENT IEEE paper + build/figure scripts + figs_final/;  paper/archive/ = superseded drafts
 ├── docx/                generated Word exports (paper, overview, structure, reading guide)
 │
@@ -169,6 +183,33 @@ deployed adapter is `ckpts/train/lora_verifier_pooled4` (per-answer AUROC 0.924)
 | `casp_stability.py` | trained gate whose target is cascade-cost optimality |
 | `fld_distill.py` | FastLeg-Distill: LoRA-distill the big no-think model into the small one |
 | `lora_stability_router.py` | LoRA-trained gate predicting the 7B's own resolution-stability |
+
+## `src/audit_2026_09_18/` — the scripts of the 2026-09-18→20 full project audit
+
+Every script the audit ran, plus the seven sweeps' own helpers. **Read-only on the repo**, CPU except
+the two GPU launchers, and each one names the artifact it writes into
+`results/cascade_methods/artifacts/`. Run order, inputs and outputs: **`src/audit_2026_09_18/README.md`**.
+Findings: `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`.
+
+| file | purpose |
+|---|---|
+| `em_rescore_pooled_probe.py` | **the centrepiece** — re-scores the shipped 24-probe ensemble on identical picks in judge, lenient-EM, strict-EM and token-F1 currency; writes the per-question cache every later script reads |
+| `dump_probe_scores.py` | dumps the frozen ensemble's per-candidate scores on the held-out halves so later analyses need not touch the 20 GB of feature caches |
+| `judge_length_bias.py` | is the judge-currency gain a length / leniency artefact? (length-only selectors, judge-positive rate by word bucket, length-matched gain) |
+| `build_xjudge_preds.py` | builds the cross-family re-judge input for the **held-out** candidates, in `run_judge.py`'s schema |
+| `launch_medgemma27b.sh` | **GPU** — runs `src/labeling/run_judge.py` with `--judge_model google/medgemma-27b-it` over that file, under the project's per-GPU `flock` |
+| `rescore_xjudge.py` | re-scores the frozen probe's held-out picks under the cross-family judge's labels |
+| `build_xjudge_train_preds.py` | the same for the probe's **training** rows |
+| `launch_medgemma27b_train.sh` | **GPU** — the second re-judge pass, over the training rows |
+| `judge_2x2_refit.py` | the 2×2: probes trained on judge-A vs judge-B labels, each graded by A, B and lenient EM |
+| `judge_consensus_refit.py` | the same question with consensus (A **and** B) and soft ((A+B)/2) labels |
+| `pseudolabel_precision.py` | precision vs coverage of probe-filtered against self-consistency-filtered pseudo-labels (data filtering for training — **not** abstention) |
+| `template_stratified_gain.py` | the gain split by question-template repeat and by gold-answer-seen-in-train |
+| `pilot_cross_model_transfer.py` | frozen Lingshu probes applied zero-shot to Qwen's hidden states |
+| `pilot_lineage_alignment.py` | follow-up: can a **label-free** ridge map Qwen→Lingshu hidden space close that transfer gap? (pairs are rows where both generators gave the same normalised answer) |
+| `verify_agent_claims.py` | independent spot-verification of the sweeps' most serious claims |
+| `sample_flips.py` | samples upward judge flips with zero gold-token overlap, for reading by hand |
+| `sweeps/` | the seven sub-audits' own scripts (`code-audit/`, `data-integrity/`, `docs-html/`, `docs-md/`, `docs-top/`, `replication/`, `stats-baselines/`) |
 
 ## `src/legacy_retrieval/`
 | file | purpose |

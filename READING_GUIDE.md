@@ -1,9 +1,18 @@
 # Reading Guide — how to understand this whole project, in order
 
-> **Purpose.** There is a lot here: 7 root docs, a 1,972-line retrospective, 14 current writeups, 20
-> archived ones, **13 dated progress diaries**, an IEEE paper, 3 HTML decks, a 68-idea backlog, and ~199
-> Python files. This guide is the **reading order**: exactly which *section of which file* to read, what
-> you'll learn, and why it matters.
+> **2026-09-20 — the live work is the hidden-state probe verifier, and this reading order stops
+> before it.** Since mid-August the open-text arm has been an MLP probe on frozen Lingshu-7B hidden
+> states, used as a best-of-8 verifier over eight open-ended medical VQA benchmarks.
+> **Start at `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`**, then the September
+> section of `results/cascade_methods/README.md` for the rest of that era's docs and artifacts.
+> **The numbers in this file are from the cascade era and are not current for the open-text arm.**
+
+> **Purpose.** There is a lot here: 7 root docs, a 2,672-line retrospective, 30 current writeups, 20
+> archived ones, **24 dated progress diaries** (June 17 → August 17), an IEEE paper, 8 HTML decks in
+> `meetings/`, a 68-idea backlog, and 600+ Python files under `src/`. This guide is the **reading
+> order**: exactly which *section of which file* to read, what you'll learn, and why it matters.
+> *(Counts re-measured 2026-09-20 — they had read "1,972-line", "14 current writeups", "13 dated
+> progress diaries", "3 HTML decks" and "~199 Python files".)*
 >
 > **Rewritten 2026-07-29.** The previous version stopped at June 26, pointed at a paper draft that has
 > since moved to `paper/archive/`, and described the (now permanently forbidden) abstention work as part

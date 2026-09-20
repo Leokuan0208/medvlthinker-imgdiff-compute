@@ -93,7 +93,57 @@ authors' only human-verified split, **24.3%** of the 8,220 pool). **They interse
 compare, average, or filter across them. Every PMC-VQA number must carry its file name and row count.
 Full provenance: **[`docs/current/PMCVQA_PROVENANCE_2026-07-30.md`](docs/current/PMCVQA_PROVENANCE_2026-07-30.md)**.
 
-## `docs/current/` — the canonical writeups
+## August–September 2026 (probe-verifier era) — the live work, indexed 2026-09-20
+
+> **This section was missing entirely until 2026-09-20.** The table below the next heading stops at
+> the July/Lingshu cascade era; everything from **2026-08-12** onward is the **open-text probe
+> verifier** — an MLP probe on the frozen hidden states of Lingshu-7B, used as a best-of-8 verifier
+> across eight open-ended medical VQA benchmarks. **Start at `docs/current/AUDIT_2026-09-18.md`.**
+> Vocabulary for this era is fixed by `docs/current/TERMINOLOGY_2026-08-24.md` (*benchmark* not
+> "cell"; *probe verifier* not "MLP head").
+
+| File (`docs/current/`) | What it is | status |
+|---|---|---|
+| **`AUDIT_2026-09-18.md`** | **★ START HERE for the live arm** — full project audit 2026-09-18→09-20: seven parallel sweeps plus five new measurements. The judge's real identity, the headline in four currencies, the withdrawn MedGemma replication, the extraction-pass finding, the missing baselines. **The current supersession record.** Sweep reports in `AUDIT_2026-09-18_appendix/`. | **current** |
+| `NEW_DIRECTIONS_2026-09-20.md` | The literature study and the research directions that follow from that audit. | **current** (being written 2026-09-20) |
+| `PRIOR_ART_PROBE_VERIFIER_2026-09-14.md` | Prior art for "a probe on frozen hidden states used as a best-of-N verifier": it exists, under established names (hidden-state reward model, latent verifier). Carries a 2026-09-20 corrections block. | **current**, corrected |
+| `AUDIT_2026-09-12.md` | The previous full audit. | **superseded** by `AUDIT_2026-09-18.md` |
+| `OPENTEXT_FULL_RUNDOWN_2026-09-04.md` | The open-text arm 17 Aug → 4 Sep: what worked, 12 measured dead ends, the structural findings. | **current-as-rundown**, bannered + corrected 2026-09-20 |
+| `TRANSFER_WALL_2026-08-21.md` | The transfer wall — five closed routes, the self-consistency sign flip, the Qwen replication (§12), the withdrawn MedGemma section (§14). | **partly superseded** — read its banners |
+| `TERMINOLOGY_2026-08-24.md` | What the field calls the things we had been naming ourselves. Applies to every deck, doc and draft. | **current-as-reference** |
+| `OPENTEXT_CORRECTIONS_2026-08-19.md` | Corrections to the open-text pivot, 18→19 Aug. | current-as-record |
+| `OPENTEXT_CELL_SURVEY_2026-08-18.md` | What can and cannot become a 4th…Nth benchmark. | current-as-reference |
+| `CHEAP_INTERVENTIONS_2026-08-17.md` | Cheap interventions on Lingshu-7B. | current-as-record |
+| `LITERATURE_DEBIASING_2026-08-17.md` | Targeted sweep: test-time debiasing and calibration for VLMs. | current-as-reference |
+| `CHEAP_VERIFIER_ON_7B_2026-08-16.md` | A cheap verifier on a 7B medical VLM — the central table. | current-as-record |
+| `HYPERPARAMETERS_2026-08-15.md` | Four untuned hyper-parameters — verification, combination, and the headline. | current-as-reference |
+| `INFERENCE_PARAMS_2026-08-13.md` | Inference parameters of the 7B — can they improve the candidate sets? | current-as-record |
+| `UNIFIED_VISION_VERIFIER_2026-08-12.md` | A unified 7B-only vision-aware pipeline **cannot** match always-32B-direct (macro 0.616278, −0.040395 [−0.052275, −0.028427]). | current-as-negative-result |
+| `self_consistency_suite_2026-08-17.html` | Self-consistency across eight benchmarks (HTML). | current-as-record |
+
+**The nine artifacts the 2026-09-18 audit produced** (`artifacts/`, all carry
+`no_fabricated_numbers`):
+
+| artifact | what it measures |
+|---|---|
+| `em_rescore_pooled_probe_2026-09-18.json` | The shipped probe re-scored in judge **and** exact-match currency on identical picks (judge +0.0737 WIN, lenient EM +0.0047 TIE). |
+| `pilot_cross_model_transfer_2026-09-18.json` | Frozen Lingshu probes applied **zero-shot** to Qwen2.5-VL-7B hidden states (+0.0451 over Qwen greedy, no Qwen labels). |
+| `xjudge_rescore_medgemma27b_2026-09-20.json` | The same picks re-judged by a **cross-family** judge, MedGemma-27B-it (+0.0679). |
+| `judge_2x2_2026-09-20.json` | Does the probe learn correctness or distil its judge? Probes trained on judge A vs judge B labels, graded by both (off-diagonal +0.0565…+0.0658). |
+| `judge_consensus_2026-09-20.json` | The same question with consensus labels (A **and** B) and soft labels ((A+B)/2). |
+| `judge_length_bias_2026-09-20.json` | Is the judge-currency gain a length/leniency artefact? (No: pick-the-longest *loses*, −0.0294.) |
+| `template_stratified_gain_2026-09-20.json` | The gain split by question-template repeat and by gold-answer-seen-in-train. |
+| `replication_currency_2026-09-20.json` | Qwen and MedGemma replications in all four currencies, plus the judge-family and degeneration checks. |
+| `pseudolabel_precision_2026-09-20.json` | Precision vs coverage of probe-filtered against self-consistency-filtered pseudo-labels (data filtering for training, **not** abstention). |
+| `audit_stats_baselines_2026-09-20.json` | The hostile-reviewer statistics pass on the pooled-probe headline. |
+| `pilot_lineage_alignment_2026-09-20.json` | Follow-up pilot: a **label-free** linear (ridge) alignment of Qwen's hidden space onto Lingshu's, scored by the frozen Lingshu probes. |
+
+Scripts: `src/audit_2026_09_18/` (see its `README.md` for run order and inputs).
+
+## `docs/current/` — the canonical writeups (July/Lingshu cascade era)
+
+> ⚠️ **This table stops at the cascade era.** For anything dated 2026-08-12 or later see the
+> section immediately above.
 
 | File | What it is | status |
 |---|---|---|
