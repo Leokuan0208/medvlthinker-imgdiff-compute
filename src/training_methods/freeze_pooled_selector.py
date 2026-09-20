@@ -11,12 +11,21 @@ WHAT CHANGES FROM THE INCUMBENT (ckpts/train/genframe_head_ens8, 2026-08-05)
                                                        more epochs while BCE does not)
   seeds           8                                ->  8 per layer, 24 heads total
 
-MEASURED, on held-out image halves the probe never saw (head_final_stack_2026-08-24.json):
+MEASURED, on held-out image halves the probe never saw.  SUPERSEDED NUMBERS FIRST, because they are
+what the v1 artifact (genframe_head_pooled_ens) was frozen with -- PathVQA truncated to 1,500 of 3,357
+questions (head_final_stack_2026-08-24.json):
 
     four-domain, single layer   +0.0243 macro verifier-minus-greedy   6/8 benchmarks beaten
     pooled, single layer        +0.0765
-    pooled + layer ensemble     +0.0802                               <- this artifact
+    pooled + layer ensemble     +0.0802                               <- v1 artifact
     pooled + ensemble + SC      +0.0797
+
+CURRENT (full PathVQA, head_final_stack_PVFIXED_2026-09-13.json; the v2 artifact
+genframe_head_pooled_ens_v2): four-domain +0.0182, pooled single layer +0.0729, pooled + layer
+ensemble +0.0736 (6/8), pooled + ensemble + SC +0.0720.  ALL of these are LLM-JUDGE currency
+(MedVLThinker-32B, run_judge.py's default -- not Lingshu-32B).  On the identical picks the v2 probe is
++0.0047 [-0.0077,+0.0171] under the project's lenient exact match and +0.0679 under a cross-family
+judge (MedGemma-27B-it): results/cascade_methods/docs/current/AUDIT_2026-09-18.md.
 
 Self-consistency as an input feature is NOT included even though it was worth +0.0098 from the
 four-domain base: once the probe is trained on in-domain data it is worth -0.0005.  It was
@@ -62,18 +71,35 @@ def half(img):
     return int(hashlib.md5(("nd" + str(img)).encode()).hexdigest(), 16) % 2
 
 
-def _measured():
-    """Pull the measured macro from the most recent head_final_stack artifact on disk."""
-    import glob
-    cand = sorted(glob.glob(os.path.join(ROOT, "results/cascade_methods/artifacts",
-                                         "head_final_stack*.json")), key=os.path.getmtime)
-    if not cand:
-        return {"note": "no head_final_stack artifact found; run it before freezing"}
-    a = json.load(open(cand[-1]))
+MEASURED_DEFAULT = "head_final_stack_PVFIXED_2026-09-13.json"   # the artifact of record for the v2 probe
+
+
+def _measured(name=MEASURED_DEFAULT):
+    """Read the measured macro from ONE NAMED head_final_stack artifact (never 'the newest on disk').
+
+    AUDIT 2026-09-18. This used to glob head_final_stack*.json and take the newest by mtime with no
+    generator filter. This script freezes the LINGSHU probe, but since 2026-09-16 the newest match has been
+    the MedGemma artifact (no 'deployed_4dom_L21ish' arm -> KeyError, or a foreign macro written into this
+    recipe), and even among Lingshu runs the newest is a reproducibility re-run (+0.0707), not the artifact
+    of record. A recipe must say which measurement it describes, so the file is named explicitly
+    (--measured) and validated.
+    """
+    p = os.path.join(ROOT, "results/cascade_methods/artifacts", name)
+    if not os.path.exists(p):
+        return {"note": f"measured artifact {name} not found; run head_final_stack.py before freezing"}
+    a = json.load(open(p))
+    need = {"pooled_ens", "deployed_4dom_L21ish"}
+    if a.get("generator", "lingshu") != "lingshu" or not need <= set(a.get("macro", {})) \
+            or len(a.get("cells", {})) != len(BENCH):
+        raise SystemExit(f"{name} is not a full-protocol Lingshu head_final_stack artifact "
+                         f"(generator={a.get('generator')}, cells={len(a.get('cells', {}))}, "
+                         f"arms={sorted(a.get('macro', {}))})")
     return {"macro_verifier_minus_greedy": a["macro"]["pooled_ens"],
             "benchmarks_beaten": a["beats_greedy"]["pooled_ens"],
             "four_domain_single_layer_baseline": a["macro"]["deployed_4dom_L21ish"],
-            "source": os.path.relpath(cand[-1], ROOT)}
+            "currency": "LLM judge only (MedVLThinker-32B, run_judge.py default) -- see AUDIT_2026-09-18.md "
+                        "for exact-match, token-F1 and cross-family-judge re-scores of the same picks",
+            "source": os.path.relpath(p, ROOT)}
 
 
 def load_fine(stem, dsf=None):
@@ -90,6 +116,9 @@ def main():
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--out", default=OUTDIR)
+    ap.add_argument("--measured", default=MEASURED_DEFAULT,
+                    help="head_final_stack artifact (file name under artifacts/) whose macro this "
+                         "recipe records; named explicitly, never globbed")
     A = ap.parse_args()
     HS.torch.set_num_threads(A.threads)
     t0 = time.time()
@@ -158,7 +187,7 @@ def main():
         # backfill moved the real macro to +0.0736 the recipe kept asserting +0.0802 and
         # pooled_selector.verify() correctly reported MISMATCH against the artifact it describes.
         # A recipe that states a number it did not measure is the fabrication risk rule 7 exists for.
-        "measured_on_held_out_halves": _measured(),
+        "measured_on_held_out_halves": _measured(A.measured),
         "excluded": "self-consistency input feature -- worth +0.0098 from the four-domain base "
                     "but -0.0005 once pooled, so it was compensating for missing data",
         "MAY_NOT_BE_EVALUATED_ON": "the full benchmarks -- this probe has seen the other image "
@@ -166,16 +195,28 @@ def main():
         "standardizer_stats": stats,
         "fit_seconds": round(time.time() - t0, 1)}
     json.dump(recipe, open(os.path.join(A.out, "recipe.json"), "w"), indent=1)
+    # READ, never hardcode (audit 2026-09-18). recipe.json was fixed on 2026-09-13 to read its macro
+    # from the artifact, but this README kept the literals "+0.0802 / +0.0243", so the v2 directory
+    # shipped a README that contradicts its own recipe.json (+0.0736 / +0.0182).
+    _m = recipe["measured_on_held_out_halves"]
+    if "macro_verifier_minus_greedy" in _m:
+        _measured_line = (
+            f"- measured **{_m['macro_verifier_minus_greedy']:+.4f}** macro verifier-minus-greedy on "
+            f"held-out image halves ({_m['benchmarks_beaten']} benchmarks; JUDGE currency only -- the "
+            f"judge is MedVLThinker-32B, run_judge.py's default, not Lingshu-32B), "
+            f"against **{_m['four_domain_single_layer_baseline']:+.4f}** for the four-domain "
+            f"single-layer recipe on the same halves (source: `{_m['source']}`)\n\n")
+    else:
+        _measured_line = "- NOT MEASURED: no head_final_stack artifact was on disk at freeze time\n\n"
     open(os.path.join(A.out, "README.md"), "w").write(
         "# genframe_head_pooled_ens\n\n"
         "Probe verifier retrained 2026-08-24 on the training half of all eight open-ended medical "
         "VQA benchmarks, rank-ensembled over layers 18/20/22.\n\n"
         f"- {len(y):,} training rows ({n_orig:,} from the four original domains)\n"
         f"- {len(ENS) * A.seeds} heads: {len(ENS)} layers x {A.seeds} seeds\n"
-        "- measured **+0.0802** macro verifier-minus-greedy on held-out image halves, against "
-        "**+0.0243** for the four-domain single-layer recipe on the same halves\n\n"
+        + _measured_line +
         "**Do not evaluate this on a full benchmark.** It has seen the other image half of every "
-        "one of them. The held-out halves (md5(\"nd\"+img_md5) %% 2 == 0) are the only clean test "
+        "one of them. The held-out halves (md5(\"nd\"+img_md5) % 2 == 0) are the only clean test "
         "set for it.\n\n"
         "The incumbent `genframe_head_ens8` is untouched and remains the artifact of record for "
         "every number published before 2026-08-24.\n")

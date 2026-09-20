@@ -70,7 +70,8 @@ Spec `docs/current/METHOD_FINAL_2026-07.md` (mechanism correct, numbers stale); 
 ### THE CANONICAL NUMBERS
 
 **Convention: MACRO — equal weight per reporting cell, 8 cells, 1/8 each, Variant B (MMMU excluded),
-CLEAN (disjoint) verifier.** Source: **`artifacts/cascade_selector_rerun_2026-08-05.json`**.
+CLEAN (disjoint) verifier.** Source: **`artifacts/cascade_selector_rerun_2026-08-05.json`** — except the
+prompt-matched 0.6250 row, which is in `COMPREHENSIVE_WRITEUP_2026-08-03.md` and not in that JSON.
 Never pair a macro accuracy with a sample-weighted cost, or vice versa.
 
 | arm | macro | vs 32B-reasoning | vs 32B-direct | compute |
@@ -106,6 +107,8 @@ floor — **an answer-letter-bias audit is OWED before this is used.** It only h
 latency, so **not Pareto**. And it wins **by switching the open-text machinery off**.
 
 ### Ceilings — measured free upper bounds on the 8-cell macro
+*(sources: +0.0301 `artifacts/stats_recertification_2026-08-11.json`; +0.0091 / +0.0661 / 1.3 %
+`docs/current/BEAT32B_ROUND_2026-08-10.md` — none of them is in `cascade_selector_rerun`.)*
 
 perfect **selection** over the current 8-pool **+0.0301** · perfect **coverage** (infinite sampling)
 **+0.0091** · perfect **7B-vs-32B routing +0.0661**, of which only **1.3%** is converted.
@@ -144,7 +147,8 @@ outranks verifier work.
   (`torch/optim/adam.py:535`). The reproducible variable is load: **10 threads dies in ~30 s, 4
   threads runs clean**, while the identical fit in isolation at 10 threads completes 30 epochs in
   38.5 s. Run every CPU head fit at **≤4–6 threads and shard for parallelism instead of threading**;
-  crashes give no traceback when the signal is uncatchable, so run them under
+  **the safe thread count is load-dependent** (2026-09-20: a 4-thread fit segfaulted at load average ≈ 21
+  and ran clean at 2); crashes give no traceback when the signal is uncatchable, so run them under
   `src/reporting/supervisor.py` with retries. Details: `docs/current/TRANSFER_WALL_2026-08-21.md` §7.
 - **⚠️ A FAILED PRODUCER DEADLOCKS ITS CONSUMERS.** `run_campaign11_chained.sh` waited **21 hours**
   on an artifact whose producing job had already failed, and nothing ran overnight. Any chain must
@@ -182,10 +186,45 @@ outranks verifier work.
 - **⚠️ `src/training_methods/freeze_selector.py` REWRITES `ckpts/train/genframe_head_ens8/`.** A refit is a
   fresh seed draw (seed-0 sel_eff 0.795640 at the pinned thread count vs 0.800409 at 8 threads). **The
   frozen `.pt` files are the artifact of record, not the recipe.**
-- **Preservation: ✅ committed, ✅ pushed, ✅ inputs backed up (2026-08-10)** to
+- **Preservation (⚠️ STALE — true on 2026-08-10, not now; see §0a): ✅ committed, ✅ pushed, ✅ inputs
+  backed up (2026-08-10)** to
   `/data/dan/backups/medvlthinker-imgdiff-compute/2026-08-10/` (feats_hidden 4.4 GB, genframe_head_ens8,
   lora_verifier_disjoint), content-hash verified. `results/` has 269 tracked files so the numbers travel
   with a push; `ckpts/`, `feats_hidden/`, `logs/` have **zero** tracked files and rely on that backup.
+
+## 0a. Current status (2026-09-20) — §0 stops at 2026-08-11; read this for anything newer
+
+> **Entry docs for the live work:** `docs/current/AUDIT_2026-09-18.md` (what is true, what was wrong, every
+> correction) and `docs/current/NEW_DIRECTIONS_2026-09-20.md` (literature + where to go next). Older:
+> `OPENTEXT_FULL_RUNDOWN_2026-09-04.md`, `AUDIT_2026-09-12.md`, `PRIOR_ART_PROBE_VERIFIER_2026-09-14.md`.
+
+**Live work since mid-August is the open-text arm only:** an MLP probe (one hidden layer, width 256) on
+FROZEN generator hidden states, mean-pooled over the candidate's answer tokens, used as a best-of-8
+verifier. Shipped artifact `ckpts/train/genframe_head_pooled_ens_v2` (24 probes). The cascade in §0 is
+historical context for it, not the current method.
+
+**The headline, in every currency, identical picks, 18,452 held-out questions, 8 benchmarks:**
+judge of record **+0.0737 [+0.0608, +0.0864]** (`em_rescore_pooled_probe_2026-09-18.json`, reproducing
+`head_final_stack_PVFIXED_2026-09-13.json`'s +0.0736) · **cross-family judge MedGemma-27B +0.0679**
+(`xjudge_rescore_medgemma27b_2026-09-20.json`) · token-F1 +0.0156 · lenient exact match **+0.0047
+[−0.0077, +0.0171] (tie)**. A probe graded by a judge it was NOT trained on gains **+0.057 to +0.066**
+(`judge_2x2_2026-09-20.json`) — quote that, and always say which currency.
+
+- **⚠️ THE JUDGE IS MedVLThinker-32B, NOT Lingshu-32B** (`src/labeling/run_judge.py:21` default; no runner
+  overrides it). Text-only, sees the gold. Any doc saying "Lingshu-32B judge" is wrong.
+- **⛔ MedGemma-4b sampled pools are BROKEN** (every candidate runs to the 64-token cap; 58.5 % template
+  garbage). Every MedGemma replication number is withdrawn. **Qwen2.5-VL-7B is solid in all currencies**
+  (judge +0.0814, EM +0.0276; `replication_currency_2026-09-20.json`) but is the same LM family as Lingshu.
+- **⚠️ "Adds no forward pass" has never been run.** Features come from a separate teacher-forced HF pass
+  at `max_pixels=1,003,520`; generation ran at cap320 (250,880). Full-resolution regeneration was DECIDED
+  2026-09-17 (`OPEN_EXPERIMENTS_2026-09-17.md` §1.0, on unmerged branch `worktree-lit-domain-package`).
+- **Mechanism is not novel, and neither is "in a VLM"** (arXiv:2505.12225, 2608.30841, 2605.28527,
+  2603.22492, 2608.10835). See `NEW_DIRECTIONS_2026-09-20.md` for what is still open.
+- **Unreported baselines:** generator LoRA-SFT +0.0142 at 1× cost (`ckpts/cheapleg/scores_*`); 7B+probe
+  vs Lingshu-32B greedy loses 2, ties 1, wins 1 of 4.
+- **Preservation:** `main` is 78+ commits ahead of `origin/main`; `genframe_head_pooled_ens_v2`,
+  `ckpts/openvqa/cheap_lingshu7b` and the September `feats_hidden` caches are in NO backup. The audit's
+  198,378 MedGemma-27B judge labels and per-candidate probe scores are at `/data/dan/audit_2026-09-18/`.
 
 ## 1. The project in one paragraph
 
@@ -261,7 +300,8 @@ still the reproducibility anchor for `docs/archive_mcq/`), **dependency repos** 
   signal the gate thresholds.
 - **Escalation rate** — fraction of questions handed up to the 32B.
 - **cap320 / cap640 / fullres** — image-resolution budgets (a cap on pixels via `max_pixels`).
-  Lower cap = fewer image tokens = cheaper. "cap320" is the chosen operating point.
+  Lower cap = fewer image tokens = cheaper. "cap320" was the chosen operating point through 2026-08 and
+  is still `run_openvqa.py`'s silent default; regenerating at fullres was DECIDED 2026-09-17 (§0a).
 - **Prefill-inclusive FLOPs** — honest compute accounting that includes the cost of reading the
   prompt+image, not just generating the answer. (An earlier decode-only estimate was too rosy.)
 - **think / no-think** (also written *reasoning* / *direct*) — these models can emit a
@@ -278,7 +318,8 @@ still the reproducibility anchor for `docs/archive_mcq/`), **dependency repos** 
   GPU memory use. **HF** (HuggingFace transformers) is slower but measures real VRAM, so it's
   used for the live cascade memory/energy measurement.
 - **Verifier** — a small LoRA-fine-tuned model scoring `P(correct | image, question, candidate)`; used
-  to pick the best of N sampled open-text answers. `ckpts/train/lora_verifier_pooled4`.
+  to pick the best of N sampled open-text answers. `ckpts/train/lora_verifier_pooled4`. **Superseded
+  mid-August 2026 by an MLP probe on frozen hidden states — §0a.**
 - **best-of-N / oracle-of-N** — sample N answers and keep one / the best possible one. The gap between
   them is the **selection wall**; the fraction of questions with *no* correct answer in the pool is the
   **coverage wall**.
@@ -324,8 +365,9 @@ both and drifted badly, so it is now a pointer plus the handful of facts the lan
   every reader treats `(?:_s\d+of\d+)?` as optional, so both forms load and shards merge by `idx`.
 - **Faithful-eval outputs live in `MedEvalKit/eval_results_*/`** — which is **gitignored vendor
   territory**. Every faithful MCQ number in the paper is read from there. Do not clean that directory.
-- **`results/cascade_methods/artifacts/`** holds ~107 numeric `.json` outputs (gitignored,
-  regeneratable). The headline chain is `method_final.json`, `method_final_v2.json`,
+- **`results/cascade_methods/artifacts/`** holds 350+ numeric `.json` outputs and is **tracked in git on
+  purpose** (`.gitignore` un-ignores it), so the numbers travel with a push — unlike `ckpts/` and
+  `feats_hidden/`. The July headline chain is `method_final.json`, `method_final_v2.json`,
   `method_final_mmmu_corrected.json`, `paper_baselines.json`, `opentext_32b_think_full.json`,
   **`f8_mode_vsthink_ci.json`** (the canonical headline CI).
 - **`archive/`, `docs/archive_mcq/`, `_legacy/`** are the record of negative results. Move, never delete.
@@ -348,8 +390,8 @@ one place, **`STRUCTURE.md`**, which is kept current. Top-level shape, for orien
 
 ```
 src/{labeling,sweep,gate,cascade,cascade_methods,training_methods,analysis,reporting,data_prep,legacy_retrieval}
-runners/            38 shell launchers (each cd's to the repo root)
-progress/           13 dated daily diaries (June 17 -> July 8) — the primary narrative record
+runners/            147 shell launchers + the auto_*_wave*.json campaign queues (each cd's to the repo root)
+progress/           24 dated daily diaries (June 17 -> August 17) — the primary narrative record; none since
 paper/              the IEEE deliverable + build scripts + figs_final/;  paper/archive/ = superseded drafts
 meetings/           dated .html decks (the 2026-07-27 one is the best summary in the repo)
 docx/               generated Word exports
@@ -437,11 +479,12 @@ that discipline:
   **Also never mislabel provenance:** an estimate is an estimate until it is measured, and a number
   copied by hand into a deck is not "read from an artifact". Both failure modes have happened here
   (retrospective §7 hole 14, §10.2 X8). See CRITICAL RULE 7.
-- **The July/Lingshu work is not in git.** Last commit `8cdefef` (2026-07-02). 44 untracked `.py`
-  files under `src/` include the entire live headline chain; the IEEE paper, the July diaries and the
-  2026-07-27 deck are untracked; `results/` and `MedEvalKit/` are gitignored. **The method, its inputs
-  and its outputs currently exist on one disk.** Do not delete or relocate anything untracked, and
-  treat "commit the working tree" as the standing top-priority chore.
+- **Git is committed but NOT PUSHED** (corrected 2026-09-20; this bullet used to say the July work was
+  not in git at all, which stopped being true in August). Check with
+  `git log origin/main..main --oneline | wc -l` — 78 on 2026-09-20. **Treat "push" as the standing
+  top-priority chore.** `results/cascade_methods/{docs,artifacts,README.md}` ARE tracked (§4.1);
+  `MedEvalKit/`, `ckpts/`, `feats_hidden/`, `logs/`, `data/` are gitignored and their September contents
+  are in no backup (§0a). Do not delete or relocate anything untracked.
 - **Code-delivery convention Leo uses:** brand-new files / standalone scripts are delivered as
   a heredoc (`cat > path << 'EOF' ... EOF`) so he can paste them whole. **Edits to existing
   files** are delivered as a plain code block (the snippet to change), which Leo applies himself

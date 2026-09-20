@@ -13,6 +13,13 @@ THREE THINGS SURVIVED end-to-end validation, and they act on different parts of 
 They plausibly stack -- one changes WHAT the probe is fitted on, the others change WHAT IT READS --
 but "plausibly" is how the layer sweep went wrong, so this measures it.
 
+  SUPERSEDED (audit 2026-09-18): the three figures above are the PRE-FIX motivating numbers, from
+  artifacts that held PathVQA at 1,500 of 3,357 questions.  What THIS script measures on full PathVQA
+  (head_final_stack_PVFIXED_2026-09-13.json, 5 seeds, 112,770 rows): four-domain single layer +0.0182,
+  pooled single layer +0.0729, pooled + ensemble +0.0736, pooled + ensemble + SC +0.0720 -- i.e.
+  pooled training +0.0547, layer ensembling +0.0007 (below the 0.0033 thread-count floor: a variance
+  hedge, not a gain), SC feature -0.0016 once pooled.  All JUDGE currency (MedVLThinker-32B).
+
 EVERY ARM IS EVALUATED ON THE SAME HELD-OUT HALVES, split by image with
 md5("nd" + img_md5) % 2, so the deployed recipe is re-measured on exactly the questions the stacked
 one is scored on rather than quoted from a run over the full benchmark.  Question counts are
@@ -257,7 +264,6 @@ def main():
         src_all = [s for s, dd in zip(src_all, drop) if not dd]
     y = np.array([r["y"] for r in rows_all], dtype=np.float32)
     qid = np.array([f"{s}|{r['idx']}" for s, r in zip(src_all, rows_all)])
-    sc = sc_of(rows_all, lambda r: src_all[rows_all.index(r)] if False else r["ds"])
     # rows carry their own ds for the four original domains; for benchmark rows ds == the benchmark
     sc = sc_of(rows_all, lambda r: r["ds"])
     print(f"pooled: {len(y):,} rows ({n_orig:,} original)", flush=True)
@@ -334,10 +340,22 @@ def main():
         best = max(art["macro"], key=art["macro"].get)
         # --only_arm runs can omit the four-domain baseline entirely; the verdict must not assume it
         base = art["macro"].get("deployed_4dom_L21ish")
-        art["VERDICT"] = (f"best is {best} at {art['macro'][best]:+.4f} macro" +
-                          (f", {art['macro'][best]-base:+.4f} over the four-domain single-layer "
+        # AUDIT 2026-09-18: the verdict used to quote max(macro) -- the best arm CHOSEN ON THE EVAL
+        # HALF, and a different arm per generator (qwen -> pooled_ens, medgemma_ALL8 ->
+        # pooled_singlelayer, *_matched -> pooled_ens_sc / pooled_singlelayer), which is how "8/8" came
+        # to be quoted for an arm that is not the shipped recipe. Lead with the PRE-SPECIFIED shipped
+        # arm; report the best arm separately and label it post-hoc.
+        SHIPPED = "pooled_ens"
+        art["shipped_arm"], art["best_arm_posthoc"] = SHIPPED, best
+        lead = SHIPPED if SHIPPED in art["macro"] else best
+        art["VERDICT"] = (f"shipped arm {lead}: {art['macro'][lead]:+.4f} macro, beats greedy on "
+                          f"{art['beats_greedy'][lead]} (judge currency)" +
+                          (f", {art['macro'][lead]-base:+.4f} over the four-domain single-layer "
                            f"probe on the same held-out halves." if base is not None else
-                           " (four-domain baseline not fitted in this run)."))
+                           " (four-domain baseline not fitted in this run).") +
+                          (f" Post-hoc best arm on these same halves is {best} at "
+                           f"{art['macro'][best]:+.4f} -- selected on evaluation data, do not headline it."
+                           if best != lead else ""))
         print(f"\n=> {art['VERDICT']}")
     json.dump(art, open(A.out, "w"), indent=1)
     print(f"wrote {A.out}")

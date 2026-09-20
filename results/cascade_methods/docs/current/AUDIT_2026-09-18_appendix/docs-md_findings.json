@@ -1,0 +1,167 @@
+{
+"status": "in_progress - doc1 (OPENTEXT_FULL_RUNDOWN) substantially done, moving to TRANSFER_WALL/AUDIT/DOMAIN_GUIDE/OPEN_EXPERIMENTS/docstrings",
+"doc1_OPENTEXT_FULL_RUNDOWN_2026-09-04": {
+  "S1_headline_table_lines_33-42": {
+    "severity": "CRITICAL",
+    "claim": "Headline table cites free_signal_bakeoff_2026-08-21.json; PathVQA row (n=1500,greedy=.3427,prior=.3333,sc=.3260,head=.3900,oracle=.5167) and SLAKE/VQA-RAD prior/sc/head cols are STALE vs artifact as it is on disk today",
+    "evidence": "artifact current: pathvqa_open n_questions=3357 greedy=0.3140 prior=0.2833 sc=0.2943 head=0.3452 oracle=0.4808 (regenerated commit e021633/870784d 2026-09-13, PathVQA truncation fix 1500->3357). SLAKE current prior=0.7302 sc=0.7426 head=0.7721 (doc says .7287/.7395/.7690) -- changed by commit e021633 'Close the two-artifact disagreement' (argsort tie-break fix, per-benchmark cache). VQA-RAD prior 0.425 (doc .435), sc 0.460 (doc .465) also shifted by same fix. RadImageNet/Kvasir/OmniMedVQA/VQA-Med/GEMeX rows verified OK (match exactly).",
+    "correction": "Replace PathVQA row with n=3357, 0.3140/0.2833/0.2943/0.3452/0.4808. Replace SLAKE prior/sc/head with 0.7302/0.7302/0.7426/0.7721 (greedy 0.7302, oracle 0.8791 unchanged). Replace VQA-RAD prior/sc with 0.4250->0.4250(check)/0.4600->0.4600(check exact); re-run check_s1_table.py output for exact figures.",
+    "no_note": true
+  },
+  "S3.2_head_best_config": {
+    "severity": "HIGH",
+    "claim": "Table A/B/C/D MACRO +0.0199/+0.0324/+0.0297/+0.0366 stale; artifact regenerated 2026-09-13",
+    "evidence": "head_best_config_2026-08-24.json current macro_minus_greedy: A=0.01815->+0.0182, B=0.03061->+0.0306, C=0.02813->+0.0281, D=0.03427->+0.0343. beats_greedy counts (5/8,7/8,7/8,7/8) unchanged. Per-cell flip examples in prose (VQA-RAD -0.0150->+0.0300, OmniMedVQA -0.0063->+0.0220, RadImageNet +0.0010->+0.0125) still match current (those 3 cells untouched by fix).",
+    "correction": "MACRO row -> +0.0182 / +0.0306 / +0.0281 / +0.0343",
+    "no_note": true
+  },
+  "S3.3_head_final_stack": {
+    "severity": "HIGH (supersession, not arithmetic error)",
+    "claim": "Table (four-domain +0.0243, pooled single layer +0.0765, pooled+ens +0.0802, pooled+ens+SC +0.0797) EXACTLY matches head_final_stack_2026-08-24.json (unregenerated, mtime Aug24) but that file is now superseded by head_final_stack_PVFIXED_2026-09-13.json (pooled_ens macro 0.0736 not 0.0802) per the briefing's known headline restatement. Same applies to S3.5, S5.2, S5.3, S5.4, S9 (all still quote 0.0802/0.0816/0.0803/0.0816 family).",
+    "evidence": "head_final_stack_2026-08-24.json macro.pooled_ens=0.080153 exact match to doc. head_final_stack_PVFIXED_2026-09-13.json macro.pooled_ens=0.073607 (the corrected headline per RESUME NOTE).",
+    "correction": "Whole doc needs supersession banner pointing to PVFIXED; §3.3 table pooled+ens +0.0802->+0.0736 etc, OR explicit note 'superseded 2026-09-13, see head_final_stack_PVFIXED'.",
+    "no_note": true
+  },
+  "S3.5_shipped_artifact": {
+    "severity": "HIGH",
+    "claim": "Doc cites ckpts/train/genframe_head_pooled_ens/ (no _v2) +0.0816/+0.0243 -- EXACT match to that (old, pre-fix) recipe.json, but the deployed/current artifact is genframe_head_pooled_ens_v2 (built 2026-09-13, reload_verified_macro=0.0737, baseline 0.018238794). Doc never mentions v2.",
+    "evidence": "ckpts/train/genframe_head_pooled_ens/recipe.json: measured_on_held_out_halves.reload_verified_macro=0.0816, four_domain_single_layer_baseline=0.0243 (matches doc exactly). genframe_head_pooled_ens_v2/recipe.json: reload_verified_macro=0.0737, baseline=0.018238794, explicit field supersedes:'genframe_head_pooled_ens, which was fitted on 108,126 rows with pathvqa truncated to 1,500 of 3,357 questions. Both are kept; this one is the current artifact.'",
+    "correction": "Add note that genframe_head_pooled_ens_v2 (2026-09-13) supersedes this for deployment; +0.0816/+0.0243 -> +0.0737/+0.0182(4-domain baseline changed too, four_domain_single_layer_baseline v2=0.018238794->+0.0182)",
+    "no_note": true
+  },
+  "genframe_head_pooled_ens_v2_README_BUG": {
+    "severity": "CRITICAL (separate from the doc, but directly relevant, found while checking S3.5)",
+    "claim": "ckpts/train/genframe_head_pooled_ens_v2/README.md still prints the OLD numbers '+0.0802 macro ... against +0.0243' -- contradicts its own sibling recipe.json in the same directory (0.0737/0.0182). Looks copy-pasted from the v1 (non-v2) README and never regenerated when v2 was fitted 2026-09-13.",
+    "evidence": "ckpts/train/genframe_head_pooled_ens_v2/README.md text: 'measured +0.0802 macro verifier-minus-greedy on held-out image halves, against +0.0243'. Sibling recipe.json (same dir): measured_on_held_out_halves.macro_verifier_minus_greedy=0.07360735025242765, four_domain_single_layer_baseline=0.018238794267665736.",
+    "correction": "README.md +0.0802/+0.0243 -> +0.0736/+00.0182, and update training_rows 108,126 (v1 count, README still says this) -> should be 112,770 per recipe.json (v2's own training_rows field)",
+    "not_in_original_scope_but_flagging": true
+  },
+  "S4_row3_LOBO": {
+    "severity": "HIGH",
+    "claim": "'Breadth on unseen benchmarks (LOBO) | -0.0008 | head_lobo_pooled_2026-08-25' -- stale, current macro_breadth_gain=-0.005593563280094926 (-0.0056)",
+    "evidence": "head_lobo_pooled_2026-08-25.json macro_breadth_gain=-0.005593563280094926, regenerated 2026-09-14 (mtime) per git log since 2026-09-12 list.",
+    "correction": "-0.0008 -> -0.0056",
+    "no_note": true
+  },
+  "S4_other_rows_1_2_4_5_7_8_9_10_11_12": {
+    "severity": "NONE (verified clean)",
+    "claim": "Rows 1 (arch, 7 values), 2 (breadth slope +0.00868), 4 (union temp 7/8), 5 (pool pruning -0.0000), 7 (greedy-anchored veto +0.0006), 8 (regime detectors -0.548/+0.548), 9 (answer kind +0.0045), 10 (temp matching qualitative), 11 (ensemble width +0.1051/+0.1040), 12 (visual features +0.0002/+0.0018) ALL match current artifacts exactly.",
+    "evidence": "head_arch_transfer_2026-08-19.json MEAN_head_minus_prior per variant all exact; head_domain_scaling_MERGED collapsed mean_slope=0.008679 exact; mixed_temperature_2026-08-22.json 7/8 lose confirmed; pool_pruning_2026-08-24.json best_fixed_combo -3.15e-5 exact; greedy_anchored_2026-08-22.json aggressive vs_head delta=0.000578 exact; regime_detector cell_level_spearman knn=-0.5476/domclf=+0.5476 exact; answer_kind mean_long_minus_short=0.004480 exact; head_ens_width macro shipped=0.10514/all5=0.10402 exact; head_visual_features visual_gain=0.000188/context_control_gain=0.001848 exact."
+  },
+  "S5.1_decomposition": {
+    "severity": "MED",
+    "claim": "'selection skill positive on 7/8 (mean +0.0403 vs mean penalty +0.0256)' -- mean figures stale; per-cell VQA-RAD figures (+0.0244 skill, 0.0494 penalty) still match",
+    "evidence": "decomposition_2026-08-24.json (regenerated 2026-09-13) summary_T07: cells_with_positive_selection_skill=7/8 OK, mean_selection_skill=0.03871257 (+0.0387 not +0.0403), mean_sampling_penalty=0.02568024 (+0.0257 not +0.0256). VQA-RAD cell selection_skill=0.024375 (+0.0244 exact), sampling_penalty=0.049375 (+0.0494 exact).",
+    "correction": "mean +0.0403 -> +0.0387; mean penalty +0.0256 -> +0.0257",
+    "no_note": true
+  },
+  "S5.2_LOBO": {
+    "severity": "HIGH",
+    "claim": "'four-domain +0.0312 -> LOBO +0.0304 -> pooled +0.0803. Breadth -0.0008, own data +0.0500' -- ALL FOUR NUMBERS stale",
+    "evidence": "head_lobo_pooled_2026-08-25.json current macro: four_domain=0.027858(+0.0279), lobo=0.022264(+0.0223), pooled=0.070747(+0.0707); macro_breadth_gain=-0.005594(-0.0056); macro_own_data_gain=0.048482(+0.0485)",
+    "correction": "+0.0312 -> +0.0279; +0.0304 -> +0.0223; +0.0803 -> +0.0707; -0.0008 -> -0.0056; +0.0500 -> +0.0485",
+    "no_note": true
+  },
+  "S5.3_price_of_onboarding": {
+    "severity": "MED",
+    "claim": "'the first hundred questions carry most of the gain (OmniMedVQA -0.0004->+0.0986, RadImageNet +0.0010->+0.0528, GEMeX +0.0224->+0.0857)' stale vs current head_price_from_lobo_2026-08-30.json (regenerated 2026-09-17)",
+    "evidence": "current curve k=0/k=100 minus_greedy: omnimed -0.0108->+0.0998 (doc -0.0004->+0.0986); radimagenet +0.0149->+0.0578 (doc +0.0010->+0.0528); gemex +0.0292->+0.0855 (doc +0.0224->+0.0857, close-but-off at 4dp). summary.crossed=6 (doc text nearby says 'OmniMedVQA crosses at k=50' -- crossover_k for omnimed IS 50, consistent -- but doc's earlier statement 'onboarding costs ~100 labelled questions' / zero_shot_macro across whole file now +0.0196 (matches recent commit e2aa6f0 'Price curve re-fitted on the corrected PathVQA: onboarding costs +0.0196 at k=0' -- not quoted verbatim in this doc at all, doc predates this restatement)",
+    "correction": "OmniMedVQA -0.0004->+0.0986 => -0.0108->+0.0998; RadImageNet +0.0010->+0.0528 => +0.0149->+0.0578; GEMeX +0.0224->+0.0857 => +0.0292->+0.0855",
+    "no_note": true
+  },
+  "S5.4_temperature": {
+    "severity": "HIGH",
+    "claim": "'T=0.2 +0.0401, T=0.4 +0.0573, T=0.7 +0.0816, T=1.0 +0.0759 ... spread 0.0416' -- stale vs current head_temp_ensemble_2026-08-30.json",
+    "evidence": "current macro_by_temperature: 0.2->0.0393(+0.0393), 0.4->0.0539(+0.0539), 0.7->0.0773(+0.0773, best_fixed_T), 1.0->0.0710(+0.0710); macro_spread_across_T=0.0381",
+    "correction": "+0.0401->+0.0393; +0.0573->+0.0539; +0.0816->+0.0773; +0.0759->+0.0710; spread 0.0416->0.0381",
+    "no_note": true
+  },
+  "S5.6_layer_choice": {
+    "severity": "CRITICAL (data integrity, not just staleness)",
+    "claim": "'L18 +0.0275, L19 +0.0331, L20 +0.0235, L21 +0.0201, L22 +0.0277' cannot be reproduced -- head_layer19_eval_2026-08-24.json and head_layer21_eval_2026-08-24.json were NEWLY CREATED (git shows pure-add, 57 insertions/0 deletions) in commit 4b135ce (2026-09-13), i.e. never committed before; current files cover only 5/8 benchmarks (kvasir,vqamed,omnimed,gemex,radimagenet -- MISSING pathvqa,slake,vqa_rad) with macro_head_minus_greedy L19=0.02801(+0.0280) L21=0.01829(+0.0183), both far from doc's +0.0331/+0.0201 and computed over a different (smaller) cell set. Root cause per commit 4b135ce message: PathVQA/SLAKE/VQA-RAD backfill went into 'generator_eval_pathvqa_full at layers 18/20/21/22' (wrong stem) while these layer-eval scripts read 'generator_eval_<cell><SUF> at layers 7/14/21/28' (canonical stem) -- so those 3 benchmarks are silently absent from every current per-layer artifact, and a re-extraction was 'queued' as of that commit (unclear if since completed).",
+    "correction": "Cannot state a verbatim correction without the re-extraction; flag as UNVERIFIABLE / recompute needed. At minimum note '5/8 benchmarks only, pending re-extraction' next to any L18-L22 numbers quoted anywhere.",
+    "no_note": true
+  }
+},
+"cross_doc": {},
+"doc3_AUDIT_2026-09-12_S5b_items": {
+  "item_a_HTML_deck_TRANSFERWALL_not_updated": {
+    "status": "PARTIALLY CLOSED",
+    "evidence": "commit 753ef27 (2026-09-13) 'Propagate the corrections into the three documents that never got them' DID edit TRANSFER_WALL_2026-08-21.md (pathvqa/omnimed rows in S1 table fixed 0.3427->0.3140 etc, 4316->4315, 0.693->0.686 all now correct in current file). BUT this only fixed the SPECIFIC small corrections listed in AUDIT S5 table, not the much larger separate PathVQA-truncation headline restatement (+0.0802->+0.0736) which is STILL unpropagated into TRANSFER_WALL S1-9 and into OPENTEXT_FULL_RUNDOWN.md entirely (see doc1 findings). Did not verify the HTML rundown or the 08-24 deck file directly (out of primary scope per briefing but flagging as not checked)."
+  },
+  "item_b_decomposition_report_docstring": {
+    "status": "CLOSED, verified",
+    "evidence": "src/cascade_methods/decomposition_report.py lines 6-13 now read '...inflated the sampling penalty 12.4x (gemex read penalty +0.2288 instead of the correct +0.018484, this file's own artifact)...corrected 2026-09-13 against decomposition_2026-08-24.json cells.gemex_open[\"0.7\"].' Verified against current decomposition_2026-08-24.json: cells.gemex_open.\"0.7\".sampling_penalty=0.018484374999999997 -- matches exactly."
+  },
+  "item_c_two_artifacts_disagree_T07": {
+    "status": "CLOSED, verified",
+    "evidence": "commit e021633 (2026-09-13) 'Close the two-artifact disagreement' made free_signal_bakeoff.py read the per-benchmark cache for slake_open and vqa_rad_open like every other analysis. TRANSFER_WALL S11 (new section, 2026-09-13) documents this explicitly: 'the +0.0736 headline does not move' and gives the tiebreak_2026-09-13.json measurement of the ambiguity band (+0.0061 macro upper bound, best-rule-minus-first_row +0.00018). Not independently re-verified past what TRANSFER_WALL S11 already states, but the mechanism and fix are on disk and documented."
+  }
+},
+"doc2_TRANSFER_WALL_2026-08-21": {
+  "banner_check": {
+    "severity": "CRITICAL",
+    "claim": "Top banner (lines 4-8) still says only 'SUPERSEDED IN PART BY GEMeX... S1, S2, S4, S7 and S8 stand.' It does NOT mention AUDIT_2026-09-12.md at all, despite AUDIT S5 explicitly stating: '`TRANSFER_WALL_2026-08-21.md`'s banner is insufficient... Treat S1, S3, S5, S6 and S10 as superseded by this file [AUDIT].' This correction to the banner itself was never applied, even after 9 further edits to this file on 2026-09-13 (commits 753ef27 through 41175f1).",
+    "evidence": "grep for AUDIT in TRANSFER_WALL only hits line 125 inside S6 (a pointer added within that section), not in the top banner. S10.3 (line 252) still separately asserts 'S1, S2, S4, S7, S8 are unaffected' -- consistent with the OLD banner, not with AUDIT's broader supersession list (S3, S5, S6 explicitly, which S10 already documents as falsified, but AUDIT also implicates S1 itself via the retracted OmniMedVQA numbers it names).",
+    "correction": "Add to top banner: 'See AUDIT_2026-09-12.md S5 -- treat S1, S3, S5, S6 and S10 as superseded by that file, not just the GEMeX falsifications below.'",
+    "no_note": true
+  },
+  "S10-14_detail": {
+    "S11_tiebreak": "VERIFIED CLEAN. Matches tiebreak_2026-09-13.json framing; explicitly states 'the +0.0736 headline does not move' -- internally consistent with PVFIXED.",
+    "S12_qwen_replication_table": "VERIFIED CLEAN, exact match to head_final_stack_qwen_2026-09-13.json and head_final_stack_PVFIXED_2026-09-13.json: four-domain +0.0182(6/8)/+0.0227(6/8), pooled single layer +0.0729(6/8)/+0.0814(8/8), pooled+ensemble +0.0736(6/8)/+0.0820(8/8), +SC feature +0.0720(7/8)/+0.0783(8/8), pooled lever +0.0554/+0.0594 all exact.",
+    "S13_reproducibility_floor": "Narrative/methodology section, no artifact-checkable headline numbers beyond the six-run table; internally self-consistent (retraction-within-section is itself the point). Not independently re-verified against raw run logs (would require re-running fits, out of scope/time budget).",
+    "S14_medgemma_table1_FIRST_READING": {
+      "severity": "MED",
+      "claim": "'Lingshu, full protocol | 112,770 | +0.0433' does NOT reproduce from head_final_stack_PVFIXED_2026-09-13.json. Equal-weight mean of pooled_ens_minus_greedy over the 4 cells (PathVQA/SLAKE/VQA-RAD/RadImageNet) = +0.0479 (computed: (0.052988+0.054545-0.041237+0.125498)/4=0.047949), a 0.0046 gap from the printed +0.0433. By contrast the SAME computation for the Qwen row (+0.0547) reproduces EXACTLY from head_final_stack_qwen_2026-09-13.json (computed 0.054689), and MedGemma's +0.0248 reproduces exactly from head_final_stack_medgemma_2026-09-13.json macro.pooled_ens.",
+      "evidence": "PVFIXED cells pooled_ens_minus_greedy: pathvqa=0.052988, slake=0.054545, vqa_rad=-0.041237, radimagenet=0.125498 -> mean 0.047949, not 0.0433. Tried pooled_singlelayer (0.0487) and pooled_ens_sc (0.0424) as alternate metrics -- neither matches 0.0433 either.",
+      "note": "This document's OWN S13 documents an invocation-dependent +/-0.0029 to +/-0.0033 reproducibility floor for exactly this kind of run-level macro, so this may be that floor rather than a copy/paste staleness bug -- but as printed it is NOT reproducible from the artifact on disk today and should be re-derived or flagged.",
+      "no_note_in_doc": true
+    },
+    "S14_medgemma_table2_matched_protocol": "VERIFIED CLEAN, fully exact match to head_final_stack_medgemma_2026-09-13.json (depth-matched primary), head_final_stack_lingshu_matched_2026-09-13.json, head_final_stack_qwen_matched_2026-09-13.json: all 4 benchmarks x 3 generators x macro x training_rows checked, all exact to 4dp. ABSLAYERS secondary +0.0185 also exact (head_final_stack_medgemma_ABSLAYERS_2026-09-13.json macro.pooled_ens=0.018508)."
+  }
+},
+"doc4_DOMAIN_GUIDE_2026-09-16_lines1018-1391": {
+  "status": "VERIFIED CLEAN, exemplary",
+  "evidence": "Spot-checked ~25 numbers across S2.4.1 (headline table incl per-benchmark, exact match to head_final_stack_PVFIXED_2026-09-13.json), S2.4.4 (Qwen/MedGemma replication, exact), S2.4.5 (decomposition, LOBO, price-of-onboarding, coverage N=16 CI table all exact to source artifacts, all correctly labelled with commit ids e2aa6f0/999fd68), S2.4.6 cost table (exact to bestofn_vllm_2026-09-16.json). Document EXPLICITLY flags its own S2.4.2 table as quoting the pre-fix PathVQA 1,500-prefix number with a caveat ('as printed in OPENTEXT_FULL_RUNDOWN...; PathVQA there is the 1,500-question prefix') -- i.e. it correctly identifies staleness elsewhere rather than propagating it silently. This is the one document that models correct practice.",
+  "minor_note": {
+    "severity": "LOW",
+    "claim": "S2.4.5 onboarding bullet: '6/8 already cross greedy at k = 0, median crossover k = 0' is imprecise -- per head_price_from_lobo_2026-08-30.json curve data only 5/8 cross AT k=0 (pathvqa,slake,radimagenet,kvasir,gemex); omnimed crosses only at k=50 (6th benchmark to ever cross); vqa_rad and vqamed never cross (crossover_k=null). 'median crossover k=0' is itself correct (median of the 6 crossing benchmarks' k-values [0,0,0,0,0,50] = 0). Wording conflates 'crosses eventually' with 'crosses at k=0'.",
+    "correction": "'6/8 already cross greedy at k=0' -> '6/8 eventually cross greedy (5 already at k=0, OmniMedVQA at k=50); median crossover k=0'"
+  }
+},
+"doc5_OPEN_EXPERIMENTS_2026-09-17": {
+  "status": "MOSTLY VERIFIED CLEAN",
+  "verified_exact": ["0.9 SLAKE geometry row vs resolution_sweep_2026-08-13.json (244.0/616.5/671.6/78.3% all exact)", "0.2/0.3 cost table vs bestofn_vllm_2026-09-16.json (174.0/476.6ms, 34.3/123.2J, 2.74x/3.59x, 1.13x/8.0x all exact)", "1.2 coverage_sc16 per-benchmark deltas exact (cross-consistent with DOMAIN_GUIDE)", "1.3 budget_conversion_sc32 exact (cross-consistent with DOMAIN_GUIDE)", "GFLOPs 5,831/6,589/46,689 -- 5,831.4x is a consistent constant across 10+ artifacts (cost_floor, cost_decomposition, flop_ratio_derivation, free_head, shared_prefix_verifier, verifier_n_scaling), 6,589/46,689 are simple linear derivations from it (17.75 GFLOP/token x 371.2 / x 2630.1) -- not literally stored but correctly and transparently derived"],
+  "CRITICAL_cross_doc_inconsistency": {
+    "severity": "HIGH",
+    "claim": "OPEN_EXPERIMENTS S0.9 states corpus = '2,345 of 36,869 questions'. OPENTEXT_FULL_RUNDOWN_2026-09-04.md S1 states corpus = '35,012' questions (line 26), and AUDIT_2026-09-12.md S5 'corrected' an even older '30,912' to '35,012'. THESE ARE THREE DIFFERENT NUMBERS FOR THE SAME QUANTITY.",
+    "evidence": "36,869 = sum of CURRENT (post-2026-09-13 PathVQA-fix) full-benchmark n_questions from free_signal_bakeoff_2026-08-21.json: 3357+645+200+2000+10121+8883+3663+8000=36869 EXACT. 35,012 = sum using the OLD truncated PathVQA=1,500: 1500+645+200+2000+10121+8883+3663+8000=35012 EXACT. So OPEN_EXPERIMENTS (2026-09-17, newer) correctly uses the post-fix total; OPENTEXT_FULL_RUNDOWN (last touched 2026-09-13, same day as the fix) and AUDIT_2026-09-12's own 'correction' both still carry the now-stale 35,012 -- i.e. AUDIT's correction was itself overtaken by the PathVQA fix within about 24 hours and nothing re-corrected it a second time.",
+    "correction": "OPENTEXT_FULL_RUNDOWN.md line 26 and any other '35,012' instance -> 36,869; note that this is downstream of the same un-propagated PathVQA-fix root cause as every other S1 finding in doc1.",
+    "no_note": true
+  },
+  "not_independently_verified": ["0.7 row-cap reweighting figures (H_rwper_ds_bce 0.68975 vs ctl_bce_h256 0.68980) -- cited from head_sweep.py raw output, not a *.json in results/cascade_methods/artifacts/, so outside this audit script's index; consistent between DOMAIN_GUIDE and OPEN_EXPERIMENTS (same two docs, same values, at least internally consistent)", "1.2 Weitzman '11.74 against 16.0 FLOP-eq, 27% cut, 4.37-6.63 mean draws' -- weitzman_T04_2026-08-15.json has matching PER-CELL flops_eq values (e.g. VQA_RAD_open=11.74202) corroborating the figure but the exact aggregate 11.74/16.0/27% pairing was not reconstructed from the raw artifact in the time available"]
+},
+"doc6_docstrings": {
+  "head_final_stack_py": {
+    "severity": "MED",
+    "claim": "Top docstring (lines 6-11): pooled training +0.0565, layer ensembling +0.0125, self-consistency +0.0098",
+    "findings": [
+      "+0.0565 (pooled training, cited head_pooled_alldomains_2026-08-24.json gain_from_pooling) -- EXACT match to that artifact as it stands (mtime Aug24, never regenerated after the 2026-09-13 PathVQA fix -- same latent-staleness caveat as OPENTEXT_FULL_RUNDOWN S3.1: this specific artifact's PathVQA cell still uses n=700, not the fixed 1,623).",
+      "+0.0125 (layer ensembling, B-A from head_best_config_2026-08-24.json) -- artifact WAS regenerated 2026-09-13; current B-A = 0.030610-0.018151 = 0.012459 -> rounds to +0.0125, so this one STILL happens to match current data despite the regeneration.",
+      "+0.0098 (self-consistency, C-A from same artifact) -- current C-A = 0.028130-0.018151 = 0.009979 -> rounds to +0.0100, NOT +0.0098. This one only matches the OLD pre-regen rounded delta (+0.0297-+0.0199=+0.0098 using OPENTEXT_FULL_RUNDOWN's stale S3.2 table). STALE.",
+      "The docstring's own claim that the combination is '+0.0168 over the deployed recipe' (D-A) also does not match current data: current D-A = 0.034273-0.018151 = 0.016123 -> +0.0161, not +0.0168 (old rounded D-A was +0.0366-+0.0199=+0.0167, close but this specific +0.0168 also doesn't reproduce precisely either way)."
+    ],
+    "correction": "self-consistency +0.0098 -> +0.0100 (or re-derive precisely); combined +0.0168 -> +0.0161",
+    "no_note": true
+  },
+  "freeze_pooled_selector_py": {
+    "severity": "HIGH (supersession, matches briefing's flagged numbers exactly)",
+    "claim": "Top docstring (lines 14-19), explicitly citing head_final_stack_2026-08-24.json: four-domain +0.0243 (6/8), pooled single layer +0.0765, pooled+ensemble +0.0802 ('<- this artifact'), pooled+ensemble+SC +0.0797",
+    "evidence": "EXACT match to head_final_stack_2026-08-24.json as it stands on disk (unregenerated, superseded file) -- same category as OPENTEXT_FULL_RUNDOWN S3.3/S3.5. No mention anywhere in the docstring that genframe_head_pooled_ens_v2 (built 2026-09-13 from head_final_stack_PVFIXED_2026-09-13.json, +0.0736/+0.0182) has since superseded this for deployment.",
+    "IMPORTANT_CONTEXT": "This repo already has an UNCOMMITTED working-tree diff to this exact file (git status shows 'M src/training_methods/freeze_pooled_selector.py') that fixes a RELATED but narrower bug: the README.md-WRITING code (main(), lines ~166-190) was hardcoding the literal strings '+0.0802 / +0.0243' instead of reading them from the freshly-fit recipe dict, which is why ckpts/train/genframe_head_pooled_ens_v2/README.md on disk today STILL prints '+0.0802 macro ... against +0.0243' even though its sibling recipe.json in the same directory correctly says 0.07360735025242765 / 0.018238794267665736. The uncommitted diff's own comment says: 'READ, never hardcode (audit 2026-09-18)... so the v2 directory shipped a README that contradicts its own recipe.json (+0.0736 / +0.0182).' This independently corroborates the exact bug found in this audit. HOWEVER that diff only touches the runtime README-generation code -- it does NOT touch the MODULE-LEVEL DOCSTRING at the top of the file (lines 14-19), which is what the task asked about and which remains stale/unsuperseded.",
+    "correction": "Docstring lines 14-19 need either updated numbers (+0.0182/+0.0729/+0.0736/+0.0720, source head_final_stack_PVFIXED_2026-09-13.json) or, better, an explicit note that this recipe's numbers are what genframe_head_pooled_ens (v1, non-deployed) measured, and pointing to v2/recipe.json for the current deployed figures.",
+    "genframe_head_pooled_ens_v2_README_note_correction": "checked training_rows in v2 README: '112,770 training rows (31,439 from the four original domains)' IS correct (matches v2 recipe.json training_rows=112770) -- only the accuracy line is stale, not the row count."
+  }
+},
+"pending": []
+}
