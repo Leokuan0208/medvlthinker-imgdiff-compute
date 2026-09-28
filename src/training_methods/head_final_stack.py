@@ -108,6 +108,22 @@ GENERATORS = {
         # [18,20,22] is extracted too and is a robustness check, NOT the headline.
         "ens": [22, 24, 27],
     },
+    "qoq": {
+        # SECOND LINEAGE PAIR for D3. QoQ-Med-VL-7B is, like Lingshu-7B, a fine-tune of
+        # Qwen2.5-VL-7B (qwen2_5_vl, hidden 3584, 28 layers -- verified from its config), so
+        # Lingshu -> QoQ is a second instance of the same base->fine-tune relationship as
+        # Lingshu -> Qwen. One pair is an anecdote; this is what makes it a claim.
+        # Decode checked before any GPU time was spent, over 294,952 sampled candidates: 3.49-11.04
+        # mean generated tokens and 0.00-0.38% at the 64-token cap, per cell, against MedGemma's 100%
+        # which invalidated that arm.  Audit: artifacts/qoq_stoptoken_audit_2026-09-28.json.
+        "tag": "qoq7b",
+        "train_stems": [],
+        "eval_stem": lambda c: f"generator_eval_qoq_{c}",
+        "eval_dsfilter": lambda c: None,
+        "out": "head_final_stack_qoq_2026-09-28.json",
+        "bench": None,
+        "ens": None,
+    },
     # MATCHED CONTROLS for the MedGemma comparison. MedGemma has no dedicated train-domain caches
     # and only four benchmarks, so its probe is fitted on 20,102 rows against Lingshu's 112,770 --
     # a 5.6x gap that confounds "different LM family" with "less training data". These two run the

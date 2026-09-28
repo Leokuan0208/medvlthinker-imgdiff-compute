@@ -1,0 +1,84 @@
+[
+ {
+  "name": "qoq_gen_kvasir_x1_open_t0",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --tag qoq7b --dataset kvasir_x1_open --n_samples 1 --temp 0.0 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b.jsonl",
+  "expect_grep": "DONE"
+ },
+ {
+  "name": "qoq_gen_kvasir_x1_open_sc8",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --tag qoq7b_sc8 --dataset kvasir_x1_open --n_samples 8 --temp 0.7 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b_sc8.jsonl",
+  "expect_grep": "DONE"
+ },
+ {
+  "name": "qoq_judge_kvasir_x1_open_t0",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b.jsonl'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b.judge.jsonl",
+  "expect_grep": "DONE judge"
+ },
+ {
+  "name": "qoq_judge_kvasir_x1_open_pool",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b_sc8_scexploded.jsonl'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_kvasir_x1_open_qoq7b_sc8_scexploded.judge.jsonl",
+  "expect_grep": "DONE judge"
+ },
+ {
+  "name": "qoq_extract_kvasir_x1_open",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --mode generator --split eval --eval_ds kvasir_x1_open --gen_tag qoq7b --pool_tag _sc8 --layers 18 20 22 --stem_tag qoq_kvasir_x1_open --out feats_hidden'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qoq_kvasir_x1_open.npz",
+  "expect_min_bytes": 5000000,
+  "expect_grep": "saved"
+ },
+ {
+  "name": "qoq_gen_gemex_open_t0",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --tag qoq7b --dataset gemex_open --n_samples 1 --temp 0.0 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b.jsonl",
+  "expect_grep": "DONE"
+ },
+ {
+  "name": "qoq_gen_gemex_open_sc8",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_openvqa.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --tag qoq7b_sc8 --dataset gemex_open --n_samples 8 --temp 0.7 --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b --tp 1 --max_model_len 4096'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b_sc8.jsonl",
+  "expect_grep": "DONE"
+ },
+ {
+  "name": "qoq_judge_gemex_open_t0",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b.jsonl'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b.judge.jsonl",
+  "expect_grep": "DONE judge"
+ },
+ {
+  "name": "qoq_judge_gemex_open_pool",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; python3 src/cascade_methods/explode_sc_for_judge.py /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b_sc8.jsonl && CUDA_VISIBLE_DEVICES=0 python3 src/labeling/run_judge.py --tp 1 --gpu_mem 0.92 --preds /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b_sc8_scexploded.jsonl'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_gemex_open_qoq7b_sc8_scexploded.judge.jsonl",
+  "expect_grep": "DONE judge"
+ },
+ {
+  "name": "qoq_extract_gemex_open",
+  "timeout_s": 86400,
+  "stall_s": 3600,
+  "cmd": "flock -w 172800 logs/.gpu0.lock bash -c 'export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1; CUDA_VISIBLE_DEVICES=0 python3 src/training_methods/extract_generator_hidden.py --model_path /data/dan/hf_cache/hub/models--ddvd233--QoQ-Med-VL-7B/snapshots/aedfc42114c42fed85e5eef91466131e9597d750 --mode generator --split eval --eval_ds gemex_open --gen_tag qoq7b --pool_tag _sc8 --layers 18 20 22 --stem_tag qoq_gemex_open --out feats_hidden'",
+  "expect": "/home/jamesyang/medvlthinker-imgdiff-compute/feats_hidden/generator_eval_qoq_gemex_open.npz",
+  "expect_min_bytes": 5000000,
+  "expect_grep": "saved"
+ }
+]
