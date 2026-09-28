@@ -236,8 +236,8 @@ judge of record **+0.0737 [+0.0608, +0.0864]** (`em_rescore_pooled_probe_2026-09
   negative" came from shrinking toward ZERO, and QoQ-Med-VL-7B is NOT an independent second pair (0.11%
   weight distance from Qwen in layers 18–22, vs Lingshu's 3.2%). Owed before claiming: exact-match
   currency, paired CIs, a genuinely different fine-tune, the reverse direction (base-trained probe).
-- **Preservation (2026-09-28).** **Nothing since 2026-08-17 is on the remote** — `git ls-remote` shows only
-  `main` at `e01de8c`; pushing is Leo's (background-session pushes are refused). **Backup** `/data/dan/backups/medvlthinker-imgdiff-compute/2026-09-28/`, on the
+- **Preservation (2026-09-28).** **Pushed 2026-09-28** at Leo's request: `main`, `audit-2026-09-18` (both
+  `45f42ca` at push time) and `worktree-lit-domain-package` (`cf0d1ac`) are on `origin`. **Backup** `/data/dan/backups/medvlthinker-imgdiff-compute/2026-09-28/`, on the
   `/data` disk, separate from `~`: 699 files, 48.06 GB, each verified by sha256 against its source (`STATUS`,
   `MANIFEST.sha256` there) — the shipped probe, `ckpts/openvqa/cheap_lingshu7b`, `/data/dan/audit_2026-09-18/`,
   every September `feats_hidden` cache except MedGemma's (withdrawn arm), the literature-guide build
@@ -497,10 +497,9 @@ that discipline:
   **Also never mislabel provenance:** an estimate is an estimate until it is measured, and a number
   copied by hand into a deck is not "read from an artifact". Both failure modes have happened here
   (retrospective §7 hole 14, §10.2 X8). See CRITICAL RULE 7.
-- **Git is committed but NOT PUSHED** (corrected 2026-09-20; this bullet used to say the July work was
-  not in git at all, which stopped being true in August). Check with
-  `git log origin/main..main --oneline | wc -l` — 78 on 2026-09-20; on 2026-09-28 `main` was fast-forwarded
-  to `audit-2026-09-18`, so all of it is on `main`. **Treat "push" as the standing top-priority chore.**
+- **Git: committed AND pushed as of 2026-09-28** (78 commits sat unpushed from 2026-08-17 until then; on
+  2026-09-28 `main` was fast-forwarded to `audit-2026-09-18` and pushed with it). Check with
+  `git log origin/main..main --oneline | wc -l`; **push only when Leo asks.**
   `results/cascade_methods/{docs,artifacts,README.md}` ARE tracked (§4.1); `MedEvalKit/`, `ckpts/`,
   `feats_hidden/`, `logs/`, `data/` are gitignored — their September contents are backed up as of 2026-09-28
   (§0a). Do not delete or relocate anything untracked.
