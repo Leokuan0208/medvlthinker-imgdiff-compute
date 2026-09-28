@@ -207,6 +207,12 @@ Findings: `results/cascade_methods/docs/current/AUDIT_2026-09-18.md`.
 | `template_stratified_gain.py` | the gain split by question-template repeat and by gold-answer-seen-in-train |
 | `pilot_cross_model_transfer.py` | frozen Lingshu probes applied zero-shot to Qwen's hidden states |
 | `pilot_lineage_alignment.py` | follow-up: can a **label-free** ridge map Qwen→Lingshu hidden space close that transfer gap? (pairs are rows where both generators gave the same normalised answer) |
+| `d3_lineage_pair.py` | D3: the pilot generalised over `--target {qwen,qoq}` — A zero-shot / B re-standardised / ridge arms |
+| `d3_pair_efficiency.py` | D3: ridge map refit on 100…9,688 pairs, shrunk toward zero (superseded by the next row) |
+| `d3_ridge_identity_prior.py` | D3: the same sweep with the ridge shrunk toward the identity; its W = I arm must reproduce arm B |
+| `d3_writeup.py` | renders `LINEAGE_TRANSFER_2026-09-28.md` from the D3 artifacts (carries the supersession banner) |
+| `d3_finish.sh` | detached finisher: waited for the QoQ-native fit, repaired its VERDICT, regenerated the doc, committed |
+| `check_2026_09_28_report.py` | renders `CHECK_2026-09-28.md` from `artifacts/check_2026-09-28_findings.json` |
 | `verify_agent_claims.py` | independent spot-verification of the sweeps' most serious claims |
 | `sample_flips.py` | samples upward judge flips with zero gold-token overlap, for reading by hand |
 | `sweeps/` | the seven sub-audits' own scripts (`code-audit/`, `data-integrity/`, `docs-html/`, `docs-md/`, `docs-top/`, `replication/`, `stats-baselines/`) |

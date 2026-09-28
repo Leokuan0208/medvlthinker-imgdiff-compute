@@ -102,7 +102,10 @@ policy to the multiple-choice half and leaving the open half at always-32B-direc
 (fusion), guardrail-clean. **It is 100% one cell** — byte-identical to the baseline on 7 of 8 by
 construction, and dropping PMC_VQA takes the delta to exactly 0.000. That cell is **`test_2.csv`**, the
 split with zero published verification, independently measured at B+C = 73.6% with a 37.8% constant-C
-floor — **an answer-letter-bias audit is OWED before this is used.** It only holds because the policy is
+floor. **The answer-letter-bias audit was done 2026-08-12 and the win survives it, smaller:** +0.00067 macro
+after letter-balancing for both policies (veto [+0.00034,+0.00099], fusion [+0.00017,+0.00117];
+`pmcvqa_letterbias_audit_2026-08-12.json`), and +0.00099 after the grader-defect repair
+(`pmcvqa_grader_defect_2026-08-12.json`). It only holds because the policy is
 **pre-specified** from the 2026-08-05 artifact (selected on eval instead: p = 0.29). It is worse on
 latency, so **not Pareto**. And it wins **by switching the open-text machinery off**.
 
@@ -192,10 +195,12 @@ outranks verifier work.
   lora_verifier_disjoint), content-hash verified. `results/` has 269 tracked files so the numbers travel
   with a push; `ckpts/`, `feats_hidden/`, `logs/` have **zero** tracked files and rely on that backup.
 
-## 0a. Current status (2026-09-20) — §0 stops at 2026-08-11; read this for anything newer
+## 0a. Current status (2026-09-20, amended 2026-09-28) — §0 stops at 2026-08-11; read this for anything newer
 
 > **Entry docs for the live work:** `docs/current/AUDIT_2026-09-18.md` (what is true, what was wrong, every
-> correction) and `docs/current/NEW_DIRECTIONS_2026-09-20.md` (literature + where to go next). Older:
+> correction) and `docs/current/NEW_DIRECTIONS_2026-09-20.md` (literature + where to go next). Then
+> `docs/current/CHECK_2026-09-28.md` — a fresh-model re-check of everything since (123 findings, each
+> adversarially verified), including the deck's to-do list. Older:
 > `OPENTEXT_FULL_RUNDOWN_2026-09-04.md`, `AUDIT_2026-09-12.md`, `PRIOR_ART_PROBE_VERIFIER_2026-09-14.md`.
 
 **Live work since mid-August is the open-text arm only:** an MLP probe (one hidden layer, width 256) on
@@ -221,7 +226,16 @@ judge of record **+0.0737 [+0.0608, +0.0864]** (`em_rescore_pooled_probe_2026-09
 - **Mechanism is not novel, and neither is "in a VLM"** (arXiv:2505.12225, 2608.30841, 2605.28527,
   2603.22492, 2608.10835). See `NEW_DIRECTIONS_2026-09-20.md` for what is still open.
 - **Unreported baselines:** generator LoRA-SFT +0.0142 at 1× cost (`ckpts/cheapleg/scores_*`); 7B+probe
-  vs Lingshu-32B greedy loses 2, ties 1, wins 1 of 4.
+  vs Lingshu-32B greedy, 4 cells: **judge** 1 loss (VQA-RAD), 2 ties, 1 win (RadImageNet); **lenient EM**
+  2 losses, 1 tie, 1 win (`audit_stats_baselines_2026-09-20.json`). Always say which.
+- **D3 — verifier transfer along a fine-tuning lineage (2026-09-28; judge currency only, NOT yet a claim).**
+  The frozen Lingshu probe, read on Qwen2.5-VL-7B (Lingshu's base) with no labels: zero-shot +0.0451,
+  re-standardised +0.0490, native Qwen probe +0.0820. A label-free ridge map shrunk toward the IDENTITY
+  adds more: +0.0541 at 100 pairs, +0.0649 at 9,688 (`d3_ridge_identity_prior_2026-09-28.json`).
+  ⚠️ `LINEAGE_TRANSFER_2026-09-28.md` is wrong twice (it carries a banner): its "ridge map is a measured
+  negative" came from shrinking toward ZERO, and QoQ-Med-VL-7B is NOT an independent second pair (0.11%
+  weight distance from Qwen in layers 18–22, vs Lingshu's 3.2%). Owed before claiming: exact-match
+  currency, paired CIs, a genuinely different fine-tune, the reverse direction (base-trained probe).
 - **Preservation:** `main` is 78+ commits ahead of `origin/main`; `genframe_head_pooled_ens_v2`,
   `ckpts/openvqa/cheap_lingshu7b` and the September `feats_hidden` caches are in NO backup. The audit's
   198,378 MedGemma-27B judge labels and per-candidate probe scores are at `/data/dan/audit_2026-09-18/`.

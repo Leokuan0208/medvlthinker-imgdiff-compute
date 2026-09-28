@@ -525,7 +525,9 @@ halves — separates them:
 training set, not the architecture. Note the row counts are *not* equalised — the protocol is
 matched, but generators differ in how many distinct candidates they produce per question, and
 MedGemma produces the most (6.58), so if anything this favours it slightly. All three lose on
-VQA-RAD (n=97), which loses on every generator and every protocol we have run.
+VQA-RAD (n=97) under this matched protocol (Qwen −0.0619, `head_final_stack_qwen_matched_2026-09-13.json`).
+*Corrected 2026-09-28 (CHECK_2026-09-28.md C5b):* it does **not** lose on every protocol — Qwen under the
+full protocol gains **+0.0412** on VQA-RAD (pooled_ens, `head_final_stack_qwen_2026-09-13.json`).
 
 **The pre-registered layer choice was also right, and can be said so because it was declared
 first:** the depth-matched primary gives **+0.0248** against the absolute-matched secondary's

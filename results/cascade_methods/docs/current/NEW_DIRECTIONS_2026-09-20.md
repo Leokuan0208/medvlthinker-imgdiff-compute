@@ -35,7 +35,7 @@ itself. D3 is the cheap generalisation that takes the work out of medicine.**
 |---|---|---|---|---|
 | **D1** | **Probe-selected rejection-sampling fine-tuning (PRFT)** — move the best-of-N gain into the weights so *greedy* gets it | selector is OPEN in text *and* vision | 5–6 LoRA runs on Qwen2.5-VL-7B, ~1 GPU-day each | probe-filtered pseudo-labels 0.829 precise vs 0.679 for self-consistency, under a judge the probe never saw |
 | **D2** | **"The currency decides the winner"** — evaluation-currency sensitivity of test-time scaling, and judge distillation in a latent verifier | OPEN in this form | one more judge + a 300-item human-rated subset | four currencies, a 2×2 and a consensus probe are done |
-| **D3** | **Zero-label verifier transfer along a fine-tuning lineage** | OPEN for VLMs | reverse direction + a second lineage pair (CPU) | +0.0451 zero-shot → **+0.0603 with a label-free linear map** = 74 % of native |
+| **D3** | **Zero-label verifier transfer along a fine-tuning lineage** | OPEN for VLMs | reverse direction + a second lineage pair (CPU) | +0.0451 zero-shot → **+0.0603 with a label-free linear map** = 74 % of native. *2026-09-28: see the D3 status block below* |
 | D4 | Tiny probe vs multi-billion-parameter multimodal reward models, general-domain VQA | OPEN | new generation on general benchmarks (GPU-days) | — |
 | D5 | A predictive law for best-of-N gain, tested on our grid | OPEN (three untested theories) | CPU only | per-candidate scores dumped |
 | D6 | Does a latent verifier look at the image? | partly done (DualRead) | ablated re-extraction (GPU-hours) | image-token features +0.0002 |
@@ -216,6 +216,15 @@ judge inheritance is real but bounded at 7–30 %". That is a solid workshop/sho
 exists) and the evaluation section of D1 — not a flagship on its own. **Risk:** low; cost is mostly writing.
 
 ### D3 — A verifier that survives the model it was trained on: zero-label transfer along a fine-tuning lineage
+
+> **Status 2026-09-28 (judge currency only — not yet a claim).** Run: (c) a "second pair", QoQ-Med-VL-7B —
+> but it is **not independent**: 0.11 % weight distance from Qwen2.5-VL in the probed layers vs Lingshu's
+> 3.2 %, so it re-measures pair 1 (`CHECK_2026-09-28.md`, d3-method P1). The pair-efficiency sweep first
+> read as "the map needs >3,000 pairs to beat plain re-standardisation"; that was an artifact of shrinking
+> the ridge toward zero. Shrunk toward the identity: **+0.0541 at 100 pairs, +0.0649 at 9,688**
+> (`d3_ridge_identity_prior_2026-09-28.json`) — so onboarding a related model does look cheap. Writeup,
+> bannered: `LINEAGE_TRANSFER_2026-09-28.md`. **Still open:** the reverse direction (a); a genuinely different
+> fine-tune for (c); exact-match currency and paired CIs, both required before this is quoted.
 
 **Pitch.** Lingshu's probes, unchanged, applied to Qwen2.5-VL-7B's states give **+0.0451** with zero Qwen
 labels (4/8 benchmarks individually significant; the three large ones — Kvasir-x1, OmniMedVQA, GEMeX — keep

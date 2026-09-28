@@ -226,8 +226,10 @@ RadImageNet, where the 32B (0.3078) is actually WORSE than the 7B (0.3337), so i
 degraded reference, not over a stronger model.** In exact-match currency the 4-benchmark macro is
 **-0.0305**, i.e. the 32B is better. Caveats that must travel with this table: (i) PathVQA matches
 only 700 of 1,623 — the 32B dump is on the truncated prefix, so that row is on the *easier* half
-(`AUDIT_2026-09-12.md` §3); (ii) the judge is Lingshu-32B scoring **its own** greedy output on the
-32B rows — self-judging, which biases *towards* the 32B; (iii) the 32B dumps predate the current
+(`AUDIT_2026-09-12.md` §3); (ii) ~~the judge is Lingshu-32B scoring its own greedy output on the
+32B rows — self-judging, which biases towards the 32B~~ *corrected 2026-09-28 (CHECK_2026-09-28.md C4c):*
+the judge is **MedVLThinker-32B** (`src/labeling/run_judge.py:21`), not Lingshu-32B, so this is **not**
+self-judging and no bias toward the 32B follows; the artifact's `note` field still carries the old label; (iii) the 32B dumps predate the current
 serving config, so the +-0.008 caveat applies; (iv) **the comparison is not cost-matched** — 7B
 best-of-8 is ~1.13x 7B FLOPs / 2.74x latency (`bestofn_vllm_2026-09-16.json`) against a 32B's ~4.6x
 weights, so the honest framing is a Pareto one, not "we beat the big model".

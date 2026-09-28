@@ -103,6 +103,20 @@ tmp/{code-audit,data-integrity,docs-html,docs-md,docs-top,replication,stats-base
 These are expensive to regenerate — the two GPU judge passes are the bulk of the audit's cost — and
 they are **not backed up** (`AUDIT_2026-09-18.md` §9 item 2).
 
+## D3 and the 2026-09-28 check (run from the worktree or repo root; CPU, 4 threads)
+
+```
+python3 src/audit_2026_09_18/d3_lineage_pair.py --target qoq --out results/cascade_methods/artifacts/d3_lineage_qoq_2026-09-28.json
+python3 src/audit_2026_09_18/d3_pair_efficiency.py       results/cascade_methods/artifacts/d3_pair_efficiency_2026-09-21.json   # ~43 min (2,565 s)
+python3 src/audit_2026_09_18/d3_ridge_identity_prior.py  results/cascade_methods/artifacts/d3_ridge_identity_prior_2026-09-28.json  # ~29 min (1,760.6 s)
+python3 src/audit_2026_09_18/d3_writeup.py             > results/cascade_methods/docs/current/LINEAGE_TRANSFER_2026-09-28.md
+python3 src/audit_2026_09_18/check_2026_09_28_report.py > results/cascade_methods/docs/current/CHECK_2026-09-28.md
+```
+
+Inputs: `feats_hidden/generator_eval_{finelayer*,qwen_*,qoq_*}`, the frozen probes in
+`ckpts/train/genframe_head_pooled_ens_v2`, and the judge labels `ckpts/openvqa/cheap_lingshu7b/ckpt_*_{qwen25vl7b,qoq7b}.judge.jsonl`.
+The pair-2 native reference comes from `src/training_methods/head_final_stack.py --generator qoq`.
+
 ## `sweeps/`
 
 The seven parallel sub-audits' own scripts, one directory each: `code-audit/`, `data-integrity/`,
