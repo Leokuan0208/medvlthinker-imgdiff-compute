@@ -7,7 +7,7 @@ Artifacts of record:
 - `results/cascade_methods/artifacts/pilot_lineage_alignment_2026-09-20.json`
 - `results/cascade_methods/artifacts/d3_pair_efficiency_2026-09-21.json`
 - `results/cascade_methods/artifacts/d3_lineage_qoq_2026-09-28.json`
-- `results/cascade_methods/artifacts/head_final_stack_qoq_2026-09-28.json`  **(missing at generation time)**
+- `results/cascade_methods/artifacts/head_final_stack_qoq_2026-09-28.json`
 - `results/cascade_methods/artifacts/qoq_stoptoken_audit_2026-09-28.json`
 
 Currency: judge of record (MedVLThinker-32B). Bootstrap: 10000, clustered by img_md5.
@@ -39,7 +39,7 @@ teacher-forced on identical text. Pairing rule: same (benchmark, idx, answer up 
 | **RIDGE**, all pairs | +0.0574 | +0.0564 |
 | → ridge over zero-shot | +0.0123 | +0.0138 |
 | → **ridge over re-standardise** | +0.0084 | **+0.0053** |
-| target-native probe (the ceiling) | +0.0820 |   n/a |
+| target-native probe (the ceiling) | +0.0820 | +0.0739 |
 
 All values are macro verifier-minus-greedy over the eight held-out benchmark halves.
 
@@ -116,10 +116,8 @@ reported as a measured negative, not as the method.
   294,952 sampled candidates the mean generated length is 3.49–11.04 tokens and 0.0–0.384% of candidates reach the 64-token cap, per cell.
   MedGemma-4B failed this same check at 100% at the cap, which invalidated that entire replication
   arm — so it is now run before, not after, committing GPU time. (`qoq_stoptoken_audit_2026-09-28.json`)
+- pair-2 native ceiling read from `head_final_stack_qoq_2026-09-28.json` macro.pooled_ens (5 seeds, 87,308 pooled rows); the D3 pair run wrote null for it because that fit was still going when the artifact was written. Two caveats on that ceiling: it is a 5-seed fit while the transfer arms use the frozen 8-seed `genframe_head_pooled_ens_v2` probes, and QoQ has 87,308 pooled training rows against Qwen's 145,085 (`head_final_stack_qwen_2026-09-13.json`), so the two native ceilings are matched to each other in recipe but not in training volume.
 - per-cell greedy accuracy was written under the key 'qwen_greedy' by a stale field name in d3_lineage_pair.py:166; the VALUE was always the TARGET generator's own greedy (computed from ckpt_<cell>_qoq7b.judge.jsonl). Key renamed to 'target_greedy' 2026-09-28, no value changed.
 - Pair 1's reference points (A, B, native) are the pre-registered `reference` block of
   `d3_pair_efficiency_2026-09-21.json`, copied from the pilot; the RIDGE row is this run's own refit, which is
   why it differs slightly from the pilot value quoted in the reproducibility check above.
-
-> ⚠️ **`head_final_stack_qoq_2026-09-28.json` was not on disk when this document was generated**, so
-> the pair-2 native ceiling reads `n/a`. Re-run this script once that fit lands.
