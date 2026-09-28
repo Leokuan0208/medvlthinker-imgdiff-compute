@@ -236,9 +236,13 @@ judge of record **+0.0737 [+0.0608, +0.0864]** (`em_rescore_pooled_probe_2026-09
   negative" came from shrinking toward ZERO, and QoQ-Med-VL-7B is NOT an independent second pair (0.11%
   weight distance from Qwen in layers 18–22, vs Lingshu's 3.2%). Owed before claiming: exact-match
   currency, paired CIs, a genuinely different fine-tune, the reverse direction (base-trained probe).
-- **Preservation:** `main` is 78+ commits ahead of `origin/main`; `genframe_head_pooled_ens_v2`,
-  `ckpts/openvqa/cheap_lingshu7b` and the September `feats_hidden` caches are in NO backup. The audit's
-  198,378 MedGemma-27B judge labels and per-candidate probe scores are at `/data/dan/audit_2026-09-18/`.
+- **Preservation (2026-09-28).** **Nothing since 2026-08-17 is on the remote** — `git ls-remote` shows only
+  `main` at `e01de8c`; pushing is Leo's (background-session pushes are refused). **Backup** `/data/dan/backups/medvlthinker-imgdiff-compute/2026-09-28/`, on the
+  `/data` disk, separate from `~`: 699 files, 48.06 GB, each verified by sha256 against its source (`STATUS`,
+  `MANIFEST.sha256` there) — the shipped probe, `ckpts/openvqa/cheap_lingshu7b`, `/data/dan/audit_2026-09-18/`,
+  every September `feats_hidden` cache except MedGemma's (withdrawn arm), the literature-guide build
+  scripts, and a git bundle of every branch. **Still single-copy:** `/data/dan/archive/` (91 GB, the Lingshu
+  feature caches behind the headline, symlinked from `feats_hidden/`) — a copy on the same disk would not help.
 
 ## 1. The project in one paragraph
 
@@ -495,10 +499,11 @@ that discipline:
   (retrospective §7 hole 14, §10.2 X8). See CRITICAL RULE 7.
 - **Git is committed but NOT PUSHED** (corrected 2026-09-20; this bullet used to say the July work was
   not in git at all, which stopped being true in August). Check with
-  `git log origin/main..main --oneline | wc -l` — 78 on 2026-09-20. **Treat "push" as the standing
-  top-priority chore.** `results/cascade_methods/{docs,artifacts,README.md}` ARE tracked (§4.1);
-  `MedEvalKit/`, `ckpts/`, `feats_hidden/`, `logs/`, `data/` are gitignored and their September contents
-  are in no backup (§0a). Do not delete or relocate anything untracked.
+  `git log origin/main..main --oneline | wc -l` — 78 on 2026-09-20; on 2026-09-28 `main` was fast-forwarded
+  to `audit-2026-09-18`, so all of it is on `main`. **Treat "push" as the standing top-priority chore.**
+  `results/cascade_methods/{docs,artifacts,README.md}` ARE tracked (§4.1); `MedEvalKit/`, `ckpts/`,
+  `feats_hidden/`, `logs/`, `data/` are gitignored — their September contents are backed up as of 2026-09-28
+  (§0a). Do not delete or relocate anything untracked.
 - **Code-delivery convention Leo uses:** brand-new files / standalone scripts are delivered as
   a heredoc (`cat > path << 'EOF' ... EOF`) so he can paste them whole. **Edits to existing
   files** are delivered as a plain code block (the snippet to change), which Leo applies himself

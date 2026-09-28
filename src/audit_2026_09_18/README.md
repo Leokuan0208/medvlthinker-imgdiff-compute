@@ -101,7 +101,7 @@ tmp/{code-audit,data-integrity,docs-html,docs-md,docs-top,replication,stats-base
 ```
 
 These are expensive to regenerate — the two GPU judge passes are the bulk of the audit's cost — and
-they are **not backed up** (`AUDIT_2026-09-18.md` §9 item 2).
+they were backed up 2026-09-28, sha256-verified, to `/data/dan/backups/medvlthinker-imgdiff-compute/2026-09-28/`audit_2026-09-18/.
 
 ## D3 and the 2026-09-28 check (run from the worktree or repo root; CPU, 4 threads)
 
