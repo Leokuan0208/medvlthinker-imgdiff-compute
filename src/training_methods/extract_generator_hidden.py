@@ -113,7 +113,10 @@ JSON_CELLS = {"kvasir_open": "/data/dan/dataset/kvasir_vqa_x1/kvasir_open_1200.j
               "kvasir_x1_open": "/data/dan/dataset/kvasir_x1_cell/kvasir_x1_open.json",
               "omnimed_open": "/data/dan/dataset/omnimed_opentext/omnimed_open.json",
               "vqamed_open": "/data/dan/dataset/vqamed_cell/vqamed_open.json",
-              "gemex_open": "/data/dan/dataset/gemex_cell/gemex_open.json"}
+              "gemex_open": "/data/dan/dataset/gemex_cell/gemex_open.json",
+              # comparability cells (2026-10-15, src/exp_2026_10/build_comparability_cells.py)
+              **{c: f"/data/dan/dataset/comparability_cells/{c}.json"
+                 for c in ("vqa_rad_closed", "pathvqa_closed", "slake_closed", "vqamed2019_test")}}
 
 
 def imgs_for_eval(ds):

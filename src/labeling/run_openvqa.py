@@ -57,6 +57,9 @@ ap.add_argument("--dataset", required=True, choices=["slake_open", "vqa_rad_open
                 # src/data_prep/build_kvasir_x1_cell.py, which excludes the 1,052 images our own
                 # kvasir_open_1200 pool (and hence the head's training data) was drawn from.
                 "kvasir_x1_open", "omnimed_open", "quilt_open", "vqamed_open", "gemex_open",
+                # comparability cells (2026-10-15, src/exp_2026_10/build_comparability_cells.py): the
+                # closed halves of the official test splits, and the official VQA-Med 2019 test.
+                "vqa_rad_closed", "pathvqa_closed", "slake_closed", "vqamed2019_test",
                 # *_train = the datasets' OFFICIAL TRAIN splits, same open-ended filter. Added for the
                 # disjoint verifier retrain (src/training_methods/build_disjoint_verifier_split.py): the
                 # verifier must be trained on items that share no question and no image with the eval sets.
@@ -126,6 +129,9 @@ elif A.dataset == "quilt_open":
 elif A.dataset == "omnimed_open":
     # OmniMedVQA asked OPEN-ENDED: the options are dropped and the free-text gt_answer is the gold.
     d = json.load(open("/data/dan/dataset/omnimed_opentext/omnimed_open.json"))
+    items = [(r["idx"], r["question"], r["answer"], r["img_path"]) for r in d]
+elif A.dataset in ("vqa_rad_closed", "pathvqa_closed", "slake_closed", "vqamed2019_test"):
+    d = json.load(open(f"/data/dan/dataset/comparability_cells/{A.dataset}.json"))
     items = [(r["idx"], r["question"], r["answer"], r["img_path"]) for r in d]
 elif A.dataset == "kvasir_x1_open":
     d = json.load(open("/data/dan/dataset/kvasir_x1_cell/kvasir_x1_open.json"))
