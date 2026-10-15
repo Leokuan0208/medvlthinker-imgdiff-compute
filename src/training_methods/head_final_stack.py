@@ -124,6 +124,20 @@ GENERATORS = {
         "bench": None,
         "ens": None,
     },
+    "lingshu_fr": {
+        # FULL-RESOLUTION REGENERATION (backlog 1.0, decided 2026-09-17, run 2026-10-15). Same
+        # generator, same recipe; the pools were generated at --cap fullres (max_pixels 1,003,520),
+        # the resolution extract_generator_hidden.py has always extracted at, so generation and
+        # features finally share one resolution. radimagenet_open's pool is the original one
+        # hard-linked under the new tag: none of its images exceeds even cap320.
+        "tag": "lingshu7bFR",
+        "train_stems": ["generator_train_FR"],
+        "eval_stem": lambda c: f"generator_eval_FR_{c}",
+        "eval_dsfilter": lambda c: None,
+        "out": "head_final_stack_fullres_2026-10-15.json",
+        "bench": None,
+        "ens": None,
+    },
     # MATCHED CONTROLS for the MedGemma comparison. MedGemma has no dedicated train-domain caches
     # and only four benchmarks, so its probe is fitted on 20,102 rows against Lingshu's 112,770 --
     # a 5.6x gap that confounds "different LM family" with "less training data". These two run the
