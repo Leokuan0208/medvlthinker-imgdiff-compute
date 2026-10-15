@@ -226,6 +226,14 @@ with open(ckpt, "a") as fh:
             slp = None
             if o.outputs[0].logprobs:
                 slp = float(np.mean([next(iter(lp.values())).logprob for lp in o.outputs[0].logprobs if lp]))
+            # Per-candidate log-probabilities of the tokens actually sampled (added 2026-10-15). The
+            # `seqlogprob` above covers sample 0 only and reads the FIRST entry of the top-5 dict,
+            # which is not guaranteed to be the sampled token; these index by token id instead.
+            cum_all, mean_all = [], []
+            for c in o.outputs:
+                lps = [lp[t].logprob for t, lp in zip(c.token_ids, c.logprobs or []) if lp and t in lp]
+                cum_all.append(round(float(sum(lps)), 4) if lps else None)
+                mean_all.append(round(float(np.mean(lps)), 4) if lps else None)
             margin = conf = None
             try:  # 1st-token top1-top2 prob -> confidence margin (cascade gate signal)
                 _ps = sorted([math.exp(v.logprob) for v in o.outputs[0].logprobs[0].values()], reverse=True)
@@ -236,6 +244,7 @@ with open(ckpt, "a") as fh:
                 "modal_pred": modal_pred, "modal_ok": int(score(modal_pred, gold)),
                 "self_consistency": round(sc, 4), "n_distinct": ndist,
                 "seqlogprob": (round(slp, 4) if slp is not None else None),
+                "cumlogprob_all": cum_all, "seqlogprob_all": mean_all, "cap": A.cap,
                 "margin": margin, "conf": conf,
                 "gen_tokens": len(o.outputs[0].token_ids),
                 "gen_tokens_all": [len(c.token_ids) for c in o.outputs], "lat_s": round(_blat, 4),
