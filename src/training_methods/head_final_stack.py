@@ -198,6 +198,10 @@ def main():
                     help="fit just this one arm. For reproducibility replicates: the full ladder is "
                          "~2.5 h, one arm is ~25 min, so a spread can be measured in a morning.")
     ap.add_argument("--out", default=None)
+    # Probe hyperparameters (added 2026-10-15 for backlog 0.8). Defaults ARE the shipped recipe.
+    ap.add_argument("--hidden", type=int, default=256)
+    ap.add_argument("--epochs", type=int, default=30)
+    ap.add_argument("--sched", choices=["none", "cos"], default="none")
     A = ap.parse_args()
     globals()["GEN"] = GENERATORS[A.generator]
     if GEN.get("ens"):
@@ -215,6 +219,7 @@ def main():
     except Exception:
         _sha = "unknown"
     PROV = {"argv": " ".join(sys.argv), "threads": A.threads, "seeds": A.seeds,
+            "hidden": A.hidden, "epochs": A.epochs, "sched": A.sched,
             "torch_threads": HS.torch.get_num_threads(),
             "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
             "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
@@ -301,7 +306,8 @@ def main():
     def fit(X, sub):
         mu, sg = X[sub].mean(0), X[sub].std(0) + 1e-6
         return mu, sg, [HS.fit((X[sub] - mu) / sg, y[sub], qid[sub], None, objective="bce",
-                               hidden=256, wd=1e-2, epochs=30, seed=s) for s in range(A.seeds)]
+                               hidden=A.hidden, wd=1e-2, epochs=A.epochs, sched=A.sched, seed=s)
+                               for s in range(A.seeds)]
     isorig = np.arange(len(y)) < n_orig
     allrows = np.ones(len(y), bool)
     ARMS = {}
