@@ -98,7 +98,7 @@ def pool_tag(cell, policy, legacy):
     if legacy:
         # cap320 pools at other temperatures exist from the August temperature sweep (lingshu7bT02/T04/T10)
         if policy == "Tmap":
-            T = TMAP.get(cell, 0.7)
+            T = TMAP.get(cell, TMAP_COMP.get(cell, 0.7))
             tag = f"lingshu7bT{int(round(T * 10)):02d}"
             if T != 0.7 and os.path.exists(f"{CK}/ckpt_{cell}_{tag}_sc8.jsonl"):
                 return tag
@@ -155,7 +155,7 @@ def main():
     t0 = time.time()
     legacy = A.legacy_cap320
     gtag = "lingshu7b" if legacy else "lingshu7bFR"
-    cells = [c for c in A.cells if not (legacy and c in COMP)]
+    cells = list(A.cells)          # comparability cells have cap320 pools/caches since stage 4c (2026-10-16)
 
     # ---- training-side rows: four original domains (T=0.7) + every cell's T=0.7 cache
     tr_stem = "generator_train_finelayer" if legacy else "generator_train_FR"
