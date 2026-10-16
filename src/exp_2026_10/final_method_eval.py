@@ -96,6 +96,12 @@ def imageclef(pred, ref):
 # ------------------------------------------------------------------ cell layout
 def pool_tag(cell, policy, legacy):
     if legacy:
+        # cap320 pools at other temperatures exist from the August temperature sweep (lingshu7bT02/T04/T10)
+        if policy == "Tmap":
+            T = TMAP.get(cell, 0.7)
+            tag = f"lingshu7bT{int(round(T * 10)):02d}"
+            if T != 0.7 and os.path.exists(f"{CK}/ckpt_{cell}_{tag}_sc8.jsonl"):
+                return tag
         return "lingshu7b"
     if policy == "Tmap":
         T = TMAP.get(cell, TMAP_COMP.get(cell, 0.7))
@@ -108,6 +114,8 @@ def pool_tag(cell, policy, legacy):
 
 def eval_stem(cell, tag, legacy):
     if legacy:
+        if tag != "lingshu7b":                     # cap320 temperature-sweep caches (layers 18/20/22)
+            return f"generator_eval_ens_{tag.replace('lingshu7b', '')}_{cell}", None
         return ("generator_eval_finelayer", {cell}) if cell in ER.SHARED else (f"generator_eval_finelayer_{cell}", None)
     return f"generator_eval_{tag.replace('lingshu7b', '')}_{cell}", None
 
