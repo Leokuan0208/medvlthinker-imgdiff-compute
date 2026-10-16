@@ -32,12 +32,33 @@ OUT = MAIN + "/results/cascade_methods/artifacts/wed_vs_probe_2026-10-16.json"
 CELLS = ["pathvqa_open", "vqa_rad_open", "slake_open"]
 
 
+_CANON = None
+
+
+def canon(p):
+    """WED's own canonicalize_answer (repo utils.py:193), imported, applied to every PREDICTION before its
+    metrics -- in WED's main.py the scored answers are canonicalised candidates; the gold is not."""
+    global _CANON
+    if _CANON is None:
+        hf = os.environ.get("HF_HOME")
+        sys.path.insert(0, "/data/dan/repos/Wasserstein-BDG-medical-VQA-main")
+        from utils import canonicalize_answer   # noqa: E402  (authors' code, unlicensed: imported, not copied)
+        if hf is not None:
+            os.environ["HF_HOME"] = hf            # the repo's config.py overwrites HF_HOME at import
+        _CANON = canonicalize_answer
+    return _CANON(str(p))
+
+
 def wed_em(p, g):
-    return float(str(p).lower().strip() == str(g).lower().strip())
+    """WED utils.evaluate_answer 'exact': canonicalised pred, both stripped + lowercased, equality."""
+    return float(canon(p).strip().lower() == str(g).strip().lower())
 
 
 def wed_f1(p, g):
-    a, b = set(str(p).lower().split()), set(str(g).lower().split())
+    """WED utils.evaluate_answer 'f1' over token sets (equality fallback when either side is empty)."""
+    a, b = set(canon(p).strip().lower().split()), set(str(g).strip().lower().split())
+    if not a or not b:
+        return float(canon(p).strip().lower() == str(g).strip().lower())
     if not a or not b or not (a & b):
         return 0.0
     pr, rc = len(a & b) / len(a), len(a & b) / len(b)

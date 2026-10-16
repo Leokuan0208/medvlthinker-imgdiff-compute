@@ -34,7 +34,8 @@ artifact it came from, all under `results/cascade_methods/artifacts/`. Judge of 
 5. **Comparability.** The final method is now also scored on the full official VQA-RAD (451), SLAKE-English
    (1,061) and PathVQA (6,719) test splits (closed + open), on the official VQA-Med 2019 test (500), in the
    field's metrics, and head-to-head against WED (arXiv 2605.18313), the only published test-time-selection
-   method on our exact open subsets. §5.
+   method on our exact open subsets: **on identical candidates the probe beats WED on PathVQA (+0.0843 judge)
+   and SLAKE (+0.0574) in every currency including WED's own exact match, and ties on VQA-RAD.** §5.
 
 ---
 
@@ -150,7 +151,36 @@ is largest on *organ* (strict 0.096 vs judge 0.472 — right answers in the wron
 
 ### 5.3 Head-to-head: WED (arXiv 2605.18313) on identical pools
 
-**[filled in when the PathVQA run completes — see `wed_vs_probe_2026-10-16.json`]**
+WED (Wasserstein Equilibrium Decoding) is the only published test-time selection method evaluated on our exact
+open subsets (VQA-RAD and PathVQA, yes/no excluded). It was run as a selector over **the same cap320 T=0.7
+pools** the probe chooses from (`src/exp_2026_10/wed/wed_select.py`, authors' code imported), so the only
+difference is the selection rule. Probe picks come from the cross-fitted FINAL records (T=0.7 policy, so the
+pools are identical). `wed_vs_probe_2026-10-16.json`; "WED-EM / WED-F1" are WED's own metrics, computed with
+its own `canonicalize_answer` + `evaluate_answer` logic (repo `utils.py`):
+
+| benchmark | n | currency | greedy | WED | probe | probe − WED [95% CI] | WED − greedy |
+|---|---:|---|---:|---:|---:|---|---|
+| PathVQA-open | 3,357 | judge | 0.3140 | 0.2821 | **0.3664** | **+0.0843 [+0.0711, +0.0978]** | −0.0319 LOSS |
+| | | MedGemma-27B | 0.3441 | 0.3077 | **0.3861** | **+0.0783 [+0.0647, +0.0918]** | −0.0363 LOSS |
+| | | WED-EM | 0.2601 | 0.2237 | **0.2845** | **+0.0608 [+0.0497, +0.0722]** | −0.0363 LOSS |
+| | | WED-F1 | 0.3090 | 0.2671 | **0.3285** | **+0.0615 [+0.0498, +0.0730]** | −0.0419 LOSS |
+| SLAKE-open | 645 | judge | 0.7302 | 0.7302 | **0.7876** | **+0.0574 [+0.0326, +0.0818]** | 0.0000 |
+| | | MedGemma-27B | 0.7566 | 0.7488 | **0.7984** | **+0.0496 [+0.0216, +0.0775]** | −0.0078 |
+| | | WED-EM | 0.6357 | 0.6264 | **0.6558** | **+0.0295 [+0.0048, +0.0546]** | −0.0093 |
+| | | WED-F1 | 0.7226 | 0.7131 | **0.7393** | **+0.0262 [+0.0057, +0.0476]** | −0.0095 |
+| VQA-RAD-open | 200 | judge | 0.4900 | 0.4850 | 0.4900 | +0.0050 [−0.0515, +0.0580] | −0.0050 |
+| | | MedGemma-27B | 0.5200 | 0.5200 | 0.5300 | +0.0100 [−0.0479, +0.0663] | 0.0000 |
+| | | WED-EM | 0.2600 | 0.2200 | 0.2600 | +0.0400 [−0.0053, +0.0826] | −0.0400 LOSS |
+| | | WED-F1 | 0.3694 | 0.3450 | 0.3660 | +0.0210 [−0.0268, +0.0655] | −0.0245 |
+
+**On identical candidates the probe beats WED on PathVQA and SLAKE in every currency, including WED's own
+metrics; VQA-RAD (200 questions) is a tie throughout.** WED does not beat greedy decoding on any of the three
+benchmarks with Lingshu-7B's pools, and is significantly worse than greedy on PathVQA. For orientation, WED's
+paper reports VQA-RAD-open greedy EM 21.00 / 29.00 for Qwen3-VL-8B / MedGemma-4B (2605.18313v2, Table 3);
+our Lingshu-7B greedy is 0.2600 on the same metric. **Caveat in WED's favour:** it was adapted to select from
+our 8 samples; its own pipeline samples up to 16 times at T ∈ {0.5, 1.0} with its own prompts, which was not
+reproduced. It fell back to the majority answer on 12/3,357 PathVQA, 55/645 SLAKE and 0/200 VQA-RAD questions
+where its filters removed every candidate.
 
 ---
 
