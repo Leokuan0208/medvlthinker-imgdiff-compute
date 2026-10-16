@@ -138,7 +138,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
     ap.add_argument("--cells", nargs="+", default=OPEN8 + COMP)
-    ap.add_argument("--policy", choices=["T07", "Tmap"], default="T07")
+    # several policies are scored with the SAME fitted probes (they are always fitted on T=0.7 rows), so a
+    # policy comparison is paired on probes as well as on questions; one artifact per policy
+    ap.add_argument("--policy", choices=["T07", "Tmap"], nargs="+", default=["T07"])
     ap.add_argument("--readout", choices=["rank", "rank_vote"], default="rank_vote")
     ap.add_argument("--folds", type=int, nargs="+", default=[0, 1])
     ap.add_argument("--seeds", type=int, default=8)
@@ -161,7 +163,7 @@ def main():
     tr_stem = "generator_train_finelayer" if legacy else "generator_train_FR"
     Xo, ro = load_cache(tr_stem, TRAIN_DOMAINS)
     fit_X, fit_rows, fit_src, fit_isorig = {L: [Xo[L]] for L in ENS}, list(ro), [r["ds"] for r in ro], [True] * len(ro)
-    ev = {}
+    EV = {pol: {} for pol in A.policy}
     for c in cells:
         stem07, dsf = eval_stem(c, "lingshu7b" if legacy else "lingshu7bFR", legacy)
         if not os.path.exists(f"{FEATS}/{stem07}.npz"):
@@ -170,14 +172,15 @@ def main():
         for L in ENS:
             fit_X[L].append(X07[L])
         fit_rows += r07; fit_src += [c] * len(r07); fit_isorig += [False] * len(r07)
-        tag = pool_tag(c, A.policy, legacy)
-        if tag == ("lingshu7b" if legacy else "lingshu7bFR"):
-            Xe, re_ = X07, r07
-        else:
-            st, ds2 = eval_stem(c, tag, legacy)
-            Xe, re_ = load_cache(st, ds2)
-        ev[c] = {"tag": tag, "X": Xe, "rows": re_}
-        print(f"  loaded {c:17} eval tag {tag} rows {len(re_)} ({time.time() - t0:.0f}s)", flush=True)
+        for pol in A.policy:
+            tag = pool_tag(c, pol, legacy)
+            if tag == ("lingshu7b" if legacy else "lingshu7bFR"):
+                Xe, re_ = X07, r07
+            else:
+                st, ds2 = eval_stem(c, tag, legacy)
+                Xe, re_ = load_cache(st, ds2)
+            EV[pol][c] = {"tag": tag, "X": Xe, "rows": re_}
+            print(f"  loaded {c:17} [{pol}] eval tag {tag} rows {len(re_)} ({time.time() - t0:.0f}s)", flush=True)
     FX = {L: np.concatenate(fit_X[L]) for L in ENS}
     Fy = np.array([r["y"] for r in fit_rows], np.float32)
     Fq = np.array([f"{s}|{r['idx']}" for s, r in zip(fit_src, fit_rows)])
@@ -199,12 +202,13 @@ def main():
     if os.path.exists(vqm):
         refs = {r["idx"]: r["answer_ref"] for r in json.load(open(vqm))}
 
-    records = defaultdict(list)
+    RECORDS = {pol: defaultdict(list) for pol in A.policy}
     fold_info = {}
     for f in A.folds:
         evimg = set()
-        for c, d in ev.items():
-            evimg |= {r["img_md5"] for r in d["rows"] if ER.half(r["img_md5"]) == f}
+        for pol in A.policy:
+            for c, d in EV[pol].items():
+                evimg |= {r["img_md5"] for r in d["rows"] if ER.half(r["img_md5"]) == f}
         tr = np.array([(Forig[i] or Fhalf[i] == 1 - f) and Fimg[i] not in evimg for i in range(len(Fy))])
         fold_info[f] = {"train_rows": int(tr.sum()), "train_rows_original_domains": int((tr & Forig).sum()),
                         "eval_images": len(evimg)}
@@ -227,8 +231,9 @@ def main():
                         torch.save(m.state_dict(), f"{od}/head_L{L}_seed{s}.pt")
                     np.savez(f"{od}/standardizer_L{L}.npz", mu=mu, sd=sd)
             fold_info[f]["probes"] = f"fitted, hidden {A.hidden}, epochs {A.epochs}, sched {A.sched}, seeds {A.seeds}"
-        # score fold f of every cell
-        for c, d in ev.items():
+        # score fold f of every cell, under every policy, with the same probes
+        for pol, c, d in [(p, c, d) for p in A.policy for c, d in EV[p].items()]:
+            records = RECORDS[pol]
             idx = [i for i, r in enumerate(d["rows"]) if ER.half(r["img_md5"]) == f]
             if not idx:
                 continue
@@ -278,9 +283,15 @@ def main():
                                    "greedy": cur(gpred, gj[q]),
                                    "oracle_judge": int(max(rr[i]["y"] for i in ii)),
                                    "pick_ans": rr[ii[p]]["ans"], "greedy_ans": gpred})
-            print(f"  fold {f} scored {c:17} questions {sum(1 for r in records[c] if r['fold'] == f)} "
+            print(f"  fold {f} [{pol}] scored {c:17} questions {sum(1 for r in records[c] if r['fold'] == f)} "
                   f"({time.time() - t0:.0f}s)", flush=True)
 
+    for pol in A.policy:
+        name = A.name if len(A.policy) == 1 else f"{A.name}_{pol}"
+        summarize(A, name, pol, RECORDS[pol], EV[pol], fold_info, legacy, gtag, t0)
+
+
+def summarize(A, name, pol, records, ev, fold_info, legacy, gtag, t0):
     # ---- summaries + paired image-clustered bootstrap (pick - greedy, sc - greedy), per cell and fold
     ss = np.random.SeedSequence(SEED)
     out_cells, macro_parts = {}, defaultdict(lambda: defaultdict(list))
@@ -335,17 +346,17 @@ def main():
                 full[fam][f"{arm}_judge"] = float(np.mean([r[arm]["judge"] for r in R]))
                 full[fam][f"{arm}_llava_open_recall"] = float(np.mean([r[arm]["llava_recall"] for r in records[o_]]))
                 full[fam][f"{arm}_llava_closed_acc"] = float(np.mean([r[arm]["llava_closed"] for r in records[c_]]))
-    art = {"title": f"Final-method evaluation: {A.name}", "date": time.strftime("%Y-%m-%d"),
-           "no_fabricated_numbers": True, "script": os.path.abspath(__file__), "args": vars(A),
+    art = {"title": f"Final-method evaluation: {name}", "date": time.strftime("%Y-%m-%d"),
+           "no_fabricated_numbers": True, "script": os.path.abspath(__file__), "args": vars(A), "policy": pol,
            "legacy_cap320": legacy, "greedy_tag": gtag, "eval_tags": {c: d["tag"] for c, d in ev.items()},
            "folds": fold_info, "macro_over_open8": macro, "full_official_splits": full, "cells": out_cells,
            "bootstrap": {"n": NBOOT, "seed": SEED, "cluster": "img_md5 within cell, paired"},
            "seconds": round(time.time() - t0, 1)}
-    out = f"{ART}/final_eval_{A.name}.json"
+    out = f"{ART}/final_eval_{name}.json"
     json.dump(art, open(out, "w"), indent=1)
-    json.dump({c: v for c, v in records.items()}, open(f"/data/dan/exp_2026_10/final_eval_{A.name}_records.json", "w"))
+    json.dump({c: v for c, v in records.items()}, open(f"/data/dan/exp_2026_10/final_eval_{name}_records.json", "w"))
     for scope in macro:
-        print(f"\nMACRO over open8, {scope}:")
+        print(f"\nMACRO over open8, {scope} [{name}]:")
         for k in sorted(macro[scope]):
             v = macro[scope][k]
             print(f"  {k:32} {v['macro']:+.4f} [{v['ci'][0]:+.4f},{v['ci'][1]:+.4f}] {v['verdict']:4} "
