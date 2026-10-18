@@ -65,6 +65,7 @@ CLOSED = {"vqa_rad_closed", "pathvqa_closed", "slake_closed"}
 TMAP = json.load(open(WT + "/results/cascade_methods/artifacts/frozen_temperature_map_2026-10-15.json"))["frozen_T"]
 TMAP_COMP = {"vqa_rad_closed": 0.2, "vqamed2019_test": 0.4}     # make_comparability_queue.py, pre-specified
 NBOOT, SEED = 10000, 20261017
+FEAT = ""      # "" = the historical 1,003,520-pixel caches; "C320" = caches read at the pools' own cap320 (--feat)
 
 
 # ------------------------------------------------------------------ currencies
@@ -94,26 +95,38 @@ def imageclef(pred, ref):
 
 
 # ------------------------------------------------------------------ cell layout
+def base_pool(legacy):
+    return "lingshu7b_sc8" if legacy else "lingshu7bFR_sc8"
+
+
 def pool_tag(cell, policy, legacy):
+    """The candidate pool a policy scores, named as in ckpt_<cell>_<pool>.jsonl.
+    T07 / Tmap = N=8 at T=0.7 / at the frozen per-benchmark temperature; *_16 = the same with N=16
+    (added 2026-10-18). Falls back to the N=8 T=0.7 pool where the requested pool does not exist."""
+    T = TMAP.get(cell, TMAP_COMP.get(cell, 0.7))
+    n = "_sc16" if policy.endswith("_16") else "_sc8"
+    tmap = policy.startswith("Tmap") and T != 0.7
     if legacy:
-        # cap320 pools at other temperatures exist from the August temperature sweep (lingshu7bT02/T04/T10)
-        if policy == "Tmap":
-            T = TMAP.get(cell, TMAP_COMP.get(cell, 0.7))
-            tag = f"lingshu7bT{int(round(T * 10)):02d}"
-            if T != 0.7 and os.path.exists(f"{CK}/ckpt_{cell}_{tag}_sc8.jsonl"):
-                return tag
-        return "lingshu7b"
-    if policy == "Tmap":
-        T = TMAP.get(cell, TMAP_COMP.get(cell, 0.7))
-        if T != 0.7:
-            tag = f"lingshu7bFRT{int(round(T * 10)):02d}"
-            if os.path.exists(f"{CK}/ckpt_{cell}_{tag}_sc8.jsonl"):
-                return tag
-    return "lingshu7bFR"
+        tag = f"lingshu7bT{int(round(T * 10)):02d}" if tmap else "lingshu7b"
+        if os.path.exists(f"{CK}/ckpt_{cell}_{tag}{n}.jsonl"):
+            return tag + n
+        return base_pool(legacy)
+    if tmap:
+        tag = f"lingshu7bFRT{int(round(T * 10)):02d}"
+        if os.path.exists(f"{CK}/ckpt_{cell}_{tag}_sc8.jsonl"):
+            return tag + "_sc8"
+    return base_pool(legacy)
 
 
-def eval_stem(cell, tag, legacy):
+def eval_stem(cell, pool, legacy):
+    tag, n = pool.rsplit("_", 1)                   # e.g. ("lingshu7bT10", "sc16")
+    if legacy and FEAT and n == "sc8":            # one per-cell cache per pool, read at the generation cap
+        return (f"generator_eval_{FEAT}_{cell}" if tag == "lingshu7b" else
+                f"generator_eval_{FEAT}_{tag.replace('lingshu7b', '')}_{cell}"), None
     if legacy:
+        if n == "sc16":
+            return (f"generator_eval_{cell}_sc16" if tag == "lingshu7b" else
+                    f"generator_eval_ens_{tag.replace('lingshu7b', '')}_sc16_{cell}"), None
         if tag != "lingshu7b":                     # cap320 temperature-sweep caches (layers 18/20/22)
             return f"generator_eval_ens_{tag.replace('lingshu7b', '')}_{cell}", None
         return ("generator_eval_finelayer", {cell}) if cell in ER.SHARED else (f"generator_eval_finelayer_{cell}", None)
@@ -140,7 +153,7 @@ def main():
     ap.add_argument("--cells", nargs="+", default=OPEN8 + COMP)
     # several policies are scored with the SAME fitted probes (they are always fitted on T=0.7 rows), so a
     # policy comparison is paired on probes as well as on questions; one artifact per policy
-    ap.add_argument("--policy", choices=["T07", "Tmap"], nargs="+", default=["T07"])
+    ap.add_argument("--policy", choices=["T07", "Tmap", "T07_16", "Tmap_16"], nargs="+", default=["T07"])
     ap.add_argument("--readout", choices=["rank", "rank_vote"], default="rank_vote")
     ap.add_argument("--folds", type=int, nargs="+", default=[0, 1])
     ap.add_argument("--seeds", type=int, default=8)
@@ -152,20 +165,30 @@ def main():
     ap.add_argument("--frozen_fold0", default=None, help="use these frozen probes for fold 0 instead of fitting")
     ap.add_argument("--save_probes", default=None, help="directory to freeze fitted probes into (per fold)")
     ap.add_argument("--xjudge", default=None, help="MedGemma-27B preds jsonl with idx 'cell|q|k' (+ .judge.jsonl)")
+    ap.add_argument("--feat", choices=["", "C320"], default="",
+                    help="C320 = hidden-state caches extracted at max_pixels 250,880 (the generation cap) "
+                         "instead of 1,003,520 (added 2026-10-18; --legacy_cap320 pools only)")
+    ap.add_argument("--fit_tmap_rows", action="store_true",
+                    help="TEMPERATURE-MATCHED TRAINING (2026-10-18): also fit on the rows of each benchmark's "
+                         "frozen-temperature N=8 pool (other image half only, like every training row), so "
+                         "probes that score a T=1.0/0.4/0.2 pool have seen candidates sampled at that T")
     A = ap.parse_args()
     torch.set_num_threads(A.threads)
     t0 = time.time()
     legacy = A.legacy_cap320
+    globals()["FEAT"] = A.feat
+    assert not A.feat or legacy, "--feat C320 is defined for the cap320 pools only"
     gtag = "lingshu7b" if legacy else "lingshu7bFR"
     cells = list(A.cells)          # comparability cells have cap320 pools/caches since stage 4c (2026-10-16)
 
     # ---- training-side rows: four original domains (T=0.7) + every cell's T=0.7 cache
-    tr_stem = "generator_train_finelayer" if legacy else "generator_train_FR"
+    tr_stem = (f"generator_train_{A.feat}" if A.feat else
+               "generator_train_finelayer" if legacy else "generator_train_FR")
     Xo, ro = load_cache(tr_stem, TRAIN_DOMAINS)
     fit_X, fit_rows, fit_src, fit_isorig = {L: [Xo[L]] for L in ENS}, list(ro), [r["ds"] for r in ro], [True] * len(ro)
     EV = {pol: {} for pol in A.policy}
     for c in cells:
-        stem07, dsf = eval_stem(c, "lingshu7b" if legacy else "lingshu7bFR", legacy)
+        stem07, dsf = eval_stem(c, base_pool(legacy), legacy)
         if not os.path.exists(f"{FEATS}/{stem07}.npz"):
             print(f"  [skip] {c}: no T=0.7 cache {stem07}", flush=True); continue
         X07, r07 = load_cache(stem07, dsf)
@@ -174,13 +197,26 @@ def main():
         fit_rows += r07; fit_src += [c] * len(r07); fit_isorig += [False] * len(r07)
         for pol in A.policy:
             tag = pool_tag(c, pol, legacy)
-            if tag == ("lingshu7b" if legacy else "lingshu7bFR"):
+            if tag == base_pool(legacy):
                 Xe, re_ = X07, r07
             else:
                 st, ds2 = eval_stem(c, tag, legacy)
                 Xe, re_ = load_cache(st, ds2)
             EV[pol][c] = {"tag": tag, "X": Xe, "rows": re_}
             print(f"  loaded {c:17} [{pol}] eval tag {tag} rows {len(re_)} ({time.time() - t0:.0f}s)", flush=True)
+        if A.fit_tmap_rows:
+            tp = pool_tag(c, "Tmap", legacy)
+            if tp != base_pool(legacy):
+                cached = next((EV[p][c] for p in A.policy if c in EV[p] and EV[p][c]["tag"] == tp), None)
+                if cached is not None:
+                    Xt, rt = cached["X"], cached["rows"]
+                else:
+                    st, ds2 = eval_stem(c, tp, legacy)
+                    Xt, rt = load_cache(st, ds2)
+                for L in ENS:
+                    fit_X[L].append(Xt[L])
+                fit_rows += rt; fit_src += [f"{c}@{tp}"] * len(rt); fit_isorig += [False] * len(rt)
+                print(f"  fit also on {c} {tp}: {len(rt)} rows", flush=True)
     FX = {L: np.concatenate(fit_X[L]) for L in ENS}
     Fy = np.array([r["y"] for r in fit_rows], np.float32)
     Fq = np.array([f"{s}|{r['idx']}" for s, r in zip(fit_src, fit_rows)])
@@ -246,7 +282,7 @@ def main():
                     for m in heads[L]:
                         m.eval(); S.append(m(Z).numpy())
             S = np.stack(S)
-            sc8 = loadj(f"{CK}/ckpt_{c}_{d['tag']}_sc8.jsonl")
+            sc8 = loadj(f"{CK}/ckpt_{c}_{d['tag']}.jsonl")
             greedy = loadj(f"{CK}/ckpt_{c}_{gtag}.jsonl")
             gj = {k: int(v["judge_ok"]) for k, v in loadj(f"{CK}/ckpt_{c}_{gtag}.judge.jsonl").items()}
             byq = defaultdict(list)

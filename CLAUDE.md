@@ -199,7 +199,7 @@ outranks verifier work.
 
 > **➜ NEWER (2026-10-16, branch `exp-2026-10-15`): `docs/current/FINAL_METHOD_2026-10-16.md`** — the final
 > method (cap320 pools + frozen per-benchmark temperature + shipped probes + vote tie-break), cross-fitted over
-> both image halves: judge +0.0897, MedGemma-27B +0.0783, EM +0.0165, LLaVA recall +0.0347, all 8/8 or WIN.
+> both image halves: judge +0.0897, MedGemma-27B +0.0783, EM +0.0165, LLaVA recall +0.0347, every macro significant (per benchmark: judge 6 wins + 2 ties; EM loses on Kvasir-x1 and GEMeX).
 > **Full resolution was measured and REJECTED** (hurts GEMeX). Comparability tables vs Lingshu/LLaVA-Med/WED.
 
 > **Entry docs for the live work:** `docs/current/AUDIT_2026-09-18.md` (what is true, what was wrong, every

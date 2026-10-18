@@ -12,8 +12,11 @@ artifact it came from, all under `results/cascade_methods/artifacts/`. Judge of 
 1. **The final method** = Lingshu-7B **cap320** best-of-8 pools, sampled at a **frozen per-benchmark
    temperature**, scored by the shipped probe recipe (24 MLP probes, layers 18/20/22, BCE), read out by
    **rank average with a vote-count tie-break**. Frozen probes: `ckpts/train/final_probe_2026-10-16/fold{0,1}`.
-2. **It beats greedy decoding in every currency, significantly**, on all eight open benchmarks, every question
-   scored by a probe that never saw its image (two-fold image cross-fitting):
+2. **Its macro gain over greedy decoding is significant in every currency**, every question scored by a probe
+   that never saw its image (two-fold image cross-fitting). "n/8" counts benchmarks with a positive point
+   estimate, not significant wins: per benchmark the judge gives 6 wins and 2 ties (VQA-RAD, VQA-Med), and
+   exact match gives 3 wins, 3 ties and 2 losses (Kvasir-x1, GEMeX) — §3. *(Corrected 2026-10-18: this line
+   first said "on all eight open benchmarks", which the per-benchmark intervals do not support.)*
 
    | currency | gain over greedy, both folds | image half 1 only (out of sample for every choice) |
    |---|---|---|
@@ -63,7 +66,7 @@ artifact it came from, all under `results/cascade_methods/artifacts/`. Judge of 
 | **rank_vote readout** (ties broken by vote count) | +0.0006 judge WIN, +0.0006 EM WIN, MedGemma +0.0005 (`readout_variants_2026-10-15.json`) | **ADOPTED** (pre-specified rule) |
 | full-resolution pools | method +0.0745 vs +0.0790 at cap320; per-benchmark choice of resolution −0.0023 vs cap320, tie (`select_policy_cap320_vs_fullres_T07.json`) | rejected |
 | wider probe (1024, 60 ep, cosine) | +0.0021 over a same-session control, below the ~0.003 refit floor; mostly 5 SLAKE questions | rejected |
-| calibrated averaging (z-score, Platt, prob) | −0.0022 … +0.0027 judge, all ties | rejected — backlog 0.4 closed |
+| calibrated averaging (z-score, Platt, prob) | ties under both judges (−0.0022 … +0.0027; the −0.0022 is Platt under MedGemma); z-score wins EM +0.0032 [+0.00001, +0.0073] | rejected under the pre-specified rule — backlog 0.4 closed |
 | probe-weighted vote (`vote_prob`) | EM **+0.0135** WIN and F1 +0.0094 WIN, but judge −0.0040 / MedGemma −0.0058 | not adopted; it is a **currency trade**, the clearest D2 evidence so far |
 
 **Why full resolution was reversed.** Judge currency, greedy, full resolution minus a cap320 control generated
@@ -89,9 +92,10 @@ decision rested on a sweep of the three benchmarks where full resolution happens
 | VQA-Med C4 | 3,663 | 0.4 | 0.0947 | 0.1007 | +0.0060 [−0.0022, +0.0139] | +0.0087 | −0.0014 | +0.0011 | 0.1873 |
 | GEMeX | 8,000 | 1.0 | 0.3974 | 0.5391 | +0.1417 [+0.1321, +0.1513] | +0.1182 | −0.0174 | +0.0316 | 0.6241 |
 
-The two benchmarks that **lost** under the shipped method (VQA-RAD, VQA-Med) are now positive. EM is negative on
-Kvasir-x1 and GEMeX, whose golds are sentences: there EM penalises correct paraphrases (judge and MedGemma both
-agree the picks are better).
+The two benchmarks that **lost** under the shipped method (VQA-RAD, VQA-Med) now have positive point estimates,
+but both are ties, and VQA-Med is −0.0005 on image half 1 (`final_fold1_headline_2026-10-16.json`). EM is
+significantly negative on Kvasir-x1 [−0.0441, −0.0322] and GEMeX [−0.0251, −0.0096], whose golds are sentences:
+there EM penalises correct paraphrases (judge and MedGemma both agree the picks are better).
 
 ---
 

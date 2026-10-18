@@ -272,6 +272,9 @@ def main():
     ap.add_argument("--pool_tag", default="_sc8",
                     help="candidate-set suffix in the dump filename, e.g. _sc8 or _sc16. The pool "
                          "size is part of the path, so this cannot be folded into --gen_tag.")
+    ap.add_argument("--cap", choices=["fullres", "cap640", "cap320"], default="fullres",
+                    help="image budget, as run_openvqa.py's --cap (cap320 = max_pixels 250,880, the "
+                         "resolution the pools were generated at); default keeps the historical 1,003,520")
     ap.add_argument("--stem_tag", default="",
                     help="appended to the output stem so a new cell cannot overwrite the frozen cache")
     ap.add_argument("--max_train", type=int, default=10364,
@@ -290,6 +293,8 @@ def main():
     DEV = "cuda"
     outdir = os.path.join(ROOT, A.out); os.makedirs(outdir, exist_ok=True)
     globals()["POOL"] = A.pool_tag
+    globals()["HIGH_PX"] = HIGH_PX // {"fullres": 1, "cap640": 2, "cap320": 4}[A.cap]
+    print(f"[cap] {A.cap}: max_pixels {HIGH_PX}", flush=True)
     if A.gen_tag:
         globals()["TAG"] = A.gen_tag
         print(f"[gen_tag] reading pools tagged {A.gen_tag}", flush=True)
