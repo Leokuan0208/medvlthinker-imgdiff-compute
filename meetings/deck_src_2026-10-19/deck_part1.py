@@ -634,80 +634,206 @@ def build(d):
               ("Why not N = 64 or more?", "More samples raise coverage but also the chance of fooling the scorer — reward over-optimisation (Gao, Schulman "
                "& Hilton 2022); Cobbe saw accuracy fall beyond 400 samples. Our largest measured N is 32 on one benchmark; see the N slide.")])
 
-    # ---- Cobbe + Brown
-    d.add("cobbe", "Trained verifiers (Cobbe 2021) and coverage vs precision (Brown 2024)",
-          """
-<div class="row">
- <div class="col">
-  <div class="paper"><div class="cite">Cobbe et al. 2021 · arXiv:2110.14168 · OpenAI</div><h3>Training Verifiers to Solve Math Word Problems</h3>
-  <ul class="b sm"><li><b>method:</b> label 100 samples by final answer → train a verifier → argmax of 100</li>
-  <li><b>result:</b> 6B + verifier ≈ a 30× larger model (§6)</li>
-  <li><b>against us:</b> token-level beat solution-level; accuracy fell past 400 samples (<i>reward over-optimisation</i>)</li></ul></div>
- </div>
- <div class="col">
-  <div class="paper"><div class="cite">Brown et al. 2024 · arXiv:2407.21787</div><h3>Large Language Monkeys</h3>
-  <ul class="b sm"><li><b>method:</b> up to 10,000 samples; split into <i>coverage</i> and <i>precision</i></li>
-  <li><b>result:</b> MATH coverage 82.9% → 98.44%; vote / RMs 40.50% → 41.41%</li>
-  <li><b>lesson:</b> coverage grows, selection plateaus — selection is the bottleneck</li></ul></div>
- </div>
-</div>
-<div class="term t" style="margin-top:12px"><b class="k">what we take</b><span>Cobbe's recipe with a 918k-parameter probe as the verifier; Brown's coverage / precision split as our frame</span></div>""",
-          "II · Key papers", src="Cobbe §4.2 p.8, §5.1 p.10, §6 p.12; Brown p.2–3, Fig. 7 p.10 (PAPER_NOTES_A); Gao et al. arXiv:2210.10760",
-          minutes=2.0,
-          say="""# Training Verifiers to Solve Math Word Problems
+    # ---- one slide per key paper: the paper's own overview figure + a labelled fact block
+    def fig_b64(name):
+        import base64, os
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "paper_figs", name)
+        return "data:image/png;base64," + base64.b64encode(open(p, "rb").read()).decode()
+
+    def facts(rows, cols=1):
+        lab = ("font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;"
+               "color:var(--indigo-d);font-weight:600;padding-top:3px")
+        cells = "".join(f'<div style="{lab}">{k}</div><div style="min-width:0">{v}</div>' for k, v in rows)
+        if cols == 1:
+            return (f'<div style="display:grid;grid-template-columns:112px 1fr;gap:9px 14px;font-size:15.5px;line-height:1.4;'
+                    f'color:#2b3045">{cells}</div>')
+        half = (len(rows) + 1) // 2
+        return ('<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 30px">'
+                + facts(rows[:half]) + facts(rows[half:]) + '</div>')
+
+    def paper_slide(sid, title, fig, cap, rows, src, say, look, minutes=2.0, qa=(), wide=False, fig_h=430):
+        img = (f'<img src="{fig_b64(fig)}" alt="{cap}" style="max-width:100%;max-height:{fig_h}px;display:block;margin:0 auto;'
+               f'border:1px solid var(--line);border-radius:6px;background:#fff">')
+        capd = f'<div class="note" style="text-align:center;margin-top:6px;font-size:13px">{cap}, shown for illustration</div>'
+        if wide:
+            body = f'<div>{img}{capd}</div><div style="margin-top:16px">{facts(rows, cols=2)}</div>'
+        else:
+            body = (f'<div class="row"><div class="col w3" style="justify-content:center">{img}{capd}</div>'
+                    f'<div class="col w2">{facts(rows)}</div></div>')
+        d.add(sid, title, body, "II · Key papers", src=src, say=say, look=look, minutes=minutes, qa=list(qa))
+
+    # ---- Cobbe 2021
+    paper_slide("cobbe", "Trained verifiers: Cobbe et al. 2021 (OpenAI)", "cobbe_fig4.png",
+                "Figure 4 from Cobbe et al. 2021 (p.7): the verifier training pipeline",
+                [("domain", "text · grade-school math word problems (numeric answers)"),
+                 ("models", "GPT-3 6B and 175B generators, fine-tuned; verifier = a same-size LM, full fine-tune"),
+                 ("method", "sample 100 solutions per training problem → label each by its final answer → train a verifier → "
+                            "at test time return the highest-scored of 100 (T = 0.7)"),
+                 ("benchmarks", "GSM8K (introduced here: 7.5K train / 1K test)"),
+                 ("result", "6B + verifier slightly beats a fine-tuned 175B — “approximately equivalent to a 30x model size increase” (§6)"),
+                 ("against us", "token-level verifier beat solution-level; accuracy fell past 400 samples (<i>reward over-optimisation</i>)"),
+                 ("for us", "our recipe: outcome labels → trained scorer → argmax, with a 918k-parameter probe as the verifier")],
+                "Cobbe et al. arXiv:2110.14168: Fig. 4 p.7; §4.2 p.8, §4.3 p.9, §5.1 p.10, §6 p.12, Table 1 p.16 (PAPER_NOTES_A §1.1); Gao et al. arXiv:2210.10760",
+                """# Trained verifiers: Cobbe et al. 2021 (OpenAI)
 - Two founding papers. First, Cobbe and colleagues at OpenAI, 2021, established the recipe we follow.
-- method:
-  - Sample a hundred solutions to each training problem.
-  - Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
-  - At test time, return the highest-scored of a hundred samples.
-- result: on grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
+# Figure 4 (left)
+- Point at the three columns: train the generator; generate and label a hundred solutions per problem; train the verifier.
+- Each solution is labelled correct or incorrect by its final answer only.
+# domain
+- Text only: grade-school math word problems, where the answer is a number.
+# models
+- GPT-3 generators; the verifier is a second language model of the same size, fully fine-tuned.
+# method
+- Sample a hundred solutions to each training problem.
+- Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
+- At test time, return the highest-scored of a hundred samples.
+# benchmarks
+- GSM8K, a benchmark they released with this paper.
+# result
+- On grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
   - They describe it as worth a 30-times increase in model size.
-- against us: two findings.
+# against us
+- Two findings.
   - Their token-level verifier was better than a whole-answer verifier.
   - Past 400 samples accuracy fell: the generator produced answers that fooled the verifier — reward over-optimisation.
-# Large Language Monkeys
+# for us
+- Cobbe's recipe — outcome labels, a trained scorer, pick the highest score.
+- But the verifier is replaced by a small probe on our generator's own frozen internal states.""",
+                "Figure on the left: walk the three numbered columns; then read the fact rows top to bottom.",
+                minutes=2.0)
+
+    # ---- Brown 2024
+    paper_slide("brown", "Coverage vs precision: Brown et al. 2024 (Large Language Monkeys)", "brown_fig1.png",
+                "Figure 1 from Brown et al. 2024 (p.2): repeated sampling, then a verifier",
+                [("domain", "text · math, formal proofs (Lean4), code"),
+                 ("models", "Llama-3 8B / 8B-Instruct / 70B-Instruct, Gemma 2B / 7B, Pythia, DeepSeek-Coder-V2; nothing trained"),
+                 ("method", "repeated sampling up to 10,000 samples; split best-of-N into <i>coverage</i> (any sample right) and "
+                            "<i>precision</i> (finding it)"),
+                 ("benchmarks", "GSM8K, MATH, MiniF2F-MATH, CodeContests, SWE-bench Lite"),
+                 ("result", "MATH, Llama-3-8B-Instruct: coverage 82.9% → 98.44%; majority vote / reward models only 40.50% → 41.41% (p.3, Fig. 7)"),
+                 ("for us", "coverage = our oracle@8; selection is what the probe does")],
+                "Brown et al. arXiv:2407.21787: Fig. 1 p.2; §2–4, p.3, Fig. 7 p.10 (PAPER_NOTES_A §1.2)",
+                """# Coverage vs precision: Brown et al. 2024 (Large Language Monkeys)
 - Brown and colleagues, 2024, showed why selection is the hard part.
+# Figure 1 (top)
+- Point at the two stages: the model generates many candidates; a verifier has to find a right one.
+- Problem 1 under the first stage is coverage; problem 2 under the verifier is precision.
+# domain
+- Text only: math, formal proofs and code.
+# models
+- Several open models, Llama-3, Gemma and others; nothing is trained.
+# method
+- They sample up to ten thousand times per problem and measure the two problems separately.
+# benchmarks
+- GSM8K and MATH for math, MiniF2F for proofs, CodeContests and SWE-bench for code.
+# result
 - With ten thousand samples from Llama-3-8B-Instruct, a correct answer exists for 98 percent of the MATH problems.
 - But voting or off-the-shelf reward models only got from 40.5 to 41.4 percent.
-- Coverage grows; selection does not keep up. That split frames all our results.
-# what we take
-- Cobbe's recipe — outcome labels, a trained scorer, pick the highest score.
-- But the verifier is replaced by a small probe on our generator's own frozen internal states.""")
+# for us
+- Coverage grows; selection does not keep up. That split frames all our results.""",
+                "Figure on top: the two numbered problems; then the fact rows, ending on result.", minutes=1.5, wide=True)
 
-    # ---- Snell
-    d.add("snell", "Test-time compute vs model size (Snell et al. 2024)",
-          """
-<div class="row">
- <div class="col w2">
-  <div class="paper"><div class="cite">Snell, Lee, Xu, Kumar · arXiv:2408.03314 · ICLR 2025</div><h3>Scaling LLM Test-Time Compute Optimally …</h3>
-  <ul class="b sm"><li><b>frame:</b> test-time method = <i>proposer</i> + <i>verifier</i></li>
-  <li><b>method:</b> pick the strategy per question difficulty (“compute-optimal”); PRM verifiers</li>
-  <li><b>result:</b> ≈ best-of-N at up to 4× less compute; beats a ~14× larger model — only where the small model sometimes succeeds</li>
-  <li><b>against us:</b> PRM beat ORM, more so as N grew; we use one fixed N and T</li></ul></div>
- </div>
- <div class="col">
-  <div class="term t"><b class="k">a similar shape in our data</b><span>OmniMedVQA: oracle@8 0.70 → +0.160<br>VQA-Med: oracle@8 0.21 → −0.004 (a selection failure too, Part V)</span></div>
-  <div class="term w"><b class="k">best-of-N weighted</b><span>Snell's default aggregator: sum verifier scores over identical answers — we test it against ours in Part IV (readout slide)</span></div>
- </div>
-</div>""", "II · Key papers", src="Snell v1 abstract, Fig. 4 p.10, Fig. 9 p.15, App. F p.24–25; ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}",
-          minutes=1.5,
-          say="""# Scaling LLM Test-Time Compute Optimally …
+    # ---- Snell 2024
+    paper_slide("snell", "Test-time compute vs model size: Snell et al. 2024", "snell_fig2.png",
+                "Figure 2 from Snell et al. 2024 (p.8): three ways to search against a verifier",
+                [("domain", "text · competition math"),
+                 ("models", "PaLM 2-S* base; verifier = a process reward model (PRM), PaLM 2-S* fine-tuned; a revision model"),
+                 ("method", "every method = proposer + verifier; pick the search strategy per question difficulty (“compute-optimal”)"),
+                 ("benchmarks", "MATH (Lightman et al. split, 500 test problems)"),
+                 ("result", "≈ best-of-N at up to 4× less compute; beats a ~14× larger model only where the small model sometimes succeeds"),
+                 ("against us", "PRM beat ORM, more so as N grew; we use one fixed N and T"),
+                 ("our data", "OmniMedVQA: oracle@8 0.70 → +0.160 · VQA-Med: oracle@8 0.21 → −0.004 (a selection failure too, Part V)")],
+                "Snell et al. arXiv:2408.03314 (ICLR 2025): Fig. 2 p.8, abstract, Fig. 4 p.10, Fig. 9 p.15, App. D p.22, App. F p.24–25 (PAPER_NOTES_A §1.3); "
+                "ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}",
+                """# Test-time compute vs model size: Snell et al. 2024
 - Snell and colleagues framed the modern debate: spend compute at test time, or on a bigger model?
-- frame: every method is a proposer plus a verifier.
-- method: they choose the strategy per question according to its difficulty; their verifiers are process reward models.
-- result: smart test-time search can match plain best-of-N with four times less compute.
+# Figure 2 (left)
+- Point at the three panels: best-of-N, beam search, lookahead search.
+- Green nodes are kept by the verifier, red ones rejected; best-of-N on the left is our setting.
+# domain
+- Text only: competition math.
+# models
+- Every method is a proposer plus a verifier; their verifiers are process reward models, which score each reasoning step.
+# method
+- They choose the strategy per question according to its difficulty.
+# benchmarks
+- The MATH benchmark.
+# result
+- Smart test-time search can match plain best-of-N with four times less compute.
 - And it can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains somewhat non-trivial success rates".
 - On the hardest questions, they say, pretraining is the more effective way.
-# a similar shape in our data
-- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
-- On VQA-Med, that is only 21 percent — and we gain nothing.
-  - Though I will show that there the probe also fails to find the correct answers that do exist.
 # against us
 - Step-level verifiers beat outcome-level ones in their data, more so as N grows.
 - Their method chooses the budget per question; ours uses one fixed setting.
-# best-of-N weighted
 - Their default way of combining scores: add up the verifier's score over identical answers.
-- We tested it against our own readout; I show it in part four.""")
+- We tested it against our own readout; I show it in part four.
+# our data
+- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
+- On VQA-Med, that is only 21 percent — and we gain nothing.
+  - Though I will show that there the probe also fails to find the correct answers that do exist.""",
+                "Figure on the left: point at best-of-N (left panel); then result and our data.", minutes=2.0)
+
+    # ---- self-consistency (Wang 2023)
+    paper_slide("wang", "Majority vote: self-consistency (Wang et al. 2023)", "wang_fig1.png",
+                "Figure 1 from Wang et al. 2023 (p.2): greedy chain of thought vs sampled paths and a vote",
+                [("domain", "text · arithmetic, commonsense and symbolic reasoning (chain of thought)"),
+                 ("models", "UL2-20B, GPT-3 (code-davinci-001/002), LaMDA-137B, PaLM-540B; few-shot, nothing trained"),
+                 ("method", "sample m = 40 reasoning paths; majority vote over the final answers; needs answers that match exactly"),
+                 ("benchmarks", "GSM8K, SVAMP, AQuA, AddSub, MultiArith, ASDiv, CSQA, StrategyQA, ARC"),
+                 ("result", "PaLM-540B, GSM8K: 56.5 → 74.4 (Table 2, p.5)"),
+                 ("for us", "the standard training-free baseline; on our open answers it loses to greedy (next slides)")],
+                "Wang et al., ICLR 2023, arXiv:2203.11171: Fig. 1 p.2, p.3–5, Table 2 p.5 (PAPER_NOTES_DE E1)",
+                """# Majority vote: self-consistency (Wang et al. 2023)
+- The simplest selector is majority vote, which the field calls self-consistency.
+# Figure 1 (top)
+- Top row: greedy chain of thought gives one wrong answer.
+- Bottom: several sampled reasoning paths, then the most common final answer wins.
+# domain
+- Text only: arithmetic, commonsense and symbolic reasoning.
+# models
+- Large language models used few-shot; nothing is trained.
+# method
+- Sample forty reasoning paths and take the majority answer. It needs answers that can be matched exactly.
+# benchmarks
+- Nine reasoning benchmarks, GSM8K among them.
+# result
+- On grade-school math with a big model it raised accuracy from 56 to 74 percent.
+- Because a correct number tends to come up again and again.
+# for us
+- It is the baseline every selector must beat; on our open medical answers it does worse than greedy.""",
+                "Figure on top: greedy row, then the sampled paths converging on one answer.", minutes=1.3, wide=True, fig_h=300)
+
+    # ---- USC (Chen 2023)
+    paper_slide("usc", "Voting for free text: Universal Self-Consistency (Chen et al. 2023)", "usc_fig1.png",
+                "Figure 1 from Chen et al. 2023 (p.2): the USC workflow",
+                [("domain", "text · math, code (text-to-SQL, Python), summarisation, open QA"),
+                 ("models", "PaLM 2-L, gpt-3.5-turbo; nothing trained"),
+                 ("method", "concatenate 8 sampled answers; ask the same LLM to “select the most consistent response”; one extra call"),
+                 ("benchmarks", "GSM8K, MATH, BIRD-SQL, ARCADE, GovReport, SummScreen, TruthfulQA"),
+                 ("result", "GSM8K, PaLM 2-L: greedy 85.7, majority vote 90.4, USC 90.2 — oracle over the same 8: 96.2 (Tables 1, 7)"),
+                 ("also free text", "EBA (embedding clusters), self-certainty (own logits)"),
+                 ("for us", "not run on our pools — an owed baseline")],
+                "Chen et al. arXiv:2311.17311: Fig. 1 p.2, p.4, Table 1 p.5, Table 7 p.13 (PAPER_NOTES_DE E2); Ontalvilla et al. arXiv:2606.12003; Kang et al. arXiv:2502.18581",
+                """# Voting for free text: Universal Self-Consistency (Chen et al. 2023)
+- Majority vote needs exact repeats; USC is the field's answer for free text.
+# Figure 1 (top)
+- Point at the prompt box: all sampled responses are pasted in, and the model is asked which one is most consistent.
+# domain
+- Text only: math, code, summaries and open questions.
+# models
+- PaLM 2 and GPT-3.5; nothing is trained.
+# method
+- One extra call to the same model per question.
+# benchmarks
+- Seven text benchmarks, from GSM8K to TruthfulQA.
+# result
+- On math it matches majority vote, and both stay well below the best of the same eight samples.
+# also free text
+- EBA picks the centre of the largest cluster of answer embeddings.
+- Self-certainty scores each sample from the model's own output probabilities.
+# for us
+- We have not run these on our pools, and that is a gap.""",
+                "Figure on top: the USC prompt box in the middle.", minutes=1.2, wide=True)
 
     # ---- voting and its ceiling
     sc_rows = []
@@ -754,8 +880,105 @@ def build(d):
                f"Their answers repeat (math, multiple choice), so voting is strong. On our open answers voting itself loses to greedy ({pm(SCJ[0])} {ci(SCJ[1],SCJ[2])}), "
                "and the probe beats voting by +0.0893 [+0.0811, +0.0972] under the training judge and +0.0136 [+0.0053, +0.0216] under lenient EM (extra_numbers.json).")])
 
+    # ---- Q-Probe
+    paper_slide("qprobe", "The first probe reranker: Q-Probe (Li et al., ICML 2024)", "qprobe_fig1.png",
+                "Figure 1 from Li et al. 2024 (p.2): one feature vector per sampled program, scored by a probe",
+                [("domain", "text · code generation (also grade-school math, human preferences)"),
+                 ("models", "Code-LLaMA-7B, frozen; probe = linear, 4,096 weights, on layer 26's embedding of prompt + completion"),
+                 ("method", "sample k = 48 programs; the probe scores each; sample from a softmax over scores (β → 0 = argmax)"),
+                 ("benchmarks", "MBPP, HumanEval, GSM8K; HH / OASST / SHP preferences (GPT-4 win rate)"),
+                 ("result", "MBPP pass@1 0.29 → 0.46 with the policy-gradient loss (greedy 0.38) (Table 1, p.6)"),
+                 ("against us", "pointwise cross-entropy 0.40 &lt; within-question loss 0.46; 2–3-layer MLPs overfit on preference data")],
+                "Li et al. arXiv:2402.14688 (ICML 2024): Fig. 1 p.2, §4–5 p.4–5, Table 1 p.6, §7.2 p.9 (PAPER_NOTES_BC C3)",
+                """# The first probe reranker: Q-Probe (Li et al., ICML 2024)
+- Q-Probe, in 2024, is the earliest paper to rerank a frozen model's samples with a probe.
+# Figure 1 (top)
+- Point left to right: the model writes several programs; each gets its own feature vector; the probe turns the vectors into probabilities; one program is picked.
+- That is our pipeline, with programs instead of medical answers.
+# domain
+- Text only: code generation, plus some math and preference data.
+# models
+- A frozen code model with a linear probe on one middle layer.
+# method
+- It reranks 48 sampled programs; as the softmax temperature goes to zero this becomes our argmax.
+# benchmarks
+- Two code benchmarks, MBPP and HumanEval, plus GSM8K and preference data.
+# result
+- On MBPP, success with one program rises from 0.29 to 0.46.
+# against us
+- Their pointwise loss — the kind we use — did worse than a within-question loss.
+- And deeper probes overfit on their preference data.""",
+                "Figure on top: follow the colours from each program to its feature strip to the probe.", minutes=1.4, wide=True, fig_h=250)
+
+    # ---- SWIFT
+    paper_slide("swift", "Rewards from hidden states: SWIFT (Guo et al., KDD 2026)", "swift_fig1.png",
+                "Figure 1 from Guo et al. 2026 (p.2): a large reward model vs SWIFT's linear head on all layers",
+                [("domain", "text · math, code, commonsense, symbolic reasoning, safety"),
+                 ("models", "Llama-3.2-3B, Llama-3.1-8B, Ministral-8B, frozen; head = linear gate + linear token reward, 1.8–3.0×10⁵ parameters"),
+                 ("method", "concatenate every layer's state at each answer token → gate-weighted mean of token rewards → BCE on "
+                            "correctness → argmax of N"),
+                 ("benchmarks", "MATH, GSM8K, AQuA_RAT, Imbue Code, HellaSwag, CoinFlip, PKU-SafeRLHF"),
+                 ("result", "MATH average 57.5 vs 52.9 for the strongest baseline reward model (Skywork-Llama3.1-8B), 51.0 EurusRM-7B (Table 1)"),
+                 ("supports us", "BCE was the best of 5 losses (Table 7)"),
+                 ("against us", "the learned gate beat a plain mean by 2.7 points (Table 8)")],
+                "Guo et al. arXiv:2505.12225 (KDD 2026): Fig. 1 p.2, §4.2 p.3–4, Tables 1, 7, 8 (PAPER_NOTES_BC C2; arxiv.org/html/2505.12225)",
+                """# Rewards from hidden states: SWIFT (Guo et al., KDD 2026)
+- SWIFT is the closest single text-only neighbour.
+# Figure 1 (left)
+- Top half: the usual way, a separate billion-parameter reward model reads the output text.
+- Bottom half: SWIFT taps every transformer block, concatenates, and a linear head with a gate gives the reward.
+# domain
+- Text only: math, code, commonsense and safety tasks.
+# models
+- Three open 3-to-8-billion models, frozen; the head has about a hundred thousand to three hundred thousand weights.
+# method
+- It reads every token of every layer and pools them with a learned gate.
+- It trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers.
+# benchmarks
+- Seven text benchmarks, with MATH as the headline.
+# result
+- On MATH it beats the strongest trained reward model in their table.
+# supports us
+- Our loss was their best of five.
+# against us
+- Learning which tokens to weight beat a plain average.""",
+                "Figure on the left: top half (big reward model) vs bottom half (taps on every block).", minutes=1.5)
+
+    # ---- HSRM
+    paper_slide("hsrm", "A small reader on hidden states: HSRM (Li & Zhu 2026)", "hsrm_fig1.png",
+                "Figure 1 from Li &amp; Zhu 2026 (p.3): hidden states at reasoning-step boundaries feed a 2M-parameter reader",
+                [("domain", "text · math reasoning"),
+                 ("models", "Qwen3 1.7B–14B and Llama-3 1B–8B generators, frozen; reader = 2-layer Transformer → mean → linear, 2.1–3.4 M parameters"),
+                 ("method", "read final-layer states at the end of each reasoning step; pairwise (Bradley–Terry) loss within a problem; best-of-8"),
+                 ("benchmarks", "GSM8K, MATH-500, AIME, OlympiadBench"),
+                 ("result", "≥ a 55M text verifier in 15 of 16 settings; Llama-8B GSM8K 88.3 vs 85.2 (oracle 96.0) (Table 3, p.9)"),
+                 ("supports us", "a mean-pooled MLP reader ≈ their Transformer reader (Table 10)"),
+                 ("against us", "Bradley–Terry 85.9 &gt; BCE 83.9 on GSM8K (Table 9)")],
+                "Li &amp; Zhu arXiv:2608.30841: Fig. 1 p.3, §3 p.3–4, Table 3 p.9, Tables 9–10 p.14–15 (PAPER_NOTES_BC C1)",
+                """# A small reader on hidden states: HSRM (Li & Zhu 2026)
+- HSRM is the closest published analogue to our pipeline.
+# Figure 1 (top)
+- Point at the yellow boxes: the hidden states at the end of each reasoning step go into the 2-million-parameter reader.
+- The bottom row is the expensive alternative: re-reading the text with a separate verifier.
+# domain
+- Text only: math word problems and competition math.
+# models
+- Frozen Qwen3 and Llama generators.
+# method
+- It reads the states at the end of each reasoning step with a small Transformer and picks the best of eight — the same N as ours.
+# benchmarks
+- Four math benchmarks, from GSM8K to olympiad problems.
+# result
+- It matches or beats a much larger text verifier in fifteen of sixteen settings.
+# supports us
+- The reader's architecture matters much less than what you feed it.
+  - A mean-pooled MLP reader did about as well as their Transformer reader.
+# against us
+- HSRM found a pairwise ranking loss, Bradley–Terry, better than our loss — 85.9 versus 83.9 on grade-school math.""",
+                "Figure on top: the yellow step-boundary states → HSRM 2M box.", minutes=1.5, wide=True, fig_h=250)
+
     # ---- hidden-state verifiers in LLMs
-    d.add("hsv", "Hidden-state verifiers in text LLMs: Q-Probe, SWIFT, HSRM",
+    d.add("hsv", "Hidden-state verifiers side by side: Q-Probe, SWIFT, HSRM — and ours",
           """
 <table class="d sm">
 <tr><th>paper</th><th>what is read</th><th>layer</th><th>pooling</th><th>head · loss</th><th>params</th><th>N</th><th>result (own units)</th></tr>
@@ -769,7 +992,7 @@ def build(d):
  <div class="col"><div class="term r"><b class="k">cuts against it</b><span>HSRM: Bradley–Terry > BCE · Q-Probe: within-question loss > CE · SWIFT: gated > mean pooling</span></div></div>
 </div>""", "II · Key papers", src="Q-Probe Table 1 p.6, §7.2; SWIFT Tables 1 (MATH Avg. column, arxiv.org/html/2505.12225), 7, 8; HSRM Tables 3, 9, 10 (PAPER_NOTES_BC); ours final_eval_FINAL_cap320_T07.json",
           minutes=2.5,
-          say="""# Hidden-state verifiers in text LLMs (table)
+          say="""# Hidden-state verifiers side by side: Q-Probe, SWIFT, HSRM — and ours
 - These are our three closest relatives, all on text-only language models.
 # Q-Probe
 - Q-Probe, in 2024, put a linear probe on a frozen code model's embeddings to rerank 48 sampled programs.
@@ -794,129 +1017,185 @@ def build(d):
           qa=[("Is the BCE-vs-ranking-loss question settled?", "No. SWIFT finds BCE best; HSRM and Q-Probe find within-question losses better. Our own BCE-vs-Bradley–Terry comparison "
                "is confounded (Bradley–Terry sees 38.9% of rows and 3.26× fewer steps), so we do not claim BCE is better; a ranking loss on the final recipe is untested.")])
 
-    # ---- CASE, LiLaVe, ReProbe
-    d.add("case", "CASE, LiLaVe, ReProbe: when hidden-state selection beats voting",
-          """
-<div class="row">
- <div class="col">
-  <div class="paper"><div class="cite">Wang, Hong, Bagci 2026 · arXiv:2608.17124</div><h3>CASE — a decodability criterion</h3>
-  <ul class="b sm"><li>logistic gate on the answer-token state picks the top candidate</li>
-  <li><b>within-question AUC</b>: random-split 0.610 → grouped 0.542 → within-question 0.502</li>
-  <li>predicts gain over voting: \\( \\hat\\Delta = 100.8\\,\\mathrm{AUC}_{wq} - 58.5 \\) (r = 0.75)</li>
-  <li>medical MedMCQA, medium bin: +19.1 over voting</li>
-  <li><b>against us:</b> logistic ≥ MLP-256 (small data); token-mean “averages the signal away”</li></ul></div>
- </div>
- <div class="col">
-  <div class="paper"><div class="cite">LiLaVe 2025 · arXiv:2504.16760</div><h3>Lightweight latent verifier</h3>
-  <span class="note">XGBoost on hidden states · AUC 0.86 (GSM8K) · best-of-n fell below voting at large n</span></div>
-  <div class="paper"><div class="cite">ReProbe · ACL 2026 · arXiv:2511.06209</div><h3>Same head shape as ours</h3>
-  <span class="note">mean over the span → Linear–GELU–Linear, BCE, LLM-judge labels</span></div>
-  <div class="term w"><b class="k">our gap</b><span>within-question AUROC never reported</span></div>
- </div>
-</div>""", "II · Key papers", src="CASE HTML §3.2, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe HTML Table 1, §4.4; ReProbe HTML §3 (PAPER_NOTES_I)",
-          minutes=2.0,
-          say="""# CASE — a decodability criterion
-- Three more relatives, each teaching something.
+    # ---- CASE (+ LiLaVe, ReProbe)
+    paper_slide("case", "When hidden-state selection beats voting: CASE (Wang, Hong, Bagci 2026)", "case_fig1.png",
+                "Figure 1 from Wang, Hong &amp; Bagci 2026 (p.8): voting vs CASE on the same 5 candidates",
+                [("domain", "text · multiple-choice and short-answer QA: logic, medicine, math"),
+                 ("models", "12 LLMs incl. Qwen2.5 1.5–14B, Llama-3-8B, OpenBioLLM-8B/70B, Med42-8B; gate = logistic regression on the answer-token state"),
+                 ("method", "score each of N candidates with the gate, pick the maximum; <b>within-question AUC</b> predicts the gain over voting"),
+                 ("benchmarks", "LogiQA, MedQA, MedMCQA, PubMedQA, MATH-500, GSM8K, GPQA"),
+                 ("result", "OpenBioLLM-8B, MedMCQA medium-difficulty bin: +19.1 over voting; ordinary CV AUC 0.610 → grouped 0.542 → within-question 0.502 (LogiQA)"),
+                 ("against us", "logistic 0.596 ≥ MLP-256 0.537 (small data); token-mean “averages the signal away”; voting overtakes it by N = 16 on the medium bin"),
+                 ("related", "LiLaVe: trees on hidden states (AUC 0.86, GSM8K) · ReProbe: our head shape, BCE, LLM-judge labels"),
+                 ("our gap", "within-question AUROC never reported")],
+                "Wang, Hong, Bagci arXiv:2608.17124: Fig. 1 p.8; HTML §3.1–3.3, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe arXiv:2504.16760 Table 1, §4.4; "
+                "ReProbe arXiv:2511.06209 §3 (PAPER_NOTES_I G1–G3)",
+                """# When hidden-state selection beats voting: CASE (Wang, Hong, Bagci 2026)
 - CASE, from August 2026, asks exactly when choosing by hidden states beats majority voting.
+# Figure 1 (left)
+- Left box: voting counts surface answers and picks the wrong majority A.
+- Right box: CASE reads each candidate's answer-token state, a logistic gate scores it, and the minority correct answer B wins.
+# domain
+- Text only: multiple-choice and short-answer questions, including medical exams.
+# models
+- Twelve language models, general and medical, with a logistic gate.
+# method
 - Key contribution: within-question AUC — how well the probe orders the candidates of the same question.
+- That metric predicts how much you gain over voting.
+# benchmarks
+- Seven text benchmarks, four of them medical.
+# result
 - Ordinary cross-validation badly overstates probes: a probe can learn which questions are easy instead of which answers are right.
   - 0.61 drops to 0.50 when measured properly.
-- That metric predicts how much you gain over voting.
 - On a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting.
-- against us, two findings:
-  - a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting;
-  - averaging over tokens hurt in their multiple-choice setting.
+# against us
+- A small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting.
+- Averaging over tokens hurt in their multiple-choice setting.
 - Also, on those medium questions, voting caught up and overtook them by N of 16.
-# our gap
-- Our evaluation avoids the leakage they warn about by splitting by image.
-- But we have not reported their within-question AUC, and we should.
-# Lightweight latent verifier
+# related
 - LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers.
 - In their data plain best-of-n eventually fell below voting, and weighted voting was best.
-# Same head shape as ours
 - ReProbe has the same classifier shape as ours.
   - One Transformer layer, a mean over the span, then linear, GELU, linear.
   - Trained with binary cross-entropy on labels from an LLM judge.
-- It matches process reward models up to 810 times larger.""")
+- It matches process reward models up to 810 times larger.
+# our gap
+- Our evaluation avoids the leakage they warn about by splitting by image.
+- But we have not reported their within-question AUC, and we should.""",
+                "Figure on the left: the red voting box vs the CASE box; then result and against us.", minutes=2.2)
 
-    # ---- medical side
-    d.add("medside", "Medical side: self-verification fails; probes do MCQ or a demo",
-          """
-<div class="row">
- <div class="col">
-  <div class="paper"><div class="cite">Jin et al. 2026 · arXiv:2605.10850</div><h3>Verification Mirage</h3>
-  <ul class="b sm"><li>re-ask the same medical VLM “is your answer correct?” (6 VLMs incl. Lingshu)</li>
-  <li>Lingshu accepts <b>62.2–72.5%</b> of its own wrong answers</li>
-  <li>larger same-family verifier: no significant reduction (p = 0.782)</li>
-  <li>wrong answers locked in: 69.5–87.1% over 4 turns</li></ul>
-  <span class="note">⇒ why our selector is <b>trained</b>, not prompted</span></div>
- </div>
- <div class="col">
-  <div class="paper"><div class="cite">Nourbakhsh et al. 2026 · arXiv:2609.04336</div><h3>MedProb</h3>
-  <ul class="b sm"><li>logistic probe on the last <i>input</i> token; closed questions as MCQ</li>
-  <li>beats prompting by &gt;20 points in several cases; linear ≈ MLP</li>
-  <li>App. H: open reranking on 100 items, 0.09 → 0.13 — “an initial demonstration”</li></ul></div>
-  <div class="paper"><div class="cite">Xie et al. 2026 · arXiv:2609.06419</div><h3>DualRead</h3>
-  <span class="note">teacher-forced replay; calibrates, does not choose · AUROC 0.952 in-distribution, 0.666 out</span></div>
- </div>
-</div>""", "II · Key papers", src="Mirage Tables 1, 11–15, App. B.4; MedProb p.6, App. H p.27 Table 14, App. L Table 21; DualRead Table 1 (PAPER_NOTES_BC, PAPER_NOTES_I)",
-          minutes=2.2,
-          say="""# Verification Mirage
+    # ---- Verification Mirage
+    paper_slide("medside", "Medical self-verification fails: Verification Mirage (Jin et al. 2026)", "mirage_fig1.png",
+                "Figure 1 from Jin et al. 2026 (p.2): the generator–verifier study pipeline",
+                [("domain", "vision-language · medical VQA"),
+                 ("models", "6 VLMs: Qwen2.5-VL-7B, Gemma-3, Phi-4-Multimodal, MedGemma, HuatuoGPT-Vision, Lingshu (size not stated); "
+                            "verifiers prompted, nothing trained"),
+                 ("method", "the model answers; the same model, in a fresh context, judges “correct / incorrect / uncertain”; oracle labels by "
+                            "Gemini-2.5-Flash; a 4-turn feedback loop"),
+                 ("benchmarks", "VQA-RAD, PathVQA, SLAKE, PMC-VQA, MedXpertQA"),
+                 ("result", "Lingshu accepts <b>62.2–72.5%</b> of its own wrong answers; larger same-family verifier: no significant reduction "
+                            "(p = 0.782); 69.5–87.1% of wrong answers locked in over 4 turns"),
+                 ("for us", "why our selector is <b>trained</b>, not prompted")],
+                "Jin et al. arXiv:2605.10850: Fig. 1 p.2, §3–4, Tables 1, 11–15, App. B.4 (PAPER_NOTES_BC B2)",
+                """# Medical self-verification fails: Verification Mirage (Jin et al. 2026)
 - On the medical side, three papers set the context.
+# Figure 1 (left)
+- Panel a: the generator answers, then a verifier with the same weights says correct or incorrect.
+- Panel b: five medical VQA datasets and seven question types; panel c: where verifiers fail.
+# domain
+- Images plus text: medical visual question answering, the same field as ours.
+# models
+- Six medical and general VLMs, including Lingshu; nothing is trained.
+# method
 - Verification Mirage asked medical VLMs, including Lingshu, to check their own answers.
+# benchmarks
+- Five medical VQA datasets, three of which we also use.
+# result
 - Lingshu accepted 62 to 73 percent of its own wrong answers.
 - A bigger model of the same family did not significantly help.
 - Over four turns of conversation, the wrong answers got locked in.
+# for us
 - That is why our selector is trained on labels rather than prompted.
 - One point to keep apart: in part four, a separate 32-billion model judging our 7B's candidates without training does better than a 7B doing the same.
   - That does not conflict with Mirage.
   - Mirage measures whether a model accepts its own wrong answers when it re-checks them.
   - We measure best-of-8 selection accuracy, with a different model as the judge.
-  - Both point the same way: training, not prompting, is what makes a selector work.
-# MedProb
+  - Both point the same way: training, not prompting, is what makes a selector work.""",
+                "Figure on the left: panel a (generator → verifier); then the result row.", minutes=1.8,
+                qa=[("Did Verification Mirage use Lingshu-7B?", "The paper does not state Lingshu's size; do not call it 7B."),
+                    ("Why not just ask the model, or use its likelihood — no labels needed?",
+                     "Prompted self-verification: Mirage shows Lingshu accepts 62–73% of its own wrong answers. Plain log-probability ranking and self-certainty "
+                     "have not been run on our pools — an owed baseline on the gap list.")])
+
+    # ---- MedProb
+    paper_slide("medprob", "Probing medical VLMs: MedProb (Nourbakhsh et al. 2026)", "medprob_fig2.png",
+                "Figure 2 from Nourbakhsh et al. 2026 (p.5): VLMs evaluated (left) and the probe vs prompting (right)",
+                [("domain", "vision-language · medical VQA, closed questions as multiple choice"),
+                 ("models", "28 VLMs incl. Qwen2.5-VL 3/7/32B, MedVLThinker 3/7/32B; probe = logistic regression on the last <i>input</i> token, per layer"),
+                 ("method", "read the state before any answer is written and classify the option — a classifier, not a selector"),
+                 ("benchmarks", "PathVQA, SLAKE, VQA-RAD (closed, as MCQ); OmniMedVQA"),
+                 ("result", "probe beats prompting by &gt;20 points in several cases; linear ≈ MLP (App. L)"),
+                 ("App. H", "open reranking on 100 OmniMedVQA items, Qwen2.5-VL-7B 0.09 → 0.13 — “an initial demonstration”; N, grader, probe type not stated"),
+                 ("for us", "the only earlier medical instance of probe reranking of open answers")],
+                "Nourbakhsh et al. arXiv:2609.04336: Fig. 2 p.5, §3 p.3–5, p.6, Table 10 p.26, App. H p.27 Table 14, App. L Table 21 (PAPER_NOTES_BC C4)",
+                """# Probing medical VLMs: MedProb (Nourbakhsh et al. 2026)
+- MedProb probes medical vision-language models directly.
+# Figure 2 (top)
+- Left panel: the many general and medical VLMs they test.
+- Right panel, middle row: a linear classifier on the model's internal state, instead of letting it write an answer.
+# domain
+- Images plus text: medical VQA, but closed questions turned into multiple choice.
+# models
+- Twenty-eight VLMs; the probe is a logistic regression.
+# method
+- It reads the state before any answer is written, so it is a classifier, not a selector.
+# benchmarks
+- The closed halves of PathVQA, SLAKE and VQA-RAD, plus OmniMedVQA.
+# result
 - A simple linear probe on a medical VLM's internal state answers closed multiple-choice questions better than the model's own generated answer.
 - By more than 20 points in several cases.
-- But it reads the state before any answer is written, so it is a classifier, not a selector.
+# App. H
 - In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09 to 0.13.
   - They call it an initial demonstration; the number of samples, the grader and the probe type are not stated.
-# DualRead
-- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
-- But only to calibrate confidence.
-- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.""",
-          qa=[("Did Verification Mirage use Lingshu-7B?", "The paper does not state Lingshu's size; do not call it 7B."),
-              ("Is MedProb App. H comparable to our OmniMedVQA result?", "No: 100 test items, unstated grader and recipe, baseline is a single sample rather than greedy. "
-               "Ours on OmniMedVQA: 8,883 questions, greedy 0.516 → 0.677 judge. We make no priority claim — its authors call it 'an initial demonstration'."),
-              ("Why not just ask the model, or use its likelihood — no labels needed?",
-               "Prompted self-verification: Mirage shows Lingshu accepts 62–73% of its own wrong answers. Plain log-probability ranking and self-certainty "
-               "have not been run on our pools — an owed baseline on the gap list.")])
+# for us
+- It is the closest medical precedent; we make no priority claim.""",
+                "Figure on top: the MedProb row in the right panel; then App. H.", minutes=1.6, wide=True, fig_h=270,
+                qa=[("Is MedProb App. H comparable to our OmniMedVQA result?", "No: 100 test items, unstated grader and recipe, baseline is a single sample rather than greedy. "
+                     "Ours on OmniMedVQA: 8,883 questions, greedy 0.516 → 0.677 judge. We make no priority claim — its authors call it 'an initial demonstration'.")])
 
-    # ---- WED and BoE
-    d.add("wed", "Published medical test-time selectors: WED and Best-of-Evidence",
-          """
-<div class="row">
- <div class="col">
-  <div class="paper"><div class="cite">Hagen et al. 2026 · arXiv:2605.18313</div><h3>Wasserstein Equilibrium Decoding (WED)</h3>
-  <ol style="font-size:16px;line-height:1.45;padding-left:20px">
-   <li>sample ≤ 8 distinct candidates (≤ 16 draws), merge by meaning</li>
-   <li>same VLM scores each as <i>generator</i> and as <i>verifier</i></li>
-   <li>the two roles update toward each other (a game)</li>
-   <li>stop when Wasserstein-1 &lt; 0.2; return the top candidate</li>
-  </ol>
-  <span class="note">training-free · VQA-RAD, PathVQA open · −1.2 to +5.0 pts over greedy · “gains diminish with size”</span></div>
- </div>
- <div class="col">
-  <div class="paper"><div class="cite">Zhang et al. 2026 · arXiv:2607.20950</div><h3>Best-of-Evidence</h3>
-  <ul class="b sm"><li>16 samples; a 235B judge checks individual claims</li>
-  <li>vs majority vote: +0.26 to +0.58 pts; 2 of 4 significant</li>
-  <li>no greedy baseline; VQA-Med items from the training split</li></ul></div>
-  <div class="term t"><b class="k">for us</b><span>WED is evaluated on two of our open benchmarks → we ran its code on <b>our</b> candidates (Part VI)</span></div>
- </div>
-</div>""", "II · Key papers", src="WED §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py; BoE §5.1, Table 2 p.9, App. B.2 (PAPER_NOTES_DE, PAPER_NOTES_BC); "
-              "Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064",
-          minutes=2.0,
-          say="""# Wasserstein Equilibrium Decoding (WED)
+    # ---- DualRead
+    paper_slide("dualread", "Teacher-forced replay for confidence: DualRead (Xie et al. 2026)", "dualread_fig2.png",
+                "Figure 2 from Xie et al. 2026 (p.3): replaying the answer, reading states before and after it",
+                [("domain", "vision-language · medical VQA, confidence of one answer"),
+                 ("models", "GRPO-trained Qwen3-VL-2B and MedGemma1.5-4B, frozen; small MLP / linear readers on final-layer states"),
+                 ("method", "replay the greedy answer with teacher forcing; read the state before and after the answer; fuse into one "
+                            "confidence. It does not choose among answers."),
+                 ("benchmarks", "SLAKE-test (in-distribution); VQA-RAD, PathVQA, PMC-VQA, OmniMedVQA, ReXVQA, VQA-Med 2019 (out of distribution)"),
+                 ("result", "AUROC 0.952 on SLAKE vs 0.666 averaged out of distribution (Qwen3-VL-2B, Table 1)"),
+                 ("for us", "the same teacher-forced re-read as ours; its drop on new datasets is a warning about transfer")],
+                "Xie et al. arXiv:2609.06419: Fig. 2 p.3, method §, Table 1 (PAPER_NOTES_I G4)",
+                """# Teacher-forced replay for confidence: DualRead (Xie et al. 2026)
+- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
+# Figure 2 (left)
+- Panel a, middle band: the image, question and answer tokens replayed through the frozen model.
+- An orange read before the answer and a purple read after it are fused into one confidence.
+# domain
+- Images plus text: medical VQA, but scoring the confidence of a single answer.
+# models
+- Two small medical VLMs, frozen, with small readers on the last layer.
+# method
+- But only to calibrate confidence; it never chooses between answers.
+# benchmarks
+- Trained on SLAKE, tested on SLAKE and six other medical sets.
+# result
+- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
+# for us
+- Same re-read, different job; and a warning that probes may not transfer to new datasets.""",
+                "Figure on the left: panel a, the replay band and the two reads.", minutes=1.3)
+
+    # ---- WED
+    paper_slide("wed", "A published medical selector: WED (Hagen et al. 2026)", "wed_fig1.png",
+                "Figure 1 from Hagen et al. 2026 (p.3): generator and verifier rankings converge; the Wasserstein rule stops earlier",
+                [("domain", "vision-language · open-ended medical VQA"),
+                 ("models", "Qwen3-VL-2B / 4B / 8B, Gemma-3-4B, MedGemma-4B; nothing trained — the same VLM plays generator and verifier"),
+                 ("method", "sample ≤ 8 distinct candidates (≤ 16 draws), merge by meaning → score each as generator and as verifier → "
+                            "the two update toward each other (a game) → stop when Wasserstein-1 &lt; 0.2 → return the top candidate"),
+                 ("benchmarks", "VQA-RAD and PathVQA open-ended test subsets, yes/no excluded; graded by Grok 4.1 Fast, EM, F1"),
+                 ("result", "−1.2 to +5.0 points over greedy (judge, Table 1 p.8) — “gains diminish with size”"),
+                 ("for us", "evaluated on two of our open benchmarks → we ran its code on <b>our</b> candidates (Part VI)")],
+                "Hagen et al. arXiv:2605.18313: Fig. 1 p.3, §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py (PAPER_NOTES_DE E4); "
+                "Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064",
+                """# A published medical selector: WED (Hagen et al. 2026)
 - Two recent papers do test-time selection specifically for medical VQA.
-- WED is training-free.
+# Figure 1 (top)
+- Left: a CT image and candidate answers; synonyms like liver and hepatic region are merged.
+- Middle: the generator's and the verifier's rankings of the candidates.
+- Right: the rankings converge over iterations; the Wasserstein rule stops earlier than exact agreement.
+# domain
+- Images plus text: open-ended medical VQA, like ours.
+# models
+- Small VLMs; WED is training-free.
+# method
 - It samples up to eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning.
 - Then the same model plays two roles:
   - a generator that scores how likely each candidate is;
@@ -924,16 +1203,47 @@ def build(d):
 - The two roles adjust toward each other in a game until their rankings agree.
   - Measured with a Wasserstein distance, so that synonyms count as agreement.
 - The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is the stopping rule.
+# benchmarks
+- The open questions of VQA-RAD and PathVQA, without yes/no.
+# result
 - Graded by the Grok model, it reports one to five points over greedy on most small models.
 - And a small loss for the largest one on VQA-RAD — so gains shrink as models get bigger.
-# Best-of-Evidence
-- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
-- It gains under one point over majority vote, significant on two of four datasets.
-- No greedy baseline, and its VQA-Med items come from the training split.
 # for us
 - WED matters most for us: the only published selector evaluated on two of our open benchmarks, VQA-RAD and PathVQA.
 - So rather than compare numbers across papers, we ran WED's own code on our candidates.
-- I show that result in part six.""")
+- I show that result in part six.""",
+                "Figure on top: candidates → two rankings → convergence; then the method row.", minutes=2.0, wide=True, fig_h=250)
+
+    # ---- Best-of-Evidence
+    paper_slide("boe", "Claim-level checking: Best-of-Evidence (Zhang et al. 2026)", "boe_fig1.png",
+                "Figure 1 from Zhang et al. 2026 (p.1): a fixed candidate pool, a claim graph, budgeted evidence checks",
+                [("domain", "vision-language · medical VQA (open and multiple choice)"),
+                 ("models", "generator Qwen3-VL-30B-A3B (16 samples, T = 1.1); evidence judge Qwen3-VL-235B-A22B"),
+                 ("method", "keep the 16-sample pool; check individual claims (modality, anatomy …) under a budget; update each "
+                            "candidate's score; pick the maximum"),
+                 ("benchmarks", "VQA-Med (training partition), PathVQA open, PMC-VQA (options hidden), MedXpertQA-MM"),
+                 ("result", "vs majority vote: +0.26 to +0.58 points; 2 of 4 significant (Table 2, p.9)"),
+                 ("for us", "its baseline is voting, not greedy — the matching number for us is probe − vote (Part VI)")],
+                "Zhang et al. arXiv:2607.20950: Fig. 1 p.1, §5.1 p.7, Table 1 p.7, Table 2 p.9, App. B.2 (PAPER_NOTES_BC B3)",
+                """# Claim-level checking: Best-of-Evidence (Zhang et al. 2026)
+- The second medical selector.
+# Figure 1 (top)
+- Left: a VLM generates a fixed pool of candidates.
+- Middle: their claims form a graph; a budget controller decides which claims to check.
+- Right: the evidence updates each candidate's score, and the best one is selected.
+# domain
+- Images plus text: medical VQA.
+# models
+- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
+# method
+- The pool stays fixed; only the checking is budgeted.
+# benchmarks
+- Four medical sets; its VQA-Med items come from the training split.
+# result
+- It gains under one point over majority vote, significant on two of four datasets.
+# for us
+- No greedy baseline, so the fair comparison for us is probe minus vote.""",
+                "Figure on top: left to right, pool → claim graph → budgeted checks → selection.", minutes=1.3, wide=True, fig_h=250)
 
     # ---- generator and judges provenance + gap table
     d.add("gap", "Where this work sits",

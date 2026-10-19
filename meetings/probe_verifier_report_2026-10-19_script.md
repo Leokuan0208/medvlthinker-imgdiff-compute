@@ -1,6 +1,6 @@
 # Speaker script — probe_verifier_report_2026-10-19.html
 
-72 slides · main talk ≈ 101 minutes · backup slides are only for questions.
+82 slides · main talk ≈ 115 minutes · backup slides are only for questions.
 
 **How to use this script.** Each slide has three parts:
 - **On screen** — what the audience is looking at, and where to point.
@@ -577,69 +577,239 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: Collins & Koo, Comp. Ling. 31(1) 2005; Li et al. arXiv:2010.11428 (CEM), 2103.14152 (R-EBM); Cobbe arXiv:2110.14168; Nakano arXiv:2112.09332; Jumper, Nature 2021; arXiv:2402.14688, 2505.12225 (SWIFT, KDD 2026), 2504.16760, 2608.30841, 2608.17124, 2605.28527 (VLA probe), 2609.04336, 2609.06419</sub>
 
-### 16 · Trained verifiers (Cobbe 2021) and coverage vs precision (Brown 2024)  ·  ~2 min
+### 16 · Trained verifiers: Cobbe et al. 2021 (OpenAI)  ·  ~2 min
+*On screen:* Figure on the left: walk the three numbered columns; then read the fact rows top to bottom.
+
 **Say:**
 
 
-#### ▸ Training Verifiers to Solve Math Word Problems
+#### ▸ Trained verifiers: Cobbe et al. 2021 (OpenAI)
 
 - Two founding papers. First, Cobbe and colleagues at OpenAI, 2021, established the recipe we follow.
-- method:
-    - Sample a hundred solutions to each training problem.
-    - Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
-    - At test time, return the highest-scored of a hundred samples.
-- result: on grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
+
+#### ▸ Figure 4 (left)
+
+- Point at the three columns: train the generator; generate and label a hundred solutions per problem; train the verifier.
+- Each solution is labelled correct or incorrect by its final answer only.
+
+#### ▸ domain
+
+- Text only: grade-school math word problems, where the answer is a number.
+
+#### ▸ models
+
+- GPT-3 generators; the verifier is a second language model of the same size, fully fine-tuned.
+
+#### ▸ method
+
+- Sample a hundred solutions to each training problem.
+- Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
+- At test time, return the highest-scored of a hundred samples.
+
+#### ▸ benchmarks
+
+- GSM8K, a benchmark they released with this paper.
+
+#### ▸ result
+
+- On grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
     - They describe it as worth a 30-times increase in model size.
-- against us: two findings.
+
+#### ▸ against us
+
+- Two findings.
     - Their token-level verifier was better than a whole-answer verifier.
     - Past 400 samples accuracy fell: the generator produced answers that fooled the verifier — reward over-optimisation.
 
-#### ▸ Large Language Monkeys
-
-- Brown and colleagues, 2024, showed why selection is the hard part.
-- With ten thousand samples from Llama-3-8B-Instruct, a correct answer exists for 98 percent of the MATH problems.
-- But voting or off-the-shelf reward models only got from 40.5 to 41.4 percent.
-- Coverage grows; selection does not keep up. That split frames all our results.
-
-#### ▸ what we take
+#### ▸ for us
 
 - Cobbe's recipe — outcome labels, a trained scorer, pick the highest score.
 - But the verifier is replaced by a small probe on our generator's own frozen internal states.
 
-<sub>Source: Cobbe §4.2 p.8, §5.1 p.10, §6 p.12; Brown p.2–3, Fig. 7 p.10 (PAPER_NOTES_A); Gao et al. arXiv:2210.10760</sub>
+<sub>Source: Cobbe et al. arXiv:2110.14168: Fig. 4 p.7; §4.2 p.8, §4.3 p.9, §5.1 p.10, §6 p.12, Table 1 p.16 (PAPER_NOTES_A §1.1); Gao et al. arXiv:2210.10760</sub>
 
-### 17 · Test-time compute vs model size (Snell et al. 2024)  ·  ~1.5 min
+### 17 · Coverage vs precision: Brown et al. 2024 (Large Language Monkeys)  ·  ~1.5 min
+*On screen:* Figure on top: the two numbered problems; then the fact rows, ending on result.
+
 **Say:**
 
 
-#### ▸ Scaling LLM Test-Time Compute Optimally …
+#### ▸ Coverage vs precision: Brown et al. 2024 (Large Language Monkeys)
+
+- Brown and colleagues, 2024, showed why selection is the hard part.
+
+#### ▸ Figure 1 (top)
+
+- Point at the two stages: the model generates many candidates; a verifier has to find a right one.
+- Problem 1 under the first stage is coverage; problem 2 under the verifier is precision.
+
+#### ▸ domain
+
+- Text only: math, formal proofs and code.
+
+#### ▸ models
+
+- Several open models, Llama-3, Gemma and others; nothing is trained.
+
+#### ▸ method
+
+- They sample up to ten thousand times per problem and measure the two problems separately.
+
+#### ▸ benchmarks
+
+- GSM8K and MATH for math, MiniF2F for proofs, CodeContests and SWE-bench for code.
+
+#### ▸ result
+
+- With ten thousand samples from Llama-3-8B-Instruct, a correct answer exists for 98 percent of the MATH problems.
+- But voting or off-the-shelf reward models only got from 40.5 to 41.4 percent.
+
+#### ▸ for us
+
+- Coverage grows; selection does not keep up. That split frames all our results.
+
+<sub>Source: Brown et al. arXiv:2407.21787: Fig. 1 p.2; §2–4, p.3, Fig. 7 p.10 (PAPER_NOTES_A §1.2)</sub>
+
+### 18 · Test-time compute vs model size: Snell et al. 2024  ·  ~2 min
+*On screen:* Figure on the left: point at best-of-N (left panel); then result and our data.
+
+**Say:**
+
+
+#### ▸ Test-time compute vs model size: Snell et al. 2024
 
 - Snell and colleagues framed the modern debate: spend compute at test time, or on a bigger model?
-- frame: every method is a proposer plus a verifier.
-- method: they choose the strategy per question according to its difficulty; their verifiers are process reward models.
-- result: smart test-time search can match plain best-of-N with four times less compute.
+
+#### ▸ Figure 2 (left)
+
+- Point at the three panels: best-of-N, beam search, lookahead search.
+- Green nodes are kept by the verifier, red ones rejected; best-of-N on the left is our setting.
+
+#### ▸ domain
+
+- Text only: competition math.
+
+#### ▸ models
+
+- Every method is a proposer plus a verifier; their verifiers are process reward models, which score each reasoning step.
+
+#### ▸ method
+
+- They choose the strategy per question according to its difficulty.
+
+#### ▸ benchmarks
+
+- The MATH benchmark.
+
+#### ▸ result
+
+- Smart test-time search can match plain best-of-N with four times less compute.
 - And it can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains somewhat non-trivial success rates".
 - On the hardest questions, they say, pretraining is the more effective way.
-
-#### ▸ a similar shape in our data
-
-- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
-- On VQA-Med, that is only 21 percent — and we gain nothing.
-    - Though I will show that there the probe also fails to find the correct answers that do exist.
 
 #### ▸ against us
 
 - Step-level verifiers beat outcome-level ones in their data, more so as N grows.
 - Their method chooses the budget per question; ours uses one fixed setting.
-
-#### ▸ best-of-N weighted
-
 - Their default way of combining scores: add up the verifier's score over identical answers.
 - We tested it against our own readout; I show it in part four.
 
-<sub>Source: Snell v1 abstract, Fig. 4 p.10, Fig. 9 p.15, App. F p.24–25; ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}</sub>
+#### ▸ our data
 
-### 18 · Training-free selection and its ceiling: majority vote, USC, embeddings  ·  ~1.5 min
+- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
+- On VQA-Med, that is only 21 percent — and we gain nothing.
+    - Though I will show that there the probe also fails to find the correct answers that do exist.
+
+<sub>Source: Snell et al. arXiv:2408.03314 (ICLR 2025): Fig. 2 p.8, abstract, Fig. 4 p.10, Fig. 9 p.15, App. D p.22, App. F p.24–25 (PAPER_NOTES_A §1.3); ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}</sub>
+
+### 19 · Majority vote: self-consistency (Wang et al. 2023)  ·  ~1.3 min
+*On screen:* Figure on top: greedy row, then the sampled paths converging on one answer.
+
+**Say:**
+
+
+#### ▸ Majority vote: self-consistency (Wang et al. 2023)
+
+- The simplest selector is majority vote, which the field calls self-consistency.
+
+#### ▸ Figure 1 (top)
+
+- Top row: greedy chain of thought gives one wrong answer.
+- Bottom: several sampled reasoning paths, then the most common final answer wins.
+
+#### ▸ domain
+
+- Text only: arithmetic, commonsense and symbolic reasoning.
+
+#### ▸ models
+
+- Large language models used few-shot; nothing is trained.
+
+#### ▸ method
+
+- Sample forty reasoning paths and take the majority answer. It needs answers that can be matched exactly.
+
+#### ▸ benchmarks
+
+- Nine reasoning benchmarks, GSM8K among them.
+
+#### ▸ result
+
+- On grade-school math with a big model it raised accuracy from 56 to 74 percent.
+- Because a correct number tends to come up again and again.
+
+#### ▸ for us
+
+- It is the baseline every selector must beat; on our open medical answers it does worse than greedy.
+
+<sub>Source: Wang et al., ICLR 2023, arXiv:2203.11171: Fig. 1 p.2, p.3–5, Table 2 p.5 (PAPER_NOTES_DE E1)</sub>
+
+### 20 · Voting for free text: Universal Self-Consistency (Chen et al. 2023)  ·  ~1.2 min
+*On screen:* Figure on top: the USC prompt box in the middle.
+
+**Say:**
+
+
+#### ▸ Voting for free text: Universal Self-Consistency (Chen et al. 2023)
+
+- Majority vote needs exact repeats; USC is the field's answer for free text.
+
+#### ▸ Figure 1 (top)
+
+- Point at the prompt box: all sampled responses are pasted in, and the model is asked which one is most consistent.
+
+#### ▸ domain
+
+- Text only: math, code, summaries and open questions.
+
+#### ▸ models
+
+- PaLM 2 and GPT-3.5; nothing is trained.
+
+#### ▸ method
+
+- One extra call to the same model per question.
+
+#### ▸ benchmarks
+
+- Seven text benchmarks, from GSM8K to TruthfulQA.
+
+#### ▸ result
+
+- On math it matches majority vote, and both stay well below the best of the same eight samples.
+
+#### ▸ also free text
+
+- EBA picks the centre of the largest cluster of answer embeddings.
+- Self-certainty scores each sample from the model's own output probabilities.
+
+#### ▸ for us
+
+- We have not run these on our pools, and that is a gap.
+
+<sub>Source: Chen et al. arXiv:2311.17311: Fig. 1 p.2, p.4, Table 1 p.5, Table 7 p.13 (PAPER_NOTES_DE E2); Ontalvilla et al. arXiv:2606.12003; Kang et al. arXiv:2502.18581</sub>
+
+### 21 · Training-free selection and its ceiling: majority vote, USC, embeddings  ·  ~1.5 min
 *On screen:* Right chart: most dots sit left of the zero line; end on the bold macro row at the bottom (hollow dot = not significant).
 
 **Say:**
@@ -678,11 +848,145 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all.sc_minus_greedy_judge (+CI), macro_over_open8.all.sc_minus_greedy_judge; Wang 2023 Table 2 p.5; Bay Prop. 5 Eq. 13 p.10</sub>
 
-### 19 · Hidden-state verifiers in text LLMs: Q-Probe, SWIFT, HSRM  ·  ~2.5 min
+### 22 · The first probe reranker: Q-Probe (Li et al., ICML 2024)  ·  ~1.4 min
+*On screen:* Figure on top: follow the colours from each program to its feature strip to the probe.
+
 **Say:**
 
 
-#### ▸ Hidden-state verifiers in text LLMs (table)
+#### ▸ The first probe reranker: Q-Probe (Li et al., ICML 2024)
+
+- Q-Probe, in 2024, is the earliest paper to rerank a frozen model's samples with a probe.
+
+#### ▸ Figure 1 (top)
+
+- Point left to right: the model writes several programs; each gets its own feature vector; the probe turns the vectors into probabilities; one program is picked.
+- That is our pipeline, with programs instead of medical answers.
+
+#### ▸ domain
+
+- Text only: code generation, plus some math and preference data.
+
+#### ▸ models
+
+- A frozen code model with a linear probe on one middle layer.
+
+#### ▸ method
+
+- It reranks 48 sampled programs; as the softmax temperature goes to zero this becomes our argmax.
+
+#### ▸ benchmarks
+
+- Two code benchmarks, MBPP and HumanEval, plus GSM8K and preference data.
+
+#### ▸ result
+
+- On MBPP, success with one program rises from 0.29 to 0.46.
+
+#### ▸ against us
+
+- Their pointwise loss — the kind we use — did worse than a within-question loss.
+- And deeper probes overfit on their preference data.
+
+<sub>Source: Li et al. arXiv:2402.14688 (ICML 2024): Fig. 1 p.2, §4–5 p.4–5, Table 1 p.6, §7.2 p.9 (PAPER_NOTES_BC C3)</sub>
+
+### 23 · Rewards from hidden states: SWIFT (Guo et al., KDD 2026)  ·  ~1.5 min
+*On screen:* Figure on the left: top half (big reward model) vs bottom half (taps on every block).
+
+**Say:**
+
+
+#### ▸ Rewards from hidden states: SWIFT (Guo et al., KDD 2026)
+
+- SWIFT is the closest single text-only neighbour.
+
+#### ▸ Figure 1 (left)
+
+- Top half: the usual way, a separate billion-parameter reward model reads the output text.
+- Bottom half: SWIFT taps every transformer block, concatenates, and a linear head with a gate gives the reward.
+
+#### ▸ domain
+
+- Text only: math, code, commonsense and safety tasks.
+
+#### ▸ models
+
+- Three open 3-to-8-billion models, frozen; the head has about a hundred thousand to three hundred thousand weights.
+
+#### ▸ method
+
+- It reads every token of every layer and pools them with a learned gate.
+- It trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers.
+
+#### ▸ benchmarks
+
+- Seven text benchmarks, with MATH as the headline.
+
+#### ▸ result
+
+- On MATH it beats the strongest trained reward model in their table.
+
+#### ▸ supports us
+
+- Our loss was their best of five.
+
+#### ▸ against us
+
+- Learning which tokens to weight beat a plain average.
+
+<sub>Source: Guo et al. arXiv:2505.12225 (KDD 2026): Fig. 1 p.2, §4.2 p.3–4, Tables 1, 7, 8 (PAPER_NOTES_BC C2; arxiv.org/html/2505.12225)</sub>
+
+### 24 · A small reader on hidden states: HSRM (Li & Zhu 2026)  ·  ~1.5 min
+*On screen:* Figure on top: the yellow step-boundary states → HSRM 2M box.
+
+**Say:**
+
+
+#### ▸ A small reader on hidden states: HSRM (Li & Zhu 2026)
+
+- HSRM is the closest published analogue to our pipeline.
+
+#### ▸ Figure 1 (top)
+
+- Point at the yellow boxes: the hidden states at the end of each reasoning step go into the 2-million-parameter reader.
+- The bottom row is the expensive alternative: re-reading the text with a separate verifier.
+
+#### ▸ domain
+
+- Text only: math word problems and competition math.
+
+#### ▸ models
+
+- Frozen Qwen3 and Llama generators.
+
+#### ▸ method
+
+- It reads the states at the end of each reasoning step with a small Transformer and picks the best of eight — the same N as ours.
+
+#### ▸ benchmarks
+
+- Four math benchmarks, from GSM8K to olympiad problems.
+
+#### ▸ result
+
+- It matches or beats a much larger text verifier in fifteen of sixteen settings.
+
+#### ▸ supports us
+
+- The reader's architecture matters much less than what you feed it.
+    - A mean-pooled MLP reader did about as well as their Transformer reader.
+
+#### ▸ against us
+
+- HSRM found a pairwise ranking loss, Bradley–Terry, better than our loss — 85.9 versus 83.9 on grade-school math.
+
+<sub>Source: Li &amp; Zhu arXiv:2608.30841: Fig. 1 p.3, §3 p.3–4, Table 3 p.9, Tables 9–10 p.14–15 (PAPER_NOTES_BC C1)</sub>
+
+### 25 · Hidden-state verifiers side by side: Q-Probe, SWIFT, HSRM — and ours  ·  ~2.5 min
+**Say:**
+
+
+#### ▸ Hidden-state verifiers side by side: Q-Probe, SWIFT, HSRM — and ours
 
 - These are our three closest relatives, all on text-only language models.
 
@@ -724,54 +1028,105 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: Q-Probe Table 1 p.6, §7.2; SWIFT Tables 1 (MATH Avg. column, arxiv.org/html/2505.12225), 7, 8; HSRM Tables 3, 9, 10 (PAPER_NOTES_BC); ours final_eval_FINAL_cap320_T07.json</sub>
 
-### 20 · CASE, LiLaVe, ReProbe: when hidden-state selection beats voting  ·  ~2 min
+### 26 · When hidden-state selection beats voting: CASE (Wang, Hong, Bagci 2026)  ·  ~2.2 min
+*On screen:* Figure on the left: the red voting box vs the CASE box; then result and against us.
+
 **Say:**
 
 
-#### ▸ CASE — a decodability criterion
+#### ▸ When hidden-state selection beats voting: CASE (Wang, Hong, Bagci 2026)
 
-- Three more relatives, each teaching something.
 - CASE, from August 2026, asks exactly when choosing by hidden states beats majority voting.
+
+#### ▸ Figure 1 (left)
+
+- Left box: voting counts surface answers and picks the wrong majority A.
+- Right box: CASE reads each candidate's answer-token state, a logistic gate scores it, and the minority correct answer B wins.
+
+#### ▸ domain
+
+- Text only: multiple-choice and short-answer questions, including medical exams.
+
+#### ▸ models
+
+- Twelve language models, general and medical, with a logistic gate.
+
+#### ▸ method
+
 - Key contribution: within-question AUC — how well the probe orders the candidates of the same question.
+- That metric predicts how much you gain over voting.
+
+#### ▸ benchmarks
+
+- Seven text benchmarks, four of them medical.
+
+#### ▸ result
+
 - Ordinary cross-validation badly overstates probes: a probe can learn which questions are easy instead of which answers are right.
     - 0.61 drops to 0.50 when measured properly.
-- That metric predicts how much you gain over voting.
 - On a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting.
-- against us, two findings:
-    - a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting;
-    - averaging over tokens hurt in their multiple-choice setting.
+
+#### ▸ against us
+
+- A small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting.
+- Averaging over tokens hurt in their multiple-choice setting.
 - Also, on those medium questions, voting caught up and overtook them by N of 16.
+
+#### ▸ related
+
+- LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers.
+- In their data plain best-of-n eventually fell below voting, and weighted voting was best.
+- ReProbe has the same classifier shape as ours.
+    - One Transformer layer, a mean over the span, then linear, GELU, linear.
+    - Trained with binary cross-entropy on labels from an LLM judge.
+- It matches process reward models up to 810 times larger.
 
 #### ▸ our gap
 
 - Our evaluation avoids the leakage they warn about by splitting by image.
 - But we have not reported their within-question AUC, and we should.
 
-#### ▸ Lightweight latent verifier
+<sub>Source: Wang, Hong, Bagci arXiv:2608.17124: Fig. 1 p.8; HTML §3.1–3.3, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe arXiv:2504.16760 Table 1, §4.4; ReProbe arXiv:2511.06209 §3 (PAPER_NOTES_I G1–G3)</sub>
 
-- LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers.
-- In their data plain best-of-n eventually fell below voting, and weighted voting was best.
+### 27 · Medical self-verification fails: Verification Mirage (Jin et al. 2026)  ·  ~1.8 min
+*On screen:* Figure on the left: panel a (generator → verifier); then the result row.
 
-#### ▸ Same head shape as ours
-
-- ReProbe has the same classifier shape as ours.
-    - One Transformer layer, a mean over the span, then linear, GELU, linear.
-    - Trained with binary cross-entropy on labels from an LLM judge.
-- It matches process reward models up to 810 times larger.
-
-<sub>Source: CASE HTML §3.2, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe HTML Table 1, §4.4; ReProbe HTML §3 (PAPER_NOTES_I)</sub>
-
-### 21 · Medical side: self-verification fails; probes do MCQ or a demo  ·  ~2.2 min
 **Say:**
 
 
-#### ▸ Verification Mirage
+#### ▸ Medical self-verification fails: Verification Mirage (Jin et al. 2026)
 
 - On the medical side, three papers set the context.
+
+#### ▸ Figure 1 (left)
+
+- Panel a: the generator answers, then a verifier with the same weights says correct or incorrect.
+- Panel b: five medical VQA datasets and seven question types; panel c: where verifiers fail.
+
+#### ▸ domain
+
+- Images plus text: medical visual question answering, the same field as ours.
+
+#### ▸ models
+
+- Six medical and general VLMs, including Lingshu; nothing is trained.
+
+#### ▸ method
+
 - Verification Mirage asked medical VLMs, including Lingshu, to check their own answers.
+
+#### ▸ benchmarks
+
+- Five medical VQA datasets, three of which we also use.
+
+#### ▸ result
+
 - Lingshu accepted 62 to 73 percent of its own wrong answers.
 - A bigger model of the same family did not significantly help.
 - Over four turns of conversation, the wrong answers got locked in.
+
+#### ▸ for us
+
 - That is why our selector is trained on labels rather than prompted.
 - One point to keep apart: in part four, a separate 32-billion model judging our 7B's candidates without training does better than a 7B doing the same.
     - That does not conflict with Mirage.
@@ -779,36 +1134,131 @@ Every number comes from a named artifact or paper; the source line at the bottom
     - We measure best-of-8 selection accuracy, with a different model as the judge.
     - Both point the same way: training, not prompting, is what makes a selector work.
 
-#### ▸ MedProb
-
-- A simple linear probe on a medical VLM's internal state answers closed multiple-choice questions better than the model's own generated answer.
-- By more than 20 points in several cases.
-- But it reads the state before any answer is written, so it is a classifier, not a selector.
-- In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09 to 0.13.
-    - They call it an initial demonstration; the number of samples, the grader and the probe type are not stated.
-
-#### ▸ DualRead
-
-- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
-- But only to calibrate confidence.
-- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
-
 **If asked:**
 
 - *Did Verification Mirage use Lingshu-7B?* — The paper does not state Lingshu's size; do not call it 7B.
-- *Is MedProb App. H comparable to our OmniMedVQA result?* — No: 100 test items, unstated grader and recipe, baseline is a single sample rather than greedy. Ours on OmniMedVQA: 8,883 questions, greedy 0.516 → 0.677 judge. We make no priority claim — its authors call it 'an initial demonstration'.
 - *Why not just ask the model, or use its likelihood — no labels needed?* — Prompted self-verification: Mirage shows Lingshu accepts 62–73% of its own wrong answers. Plain log-probability ranking and self-certainty have not been run on our pools — an owed baseline on the gap list.
 
-<sub>Source: Mirage Tables 1, 11–15, App. B.4; MedProb p.6, App. H p.27 Table 14, App. L Table 21; DualRead Table 1 (PAPER_NOTES_BC, PAPER_NOTES_I)</sub>
+<sub>Source: Jin et al. arXiv:2605.10850: Fig. 1 p.2, §3–4, Tables 1, 11–15, App. B.4 (PAPER_NOTES_BC B2)</sub>
 
-### 22 · Published medical test-time selectors: WED and Best-of-Evidence  ·  ~2 min
+### 28 · Probing medical VLMs: MedProb (Nourbakhsh et al. 2026)  ·  ~1.6 min
+*On screen:* Figure on top: the MedProb row in the right panel; then App. H.
+
 **Say:**
 
 
-#### ▸ Wasserstein Equilibrium Decoding (WED)
+#### ▸ Probing medical VLMs: MedProb (Nourbakhsh et al. 2026)
+
+- MedProb probes medical vision-language models directly.
+
+#### ▸ Figure 2 (top)
+
+- Left panel: the many general and medical VLMs they test.
+- Right panel, middle row: a linear classifier on the model's internal state, instead of letting it write an answer.
+
+#### ▸ domain
+
+- Images plus text: medical VQA, but closed questions turned into multiple choice.
+
+#### ▸ models
+
+- Twenty-eight VLMs; the probe is a logistic regression.
+
+#### ▸ method
+
+- It reads the state before any answer is written, so it is a classifier, not a selector.
+
+#### ▸ benchmarks
+
+- The closed halves of PathVQA, SLAKE and VQA-RAD, plus OmniMedVQA.
+
+#### ▸ result
+
+- A simple linear probe on a medical VLM's internal state answers closed multiple-choice questions better than the model's own generated answer.
+- By more than 20 points in several cases.
+
+#### ▸ App. H
+
+- In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09 to 0.13.
+    - They call it an initial demonstration; the number of samples, the grader and the probe type are not stated.
+
+#### ▸ for us
+
+- It is the closest medical precedent; we make no priority claim.
+
+**If asked:**
+
+- *Is MedProb App. H comparable to our OmniMedVQA result?* — No: 100 test items, unstated grader and recipe, baseline is a single sample rather than greedy. Ours on OmniMedVQA: 8,883 questions, greedy 0.516 → 0.677 judge. We make no priority claim — its authors call it 'an initial demonstration'.
+
+<sub>Source: Nourbakhsh et al. arXiv:2609.04336: Fig. 2 p.5, §3 p.3–5, p.6, Table 10 p.26, App. H p.27 Table 14, App. L Table 21 (PAPER_NOTES_BC C4)</sub>
+
+### 29 · Teacher-forced replay for confidence: DualRead (Xie et al. 2026)  ·  ~1.3 min
+*On screen:* Figure on the left: panel a, the replay band and the two reads.
+
+**Say:**
+
+
+#### ▸ Teacher-forced replay for confidence: DualRead (Xie et al. 2026)
+
+- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
+
+#### ▸ Figure 2 (left)
+
+- Panel a, middle band: the image, question and answer tokens replayed through the frozen model.
+- An orange read before the answer and a purple read after it are fused into one confidence.
+
+#### ▸ domain
+
+- Images plus text: medical VQA, but scoring the confidence of a single answer.
+
+#### ▸ models
+
+- Two small medical VLMs, frozen, with small readers on the last layer.
+
+#### ▸ method
+
+- But only to calibrate confidence; it never chooses between answers.
+
+#### ▸ benchmarks
+
+- Trained on SLAKE, tested on SLAKE and six other medical sets.
+
+#### ▸ result
+
+- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
+
+#### ▸ for us
+
+- Same re-read, different job; and a warning that probes may not transfer to new datasets.
+
+<sub>Source: Xie et al. arXiv:2609.06419: Fig. 2 p.3, method §, Table 1 (PAPER_NOTES_I G4)</sub>
+
+### 30 · A published medical selector: WED (Hagen et al. 2026)  ·  ~2 min
+*On screen:* Figure on top: candidates → two rankings → convergence; then the method row.
+
+**Say:**
+
+
+#### ▸ A published medical selector: WED (Hagen et al. 2026)
 
 - Two recent papers do test-time selection specifically for medical VQA.
-- WED is training-free.
+
+#### ▸ Figure 1 (top)
+
+- Left: a CT image and candidate answers; synonyms like liver and hepatic region are merged.
+- Middle: the generator's and the verifier's rankings of the candidates.
+- Right: the rankings converge over iterations; the Wasserstein rule stops earlier than exact agreement.
+
+#### ▸ domain
+
+- Images plus text: open-ended medical VQA, like ours.
+
+#### ▸ models
+
+- Small VLMs; WED is training-free.
+
+#### ▸ method
+
 - It samples up to eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning.
 - Then the same model plays two roles:
     - a generator that scores how likely each candidate is;
@@ -816,14 +1266,15 @@ Every number comes from a named artifact or paper; the source line at the bottom
 - The two roles adjust toward each other in a game until their rankings agree.
     - Measured with a Wasserstein distance, so that synonyms count as agreement.
 - The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is the stopping rule.
+
+#### ▸ benchmarks
+
+- The open questions of VQA-RAD and PathVQA, without yes/no.
+
+#### ▸ result
+
 - Graded by the Grok model, it reports one to five points over greedy on most small models.
 - And a small loss for the largest one on VQA-RAD — so gains shrink as models get bigger.
-
-#### ▸ Best-of-Evidence
-
-- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
-- It gains under one point over majority vote, significant on two of four datasets.
-- No greedy baseline, and its VQA-Med items come from the training split.
 
 #### ▸ for us
 
@@ -831,9 +1282,51 @@ Every number comes from a named artifact or paper; the source line at the bottom
 - So rather than compare numbers across papers, we ran WED's own code on our candidates.
 - I show that result in part six.
 
-<sub>Source: WED §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py; BoE §5.1, Table 2 p.9, App. B.2 (PAPER_NOTES_DE, PAPER_NOTES_BC); Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064</sub>
+<sub>Source: Hagen et al. arXiv:2605.18313: Fig. 1 p.3, §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py (PAPER_NOTES_DE E4); Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064</sub>
 
-### 23 · Where this work sits  ·  ~1.5 min
+### 31 · Claim-level checking: Best-of-Evidence (Zhang et al. 2026)  ·  ~1.3 min
+*On screen:* Figure on top: left to right, pool → claim graph → budgeted checks → selection.
+
+**Say:**
+
+
+#### ▸ Claim-level checking: Best-of-Evidence (Zhang et al. 2026)
+
+- The second medical selector.
+
+#### ▸ Figure 1 (top)
+
+- Left: a VLM generates a fixed pool of candidates.
+- Middle: their claims form a graph; a budget controller decides which claims to check.
+- Right: the evidence updates each candidate's score, and the best one is selected.
+
+#### ▸ domain
+
+- Images plus text: medical VQA.
+
+#### ▸ models
+
+- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
+
+#### ▸ method
+
+- The pool stays fixed; only the checking is budgeted.
+
+#### ▸ benchmarks
+
+- Four medical sets; its VQA-Med items come from the training split.
+
+#### ▸ result
+
+- It gains under one point over majority vote, significant on two of four datasets.
+
+#### ▸ for us
+
+- No greedy baseline, so the fair comparison for us is probe minus vote.
+
+<sub>Source: Zhang et al. arXiv:2607.20950: Fig. 1 p.1, §5.1 p.7, Table 1 p.7, Table 2 p.9, App. B.2 (PAPER_NOTES_BC B3)</sub>
+
+### 32 · Where this work sits  ·  ~1.5 min
 **Say:**
 
 
@@ -875,7 +1368,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## III · Method
 
-### 24 · (section divider)  ·  ~0.2 min
+### 33 · (section divider)  ·  ~0.2 min
 **Say:**
 
 
@@ -883,7 +1376,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 - Part three: our method, one step at a time.
 
-### 25 · The method in one figure  ·  ~2.5 min
+### 34 · The method in one figure  ·  ~2.5 min
 *On screen:* Walk left to right: the CT and its question; step 1, the eight sampled pills; the three merged answers with their vote badges; step 2, the violet taps at blocks 22 / 20 / 18; step 3, the 24 probe tiles; step 4, the rank bars and the green returned answer.
 
 **Say:**
@@ -927,7 +1420,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: worked_example_12231.json (computed with ckpts/train/final_probe_2026-10-16/fold0, the probes trained without this image); shipped recipe: FINAL_METHOD_2026-10-16.md, single T = 0.7</sub>
 
-### 26 · The data: eight open-ended medical VQA benchmarks  ·  ~2 min
+### 35 · The data: eight open-ended medical VQA benchmarks  ·  ~2 min
 *On screen:* The table top to bottom: the three classic benchmarks, then the five that broaden coverage; then the three boxes on the right.
 
 **Say:**
@@ -967,7 +1460,45 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all.{n,n_images}, folds.{0,1}.train_rows (row breakdown: numbers_review_part2.json, recomputed from the feature-cache metas, reproduces both totals); Lingshu Table 5 p.12; benchmark sources per PAPER_NOTES_GH</sub>
 
-### 27 · Step 1 — sampling: 8 answers, one image encoding  ·  ~1.5 min
+### 36 · One question, many answers: temperature sampling  ·  ~1.5 min
+*On screen:* Left to right: the same image and question → the same frozen model → a random draw at every token → four columns of real answers. Point at the shipped T = 0.7 column, then the greedy box.
+
+**Say:**
+
+
+#### ▸ same input
+
+- One image, one question, one frozen model — nothing about the input changes between runs.
+
+#### ▸ each next token is drawn at random
+
+- At every step the model gives a probability for each possible next token.
+- Greedy decoding always takes the top one; sampling draws one at random, in proportion to those probabilities.
+- Temperature T reshapes them: low T makes the top token dominate, high T flattens them.
+- These bars are a schematic — we did not store the token probabilities.
+
+#### ▸ real samples for this question (8 per temperature)
+
+- These are the model's real answers to this question, eight runs at each temperature.
+- At T = 0.2 and 0.4 it says Small Bowel seven times out of eight — and never the right answer.
+- At T = 0.7, our setting, three different answers appear, and one of the eight is right: Large Bowel.
+- At T = 1.0 five different answers appear; Large Bowel comes up twice, but so do Liver and Kidney.
+
+#### ▸ greedy decoding
+
+- Greedy says Small Bowel, which is wrong, and says it every single time.
+- The model gives that answer about 76 percent of its probability; the right answer is in the remaining 24 percent.
+- So sampling is what puts the right answer in the pool at all — the probe's job is then to pick it out.
+- Across all 36,869 questions, eight samples give 4.42 different answers on average; only 16.3 percent of questions get a single answer.
+
+**If asked:**
+
+- *Why not just raise the temperature further?* — More diversity also means more wrong answers in the pool: here T = 1.0 brings Liver and Kidney. The measured trade-off across benchmarks is on the temperature slide in Part IV: T = 0.7 was the best single setting under the judge.
+- *Are the bars real probabilities?* — No — a schematic. Per-token probabilities were not stored for these pools; the only real number is the greedy answer's whole-sequence log-probability, −0.2718, i.e. about 0.76 (ckpt_slake_open_lingshu7b.jsonl seqlogprob).
+
+<sub>Source: sampling_example_12231.json (sampling_example.py; ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_{lingshu7bT02,lingshu7bT04,lingshu7b,lingshu7bT10}_sc8.jsonl preds/oks, greedy ckpt_slake_open_lingshu7b.jsonl seqlogprob −0.2718); middle bars schematic; distinct per question: numbers_review_part2.json open8_pools</sub>
+
+### 37 · Step 1 — sampling: 8 answers, one image encoding  ·  ~1.5 min
 *On screen:* The three boxes on the left, top to bottom; then the cost table — point at the ratio column.
 
 **Say:**
@@ -996,7 +1527,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: bestofn_vllm_2026-09-16.json (ms and J measured: NVML, 20 timed calls after 3 warm-ups, vqa_rad open items, max_new 32; 1.13× FLOP-eq); GFLOPs modelled = analytic FLOP model (free_head_2026-08-16.json null_tests.flop_model_rebuild) × forward-token ratio; 4.42 distinct = 162,885 rows / 36,869 questions (numbers_review_part2.json); dedup: extract_generator_hidden.py norm(); sampling: run_openvqa.py:186</sub>
 
-### 28 · Step 2 — where the probe reads: the answer's own tokens  ·  ~2.5 min
+### 38 · Step 2 — where the probe reads: the answer's own tokens  ·  ~2.5 min
 *On screen:* The dashed teal box (the answer's tokens), then the three violet lines (blocks 18, 20, 22), then the formula at the bottom.
 
 **Say:**
@@ -1038,7 +1569,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: extract_generator_hidden.py (h_span = mean over the candidate's tokens; layers index output_hidden_states, 0 = embeddings); token counts: numbers_review_part2.json (Lingshu tokenizer), mean ≈ 274 image tokens at cap320 (free_head_2026-08-16.json); bound = max_pixels/784 (2×2 merge of 14-px patches); AUDIT_2026-09-18.md §4 (two resolutions); select_policy_cap320_vs_fullres_T07.json</sub>
 
-### 29 · Which layers: 18, 20, 22 of 28 — upper-middle depth  ·  ~1.5 min
+### 39 · Which layers: 18, 20, 22 of 28 — upper-middle depth  ·  ~1.5 min
 *On screen:* The violet rows on the left (blocks 18, 20, 22), then the five bar values on the right, then the ensemble line.
 
 **Say:**
@@ -1067,7 +1598,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: head_ens_width_2026-08-25.json macro.* (5 of 8 benchmarks, 5 seeds, August-era pooled probe, judge); head_final_stack_PVFIXED_2026-09-13.json pooled_ens − pooled_singlelayer; HSRM Fig. 3 p.6; MedProb Fig. 5 p.7</sub>
 
-### 30 · Step 3 — the probe: one hidden layer, 918,017 parameters  ·  ~1.5 min
+### 40 · Step 3 — the probe: one hidden layer, 918,017 parameters  ·  ~1.5 min
 *On screen:* The figure bottom to top: input vector, standardise, the two trained Linear layers with GELU between, the score at the top; the dashed sigmoid box is training only. Then the two equations.
 
 **Say:**
@@ -1098,7 +1629,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: ckpts/train/final_probe_2026-10-16/fold{0,1} (recipe.json: Linear(3584→256)-GELU-Linear(256→1)); 3584·256+256+256+1 = 918,017; standardiser: final_method_eval.py (std + 1e-6)</sub>
 
-### 31 · Training the probe: labels, loss, data  ·  ~2 min
+### 41 · Training the probe: labels, loss, data  ·  ~2 min
 *On screen:* The loss formula in the teal box — point at the weight w₊; then the training-rows box.
 
 **Say:**
@@ -1132,7 +1663,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json folds.*.train_rows; head_sweep.py:172-174 (pos_weight = (1−π)/π); π and row breakdown: numbers_review_part2.json; final probes fitted on T = 0.7 pools</sub>
 
-### 32 · Step 4 — the readout: rank averaging with a vote tie-break  ·  ~1.5 min
+### 42 · Step 4 — the readout: rank averaging with a vote tie-break  ·  ~1.5 min
 *On screen:* Read one row of the grid — Large Bowel, 24 cells — then the mean column; then the formula.
 
 **Say:**
@@ -1158,7 +1689,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: worked_example_12231.json (raw scores: candidates[*].probe_scores); readout: genframe_data.rank_avg (ties averaged, ÷ max(n−1, 1)), final_method_eval.py tie-break; adopted 2026-10-15 under a pre-specified rule (readout_variants_2026-10-15.json)</sub>
 
-### 33 · 24 probes ≠ 8 samples — the probes work for any N  ·  ~1.5 min
+### 43 · 24 probes ≠ 8 samples — the probes work for any N  ·  ~1.5 min
 *On screen:* Three panels, left to right: the sample column grows, the 24-probe grid stays the same.
 
 **Say:**
@@ -1192,7 +1723,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: coverage_sc16_ci_ALL_2026-09-16.json (September probe, judge); budget_conversion_sc32_2026-09-17.json (RadImageNet N = 32 sampled at T = 1.0); final_eval_FINAL_cap320_MIX_T07_16.json in the main checkout's artifacts/ (MedGemma labels incomplete for 16-sample pools)</sub>
 
-### 34 · Evaluation: scored only by probes that never saw the image  ·  ~1.5 min
+### 44 · Evaluation: scored only by probes that never saw the image  ·  ~1.5 min
 *On screen:* The two fold rows: train on one half, score the other; then the green box on the right.
 
 **Say:**
@@ -1230,7 +1761,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json (bootstrap: 10,000 resamples, clustered by image within benchmark); split: md5('nd'+pixel_md5) mod 2, fold f scores half f; run_judge.py (both judges)</sub>
 
-### 35 · What it costs: cheap sampling, negligible probe, costly re-read  ·  ~1 min
+### 45 · What it costs: cheap sampling, negligible probe, costly re-read  ·  ~1 min
 *On screen:* Left chart (milliseconds), middle chart (joules), then the three boxes — the orange one is the honest caveat.
 
 **Say:**
@@ -1267,7 +1798,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## IV · Why
 
-### 36 · (section divider)  ·  ~0.5 min
+### 46 · (section divider)  ·  ~0.5 min
 **Say:**
 
 
@@ -1293,7 +1824,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 - The October probes, cross-fitted on both halves, give every headline number.
 - When a slide says July, August or September, it is evidence from an earlier version.
 
-### 37 · Design decisions at a glance  ·  ~1.5 min
+### 47 · Design decisions at a glance  ·  ~1.5 min
 *On screen:* Read the table row by row only for the rows I name: selector, verifier type, label source, temperature. The two right-hand columns are the two metrics.
 
 **Say:**
@@ -1325,7 +1856,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_fold1_headline_2026-10-16.json policies.T07.macro; extra_numbers.json probe_minus_vote_em; free_head_2026-08-16.json; verifier_32b_gpu.json; wed_vs_probe_2026-10-16.json; readout_variants_2026-10-15.json; judge_2x2_2026-09-20.json, judge_consensus_2026-09-20.json (layer 20, 3 seeds); temp_crossfit_2026-10-15.json; select_policy_cap320_vs_fullres_T07.json; final_eval_FINAL_cap320_MIX_T07_16.json</sub>
 
-### 38 · Why train a selector at all  ·  ~2 min
+### 48 · Why train a selector at all  ·  ~2 min
 *On screen:* The top two dots first (probe, majority vote); then the rows below the dashed September line; then the orange answer-prior box.
 
 **Say:**
@@ -1366,7 +1897,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json; extra_numbers.json probe_minus_vote_*; audit_stats_baselines_2026-09-20.json summary_by_currency.{judge,lenientEM}.* (benchmark_t_interval_df7) and per_benchmark.* (shares: numbers_review_part2.json answer_prior_share); PROJECT_RETROSPECTIVE N32; verifier_32b_gpu.json pooled.deltas_vs_32B</sub>
 
-### 39 · Why a probe on hidden states instead of a fine-tuned verifier model  ·  ~2 min
+### 49 · Why a probe on hidden states instead of a fine-tuned verifier model  ·  ~2 min
 *On screen:* The first table (accuracy), then the two cost tables — the bottom one is in the HF accounting.
 
 **Say:**
@@ -1399,7 +1930,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: free_head_2026-08-16.json DELIVERABLE_4_head_only.head_vs_incumbent, DELIVERABLE_3_cost.arms_fixed_bestof8.{bo8_head_TODAY,bo8_incumbent_LoRA}.flopeq_measured_geometry; bestofn_latency_energy_2026-08-03.json measured.{bo8_total,verify8,gen1}; CLAUDE.md §0 (vLLM LoRA landmine); HSRM Table 1 p.7</sub>
 
-### 40 · Why read the answer tokens, with the answering prompt  ·  ~1.5 min
+### 50 · Why read the answer tokens, with the answering prompt  ·  ~1.5 min
 *On screen:* The highlighted top row of each table; then the 'against us' box.
 
 **Say:**
@@ -1428,7 +1959,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: verifarch_hidden_promptform_indomain_2026-08-04.json (in-eval CV, upper bound); _head_sweep_journal*.jsonl A_objbt_h256, B_L21_last (clean CV, Bradley–Terry; sd 0.016 / 0.009); head_visual_features_2026-09-01.json macro.*; SWIFT Table 8; CASE §3.2</sub>
 
-### 41 · Why an MLP of width 256 — the probe-size plateau  ·  ~1.5 min
+### 51 · Why an MLP of width 256 — the probe-size plateau  ·  ~1.5 min
 *On screen:* The linear dot against the four MLP dots; then the axis table on the right.
 
 **Say:**
@@ -1463,7 +1994,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: _head_sweep_journal*.jsonl tags A_objbce_h{0,128,256,512,1024}, REG_drop*, REG_ep*, REG_wd*, R2_d2_dr0.0, R2_normz_ln1 (150 runs, 128 distinct _key configurations; fold sd A_objbce_h256 0.0133); head_final_stack_08{ctrl,wide}_2026-10-15.json (judge, 0.0761 vs 0.0740); VERIFIER_ARCHITECTURES_2026-08-04.md §6 item 3</sub>
 
-### 42 · Why BCE — and why we do not claim it beats ranking losses  ·  ~1.5 min
+### 52 · Why BCE — and why we do not claim it beats ranking losses  ·  ~1.5 min
 *On screen:* The table (BCE highlighted), then the red 'confounded' box — that is why there is no claim.
 
 **Say:**
@@ -1495,7 +2026,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: _head_sweep_journal*.jsonl A_obj{bce,bt,listwise}_h256, F_hybrid1.0, BUD_bt_ep98, BUD_bce_ep30; OPENTEXT_CORRECTIONS_2026-08-19.md §3b; SWIFT Table 7; HSRM Table 9 (GSM8K); Q-Probe Table 1, Fig. 4 (MBPP)</sub>
 
-### 43 · Why rank averaging with a vote tie-break  ·  ~1.5 min
+### 53 · Why rank averaging with a vote tie-break  ·  ~1.5 min
 *On screen:* The row marked with a tick — rank + vote tie — then the bottom row, probe-weighted vote: its violet EM dot is right, its two judge dots are left.
 
 **Say:**
@@ -1524,7 +2055,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: readout_variants_2026-10-15.json macro.*_minus_rank_{j,x,em} (rank_vote CI: judge [+0.00005, +0.00152], EM [+0.00003, +0.00154]), adoption_rule (September pooled probe, image half A, n = 18,452; not re-checked on the final probes)</sub>
 
-### 44 · Why train on all eight benchmarks: the largest single lever  ·  ~1.5 min
+### 54 · Why train on all eight benchmarks: the largest single lever  ·  ~1.5 min
 *On screen:* The three bars left to right: 4 domains, left out, pooled — the left-out bar is no higher than the first.
 
 **Say:**
@@ -1553,7 +2084,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: head_lobo_pooled_2026-08-25.json macro.* (chart, −0.0056, +0.0485); head_final_stack_PVFIXED_2026-09-13.json (+0.0182 → +0.0736, September, script only); head_price_from_lobo_2026-08-30.json summary.zero_shot_macro; TRANSFER_WALL_2026-08-21.md §12 (Qwen, head_final_stack_qwen pooled ensemble)</sub>
 
-### 45 · Why N = 8 — and what more samples buy  ·  ~1 min
+### 55 · Why N = 8 — and what more samples buy  ·  ~1 min
 *On screen:* The teal RadImageNet line rising; the indigo VQA-Med line flat.
 
 **Say:**
@@ -1580,7 +2111,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: coverage_sc16_ci_ALL_2026-09-16.json (judge); budget_conversion_sc32_2026-09-17.json cells.{radimagenet_open,vqamed_open} (September pooled probe; RadImageNet N = 32 sampled at T = 1.0); CHEAP_VERIFIER_ON_7B_2026-08-16.md §4 (N = 4: judge +0.00159 [−0.0051, +0.0083], EM +0.00825 [+0.0015, +0.0151])</sub>
 
-### 46 · Why one temperature, T = 0.7  ·  ~2 min
+### 56 · Why one temperature, T = 0.7  ·  ~2 min
 *On screen:* The left chart: the indigo judge line peaks at 0.7, the violet EM line falls from 0.2; then the table's 'best' column; then the red box.
 
 **Say:**
@@ -1620,7 +2151,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: chart: temp_crossfit_2026-10-15.json macro.fixed_*_minus_greedy_{judge,em} (September pooled probe v2, image half A); table: head_temp_ensemble_2026-08-30.json cells.*.{T}.minus_greedy (August pooled probe v1); tmap_vs_t07_2026-10-16.json macro.fold1_out_of_sample; final_eval_FINAL_cap320_MIX_{T07,MIX8}.json (main checkout artifacts/)</sub>
 
-### 47 · Why cap320 instead of the 1-megapixel cap  ·  ~1 min
+### 57 · Why cap320 instead of the 1-megapixel cap  ·  ~1 min
 *On screen:* The top table's first two rows; then the GEMeX row in red.
 
 **Say:**
@@ -1659,7 +2190,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## V · Results
 
-### 48 · (section divider)  ·  ~0.2 min
+### 58 · (section divider)  ·  ~0.2 min
 **Say:**
 
 
@@ -1667,7 +2198,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 - Part five: results.
 
-### 49 · Headline: significant macro gains under every metric  ·  ~2 min
+### 59 · Headline: significant macro gains under every metric  ·  ~2 min
 *On screen:* the first row (cross-family judge), then the last column (image half B).
 
 **Say:**
@@ -1724,7 +2255,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json macro_over_open8.all.pick_minus_greedy_*; final_fold1_headline_2026-10-16.json policies.T07.macro</sub>
 
-### 50 · Per benchmark: where it helps, where it ties, where exact match disagrees  ·  ~2 min
+### 60 · Per benchmark: where it helps, where it ties, where exact match disagrees  ·  ~2 min
 *On screen:* filled vs hollow markers; the indigo (judge) and teal (MedGemma) dots move together, the violet (lenient exact match) ones do not.
 
 **Say:**
@@ -1763,7 +2294,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all.{pick_minus_greedy,ci_pick_minus_greedy}_{judge,xjudge,em}; Bonferroni: numbers_review_part3.json (part3_numbers.py on final_eval_FINAL_cap320_T07_records.json; image-clustered bootstrap, 10,000 resamples)</sub>
 
-### 51 · Fixes vs harms: what the selector changes, question by question  ·  ~1.5 min
+### 61 · Fixes vs harms: what the selector changes, question by question  ·  ~1.5 min
 *On screen:* the fixed and harmed columns, then the VQA-Med row.
 
 **Say:**
@@ -1798,7 +2329,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: extra_numbers.json (from final_eval_FINAL_cap320_T07_records.json, judge); answer-changed rate: numbers_review_part3.json; accounting: Hu 2026 arXiv:2607.17531 Eq. 1–6</sub>
 
-### 52 · Gain follows headroom; selection fails on VQA-RAD, VQA-Med  ·  ~1.5 min
+### 62 · Gain follows headroom; selection fails on VQA-RAD, VQA-Med  ·  ~1.5 min
 *On screen:* the gap between the grey and teal bars, then between teal and blue, benchmark by benchmark.
 
 **Say:**
@@ -1830,7 +2361,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all.{greedy,pick,oracle}_judge; headroom / correlations: numbers_review_part3.json (part3_numbers.py on final_eval_FINAL_cap320_T07_records.json; image-clustered bootstrap, 10,000 resamples)</sub>
 
-### 53 · Does the probe just learn which answers are common?  ·  ~2 min
+### 63 · Does the probe just learn which answers are common?  ·  ~2 min
 *On screen:* the prior's share per benchmark (top-right box), then the 'never seen' rows of the table.
 
 **Say:**
@@ -1882,7 +2413,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: template_stratified_gain_2026-09-20.json pooled_micro, cells.pathvqa_open.{repeat,novel}; audit_stats_baselines_2026-09-20.json summary_by_currency.judge and per_benchmark.*.judge (September probe, half A; shares: numbers_review_part3.json, r2_part3_extra.py)</sub>
 
-### 54 · A second training recipe of the same language model: Qwen2.5-VL-7B  ·  ~1 min
+### 64 · A second training recipe of the same language model: Qwen2.5-VL-7B  ·  ~1 min
 **Say:**
 
 
@@ -1915,7 +2446,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## VI · Comparison
 
-### 55 · (section divider)  ·  ~0.2 min
+### 65 · (section divider)  ·  ~0.2 min
 **Say:**
 
 
@@ -1923,7 +2454,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 - Part six: how this compares with published work.
 
-### 56 · How to compare honestly  ·  ~1 min
+### 66 · How to compare honestly  ·  ~1 min
 **Say:**
 
 
@@ -1953,7 +2484,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: Lingshu Table 6 p.17, §4.2 p.16; Liu et al. 2025 Table 1 p.4 (Lingshu-7B PathVQA 0.7192) — PAPER_NOTES_GH G4</sub>
 
-### 57 · Tier 1 — head-to-head with WED on identical candidates  ·  ~2 min
+### 67 · Tier 1 — head-to-head with WED on identical candidates  ·  ~2 min
 *On screen:* the probe − WED column, PathVQA first; then the red box.
 
 **Say:**
@@ -1998,7 +2529,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: wed_vs_probe_2026-10-16.json cells.*.{probe_minus_wed,wed_minus_greedy}_* (T = 0.7 pools; authors' code, src/exp_2026_10/wed/wed_select.py); game-active subset: numbers_review_part3.json; WED Table 1 p.8</sub>
 
-### 58 · Tier 2 — LLaVA-Med's metric on the full official test splits  ·  ~1.5 min
+### 68 · Tier 2 — LLaVA-Med's metric on the full official test splits  ·  ~1.5 min
 *On screen:* the two bottom rows of the table (greedy vs + probe), then the claim box.
 
 **Say:**
@@ -2033,7 +2564,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json full_official_splits.*, cells.*.all.ci_pick_minus_greedy_llava_recall, cells.pathvqa_closed; training rows: numbers_review_part3.json training_rows_by_source; LLaVA-Med arXiv:2306.00890 Tables 3–4; LLaVA-Med v1.0.0 eval code imported verbatim</sub>
 
-### 59 · Tier 2/3 — ImageCLEF VQA-Med 2019 and Lingshu's published numbers  ·  ~1.5 min
+### 69 · Tier 2/3 — ImageCLEF VQA-Med 2019 and Lingshu's published numbers  ·  ~1.5 min
 **Say:**
 
 
@@ -2056,7 +2587,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.vqamed2019_test, full_official_splits; VQA-Med 2019 overview (CEUR Vol-2380) p.1, p.6 (best team 0.624); Lingshu arXiv:2506.07044v4 Table 6 p.17 (= v5 Table I), §4.2 p.16</sub>
 
-### 60 · Tier 3 — medical test-time methods, each in its own units  ·  ~1.5 min
+### 70 · Tier 3 — medical test-time methods, each in its own units  ·  ~1.5 min
 **Say:**
 
 
@@ -2098,7 +2629,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## VII · Limits
 
-### 61 · (section divider)  ·  ~0.2 min
+### 71 · (section divider)  ·  ~0.2 min
 **Say:**
 
 
@@ -2106,7 +2637,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 - Finally, what we cannot claim, and what comes next.
 
-### 62 · What the evidence does not support  ·  ~2.5 min
+### 72 · What the evidence does not support  ·  ~2.5 min
 *On screen:* left column (what we cannot claim), then right column (costs and risks).
 
 **Say:**
@@ -2172,7 +2703,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: literature/DOMAIN_GUIDE_2026-09-30.md §2.5 (branch worktree-lit-domain-package); AUDIT_2026-09-18.md; pathvqa_judge_audit.json; free_head_2026-08-16.json; bestofn_vllm_2026-09-16.json; extra_numbers.json; audit_stats_baselines_2026-09-20.json bigger_model_reference_32B</sub>
 
-### 63 · How far the statistics reach  ·  ~2 min
+### 73 · How far the statistics reach  ·  ~2 min
 *On screen:* the 'benchmarks as the unit' column: the two judge rows exclude zero, the exact-match row does not.
 
 **Say:**
@@ -2219,7 +2750,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: numbers_review_part3.json (part3_numbers.py on final_eval_FINAL_cap320_T07_records.json; image-clustered bootstrap, 10,000 resamples); refit floor AUDIT_2026-09-18.md §5</sub>
 
-### 64 · Never tested — the honest gap list  ·  ~1.5 min
+### 74 · Never tested — the honest gap list  ·  ~1.5 min
 **Say:**
 
 
@@ -2247,7 +2778,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: DESIGN_EVIDENCE.md §9 (21 gaps); PAPER_NOTES_* 'honest gaps' sections; review/R_results.md, R_papers.md</sub>
 
-### 65 · Next steps  ·  ~1.5 min
+### 75 · Next steps  ·  ~1.5 min
 **Say:**
 
 
@@ -2286,7 +2817,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 <sub>Source: DESIGN_EVIDENCE.md §9; this deck's limits and gap slides; log-probs: src/labeling/run_openvqa.py cumlogprob_all (October 1-MP pools, RadImageNet missing)</sub>
 
-### 66 · Summary — the claim, stated precisely  ·  ~1.5 min
+### 76 · Summary — the claim, stated precisely  ·  ~1.5 min
 *On screen:* the three numbers left to right, then the four lines.
 
 **Say:**
@@ -2337,7 +2868,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 ## Backup
 
-### 67 · (section divider)
+### 77 · (section divider)
 **Say:**
 
 
@@ -2345,20 +2876,20 @@ Every number comes from a named artifact or paper; the source line at the bottom
 
 - (Backup — only if asked.)
 
-### 68 · Backup — every benchmark, every metric (shipped method)
+### 78 · Backup — every benchmark, every metric (shipped method)
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all; headroom captured and micro: numbers_review_part3.json (part3_numbers.py on final_eval_FINAL_cap320_T07_records.json; image-clustered bootstrap, 10,000 resamples)</sub>
 
-### 69 · Backup — per-benchmark temperature (adopted, reversed)
+### 79 · Backup — per-benchmark temperature (adopted, reversed)
 **If asked:**
 
 - *Why ship the lower number?* — Because the +0.0091 comes from knowing which benchmark a question belongs to. The shipped method must answer an unlabelled question; choosing temperature from the question itself (modality, or the probe's own scores) is a next step.
 
 <sub>Source: tmap_vs_t07_2026-10-16.json macro.fold1_out_of_sample; frozen_temperature_map_2026-10-15.json; final_eval_FINAL_cap320_Tmap.json; FINAL_METHOD_2026-10-16.md</sub>
 
-### 70 · Backup — the full recipe
+### 80 · Backup — the full recipe
 <sub>Source: src/training_methods/head_sweep.py:170–175; src/exp_2026_10/final_method_eval.py; src/labeling/run_openvqa.py:51; training rows numbers_review_part3.json</sub>
 
-### 71 · Backup — data exposure and contamination
+### 81 · Backup — data exposure and contamination
 <sub>Source: Lingshu arXiv:2506.07044v4; Xu, Wu, Ryu arXiv:2606.10066; FINAL_METHOD_2026-10-16.md §6.4; AUDIT_2026-09-18 appendix DI-5</sub>
 
-### 72 · Backup — references
+### 82 · Backup — references

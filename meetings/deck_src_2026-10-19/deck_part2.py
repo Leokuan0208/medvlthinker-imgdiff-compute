@@ -93,6 +93,37 @@ def build(d):
               ("What exactly is the training set?", "Per fold: the opposite image half of the 8 open benchmarks (81,331 / 81,554 rows) and of the 4 comparison sets (3,366 / 3,325 rows: closed VQA-RAD, PathVQA, SLAKE and the VQA-Med 2019 test), plus a fixed 6,029-question subsample of Kvasir-VQA and the PathVQA/SLAKE/VQA-RAD training splits (31,237 / 31,121 rows after removal). Any row whose image is in the scored half is removed (exact pixel match). Totals 115,934 / 116,000 (numbers_review_part2.json; reproduces final_eval_FINAL_cap320_T07.json folds.*.train_rows)."),
               ("Why Lingshu-7B?", "An open 7B medical VLM whose published numbers MedEvalKit reproduces, so every claim is anchored to a public baseline. The MedGemma-4B replication was withdrawn (its sampled answers ran to the token cap); Qwen2.5-VL-7B, Lingshu's base, is the second generator.")])
 
+    # ---- what sampling does: one input, different answers (real samples, SLAKE 12231)
+    import figs_sampling as FS
+    d.add("sampling", "One question, many answers: temperature sampling",
+          f"""<div class="center">{FS.fig_sampling()}</div>""",
+          "III · Method", tall=True,
+          src="sampling_example_12231.json (sampling_example.py; ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_{lingshu7bT02,lingshu7bT04,lingshu7b,lingshu7bT10}_sc8.jsonl "
+              "preds/oks, greedy ckpt_slake_open_lingshu7b.jsonl seqlogprob −0.2718); middle bars schematic; distinct per question: numbers_review_part2.json open8_pools",
+          minutes=1.5,
+          look="Left to right: the same image and question → the same frozen model → a random draw at every token → four columns of real answers. Point at the shipped T = 0.7 column, then the greedy box.",
+          say="""# same input
+- One image, one question, one frozen model — nothing about the input changes between runs.
+# each next token is drawn at random
+- At every step the model gives a probability for each possible next token.
+- Greedy decoding always takes the top one; sampling draws one at random, in proportion to those probabilities.
+- Temperature T reshapes them: low T makes the top token dominate, high T flattens them.
+- These bars are a schematic — we did not store the token probabilities.
+# real samples for this question (8 per temperature)
+- These are the model's real answers to this question, eight runs at each temperature.
+- At T = 0.2 and 0.4 it says Small Bowel seven times out of eight — and never the right answer.
+- At T = 0.7, our setting, three different answers appear, and one of the eight is right: Large Bowel.
+- At T = 1.0 five different answers appear; Large Bowel comes up twice, but so do Liver and Kidney.
+# greedy decoding
+- Greedy says Small Bowel, which is wrong, and says it every single time.
+- The model gives that answer about 76 percent of its probability; the right answer is in the remaining 24 percent.
+- So sampling is what puts the right answer in the pool at all — the probe's job is then to pick it out.
+- Across all 36,869 questions, eight samples give 4.42 different answers on average; only 16.3 percent of questions get a single answer.""",
+          qa=[("Why not just raise the temperature further?", "More diversity also means more wrong answers in the pool: here T = 1.0 brings Liver and Kidney. "
+               "The measured trade-off across benchmarks is on the temperature slide in Part IV: T = 0.7 was the best single setting under the judge."),
+              ("Are the bars real probabilities?", "No — a schematic. Per-token probabilities were not stored for these pools; the only real number is the greedy "
+               "answer's whole-sequence log-probability, −0.2718, i.e. about 0.76 (ckpt_slake_open_lingshu7b.jsonl seqlogprob).")])
+
     # ---- step 1 sampling
     cost = D.cost
     d.add("step1", "Step 1 — sampling: 8 answers, one image encoding",

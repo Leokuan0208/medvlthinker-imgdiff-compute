@@ -485,13 +485,13 @@ def build(d):
     SC = D.sc_macro("judge")      # majority vote − greedy, judge, macro (final_eval_FINAL_cap320_T07.json)
     d.add("context", "Tier 3 — medical test-time methods, each in its own units",
           f"""
-<table class="d sm"><tr><th>method</th><th>generator · N · grader</th><th><b>baseline</b></th><th>reported gain</th></tr>
-<tr><td>Best-of-Evidence 2026</td><td>Qwen3-VL-30B · 16 · 235B judge</td><td><b>majority vote</b></td><td>+0.26 to +0.58 pts (2 of 4 significant)</td></tr>
-<tr class="hl"><td>ours, against the same baseline</td><td>Lingshu-7B · 8 · MedVLThinker-32B</td><td><b>majority vote</b></td><td>+{pv['macro']*100:.1f} [{pv['ci'][0]*100:+.1f}, {pv['ci'][1]*100:+.1f}] pts judge — our vote is itself {-SC[0]*100:.1f} pts <b>below</b> greedy</td></tr>
-<tr><td>WED 2026 (its paper)</td><td>2–8B VLMs · ≤ 8 distinct (≤ 16 draws) · Grok-4.1-Fast</td><td><b>greedy</b></td><td>−1.2 to +5.0 pts (9 of 10 cells positive)</td></tr>
-<tr><td>MedProb App. H 2026</td><td>Qwen2.5-VL-7B · not stated · not stated</td><td><b>one sample</b></td><td>0.09 → 0.13 on 100 questions</td></tr>
-<tr class="hl"><td>ours, against greedy</td><td>Lingshu-7B · 8 · MedGemma-27B (cross-family)</td><td><b>greedy</b></td><td>+{X[0]*100:.1f} [{X[1]*100:+.1f}, {X[2]*100:+.1f}] pts (+{J[0]*100:.1f} training judge)</td></tr>
-<tr><td>Verification Mirage 2026</td><td>6 VLMs incl. Lingshu · — · LLM grader</td><td>—</td><td>self-verification accepts 62–73% of Lingshu's wrong answers</td></tr>
+<table class="d sm"><tr><th>method</th><th>domain · benchmarks</th><th>generator · N · grader</th><th><b>baseline</b></th><th>reported gain</th></tr>
+<tr><td>Best-of-Evidence 2026</td><td>medical VQA · VQA-Med (train partition), PathVQA open, PMC-VQA, MedXpertQA-MM</td><td>Qwen3-VL-30B · 16 · 235B judge</td><td><b>majority vote</b></td><td>+0.26 to +0.58 pts (2 of 4 significant)</td></tr>
+<tr class="hl"><td>ours, against the same baseline</td><td>open medical VQA · our 8 benchmarks</td><td>Lingshu-7B · 8 · MedVLThinker-32B</td><td><b>majority vote</b></td><td>+{pv['macro']*100:.1f} [{pv['ci'][0]*100:+.1f}, {pv['ci'][1]*100:+.1f}] pts judge — our vote is itself {-SC[0]*100:.1f} pts <b>below</b> greedy</td></tr>
+<tr><td>WED 2026 (its paper)</td><td>open medical VQA · VQA-RAD, PathVQA open (no yes/no)</td><td>2–8B VLMs · ≤ 8 distinct (≤ 16 draws) · Grok-4.1-Fast</td><td><b>greedy</b></td><td>−1.2 to +5.0 pts (9 of 10 cells positive)</td></tr>
+<tr><td>MedProb App. H 2026</td><td>medical VQA · OmniMedVQA, 100 items</td><td>Qwen2.5-VL-7B · not stated · not stated</td><td><b>one sample</b></td><td>0.09 → 0.13 on 100 questions</td></tr>
+<tr class="hl"><td>ours, against greedy</td><td>open medical VQA · our 8 benchmarks</td><td>Lingshu-7B · 8 · MedGemma-27B (cross-family)</td><td><b>greedy</b></td><td>+{X[0]*100:.1f} [{X[1]*100:+.1f}, {X[2]*100:+.1f}] pts (+{J[0]*100:.1f} training judge)</td></tr>
+<tr><td>Verification Mirage 2026</td><td>medical VQA · VQA-RAD, PathVQA, SLAKE, PMC-VQA, MedXpertQA</td><td>6 VLMs incl. Lingshu · — · LLM grader</td><td>—</td><td>self-verification accepts 62–73% of Lingshu's wrong answers</td></tr>
 </table>
 <div class="term w" style="margin-top:14px"><b class="k">context, not a ranking</b><span>different generators, graders and N; each row is in its own units. Compare only rows with the same baseline. The one controlled comparison is the WED head-to-head.</span></div>""",
           "VI · Comparison", src="BoE Table 2 p.9; WED p.5, Table 1 p.8; MedProb Table 14 p.27; Mirage Tables 11–15; ours final_eval_FINAL_cap320_T07.json and extra_numbers.json (probe − vote, paired image-clustered bootstrap)",
@@ -677,7 +677,7 @@ def build(d):
 <div class="row">
  <div class="col">
   <div class="term t"><b class="k">running now</b><span>features re-extracted at cap320 (done); refit + cross-fitted evaluation running</span></div>
-  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools</span></div>
+  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools · probe-count sweep (1–8 seeds × 1 or 3 layers: why 24?)</span></div>
   <div class="term"><b class="k">temperature without the dataset label</b><span>per-modality T · per-question T or N from the probe's scores</span></div>
  </div>
  <div class="col">
