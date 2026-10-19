@@ -9,9 +9,27 @@ artifact it came from, all under `results/cascade_methods/artifacts/`. Judge of 
 
 ## 0. The short version
 
-1. **The final method** = Lingshu-7B **cap320** best-of-8 pools, sampled at a **frozen per-benchmark
-   temperature**, scored by the shipped probe recipe (24 MLP probes, layers 18/20/22, BCE), read out by
+1. **The final method** = Lingshu-7B **cap320** best-of-8 pools, sampled at a **single temperature T = 0.7**,
+   scored by the shipped probe recipe (24 MLP probes, layers 18/20/22, class-weighted BCE), read out by
    **rank average with a vote-count tie-break**. Frozen probes: `ckpts/train/final_probe_2026-10-16/fold{0,1}`.
+   *(Corrected 2026-10-18: this line first shipped a **frozen per-benchmark temperature**. Leo reversed it
+   because choosing T per benchmark needs each question's dataset identity at test time, which a deployed
+   system does not have; the probe itself needs no dataset label. The map is kept below as the
+   **domain-calibrated variant, not shipped**. Shipped numbers, `final_eval_FINAL_cap320_T07.json`
+   `macro_over_open8.all` and `final_fold1_headline_2026-10-16.json` `policies.T07.macro`:)*
+
+   | currency | gain over greedy, both folds | image half 1 only |
+   |---|---|---|
+   | judge (MedVLThinker-32B, also the training-label judge) | **+0.0798 [+0.0711, +0.0887]** | **+0.0846 [+0.0729, +0.0965]** |
+   | cross-family judge (MedGemma-27B) | **+0.0710 [+0.0622, +0.0797]** | **+0.0721 [+0.0601, +0.0841]** |
+   | lenient EM | **+0.0121 [+0.0030, +0.0210]** | **+0.0165 [+0.0026, +0.0299]** |
+   | token-F1 | +0.0232 [+0.0160, +0.0303] | +0.0288 [+0.0182, +0.0388] |
+   | LLaVA-Med open recall | +0.0324 [+0.0250, +0.0396] | +0.0389 |
+
+   Per benchmark (T = 0.7): judge 6 significant wins, 2 ties (VQA-RAD +0.0000, VQA-Med −0.0038); lenient EM
+   significantly negative on Kvasir-x1, GEMeX and VQA-Med.
+
+   The rest of §0 item 2 and the §3 table describe the **per-benchmark-temperature variant**:
 2. **Its macro gain over greedy decoding is significant in every currency**, every question scored by a probe
    that never saw its image (two-fold image cross-fitting). "n/8" counts benchmarks with a positive point
    estimate, not significant wins: per benchmark the judge gives 6 wins and 2 ties (VQA-RAD, VQA-Med), and
@@ -62,7 +80,7 @@ artifact it came from, all under `results/cascade_methods/artifacts/`. Judge of 
 
 | change | result | verdict |
 |---|---|---|
-| **per-benchmark temperature** (frozen map: GEMeX / OmniMedVQA / RadImageNet 1.0, VQA-RAD 0.2, VQA-Med 0.4, others 0.7) | map − fixed 0.7, **image half 1 (out of sample)**: judge **+0.0091 [+0.0007, +0.0182]**, MedGemma **+0.0090 [+0.0010, +0.0175]**, EM +0.0041 (tie), LLaVA recall −0.0015 (tie); all five changed benchmarks positive under both judges (`tmap_vs_t07_2026-10-16.json`) | **ADOPTED** |
+| **per-benchmark temperature** (frozen map: GEMeX / OmniMedVQA / RadImageNet 1.0, VQA-RAD 0.2, VQA-Med 0.4, others 0.7) | map − fixed 0.7, **image half 1 (out of sample)**: judge **+0.0091 [+0.0007, +0.0182]**, MedGemma **+0.0090 [+0.0010, +0.0175]**, EM +0.0041 (tie), LLaVA recall −0.0015 (tie); all five changed benchmarks positive under both judges (`tmap_vs_t07_2026-10-16.json`) | adopted 2026-10-16, **reversed 2026-10-18** (needs the dataset label at test time) — kept as the domain-calibrated variant |
 | **rank_vote readout** (ties broken by vote count) | +0.0006 judge WIN, +0.0006 EM WIN, MedGemma +0.0005 (`readout_variants_2026-10-15.json`) | **ADOPTED** (pre-specified rule) |
 | full-resolution pools | method +0.0745 vs +0.0790 at cap320; per-benchmark choice of resolution −0.0023 vs cap320, tie (`select_policy_cap320_vs_fullres_T07.json`) | rejected |
 | wider probe (1024, 60 ep, cosine) | +0.0021 over a same-session control, below the ~0.003 refit floor; mostly 5 SLAKE questions | rejected |
@@ -123,7 +141,12 @@ protocol columns computed with its own code):
 | SLAKE test (English) | 1,061 (645 + 416) | 0.7710 → **0.8002** | 0.7815 → 0.8115 | 0.7212 → 0.7163 |
 
 Closed (yes/no) halves alone, judge, final − greedy: PathVQA +0.0298 [+0.0197, +0.0397] WIN; VQA-RAD +0.0159
-(tie); SLAKE −0.0144 (tie). The probe was trained only on open answers; it transfers to yes/no without harm.
+(tie); SLAKE −0.0144 (tie). These closed-half gains are **in-domain, not transfer**: the cross-fitted run trains
+each fold's probes on the other image half of the three closed splits and of the VQA-Med 2019 test as well
+(3,366 / 3,325 such rows in folds 0 / 1). *(Corrected 2026-10-19: this sentence first said "the probe was trained
+only on open answers; it transfers to yes/no without harm". A deck review found that the FINAL run's training
+rows only sum to the logged 115,934 / 116,000 when the closed and VQA-Med-2019 cells are included —
+`deck/review/R_results.md`, R_method.md.)*
 
 ### 5.2 Published numbers (verbatim from each paper; protocols differ — read the caveats)
 

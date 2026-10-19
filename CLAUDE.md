@@ -198,8 +198,11 @@ outranks verifier work.
 ## 0a. Current status (2026-09-20, amended 2026-09-28) — §0 stops at 2026-08-11; read this for anything newer
 
 > **➜ NEWER (2026-10-16, branch `exp-2026-10-15`): `docs/current/FINAL_METHOD_2026-10-16.md`** — the final
-> method (cap320 pools + frozen per-benchmark temperature + shipped probes + vote tie-break), cross-fitted over
-> both image halves: judge +0.0897, MedGemma-27B +0.0783, EM +0.0165, LLaVA recall +0.0347, every macro significant (per benchmark: judge 6 wins + 2 ties; EM loses on Kvasir-x1 and GEMeX).
+> method (cap320 pools + **single T = 0.7** + shipped probes + vote tie-break), cross-fitted over both image
+> halves: judge +0.0798, MedGemma-27B +0.0710, lenient EM +0.0121, LLaVA recall +0.0324, every macro significant
+> (per benchmark: judge 6 wins + 2 ties; EM loses on Kvasir-x1, GEMeX, VQA-Med) — `final_eval_FINAL_cap320_T07.json`.
+> The per-benchmark-temperature map (+0.0897 / +0.0783 / +0.0165) was **reversed 2026-10-18** (needs the dataset
+> label at test time) and is kept only as a labelled variant.
 > **Full resolution was measured and REJECTED** (hurts GEMeX). Comparability tables vs Lingshu/LLaVA-Med/WED.
 
 > **Entry docs for the live work:** `docs/current/AUDIT_2026-09-18.md` (what is true, what was wrong, every
