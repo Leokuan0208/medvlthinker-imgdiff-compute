@@ -24,7 +24,7 @@ def build(d):
     d.part = "V · Results"
     d.add("p5", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART V</div>
 <h1>Results</h1><p>Shipped method: N = 8, T = 0.7, cap320, 24 probes, rank average + vote tie-break.<br>36,869 questions, every one scored by probes that never saw its image (exact pixel match).</p></div>""",
-          raw=True, minutes=0.2, say="Part five: results.")
+          raw=True, minutes=0.2, say="# Results\n- Part five: results.")
 
     rows = ""
     for lab, k in [("cross-family judge (MedGemma-27B) — never used in training", "xjudge"),
@@ -44,16 +44,31 @@ def build(d):
 </div>""", "V · Results", src="final_eval_FINAL_cap320_T07.json macro_over_open8.all.pick_minus_greedy_*; final_fold1_headline_2026-10-16.json policies.T07.macro",
           minutes=2.0,
           look="the first row (cross-family judge), then the last column (image half B).",
-          say=f"""The headline. Averaged over the eight benchmarks, the method improves on the model's own greedy answer by {X[0]:.4f}
-under a judge from another model family, MedGemma-27B, which the probe never saw during training. That is the number I lead with. Under
-our main judge, MedVLThinker-32B, the gain is {J[0]:.4f} — but that judge also produced the probe's training labels, so it is not
-independent. Lenient exact match, which counts an answer right if it equals or contains the gold string, gains {E[0]:.4f}; token overlap
-{F1[0]:.4f}; LLaVA-Med's recall metric {L[0]:.4f}. All five intervals exclude zero.
-Two things to read carefully. The column "benchmarks above zero" counts positive point estimates, not significant wins; per benchmark,
-under the judge, six of eight are significant wins and two are ties. And the last column uses only image half B. Half B played no part in
-the September choices — layers, probe size, loss — nor in the readout tie-break or the temperature decision; the October check that kept
-the cap320 image budget used both halves. The gains on half B are, if anything, slightly larger. Exact match gains much less than the
-judges, and per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain why on the next slide.""",
+          say=f"""# Headline: significant macro gains under every metric
+- The headline: the gain over the model's own greedy answer, averaged over the eight benchmarks.
+# cross-family judge (MedGemma-27B) — never used in training
+- Under a judge from another model family, MedGemma-27B, the method gains {X[0]:.4f}.
+- The probe never saw this judge during training. That is the number I lead with.
+# judge (MedVLThinker-32B) — also the training-label source
+- Under our main judge, MedVLThinker-32B, the gain is {J[0]:.4f}.
+- But that judge also produced the probe's training labels, so it is not independent.
+# lenient exact match (equality or containment)
+- Lenient exact match counts an answer right if it equals or contains the gold string; it gains {E[0]:.4f}.
+# token-F1
+- Token overlap gains {F1[0]:.4f}; LLaVA-Med's recall metric {L[0]:.4f}.
+- All five intervals exclude zero.
+# benchmarks Δ > 0 (point est.)
+- This column counts positive point estimates, not significant wins.
+# per benchmark, judge
+- Per benchmark, under the judge, six of eight are significant wins and two are ties.
+# image half B only
+- The last column uses only image half B.
+- Half B played no part in the September choices — layers, probe size, loss — nor in the readout tie-break or the temperature decision.
+- The October check that kept the cap320 image budget used both halves.
+- The gains on half B are, if anything, slightly larger.
+# lenient exact match
+- Exact match gains much less than the judges.
+- Per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain why on the next slide.""",
           qa=[("Isn't the +0.08 partly the probe learning the judge's taste?",
                "See the answer on the opening slide: the cross-family judge, which was never used in training, gives "
                f"{X[0]:+.4f} [{X[1]:+.4f}, {X[2]:+.4f}]; the 0.009 gap to the training judge matches the measured paraphrase drift (0.006–0.009)."),
@@ -88,13 +103,23 @@ judges, and per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain 
 </div>""", "V · Results", src="final_eval_FINAL_cap320_T07.json cells.*.all.{pick_minus_greedy,ci_pick_minus_greedy}_{judge,xjudge,em}; Bonferroni: " + RVSRC,
           minutes=2.0,
           look="filled vs hollow markers; the indigo (judge) and teal (MedGemma) dots move together, the violet (lenient exact match) ones do not.",
-          say="""Per benchmark. The largest gains, 11 to 16 points under the judge and 10 to 15 under MedGemma, are on OmniMedVQA,
-RadImageNet, GEMeX and Kvasir, and the two judges agree closely. Two benchmarks tie: VQA-RAD, which has only 200 questions so its interval
-is wide, and VQA-Med. Neither tie is for lack of correct answers among the samples — I will show in two slides that the probe simply fails
-to pick them there. Exact match disagrees on three benchmarks. On Kvasir and GEMeX the gold answers are whole sentences generated by a
-language model, so a correct answer in different words fails string matching while both judges accept it. On VQA-Med the exact-match
-loss is small but real. If you correct for testing eight benchmarks, all six judge wins remain, and the GEMeX exact-match loss becomes a
-tie.""",
+          say="""# Per benchmark: where it helps, where it ties, where exact match disagrees
+- Per benchmark; filled markers are significant, hollow ones are ties.
+# large gains
+- The largest gains, 11 to 16 points under the judge and 10 to 15 under MedGemma, are on OmniMedVQA, RadImageNet, GEMeX and Kvasir.
+- The two judges agree closely.
+# ties
+- Two benchmarks tie: VQA-RAD, which has only 200 questions so its interval is wide, and VQA-Med.
+- Neither tie is for lack of correct answers among the samples.
+- I will show in two slides that the probe simply fails to pick them there.
+# exact-match losses
+- Exact match disagrees on three benchmarks.
+- On Kvasir and GEMeX the gold answers are whole sentences generated by a language model.
+  - A correct answer in different words fails string matching, while both judges accept it.
+- On VQA-Med the exact-match loss is small but real.
+# Bonferroni ×8
+- If you correct for testing eight benchmarks, all six judge wins remain.
+- The GEMeX exact-match loss becomes a tie.""",
           qa=[("You test 8 benchmarks × 5 metrics. Multiple comparisons?",
                f"Bonferroni: the 6 judge wins survive even a 40-test correction (smallest lower bound SLAKE "
                f"{RV['judge.per_benchmark_bonferroni']['slake_open']['ci_bonf40'][0]:+.4f}). MedGemma-SLAKE does not at ×40 "
@@ -121,14 +146,21 @@ tie.""",
 </div>""", "V · Results", src="extra_numbers.json (from final_eval_FINAL_cap320_T07_records.json, judge); answer-changed rate: numbers_review_part3.json; accounting: Hu 2026 arXiv:2607.17531 Eq. 1–6",
           minutes=1.5,
           look="the fixed and harmed columns, then the VQA-Med row.",
-          say=f"""A net gain hides two movements, so here they are separately, using the accounting from Hu's 2026 paper. "Fixed" means
-greedy was wrong and our pick is right; "harmed" means greedy was right and our pick is wrong; "recoverable" means greedy was wrong but at
-least one of the eight samples was right. Over all
-36 thousand questions, the selector fixes {t['fixed']:,} questions that greedy got wrong, and breaks {t['harmed']:,} that greedy got right
-— {t['harmed_unavoidable_no_correct_candidate']} of those could not have been avoided by any selector, because none of the eight samples
-was correct. On most benchmarks harms are a few percent of greedy's correct answers. VQA-Med is the exception: there are {vm['recoverable']}
-questions where greedy is wrong but a correct sample exists, yet the probe fixes only {vm['fixed']} and breaks {vm['harmed']} — {vm['harm_rate_of_greedy_right']:.0%}
-of greedy's correct answers. That is not a shortage of correct samples; the probe cannot tell them apart there.""",
+          say=f"""# fixed / harmed
+- A net gain hides two movements, so here they are separately, using the accounting from Hu's 2026 paper.
+- "Fixed": greedy was wrong and our pick is right.
+- "Harmed": greedy was right and our pick is wrong.
+- "Recoverable": greedy was wrong but at least one of the eight samples was right.
+# total
+- Over all 36 thousand questions, the selector fixes {t['fixed']:,} questions that greedy got wrong.
+- It breaks {t['harmed']:,} that greedy got right.
+- {t['harmed_unavoidable_no_correct_candidate']} of those could not have been avoided by any selector, because none of the eight samples was correct.
+# harmed ÷ greedy-right
+- On most benchmarks harms are a few percent of greedy's correct answers.
+# VQA-Med: selection failure
+- VQA-Med is the exception: {vm['recoverable']} questions where greedy is wrong but a correct sample exists.
+- Yet the probe fixes only {vm['fixed']} and breaks {vm['harmed']} — {vm['harm_rate_of_greedy_right']:.0%} of greedy's correct answers.
+- That is not a shortage of correct samples; the probe cannot tell them apart there.""",
           qa=[("Does the method ever make things worse?",
                f"Yes, per question always some, and on VQA-Med net: {vm['fixed']} fixed vs {vm['harmed']} broken, with a significant lenient-EM loss "
                f"{pm(D.cell('vqamed_open')['pick_minus_greedy_em'])} {ci(*D.cell('vqamed_open')['ci_pick_minus_greedy_em'])}. There is no per-benchmark guarantee of never being worse than greedy.")])
@@ -147,12 +179,19 @@ of greedy's correct answers. That is not a shortage of correct samples; the prob
 </div>""", "V · Results", tall=True, src="final_eval_FINAL_cap320_T07.json cells.*.all.{greedy,pick,oracle}_judge; headroom / correlations: " + RVSRC,
           minutes=1.5,
           look="the gap between the grey and teal bars, then between teal and blue, benchmark by benchmark.",
-          say=f"""This chart puts greedy, our pick, and the oracle side by side for each benchmark. The gap between the grey and teal
-bars is our gain; the gap between the teal and blue bars is what a perfect selector would still add. The fair way to score a selector is the share of that available
-headroom it captures: the gain divided by oracle minus greedy. Averaged over benchmarks we capture {cap['macro']:.2f} of the headroom —
-{cap['omnimed_open']:.2f} on OmniMedVQA, about two-thirds on RadImageNet, Kvasir and GEMeX, about a third on PathVQA and SLAKE, and nothing
-on VQA-RAD and VQA-Med. Those two are not out of reach: VQA-Med still has {hdr['vqamed_open']:.3f} of headroom. The probe just cannot pick
-the right sample there. Across benchmarks the gain follows the headroom closely, much more than it follows how high the oracle is.""",
+          say=f"""# greedy · probe pick · oracle@8
+- This chart puts greedy, our pick, and the oracle side by side for each benchmark.
+- The gap between the grey and teal bars is our gain.
+- The gap between the teal and blue bars is what a perfect selector would still add.
+# headroom captured = (pick − greedy) ÷ (oracle@8 − greedy)
+- The fair way to score a selector: the share of the available headroom it captures — the gain divided by oracle minus greedy.
+- Averaged over benchmarks we capture {cap['macro']:.2f} of the headroom.
+  - {cap['omnimed_open']:.2f} on OmniMedVQA; about two-thirds on RadImageNet, Kvasir and GEMeX.
+  - About a third on PathVQA and SLAKE; nothing on VQA-RAD and VQA-Med.
+- Those two are not out of reach: VQA-Med still has {hdr['vqamed_open']:.3f} of headroom.
+- The probe just cannot pick the right sample there.
+# pattern
+- Across benchmarks the gain follows the headroom closely, much more than it follows how high the oracle is.""",
           qa=[("You said selection efficiency is 0.81 — which is it, 0.81 or 0.44?",
                f"Different quantities. pick ÷ oracle@8, averaged over benchmarks, is {D.SELEFF:.2f}; it is flattered because greedy alone already reaches "
                f"most of the oracle (VQA-RAD scores 0.78 with zero gain). The share of the headroom captured, (pick − greedy)/(oracle − greedy), is {cap['macro']:.2f}. "
@@ -189,19 +228,29 @@ the right sample there. Across benchmarks the gain follows the headroom closely,
 </div>""", "V · Results", src="template_stratified_gain_2026-09-20.json pooled_micro, cells.pathvqa_open.{repeat,novel}; audit_stats_baselines_2026-09-20.json summary_by_currency.judge and per_benchmark.*.judge (September probe, half A; shares: numbers_review_part3.json, r2_part3_extra.py)",
           minutes=2.0,
           look="the prior's share per benchmark (top-right box), then the 'never seen' rows of the table.",
-          say=f"""A fair question is whether the probe simply learned which answers are common. Two checks. First, a baseline that scores
-each answer only by how often that exact string was correct in training. Over all benchmarks it recovers about a quarter of the probe's
-gain. But per benchmark it is uneven. On OmniMedVQA and RadImageNet, where many questions ask for a modality or an organ from a small
-vocabulary, the prior alone gets about two-thirds of the way — {psh['omnimed_open']['prior_share_of_probe_gain']:.0%} and
-{psh['radimagenet_open']['prior_share_of_probe_gain']:.0%} of the probe's gain. So on those two, a large part of the gain is knowing which
-answers are usually right, and the probe adds the rest. Those are exactly the two benchmarks the exact-match macro win rests on. On GEMeX
-the prior gets less than half, on Kvasir about a quarter, and on PathVQA, SLAKE and VQA-Med it is below greedy. Second, pooled over all
-benchmarks, the judge gain is just as large on question
-templates the probe never saw, and still clearly positive on gold answers it never saw. But I have to be careful: those groups come
-mostly from different benchmarks, and inside PathVQA alone the gain on unseen templates is not significant. So what the evidence supports
-is "not only an answer prior", not "no memorisation". The test that would settle it — swapping in a wrong image — has not been run yet.
-And note the exact-match column: on unseen answers it is a loss, partly because those strata are the sentence-gold benchmarks where
-exact match is unreliable.""",
+          say=f"""# Does the probe just learn which answers are common?
+- A fair question is whether the probe simply learned which answers are common. Two checks.
+# answer-frequency prior: share of the probe's judge gain
+- First, a baseline that scores each answer only by how often that exact string was correct in training.
+- Over all benchmarks it recovers about a quarter of the probe's gain. But per benchmark it is uneven.
+- On OmniMedVQA and RadImageNet many questions ask for a modality or an organ from a small vocabulary.
+  - There the prior alone gets about two-thirds of the way — {psh['omnimed_open']['prior_share_of_probe_gain']:.0%} and {psh['radimagenet_open']['prior_share_of_probe_gain']:.0%} of the probe's gain.
+- So on those two, a large part of the gain is knowing which answers are usually right, and the probe adds the rest.
+- On GEMeX the prior gets less than half, on Kvasir about a quarter, and on PathVQA, SLAKE and VQA-Med it is below greedy.
+# so
+- Those are exactly the two benchmarks the exact-match macro win rests on.
+# question template never seen
+- Second, pooled over all benchmarks, the judge gain is just as large on question templates the probe never saw.
+# gold answer never seen
+- And still clearly positive on gold answers it never saw.
+# within PathVQA: template seen / never seen
+- But careful: those groups come mostly from different benchmarks.
+- Inside PathVQA alone the gain on unseen templates is not significant.
+# claim
+- What the evidence supports is "not only an answer prior", not "no memorisation".
+- The test that would settle it — swapping in a wrong image — has not been run yet.
+# lenient-EM gain
+- On unseen answers exact match is a loss, partly because those strata are the sentence-gold benchmarks where exact match is unreliable.""",
           qa=[("Is OmniMedVQA / RadImageNet just an answer prior, or a modality classifier?",
                f"Largely, on those two: the leave-one-out answer prior reaches {psh['omnimed_open']['prior_share_of_probe_gain']:.0%} / "
                f"{psh['radimagenet_open']['prior_share_of_probe_gain']:.0%} of the probe's judge gain (prior {psh['omnimed_open']['prior_minus_greedy']:+.4f} vs probe "
@@ -231,10 +280,16 @@ exact match is unreliable.""",
  </div>
 </div>""", "V · Results", src="replication_currency_2026-09-20.json qwen.macro.probe_minus_greedy_{judge,em,strict_em,token_f1}; AUDIT_2026-09-18.md §3",
           minutes=1.0,
-          say="""Does it work on another model? On Qwen2.5-VL-7B the same pipeline, in its September form, gains eight points under the
-judge and is significant under every metric, including strict exact match. But Qwen is Lingshu's own base model, so this is the same
-language model with different training, not an independent replication, and it uses the same judge. An attempt on MedGemma-4b was
-withdrawn because its sampled answers were broken. A replication on a genuinely different model family is still owed.""",
+          say="""# Qwen2.5-VL-7B
+- Does it work on another model? On Qwen2.5-VL-7B the same pipeline, in its September form, gains eight points under the judge.
+- It is significant under every metric, including strict exact match.
+# same family
+- But Qwen is Lingshu's own base model: the same language model with different training, not an independent replication.
+- And it uses the same judge.
+# withdrawn
+- An attempt on MedGemma-4b was withdrawn because its sampled answers were broken.
+# owed
+- A replication on a genuinely different model family is still owed.""",
           qa=[("Is the Qwen result an independent replication?",
                "No: Lingshu's base model, the September recipe (single layer, 5 seeds, half A), the same judge. The +0.0814 here is the single-layer refit; "
                "the pooled ensemble in head_final_stack_qwen_2026-09-13.json gives +0.0820.")])
@@ -243,7 +298,7 @@ withdrawn because its sampled answers were broken. A replication on a genuinely 
     d.part = "VI · Comparison"
     d.add("p6", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART VI</div>
 <h1>Against published work</h1><p>Three levels of comparability: same candidates · same metric code and test split · different protocol (context only).</p></div>""",
-          raw=True, minutes=0.2, say="Part six: how this compares with published work.")
+          raw=True, minutes=0.2, say="# Against published work\n- Part six: how this compares with published work.")
 
     d.add("tiers", "How to compare honestly",
           """
@@ -256,12 +311,20 @@ withdrawn because its sampled answers were broken. A replication on a genuinely 
 <div class="term w" style="margin-top:16px"><b class="k">why this matters</b><span>the same Lingshu-7B scores 61.9 on PathVQA in its own paper (open: GPT-4.1 judge; closed: rule-scored) and 71.9 in an independent benchmark (step-by-step \\boxed{} prompt, option-matched scoring, item set not stated): evaluation choices alone move the same model by ~10 points.</span></div>""",
           "VI · Comparison", src="Lingshu Table 6 p.17, §4.2 p.16; Liu et al. 2025 Table 1 p.4 (Lingshu-7B PathVQA 0.7192) — PAPER_NOTES_GH G4",
           minutes=1.0,
-          say="""Before the numbers, how to compare honestly. The strongest comparison holds everything fixed except the selector:
-same questions, same eight samples, same graders. We have one of those, against WED. The second level uses the same official test
-split and the same scoring code, which tells you where our numbers sit, but the generators differ, so it is not a ranking. The third
-level is everything else, which is context only. To show why this discipline matters: the very same Lingshu-7B model is reported at
-61.9 on PathVQA in its own paper and 71.9 in an independent benchmark. The prompt, the grader, the answer format and possibly the
-question set all differ — evaluation choices alone move the same model by about ten points.""")
+          say="""# How to compare honestly
+- Before the numbers, how to compare honestly.
+# 1 · same candidates
+- The strongest comparison holds everything fixed except the selector: same questions, same eight samples, same graders.
+- We have one of those, against WED.
+# 2 · same metric code / test split
+- The second level uses the same official test split and the same scoring code.
+- That tells you where our numbers sit, but the generators differ, so it is not a ranking.
+# 3 · different protocol
+- The third level is everything else, which is context only.
+# why this matters
+- The very same Lingshu-7B model is reported at 61.9 on PathVQA in its own paper and 71.9 in an independent benchmark.
+- The prompt, the grader, the answer format and possibly the question set all differ.
+- Evaluation choices alone move the same model by about ten points.""")
 
     # WED
     w = D.wed["cells"]
@@ -302,18 +365,26 @@ question set all differ — evaluation choices alone move the same model by abou
 </div>""", "VI · Comparison", src="wed_vs_probe_2026-10-16.json cells.*.{probe_minus_wed,wed_minus_greedy}_* (T = 0.7 pools; authors' code, src/exp_2026_10/wed/wed_select.py); game-active subset: numbers_review_part3.json; WED Table 1 p.8",
           minutes=2.0,
           look="the probe − WED column, PathVQA first; then the red box.",
-          say=f"""The controlled comparison. We ran WED's own code on our candidates, so the only thing that differs is how the answer
-is chosen. We score it under seven metrics; the table shows two, the judge and lenient exact match. On PathVQA the probe beats WED under
-all seven, by about eight points under the judge. On SLAKE it wins under six of seven; under our lenient exact match it ties. On VQA-RAD
-everything ties — with 200 questions that means we cannot tell, not that they are equal.
-One result needs explaining: on PathVQA, WED is significantly worse than greedy decoding, even though its own paper reports gains there.
-Two asymmetries matter. WED normally runs its own sampling loop until it has eight distinct answers; we gave it our eight samples instead,
-and after its clean-up step it often had only one candidate left — on {wa['slake_open']['wed_le1_candidate']} of 645 SLAKE questions and
-{wa['pathvqa_open']['wed_le1_candidate']:,} of 3,357 PathVQA questions — so its game never ran there. And WED read the image at our generation
-budget, cap320, while our probe's features used the higher one-megapixel cap. To check that these do not explain the result, restrict to
-the questions where WED's game actually runs: there the probe's margin is larger, not smaller —
-{wa['pathvqa_open']['probe_minus_wed_judge_active']['pt']*100:.1f} points on PathVQA and {wa['slake_open']['probe_minus_wed_judge_active']['pt']*100:.1f}
-on SLAKE under the judge. Finally, in fairness: WED needs no training, ours needs labelled data.""",
+          say=f"""# Tier 1 — head-to-head with WED on identical candidates
+- The controlled comparison: we ran WED's own code on our candidates, so only the way the answer is chosen differs.
+- We score it under seven metrics; the table shows two, the judge and lenient exact match.
+# probe − WED
+- On PathVQA the probe beats WED under all seven, by about eight points under the judge.
+# result (7 metrics)
+- On SLAKE it wins under six of seven; under our lenient exact match it ties.
+- On VQA-RAD everything ties — with 200 questions that means we cannot tell, not that they are equal.
+# WED vs greedy
+- One result needs explaining: on PathVQA, WED is significantly worse than greedy decoding.
+- Its own paper reports gains there.
+# asymmetries
+- Two asymmetries matter.
+- First: WED normally runs its own sampling loop until it has eight distinct answers; we gave it our eight samples instead.
+  - After its clean-up step it often had only one candidate left — on {wa['slake_open']['wed_le1_candidate']} of 645 SLAKE questions and {wa['pathvqa_open']['wed_le1_candidate']:,} of 3,357 PathVQA questions.
+  - So its game never ran there.
+- Second: WED read the image at our generation budget, cap320, while our probe's features used the higher one-megapixel cap.
+- Check: restrict to the questions where WED's game actually runs. There the probe's margin is larger, not smaller.
+  - {wa['pathvqa_open']['probe_minus_wed_judge_active']['pt']*100:.1f} points on PathVQA and {wa['slake_open']['probe_minus_wed_judge_active']['pt']*100:.1f} on SLAKE under the judge.
+- Finally, in fairness: WED needs no training, ours needs labelled data.""",
           qa=[("What are the seven metrics, and the other numbers?",
                "judge, MedGemma, lenient EM, WED's own EM, token-F1, WED's F1, LLaVA recall (wed_vs_probe_2026-10-16.json; verdicts in numbers_review_part3.json "
                f"wed.verdict_per_grader). MedGemma and WED's EM, probe − WED: {other}."),
@@ -353,13 +424,21 @@ on SLAKE under the judge. Finally, in fairness: WED needs no training, ours need
 </div>""", "VI · Comparison", src="final_eval_FINAL_cap320_T07.json full_official_splits.*, cells.*.all.ci_pick_minus_greedy_llava_recall, cells.pathvqa_closed; training rows: " + RVSRC.split(" (")[0] + " training_rows_by_source; LLaVA-Med arXiv:2306.00890 Tables 3–4; LLaVA-Med v1.0.0 eval code imported verbatim",
           minutes=1.5,
           look="the two bottom rows of the table (greedy vs + probe), then the claim box.",
-          say=f"""Second level: LLaVA-Med's own metric, computed with their published code, on the full official test splits. Under
-their metric our method improves open-question recall significantly on PathVQA and SLAKE; on VQA-RAD it ties. Closed yes/no accuracy
-rises significantly on PathVQA — but I want to be precise: the probe's training data included the other image half of the PathVQA closed
-questions, {pc[0]:,} and {pc[1]:,} rows in the two folds, so this is an in-domain gain, not transfer from open questions. SLAKE closed dips
-slightly, a tie. Where do we sit? LLaVA-Med fine-tuned separately on each dataset is higher on all six columns, so this is not a ranking —
-different generator, different training. The test counts also differ: their VQA-RAD has 179 open and 272 closed questions against our 200
-and 251, and their PathVQA 6,761 against our 6,719. SLAKE English is the one split that matches theirs exactly.""",
+          say=f"""# Tier 2 — LLaVA-Med's metric on the full official test splits
+- Second level: LLaVA-Med's own metric, computed with their published code, on the full official test splits.
+# + probe (ours)
+- Under their metric our method improves open-question recall significantly on PathVQA and SLAKE; on VQA-RAD it ties.
+# claim
+- Closed yes/no accuracy rises significantly on PathVQA.
+- But to be precise: the probe's training data included the other image half of the PathVQA closed questions.
+  - {pc[0]:,} and {pc[1]:,} rows in the two folds.
+  - So this is an in-domain gain, not transfer from open questions.
+- SLAKE closed dips slightly, a tie.
+# not a ranking
+- Where do we sit? LLaVA-Med fine-tuned separately on each dataset is higher on all six columns.
+- So this is not a ranking — different generator, different training.
+- The test counts also differ: their VQA-RAD has 179 open and 272 closed questions against our 200 and 251.
+- Their PathVQA 6,761 against our 6,719. SLAKE English is the one split that matches theirs exactly.""",
           qa=[("Did the probe train on closed questions?",
                f"Yes. Each fold's training set includes the other image half of VQA-RAD-, PathVQA- and SLAKE-closed and of the VQA-Med 2019 test: "
                f"{rows_tr['fold0']['closed3_plus_vqamed2019_other_half']:,} rows (fold 0) and {rows_tr['fold1']['closed3_plus_vqamed2019_other_half']:,} (fold 1) "
@@ -389,11 +468,17 @@ and 251, and their PathVQA 6,761 against our 6,719. SLAKE English is the one spl
  </div>
 </div>""", "VI · Comparison", src="final_eval_FINAL_cap320_T07.json cells.vqamed2019_test, full_official_splits; VQA-Med 2019 overview (CEUR Vol-2380) p.1, p.6 (best team 0.624); Lingshu arXiv:2506.07044v4 Table 6 p.17 (= v5 Table I), §4.2 p.16",
           minutes=1.5,
-          say="""Two more anchors. On the official 2019 VQA-Med test, the probe neither helps nor hurts — both changes are ties — and
-strict string accuracy is far below the best 2019 team, because those systems were trained to output the challenge's fixed vocabulary
-while our model answers in free text. On the right, Lingshu's own published scores. It is tempting to put our numbers next to theirs,
-but they grade open questions with GPT-4.1 and closed ones by rule, their SLAKE includes the Chinese questions, and they use a different
-image resolution, so only our two rows are comparable to each other. I will not claim we match the 32-billion model.""")
+          say="""# VQA-Med 2019 official test (500)
+- Two more anchors. On the official 2019 VQA-Med test, the probe neither helps nor hurts — both changes are ties.
+- Strict string accuracy is far below the best 2019 team.
+  - Those systems were trained to output the challenge's fixed vocabulary; our model answers in free text.
+# Lingshu's own Table 6 vs our protocol (open + closed, judge)
+- On the right, Lingshu's own published scores. It is tempting to put our numbers next to theirs.
+# not comparable
+- But they grade open questions with GPT-4.1 and closed ones by rule.
+- Their SLAKE includes the Chinese questions, and they use a different image resolution.
+- So only our two rows are comparable to each other.
+- I will not claim we match the 32-billion model.""")
 
     # medical TTC context
     pv = EXN["probe_minus_vote_judge"]
@@ -411,19 +496,29 @@ image resolution, so only our two rows are comparable to each other. I will not 
 <div class="term w" style="margin-top:14px"><b class="k">context, not a ranking</b><span>different generators, graders and N; each row is in its own units. Compare only rows with the same baseline. The one controlled comparison is the WED head-to-head.</span></div>""",
           "VI · Comparison", src="BoE Table 2 p.9; WED p.5, Table 1 p.8; MedProb Table 14 p.27; Mirage Tables 11–15; ours final_eval_FINAL_cap320_T07.json and extra_numbers.json (probe − vote, paired image-clustered bootstrap)",
           minutes=1.5,
-          say=f"""For context, other medical test-time methods in their own units, grouped by baseline. Best-of-Evidence, with a
-235-billion-parameter judge and sixteen samples, gains under one point over majority vote; the matching number for us, also over majority
-vote, is {pv['macro']*100:.1f} points under our judge — but on our short free-text answers majority vote is already
-{-SC[0]*100:.1f} points below greedy, so this delta mostly shows how weak voting is here, not that we beat Best-of-Evidence. WED's own paper reports between minus one and plus five points over greedy on small
-models. MedProb's appendix test is a hundred questions. Over greedy we gain {X[0]*100:.1f} points under the cross-family judge. But these
-use different models, graders and question sets, so I present this as context, not as a ranking — the only controlled comparison is the
-WED head-to-head.""")
+          say=f"""# Tier 3 — medical test-time methods, each in its own units
+- For context, other medical test-time methods in their own units, grouped by baseline.
+# Best-of-Evidence 2026
+- Best-of-Evidence, with a 235-billion-parameter judge and sixteen samples, gains under one point over majority vote.
+# ours, against the same baseline
+- The matching number for us, also over majority vote, is {pv['macro']*100:.1f} points under our judge.
+- But on our short free-text answers majority vote is already {-SC[0]*100:.1f} points below greedy.
+- So this delta mostly shows how weak voting is here, not that we beat Best-of-Evidence.
+# WED 2026 (its paper)
+- WED's own paper reports between minus one and plus five points over greedy on small models.
+# MedProb App. H 2026
+- MedProb's appendix test is a hundred questions.
+# ours, against greedy
+- Over greedy we gain {X[0]*100:.1f} points under the cross-family judge.
+# context, not a ranking
+- These use different models, graders and question sets, so this is context, not a ranking.
+- The only controlled comparison is the WED head-to-head.""")
 
     # ================================================================== PART VII
     d.part = "VII · Limits"
     d.add("p7", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART VII</div>
 <h1>Limits, gaps, and next steps</h1><p>What the evidence does not support, what was never tested, and what is running.</p></div>""",
-          raw=True, minutes=0.2, say="Finally, what we cannot claim, and what comes next.")
+          raw=True, minutes=0.2, say="# Limits, gaps, and next steps\n- Finally, what we cannot claim, and what comes next.")
 
     d.add("limits", "What the evidence does not support",
           """
@@ -444,21 +539,37 @@ WED head-to-head.""")
 </div>""", "VII · Limits", src="literature/DOMAIN_GUIDE_2026-09-30.md §2.5 (branch worktree-lit-domain-package); AUDIT_2026-09-18.md; pathvqa_judge_audit.json; free_head_2026-08-16.json; bestofn_vllm_2026-09-16.json; extra_numbers.json; audit_stats_baselines_2026-09-20.json bigger_model_reference_32B",
           minutes=2.5,
           look="left column (what we cannot claim), then right column (costs and risks).",
-          say="""What the evidence does not support. First, the mechanism is not ours: probes on hidden states used as best-of-N
-verifiers already exist in text models, and MedProb showed one on a hundred medical questions. Second, it is not domain-general: every
-one of our eight benchmarks contributed labelled training questions, and a benchmark left out of training gains no more than a probe
-trained on the four-domain set. Third, it is judge-sensitive: the gains are much larger under the judges than under exact match, and the
-main judge is also where the training labels came from — which is why I lead with the cross-family judge. Exact match loses on Kvasir
-and VQA-Med. Fourth, no human has rated this method's answers. The earlier checks were an LLM adjudicator on SLAKE and VQA-RAD and a small
-hand-checked sample on PathVQA, all on older July outputs, and nothing on the other five benchmarks. Fifth, one model family: Lingshu and
-its own base model; a MedGemma-4b attempt was withdrawn.
-On the right. Cost, as run, comes from two different measurements that I do not add together. Sampling eight answers with vLLM's shared
-prefill costs 1.13 times greedy in compute; the measured latency and energy, 2.74 and 3.59 times, come from twenty short VQA-RAD
-questions, not from the sentence-answer benchmarks. Separately, the re-read of each distinct answer at the one-megapixel cap, in the
-HuggingFace pipeline, costs about seven greedy passes. So "no extra forward pass" is true by design, not as we ran it; end-to-end cost and
-memory were not measured. Where selection fails, on VQA-Med, the method breaks more answers than it fixes. Our VQA-Med set is mostly data
-the generator was fine-tuned on, and whether that changes the delta is not measured. And against Lingshu-32B greedy we do not claim to
-match it: one loss, two ties and one win under the judge, on four benchmarks, with an earlier probe.""",
+          say="""# What the evidence does not support
+- What the evidence does not support — left column first.
+# not a new mechanism
+- The mechanism is not ours: probes on hidden states used as best-of-N verifiers already exist in text models.
+- MedProb showed one on a hundred medical questions.
+# not domain-general
+- Every one of our eight benchmarks contributed labelled training questions.
+- A benchmark left out of training gains no more than a probe trained on the four-domain set.
+# judge-sensitive
+- The gains are much larger under the judges than under exact match.
+- The main judge is also where the training labels came from — which is why I lead with the cross-family judge.
+- Exact match loses on Kvasir, GEMeX and VQA-Med.
+# no human evaluation
+- No human has rated this method's answers.
+- Earlier checks: an LLM adjudicator on SLAKE and VQA-RAD and a small hand-checked sample on PathVQA, all on older July outputs.
+- Nothing on the other five benchmarks.
+# one model family
+- Lingshu and its own base model; a MedGemma-4b attempt was withdrawn.
+# cost, as run
+- Cost, as run, comes from two different measurements that I do not add together.
+- Sampling eight answers with vLLM's shared prefill costs 1.13 times greedy in compute.
+- The measured latency and energy, 2.74 and 3.59 times, come from twenty short VQA-RAD questions, not from the sentence-answer benchmarks.
+- Separately, the re-read of each distinct answer at the one-megapixel cap, in the HuggingFace pipeline, costs about seven greedy passes.
+- So "no extra forward pass" is true by design, not as we ran it; end-to-end cost and memory were not measured.
+# harms where selection fails
+- Where selection fails, on VQA-Med, the method breaks more answers than it fixes.
+# data exposure
+- Our VQA-Med set is mostly data the generator was fine-tuned on; whether that changes the delta is not measured.
+# no claim against bigger models
+- Against Lingshu-32B greedy we do not claim to match it.
+- One loss, two ties and one win under the judge, on four benchmarks, with an earlier probe.""",
           qa=[("Has any human checked these answers?",
                f"Not on this method's picks. Earlier checks (July pools): an LLM adjudicator (claude_judge/verdicts_lingshu32b/) on SLAKE and VQA-RAD; "
                f"on PathVQA, 50 judge decisions on direct (short) answers, 2 wrong: 0.04, Wilson 95% [{RVA['judge_audit.wilson95_2_of_50'][0]:.3f}, "
@@ -496,16 +607,26 @@ match it: one loss, two ties and one win under the judge, on four benchmarks, wi
 </div>""", "VII · Limits", src=RVSRC + "; refit floor AUDIT_2026-09-18.md §5",
           minutes=2.0,
           look="the 'benchmarks as the unit' column: the two judge rows exclude zero, the exact-match row does not.",
-          say=f"""How far do the statistics reach? Our main intervals resample images inside each of the eight benchmarks, so they say
-the gain is real on these eight benchmarks. A stricter question: if we drew a new benchmark of the same kind and labelled part of it for
-training, would the gain hold? Treating the eight benchmarks themselves as the sample, both judge gains stay positive, but the
-exact-match interval crosses zero. And that assumes each new benchmark comes with labelled training questions, as all eight of ours did;
-without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on the four-domain set. The
-exact-match gain also depends on two benchmarks: drop either OmniMedVQA or RadImageNet and it becomes a tie.
-What our intervals hold fixed: the trained probes and the image split. Refitting the probes with other seeds or thread counts moves the
-macro by up to about 0.003; resampling the training set or the split was not measured. And they cluster by image, not by question template.
-On tuning: the September choices were made on image half A; half B alone gives a slightly larger gain. Weighting by question instead of by
-benchmark makes the judge gains larger and the exact-match gain slightly smaller.""",
+          say=f"""# macro, images resampled
+- How far do the statistics reach?
+- Our main intervals resample images inside each of the eight benchmarks, so they say the gain is real on these eight benchmarks.
+# benchmarks as the unit (t, 7 df)
+- A stricter question: if we drew a new benchmark of the same kind and labelled part of it for training, would the gain hold?
+- Treating the eight benchmarks themselves as the sample, both judge gains stay positive, but the exact-match interval crosses zero.
+# benchmarks as the unit
+- That assumes each new benchmark comes with labelled training questions, as all eight of ours did.
+- Without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on the four-domain set.
+# leave one benchmark out
+- The exact-match gain also depends on two benchmarks: drop either OmniMedVQA or RadImageNet and it becomes a tie.
+# held fixed
+- What our intervals hold fixed: the trained probes and the image split.
+- Refitting the probes with other seeds or thread counts moves the macro by up to about 0.003.
+- Resampling the training set or the split was not measured.
+- And they cluster by image, not by question template.
+# tuning vs test
+- The September choices were made on image half A; half B alone gives a slightly larger gain.
+# question-weighted (micro)
+- Weighting by question instead of by benchmark makes the judge gains larger and the exact-match gain slightly smaller.""",
           qa=[("Your CIs hold the trained probes fixed. What is the real uncertainty?",
                f"Refitting with other seeds/thread counts moves macros by up to ~0.003 (AUDIT_2026-09-18.md §5). Resampling the training set or the image split was not measured. "
                f"Fold to fold (different probes, different questions): {RV['judge.fold0_macro_pt']:+.4f} vs {RV['judge.fold1_macro_pt']:+.4f}, the same order as the CI width."),
@@ -536,13 +657,20 @@ benchmark makes the judge gains larger and the exact-match gain slightly smaller
  </div>
 </div>""", "VII · Limits", src="DESIGN_EVIDENCE.md §9 (21 gaps); PAPER_NOTES_* 'honest gaps' sections; review/R_results.md, R_papers.md",
           minutes=1.5,
-          say="""And the list of what was never tested. Several selectors we have not run on our data, most importantly ranking by the
-model's own likelihood and combining that with the probe, which classical rerankers rely on. The likelihoods were not stored for the
-shipped cap320 pools, but they were stored for the October one-megapixel pools on seven of the eight benchmarks, so this baseline can be
-run on the CPU there. Also WED with its own sampling procedure.
-Several design axes, including a ranking loss on the final recipe and learned pooling. And several diagnostics: a control task with random
-labels, the within-question AUROC that CASE introduced, a test where the image is swapped, a human rating of our picks, and the variance
-from retraining. Most of these are cheap to run on cached features, and they are first on the list.""")
+          say="""# Never tested — the honest gap list
+- And the list of what was never tested.
+# selectors not run on our pools
+- Several selectors we have not run on our data.
+- Most importantly ranking by the model's own likelihood, and combining that with the probe, which classical rerankers rely on.
+- The likelihoods were not stored for the shipped cap320 pools.
+- But they were stored for the October one-megapixel pools on seven of the eight benchmarks, so this baseline can be run on the CPU there.
+- Also WED with its own sampling procedure.
+# design axes not tested
+- Several design axes, including a ranking loss on the final recipe and learned pooling.
+# diagnostics not run
+- A control task with random labels, and the within-question AUROC that CASE introduced.
+- A test where the image is swapped, a human rating of our picks, and the variance from retraining.
+- Most of these are cheap to run on cached features, and they are first on the list.""")
 
     d.add("next", "Next steps",
           """
@@ -558,15 +686,27 @@ from retraining. Most of these are cheap to run on cached features, and they are
   <div class="term"><b class="k">generality</b><span>a non-Qwen generator · capture states inside vLLM sampling</span></div>
  </div>
 </div>""", "VII · Limits", src="DESIGN_EVIDENCE.md §9; this deck's limits and gap slides; log-probs: src/labeling/run_openvqa.py cumlogprob_all (October 1-MP pools, RadImageNet missing)", minutes=1.5,
-          say="""Next steps. One experiment is running now. All features have been re-extracted at the same image budget the answers were
-generated at, cap320, and the probes are being refit and re-evaluated with the same protocol. If it holds, the re-read no longer needs the
-higher-resolution pass, and the WED comparison becomes symmetric in resolution.
-After that, the cheap experiments on the CPU. First, ranking by the model's own likelihood, and likelihood plus probe — the log
-probabilities were stored for the October one-megapixel pools on seven of eight benchmarks, so this needs no GPU. Then the within-question
-AUROC, which should tell us why VQA-RAD and VQA-Med fail, the control task, the image-swap test, and the agreement between our two judges.
-Then the temperature question you raised: whether the model can pick its temperature without knowing the dataset — by modality, although
-GEMeX and VQA-RAD preferring opposite temperatures suggests modality is not the driver, or per question from the probe's own scores. And the
-remaining baselines, a human rating, and the second model family that a reviewer would ask for.""")
+          say="""# running now
+- One experiment is running now.
+- All features have been re-extracted at the same image budget the answers were generated at, cap320.
+- The probes are being refit and re-evaluated with the same protocol.
+- If it holds, the re-read no longer needs the higher-resolution pass, and the WED comparison becomes symmetric in resolution.
+# cheap, CPU-only
+- After that, the cheap experiments on the CPU.
+- First, ranking by the model's own likelihood, and likelihood plus probe.
+  - The log probabilities were stored for the October one-megapixel pools on seven of eight benchmarks, so this needs no GPU.
+- Then the within-question AUROC, which should tell us why VQA-RAD and VQA-Med fail.
+- Then the control task, the image-swap test, and the agreement between our two judges.
+# temperature without the dataset label
+- Then the temperature question you raised: can the model pick its temperature without knowing the dataset?
+- By modality — although GEMeX and VQA-RAD preferring opposite temperatures suggests modality is not the driver.
+- Or per question, from the probe's own scores.
+# baselines owed
+- And the remaining baselines.
+# evaluation owed
+- A human rating.
+# generality
+- And the second model family that a reviewer would ask for.""")
 
     lob = RV["em.leave_one_benchmark_out"]
     d.add("summary", "Summary — the claim, stated precisely",
@@ -587,14 +727,26 @@ remaining baselines, a human rating, and the second model family that a reviewer
 </div>""", "VII · Limits", src="final_eval_FINAL_cap320_T07.json macro_over_open8.all; wed_vs_probe_2026-10-16.json; " + RVSRC.split(" (")[0],
           minutes=1.5,
           look="the three numbers left to right, then the four lines.",
-          say=f"""To summarise in one sentence: a 918-thousand-parameter probe reading Lingshu-7B's frozen internal states, choosing among
-eight sampled answers at temperature 0.7, improves open-ended medical VQA over the model's own greedy answer on eight benchmarks — by
-{X[0]:.3f} under a judge from another model family that it never trained on, {J[0]:.3f} under the judge that supplied its labels, and
-{E[0]:.3f} in lenient exact match, all significant on these benchmarks. With benchmarks as the unit, the judge gains stay significant and
-the exact-match gain does not — and that assumes each new benchmark comes with labelled training data. Under the judge it wins on six of
-eight benchmarks and ties on two, where the right answer is among the samples but the probe fails to pick it. On identical candidates it
-beats the training-free selector WED on PathVQA and SLAKE, and ties on VQA-RAD. The mechanism is not new; the setting, the breadth and the
-care of the evaluation are. Thank you — I am happy to go into any part in detail; there are backup slides on every component.""",
+          say=f"""# Summary — the claim, stated precisely
+- To summarise: a 918-thousand-parameter probe reading Lingshu-7B's frozen internal states.
+- It chooses among eight sampled answers at temperature 0.7.
+- It improves open-ended medical VQA over the model's own greedy answer on eight benchmarks.
+# cross-family judge
+- By {X[0]:.3f} under a judge from another model family that it never trained on.
+# training judge
+- By {J[0]:.3f} under the judge that supplied its labels.
+# lenient exact match
+- And {E[0]:.3f} in lenient exact match — all significant on these benchmarks.
+- With benchmarks as the unit, the judge gains stay significant and the exact-match gain does not.
+- And that assumes each new benchmark comes with labelled training data.
+# judge: 6 significant wins; 2 ties (VQA-RAD, VQA-Med), both selection failures — the right answer was often in the pool
+- Under the judge it wins on six of eight benchmarks and ties on two.
+- On those two the right answer is among the samples but the probe fails to pick it.
+# vs WED on identical candidates: wins on PathVQA and SLAKE, ties on VQA-RAD
+- On identical candidates it beats the training-free selector WED on PathVQA and SLAKE, and ties on VQA-RAD.
+# mechanism not new; each benchmark needs labelled training questions
+- The mechanism is not new; the setting, the breadth and the care of the evaluation are.
+- Thank you — I am happy to go into any part in detail; there are backup slides on every component.""",
           qa=[("What generalises beyond this project?",
                "Training, not prompting, is what makes a selector work here: a trained 7B selector ties a zero-shot 32B verifier (+0.005 [−0.023, +0.032], "
                "n = 600, July pools, EM/substring; verifier_32b_gpu.json) and beats asking the model to verify itself; and selection gains follow the headroom "
@@ -604,7 +756,7 @@ care of the evaluation are. Thank you — I am happy to go into any part in deta
     d.part = "Backup"
     d.add("pA", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">BACKUP</div>
 <h1>Backup slides</h1><p>Full numbers, recipe, the per-benchmark-temperature variant, data exposure, references.</p></div>""",
-          raw=True, minutes=0, say="(Backup — only if asked.)")
+          raw=True, minutes=0, say="# Backup slides\n- (Backup — only if asked.)")
 
     full = ""
     for c in D.OPEN8:

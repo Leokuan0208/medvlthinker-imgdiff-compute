@@ -22,9 +22,13 @@ L = [f"# Speaker script — {NAME}.html", "",
      f"{len(d.slides)} slides · main talk ≈ {total:.0f} minutes · backup slides are only for questions.", "",
      "**How to use this script.** Each slide has three parts:",
      "- **On screen** — what the audience is looking at, and where to point.",
-     "- **Say** — the words to speak, verbatim. Numbers in the text are the same numbers as on the slide.",
+     "- **Say** — what to say, as bullet points. Each group starts with **▸ the exact label you see on the slide** "
+     "(a box title, figure stage, chart or table), so you can find the matching script for any part of the slide. "
+     "Numbers are the same numbers as on the slide.",
      "- **If asked** — likely questions with a sourced answer. Don't volunteer these unless asked.", "",
-     "Every number comes from a named artifact or paper; the source line at the bottom of each slide names it.", ""]
+     "Every number comes from a named artifact or paper; the source line at the bottom of each slide names it.", "",
+     "**Finding your place.** Slide numbers match the number at the bottom-right of each slide. In Word, open "
+     "View → Navigation Pane: it lists every slide and, under each, its on-screen labels — click one to jump there.", ""]
 part = None
 for s in d.script:
     if s["part"] != part:
@@ -38,8 +42,18 @@ for s in d.script:
     if s["say"]:
         L.append("**Say:**")
         L.append("")
-        for para in s["say"].strip().split("\n"):
-            L.append(para.strip())
+        # say format: "# <exact on-screen label>" starts a group; "- " is a bullet; "  - " a sub-bullet
+        for line in s["say"].strip().split("\n"):
+            if not line.strip():
+                continue
+            if line.lstrip().startswith("# "):
+                L += ["", f"#### ▸ {line.lstrip()[2:].strip()}", ""]
+            elif line.startswith("  - ") or line.startswith("    - "):
+                L.append("    - " + line.strip()[2:])
+            elif line.lstrip().startswith("- "):
+                L.append("- " + line.strip()[2:])
+            else:
+                L.append(line.strip())
         L.append("")
     if s["qa"]:
         L.append("**If asked:**")
@@ -54,7 +68,8 @@ md = "\n".join(L)
 open(f"{OUT}/{NAME}_script.md", "w").write(md)
 try:
     import pypandoc
-    pypandoc.convert_file(f"{OUT}/{NAME}_script.md", "docx", outputfile=f"{OUT}/{NAME}_script.docx")
+    pypandoc.convert_file(f"{OUT}/{NAME}_script.md", "docx", outputfile=f"{OUT}/{NAME}_script.docx",
+                          extra_args=["--toc", "--toc-depth=3"])
 except Exception as e:
     print("docx failed:", e)
 print(f"slides {len(d.slides)}; minutes {total:.1f}; wrote {OUT}")

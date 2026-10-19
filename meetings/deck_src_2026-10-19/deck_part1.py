@@ -38,11 +38,13 @@ def build(d):
  the field, the method in full, why each design choice, and how it compares.</p>
  <p style="top:560px;font-size:16px;opacity:.75">Li-Wen (Leo) Kuan · medvlthinker-imgdiff-compute · shipped method: single sampling temperature T = 0.7</p>
 </div>""", raw=True, minutes=1.0,
-          say="""Good afternoon. Today I want to do three things. First, give you the vocabulary of the research area our
-work sits in, so every term I use later is defined. Second, walk through our method piece by piece — what it reads,
-how it decides, and why each piece is the way it is. Third, compare it honestly with what other groups have published.
-The short version of the method: a medical vision-language model writes eight possible answers to a question, and a
-small trained classifier that reads the model's internal states picks one of them.""")
+          say="""# Choosing the right answer from a medical VLM's own samples
+- Good afternoon. Today I want to do three things.
+  - First, the vocabulary of our research area, so every term I use later is defined.
+  - Second, our method piece by piece — what it reads, how it decides, and why each piece is the way it is.
+  - Third, an honest comparison with what other groups have published.
+- The short version: a medical vision-language model writes eight possible answers to a question.
+- A small trained classifier that reads the model's internal states picks one of them.""")
 
     # ------------------------------------------------------------------ 2 the result in one slide
     d.add("oneslide", "The whole talk on one slide",
@@ -63,20 +65,32 @@ small trained classifier that reads the model's internal states picks one of the
           src="final_eval_FINAL_cap320_T07.json — macro_over_open8.all.pick_minus_greedy_{judge,xjudge,em}; every question scored by probes that never saw its image",
           minutes=2.5,
           look="Left: the three boxes. Right: the three numbers — the top one is the grader the probe never trained on.",
-          say=f"""Here is the whole talk on one slide. The model we use, Lingshu-7B, is a medical vision-language model. For
-each question we let it write eight answers, using a bit of randomness. A small trained classifier — in the field this is
-called a probe — reads the model's internal numbers for each answer and gives it a score. We train 24 of these probes,
-average their rankings, and return the answer they rank first.
-The question is whether that beats the model's normal answer, which is the single most likely answer, called the greedy
-answer. It does. Averaged over eight benchmarks, a grader from a completely different model family, MedGemma-27B, which the
-probe never saw during training, measures a gain of {X[0]:.3f} — about seven points. The grader whose labels we trained on, a
-32-billion-parameter medical model, measures {J[0]:.3f}. Because the probe learned from that second grader, I treat the
-MedGemma number as the cleaner one. A lenient string-matching score, which counts an answer as right if it equals or contains
-the gold answer, also improves, by {E[0]:.3f}: small, but significant on these benchmarks.
-I want to be upfront about what is new. Using a probe on hidden states to pick among sampled answers has been done for
-text-only language models, mostly on math, and one medical paper tried it on a hundred questions. What we add is the
-measurement: eight benchmarks, held-out images, two graders from different families plus string matching, and a direct
-comparison with a published method. I will show you exactly where it works and where it does not.""",
+          say=f"""# Method
+- Here is the whole talk on one slide.
+- Our model, Lingshu-7B, is a medical vision-language model.
+- For each question it writes eight answers, using a bit of randomness.
+- A small trained classifier — in the field, a probe — reads the model's internal numbers for each answer and scores it.
+- We train 24 of these probes, average their rankings, and return the answer they rank first.
+# Question
+- Does that beat the model's normal answer — the single most likely one, called the greedy answer?
+- It does.
+# CROSS-FAMILY JUDGE
+- Averaged over eight benchmarks, a grader from a completely different model family, MedGemma-27B, measures a gain of {X[0]:.3f} — about seven points.
+- The probe never saw this grader during training.
+# TRAINING JUDGE
+- The grader whose labels we trained on, a 32-billion-parameter medical model, measures {J[0]:.3f}.
+- Because the probe learned from this grader, I treat the MedGemma number as the cleaner one.
+# LENIENT EXACT MATCH
+- A lenient string-matching score: right if the answer equals or contains the gold answer.
+- It also improves, by {E[0]:.3f}: small, but significant on these benchmarks.
+# What is new — and what is not
+- Using a probe on hidden states to pick among sampled answers has been done for text-only language models, mostly on math.
+- One medical paper tried it on a hundred questions.
+- What we add is the measurement:
+  - eight benchmarks and held-out images;
+  - two graders from different families plus string matching;
+  - a direct comparison with a published method.
+- I will show you exactly where it works and where it does not.""",
           qa=[("Is the +0.08 partly the probe learning the training judge's taste?",
                f"Partly, yes. In this project a newly trained verifier gains about 0.006–0.009 under its training judge from paraphrase drift alone "
                f"(coadapt_verifier_T04_2026-08-14.json). That is why the cross-family judge, never used in training, is quoted first: {pm(X[0])} {ci(X[1],X[2])}. "
@@ -125,16 +139,28 @@ comparison with a published method. I will show you exactly where it works and w
   <div class="box"><h3>VII · Honest limits and next steps</h3></div>
  </div>
 </div>""", "Opening", minutes=0.7,
-          say="""The talk has seven parts. Parts one and two are background: the words the field uses and the papers that
-matter, including how their methods work. Part three is our method step by step with the math. Part four goes through every
-design choice and shows what we tried instead. Then results, then a careful comparison with published work, and finally the
-limits of what we can claim.""")
+          say="""# Roadmap
+- The talk has seven parts.
+# I · The field's vocabulary
+- Parts one and two are background: the words the field uses …
+# II · Key papers and their methods
+- … and the papers that matter, including how their methods work.
+# III · Our method, piece by piece
+- Part three is our method step by step, with the math.
+# IV · Why each choice
+- Part four goes through every design choice and shows what we tried instead.
+# V · Results
+- Then results.
+# VI · Against published work
+- Then a careful comparison with published work.
+# VII · Honest limits and next steps
+- And finally the limits of what we can claim.""")
 
     # ================================================================== PART I
     d.part = "I · Vocabulary"
     d.add("p1", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART I</div>
 <h1>The field's vocabulary</h1><p>Every term used later, defined once, with the name the literature uses.</p></div>""",
-          raw=True, minutes=0.2, say="Part one: the vocabulary.")
+          raw=True, minutes=0.2, say="# The field's vocabulary\n- Part one: the vocabulary.")
 
     # ---- medical VQA
     ex = D.EX
@@ -157,13 +183,19 @@ limits of what we can claim.""")
  </div>
 </div>""", "I · Vocabulary", src="AUROC figures: project finding 2 (PROJECT_RETROSPECTIVE_2026-07-29.md §5.2), from the earlier multiple-choice phase",
           minutes=1.5,
-          say="""Visual question answering, VQA, means the model gets an image and a question and has to answer. In medicine there
-are two answer formats. Closed-ended means the answer comes from a fixed set — yes or no, or a letter from multiple choices.
-That is easy to grade. Open-ended means the model writes the answer itself, like the example on the right: the gold answer is
-"Large Bowel", but "colon" or "large intestine" would also be right. So grading open answers is itself a problem, and I will
-come back to how we do it.
-We work on open-ended questions for two reasons: it is the realistic setting, and in an earlier phase of this project we found
-that signals about whether an answer is right work much better on free text than on four-option multiple choice.""",
+          say="""# Medical visual question answering: two answer formats
+- Visual question answering, VQA: the model gets an image and a question and has to answer.
+- In medicine there are two answer formats.
+# Closed-ended
+- The answer comes from a fixed set — yes or no, or a letter from multiple choices.
+- That is easy to grade.
+# Open-ended (free text) — this work
+- The model writes the answer itself, like the example on the right.
+- The gold answer is "Large Bowel", but "colon" or "large intestine" would also be right.
+- So grading open answers is itself a problem; I will come back to how we do it.
+# Why open-ended
+- Two reasons. First, it is the realistic setting.
+- Second, in an earlier phase of this project, signals about whether an answer is right worked much better on free text than on four-option multiple choice.""",
           qa=[("Where does the 0.87 vs 0.6 come from?", "From the earlier multiple-choice phase of this project (finding 2 in the project retrospective): "
                "routing/error-detection signals reached AUROC ≈ 0.6 on 4-option MCQ and ≈ 0.87 on free text. It motivated the switch, it is not a result of this method.")])
 
@@ -184,14 +216,23 @@ that signals about whether an answer is right work much better on free text than
           src="Qwen2.5-VL report Table 1 p.4, §2.1 p.3–5; Lingshu §3 p.9 (built on Qwen2.5-VL-7B-Instruct); token bound derived (14-px patches, 2×2 merge)",
           minutes=2.0,
           look="Left to right along the figure: image, patches, ViT, merger, the token strip, then down to the decoder. End on the violet 'hidden state' card.",
-          say="""This is how the model we use works. Lingshu-7B is a medical fine-tune of Qwen2.5-VL-7B and has exactly its
-architecture. The image is cut into 14-by-14-pixel patches. A vision transformer with 32 layers turns each patch into a
-vector. A small two-layer network called the merger, or projector, groups each 2-by-2 block of patches into one vector of size
-3,584, which is the width of the language model. So one image token covers a 28-by-28-pixel region, and an image capped at our
-budget of about 250 thousand pixels becomes at most 320 image tokens.
-The language model then reads the system prompt, the image tokens and the question, and writes the answer one token at a time.
-It has 28 blocks, and after every block each position has a vector of 3,584 numbers. That vector is called the hidden state, or
-the residual stream. Those vectors are what our probe reads — so keep this picture in mind.""",
+          say="""# How a VLM answers: Lingshu-7B (Qwen2.5-VL-7B architecture)
+- This is how our model works.
+- Lingshu-7B is a medical fine-tune of Qwen2.5-VL-7B and has exactly its architecture.
+# vision encoder (ViT)
+- The image is cut into 14-by-14-pixel patches.
+- A vision transformer with 32 layers turns each patch into a vector.
+# merger / projector
+- A small two-layer network, the merger or projector, groups each 2-by-2 block of patches into one vector of size 3,584 — the width of the language model.
+- So one image token covers a 28-by-28-pixel region.
+- An image capped at our budget of about 250 thousand pixels becomes at most 320 image tokens.
+# decoder (LLM)
+- The language model reads the system prompt, the image tokens and the question.
+- It writes the answer one token at a time.
+- It has 28 blocks; after every block, each position has a vector of 3,584 numbers.
+# hidden state
+- That vector is called the hidden state, or the residual stream.
+- Those vectors are what our probe reads — so keep this picture in mind.""",
           qa=[("Is the 320-token bound stated in the Qwen paper?", "No — it is derived: 14-px patches merged 2×2 give one token per 28×28 px, so tokens ≤ max_pixels/784 = 250,880/784 = 320. "
                "Measured: GEMeX averages 303 image tokens at cap320 (FINAL_METHOD_2026-10-16.md)."),
               ("Was Lingshu trained with reinforcement learning?", "No. The released Lingshu-7B is the three supervised stages; RL produced a separate Lingshu-RL "
@@ -221,18 +262,28 @@ the residual stream. Those vectors are what our probe reads — so keep this pic
           src="head_temp_ensemble_2026-08-30.json — cells.*.{T}.mean_distinct and .oracle, macro over 8 benchmarks, held-out image halves, N = 8",
           minutes=2.0,
           look="Top chart first (distinct answers rise with T), then the bottom chart (coverage rises with T). Point at 0.7 on both.",
-          say="""To get several different answers we cannot use greedy decoding, because greedy always takes the most likely next
-token and gives the same answer every time. Instead we sample: the model's scores for the next token are turned into
-probabilities with this softmax, and the temperature T controls how spread out they are. At low temperature the samples are
-almost identical; at high temperature they vary more.
-The two charts are our own measurements over the eight benchmarks. At the top, the number of distinct answers among eight
-samples rises from about 2 at temperature 0.2 to about 5 at 1.0. At the bottom, the chance that at least one of the eight is
-correct rises from 0.46 to 0.57. Note that neither axis starts at zero. The price, typically, is that each individual sample is less accurate — that is not shown
-here. That trade-off is why the temperature matters. We ship one temperature, 0.7, for every question. An earlier version of the
-method picked a different temperature per benchmark; we dropped it, because that needs to know which dataset a question comes
-from, which a deployed system does not. I come back to this in part four.
-One warning about words: "temperature scaling" in the calibration literature is a different thing — it rescales a trained
-classifier's outputs. When I say temperature I always mean the sampling temperature.""",
+          say="""# greedy decoding
+- To get several different answers we cannot use greedy decoding.
+- Greedy always takes the most likely next token, so it gives the same answer every time.
+# temperature sampling
+- Instead we sample: the model's scores for the next token become probabilities through this softmax.
+- The temperature T controls how spread out they are.
+- At low temperature the samples are almost identical; at high temperature they vary more.
+# distinct answers among 8 samples (top chart)
+- The two charts are our own measurements over the eight benchmarks.
+- Top: distinct answers among eight samples rise from about 2 at temperature 0.2 to about 5 at 1.0.
+# oracle@8 — at least one of the 8 is correct (bottom chart)
+- Bottom: the chance that at least one of the eight is correct rises from 0.46 to 0.57.
+- Note that neither axis starts at zero.
+- The price, typically, is that each individual sample is less accurate — that is not shown here.
+- That trade-off is why the temperature matters.
+- We ship one temperature, 0.7, for every question.
+- An earlier version picked a different temperature per benchmark; we dropped it.
+  - It needs to know which dataset a question comes from, which a deployed system does not.
+  - I come back to this in part four.
+# not to be confused with
+- "Temperature scaling" in the calibration literature is a different thing — it rescales a trained classifier's outputs.
+- When I say temperature, I always mean the sampling temperature.""",
           qa=[("Any top-p, top-k or repetition penalty?", "None set: SamplingParams gets temperature, max_tokens = 64, n and logprobs only "
                "(src/labeling/run_openvqa.py:186). Whether vLLM 0.9.0.1 applies the model's own generation_config defaults when SamplingParams is "
                "built by hand was not separately verified."),
@@ -255,16 +306,27 @@ classifier's outputs. When I say temperature I always mean the sampling temperat
 </div>""", "I · Vocabulary",
           minutes=2.0,
           look="The three bars left to right (greedy, probe pick, oracle), then the two brackets on the right: red = coverage wall, orange = selection gap.",
-          say=f"""This is the central idea of the field we are in. Best-of-N means: sample N answers and return one of them. It
-splits into two separate problems. The first is coverage: is a correct answer anywhere among the N? That is measured by
-oracle-at-N — the accuracy you would get if someone told you which answer was right. The second is selection: can you find the
-right one without knowing the answer?
-The bars are our real numbers, averaged over the eight benchmarks. Greedy decoding is right {D.GREEDY_MACRO:.3f} of the time.
-Among our eight samples a correct one exists {D.ORACLE_MACRO:.3f} of the time — that is the ceiling. Our probe picks a correct
-answer {D.PICK_MACRO:.3f} of the time. So {1-D.ORACLE_MACRO:.0%} of questions are lost because no sample is right — the coverage
-wall — and {D.ORACLE_MACRO-D.PICK_MACRO:.3f} is lost to imperfect selection. The ratio of picked to oracle we call selection
-efficiency. If you divide the two bars you get {R1['ratio_of_macro_pick_to_macro_oracle_judge']['value']:.2f}; we compute it benchmark by
-benchmark and then average, which gives {D.SELEFF:.2f}, because one weak benchmark, VQA-Med, pulls the average down.""",
+          say=f"""# best-of-N
+- This is the central idea of our field.
+- Best-of-N: sample N answers and return one of them.
+- It splits into two separate problems.
+# oracle@N  = pass@N = coverage
+- First, coverage: is a correct answer anywhere among the N?
+- Measured by oracle-at-N — the accuracy you would get if someone told you which answer was right.
+# selection
+- Second, selection: can you find the right one without knowing the answer?
+# the bars (greedy · probe pick · oracle)
+- These are our real numbers, averaged over the eight benchmarks.
+- Greedy decoding is right {D.GREEDY_MACRO:.3f} of the time.
+- A correct answer exists among our eight samples {D.ORACLE_MACRO:.3f} of the time — that is the ceiling.
+- Our probe picks a correct answer {D.PICK_MACRO:.3f} of the time.
+- Red bracket: {1-D.ORACLE_MACRO:.0%} of questions are lost because no sample is right — the coverage wall.
+- Orange bracket: {D.ORACLE_MACRO-D.PICK_MACRO:.3f} is lost to imperfect selection.
+# selection efficiency (ours)
+- The ratio of picked to oracle we call selection efficiency.
+- Dividing the two bars gives {R1['ratio_of_macro_pick_to_macro_oracle_judge']['value']:.2f}.
+- We compute it benchmark by benchmark and then average, which gives {D.SELEFF:.2f}.
+- The difference: one weak benchmark, VQA-Med, pulls the average down.""",
           src=f"final_eval_FINAL_cap320_T07.json — cells.*.all.{{greedy,pick,oracle}}_judge, macro; selection efficiency per benchmark: {R1F}; Brown et al. 2024 p.2; Bay & Yearick 2026 abstract",
           qa=[("Is selection efficiency a standard metric?", "No. Brown et al. call the problem 'precision', Hu (2026) uses 'effective capture' = fixed/recoverable, "
                "which is a different normalisation. Ours is selected/oracle@N per benchmark, then averaged; we always define it."),
@@ -292,19 +354,35 @@ benchmark and then average, which gives {D.SELEFF:.2f}, because one weak benchma
           src="ORM/PRM: Uesato et al. arXiv:2211.14275; Lightman et al. arXiv:2305.20050; Snell et al. 2024; Zhang et al. 2025 GenRM; Kang et al. arXiv:2502.18581; "
               "Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064; status column from final_eval_FINAL_cap320_T07.json and PROJECT_RETROSPECTIVE N32",
           minutes=2.0,
-          say="""Who does the choosing? The field has roughly six families. The simplest is majority vote, also called
-self-consistency: return the answer string that appears most often. There are training-free extensions for free text —
-asking the model which answer is most consistent, or clustering answers by meaning. You can rank by the model's own
-likelihood, or ask the model to check itself. One recent medical paper, WED, makes two roles of the same model negotiate.
-And finally there are trained verifiers: a model trained on labelled correct and incorrect answers. That is our family.
-Two distinctions the literature uses. Outcome versus process: an outcome reward model scores the final answer, a process reward
-model scores every reasoning step. Lightman and colleagues showed process supervision wins on long math solutions, while Uesato
-and colleagues found outcome supervision reaches similar final-answer error with less labelling. Our answers are about five
-tokens long with no steps, so ours is outcome. And discriminative
-versus generative: a discriminative verifier is a classifier that outputs a number; a generative one is a language model that
-writes "yes" or "no". Ours is a discriminative outcome verifier, built as a probe on the model's hidden states.
-The right column already tells you something about results: majority vote actually loses to greedy on our data, and asking the
-model to check itself failed when we tried it earlier.""",
+          say="""# Who chooses? The selectors the field uses
+- Who does the choosing? The field has roughly six families — one per row.
+# majority vote / self-consistency
+- The simplest: return the answer string that appears most often.
+# LLM consistency / semantic agreement
+- Training-free extensions for free text: ask the model which answer is most consistent, or cluster answers by meaning.
+# likelihood / logit scores
+- Rank by the model's own likelihood.
+# self-verification
+- Ask the model to check itself.
+# game-theoretic decoding
+- One recent medical paper, WED, makes two roles of the same model negotiate.
+# trained verifier / reward model
+- A model trained on labelled correct and incorrect answers. That is our family.
+# ORM vs PRM
+- Two distinctions the literature uses. First, outcome versus process.
+- An outcome reward model scores the final answer; a process reward model scores every reasoning step.
+- Lightman and colleagues: process supervision wins on long math solutions.
+- Uesato and colleagues: outcome supervision reaches similar final-answer error with less labelling.
+- Our answers are about five tokens long with no steps, so ours is outcome.
+# discriminative vs generative
+- A discriminative verifier is a classifier that outputs a number.
+- A generative one is a language model that writes "yes" or "no".
+# our place
+- Ours is a discriminative outcome verifier, built as a probe on the model's hidden states.
+# status here
+- This column already tells you something about results.
+- Majority vote actually loses to greedy on our data.
+- Asking the model to check itself failed when we tried it earlier.""",
           qa=[("Which training-free selectors were not run, and why does it matter?",
                "USC, embedding agreement (EBA), MBR, and likelihood-based ranking were not run on our pools. Per-candidate log-probabilities were not stored "
                "for the shipped cap320 pools; they exist for the October 1-megapixel-cap pools on 7 of 8 benchmarks (cumlogprob_all, src/labeling/run_openvqa.py:235–241; "
@@ -345,23 +423,36 @@ model to check itself failed when we tried it earlier.""",
               ("Your probe fails to transfer to a left-out benchmark. Is that expected?",
                "It matches Orgad et al. ('such error detectors fail to generalize across datasets'). Kossen et al.'s semantic-entropy probes 'generalize better "
                "to out-of-distribution data than previous probing methods that directly predict model accuracy' — an auxiliary target worth trying; untested here.")],
-          say="""The core object of our method is a probe. In the interpretability literature a probe is a small classifier that
-takes a network's internal vectors as input and is trained to predict some property — while the network itself is frozen, never
-changed. The classic version is a linear probe: one weighted sum and a sigmoid. Ours has one hidden layer of width 256, which
-makes it an MLP probe.
-A note on words: say "one hidden layer of width 256", not "a two-layer MLP", because people count layers differently.
-That hidden states carry information about whether a statement is true is an old finding. Azaria and Mitchell read true or false
-from a model's activations with 71 to 83 percent accuracy; the contrast-consistent search of Burns and colleagues found it without
-labels, about four percent over zero-shot prompting; Kadavath and colleagues at Anthropic trained models to predict whether they
-know an answer. But each of them scores one statement on its own.
-We need something narrower: among eight answers to the same question, which is right. And Orgad and colleagues warn that such
-detectors often fail to carry over to a new dataset — we see the same thing, as I will show.
-Two cautions from that literature. First, being able to decode something from a vector does not mean the model uses it — it is
-correlation, not mechanism. Second, a probe with enough capacity can memorise labels, so the careful check is a control task:
-train the same probe on random labels and measure the difference, called selectivity. We have not run that control yet, and I
-list it among the gaps.
-Our use is different from the diagnostic use: we do not claim anything about how the model thinks. We use the probe as a tool to
-choose an answer, and we judge it only by how often the chosen answer is right on images it never saw.""")
+          say="""# probe
+- The core object of our method is a probe.
+- In the interpretability literature: a small classifier that takes a network's internal vectors as input and is trained to predict some property.
+- The network itself is frozen — never changed.
+# linear probe
+- The classic version: one weighted sum and a sigmoid.
+# MLP probe (ours)
+- Ours has one hidden layer of width 256, which makes it an MLP probe.
+- A note on words: say "one hidden layer of width 256", not "a two-layer MLP" — people count layers differently.
+# correctness is decodable — an old finding
+- That hidden states carry information about whether a statement is true is an old finding.
+- Azaria and Mitchell read true or false from a model's activations with 71 to 83 percent accuracy.
+- The contrast-consistent search of Burns and colleagues found it without labels, about four percent over zero-shot prompting.
+- Kadavath and colleagues at Anthropic trained models to predict whether they know an answer.
+- But each of them scores one statement on its own.
+- We need something narrower: among eight answers to the same question, which is right.
+# transfer
+- Orgad and colleagues warn that such detectors often fail to carry over to a new dataset.
+- We see the same thing, as I will show.
+# decodable ≠ causal
+- Two cautions from that literature. First: being able to decode something from a vector does not mean the model uses it.
+- It is correlation, not mechanism.
+# control task & selectivity
+- Second: a probe with enough capacity can memorise labels.
+- The careful check is a control task: train the same probe on random labels and measure the difference, called selectivity.
+- We have not run that control yet; I list it among the gaps.
+# our use is operational
+- We do not claim anything about how the model thinks.
+- We use the probe as a tool to choose an answer.
+- We judge it only by how often the chosen answer is right on images it never saw.""")
 
     # ---- grading
     d.add("judges", "Grading open answers: LLM judges and exact match",
@@ -383,21 +474,29 @@ choose an answer, and we judge it only by how often the chosen answer is right o
           src="MT-Bench arXiv:2306.05685 §3; src/labeling/run_judge.py (MedGemma via the same script); EM/F1: src/audit_2026_09_18/em_rescore_pooled_probe.py; "
               "length bias: AUDIT_2026-09-18.md §2.2 — full provenance in the script",
           minutes=2.0,
-          say="""Because open answers can be right in many wordings, we need a grader. The field's standard is an LLM judge: a
-language model that sees the question, the gold answer and one candidate, and says correct or incorrect. In the MT-Bench
-paper's vocabulary that is reference-guided single-answer grading.
-We use two judges, and they play different roles. MedVLThinker-32B produced the labels the probe was trained on, so I call it the
-training judge. It comes from the same Qwen family as our generator, and a probe trained on its labels can learn its taste. So every
-headline number is also graded by MedGemma-27B, from Google's Gemma family, which was never used in training — that is the
-cleaner number. Both judges read text only; they do not see the image.
-We also report a lenient string-matching score, which counts an answer as right if it equals the gold or either contains the other,
-and LLaVA-Med's token recall, so we can compare with their paper. Lenient means a partial answer contained in the gold also passes,
-and a correct paraphrase fails. In our files we call these different metrics "currencies"; from now on I just say metric, and I never
-show a judge number without the others.
-On biases: position bias needs two answers side by side, so it cannot happen here. Verbosity bias — preferring longer answers —
-we checked: always picking the longest answer loses 0.029. Self-preference and learning the training judge's taste are why we have
-the second judge. This is also the field's norm: each benchmark paper uses its own LLM judge — GPT-4.1 for Lingshu, Mistral-Large for
-RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.""",
+          say="""# LLM-as-a-judge
+- Open answers can be right in many wordings, so we need a grader.
+- The field's standard is an LLM judge: it sees the question, the gold answer and one candidate, and says correct or incorrect.
+- In the MT-Bench paper's vocabulary: reference-guided single-answer grading.
+# judge · role · family (table)
+- We use two judges, and they play different roles.
+- MedVLThinker-32B produced the probe's training labels, so I call it the training judge.
+  - It comes from the same Qwen family as our generator; a probe trained on its labels can learn its taste.
+- So every headline number is also graded by MedGemma-27B, from Google's Gemma family, never used in training — the cleaner number.
+- Both judges read text only; they do not see the image.
+# lenient exact match (“EM”)
+- We also report a lenient string-matching score: right if the answer equals the gold or either contains the other.
+- Lenient means a partial answer contained in the gold also passes, and a correct paraphrase fails.
+# token-F1, token recall
+- And LLaVA-Med's token recall, so we can compare with their paper.
+- In our files we call these different metrics "currencies"; from now on I just say metric.
+- I never show a judge number without the others.
+# known judge biases
+- Position bias needs two answers side by side, so it cannot happen here.
+- Verbosity bias — preferring longer answers — we checked: always picking the longest answer loses 0.029.
+- Self-preference and learning the training judge's taste are why we have the second judge.
+- This is also the field's norm: each benchmark paper uses its own LLM judge.
+  - GPT-4.1 for Lingshu, Mistral-Large for RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.""",
           qa=[("Has the judge been validated against humans?", "No human has rated this method's picks. Earlier spot checks, on July pools: an LLM rater "
                "(results/cascade_methods/claude_judge/) on SLAKE and VQA-RAD, and an audit of 50 + 90 PathVQA items (pathvqa_judge_audit.json). On the 50 "
                "direct (short) answers the judge was wrong 2 times: 0.04, Wilson 95% [0.011, 0.135] (computed for 2/50); on 90 long reasoning-mode answers "
@@ -429,14 +528,22 @@ RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.""",
                "the 24 probes before averaging them can change the order of the average. That is what the readout comparison tested, and it tied under both judges."),
               ("Isn't P(True) an uncertainty method?", "It scores one answer at a time, so it can rank candidates — used that way it is the "
                "self-verification selector, which failed on our earlier pools (0.715 vs 0.720 random-pick selection efficiency; PROJECT_RETROSPECTIVE N32).")],
-          say="""One neighbouring field is easy to confuse with ours: uncertainty estimation. Those methods ask "is this answer
-probably wrong?" — one score per answer or per question, judged by how well it separates right from wrong across many
-questions. We ask a different question: among the eight answers to one question, which is right? Only the order within one
-question matters.
-That difference has consequences. Semantic entropy, the best-known uncertainty method, gives one number per question, the same
-for all eight candidates, so it cannot choose between them. Calibration methods only stretch the scores, so they never change
-which answer is first. The shared ingredient is that hidden-state probes appear in both areas — ours is the variant that scores
-each candidate's correctness.""")
+          say="""# confidence / uncertainty estimation (left column)
+- One neighbouring field is easy to confuse with ours: uncertainty estimation.
+- Those methods ask "is this answer probably wrong?" — one score per answer or per question.
+- They are judged by how well they separate right from wrong across many questions.
+# best-of-N selection (ours) (right column)
+- We ask a different question: among the eight answers to one question, which is right?
+- Only the order within one question matters.
+# semantic entropy cannot pick
+- That difference has consequences.
+- Semantic entropy, the best-known uncertainty method, gives one number per question, the same for all eight candidates.
+- So it cannot choose between them.
+# calibration cannot reorder
+- Calibration methods only stretch the scores, so they never change which answer is first.
+# shared mechanism
+- The shared ingredient: hidden-state probes appear in both areas.
+- Ours is the variant that scores each candidate's correctness.""")
 
     # ---- glossary summary
     d.add("glossary", "Glossary — the terms as used in this talk",
@@ -461,14 +568,15 @@ each candidate's correctness.""")
 </table>""", "I · Vocabulary", minutes=0.5,
           src="π = share of correct training rows 0.2071 / 0.2085 → (1−π)/π = 3.83 / 3.80 (numbers_review_part1.json, review/scr/w1_pi.py); head_sweep.py:172–174; "
               "FLOP-eq unit: free_head_2026-08-16.json DELIVERABLE_3_cost.unit",
-          say="""This slide collects the terms in one place; I will not read it, it is here for reference while we go through the
-method.""")
+          say="""# Glossary — the terms as used in this talk
+- This slide collects the terms in one place.
+- I will not read it; it is here for reference while we go through the method.""")
 
     # ================================================================== PART II
     d.part = "II · Key papers"
     d.add("p2", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART II</div>
 <h1>Key papers and their methods</h1><p>186 papers catalogued (194 cards in the domain guide). These are the ones the method and the comparison rest on, read in full text.</p></div>""",
-          raw=True, minutes=0.2, src="domain guide cards_*.json: 194 cards, 186 distinct papers (review/scr/w1_count.py)", say="Part two: the papers this work stands on, and how their methods work.")
+          raw=True, minutes=0.2, src="domain guide cards_*.json: 194 cards, 186 distinct papers (review/scr/w1_count.py)", say="# Key papers and their methods\n- Part two: the papers this work stands on, and how their methods work.")
 
     # ---- lineage
     d.add("lineage", "The idea is old: rerank a generator's candidates with a trained scorer",
@@ -497,16 +605,28 @@ method.""")
               "arXiv:2402.14688, 2505.12225 (SWIFT, KDD 2026), 2504.16760, 2608.30841, 2608.17124, 2605.28527 (VLA probe), 2609.04336, 2609.06419",
           minutes=1.5,
           look="Walk the timeline left to right, alternating top and bottom labels; the colour legend at the bottom groups them.",
-          say="""The core idea is much older than large language models. In 2005 Collins and Koo took a parser's list of
-candidate parses and trained a second model to rerank them. Speech recognition did related things: a trained scorer reads the
-frozen recogniser's internal features to estimate confidence, in 2020, and to rescore the list of candidate transcripts, in 2021.
-Cobbe and colleagues brought trained verifiers to language models in 2021, and the same year WebGPT used a learned reward model to
-pick the best of up to 64 long free-text answers. AlphaFold picks the best of five protein structures by its own predicted
-confidence. From 2024 on, several groups put probes on language models' hidden states — Q-Probe, SWIFT, LiLaVe, HSRM, CASE. In
-2026 the idea also reached vision: a linear probe on a frozen vision-language-action robot policy was used to choose among sampled
-action sequences. And two papers probed medical vision-language models — mostly for multiple choice and confidence, plus a
-hundred-question demonstration of reranking open answers in MedProb's appendix.
-So I want to be clear from the start: our contribution is not the mechanism.""",
+          say="""# The idea is old: rerank a generator's candidates with a trained scorer
+- The core idea is much older than large language models.
+# Collins & Koo 2005
+- In 2005 Collins and Koo took a parser's list of candidate parses and trained a second model to rerank them.
+# CEM 2020 · R-EBM 2021
+- Speech recognition did related things: a trained scorer reads the frozen recogniser's internal features.
+  - To estimate confidence, in 2020.
+  - To rescore the list of candidate transcripts, in 2021.
+# Cobbe · WebGPT 2021
+- Cobbe and colleagues brought trained verifiers to language models in 2021.
+- The same year, WebGPT used a learned reward model to pick the best of up to 64 long free-text answers.
+# AlphaFold 2021
+- AlphaFold picks the best of five protein structures by its own predicted confidence.
+# Q-Probe 2024 · SWIFT · LiLaVe 2025
+- From 2024 on, several groups put probes on language models' hidden states — Q-Probe, SWIFT, LiLaVe, HSRM, CASE.
+# HSRM · CASE · VLA 2026
+- In 2026 the idea also reached vision: a linear probe on a frozen vision-language-action robot policy chose among sampled action sequences.
+# MedProb · DualRead 2026
+- Two papers probed medical vision-language models — mostly for multiple choice and confidence.
+- Plus a hundred-question demonstration of reranking open answers in MedProb's appendix.
+# this work
+- So I want to be clear from the start: our contribution is not the mechanism.""",
           qa=[("Hasn't a probe on a frozen vision-language model already been used as a best-of-N selector?",
                "Yes, outside VQA: 'What Frozen VLAs Already Know About Success' (arXiv:2605.28527) uses a linear probe on a frozen Pi0.5 policy as a "
                "test-time selector over sampled action prefixes — 'on push-plate, success rises from 26.7% under greedy decoding to 44.3%' (abstract, via "
@@ -534,17 +654,25 @@ So I want to be clear from the start: our contribution is not the mechanism.""",
 <div class="term t" style="margin-top:12px"><b class="k">what we take</b><span>Cobbe's recipe with a 918k-parameter probe as the verifier; Brown's coverage / precision split as our frame</span></div>""",
           "II · Key papers", src="Cobbe §4.2 p.8, §5.1 p.10, §6 p.12; Brown p.2–3, Fig. 7 p.10 (PAPER_NOTES_A); Gao et al. arXiv:2210.10760",
           minutes=2.0,
-          say="""Two founding papers. Cobbe and colleagues at OpenAI in 2021 established the recipe we follow. Sample a hundred
-solutions to each training problem, label each one correct or incorrect by its final answer, train a verifier to predict that
-label, and at test time return the highest-scored of a hundred samples. On grade-school math a 6-billion model with a verifier
-slightly beat a fine-tuned 175-billion model — they describe it as worth a 30-times increase in model size. Two of their findings
-cut against us: their token-level verifier was better than a whole-answer verifier, and past 400 samples accuracy fell, because
-the generator started producing answers that fooled the verifier — the field calls this reward over-optimisation.
-Brown and colleagues in 2024 showed why selection is the hard part. With ten thousand samples from Llama-3-8B-Instruct, a correct
-answer exists for 98 percent of the MATH problems — but voting or off-the-shelf reward models only got from 40.5 to 41.4 percent. Coverage grows; selection
-does not keep up. That split frames all our results.
-What we take from them: Cobbe's recipe — outcome labels, a trained scorer, pick the highest score — but with the verifier replaced
-by a small probe on our generator's own frozen internal states.""")
+          say="""# Training Verifiers to Solve Math Word Problems
+- Two founding papers. First, Cobbe and colleagues at OpenAI, 2021, established the recipe we follow.
+- method:
+  - Sample a hundred solutions to each training problem.
+  - Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
+  - At test time, return the highest-scored of a hundred samples.
+- result: on grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
+  - They describe it as worth a 30-times increase in model size.
+- against us: two findings.
+  - Their token-level verifier was better than a whole-answer verifier.
+  - Past 400 samples accuracy fell: the generator produced answers that fooled the verifier — reward over-optimisation.
+# Large Language Monkeys
+- Brown and colleagues, 2024, showed why selection is the hard part.
+- With ten thousand samples from Llama-3-8B-Instruct, a correct answer exists for 98 percent of the MATH problems.
+- But voting or off-the-shelf reward models only got from 40.5 to 41.4 percent.
+- Coverage grows; selection does not keep up. That split frames all our results.
+# what we take
+- Cobbe's recipe — outcome labels, a trained scorer, pick the highest score.
+- But the verifier is replaced by a small probe on our generator's own frozen internal states.""")
 
     # ---- Snell
     d.add("snell", "Test-time compute vs model size (Snell et al. 2024)",
@@ -563,16 +691,23 @@ by a small probe on our generator's own frozen internal states.""")
  </div>
 </div>""", "II · Key papers", src="Snell v1 abstract, Fig. 4 p.10, Fig. 9 p.15, App. F p.24–25; ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}",
           minutes=1.5,
-          say="""Snell and colleagues framed the modern debate: is it better to spend compute at test time or on a bigger model?
-They describe every method as a proposer plus a verifier, and they choose the strategy per question according to its difficulty;
-their verifiers are process reward models. Their result is that smart test-time search can match plain best-of-N with four times
-less compute, and can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains
-somewhat non-trivial success rates". On the hardest questions, they say, pretraining is the more effective way.
-Our data show a similar shape. On OmniMedVQA, where a correct answer is among the eight samples 70 percent of the time, we gain 16
-points. On VQA-Med, where that is only 21 percent, we gain nothing — though I will show that there the probe also fails to find the
-correct answers that do exist. Two points against us: they found that step-level verifiers beat outcome-level ones, more so as N
-grows; and their method chooses the budget per question, while ours uses one fixed setting. Their default way of combining scores —
-adding up the verifier's score over identical answers — is something we tested against our own readout; I show it in part four.""")
+          say="""# Scaling LLM Test-Time Compute Optimally …
+- Snell and colleagues framed the modern debate: spend compute at test time, or on a bigger model?
+- frame: every method is a proposer plus a verifier.
+- method: they choose the strategy per question according to its difficulty; their verifiers are process reward models.
+- result: smart test-time search can match plain best-of-N with four times less compute.
+- And it can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains somewhat non-trivial success rates".
+- On the hardest questions, they say, pretraining is the more effective way.
+# a similar shape in our data
+- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
+- On VQA-Med, that is only 21 percent — and we gain nothing.
+  - Though I will show that there the probe also fails to find the correct answers that do exist.
+# against us
+- Step-level verifiers beat outcome-level ones in their data, more so as N grows.
+- Their method chooses the budget per question; ours uses one fixed setting.
+# best-of-N weighted
+- Their default way of combining scores: add up the verifier's score over identical answers.
+- We tested it against our own readout; I show it in part four.""")
 
     # ---- voting and its ceiling
     sc_rows = []
@@ -596,15 +731,25 @@ adding up the verifier's score over identical answers — is something we tested
 </div>""", "II · Key papers", src="final_eval_FINAL_cap320_T07.json cells.*.all.sc_minus_greedy_judge (+CI), macro_over_open8.all.sc_minus_greedy_judge; Wang 2023 Table 2 p.5; Bay Prop. 5 Eq. 13 p.10",
           minutes=1.5,
           look="Right chart: most dots sit left of the zero line; end on the bold macro row at the bottom (hollow dot = not significant).",
-          say=f"""The simplest selector is majority vote, which the field calls self-consistency. On math it is very strong — on
-grade-school math with a big model it raised accuracy from 56 to 74 percent — because a correct number tends to come up again and
-again. Bay and Yearick showed its hard ceiling: as you add samples, voting converges to the most frequent answer, so it can never
-beat the rate at which the most frequent answer is correct. A learned scorer is not bound by that.
-The chart is majority vote minus greedy on our pools. On most benchmarks it is negative, and averaged it loses
-{abs(SCJ[0]):.4f}. Free-text medical answers rarely repeat exactly, and the right answer is often a minority — like "Large Bowel",
-which appeared once in our example. There are training-free methods designed for free text: USC asks the language model which
-answer is the most consistent with the others; EBA picks the centre of the largest cluster of answer embeddings; and self-certainty
-scores each sample from the model's own output probabilities. We have not run them, and that is a gap.""",
+          say=f"""# Self-consistency = majority vote
+- The simplest selector is majority vote, which the field calls self-consistency.
+- On math it is very strong: on grade-school math with a big model it raised accuracy from 56 to 74 percent.
+- Because a correct number tends to come up again and again.
+# The modal ceiling
+- Bay and Yearick showed its hard ceiling.
+- As you add samples, voting converges to the most frequent answer.
+- So it can never beat the rate at which the most frequent answer is correct. A learned scorer is not bound by that.
+# majority vote − greedy, training judge (shipped pools)
+- The chart is majority vote minus greedy on our pools.
+- On most benchmarks it is negative, and averaged it loses {abs(SCJ[0]):.4f}.
+- Free-text medical answers rarely repeat exactly, and the right answer is often a minority.
+  - Like "Large Bowel", which appeared once in our example.
+# For free text
+- There are training-free methods designed for free text:
+  - USC asks the language model which answer is the most consistent with the others;
+  - EBA picks the centre of the largest cluster of answer embeddings;
+  - self-certainty scores each sample from the model's own output probabilities.
+- We have not run them, and that is a gap.""",
           qa=[("LiLaVe and CASE found pure best-of-n can fall below voting. Why not here?",
                f"Their answers repeat (math, multiple choice), so voting is strong. On our open answers voting itself loses to greedy ({pm(SCJ[0])} {ci(SCJ[1],SCJ[2])}), "
                "and the probe beats voting by +0.0893 [+0.0811, +0.0972] under the training judge and +0.0136 [+0.0053, +0.0216] under lenient EM (extra_numbers.json).")])
@@ -624,17 +769,28 @@ scores each sample from the model's own output probabilities. We have not run th
  <div class="col"><div class="term r"><b class="k">cuts against it</b><span>HSRM: Bradley–Terry > BCE · Q-Probe: within-question loss > CE · SWIFT: gated > mean pooling</span></div></div>
 </div>""", "II · Key papers", src="Q-Probe Table 1 p.6, §7.2; SWIFT Tables 1 (MATH Avg. column, arxiv.org/html/2505.12225), 7, 8; HSRM Tables 3, 9, 10 (PAPER_NOTES_BC); ours final_eval_FINAL_cap320_T07.json",
           minutes=2.5,
-          say="""These are our three closest relatives, all on text-only language models. Q-Probe in 2024 put a linear probe on a
-frozen code model's embeddings to rerank 48 sampled programs. SWIFT reads every token of every layer, pools them with a learned gate,
-and trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers. HSRM reads the states at the end of each reasoning step with a small
-Transformer and picks the best of eight — the same N as ours.
-The last row is us, so you can compare column by column: we read only the answer's own tokens, at three middle layers, with a simple
-mean, and a one-hidden-layer network.
-I want to be honest about what these papers say against our choices. HSRM found a pairwise ranking loss, Bradley–Terry, better than
-our loss — 85.9 versus 83.9 on grade-school math. Q-Probe found a within-question loss better than a pointwise one, and saw MLPs
-overfit on preference data. SWIFT found that learning which tokens to weight beats a plain average, by 2.7 points. On the other
-side, SWIFT found our loss the best of five, and HSRM found the reader's architecture matters much less than what you feed it: a
-mean-pooled MLP reader did about as well as their Transformer reader. I will come back to each of these when I justify our choices.""",
+          say="""# Hidden-state verifiers in text LLMs (table)
+- These are our three closest relatives, all on text-only language models.
+# Q-Probe
+- Q-Probe, in 2024, put a linear probe on a frozen code model's embeddings to rerank 48 sampled programs.
+# SWIFT
+- SWIFT reads every token of every layer and pools them with a learned gate.
+- It trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers.
+# HSRM
+- HSRM reads the states at the end of each reasoning step with a small Transformer and picks the best of eight — the same N as ours.
+# ours
+- The last row is us, so you can compare column by column.
+- We read only the answer's own tokens, at three middle layers, with a simple mean, and a one-hidden-layer network.
+# cuts against it
+- I want to be honest about what these papers say against our choices.
+- HSRM found a pairwise ranking loss, Bradley–Terry, better than our loss — 85.9 versus 83.9 on grade-school math.
+- Q-Probe found a within-question loss better than a pointwise one, and saw MLPs overfit on preference data.
+- SWIFT found that learning which tokens to weight beats a plain average, by 2.7 points.
+# supports our design
+- On the other side, SWIFT found our loss the best of five.
+- HSRM found the reader's architecture matters much less than what you feed it.
+  - A mean-pooled MLP reader did about as well as their Transformer reader.
+- I will come back to each of these when I justify our choices.""",
           qa=[("Is the BCE-vs-ranking-loss question settled?", "No. SWIFT finds BCE best; HSRM and Q-Probe find within-question losses better. Our own BCE-vs-Bradley–Terry comparison "
                "is confounded (Bradley–Terry sees 38.9% of rows and 3.26× fewer steps), so we do not claim BCE is better; a ranking loss on the final recipe is untested.")])
 
@@ -659,18 +815,29 @@ mean-pooled MLP reader did about as well as their Transformer reader. I will com
  </div>
 </div>""", "II · Key papers", src="CASE HTML §3.2, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe HTML Table 1, §4.4; ReProbe HTML §3 (PAPER_NOTES_I)",
           minutes=2.0,
-          say="""Three more relatives, each teaching something. CASE, from August 2026, asks exactly when choosing by hidden states
-beats majority voting. Their key contribution is a measure called within-question AUC: how well the probe orders the candidates of
-the same question. They show that ordinary cross-validation badly overstates probes, because a probe can learn which questions are
-easy instead of which answers are right — 0.61 drops to 0.50 when measured properly. That metric predicts how much you gain over
-voting; on a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting. Two of their findings
-cut against us: a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting, and averaging over
-tokens hurt in their multiple-choice setting. Also, on those medium questions, voting caught up and overtook them by N of 16. Our
-evaluation avoids the leakage they warn about by splitting by image, but we have not reported their within-question AUC, and we should.
-LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers; interestingly, in their data plain
-best-of-n eventually fell below voting, and weighted voting was best. ReProbe has the same classifier shape as ours — one Transformer
-layer, a mean over the span, then linear, GELU, linear, trained with binary cross-entropy on labels from an LLM judge — and matches
-process reward models up to 810 times larger.""")
+          say="""# CASE — a decodability criterion
+- Three more relatives, each teaching something.
+- CASE, from August 2026, asks exactly when choosing by hidden states beats majority voting.
+- Key contribution: within-question AUC — how well the probe orders the candidates of the same question.
+- Ordinary cross-validation badly overstates probes: a probe can learn which questions are easy instead of which answers are right.
+  - 0.61 drops to 0.50 when measured properly.
+- That metric predicts how much you gain over voting.
+- On a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting.
+- against us, two findings:
+  - a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting;
+  - averaging over tokens hurt in their multiple-choice setting.
+- Also, on those medium questions, voting caught up and overtook them by N of 16.
+# our gap
+- Our evaluation avoids the leakage they warn about by splitting by image.
+- But we have not reported their within-question AUC, and we should.
+# Lightweight latent verifier
+- LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers.
+- In their data plain best-of-n eventually fell below voting, and weighted voting was best.
+# Same head shape as ours
+- ReProbe has the same classifier shape as ours.
+  - One Transformer layer, a mean over the span, then linear, GELU, linear.
+  - Trained with binary cross-entropy on labels from an LLM judge.
+- It matches process reward models up to 810 times larger.""")
 
     # ---- medical side
     d.add("medside", "Medical side: self-verification fails; probes do MCQ or a demo",
@@ -694,20 +861,28 @@ process reward models up to 810 times larger.""")
  </div>
 </div>""", "II · Key papers", src="Mirage Tables 1, 11–15, App. B.4; MedProb p.6, App. H p.27 Table 14, App. L Table 21; DualRead Table 1 (PAPER_NOTES_BC, PAPER_NOTES_I)",
           minutes=2.2,
-          say="""On the medical side, three papers set the context. Verification Mirage asked medical VLMs, including Lingshu, to
-check their own answers. Lingshu accepted 62 to 73 percent of its own wrong answers, a bigger model of the same family did not
-significantly help, and over four turns of conversation the wrong answers got locked in. That is the reason our selector is trained
-on labels rather than prompted.
-One point to keep apart: in part four I show that a separate 32-billion model, judging our 7B's candidates without training, does
-better than a 7B doing the same. That is not in conflict with Mirage. Mirage measures whether a model accepts its own wrong answers
-when it re-checks them; we measure best-of-8 selection accuracy, with a different model as the judge. Both point the same way:
-training, not prompting, is what makes a selector work.
-MedProb showed that a simple linear probe on a medical VLM's internal state can answer closed multiple-choice questions better than
-the model's own generated answer — by more than 20 points in several cases — but it reads the state before any answer is written,
-so it is a classifier, not a selector. In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09
-to 0.13, which they call an initial demonstration; the number of samples, the grader and the probe type are not stated. DualRead
-re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do — but only to calibrate confidence, and its
-quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.""",
+          say="""# Verification Mirage
+- On the medical side, three papers set the context.
+- Verification Mirage asked medical VLMs, including Lingshu, to check their own answers.
+- Lingshu accepted 62 to 73 percent of its own wrong answers.
+- A bigger model of the same family did not significantly help.
+- Over four turns of conversation, the wrong answers got locked in.
+- That is why our selector is trained on labels rather than prompted.
+- One point to keep apart: in part four, a separate 32-billion model judging our 7B's candidates without training does better than a 7B doing the same.
+  - That does not conflict with Mirage.
+  - Mirage measures whether a model accepts its own wrong answers when it re-checks them.
+  - We measure best-of-8 selection accuracy, with a different model as the judge.
+  - Both point the same way: training, not prompting, is what makes a selector work.
+# MedProb
+- A simple linear probe on a medical VLM's internal state answers closed multiple-choice questions better than the model's own generated answer.
+- By more than 20 points in several cases.
+- But it reads the state before any answer is written, so it is a classifier, not a selector.
+- In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09 to 0.13.
+  - They call it an initial demonstration; the number of samples, the grader and the probe type are not stated.
+# DualRead
+- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
+- But only to calibrate confidence.
+- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.""",
           qa=[("Did Verification Mirage use Lingshu-7B?", "The paper does not state Lingshu's size; do not call it 7B."),
               ("Is MedProb App. H comparable to our OmniMedVQA result?", "No: 100 test items, unstated grader and recipe, baseline is a single sample rather than greedy. "
                "Ours on OmniMedVQA: 8,883 questions, greedy 0.516 → 0.677 judge. We make no priority claim — its authors call it 'an initial demonstration'."),
@@ -739,17 +914,26 @@ quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
 </div>""", "II · Key papers", src="WED §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py; BoE §5.1, Table 2 p.9, App. B.2 (PAPER_NOTES_DE, PAPER_NOTES_BC); "
               "Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064",
           minutes=2.0,
-          say="""Two recent papers do test-time selection specifically for medical VQA. WED is training-free. It samples up to
-eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning. Then the
-same model plays two roles: a generator that scores how likely each candidate is, and a verifier that says whether it is correct. The
-two roles adjust toward each other in a game until their rankings agree, measured with a Wasserstein distance so that synonyms count
-as agreement. The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is that
-stopping rule. Graded by the Grok model, it reports one to five points over greedy on most small models, and a small loss for the
-largest one on VQA-RAD, so gains shrink as models get bigger. Best-of-Evidence samples sixteen answers and uses a
-235-billion-parameter judge to check individual claims — modality, anatomy and so on; it gains under one point over majority vote,
-significant on two of four datasets, with no greedy baseline, and its VQA-Med items come from the training split.
-WED matters most for us, because it is the only published selector evaluated on two of our open benchmarks, VQA-RAD and PathVQA. So
-rather than compare numbers across papers, we ran WED's own code on our candidates — I show that result in part six.""")
+          say="""# Wasserstein Equilibrium Decoding (WED)
+- Two recent papers do test-time selection specifically for medical VQA.
+- WED is training-free.
+- It samples up to eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning.
+- Then the same model plays two roles:
+  - a generator that scores how likely each candidate is;
+  - a verifier that says whether it is correct.
+- The two roles adjust toward each other in a game until their rankings agree.
+  - Measured with a Wasserstein distance, so that synonyms count as agreement.
+- The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is the stopping rule.
+- Graded by the Grok model, it reports one to five points over greedy on most small models.
+- And a small loss for the largest one on VQA-RAD — so gains shrink as models get bigger.
+# Best-of-Evidence
+- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
+- It gains under one point over majority vote, significant on two of four datasets.
+- No greedy baseline, and its VQA-Med items come from the training split.
+# for us
+- WED matters most for us: the only published selector evaluated on two of our open benchmarks, VQA-RAD and PathVQA.
+- So rather than compare numbers across papers, we ran WED's own code on our candidates.
+- I show that result in part six.""")
 
     # ---- generator and judges provenance + gap table
     d.add("gap", "Where this work sits",
@@ -770,16 +954,26 @@ rather than compare numbers across papers, we ran WED's own code on our candidat
           "II · Key papers", src="literature/DOMAIN_GUIDE_2026-09-30.md §4.1 (branch worktree-lit-domain-package); PAPER_NOTES_BC/I; VLA probe arXiv:2605.28527; VHS arXiv:2603.22492; "
               "novelty withdrawn: AUDIT_2026-09-18_appendix/lit-vlm-med.md C2 — full provenance in the script",
           minutes=1.5,
-          say="""Putting it together. The literature's hidden-state verifiers share four properties: a probe on frozen states, used to
-select among samples, pooled over the answer's own tokens, and in principle needing no extra pass through the model, because the
-states were already computed while generating. The text-only papers have most of these; the medical papers mostly probe the model
-without selecting free-text answers. In vision the idea also exists, for robot actions and for image generation.
-Our row has all of them except one honest asterisk: in our experiments we re-read each answer in a separate pass, so "no extra pass"
-is true by design, not yet as run. For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left
-accuracy unchanged; for the shipped probe, re-extracting the features at the generation resolution is running now.
-So the contribution is the evaluation, not the mechanism. MedProb's appendix tried this on a hundred questions; we measure it on eight
-benchmarks, with held-out images, a second grader from another model family plus string matching, and against a published selector on
-identical candidates.""",
+          say="""# Where this work sits (table columns A–D)
+- Putting it together. The literature's hidden-state verifiers share four properties:
+  - (A) a probe on frozen states;
+  - (B) used to select among samples;
+  - (C) pooled over the answer's own tokens;
+  - (D) in principle no extra pass through the model, because the states were already computed while generating.
+- The text-only papers have most of these.
+- The medical papers mostly probe the model without selecting free-text answers.
+- In vision the idea also exists, for robot actions and for image generation.
+# ours
+- Our row has all of them except one honest asterisk, column D.
+- In our experiments we re-read each answer in a separate pass, so "no extra pass" is true by design, not yet as run.
+- For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left accuracy unchanged.
+- For the shipped probe, re-extracting the features at the generation resolution is running now.
+# contribution, stated narrowly
+- So the contribution is the evaluation, not the mechanism.
+- MedProb's appendix tried this on a hundred questions.
+- We measure it on eight benchmarks, with held-out images.
+- With a second grader from another model family, plus string matching.
+- And against a published selector on identical candidates.""",
           qa=[("Is this just HSRM / SWIFT / Q-Probe with a different backbone?",
                "In mechanism, yes, and we say so. What differs is the setting and the measurement: an image-conditioned model, short free-text answers "
                "with no exact checker, labels from an LLM judge, 8 benchmarks cross-fitted by image, a cross-family judge and lenient EM, and a controlled "

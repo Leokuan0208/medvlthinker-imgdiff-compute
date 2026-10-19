@@ -4,10 +4,12 @@
 
 **How to use this script.** Each slide has three parts:
 - **On screen** — what the audience is looking at, and where to point.
-- **Say** — the words to speak, verbatim. Numbers in the text are the same numbers as on the slide.
+- **Say** — what to say, as bullet points. Each group starts with **▸ the exact label you see on the slide** (a box title, figure stage, chart or table), so you can find the matching script for any part of the slide. Numbers are the same numbers as on the slide.
 - **If asked** — likely questions with a sourced answer. Don't volunteer these unless asked.
 
 Every number comes from a named artifact or paper; the source line at the bottom of each slide names it.
+
+**Finding your place.** Slide numbers match the number at the bottom-right of each slide. In Word, open View → Navigation Pane: it lists every slide and, under each, its on-screen labels — click one to jump there.
 
 
 ---
@@ -17,31 +19,59 @@ Every number comes from a named artifact or paper; the source line at the bottom
 ### 1 · Title — choosing the right answer from a medical VLM's own samples  ·  ~1 min
 **Say:**
 
-Good afternoon. Today I want to do three things. First, give you the vocabulary of the research area our
-work sits in, so every term I use later is defined. Second, walk through our method piece by piece — what it reads,
-how it decides, and why each piece is the way it is. Third, compare it honestly with what other groups have published.
-The short version of the method: a medical vision-language model writes eight possible answers to a question, and a
-small trained classifier that reads the model's internal states picks one of them.
+
+#### ▸ Choosing the right answer from a medical VLM's own samples
+
+- Good afternoon. Today I want to do three things.
+    - First, the vocabulary of our research area, so every term I use later is defined.
+    - Second, our method piece by piece — what it reads, how it decides, and why each piece is the way it is.
+    - Third, an honest comparison with what other groups have published.
+- The short version: a medical vision-language model writes eight possible answers to a question.
+- A small trained classifier that reads the model's internal states picks one of them.
 
 ### 2 · The whole talk on one slide  ·  ~2.5 min
 *On screen:* Left: the three boxes. Right: the three numbers — the top one is the grader the probe never trained on.
 
 **Say:**
 
-Here is the whole talk on one slide. The model we use, Lingshu-7B, is a medical vision-language model. For
-each question we let it write eight answers, using a bit of randomness. A small trained classifier — in the field this is
-called a probe — reads the model's internal numbers for each answer and gives it a score. We train 24 of these probes,
-average their rankings, and return the answer they rank first.
-The question is whether that beats the model's normal answer, which is the single most likely answer, called the greedy
-answer. It does. Averaged over eight benchmarks, a grader from a completely different model family, MedGemma-27B, which the
-probe never saw during training, measures a gain of 0.071 — about seven points. The grader whose labels we trained on, a
-32-billion-parameter medical model, measures 0.080. Because the probe learned from that second grader, I treat the
-MedGemma number as the cleaner one. A lenient string-matching score, which counts an answer as right if it equals or contains
-the gold answer, also improves, by 0.012: small, but significant on these benchmarks.
-I want to be upfront about what is new. Using a probe on hidden states to pick among sampled answers has been done for
-text-only language models, mostly on math, and one medical paper tried it on a hundred questions. What we add is the
-measurement: eight benchmarks, held-out images, two graders from different families plus string matching, and a direct
-comparison with a published method. I will show you exactly where it works and where it does not.
+
+#### ▸ Method
+
+- Here is the whole talk on one slide.
+- Our model, Lingshu-7B, is a medical vision-language model.
+- For each question it writes eight answers, using a bit of randomness.
+- A small trained classifier — in the field, a probe — reads the model's internal numbers for each answer and scores it.
+- We train 24 of these probes, average their rankings, and return the answer they rank first.
+
+#### ▸ Question
+
+- Does that beat the model's normal answer — the single most likely one, called the greedy answer?
+- It does.
+
+#### ▸ CROSS-FAMILY JUDGE
+
+- Averaged over eight benchmarks, a grader from a completely different model family, MedGemma-27B, measures a gain of 0.071 — about seven points.
+- The probe never saw this grader during training.
+
+#### ▸ TRAINING JUDGE
+
+- The grader whose labels we trained on, a 32-billion-parameter medical model, measures 0.080.
+- Because the probe learned from this grader, I treat the MedGemma number as the cleaner one.
+
+#### ▸ LENIENT EXACT MATCH
+
+- A lenient string-matching score: right if the answer equals or contains the gold answer.
+- It also improves, by 0.012: small, but significant on these benchmarks.
+
+#### ▸ What is new — and what is not
+
+- Using a probe on hidden states to pick among sampled answers has been done for text-only language models, mostly on math.
+- One medical paper tried it on a hundred questions.
+- What we add is the measurement:
+    - eight benchmarks and held-out images;
+    - two graders from different families plus string matching;
+    - a direct comparison with a published method.
+- I will show you exactly where it works and where it does not.
 
 **If asked:**
 
@@ -58,10 +88,38 @@ comparison with a published method. I will show you exactly where it works and w
 ### 3 · Roadmap  ·  ~0.7 min
 **Say:**
 
-The talk has seven parts. Parts one and two are background: the words the field uses and the papers that
-matter, including how their methods work. Part three is our method step by step with the math. Part four goes through every
-design choice and shows what we tried instead. Then results, then a careful comparison with published work, and finally the
-limits of what we can claim.
+
+#### ▸ Roadmap
+
+- The talk has seven parts.
+
+#### ▸ I · The field's vocabulary
+
+- Parts one and two are background: the words the field uses …
+
+#### ▸ II · Key papers and their methods
+
+- … and the papers that matter, including how their methods work.
+
+#### ▸ III · Our method, piece by piece
+
+- Part three is our method step by step, with the math.
+
+#### ▸ IV · Why each choice
+
+- Part four goes through every design choice and shows what we tried instead.
+
+#### ▸ V · Results
+
+- Then results.
+
+#### ▸ VI · Against published work
+
+- Then a careful comparison with published work.
+
+#### ▸ VII · Honest limits and next steps
+
+- And finally the limits of what we can claim.
 
 
 ---
@@ -71,18 +129,35 @@ limits of what we can claim.
 ### 4 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Part one: the vocabulary.
+
+#### ▸ The field's vocabulary
+
+- Part one: the vocabulary.
 
 ### 5 · Medical visual question answering: two answer formats  ·  ~1.5 min
 **Say:**
 
-Visual question answering, VQA, means the model gets an image and a question and has to answer. In medicine there
-are two answer formats. Closed-ended means the answer comes from a fixed set — yes or no, or a letter from multiple choices.
-That is easy to grade. Open-ended means the model writes the answer itself, like the example on the right: the gold answer is
-"Large Bowel", but "colon" or "large intestine" would also be right. So grading open answers is itself a problem, and I will
-come back to how we do it.
-We work on open-ended questions for two reasons: it is the realistic setting, and in an earlier phase of this project we found
-that signals about whether an answer is right work much better on free text than on four-option multiple choice.
+
+#### ▸ Medical visual question answering: two answer formats
+
+- Visual question answering, VQA: the model gets an image and a question and has to answer.
+- In medicine there are two answer formats.
+
+#### ▸ Closed-ended
+
+- The answer comes from a fixed set — yes or no, or a letter from multiple choices.
+- That is easy to grade.
+
+#### ▸ Open-ended (free text) — this work
+
+- The model writes the answer itself, like the example on the right.
+- The gold answer is "Large Bowel", but "colon" or "large intestine" would also be right.
+- So grading open answers is itself a problem; I will come back to how we do it.
+
+#### ▸ Why open-ended
+
+- Two reasons. First, it is the realistic setting.
+- Second, in an earlier phase of this project, signals about whether an answer is right worked much better on free text than on four-option multiple choice.
 
 **If asked:**
 
@@ -95,14 +170,33 @@ that signals about whether an answer is right work much better on free text than
 
 **Say:**
 
-This is how the model we use works. Lingshu-7B is a medical fine-tune of Qwen2.5-VL-7B and has exactly its
-architecture. The image is cut into 14-by-14-pixel patches. A vision transformer with 32 layers turns each patch into a
-vector. A small two-layer network called the merger, or projector, groups each 2-by-2 block of patches into one vector of size
-3,584, which is the width of the language model. So one image token covers a 28-by-28-pixel region, and an image capped at our
-budget of about 250 thousand pixels becomes at most 320 image tokens.
-The language model then reads the system prompt, the image tokens and the question, and writes the answer one token at a time.
-It has 28 blocks, and after every block each position has a vector of 3,584 numbers. That vector is called the hidden state, or
-the residual stream. Those vectors are what our probe reads — so keep this picture in mind.
+
+#### ▸ How a VLM answers: Lingshu-7B (Qwen2.5-VL-7B architecture)
+
+- This is how our model works.
+- Lingshu-7B is a medical fine-tune of Qwen2.5-VL-7B and has exactly its architecture.
+
+#### ▸ vision encoder (ViT)
+
+- The image is cut into 14-by-14-pixel patches.
+- A vision transformer with 32 layers turns each patch into a vector.
+
+#### ▸ merger / projector
+
+- A small two-layer network, the merger or projector, groups each 2-by-2 block of patches into one vector of size 3,584 — the width of the language model.
+- So one image token covers a 28-by-28-pixel region.
+- An image capped at our budget of about 250 thousand pixels becomes at most 320 image tokens.
+
+#### ▸ decoder (LLM)
+
+- The language model reads the system prompt, the image tokens and the question.
+- It writes the answer one token at a time.
+- It has 28 blocks; after every block, each position has a vector of 3,584 numbers.
+
+#### ▸ hidden state
+
+- That vector is called the hidden state, or the residual stream.
+- Those vectors are what our probe reads — so keep this picture in mind.
 
 **If asked:**
 
@@ -116,18 +210,38 @@ the residual stream. Those vectors are what our probe reads — so keep this pic
 
 **Say:**
 
-To get several different answers we cannot use greedy decoding, because greedy always takes the most likely next
-token and gives the same answer every time. Instead we sample: the model's scores for the next token are turned into
-probabilities with this softmax, and the temperature T controls how spread out they are. At low temperature the samples are
-almost identical; at high temperature they vary more.
-The two charts are our own measurements over the eight benchmarks. At the top, the number of distinct answers among eight
-samples rises from about 2 at temperature 0.2 to about 5 at 1.0. At the bottom, the chance that at least one of the eight is
-correct rises from 0.46 to 0.57. Note that neither axis starts at zero. The price, typically, is that each individual sample is less accurate — that is not shown
-here. That trade-off is why the temperature matters. We ship one temperature, 0.7, for every question. An earlier version of the
-method picked a different temperature per benchmark; we dropped it, because that needs to know which dataset a question comes
-from, which a deployed system does not. I come back to this in part four.
-One warning about words: "temperature scaling" in the calibration literature is a different thing — it rescales a trained
-classifier's outputs. When I say temperature I always mean the sampling temperature.
+
+#### ▸ greedy decoding
+
+- To get several different answers we cannot use greedy decoding.
+- Greedy always takes the most likely next token, so it gives the same answer every time.
+
+#### ▸ temperature sampling
+
+- Instead we sample: the model's scores for the next token become probabilities through this softmax.
+- The temperature T controls how spread out they are.
+- At low temperature the samples are almost identical; at high temperature they vary more.
+
+#### ▸ distinct answers among 8 samples (top chart)
+
+- The two charts are our own measurements over the eight benchmarks.
+- Top: distinct answers among eight samples rise from about 2 at temperature 0.2 to about 5 at 1.0.
+
+#### ▸ oracle@8 — at least one of the 8 is correct (bottom chart)
+
+- Bottom: the chance that at least one of the eight is correct rises from 0.46 to 0.57.
+- Note that neither axis starts at zero.
+- The price, typically, is that each individual sample is less accurate — that is not shown here.
+- That trade-off is why the temperature matters.
+- We ship one temperature, 0.7, for every question.
+- An earlier version picked a different temperature per benchmark; we dropped it.
+    - It needs to know which dataset a question comes from, which a deployed system does not.
+    - I come back to this in part four.
+
+#### ▸ not to be confused with
+
+- "Temperature scaling" in the calibration literature is a different thing — it rescales a trained classifier's outputs.
+- When I say temperature, I always mean the sampling temperature.
 
 **If asked:**
 
@@ -141,16 +255,37 @@ classifier's outputs. When I say temperature I always mean the sampling temperat
 
 **Say:**
 
-This is the central idea of the field we are in. Best-of-N means: sample N answers and return one of them. It
-splits into two separate problems. The first is coverage: is a correct answer anywhere among the N? That is measured by
-oracle-at-N — the accuracy you would get if someone told you which answer was right. The second is selection: can you find the
-right one without knowing the answer?
-The bars are our real numbers, averaged over the eight benchmarks. Greedy decoding is right 0.394 of the time.
-Among our eight samples a correct one exists 0.559 of the time — that is the ceiling. Our probe picks a correct
-answer 0.473 of the time. So 44% of questions are lost because no sample is right — the coverage
-wall — and 0.085 is lost to imperfect selection. The ratio of picked to oracle we call selection
-efficiency. If you divide the two bars you get 0.85; we compute it benchmark by
-benchmark and then average, which gives 0.81, because one weak benchmark, VQA-Med, pulls the average down.
+
+#### ▸ best-of-N
+
+- This is the central idea of our field.
+- Best-of-N: sample N answers and return one of them.
+- It splits into two separate problems.
+
+#### ▸ oracle@N  = pass@N = coverage
+
+- First, coverage: is a correct answer anywhere among the N?
+- Measured by oracle-at-N — the accuracy you would get if someone told you which answer was right.
+
+#### ▸ selection
+
+- Second, selection: can you find the right one without knowing the answer?
+
+#### ▸ the bars (greedy · probe pick · oracle)
+
+- These are our real numbers, averaged over the eight benchmarks.
+- Greedy decoding is right 0.394 of the time.
+- A correct answer exists among our eight samples 0.559 of the time — that is the ceiling.
+- Our probe picks a correct answer 0.473 of the time.
+- Red bracket: 44% of questions are lost because no sample is right — the coverage wall.
+- Orange bracket: 0.085 is lost to imperfect selection.
+
+#### ▸ selection efficiency (ours)
+
+- The ratio of picked to oracle we call selection efficiency.
+- Dividing the two bars gives 0.85.
+- We compute it benchmark by benchmark and then average, which gives 0.81.
+- The difference: one weak benchmark, VQA-Med, pulls the average down.
 
 **If asked:**
 
@@ -163,19 +298,57 @@ benchmark and then average, which gives 0.81, because one weak benchmark, VQA-Me
 ### 9 · Who chooses? The selectors the field uses  ·  ~2 min
 **Say:**
 
-Who does the choosing? The field has roughly six families. The simplest is majority vote, also called
-self-consistency: return the answer string that appears most often. There are training-free extensions for free text —
-asking the model which answer is most consistent, or clustering answers by meaning. You can rank by the model's own
-likelihood, or ask the model to check itself. One recent medical paper, WED, makes two roles of the same model negotiate.
-And finally there are trained verifiers: a model trained on labelled correct and incorrect answers. That is our family.
-Two distinctions the literature uses. Outcome versus process: an outcome reward model scores the final answer, a process reward
-model scores every reasoning step. Lightman and colleagues showed process supervision wins on long math solutions, while Uesato
-and colleagues found outcome supervision reaches similar final-answer error with less labelling. Our answers are about five
-tokens long with no steps, so ours is outcome. And discriminative
-versus generative: a discriminative verifier is a classifier that outputs a number; a generative one is a language model that
-writes "yes" or "no". Ours is a discriminative outcome verifier, built as a probe on the model's hidden states.
-The right column already tells you something about results: majority vote actually loses to greedy on our data, and asking the
-model to check itself failed when we tried it earlier.
+
+#### ▸ Who chooses? The selectors the field uses
+
+- Who does the choosing? The field has roughly six families — one per row.
+
+#### ▸ majority vote / self-consistency
+
+- The simplest: return the answer string that appears most often.
+
+#### ▸ LLM consistency / semantic agreement
+
+- Training-free extensions for free text: ask the model which answer is most consistent, or cluster answers by meaning.
+
+#### ▸ likelihood / logit scores
+
+- Rank by the model's own likelihood.
+
+#### ▸ self-verification
+
+- Ask the model to check itself.
+
+#### ▸ game-theoretic decoding
+
+- One recent medical paper, WED, makes two roles of the same model negotiate.
+
+#### ▸ trained verifier / reward model
+
+- A model trained on labelled correct and incorrect answers. That is our family.
+
+#### ▸ ORM vs PRM
+
+- Two distinctions the literature uses. First, outcome versus process.
+- An outcome reward model scores the final answer; a process reward model scores every reasoning step.
+- Lightman and colleagues: process supervision wins on long math solutions.
+- Uesato and colleagues: outcome supervision reaches similar final-answer error with less labelling.
+- Our answers are about five tokens long with no steps, so ours is outcome.
+
+#### ▸ discriminative vs generative
+
+- A discriminative verifier is a classifier that outputs a number.
+- A generative one is a language model that writes "yes" or "no".
+
+#### ▸ our place
+
+- Ours is a discriminative outcome verifier, built as a probe on the model's hidden states.
+
+#### ▸ status here
+
+- This column already tells you something about results.
+- Majority vote actually loses to greedy on our data.
+- Asking the model to check itself failed when we tried it earlier.
 
 **If asked:**
 
@@ -188,23 +361,52 @@ model to check itself failed when we tried it earlier.
 ### 10 · What a probe is — and what it does not prove  ·  ~2.4 min
 **Say:**
 
-The core object of our method is a probe. In the interpretability literature a probe is a small classifier that
-takes a network's internal vectors as input and is trained to predict some property — while the network itself is frozen, never
-changed. The classic version is a linear probe: one weighted sum and a sigmoid. Ours has one hidden layer of width 256, which
-makes it an MLP probe.
-A note on words: say "one hidden layer of width 256", not "a two-layer MLP", because people count layers differently.
-That hidden states carry information about whether a statement is true is an old finding. Azaria and Mitchell read true or false
-from a model's activations with 71 to 83 percent accuracy; the contrast-consistent search of Burns and colleagues found it without
-labels, about four percent over zero-shot prompting; Kadavath and colleagues at Anthropic trained models to predict whether they
-know an answer. But each of them scores one statement on its own.
-We need something narrower: among eight answers to the same question, which is right. And Orgad and colleagues warn that such
-detectors often fail to carry over to a new dataset — we see the same thing, as I will show.
-Two cautions from that literature. First, being able to decode something from a vector does not mean the model uses it — it is
-correlation, not mechanism. Second, a probe with enough capacity can memorise labels, so the careful check is a control task:
-train the same probe on random labels and measure the difference, called selectivity. We have not run that control yet, and I
-list it among the gaps.
-Our use is different from the diagnostic use: we do not claim anything about how the model thinks. We use the probe as a tool to
-choose an answer, and we judge it only by how often the chosen answer is right on images it never saw.
+
+#### ▸ probe
+
+- The core object of our method is a probe.
+- In the interpretability literature: a small classifier that takes a network's internal vectors as input and is trained to predict some property.
+- The network itself is frozen — never changed.
+
+#### ▸ linear probe
+
+- The classic version: one weighted sum and a sigmoid.
+
+#### ▸ MLP probe (ours)
+
+- Ours has one hidden layer of width 256, which makes it an MLP probe.
+- A note on words: say "one hidden layer of width 256", not "a two-layer MLP" — people count layers differently.
+
+#### ▸ correctness is decodable — an old finding
+
+- That hidden states carry information about whether a statement is true is an old finding.
+- Azaria and Mitchell read true or false from a model's activations with 71 to 83 percent accuracy.
+- The contrast-consistent search of Burns and colleagues found it without labels, about four percent over zero-shot prompting.
+- Kadavath and colleagues at Anthropic trained models to predict whether they know an answer.
+- But each of them scores one statement on its own.
+- We need something narrower: among eight answers to the same question, which is right.
+
+#### ▸ transfer
+
+- Orgad and colleagues warn that such detectors often fail to carry over to a new dataset.
+- We see the same thing, as I will show.
+
+#### ▸ decodable ≠ causal
+
+- Two cautions from that literature. First: being able to decode something from a vector does not mean the model uses it.
+- It is correlation, not mechanism.
+
+#### ▸ control task & selectivity
+
+- Second: a probe with enough capacity can memorise labels.
+- The careful check is a control task: train the same probe on random labels and measure the difference, called selectivity.
+- We have not run that control yet; I list it among the gaps.
+
+#### ▸ our use is operational
+
+- We do not claim anything about how the model thinks.
+- We use the probe as a tool to choose an answer.
+- We judge it only by how often the chosen answer is right on images it never saw.
 
 **If asked:**
 
@@ -216,21 +418,39 @@ choose an answer, and we judge it only by how often the chosen answer is right o
 ### 11 · Grading open answers: LLM judges and exact match  ·  ~2 min
 **Say:**
 
-Because open answers can be right in many wordings, we need a grader. The field's standard is an LLM judge: a
-language model that sees the question, the gold answer and one candidate, and says correct or incorrect. In the MT-Bench
-paper's vocabulary that is reference-guided single-answer grading.
-We use two judges, and they play different roles. MedVLThinker-32B produced the labels the probe was trained on, so I call it the
-training judge. It comes from the same Qwen family as our generator, and a probe trained on its labels can learn its taste. So every
-headline number is also graded by MedGemma-27B, from Google's Gemma family, which was never used in training — that is the
-cleaner number. Both judges read text only; they do not see the image.
-We also report a lenient string-matching score, which counts an answer as right if it equals the gold or either contains the other,
-and LLaVA-Med's token recall, so we can compare with their paper. Lenient means a partial answer contained in the gold also passes,
-and a correct paraphrase fails. In our files we call these different metrics "currencies"; from now on I just say metric, and I never
-show a judge number without the others.
-On biases: position bias needs two answers side by side, so it cannot happen here. Verbosity bias — preferring longer answers —
-we checked: always picking the longest answer loses 0.029. Self-preference and learning the training judge's taste are why we have
-the second judge. This is also the field's norm: each benchmark paper uses its own LLM judge — GPT-4.1 for Lingshu, Mistral-Large for
-RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.
+
+#### ▸ LLM-as-a-judge
+
+- Open answers can be right in many wordings, so we need a grader.
+- The field's standard is an LLM judge: it sees the question, the gold answer and one candidate, and says correct or incorrect.
+- In the MT-Bench paper's vocabulary: reference-guided single-answer grading.
+
+#### ▸ judge · role · family (table)
+
+- We use two judges, and they play different roles.
+- MedVLThinker-32B produced the probe's training labels, so I call it the training judge.
+    - It comes from the same Qwen family as our generator; a probe trained on its labels can learn its taste.
+- So every headline number is also graded by MedGemma-27B, from Google's Gemma family, never used in training — the cleaner number.
+- Both judges read text only; they do not see the image.
+
+#### ▸ lenient exact match (“EM”)
+
+- We also report a lenient string-matching score: right if the answer equals the gold or either contains the other.
+- Lenient means a partial answer contained in the gold also passes, and a correct paraphrase fails.
+
+#### ▸ token-F1, token recall
+
+- And LLaVA-Med's token recall, so we can compare with their paper.
+- In our files we call these different metrics "currencies"; from now on I just say metric.
+- I never show a judge number without the others.
+
+#### ▸ known judge biases
+
+- Position bias needs two answers side by side, so it cannot happen here.
+- Verbosity bias — preferring longer answers — we checked: always picking the longest answer loses 0.029.
+- Self-preference and learning the training judge's taste are why we have the second judge.
+- This is also the field's norm: each benchmark paper uses its own LLM judge.
+    - GPT-4.1 for Lingshu, Mistral-Large for RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.
 
 **If asked:**
 
@@ -244,14 +464,32 @@ RadImageNet-VQA, Qwen3-30B for Kvasir-VQA-x1, GPT-4o for GEMeX.
 ### 12 · Related but different: uncertainty estimation is not selection  ·  ~1.5 min
 **Say:**
 
-One neighbouring field is easy to confuse with ours: uncertainty estimation. Those methods ask "is this answer
-probably wrong?" — one score per answer or per question, judged by how well it separates right from wrong across many
-questions. We ask a different question: among the eight answers to one question, which is right? Only the order within one
-question matters.
-That difference has consequences. Semantic entropy, the best-known uncertainty method, gives one number per question, the same
-for all eight candidates, so it cannot choose between them. Calibration methods only stretch the scores, so they never change
-which answer is first. The shared ingredient is that hidden-state probes appear in both areas — ours is the variant that scores
-each candidate's correctness.
+
+#### ▸ confidence / uncertainty estimation (left column)
+
+- One neighbouring field is easy to confuse with ours: uncertainty estimation.
+- Those methods ask "is this answer probably wrong?" — one score per answer or per question.
+- They are judged by how well they separate right from wrong across many questions.
+
+#### ▸ best-of-N selection (ours) (right column)
+
+- We ask a different question: among the eight answers to one question, which is right?
+- Only the order within one question matters.
+
+#### ▸ semantic entropy cannot pick
+
+- That difference has consequences.
+- Semantic entropy, the best-known uncertainty method, gives one number per question, the same for all eight candidates.
+- So it cannot choose between them.
+
+#### ▸ calibration cannot reorder
+
+- Calibration methods only stretch the scores, so they never change which answer is first.
+
+#### ▸ shared mechanism
+
+- The shared ingredient: hidden-state probes appear in both areas.
+- Ours is the variant that scores each candidate's correctness.
 
 **If asked:**
 
@@ -263,8 +501,11 @@ each candidate's correctness.
 ### 13 · Glossary — the terms as used in this talk  ·  ~0.5 min
 **Say:**
 
-This slide collects the terms in one place; I will not read it, it is here for reference while we go through the
-method.
+
+#### ▸ Glossary — the terms as used in this talk
+
+- This slide collects the terms in one place.
+- I will not read it; it is here for reference while we go through the method.
 
 <sub>Source: π = share of correct training rows 0.2071 / 0.2085 → (1−π)/π = 3.83 / 3.80 (numbers_review_part1.json, review/scr/w1_pi.py); head_sweep.py:172–174; FLOP-eq unit: free_head_2026-08-16.json DELIVERABLE_3_cost.unit</sub>
 
@@ -276,7 +517,10 @@ method.
 ### 14 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Part two: the papers this work stands on, and how their methods work.
+
+#### ▸ Key papers and their methods
+
+- Part two: the papers this work stands on, and how their methods work.
 
 <sub>Source: domain guide cards_*.json: 194 cards, 186 distinct papers (review/scr/w1_count.py)</sub>
 
@@ -285,16 +529,46 @@ Part two: the papers this work stands on, and how their methods work.
 
 **Say:**
 
-The core idea is much older than large language models. In 2005 Collins and Koo took a parser's list of
-candidate parses and trained a second model to rerank them. Speech recognition did related things: a trained scorer reads the
-frozen recogniser's internal features to estimate confidence, in 2020, and to rescore the list of candidate transcripts, in 2021.
-Cobbe and colleagues brought trained verifiers to language models in 2021, and the same year WebGPT used a learned reward model to
-pick the best of up to 64 long free-text answers. AlphaFold picks the best of five protein structures by its own predicted
-confidence. From 2024 on, several groups put probes on language models' hidden states — Q-Probe, SWIFT, LiLaVe, HSRM, CASE. In
-2026 the idea also reached vision: a linear probe on a frozen vision-language-action robot policy was used to choose among sampled
-action sequences. And two papers probed medical vision-language models — mostly for multiple choice and confidence, plus a
-hundred-question demonstration of reranking open answers in MedProb's appendix.
-So I want to be clear from the start: our contribution is not the mechanism.
+
+#### ▸ The idea is old: rerank a generator's candidates with a trained scorer
+
+- The core idea is much older than large language models.
+
+#### ▸ Collins & Koo 2005
+
+- In 2005 Collins and Koo took a parser's list of candidate parses and trained a second model to rerank them.
+
+#### ▸ CEM 2020 · R-EBM 2021
+
+- Speech recognition did related things: a trained scorer reads the frozen recogniser's internal features.
+    - To estimate confidence, in 2020.
+    - To rescore the list of candidate transcripts, in 2021.
+
+#### ▸ Cobbe · WebGPT 2021
+
+- Cobbe and colleagues brought trained verifiers to language models in 2021.
+- The same year, WebGPT used a learned reward model to pick the best of up to 64 long free-text answers.
+
+#### ▸ AlphaFold 2021
+
+- AlphaFold picks the best of five protein structures by its own predicted confidence.
+
+#### ▸ Q-Probe 2024 · SWIFT · LiLaVe 2025
+
+- From 2024 on, several groups put probes on language models' hidden states — Q-Probe, SWIFT, LiLaVe, HSRM, CASE.
+
+#### ▸ HSRM · CASE · VLA 2026
+
+- In 2026 the idea also reached vision: a linear probe on a frozen vision-language-action robot policy chose among sampled action sequences.
+
+#### ▸ MedProb · DualRead 2026
+
+- Two papers probed medical vision-language models — mostly for multiple choice and confidence.
+- Plus a hundred-question demonstration of reranking open answers in MedProb's appendix.
+
+#### ▸ this work
+
+- So I want to be clear from the start: our contribution is not the mechanism.
 
 **If asked:**
 
@@ -306,33 +580,62 @@ So I want to be clear from the start: our contribution is not the mechanism.
 ### 16 · Trained verifiers (Cobbe 2021) and coverage vs precision (Brown 2024)  ·  ~2 min
 **Say:**
 
-Two founding papers. Cobbe and colleagues at OpenAI in 2021 established the recipe we follow. Sample a hundred
-solutions to each training problem, label each one correct or incorrect by its final answer, train a verifier to predict that
-label, and at test time return the highest-scored of a hundred samples. On grade-school math a 6-billion model with a verifier
-slightly beat a fine-tuned 175-billion model — they describe it as worth a 30-times increase in model size. Two of their findings
-cut against us: their token-level verifier was better than a whole-answer verifier, and past 400 samples accuracy fell, because
-the generator started producing answers that fooled the verifier — the field calls this reward over-optimisation.
-Brown and colleagues in 2024 showed why selection is the hard part. With ten thousand samples from Llama-3-8B-Instruct, a correct
-answer exists for 98 percent of the MATH problems — but voting or off-the-shelf reward models only got from 40.5 to 41.4 percent. Coverage grows; selection
-does not keep up. That split frames all our results.
-What we take from them: Cobbe's recipe — outcome labels, a trained scorer, pick the highest score — but with the verifier replaced
-by a small probe on our generator's own frozen internal states.
+
+#### ▸ Training Verifiers to Solve Math Word Problems
+
+- Two founding papers. First, Cobbe and colleagues at OpenAI, 2021, established the recipe we follow.
+- method:
+    - Sample a hundred solutions to each training problem.
+    - Label each one correct or incorrect by its final answer, and train a verifier to predict that label.
+    - At test time, return the highest-scored of a hundred samples.
+- result: on grade-school math, a 6-billion model with a verifier slightly beat a fine-tuned 175-billion model.
+    - They describe it as worth a 30-times increase in model size.
+- against us: two findings.
+    - Their token-level verifier was better than a whole-answer verifier.
+    - Past 400 samples accuracy fell: the generator produced answers that fooled the verifier — reward over-optimisation.
+
+#### ▸ Large Language Monkeys
+
+- Brown and colleagues, 2024, showed why selection is the hard part.
+- With ten thousand samples from Llama-3-8B-Instruct, a correct answer exists for 98 percent of the MATH problems.
+- But voting or off-the-shelf reward models only got from 40.5 to 41.4 percent.
+- Coverage grows; selection does not keep up. That split frames all our results.
+
+#### ▸ what we take
+
+- Cobbe's recipe — outcome labels, a trained scorer, pick the highest score.
+- But the verifier is replaced by a small probe on our generator's own frozen internal states.
 
 <sub>Source: Cobbe §4.2 p.8, §5.1 p.10, §6 p.12; Brown p.2–3, Fig. 7 p.10 (PAPER_NOTES_A); Gao et al. arXiv:2210.10760</sub>
 
 ### 17 · Test-time compute vs model size (Snell et al. 2024)  ·  ~1.5 min
 **Say:**
 
-Snell and colleagues framed the modern debate: is it better to spend compute at test time or on a bigger model?
-They describe every method as a proposer plus a verifier, and they choose the strategy per question according to its difficulty;
-their verifiers are process reward models. Their result is that smart test-time search can match plain best-of-N with four times
-less compute, and can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains
-somewhat non-trivial success rates". On the hardest questions, they say, pretraining is the more effective way.
-Our data show a similar shape. On OmniMedVQA, where a correct answer is among the eight samples 70 percent of the time, we gain 16
-points. On VQA-Med, where that is only 21 percent, we gain nothing — though I will show that there the probe also fails to find the
-correct answers that do exist. Two points against us: they found that step-level verifiers beat outcome-level ones, more so as N
-grows; and their method chooses the budget per question, while ours uses one fixed setting. Their default way of combining scores —
-adding up the verifier's score over identical answers — is something we tested against our own readout; I show it in part four.
+
+#### ▸ Scaling LLM Test-Time Compute Optimally …
+
+- Snell and colleagues framed the modern debate: spend compute at test time, or on a bigger model?
+- frame: every method is a proposer plus a verifier.
+- method: they choose the strategy per question according to its difficulty; their verifiers are process reward models.
+- result: smart test-time search can match plain best-of-N with four times less compute.
+- And it can beat a 14-times-larger model — but only, in their words, "on problems where a smaller base model attains somewhat non-trivial success rates".
+- On the hardest questions, they say, pretraining is the more effective way.
+
+#### ▸ a similar shape in our data
+
+- On OmniMedVQA, a correct answer is among the eight samples 70 percent of the time — and we gain 16 points.
+- On VQA-Med, that is only 21 percent — and we gain nothing.
+    - Though I will show that there the probe also fails to find the correct answers that do exist.
+
+#### ▸ against us
+
+- Step-level verifiers beat outcome-level ones in their data, more so as N grows.
+- Their method chooses the budget per question; ours uses one fixed setting.
+
+#### ▸ best-of-N weighted
+
+- Their default way of combining scores: add up the verifier's score over identical answers.
+- We tested it against our own readout; I show it in part four.
 
 <sub>Source: Snell v1 abstract, Fig. 4 p.10, Fig. 9 p.15, App. F p.24–25; ours: final_eval_FINAL_cap320_T07.json cells.{omnimed_open,vqamed_open}</sub>
 
@@ -341,15 +644,33 @@ adding up the verifier's score over identical answers — is something we tested
 
 **Say:**
 
-The simplest selector is majority vote, which the field calls self-consistency. On math it is very strong — on
-grade-school math with a big model it raised accuracy from 56 to 74 percent — because a correct number tends to come up again and
-again. Bay and Yearick showed its hard ceiling: as you add samples, voting converges to the most frequent answer, so it can never
-beat the rate at which the most frequent answer is correct. A learned scorer is not bound by that.
-The chart is majority vote minus greedy on our pools. On most benchmarks it is negative, and averaged it loses
-0.0094. Free-text medical answers rarely repeat exactly, and the right answer is often a minority — like "Large Bowel",
-which appeared once in our example. There are training-free methods designed for free text: USC asks the language model which
-answer is the most consistent with the others; EBA picks the centre of the largest cluster of answer embeddings; and self-certainty
-scores each sample from the model's own output probabilities. We have not run them, and that is a gap.
+
+#### ▸ Self-consistency = majority vote
+
+- The simplest selector is majority vote, which the field calls self-consistency.
+- On math it is very strong: on grade-school math with a big model it raised accuracy from 56 to 74 percent.
+- Because a correct number tends to come up again and again.
+
+#### ▸ The modal ceiling
+
+- Bay and Yearick showed its hard ceiling.
+- As you add samples, voting converges to the most frequent answer.
+- So it can never beat the rate at which the most frequent answer is correct. A learned scorer is not bound by that.
+
+#### ▸ majority vote − greedy, training judge (shipped pools)
+
+- The chart is majority vote minus greedy on our pools.
+- On most benchmarks it is negative, and averaged it loses 0.0094.
+- Free-text medical answers rarely repeat exactly, and the right answer is often a minority.
+    - Like "Large Bowel", which appeared once in our example.
+
+#### ▸ For free text
+
+- There are training-free methods designed for free text:
+    - USC asks the language model which answer is the most consistent with the others;
+    - EBA picks the centre of the largest cluster of answer embeddings;
+    - self-certainty scores each sample from the model's own output probabilities.
+- We have not run them, and that is a gap.
 
 **If asked:**
 
@@ -360,17 +681,42 @@ scores each sample from the model's own output probabilities. We have not run th
 ### 19 · Hidden-state verifiers in text LLMs: Q-Probe, SWIFT, HSRM  ·  ~2.5 min
 **Say:**
 
-These are our three closest relatives, all on text-only language models. Q-Probe in 2024 put a linear probe on a
-frozen code model's embeddings to rerank 48 sampled programs. SWIFT reads every token of every layer, pools them with a learned gate,
-and trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers. HSRM reads the states at the end of each reasoning step with a small
-Transformer and picks the best of eight — the same N as ours.
-The last row is us, so you can compare column by column: we read only the answer's own tokens, at three middle layers, with a simple
-mean, and a one-hidden-layer network.
-I want to be honest about what these papers say against our choices. HSRM found a pairwise ranking loss, Bradley–Terry, better than
-our loss — 85.9 versus 83.9 on grade-school math. Q-Probe found a within-question loss better than a pointwise one, and saw MLPs
-overfit on preference data. SWIFT found that learning which tokens to weight beats a plain average, by 2.7 points. On the other
-side, SWIFT found our loss the best of five, and HSRM found the reader's architecture matters much less than what you feed it: a
-mean-pooled MLP reader did about as well as their Transformer reader. I will come back to each of these when I justify our choices.
+
+#### ▸ Hidden-state verifiers in text LLMs (table)
+
+- These are our three closest relatives, all on text-only language models.
+
+#### ▸ Q-Probe
+
+- Q-Probe, in 2024, put a linear probe on a frozen code model's embeddings to rerank 48 sampled programs.
+
+#### ▸ SWIFT
+
+- SWIFT reads every token of every layer and pools them with a learned gate.
+- It trains with binary cross-entropy — the same kind of loss as ours; ours additionally up-weights the correct answers.
+
+#### ▸ HSRM
+
+- HSRM reads the states at the end of each reasoning step with a small Transformer and picks the best of eight — the same N as ours.
+
+#### ▸ ours
+
+- The last row is us, so you can compare column by column.
+- We read only the answer's own tokens, at three middle layers, with a simple mean, and a one-hidden-layer network.
+
+#### ▸ cuts against it
+
+- I want to be honest about what these papers say against our choices.
+- HSRM found a pairwise ranking loss, Bradley–Terry, better than our loss — 85.9 versus 83.9 on grade-school math.
+- Q-Probe found a within-question loss better than a pointwise one, and saw MLPs overfit on preference data.
+- SWIFT found that learning which tokens to weight beats a plain average, by 2.7 points.
+
+#### ▸ supports our design
+
+- On the other side, SWIFT found our loss the best of five.
+- HSRM found the reader's architecture matters much less than what you feed it.
+    - A mean-pooled MLP reader did about as well as their Transformer reader.
+- I will come back to each of these when I justify our choices.
 
 **If asked:**
 
@@ -381,38 +727,71 @@ mean-pooled MLP reader did about as well as their Transformer reader. I will com
 ### 20 · CASE, LiLaVe, ReProbe: when hidden-state selection beats voting  ·  ~2 min
 **Say:**
 
-Three more relatives, each teaching something. CASE, from August 2026, asks exactly when choosing by hidden states
-beats majority voting. Their key contribution is a measure called within-question AUC: how well the probe orders the candidates of
-the same question. They show that ordinary cross-validation badly overstates probes, because a probe can learn which questions are
-easy instead of which answers are right — 0.61 drops to 0.50 when measured properly. That metric predicts how much you gain over
-voting; on a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting. Two of their findings
-cut against us: a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting, and averaging over
-tokens hurt in their multiple-choice setting. Also, on those medium questions, voting caught up and overtook them by N of 16. Our
-evaluation avoids the leakage they warn about by splitting by image, but we have not reported their within-question AUC, and we should.
-LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers; interestingly, in their data plain
-best-of-n eventually fell below voting, and weighted voting was best. ReProbe has the same classifier shape as ours — one Transformer
-layer, a mean over the span, then linear, GELU, linear, trained with binary cross-entropy on labels from an LLM judge — and matches
-process reward models up to 810 times larger.
+
+#### ▸ CASE — a decodability criterion
+
+- Three more relatives, each teaching something.
+- CASE, from August 2026, asks exactly when choosing by hidden states beats majority voting.
+- Key contribution: within-question AUC — how well the probe orders the candidates of the same question.
+- Ordinary cross-validation badly overstates probes: a probe can learn which questions are easy instead of which answers are right.
+    - 0.61 drops to 0.50 when measured properly.
+- That metric predicts how much you gain over voting.
+- On a medical multiple-choice set, the medium-difficulty questions, it gained 19 points over voting.
+- against us, two findings:
+    - a small logistic regression, 0.596, beat a 256-unit MLP, 0.537, in their small-data setting;
+    - averaging over tokens hurt in their multiple-choice setting.
+- Also, on those medium questions, voting caught up and overtook them by N of 16.
+
+#### ▸ our gap
+
+- Our evaluation avoids the leakage they warn about by splitting by image.
+- But we have not reported their within-question AUC, and we should.
+
+#### ▸ Lightweight latent verifier
+
+- LiLaVe uses gradient-boosted trees on the hidden states of the last 16 tokens of five layers.
+- In their data plain best-of-n eventually fell below voting, and weighted voting was best.
+
+#### ▸ Same head shape as ours
+
+- ReProbe has the same classifier shape as ours.
+    - One Transformer layer, a mean over the span, then linear, GELU, linear.
+    - Trained with binary cross-entropy on labels from an LLM judge.
+- It matches process reward models up to 810 times larger.
 
 <sub>Source: CASE HTML §3.2, §6.1, §6.4, §6.6, Tables 1, 4; LiLaVe HTML Table 1, §4.4; ReProbe HTML §3 (PAPER_NOTES_I)</sub>
 
 ### 21 · Medical side: self-verification fails; probes do MCQ or a demo  ·  ~2.2 min
 **Say:**
 
-On the medical side, three papers set the context. Verification Mirage asked medical VLMs, including Lingshu, to
-check their own answers. Lingshu accepted 62 to 73 percent of its own wrong answers, a bigger model of the same family did not
-significantly help, and over four turns of conversation the wrong answers got locked in. That is the reason our selector is trained
-on labels rather than prompted.
-One point to keep apart: in part four I show that a separate 32-billion model, judging our 7B's candidates without training, does
-better than a 7B doing the same. That is not in conflict with Mirage. Mirage measures whether a model accepts its own wrong answers
-when it re-checks them; we measure best-of-8 selection accuracy, with a different model as the judge. Both point the same way:
-training, not prompting, is what makes a selector work.
-MedProb showed that a simple linear probe on a medical VLM's internal state can answer closed multiple-choice questions better than
-the model's own generated answer — by more than 20 points in several cases — but it reads the state before any answer is written,
-so it is a classifier, not a selector. In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09
-to 0.13, which they call an initial demonstration; the number of samples, the grader and the probe type are not stated. DualRead
-re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do — but only to calibrate confidence, and its
-quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
+
+#### ▸ Verification Mirage
+
+- On the medical side, three papers set the context.
+- Verification Mirage asked medical VLMs, including Lingshu, to check their own answers.
+- Lingshu accepted 62 to 73 percent of its own wrong answers.
+- A bigger model of the same family did not significantly help.
+- Over four turns of conversation, the wrong answers got locked in.
+- That is why our selector is trained on labels rather than prompted.
+- One point to keep apart: in part four, a separate 32-billion model judging our 7B's candidates without training does better than a 7B doing the same.
+    - That does not conflict with Mirage.
+    - Mirage measures whether a model accepts its own wrong answers when it re-checks them.
+    - We measure best-of-8 selection accuracy, with a different model as the judge.
+    - Both point the same way: training, not prompting, is what makes a selector work.
+
+#### ▸ MedProb
+
+- A simple linear probe on a medical VLM's internal state answers closed multiple-choice questions better than the model's own generated answer.
+- By more than 20 points in several cases.
+- But it reads the state before any answer is written, so it is a classifier, not a selector.
+- In an appendix they tried reranking open answers on a hundred OmniMedVQA questions, from 0.09 to 0.13.
+    - They call it an initial demonstration; the number of samples, the grader and the probe type are not stated.
+
+#### ▸ DualRead
+
+- DualRead re-reads a frozen medical VLM's answer with teacher forcing — the same re-reading we do.
+- But only to calibrate confidence.
+- Its quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
 
 **If asked:**
 
@@ -425,33 +804,64 @@ quality drops sharply on new datasets: AUROC 0.95 in distribution, 0.67 outside.
 ### 22 · Published medical test-time selectors: WED and Best-of-Evidence  ·  ~2 min
 **Say:**
 
-Two recent papers do test-time selection specifically for medical VQA. WED is training-free. It samples up to
-eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning. Then the
-same model plays two roles: a generator that scores how likely each candidate is, and a verifier that says whether it is correct. The
-two roles adjust toward each other in a game until their rankings agree, measured with a Wasserstein distance so that synonyms count
-as agreement. The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is that
-stopping rule. Graded by the Grok model, it reports one to five points over greedy on most small models, and a small loss for the
-largest one on VQA-RAD, so gains shrink as models get bigger. Best-of-Evidence samples sixteen answers and uses a
-235-billion-parameter judge to check individual claims — modality, anatomy and so on; it gains under one point over majority vote,
-significant on two of four datasets, with no greedy baseline, and its VQA-Med items come from the training split.
-WED matters most for us, because it is the only published selector evaluated on two of our open benchmarks, VQA-RAD and PathVQA. So
-rather than compare numbers across papers, we ran WED's own code on our candidates — I show that result in part six.
+
+#### ▸ Wasserstein Equilibrium Decoding (WED)
+
+- Two recent papers do test-time selection specifically for medical VQA.
+- WED is training-free.
+- It samples up to eight distinct candidates, using up to sixteen draws at temperatures 0.5 and 1.0, and merges answers with the same meaning.
+- Then the same model plays two roles:
+    - a generator that scores how likely each candidate is;
+    - a verifier that says whether it is correct.
+- The two roles adjust toward each other in a game until their rankings agree.
+    - Measured with a Wasserstein distance, so that synonyms count as agreement.
+- The game itself comes from earlier work, the Consensus Game and the Bayesian Decoding Game; WED's addition is the stopping rule.
+- Graded by the Grok model, it reports one to five points over greedy on most small models.
+- And a small loss for the largest one on VQA-RAD — so gains shrink as models get bigger.
+
+#### ▸ Best-of-Evidence
+
+- Samples sixteen answers and uses a 235-billion-parameter judge to check individual claims — modality, anatomy and so on.
+- It gains under one point over majority vote, significant on two of four datasets.
+- No greedy baseline, and its VQA-Med items come from the training split.
+
+#### ▸ for us
+
+- WED matters most for us: the only published selector evaluated on two of our open benchmarks, VQA-RAD and PathVQA.
+- So rather than compare numbers across papers, we ran WED's own code on our candidates.
+- I show that result in part six.
 
 <sub>Source: WED §2 p.3–6, p.5 (≤ 8 candidates, ≤ 16 calls), p.7, Table 1 p.8, authors' code BDG.py; BoE §5.1, Table 2 p.9, App. B.2 (PAPER_NOTES_DE, PAPER_NOTES_BC); Jacob et al. arXiv:2310.09139; BDG arXiv:2410.01064</sub>
 
 ### 23 · Where this work sits  ·  ~1.5 min
 **Say:**
 
-Putting it together. The literature's hidden-state verifiers share four properties: a probe on frozen states, used to
-select among samples, pooled over the answer's own tokens, and in principle needing no extra pass through the model, because the
-states were already computed while generating. The text-only papers have most of these; the medical papers mostly probe the model
-without selecting free-text answers. In vision the idea also exists, for robot actions and for image generation.
-Our row has all of them except one honest asterisk: in our experiments we re-read each answer in a separate pass, so "no extra pass"
-is true by design, not yet as run. For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left
-accuracy unchanged; for the shipped probe, re-extracting the features at the generation resolution is running now.
-So the contribution is the evaluation, not the mechanism. MedProb's appendix tried this on a hundred questions; we measure it on eight
-benchmarks, with held-out images, a second grader from another model family plus string matching, and against a published selector on
-identical candidates.
+
+#### ▸ Where this work sits (table columns A–D)
+
+- Putting it together. The literature's hidden-state verifiers share four properties:
+    - (A) a probe on frozen states;
+    - (B) used to select among samples;
+    - (C) pooled over the answer's own tokens;
+    - (D) in principle no extra pass through the model, because the states were already computed while generating.
+- The text-only papers have most of these.
+- The medical papers mostly probe the model without selecting free-text answers.
+- In vision the idea also exists, for robot actions and for image generation.
+
+#### ▸ ours
+
+- Our row has all of them except one honest asterisk, column D.
+- In our experiments we re-read each answer in a separate pass, so "no extra pass" is true by design, not yet as run.
+- For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left accuracy unchanged.
+- For the shipped probe, re-extracting the features at the generation resolution is running now.
+
+#### ▸ contribution, stated narrowly
+
+- So the contribution is the evaluation, not the mechanism.
+- MedProb's appendix tried this on a hundred questions.
+- We measure it on eight benchmarks, with held-out images.
+- With a second grader from another model family, plus string matching.
+- And against a published selector on identical candidates.
 
 **If asked:**
 
@@ -468,24 +878,44 @@ identical candidates.
 ### 24 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Part three: our method, one step at a time.
+
+#### ▸ Our method, piece by piece
+
+- Part three: our method, one step at a time.
 
 ### 25 · The method in one figure  ·  ~2.5 min
 *On screen:* Walk left to right: the CT and its question; step 1, the eight sampled pills; the three merged answers with their vote badges; step 2, the violet taps at blocks 22 / 20 / 18; step 3, the 24 probe tiles; step 4, the rank bars and the green returned answer.
 
 **Say:**
 
-Here is the whole method on one real example from SLAKE: an abdominal CT, and the question "what organ is the
-gray part on the left of the image?" The correct answer is large bowel.
-Step one: the frozen Lingshu model writes eight answers at temperature 0.7. Five say small bowel, two say spleen, and only one says
-large bowel. Identical answers are merged, and we remember how many votes each got.
-Step two: each distinct answer is fed back through the same frozen model together with the image and question — this is called
-teacher forcing — and we read the hidden states at decoder layers 18, 20 and 22, averaged over that answer's own tokens. In our runs
-this re-read used a higher image resolution than the generation; I come back to that.
-Step three: 24 small trained probes — three layers times eight training seeds — each give every answer a score.
-Step four: each probe's scores are turned into ranks within this question, the ranks are averaged, and the highest wins. Here
-large bowel gets a mean rank of 0.917, and 20 of the 24 probes put it first. Majority vote would have returned small bowel, which is
-wrong. Everything on this slide is a real number from the shipped probes, and these probes never saw this image during training.
+
+#### ▸ The method in one figure
+
+- Here is the whole method on one real example from SLAKE: an abdominal CT.
+- The question: "what organ is the gray part on the left of the image?" The correct answer is large bowel.
+
+#### ▸ Sample
+
+- The frozen Lingshu model writes eight answers at temperature 0.7.
+- Five say small bowel, two say spleen, and only one says large bowel.
+- Identical answers are merged, and we remember how many votes each got.
+
+#### ▸ Re-read & tap
+
+- Each distinct answer is fed back through the same frozen model, together with the image and question — this is called teacher forcing.
+- We read the hidden states at decoder layers 18, 20 and 22, averaged over that answer's own tokens.
+- In our runs this re-read used a higher image resolution than the generation; I come back to that.
+
+#### ▸ Score
+
+- 24 small trained probes — three layers times eight training seeds — each give every answer a score.
+
+#### ▸ Select
+
+- Each probe's scores are turned into ranks within this question; the ranks are averaged, and the highest wins.
+- Here large bowel gets a mean rank of 0.917, and 20 of the 24 probes put it first.
+- Majority vote would have returned small bowel, which is wrong.
+- Everything on this slide is a real number from the shipped probes, and these probes never saw this image during training.
 
 **If asked:**
 
@@ -502,18 +932,31 @@ wrong. Everything on this slide is a real number from the shipped probes, and th
 
 **Say:**
 
-Our data: eight open-ended medical VQA benchmarks, 36,869 questions over 20,389 images, covering pathology,
-radiology, endoscopy and chest X-ray. Three are the classic ones — PathVQA, SLAKE and VQA-RAD — with the official open-ended test
-questions. The others broaden the coverage. Two have whole-sentence answers written by a language model, Kvasir and GEMeX, which
-matters later for exact match.
-Two practical points. Many questions share one image, so every split is made by image: all questions about an image go to the same
-half. And our generator was trained on the training splits of four of these benchmarks — our VQA-Med cell is mostly that training
-split — so its absolute accuracy there is not a fair measure of the model. Our comparisons are always the same model against itself,
-so exposure affects both arms. The gain is largest on the four benchmarks that are not in Lingshu's supervised training data — which
-is reassuring, but those four also differ in other ways, and one of them, OmniMedVQA, has reported text exposure for the base model,
-so I do not claim this proves anything; the effect of exposure on our gain is not measured.
-The probe's training data is the other image half of every set we score, including three closed-question sets and the VQA-Med 2019
-test, plus about six thousand questions from the training splits of PathVQA, SLAKE and VQA-RAD and from Kvasir-VQA.
+
+#### ▸ benchmark (table, left)
+
+- Our data: eight open-ended medical VQA benchmarks, 36,869 questions over 20,389 images.
+- They cover pathology, radiology, endoscopy and chest X-ray.
+- Three are the classic ones — PathVQA, SLAKE and VQA-RAD — with the official open-ended test questions. The others broaden the coverage.
+- Two have whole-sentence answers written by a language model, Kvasir and GEMeX — this matters later for exact match.
+
+#### ▸ split by image
+
+- Many questions share one image, so every split is made by image: all questions about an image go to the same half.
+
+#### ▸ probe training data
+
+- The probe's training data is the other image half of every set we score, including three closed-question sets and the VQA-Med 2019 test.
+- Plus about six thousand questions from the training splits of PathVQA, SLAKE and VQA-RAD and from Kvasir-VQA.
+
+#### ▸ exposure
+
+- Our generator was trained on the training splits of four of these benchmarks; our VQA-Med cell is mostly that training split.
+- So its absolute accuracy there is not a fair measure of the model.
+- Our comparisons are always the same model against itself, so exposure affects both arms.
+- The gain is largest on the four benchmarks not in Lingshu's supervised training data — reassuring, but those four also differ in other ways.
+- One of them, OmniMedVQA, has reported text exposure for the base model, so I do not claim this proves anything.
+- The effect of exposure on our gain is not measured.
 
 **If asked:**
 
@@ -529,16 +972,27 @@ test, plus about six thousand questions from the training splits of PathVQA, SLA
 
 **Say:**
 
-Step one in detail. For each question the model writes eight answers at temperature 0.7, with the prompt "Answer the
-question with a short, specific phrase. Do not explain." The image is capped at about 250 thousand pixels, so it becomes at most 320
-image tokens, and each answer is at most 64 tokens.
-Sampling eight answers is cheaper than it sounds, because the serving engine reads the image and question once — the shared prefill —
-and then continues eight times. In modelled arithmetic it is only 1.13 times greedy. But arithmetic understates the real cost: measured
-on one A100, a question takes 174 milliseconds greedy and 477 milliseconds for eight answers, and energy goes from 34 to 123 joules —
-about 2.7 times the time and 3.6 times the energy. Those measurements are on short VQA-RAD answers; on the benchmarks with sentence
-answers it would be more, and we have not measured it there.
-Identical answers are merged — only case and surrounding spaces are ignored — keeping the count of how many samples produced each; on
-average there are 4.4 distinct answers per question.
+
+#### ▸ what is sampled
+
+- For each question the model writes eight answers at temperature 0.7.
+- The prompt: "Answer the question with a short, specific phrase. Do not explain."
+- The image is capped at about 250 thousand pixels, so it becomes at most 320 image tokens.
+- Each answer is at most 64 tokens.
+
+#### ▸ shared prefill
+
+- Sampling eight answers is cheaper than it sounds: the serving engine reads the image and question once — the shared prefill — then continues eight times.
+- In modelled arithmetic it is only 1.13 times greedy.
+- But arithmetic understates the real cost. Measured on one A100: 174 milliseconds greedy, 477 milliseconds for eight answers.
+- Energy goes from 34 to 123 joules — about 2.7 times the time and 3.6 times the energy.
+- Those are short VQA-RAD answers; on the sentence-answer benchmarks it would be more, and we have not measured it there.
+
+#### ▸ deduplicate, keep votes
+
+- Identical answers are merged — only case and surrounding spaces are ignored.
+- We keep the count of how many samples produced each.
+- On average there are 4.4 distinct answers per question.
 
 <sub>Source: bestofn_vllm_2026-09-16.json (ms and J measured: NVML, 20 timed calls after 3 warm-ups, vqa_rad open items, max_new 32; 1.13× FLOP-eq); GFLOPs modelled = analytic FLOP model (free_head_2026-08-16.json null_tests.flop_model_rebuild) × forward-token ratio; 4.42 distinct = 162,885 rows / 36,869 questions (numbers_review_part2.json); dedup: extract_generator_hidden.py norm(); sampling: run_openvqa.py:186</sub>
 
@@ -547,20 +1001,33 @@ average there are 4.4 distinct answers per question.
 
 **Say:**
 
-Step two: where exactly the probe reads. This is the sequence the language model sees: the system prompt, the image
-tokens, the question, and then one candidate answer. Each horizontal line is the residual stream after one of the 28 blocks. The model
-computes a hidden state at every position after every block, but the probe reads only two things: the positions of the answer's own
-tokens — the dashed box — and only three blocks, 18, 20 and 22. At each of those three blocks it averages the answer's vectors, which
-gives one 3,584-number vector per layer: that is the formula at the bottom. The answer comes after the image and the question, and
-the model attends to everything before it, so each answer vector already mixes in the image and the question — that is how a probe that
-reads only answer tokens is image-aware. For scale: one image token covers 28 by 28 pixels, so the cap gives at most 320 image tokens
-— about 274 on average — and in this example the question is 13 tokens and the answer 4.
-How we get these states: we take each distinct answer and feed it back through the frozen model after the image and question — teacher
-forcing — one pass per answer. I have to be precise about one detail: in our runs this re-reading used a higher image budget than the
-generation did — a one-megapixel cap, which our files call "full resolution", instead of 250 thousand pixels. That is a difference between
-how we ran it and how it would be deployed. The direct test — re-extracting these states at the generation budget — is running now.
-Indirect evidence: when we regenerated the samples at the one-megapixel cap, so that generation and features matched, the method gave
-plus 0.0745 instead of plus 0.0790; matching did not help, but that test also changed the samples.
+
+#### ▸ system prompt · image tokens · question · answer 𝒜(y)
+
+- This is the sequence the language model sees: the system prompt, the image tokens, the question, then one candidate answer.
+- Each horizontal line is the residual stream after one of the 28 blocks.
+- The model computes a hidden state at every position after every block.
+
+#### ▸ answer 𝒜(y) (dashed box)
+
+- The probe reads only two things: the positions of the answer's own tokens — the dashed box — and only three blocks, 18, 20 and 22.
+- At each of those blocks it averages the answer's vectors: one 3,584-number vector per layer — the formula at the bottom.
+- The answer comes after the image and question, and the model attends to everything before it.
+- So each answer vector already mixes in the image and the question — that is how a probe reading only answer tokens is image-aware.
+
+#### ▸ image tokens
+
+- For scale: one image token covers 28 by 28 pixels, so the cap gives at most 320 image tokens — about 274 on average.
+- In this example the question is 13 tokens and the answer 4.
+
+#### ▸ as run
+
+- How we get these states: each distinct answer is fed back through the frozen model after the image and question — teacher forcing — one pass per answer.
+- Precisely: in our runs this re-reading used a higher image budget than generation — a one-megapixel cap, which our files call "full resolution", instead of 250 thousand pixels.
+- That is a difference between how we ran it and how it would be deployed.
+- The direct test — re-extracting these states at the generation budget — is running now.
+- Indirect evidence: regenerating the samples at the one-megapixel cap, so generation and features matched, gave plus 0.0745 instead of plus 0.0790.
+- Matching did not help, but that test also changed the samples.
 
 **If asked:**
 
@@ -576,13 +1043,23 @@ plus 0.0745 instead of plus 0.0790; matching did not help, but that test also ch
 
 **Say:**
 
-Why layers 18, 20 and 22? First, a precise definition: layer 18 means the vector after decoder block 18 of 28, so
-these sit at about two-thirds to four-fifths of the depth. The bars show the gain over greedy for a probe trained on each single layer,
-on the five benchmarks where this was measured: all between 0.101 and 0.104, so the differences are at noise level. The three-layer
-ensemble is 0.105. Honestly, the ensemble is a hedge against choosing the wrong single layer rather than a real gain — on the full pool
-it adds 0.0007.
-The literature agrees that correctness information is spread over the upper half of the network. HSRM finds the upper layers best; MedProb
-finds a later peak for a different, multiple-choice task.
+
+#### ▸ indexing
+
+- Why layers 18, 20 and 22? First a precise definition: layer 18 means the vector after decoder block 18 of 28.
+- So these sit at about two-thirds to four-fifths of the depth.
+
+#### ▸ why three layers
+
+- The bars show the gain over greedy for a probe trained on each single layer, on the five benchmarks where this was measured.
+- All are between 0.101 and 0.104, so the differences are at noise level.
+- The three-layer ensemble is 0.105.
+- Honestly, the ensemble is a hedge against choosing the wrong single layer, not a real gain — on the full pool it adds 0.0007.
+
+#### ▸ literature
+
+- The literature agrees that correctness information is spread over the upper half of the network.
+- HSRM finds the upper layers best; MedProb finds a later peak for a different, multiple-choice task.
 
 **If asked:**
 
@@ -595,13 +1072,29 @@ finds a later peak for a different, multiple-choice task.
 
 **Say:**
 
-Step three: the probe itself. It takes the 3,584-number vector, standardises each dimension with the mean and
-standard deviation from training, multiplies by a 256-by-3,584 weight matrix, applies the GELU non-linearity, and a final weighted sum
-gives one number: a score. Higher means the probe believes more strongly that the answer is correct, but it is not a calibrated
-probability — the loss up-weights correct answers, and on our example the correct answer's scores are all negative — and we only ever
-use its order within a question. The sigmoid in the dashed box exists only inside the training loss.
-That is 918 thousand parameters — tiny next to the 7-billion-parameter model it reads.
-It is pointwise: it looks at one answer at a time and never compares answers directly; the comparison happens in the next step.
+
+#### ▸ standardise
+
+- The probe takes the 3,584-number vector and standardises each dimension with the mean and standard deviation from training.
+
+#### ▸ GELU
+
+- It multiplies by a 256-by-3,584 weight matrix, applies the GELU non-linearity, and a final weighted sum gives one number: a score.
+
+#### ▸ reads as
+
+- Higher means the probe believes more strongly that the answer is correct — but it is not a calibrated probability.
+- The loss up-weights correct answers, and on our example the correct answer's scores are all negative.
+- We only ever use its order within a question.
+
+#### ▸ σ(·) → class-weighted BCE
+
+- The sigmoid in the dashed box exists only inside the training loss.
+
+#### ▸ parameter (table)
+
+- That is 918 thousand parameters — tiny next to the 7-billion-parameter model it reads.
+- It is pointwise: it looks at one answer at a time and never compares answers; the comparison happens in the next step.
 
 <sub>Source: ckpts/train/final_probe_2026-10-16/fold{0,1} (recipe.json: Linear(3584→256)-GELU-Linear(256→1)); 3584·256+256+256+1 = 918,017; standardiser: final_method_eval.py (std + 1e-6)</sub>
 
@@ -610,16 +1103,32 @@ It is pointwise: it looks at one answer at a time and never compares answers dir
 
 **Say:**
 
-How the probe is trained. For every training question we have the eight sampled answers, and each distinct answer is
-labelled correct or incorrect by the judge model. The probe is trained with binary cross-entropy — the standard loss for predicting a
-yes-or-no label — with the correct answers up-weighted, because only about one training answer in five is correct; each correct answer
-counts about 3.8 times. It uses every answer, including questions where all answers are right or all are wrong, which ranking losses
-have to throw away. The optimiser is AdamW with learning rate ten to the minus three and weight decay ten to the minus two, for 30
-epochs at batch size 256, with no early stopping. Eight random seeds for each of the three layers gives the 24 probes.
-The training data is the other half of the images of all eight benchmarks and of the closed-question comparison sets, plus about six
-thousand questions from the PathVQA, SLAKE and VQA-RAD training splits and Kvasir-VQA — about 116 thousand answer rows per fold. Two consequences: the probe learns the training
-judge's idea of correct, which is why we check with a second judge; and it needs labelled data from each benchmark, which I quantify
-later.
+
+#### ▸ label (top-left box)
+
+- For every training question we have the eight sampled answers; each distinct answer is labelled correct or incorrect by the judge model.
+
+#### ▸ loss: class-weighted binary cross-entropy
+
+- The probe is trained with binary cross-entropy — the standard loss for predicting a yes-or-no label.
+- Correct answers are up-weighted, because only about one training answer in five is correct: each counts about 3.8 times.
+- It uses every answer, including questions where all answers are right or all are wrong — which ranking losses have to throw away.
+
+#### ▸ optimiser
+
+- AdamW, learning rate ten to the minus three, weight decay ten to the minus two.
+- 30 epochs at batch size 256, no early stopping.
+- Eight random seeds for each of the three layers gives the 24 probes.
+
+#### ▸ training rows
+
+- The training data is the other half of the images of all eight benchmarks and of the closed-question comparison sets.
+- Plus about six thousand questions from the PathVQA, SLAKE and VQA-RAD training splits and Kvasir-VQA — about 116 thousand answer rows per fold.
+
+#### ▸ what this means
+
+- The probe learns the training judge's idea of correct — which is why we check with a second judge.
+- It needs labelled data from each benchmark, which I quantify later.
 
 <sub>Source: final_eval_FINAL_cap320_T07.json folds.*.train_rows; head_sweep.py:172-174 (pos_weight = (1−π)/π); π and row breakdown: numbers_review_part2.json; final probes fitted on T = 0.7 pools</sub>
 
@@ -628,16 +1137,24 @@ later.
 
 **Say:**
 
-Step four: combining the 24 probes. Each probe ranks the distinct answers of this question from worst to best — n is the number of
-distinct answers — we divide by n minus one so ranks run from 0 to 1, and average over the 24 probes. In voting-theory terms this is a
-Borda count. The answer with the highest average rank wins; if two
-are exactly tied, the one more samples produced wins.
-These are the real ranks for our example. Large bowel is ranked first by 20 of the 24 probes. Small bowel had five votes but is ranked
-first by only four probes. Spleen is last everywhere. We use ranks rather than averaging the raw scores because each probe is trained
-separately and their scores live on different scales: on this very question the spleen scores minus 37.4 under one layer-18 probe and
-minus 7.2 under a layer-22 probe. The raw numbers are not comparable across probes, but the order is. When we tested averaging raw,
-standardised or calibrated scores instead, all of them tied with rank averaging under both judges, so ranks are the scale-free
-default, not a measured win.
+
+#### ▸ Large Bowel · Small Bowel · Spleen (rank grid)
+
+- Each of the 24 probes ranks the distinct answers of this question from worst to best; n is the number of distinct answers.
+- We divide by n minus one so ranks run from 0 to 1, and average over the 24 probes — in voting-theory terms, a Borda count.
+- These are the real ranks for our example: large bowel is ranked first by 20 of the 24 probes.
+- Small bowel had five votes but is ranked first by only four probes. Spleen is last everywhere.
+
+#### ▸ selected
+
+- The answer with the highest average rank wins; if two are exactly tied, the one more samples produced wins.
+
+#### ▸ why ranks
+
+- Each probe is trained separately, and their scores live on different scales.
+- On this very question, spleen scores minus 37.4 under one layer-18 probe and minus 7.2 under a layer-22 probe.
+- The raw numbers are not comparable across probes, but the order is.
+- Averaging raw, standardised or calibrated scores instead all tied with rank averaging under both judges — so ranks are the scale-free default, not a measured win.
 
 <sub>Source: worked_example_12231.json (raw scores: candidates[*].probe_scores); readout: genframe_data.rank_avg (ties averaged, ÷ max(n−1, 1)), final_method_eval.py tie-break; adopted 2026-10-15 under a pre-specified rule (readout_variants_2026-10-15.json)</sub>
 
@@ -646,14 +1163,26 @@ default, not a measured win.
 
 **Say:**
 
-A question that always comes up: we ship 24 probes and sample 8 answers — are they paired? No. The 24 are three layers
-times eight training seeds; the eight seeds are just eight independent training runs. Each probe scores each distinct answer on its
-own, so with four samples every probe scores at most four answers, and with sixteen at most sixteen. Nothing is dropped and nothing is
-reused. N equal to four itself we have not measured with the probe.
-And it works: the same probes gave plus 0.0167 when going from 8 to 16 samples, with gains on four benchmarks and no losses. On
-RadImageNet the gain keeps rising up to 32 samples, although that 32-sample pool was drawn at a higher temperature. With the final
-probes, sixteen samples gives plus 0.098 instead of plus 0.080 under the judge, and a little more under exact match too — at roughly
-twice the generation cost.
+
+#### ▸ Changing N changes how many answers are scored, never which probes are used.
+
+- A question that always comes up: we ship 24 probes and sample 8 answers — are they paired? No.
+
+#### ▸ 24 = 3 layers × 8 seeds
+
+- The 24 are three layers times eight training seeds; the eight seeds are just eight independent training runs.
+- Each probe scores each distinct answer on its own: with four samples every probe scores at most four answers, with sixteen at most sixteen.
+- Nothing is dropped and nothing is reused. N equal to four itself we have not measured with the probe.
+
+#### ▸ other N, same probes
+
+- And it works: the same probes gave plus 0.0167 when going from 8 to 16 samples, with gains on four benchmarks and no losses.
+- On RadImageNet the gain keeps rising up to 32 samples, although that 32-sample pool was drawn at a higher temperature.
+
+#### ▸ N = 16 with the final probes
+
+- With the final probes, sixteen samples gives plus 0.098 instead of plus 0.080 under the judge, and a little more under exact match.
+- That is at roughly twice the generation cost.
 
 **If asked:**
 
@@ -668,14 +1197,28 @@ twice the generation cost.
 
 **Say:**
 
-How we evaluate. Every image is hashed into one of two halves, A and B. In fold zero we train the probes on half B and score
-half A; in fold one the reverse. So every one of the 36 thousand questions is scored by probes that never saw its image or any question
-about it — an exact pixel match; near-duplicate images were not checked. This is called cross-fitting; in machine-learning terms it is
-two-fold cross-validation grouped by image, and it means we train two sets of 24 probes, one per fold.
-We compare against the same model's greedy answer, under five metrics. Note that the main judge also produced the training labels,
-which is why the second judge, from another model family, matters most. Averages are macro — each benchmark counts one eighth — and
-confidence intervals come from a bootstrap that resamples whole images, because several questions about the same image are not
-independent; resampling individual questions would make the intervals too narrow.
+
+#### ▸ score every question in half A
+
+- Every image is hashed into one of two halves, A and B.
+- In fold zero we train the probes on half B and score half A; in fold one the reverse.
+- So every one of the 36 thousand questions is scored by probes that never saw its image or any question about it.
+- "Never saw" means an exact pixel match; near-duplicate images were not checked.
+- This is called cross-fitting — in machine-learning terms, two-fold cross-validation grouped by image. We train two sets of 24 probes, one per fold.
+
+#### ▸ baseline
+
+- We compare against the same model's greedy answer.
+
+#### ▸ metrics
+
+- We use five metrics. The main judge also produced the training labels, so the second judge, from another model family, matters most.
+
+#### ▸ macro + clustered CI
+
+- Averages are macro: each benchmark counts one eighth.
+- Confidence intervals come from a bootstrap that resamples whole images, because questions about the same image are not independent.
+- Resampling individual questions would make the intervals too narrow.
 
 **If asked:**
 
@@ -692,12 +1235,26 @@ independent; resampling individual questions would make the intervals too narrow
 
 **Say:**
 
-What it costs. Sampling eight answers with a shared prefill costs 2.7 times the time and 3.6 times the energy of greedy,
-measured on short VQA-RAD answers. The probe itself is about 22 million multiply-adds per answer — negligible. The honest caveat is the
-re-reading pass: as we ran it, every distinct answer was re-read at the one-megapixel cap, and that pass is not small — about 6.9 greedy
-passes' worth of arithmetic per question. That figure comes from a different measurement setup, so I do
-not add the two into one total. By design those states can be captured while generating, at no extra cost, and we showed for an earlier
-probe that this gives the same picks; the re-read could also stop at block 22. We have not measured the whole system end to end.
+
+#### ▸ What it costs: cheap sampling, negligible probe, costly re-read
+
+- Sampling eight answers with a shared prefill costs 2.7 times the time and 3.6 times the energy of greedy, measured on short VQA-RAD answers.
+
+#### ▸ the probe
+
+- The probe itself is about 22 million multiply-adds per answer — negligible.
+
+#### ▸ the re-read, as run (HF)
+
+- The honest caveat is the re-reading pass: as we ran it, every distinct answer was re-read at the one-megapixel cap.
+- That pass is not small — about 6.9 greedy passes' worth of arithmetic per question.
+- That figure comes from a different measurement setup, so I do not add the two into one total.
+- By design those states can be captured while generating, at no extra cost; we showed for an earlier probe that this gives the same picks.
+- The re-read could also stop at block 22.
+
+#### ▸ not measured
+
+- We have not measured the whole system end to end.
 
 **If asked:**
 
@@ -713,25 +1270,52 @@ probe that this gives the same picks; the re-read could also stop at block 22. W
 ### 36 · (section divider)  ·  ~0.5 min
 **Say:**
 
-Part four: for every design choice, what we tried instead and why we chose what we did. Some of the evidence comes from
-earlier versions of the probe, so here is the timeline. In July the project used a fine-tuned LoRA verifier. In August we built the
-first probe on a single layer, then pooled the training data. In September that became the pooled probe, version two, scored on one
-image half. The October probes, cross-fitted on both halves, give every headline number. When a slide says July, August or September,
-it is evidence from an earlier version.
+
+#### ▸ Why each choice
+
+- Part four: for every design choice, what we tried instead and why we chose what we did.
+- Some evidence comes from earlier versions of the probe, so here is the timeline.
+
+#### ▸ July
+
+- In July the project used a fine-tuned LoRA verifier.
+
+#### ▸ August
+
+- In August we built the first probe on a single layer, then pooled the training data.
+
+#### ▸ September
+
+- In September that became the pooled probe, version two, scored on one image half.
+
+#### ▸ October = every headline number
+
+- The October probes, cross-fitted on both halves, give every headline number.
+- When a slide says July, August or September, it is evidence from an earlier version.
 
 ### 37 · Design decisions at a glance  ·  ~1.5 min
 *On screen:* Read the table row by row only for the rows I name: selector, verifier type, label source, temperature. The two right-hand columns are the two metrics.
 
 **Say:**
 
-This table is the summary of part four; the next slides give the evidence for each row. Two things to notice first.
-One: almost every design choice was made on one half of the images, half A. Half B played no part in those choices, and on half B
-alone the method gains plus 0.085 under the judge and plus 0.017 in exact match, both significant — so the choices did not inflate the
-headline. Two: most verdicts are measured with the training judge, which also produced the labels, so I show exact match next to it
-wherever it exists. Training a selector holds under both metrics: it beats majority vote, the answer prior, random and longest pick, and self-verification;
-it ties a much larger untrained verifier; and against the published selector WED it wins on two benchmarks and ties on the third. Likelihood ranking and USC were not run. Some choices are ties
-where we picked the simpler option; the temperature is the one where the two metrics disagree. One small surprise in the label-source
-row: under exact match, a probe trained on the other judge's labels does a little better — a reminder that every judge has its own taste.
+
+#### ▸ Design decisions at a glance
+
+- This table is the summary of part four; the next slides give the evidence for each row. Two things to notice first.
+- One: almost every design choice was made on one half of the images, half A. Half B played no part in those choices.
+- On half B alone the method gains plus 0.085 under the judge and plus 0.017 in exact match, both significant — so the choices did not inflate the headline.
+
+#### ▸ training-judge verdict · lenient EM (columns)
+
+- Two: most verdicts are measured with the training judge, which also produced the labels, so I show exact match next to it wherever it exists.
+- Training a selector holds under both metrics: it beats majority vote, the answer prior, random and longest pick, and self-verification.
+- It ties a much larger untrained verifier; against the published selector WED it wins on two benchmarks and ties on the third.
+- Likelihood ranking and USC were not run.
+- Some choices are ties where we picked the simpler option; the temperature is the one where the two metrics disagree.
+
+#### ▸ label source (row)
+
+- One small surprise in this row: under exact match, a probe trained on the other judge's labels does a little better — every judge has its own taste.
 
 **If asked:**
 
@@ -746,20 +1330,34 @@ row: under exact match, a probe trained on the other judge's labels does a littl
 
 **Say:**
 
-Why train anything? Every untrained way of choosing that we ran on these pools loses to greedy or to the probe. Majority vote loses to greedy. Random
-choice or the longest answer both lose. Asking Lingshu itself whether its answer is correct did worse than picking at random when we
-tried it.
-One baseline needs care: choosing the answer string that is most often right in training. Over all benchmarks it recovers only about
-a quarter of the gain, and its interval includes zero. But per benchmark it is uneven: on OmniMedVQA and RadImageNet, where the
-questions ask for a modality or an organ from a small vocabulary, the prior alone gets about two-thirds of the way. So on those two, a
-large part of the gain is knowing which answers are usually right, and the probe adds the rest; under exact match on RadImageNet the
-prior ties the probe. I say this plainly because those are the two benchmarks the exact-match win rests on.
-A model four and a half times bigger is a better zero-shot verifier than the small one — size does help — but untrained it only tied a
-small trained verifier. That is not in conflict with Verification Mirage: they measure whether a model accepts its own wrong answers when
-it re-checks them; we measure best-of-eight selection accuracy, with the 32B judging the 7B's samples. Both agree that training, not
-prompting, is what makes a selector work.
-The probe gains plus 0.080, and on exactly the same pools it beats majority vote by 0.089 under the judge and by
-0.014 in exact match, both significant.
+
+#### ▸ selector − greedy, training judge, macro over 8 benchmarks (chart)
+
+- Why train anything? Every untrained way of choosing that we ran on these pools loses to greedy or to the probe.
+- Majority vote loses to greedy. Random choice and the longest answer both lose.
+
+#### ▸ ask the model itself
+
+- Asking Lingshu itself whether its answer is correct did worse than picking at random when we tried it.
+
+#### ▸ answer prior, per benchmark ¹
+
+- One baseline needs care: choosing the answer string that is most often right in training.
+- Over all benchmarks it recovers only about a quarter of the gain, and its interval includes zero.
+- Per benchmark it is uneven: on OmniMedVQA and RadImageNet — a modality or organ from a small vocabulary — the prior alone gets about two-thirds of the way.
+- So on those two, a large part of the gain is knowing which answers are usually right; the probe adds the rest.
+- Under exact match on RadImageNet the prior ties the probe. I say this plainly because those are the two benchmarks the exact-match win rests on.
+
+#### ▸ ask a bigger model
+
+- A model four and a half times bigger is a better zero-shot verifier than the small one — size does help — but untrained it only tied a small trained verifier.
+- That does not conflict with Verification Mirage: they measure whether a model accepts its own wrong answers when it re-checks them.
+- We measure best-of-eight selection accuracy, with the 32B judging the 7B's samples.
+- Both agree that training, not prompting, is what makes a selector work.
+
+#### ▸ same pools, paired
+
+- The probe gains plus 0.080; on exactly the same pools it beats majority vote by 0.089 under the judge and by 0.014 in exact match, both significant.
 
 **If asked:**
 
@@ -773,17 +1371,31 @@ The probe gains plus 0.080, and on exactly the same pools it beats majority vote
 
 **Say:**
 
-Before the probe, this project used a fine-tuned verifier: Lingshu-7B with a LoRA adapter, asked "is this answer
-correct". On the same questions, an earlier single-layer probe was better under the judge and worse under exact match, so on accuracy
-it is a wash.
-The decision was about cost by design. The LoRA verifier re-reads the image and runs the whole 7-billion model once per candidate:
-generating eight answers and verifying them costs 3.7 times the latency and 5.8 times the energy of greedy, and the scoring alone is
-1.7 and 2.8 times. And the fast serving engine cannot even run its visual adapter correctly.
-As we actually ran it, though, the probe needed its own re-reading pass, and then — in the HF accounting, where all eight samples are
-separate passes — it costs almost the same arithmetic as the LoRA verifier, about two percent less. The saving is real only once the
-states are captured during generation, which we showed equivalent only for an earlier probe.
-The probe is also cheap enough to train on all benchmarks, which turned out to be the biggest single improvement. A LoRA verifier
-trained on the same pooled data was never built, so I cannot claim the probe is more accurate than that.
+
+#### ▸ same 2,345 questions (table)
+
+- Before the probe, this project used a fine-tuned verifier: Lingshu-7B with a LoRA adapter, asked "is this answer correct".
+- On the same questions, an earlier single-layer probe was better under the judge and worse under exact match — on accuracy it is a wash.
+
+#### ▸ why the LoRA verifier is expensive
+
+- The decision was about cost by design. The LoRA verifier re-reads the image and runs the whole 7-billion model once per candidate.
+- Generating eight answers and verifying them costs 3.7 times the latency and 5.8 times the energy of greedy; the scoring alone is 1.7 and 2.8 times.
+
+#### ▸ and it cannot be served fast
+
+- And the fast serving engine cannot even run its visual adapter correctly.
+
+#### ▸ FLOP-eq per question — HF accounting (8 separate generation passes)
+
+- As we actually ran it, though, the probe needed its own re-reading pass.
+- In the HF accounting, where all eight samples are separate passes, it then costs almost the same arithmetic as the LoRA verifier — about two percent less.
+- The saving is real only once the states are captured during generation, which we showed equivalent only for an earlier probe.
+
+#### ▸ and the probe scales
+
+- The probe is also cheap enough to train on all benchmarks, which turned out to be the biggest single improvement.
+- A LoRA verifier trained on the same pooled data was never built, so I cannot claim the probe is more accurate than that.
 
 <sub>Source: free_head_2026-08-16.json DELIVERABLE_4_head_only.head_vs_incumbent, DELIVERABLE_3_cost.arms_fixed_bestof8.{bo8_head_TODAY,bo8_incumbent_LoRA}.flopeq_measured_geometry; bestofn_latency_energy_2026-08-03.json measured.{bo8_total,verify8,gen1}; CLAUDE.md §0 (vLLM LoRA landmine); HSRM Table 1 p.7</sub>
 
@@ -792,14 +1404,27 @@ trained on the same pooled data was never built, so I cannot claim the probe is 
 
 **Say:**
 
-Why read the answer's tokens? We compared reading the mean over the answer tokens, the last token, and the same span
-when the model is instead asked to grade the answer. The mean over the answer, read while the model is answering, was best at
-layer 21 — but these are optimistic in-sample numbers without intervals. The span beats the last token at every layer from 14 up, but at
-the last layer the grading prompt is slightly ahead of the answering prompt, so I read this only as: the answer's own tokens carry the
-signal. A cleaner cross-validation also puts the span ahead of the last token, 0.680 against 0.655. Adding the
-question tokens or the image tokens on top changed the result by less than two thousandths — under the noise level from retraining —
-so we keep one vector per layer. Two papers point the other way: SWIFT found learned token weights better than a plain mean, and CASE
-found averaging harmful in a multiple-choice setting. Learned pooling is something we have not tried.
+
+#### ▸ what the probe reads (layer 21, July features)
+
+- We compared three readings: the mean over the answer tokens, the last token, and the same span when the model is asked to grade the answer.
+- The mean over the answer, read while the model is answering, was best at layer 21 — but these are optimistic in-sample numbers without intervals.
+
+#### ▸ reading
+
+- The span beats the last token at every layer from 14 up; at the last layer the grading prompt is slightly ahead of the answering prompt.
+- So I read this only as: the answer's own tokens carry the signal.
+- A cleaner cross-validation also puts the span ahead of the last token, 0.680 against 0.655.
+
+#### ▸ extras are below the noise floor
+
+- Adding the question tokens or the image tokens on top changed the result by less than two thousandths — under the noise from retraining.
+- So we keep one vector per layer.
+
+#### ▸ against us
+
+- Two papers point the other way: SWIFT found learned token weights better than a plain mean; CASE found averaging harmful in a multiple-choice setting.
+- Learned pooling is something we have not tried.
 
 <sub>Source: verifarch_hidden_promptform_indomain_2026-08-04.json (in-eval CV, upper bound); _head_sweep_journal*.jsonl A_objbt_h256, B_L21_last (clean CV, Bradley–Terry; sd 0.016 / 0.009); head_visual_features_2026-09-01.json macro.*; SWIFT Table 8; CASE §3.2</sub>
 
@@ -808,14 +1433,28 @@ found averaging harmful in a multiple-choice setting. Learned pooling is somethi
 
 **Say:**
 
-Why this probe size? We ran a sweep of about 150 runs, 128 distinct configurations. The one clear finding is that a linear probe is worse by
-about three points of selection efficiency. Once there is one hidden layer of at least 128 units, nothing else we varied — width,
-depth, dropout, training length, weight decay — moves the result by more than the noise. So we took a simple point on the plateau.
-When we re-tested the sweep's best setting end to end, it gained two thousandths, inside the noise, so we kept width 256.
-Several papers prefer linear probes: CASE, MedProb, and the probing-methodology literature warn that wide MLP probes can memorise. Our
-situation differs — over a hundred thousand labelled rows instead of a few hundred — and our own linear probe was clearly worse, but a
-control-task check would settle this properly. Two caveats: once, in July, the model this cross-validation picked was not the best on
-evaluation; and LayerNorm in the probe and the learning rate were never tested end to end.
+
+#### ▸ 5-fold CV selection efficiency, by probe width (chart)
+
+- We ran a sweep of about 150 runs, 128 distinct configurations.
+- The one clear finding: a linear probe is worse by about three points of selection efficiency.
+- With one hidden layer of at least 128 units, nothing else we varied — width, depth, dropout, training length, weight decay — moves the result beyond the noise.
+- So we took a simple point on the plateau.
+
+#### ▸ the sweep's best cell, re-tested end-to-end
+
+- Re-tested end to end, the sweep's best setting gained two thousandths, inside the noise, so we kept width 256.
+
+#### ▸ against us
+
+- Several papers prefer linear probes: CASE, MedProb, and the probing-methodology literature warn that wide MLP probes can memorise.
+- Our situation differs — over a hundred thousand labelled rows instead of a few hundred — and our own linear probe was clearly worse.
+- But a control-task check would settle this properly.
+
+#### ▸ caveats
+
+- Once, in July, the model this cross-validation picked was not the best on evaluation.
+- LayerNorm in the probe and the learning rate were never tested end to end.
 
 **If asked:**
 
@@ -829,13 +1468,26 @@ evaluation; and LayerNorm in the probe and the learning rate were never tested e
 
 **Say:**
 
-On the loss function, I want to be careful. In our sweep, binary cross-entropy scored higher than pairwise and
-listwise ranking losses — but that comparison is not fair: a ranking loss can only learn from questions that have both a right and a
-wrong answer, which is 39 percent of our rows, and it took three times fewer training steps. So we do not claim BCE is better. We keep
-it for three reasons: it uses every row, it matches the yes-or-no label the judge gives, and our rank-based readout cancels the one
-known weakness of pointwise losses — learning which questions are hard. The literature is split: SWIFT found BCE best of five losses;
-HSRM found a pairwise loss better on math; Q-Probe found a within-question loss better on code. A ranking loss on the final recipe is
-one of the experiments still owed.
+
+#### ▸ confounded
+
+- In our sweep, binary cross-entropy scored higher than pairwise and listwise ranking losses — but that comparison is not fair.
+- A ranking loss can only learn from questions with both a right and a wrong answer — 39 percent of our rows — and it took three times fewer training steps.
+- So we do not claim BCE is better.
+
+#### ▸ reasons we keep BCE
+
+- It uses every row.
+- It matches the yes-or-no label the judge gives.
+- Our rank-based readout cancels the one known weakness of pointwise losses — learning which questions are hard.
+
+#### ▸ the literature is split
+
+- SWIFT found BCE best of five losses; HSRM found a pairwise loss better on math; Q-Probe found a within-question loss better on code.
+
+#### ▸ open
+
+- A ranking loss on the final recipe is one of the experiments still owed.
 
 **If asked:**
 
@@ -848,15 +1500,27 @@ one of the experiments still owed.
 
 **Say:**
 
-Why combine the probes by rank? We tested the alternatives on identical held-out questions, under three metrics, with a
-rule written down before seeing the results: only adopt a change if it helps under both judges, significantly under at least one, and
-does not significantly hurt exact match. Averaging raw scores, standardised scores, probabilities or calibrated probabilities all tie
-under both judges; z-score averaging does gain a third of a point in exact match, but it fails the rule.
-Breaking exact ties by vote count passed the rule — six hundredths of a point, but significant and free, and it passed a rule we wrote
-down first — so it is part of the method. This test used the September probes on image half A.
-One result I want to show rather than hide: weighting the votes by the probe's scores, which is the default aggregator in Snell et
-al., improves exact match by 1.35 points while both judges come out slightly lower — ties, minus 0.004 and minus 0.006. It trades one
-metric for another, so under our rule it was not adopted — but if exact match were the target, it would be the better readout.
+
+#### ▸ rule fixed in advance
+
+- We tested the alternatives on identical held-out questions, under three metrics.
+- The rule was written down before seeing the results: adopt a change only if it helps under both judges, significantly under at least one, and does not significantly hurt exact match.
+
+#### ▸ variant − rank average (macro, identical questions, image half A)
+
+- Averaging raw scores, standardised scores, probabilities or calibrated probabilities all tie under both judges.
+- z-score averaging gains a third of a point in exact match, but it fails the rule.
+
+#### ▸ passed
+
+- Breaking exact ties by vote count passed the rule — six hundredths of a point, but significant and free — so it is part of the method.
+- This test used the September probes on image half A.
+
+#### ▸ metric trades
+
+- One result I want to show rather than hide: weighting the votes by the probe's scores — the default aggregator in Snell et al.
+- It improves exact match by 1.35 points, while both judges come out slightly lower — ties, minus 0.004 and minus 0.006.
+- It trades one metric for another, so under our rule it was not adopted — but if exact match were the target, it would be the better readout.
 
 <sub>Source: readout_variants_2026-10-15.json macro.*_minus_rank_{j,x,em} (rank_vote CI: judge [+0.00005, +0.00152], EM [+0.00003, +0.00154]), adoption_rule (September pooled probe, image half A, n = 18,452; not re-checked on the final probes)</sub>
 
@@ -865,15 +1529,27 @@ metric for another, so under our rule it was not adopted — but if exact match 
 
 **Say:**
 
-The single biggest improvement in the project was what the probe is trained on. In this run, a probe trained only on
-the four-domain set (the PathVQA, SLAKE and VQA-RAD training splits plus Kvasir-VQA) gains about 0.03; trained on the training halves of all eight benchmarks, about 0.07 — two and a half times as
-much, and four times in a later September re-run. The same jump happens on Qwen2.5-VL.
-But this comes with an honest limitation: if you leave a benchmark out of training, the probe does no better on it than the four-domain
-probe. On the four benchmarks that have no training split in that set the gap is stark: left out plus 0.003, pooled plus 0.099. So the claim is about new questions and images from benchmarks we have labels for: a new benchmark needs some labelled
-questions, although at inference the probe needs no dataset label. These numbers are measured with the training judge only, without
-intervals. The cost of a new benchmark is modest: with zero labels it gains plus 0.0196 overall in a three-seed re-run, five of eight
-benchmarks already gain and a sixth after 50 labels; and on the two hardest cases, RadImageNet and OmniMedVQA, about a hundred labelled
-questions recover about half and two-thirds of the full gain.
+
+#### ▸ pooling
+
+- The single biggest improvement in the project was what the probe is trained on.
+- In this run, a probe trained only on the four-domain set — the PathVQA, SLAKE and VQA-RAD training splits plus Kvasir-VQA — gains about 0.03.
+- Trained on the training halves of all eight benchmarks: about 0.07 — two and a half times as much, and four times in a later September re-run.
+- The same jump happens on Qwen2.5-VL.
+
+#### ▸ breadth alone does not transfer
+
+- The honest limitation: leave a benchmark out of training, and the probe does no better on it than the four-domain probe.
+- On the four benchmarks with no training split in that set the gap is stark: left out plus 0.003, pooled plus 0.099.
+- So the claim is about new questions and images from benchmarks we have labels for: a new benchmark needs some labelled questions.
+- At inference the probe needs no dataset label.
+- These numbers are measured with the training judge only, without intervals.
+
+#### ▸ onboarding cost
+
+- The cost of a new benchmark is modest: with zero labels it gains plus 0.0196 overall in a three-seed re-run.
+- Five of eight benchmarks already gain, and a sixth after 50 labels.
+- On the two hardest cases, RadImageNet and OmniMedVQA, about a hundred labelled questions recover about half and two-thirds of the full gain.
 
 <sub>Source: head_lobo_pooled_2026-08-25.json macro.* (chart, −0.0056, +0.0485); head_final_stack_PVFIXED_2026-09-13.json (+0.0182 → +0.0736, September, script only); head_price_from_lobo_2026-08-30.json summary.zero_shot_macro; TRANSFER_WALL_2026-08-21.md §12 (Qwen, head_final_stack_qwen pooled ensemble)</sub>
 
@@ -882,12 +1558,25 @@ questions recover about half and two-thirds of the full gain.
 
 **Say:**
 
-Why eight samples? More samples help — doubling to sixteen gains another 0.017 overall, with significant wins on
-RadImageNet, Kvasir-x1, OmniMedVQA and GEMeX — but only on the benchmarks where the probe already selects well. VQA-Med shows the other case: with more samples a correct answer appears more often,
-but the probe cannot find it, so accuracy does not move. More samples also give a selector more chances to be fooled. So eight is our
-default, inherited from earlier work, where the cost was measured, and sixteen is an option if accuracy matters more than time. We never
-tried fewer than eight with the probe; with the earlier LoRA verifier, four samples at a lower temperature did as well as eight, so
-that is worth testing.
+
+#### ▸ 8 → 16, all benchmarks
+
+- More samples help: doubling to sixteen gains another 0.017 overall, with significant wins on RadImageNet, Kvasir-x1, OmniMedVQA and GEMeX.
+
+#### ▸ more samples help only where selection works
+
+- But only on the benchmarks where the probe already selects well.
+- VQA-Med shows the other case: with more samples a correct answer appears more often, but the probe cannot find it, so accuracy does not move.
+
+#### ▸ over-optimisation risk
+
+- More samples also give a selector more chances to be fooled.
+
+#### ▸ so
+
+- Eight is our default, inherited from earlier work, where the cost was measured; sixteen is an option if accuracy matters more than time.
+- We never tried fewer than eight with the probe.
+- With the earlier LoRA verifier, four samples at a lower temperature did as well as eight, so that is worth testing.
 
 <sub>Source: coverage_sc16_ci_ALL_2026-09-16.json (judge); budget_conversion_sc32_2026-09-17.json cells.{radimagenet_open,vqamed_open} (September pooled probe; RadImageNet N = 32 sampled at T = 1.0); CHEAP_VERIFIER_ON_7B_2026-08-16.md §4 (N = 4: judge +0.00159 [−0.0051, +0.0083], EM +0.00825 [+0.0015, +0.0151])</sub>
 
@@ -896,16 +1585,31 @@ that is worth testing.
 
 **Say:**
 
-Why one temperature of 0.7? The left chart is the gain over greedy when every benchmark uses the same temperature.
-Under the judge, 0.7 has the highest point estimate, though only by half a point over 1.0. Under exact match, 0.7 is third of four —
-colder sampling is better there. So the best temperature depends on the metric, and 0.7 was already the project's default before we
-measured this, so it was not chosen by looking at the test results.
-The table shows that each benchmark has its own preference: the benchmarks where the probe selects well want hotter sampling, the two
-where it struggles want colder sampling. Choosing a temperature per benchmark does help, by about 0.009 on images it was not chosen on, and our final-method
-document of October 16 adopted it. We reversed that on October 18: it requires knowing which dataset each incoming question comes
-from, which a deployed system does not know. Training the probe needs labelled data per domain, but the shipped probe then scores any
-question without a dataset label, and we keep it that way. We also tried a version that needs no dataset label — two samples at each
-of four temperatures — and its point estimate was lower than eight samples at 0.7 in every metric.
+
+#### ▸ training judge · lenient EM (left chart)
+
+- Why one temperature of 0.7? The left chart is the gain over greedy when every benchmark uses the same temperature.
+- Under the judge, 0.7 has the highest point estimate, though only by half a point over 1.0.
+
+#### ▸ metric-dependent
+
+- Under exact match, 0.7 is third of four — colder sampling is better there. So the best temperature depends on the metric.
+- 0.7 was already the project's default before we measured this, so it was not chosen by looking at the test results.
+
+#### ▸ benchmark (table)
+
+- Each benchmark has its own preference: where the probe selects well it wants hotter sampling; the two where it struggles want colder sampling.
+
+#### ▸ per-benchmark T: adopted 10-16, reversed 10-18
+
+- Choosing a temperature per benchmark does help, by about 0.009 on images it was not chosen on; our final-method document of October 16 adopted it.
+- We reversed that on October 18: it requires knowing which dataset each incoming question comes from, which a deployed system does not know.
+- Training the probe needs labelled data per domain, but the shipped probe then scores any question without a dataset label — and we keep it that way.
+
+#### ▸ mixed temperatures
+
+- We also tried a version that needs no dataset label — two samples at each of four temperatures.
+- Its point estimate was lower than eight samples at 0.7 in every metric.
 
 **If asked:**
 
@@ -921,12 +1625,28 @@ of four temperatures — and its point estimate was lower than eight samples at 
 
 **Say:**
 
-Why do we cap the image at about 250 thousand pixels? We measured the whole method at a one-megapixel cap as well — what our
-files call "full resolution": its point estimate was slightly lower under the judge, a tie in exact match, and it uses 2.8 times the
-vision tokens — four times on GEMeX. The main effect is GEMeX: its chest X-rays are around eight megapixels, and at the one-megapixel
-cap the model's own greedy answers get four points worse. So the cheaper setting is not worse — we do not claim it is better, because
-we did not compute a paired interval. One detail is still open — the probe's features were read at the one-megapixel cap — and an
-experiment re-reading everything at the generation budget is running.
+
+#### ▸ whole method, T = 0.7 (table)
+
+- Why do we cap the image at about 250 thousand pixels? We measured the whole method at a one-megapixel cap as well — what our files call "full resolution".
+- Its point estimate was slightly lower under the judge, and a tie in exact match.
+
+#### ▸ cost
+
+- The one-megapixel cap uses 2.8 times the vision tokens — four times on GEMeX.
+
+#### ▸ greedy, 1-MP − cap320, same session
+
+- The main effect is GEMeX: its chest X-rays are around eight megapixels, and at the one-megapixel cap the model's own greedy answers get four points worse.
+
+#### ▸ verdict
+
+- So the cheaper setting is not worse — we do not claim it is better, because we did not compute a paired interval.
+
+#### ▸ open detail
+
+- One detail is still open: the probe's features were read at the one-megapixel cap.
+- An experiment re-reading everything at the generation budget is running.
 
 **If asked:**
 
@@ -942,23 +1662,59 @@ experiment re-reading everything at the generation budget is running.
 ### 48 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Part five: results.
+
+#### ▸ Results
+
+- Part five: results.
 
 ### 49 · Headline: significant macro gains under every metric  ·  ~2 min
 *On screen:* the first row (cross-family judge), then the last column (image half B).
 
 **Say:**
 
-The headline. Averaged over the eight benchmarks, the method improves on the model's own greedy answer by 0.0710
-under a judge from another model family, MedGemma-27B, which the probe never saw during training. That is the number I lead with. Under
-our main judge, MedVLThinker-32B, the gain is 0.0798 — but that judge also produced the probe's training labels, so it is not
-independent. Lenient exact match, which counts an answer right if it equals or contains the gold string, gains 0.0121; token overlap
-0.0232; LLaVA-Med's recall metric 0.0324. All five intervals exclude zero.
-Two things to read carefully. The column "benchmarks above zero" counts positive point estimates, not significant wins; per benchmark,
-under the judge, six of eight are significant wins and two are ties. And the last column uses only image half B. Half B played no part in
-the September choices — layers, probe size, loss — nor in the readout tie-break or the temperature decision; the October check that kept
-the cap320 image budget used both halves. The gains on half B are, if anything, slightly larger. Exact match gains much less than the
-judges, and per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain why on the next slide.
+
+#### ▸ Headline: significant macro gains under every metric
+
+- The headline: the gain over the model's own greedy answer, averaged over the eight benchmarks.
+
+#### ▸ cross-family judge (MedGemma-27B) — never used in training
+
+- Under a judge from another model family, MedGemma-27B, the method gains 0.0710.
+- The probe never saw this judge during training. That is the number I lead with.
+
+#### ▸ judge (MedVLThinker-32B) — also the training-label source
+
+- Under our main judge, MedVLThinker-32B, the gain is 0.0798.
+- But that judge also produced the probe's training labels, so it is not independent.
+
+#### ▸ lenient exact match (equality or containment)
+
+- Lenient exact match counts an answer right if it equals or contains the gold string; it gains 0.0121.
+
+#### ▸ token-F1
+
+- Token overlap gains 0.0232; LLaVA-Med's recall metric 0.0324.
+- All five intervals exclude zero.
+
+#### ▸ benchmarks Δ > 0 (point est.)
+
+- This column counts positive point estimates, not significant wins.
+
+#### ▸ per benchmark, judge
+
+- Per benchmark, under the judge, six of eight are significant wins and two are ties.
+
+#### ▸ image half B only
+
+- The last column uses only image half B.
+- Half B played no part in the September choices — layers, probe size, loss — nor in the readout tie-break or the temperature decision.
+- The October check that kept the cap320 image budget used both halves.
+- The gains on half B are, if anything, slightly larger.
+
+#### ▸ lenient exact match
+
+- Exact match gains much less than the judges.
+- Per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain why on the next slide.
 
 **If asked:**
 
@@ -973,13 +1729,33 @@ judges, and per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain 
 
 **Say:**
 
-Per benchmark. The largest gains, 11 to 16 points under the judge and 10 to 15 under MedGemma, are on OmniMedVQA,
-RadImageNet, GEMeX and Kvasir, and the two judges agree closely. Two benchmarks tie: VQA-RAD, which has only 200 questions so its interval
-is wide, and VQA-Med. Neither tie is for lack of correct answers among the samples — I will show in two slides that the probe simply fails
-to pick them there. Exact match disagrees on three benchmarks. On Kvasir and GEMeX the gold answers are whole sentences generated by a
-language model, so a correct answer in different words fails string matching while both judges accept it. On VQA-Med the exact-match
-loss is small but real. If you correct for testing eight benchmarks, all six judge wins remain, and the GEMeX exact-match loss becomes a
-tie.
+
+#### ▸ Per benchmark: where it helps, where it ties, where exact match disagrees
+
+- Per benchmark; filled markers are significant, hollow ones are ties.
+
+#### ▸ large gains
+
+- The largest gains, 11 to 16 points under the judge and 10 to 15 under MedGemma, are on OmniMedVQA, RadImageNet, GEMeX and Kvasir.
+- The two judges agree closely.
+
+#### ▸ ties
+
+- Two benchmarks tie: VQA-RAD, which has only 200 questions so its interval is wide, and VQA-Med.
+- Neither tie is for lack of correct answers among the samples.
+- I will show in two slides that the probe simply fails to pick them there.
+
+#### ▸ exact-match losses
+
+- Exact match disagrees on three benchmarks.
+- On Kvasir and GEMeX the gold answers are whole sentences generated by a language model.
+    - A correct answer in different words fails string matching, while both judges accept it.
+- On VQA-Med the exact-match loss is small but real.
+
+#### ▸ Bonferroni ×8
+
+- If you correct for testing eight benchmarks, all six judge wins remain.
+- The GEMeX exact-match loss becomes a tie.
 
 **If asked:**
 
@@ -992,14 +1768,29 @@ tie.
 
 **Say:**
 
-A net gain hides two movements, so here they are separately, using the accounting from Hu's 2026 paper. "Fixed" means
-greedy was wrong and our pick is right; "harmed" means greedy was right and our pick is wrong; "recoverable" means greedy was wrong but at
-least one of the eight samples was right. Over all
-36 thousand questions, the selector fixes 4,890 questions that greedy got wrong, and breaks 847 that greedy got right
-— 149 of those could not have been avoided by any selector, because none of the eight samples
-was correct. On most benchmarks harms are a few percent of greedy's correct answers. VQA-Med is the exception: there are 453
-questions where greedy is wrong but a correct sample exists, yet the probe fixes only 139 and breaks 153 — 44%
-of greedy's correct answers. That is not a shortage of correct samples; the probe cannot tell them apart there.
+
+#### ▸ fixed / harmed
+
+- A net gain hides two movements, so here they are separately, using the accounting from Hu's 2026 paper.
+- "Fixed": greedy was wrong and our pick is right.
+- "Harmed": greedy was right and our pick is wrong.
+- "Recoverable": greedy was wrong but at least one of the eight samples was right.
+
+#### ▸ total
+
+- Over all 36 thousand questions, the selector fixes 4,890 questions that greedy got wrong.
+- It breaks 847 that greedy got right.
+- 149 of those could not have been avoided by any selector, because none of the eight samples was correct.
+
+#### ▸ harmed ÷ greedy-right
+
+- On most benchmarks harms are a few percent of greedy's correct answers.
+
+#### ▸ VQA-Med: selection failure
+
+- VQA-Med is the exception: 453 questions where greedy is wrong but a correct sample exists.
+- Yet the probe fixes only 139 and breaks 153 — 44% of greedy's correct answers.
+- That is not a shortage of correct samples; the probe cannot tell them apart there.
 
 **If asked:**
 
@@ -1012,12 +1803,25 @@ of greedy's correct answers. That is not a shortage of correct samples; the prob
 
 **Say:**
 
-This chart puts greedy, our pick, and the oracle side by side for each benchmark. The gap between the grey and teal
-bars is our gain; the gap between the teal and blue bars is what a perfect selector would still add. The fair way to score a selector is the share of that available
-headroom it captures: the gain divided by oracle minus greedy. Averaged over benchmarks we capture 0.44 of the headroom —
-0.87 on OmniMedVQA, about two-thirds on RadImageNet, Kvasir and GEMeX, about a third on PathVQA and SLAKE, and nothing
-on VQA-RAD and VQA-Med. Those two are not out of reach: VQA-Med still has 0.116 of headroom. The probe just cannot pick
-the right sample there. Across benchmarks the gain follows the headroom closely, much more than it follows how high the oracle is.
+
+#### ▸ greedy · probe pick · oracle@8
+
+- This chart puts greedy, our pick, and the oracle side by side for each benchmark.
+- The gap between the grey and teal bars is our gain.
+- The gap between the teal and blue bars is what a perfect selector would still add.
+
+#### ▸ headroom captured = (pick − greedy) ÷ (oracle@8 − greedy)
+
+- The fair way to score a selector: the share of the available headroom it captures — the gain divided by oracle minus greedy.
+- Averaged over benchmarks we capture 0.44 of the headroom.
+    - 0.87 on OmniMedVQA; about two-thirds on RadImageNet, Kvasir and GEMeX.
+    - About a third on PathVQA and SLAKE; nothing on VQA-RAD and VQA-Med.
+- Those two are not out of reach: VQA-Med still has 0.116 of headroom.
+- The probe just cannot pick the right sample there.
+
+#### ▸ pattern
+
+- Across benchmarks the gain follows the headroom closely, much more than it follows how high the oracle is.
 
 **If asked:**
 
@@ -1031,19 +1835,45 @@ the right sample there. Across benchmarks the gain follows the headroom closely,
 
 **Say:**
 
-A fair question is whether the probe simply learned which answers are common. Two checks. First, a baseline that scores
-each answer only by how often that exact string was correct in training. Over all benchmarks it recovers about a quarter of the probe's
-gain. But per benchmark it is uneven. On OmniMedVQA and RadImageNet, where many questions ask for a modality or an organ from a small
-vocabulary, the prior alone gets about two-thirds of the way — 60% and
-67% of the probe's gain. So on those two, a large part of the gain is knowing which
-answers are usually right, and the probe adds the rest. Those are exactly the two benchmarks the exact-match macro win rests on. On GEMeX
-the prior gets less than half, on Kvasir about a quarter, and on PathVQA, SLAKE and VQA-Med it is below greedy. Second, pooled over all
-benchmarks, the judge gain is just as large on question
-templates the probe never saw, and still clearly positive on gold answers it never saw. But I have to be careful: those groups come
-mostly from different benchmarks, and inside PathVQA alone the gain on unseen templates is not significant. So what the evidence supports
-is "not only an answer prior", not "no memorisation". The test that would settle it — swapping in a wrong image — has not been run yet.
-And note the exact-match column: on unseen answers it is a loss, partly because those strata are the sentence-gold benchmarks where
-exact match is unreliable.
+
+#### ▸ Does the probe just learn which answers are common?
+
+- A fair question is whether the probe simply learned which answers are common. Two checks.
+
+#### ▸ answer-frequency prior: share of the probe's judge gain
+
+- First, a baseline that scores each answer only by how often that exact string was correct in training.
+- Over all benchmarks it recovers about a quarter of the probe's gain. But per benchmark it is uneven.
+- On OmniMedVQA and RadImageNet many questions ask for a modality or an organ from a small vocabulary.
+    - There the prior alone gets about two-thirds of the way — 60% and 67% of the probe's gain.
+- So on those two, a large part of the gain is knowing which answers are usually right, and the probe adds the rest.
+- On GEMeX the prior gets less than half, on Kvasir about a quarter, and on PathVQA, SLAKE and VQA-Med it is below greedy.
+
+#### ▸ so
+
+- Those are exactly the two benchmarks the exact-match macro win rests on.
+
+#### ▸ question template never seen
+
+- Second, pooled over all benchmarks, the judge gain is just as large on question templates the probe never saw.
+
+#### ▸ gold answer never seen
+
+- And still clearly positive on gold answers it never saw.
+
+#### ▸ within PathVQA: template seen / never seen
+
+- But careful: those groups come mostly from different benchmarks.
+- Inside PathVQA alone the gain on unseen templates is not significant.
+
+#### ▸ claim
+
+- What the evidence supports is "not only an answer prior", not "no memorisation".
+- The test that would settle it — swapping in a wrong image — has not been run yet.
+
+#### ▸ lenient-EM gain
+
+- On unseen answers exact match is a loss, partly because those strata are the sentence-gold benchmarks where exact match is unreliable.
 
 **If asked:**
 
@@ -1055,10 +1885,24 @@ exact match is unreliable.
 ### 54 · A second training recipe of the same language model: Qwen2.5-VL-7B  ·  ~1 min
 **Say:**
 
-Does it work on another model? On Qwen2.5-VL-7B the same pipeline, in its September form, gains eight points under the
-judge and is significant under every metric, including strict exact match. But Qwen is Lingshu's own base model, so this is the same
-language model with different training, not an independent replication, and it uses the same judge. An attempt on MedGemma-4b was
-withdrawn because its sampled answers were broken. A replication on a genuinely different model family is still owed.
+
+#### ▸ Qwen2.5-VL-7B
+
+- Does it work on another model? On Qwen2.5-VL-7B the same pipeline, in its September form, gains eight points under the judge.
+- It is significant under every metric, including strict exact match.
+
+#### ▸ same family
+
+- But Qwen is Lingshu's own base model: the same language model with different training, not an independent replication.
+- And it uses the same judge.
+
+#### ▸ withdrawn
+
+- An attempt on MedGemma-4b was withdrawn because its sampled answers were broken.
+
+#### ▸ owed
+
+- A replication on a genuinely different model family is still owed.
 
 **If asked:**
 
@@ -1074,17 +1918,38 @@ withdrawn because its sampled answers were broken. A replication on a genuinely 
 ### 55 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Part six: how this compares with published work.
+
+#### ▸ Against published work
+
+- Part six: how this compares with published work.
 
 ### 56 · How to compare honestly  ·  ~1 min
 **Say:**
 
-Before the numbers, how to compare honestly. The strongest comparison holds everything fixed except the selector:
-same questions, same eight samples, same graders. We have one of those, against WED. The second level uses the same official test
-split and the same scoring code, which tells you where our numbers sit, but the generators differ, so it is not a ranking. The third
-level is everything else, which is context only. To show why this discipline matters: the very same Lingshu-7B model is reported at
-61.9 on PathVQA in its own paper and 71.9 in an independent benchmark. The prompt, the grader, the answer format and possibly the
-question set all differ — evaluation choices alone move the same model by about ten points.
+
+#### ▸ How to compare honestly
+
+- Before the numbers, how to compare honestly.
+
+#### ▸ 1 · same candidates
+
+- The strongest comparison holds everything fixed except the selector: same questions, same eight samples, same graders.
+- We have one of those, against WED.
+
+#### ▸ 2 · same metric code / test split
+
+- The second level uses the same official test split and the same scoring code.
+- That tells you where our numbers sit, but the generators differ, so it is not a ranking.
+
+#### ▸ 3 · different protocol
+
+- The third level is everything else, which is context only.
+
+#### ▸ why this matters
+
+- The very same Lingshu-7B model is reported at 61.9 on PathVQA in its own paper and 71.9 in an independent benchmark.
+- The prompt, the grader, the answer format and possibly the question set all differ.
+- Evaluation choices alone move the same model by about ten points.
 
 <sub>Source: Lingshu Table 6 p.17, §4.2 p.16; Liu et al. 2025 Table 1 p.4 (Lingshu-7B PathVQA 0.7192) — PAPER_NOTES_GH G4</sub>
 
@@ -1093,18 +1958,36 @@ question set all differ — evaluation choices alone move the same model by abou
 
 **Say:**
 
-The controlled comparison. We ran WED's own code on our candidates, so the only thing that differs is how the answer
-is chosen. We score it under seven metrics; the table shows two, the judge and lenient exact match. On PathVQA the probe beats WED under
-all seven, by about eight points under the judge. On SLAKE it wins under six of seven; under our lenient exact match it ties. On VQA-RAD
-everything ties — with 200 questions that means we cannot tell, not that they are equal.
-One result needs explaining: on PathVQA, WED is significantly worse than greedy decoding, even though its own paper reports gains there.
-Two asymmetries matter. WED normally runs its own sampling loop until it has eight distinct answers; we gave it our eight samples instead,
-and after its clean-up step it often had only one candidate left — on 392 of 645 SLAKE questions and
-490 of 3,357 PathVQA questions — so its game never ran there. And WED read the image at our generation
-budget, cap320, while our probe's features used the higher one-megapixel cap. To check that these do not explain the result, restrict to
-the questions where WED's game actually runs: there the probe's margin is larger, not smaller —
-9.5 points on PathVQA and 13.0
-on SLAKE under the judge. Finally, in fairness: WED needs no training, ours needs labelled data.
+
+#### ▸ Tier 1 — head-to-head with WED on identical candidates
+
+- The controlled comparison: we ran WED's own code on our candidates, so only the way the answer is chosen differs.
+- We score it under seven metrics; the table shows two, the judge and lenient exact match.
+
+#### ▸ probe − WED
+
+- On PathVQA the probe beats WED under all seven, by about eight points under the judge.
+
+#### ▸ result (7 metrics)
+
+- On SLAKE it wins under six of seven; under our lenient exact match it ties.
+- On VQA-RAD everything ties — with 200 questions that means we cannot tell, not that they are equal.
+
+#### ▸ WED vs greedy
+
+- One result needs explaining: on PathVQA, WED is significantly worse than greedy decoding.
+- Its own paper reports gains there.
+
+#### ▸ asymmetries
+
+- Two asymmetries matter.
+- First: WED normally runs its own sampling loop until it has eight distinct answers; we gave it our eight samples instead.
+    - After its clean-up step it often had only one candidate left — on 392 of 645 SLAKE questions and 490 of 3,357 PathVQA questions.
+    - So its game never ran there.
+- Second: WED read the image at our generation budget, cap320, while our probe's features used the higher one-megapixel cap.
+- Check: restrict to the questions where WED's game actually runs. There the probe's margin is larger, not smaller.
+    - 9.5 points on PathVQA and 13.0 on SLAKE under the judge.
+- Finally, in fairness: WED needs no training, ours needs labelled data.
 
 **If asked:**
 
@@ -1120,13 +2003,29 @@ on SLAKE under the judge. Finally, in fairness: WED needs no training, ours need
 
 **Say:**
 
-Second level: LLaVA-Med's own metric, computed with their published code, on the full official test splits. Under
-their metric our method improves open-question recall significantly on PathVQA and SLAKE; on VQA-RAD it ties. Closed yes/no accuracy
-rises significantly on PathVQA — but I want to be precise: the probe's training data included the other image half of the PathVQA closed
-questions, 2,246 and 2,123 rows in the two folds, so this is an in-domain gain, not transfer from open questions. SLAKE closed dips
-slightly, a tie. Where do we sit? LLaVA-Med fine-tuned separately on each dataset is higher on all six columns, so this is not a ranking —
-different generator, different training. The test counts also differ: their VQA-RAD has 179 open and 272 closed questions against our 200
-and 251, and their PathVQA 6,761 against our 6,719. SLAKE English is the one split that matches theirs exactly.
+
+#### ▸ Tier 2 — LLaVA-Med's metric on the full official test splits
+
+- Second level: LLaVA-Med's own metric, computed with their published code, on the full official test splits.
+
+#### ▸ + probe (ours)
+
+- Under their metric our method improves open-question recall significantly on PathVQA and SLAKE; on VQA-RAD it ties.
+
+#### ▸ claim
+
+- Closed yes/no accuracy rises significantly on PathVQA.
+- But to be precise: the probe's training data included the other image half of the PathVQA closed questions.
+    - 2,246 and 2,123 rows in the two folds.
+    - So this is an in-domain gain, not transfer from open questions.
+- SLAKE closed dips slightly, a tie.
+
+#### ▸ not a ranking
+
+- Where do we sit? LLaVA-Med fine-tuned separately on each dataset is higher on all six columns.
+- So this is not a ranking — different generator, different training.
+- The test counts also differ: their VQA-RAD has 179 open and 272 closed questions against our 200 and 251.
+- Their PathVQA 6,761 against our 6,719. SLAKE English is the one split that matches theirs exactly.
 
 **If asked:**
 
@@ -1137,24 +2036,60 @@ and 251, and their PathVQA 6,761 against our 6,719. SLAKE English is the one spl
 ### 59 · Tier 2/3 — ImageCLEF VQA-Med 2019 and Lingshu's published numbers  ·  ~1.5 min
 **Say:**
 
-Two more anchors. On the official 2019 VQA-Med test, the probe neither helps nor hurts — both changes are ties — and
-strict string accuracy is far below the best 2019 team, because those systems were trained to output the challenge's fixed vocabulary
-while our model answers in free text. On the right, Lingshu's own published scores. It is tempting to put our numbers next to theirs,
-but they grade open questions with GPT-4.1 and closed ones by rule, their SLAKE includes the Chinese questions, and they use a different
-image resolution, so only our two rows are comparable to each other. I will not claim we match the 32-billion model.
+
+#### ▸ VQA-Med 2019 official test (500)
+
+- Two more anchors. On the official 2019 VQA-Med test, the probe neither helps nor hurts — both changes are ties.
+- Strict string accuracy is far below the best 2019 team.
+    - Those systems were trained to output the challenge's fixed vocabulary; our model answers in free text.
+
+#### ▸ Lingshu's own Table 6 vs our protocol (open + closed, judge)
+
+- On the right, Lingshu's own published scores. It is tempting to put our numbers next to theirs.
+
+#### ▸ not comparable
+
+- But they grade open questions with GPT-4.1 and closed ones by rule.
+- Their SLAKE includes the Chinese questions, and they use a different image resolution.
+- So only our two rows are comparable to each other.
+- I will not claim we match the 32-billion model.
 
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.vqamed2019_test, full_official_splits; VQA-Med 2019 overview (CEUR Vol-2380) p.1, p.6 (best team 0.624); Lingshu arXiv:2506.07044v4 Table 6 p.17 (= v5 Table I), §4.2 p.16</sub>
 
 ### 60 · Tier 3 — medical test-time methods, each in its own units  ·  ~1.5 min
 **Say:**
 
-For context, other medical test-time methods in their own units, grouped by baseline. Best-of-Evidence, with a
-235-billion-parameter judge and sixteen samples, gains under one point over majority vote; the matching number for us, also over majority
-vote, is 8.9 points under our judge — but on our short free-text answers majority vote is already
-0.9 points below greedy, so this delta mostly shows how weak voting is here, not that we beat Best-of-Evidence. WED's own paper reports between minus one and plus five points over greedy on small
-models. MedProb's appendix test is a hundred questions. Over greedy we gain 7.1 points under the cross-family judge. But these
-use different models, graders and question sets, so I present this as context, not as a ranking — the only controlled comparison is the
-WED head-to-head.
+
+#### ▸ Tier 3 — medical test-time methods, each in its own units
+
+- For context, other medical test-time methods in their own units, grouped by baseline.
+
+#### ▸ Best-of-Evidence 2026
+
+- Best-of-Evidence, with a 235-billion-parameter judge and sixteen samples, gains under one point over majority vote.
+
+#### ▸ ours, against the same baseline
+
+- The matching number for us, also over majority vote, is 8.9 points under our judge.
+- But on our short free-text answers majority vote is already 0.9 points below greedy.
+- So this delta mostly shows how weak voting is here, not that we beat Best-of-Evidence.
+
+#### ▸ WED 2026 (its paper)
+
+- WED's own paper reports between minus one and plus five points over greedy on small models.
+
+#### ▸ MedProb App. H 2026
+
+- MedProb's appendix test is a hundred questions.
+
+#### ▸ ours, against greedy
+
+- Over greedy we gain 7.1 points under the cross-family judge.
+
+#### ▸ context, not a ranking
+
+- These use different models, graders and question sets, so this is context, not a ranking.
+- The only controlled comparison is the WED head-to-head.
 
 <sub>Source: BoE Table 2 p.9; WED p.5, Table 1 p.8; MedProb Table 14 p.27; Mirage Tables 11–15; ours final_eval_FINAL_cap320_T07.json and extra_numbers.json (probe − vote, paired image-clustered bootstrap)</sub>
 
@@ -1166,28 +2101,67 @@ WED head-to-head.
 ### 61 · (section divider)  ·  ~0.2 min
 **Say:**
 
-Finally, what we cannot claim, and what comes next.
+
+#### ▸ Limits, gaps, and next steps
+
+- Finally, what we cannot claim, and what comes next.
 
 ### 62 · What the evidence does not support  ·  ~2.5 min
 *On screen:* left column (what we cannot claim), then right column (costs and risks).
 
 **Say:**
 
-What the evidence does not support. First, the mechanism is not ours: probes on hidden states used as best-of-N
-verifiers already exist in text models, and MedProb showed one on a hundred medical questions. Second, it is not domain-general: every
-one of our eight benchmarks contributed labelled training questions, and a benchmark left out of training gains no more than a probe
-trained on the four-domain set. Third, it is judge-sensitive: the gains are much larger under the judges than under exact match, and the
-main judge is also where the training labels came from — which is why I lead with the cross-family judge. Exact match loses on Kvasir
-and VQA-Med. Fourth, no human has rated this method's answers. The earlier checks were an LLM adjudicator on SLAKE and VQA-RAD and a small
-hand-checked sample on PathVQA, all on older July outputs, and nothing on the other five benchmarks. Fifth, one model family: Lingshu and
-its own base model; a MedGemma-4b attempt was withdrawn.
-On the right. Cost, as run, comes from two different measurements that I do not add together. Sampling eight answers with vLLM's shared
-prefill costs 1.13 times greedy in compute; the measured latency and energy, 2.74 and 3.59 times, come from twenty short VQA-RAD
-questions, not from the sentence-answer benchmarks. Separately, the re-read of each distinct answer at the one-megapixel cap, in the
-HuggingFace pipeline, costs about seven greedy passes. So "no extra forward pass" is true by design, not as we ran it; end-to-end cost and
-memory were not measured. Where selection fails, on VQA-Med, the method breaks more answers than it fixes. Our VQA-Med set is mostly data
-the generator was fine-tuned on, and whether that changes the delta is not measured. And against Lingshu-32B greedy we do not claim to
-match it: one loss, two ties and one win under the judge, on four benchmarks, with an earlier probe.
+
+#### ▸ What the evidence does not support
+
+- What the evidence does not support — left column first.
+
+#### ▸ not a new mechanism
+
+- The mechanism is not ours: probes on hidden states used as best-of-N verifiers already exist in text models.
+- MedProb showed one on a hundred medical questions.
+
+#### ▸ not domain-general
+
+- Every one of our eight benchmarks contributed labelled training questions.
+- A benchmark left out of training gains no more than a probe trained on the four-domain set.
+
+#### ▸ judge-sensitive
+
+- The gains are much larger under the judges than under exact match.
+- The main judge is also where the training labels came from — which is why I lead with the cross-family judge.
+- Exact match loses on Kvasir, GEMeX and VQA-Med.
+
+#### ▸ no human evaluation
+
+- No human has rated this method's answers.
+- Earlier checks: an LLM adjudicator on SLAKE and VQA-RAD and a small hand-checked sample on PathVQA, all on older July outputs.
+- Nothing on the other five benchmarks.
+
+#### ▸ one model family
+
+- Lingshu and its own base model; a MedGemma-4b attempt was withdrawn.
+
+#### ▸ cost, as run
+
+- Cost, as run, comes from two different measurements that I do not add together.
+- Sampling eight answers with vLLM's shared prefill costs 1.13 times greedy in compute.
+- The measured latency and energy, 2.74 and 3.59 times, come from twenty short VQA-RAD questions, not from the sentence-answer benchmarks.
+- Separately, the re-read of each distinct answer at the one-megapixel cap, in the HuggingFace pipeline, costs about seven greedy passes.
+- So "no extra forward pass" is true by design, not as we ran it; end-to-end cost and memory were not measured.
+
+#### ▸ harms where selection fails
+
+- Where selection fails, on VQA-Med, the method breaks more answers than it fixes.
+
+#### ▸ data exposure
+
+- Our VQA-Med set is mostly data the generator was fine-tuned on; whether that changes the delta is not measured.
+
+#### ▸ no claim against bigger models
+
+- Against Lingshu-32B greedy we do not claim to match it.
+- One loss, two ties and one win under the judge, on four benchmarks, with an earlier probe.
 
 **If asked:**
 
@@ -1203,16 +2177,40 @@ match it: one loss, two ties and one win under the judge, on four benchmarks, wi
 
 **Say:**
 
-How far do the statistics reach? Our main intervals resample images inside each of the eight benchmarks, so they say
-the gain is real on these eight benchmarks. A stricter question: if we drew a new benchmark of the same kind and labelled part of it for
-training, would the gain hold? Treating the eight benchmarks themselves as the sample, both judge gains stay positive, but the
-exact-match interval crosses zero. And that assumes each new benchmark comes with labelled training questions, as all eight of ours did;
-without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on the four-domain set. The
-exact-match gain also depends on two benchmarks: drop either OmniMedVQA or RadImageNet and it becomes a tie.
-What our intervals hold fixed: the trained probes and the image split. Refitting the probes with other seeds or thread counts moves the
-macro by up to about 0.003; resampling the training set or the split was not measured. And they cluster by image, not by question template.
-On tuning: the September choices were made on image half A; half B alone gives a slightly larger gain. Weighting by question instead of by
-benchmark makes the judge gains larger and the exact-match gain slightly smaller.
+
+#### ▸ macro, images resampled
+
+- How far do the statistics reach?
+- Our main intervals resample images inside each of the eight benchmarks, so they say the gain is real on these eight benchmarks.
+
+#### ▸ benchmarks as the unit (t, 7 df)
+
+- A stricter question: if we drew a new benchmark of the same kind and labelled part of it for training, would the gain hold?
+- Treating the eight benchmarks themselves as the sample, both judge gains stay positive, but the exact-match interval crosses zero.
+
+#### ▸ benchmarks as the unit
+
+- That assumes each new benchmark comes with labelled training questions, as all eight of ours did.
+- Without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on the four-domain set.
+
+#### ▸ leave one benchmark out
+
+- The exact-match gain also depends on two benchmarks: drop either OmniMedVQA or RadImageNet and it becomes a tie.
+
+#### ▸ held fixed
+
+- What our intervals hold fixed: the trained probes and the image split.
+- Refitting the probes with other seeds or thread counts moves the macro by up to about 0.003.
+- Resampling the training set or the split was not measured.
+- And they cluster by image, not by question template.
+
+#### ▸ tuning vs test
+
+- The September choices were made on image half A; half B alone gives a slightly larger gain.
+
+#### ▸ question-weighted (micro)
+
+- Weighting by question instead of by benchmark makes the judge gains larger and the exact-match gain slightly smaller.
 
 **If asked:**
 
@@ -1224,28 +2222,67 @@ benchmark makes the judge gains larger and the exact-match gain slightly smaller
 ### 64 · Never tested — the honest gap list  ·  ~1.5 min
 **Say:**
 
-And the list of what was never tested. Several selectors we have not run on our data, most importantly ranking by the
-model's own likelihood and combining that with the probe, which classical rerankers rely on. The likelihoods were not stored for the
-shipped cap320 pools, but they were stored for the October one-megapixel pools on seven of the eight benchmarks, so this baseline can be
-run on the CPU there. Also WED with its own sampling procedure.
-Several design axes, including a ranking loss on the final recipe and learned pooling. And several diagnostics: a control task with random
-labels, the within-question AUROC that CASE introduced, a test where the image is swapped, a human rating of our picks, and the variance
-from retraining. Most of these are cheap to run on cached features, and they are first on the list.
+
+#### ▸ Never tested — the honest gap list
+
+- And the list of what was never tested.
+
+#### ▸ selectors not run on our pools
+
+- Several selectors we have not run on our data.
+- Most importantly ranking by the model's own likelihood, and combining that with the probe, which classical rerankers rely on.
+- The likelihoods were not stored for the shipped cap320 pools.
+- But they were stored for the October one-megapixel pools on seven of the eight benchmarks, so this baseline can be run on the CPU there.
+- Also WED with its own sampling procedure.
+
+#### ▸ design axes not tested
+
+- Several design axes, including a ranking loss on the final recipe and learned pooling.
+
+#### ▸ diagnostics not run
+
+- A control task with random labels, and the within-question AUROC that CASE introduced.
+- A test where the image is swapped, a human rating of our picks, and the variance from retraining.
+- Most of these are cheap to run on cached features, and they are first on the list.
 
 <sub>Source: DESIGN_EVIDENCE.md §9 (21 gaps); PAPER_NOTES_* 'honest gaps' sections; review/R_results.md, R_papers.md</sub>
 
 ### 65 · Next steps  ·  ~1.5 min
 **Say:**
 
-Next steps. One experiment is running now. All features have been re-extracted at the same image budget the answers were
-generated at, cap320, and the probes are being refit and re-evaluated with the same protocol. If it holds, the re-read no longer needs the
-higher-resolution pass, and the WED comparison becomes symmetric in resolution.
-After that, the cheap experiments on the CPU. First, ranking by the model's own likelihood, and likelihood plus probe — the log
-probabilities were stored for the October one-megapixel pools on seven of eight benchmarks, so this needs no GPU. Then the within-question
-AUROC, which should tell us why VQA-RAD and VQA-Med fail, the control task, the image-swap test, and the agreement between our two judges.
-Then the temperature question you raised: whether the model can pick its temperature without knowing the dataset — by modality, although
-GEMeX and VQA-RAD preferring opposite temperatures suggests modality is not the driver, or per question from the probe's own scores. And the
-remaining baselines, a human rating, and the second model family that a reviewer would ask for.
+
+#### ▸ running now
+
+- One experiment is running now.
+- All features have been re-extracted at the same image budget the answers were generated at, cap320.
+- The probes are being refit and re-evaluated with the same protocol.
+- If it holds, the re-read no longer needs the higher-resolution pass, and the WED comparison becomes symmetric in resolution.
+
+#### ▸ cheap, CPU-only
+
+- After that, the cheap experiments on the CPU.
+- First, ranking by the model's own likelihood, and likelihood plus probe.
+    - The log probabilities were stored for the October one-megapixel pools on seven of eight benchmarks, so this needs no GPU.
+- Then the within-question AUROC, which should tell us why VQA-RAD and VQA-Med fail.
+- Then the control task, the image-swap test, and the agreement between our two judges.
+
+#### ▸ temperature without the dataset label
+
+- Then the temperature question you raised: can the model pick its temperature without knowing the dataset?
+- By modality — although GEMeX and VQA-RAD preferring opposite temperatures suggests modality is not the driver.
+- Or per question, from the probe's own scores.
+
+#### ▸ baselines owed
+
+- And the remaining baselines.
+
+#### ▸ evaluation owed
+
+- A human rating.
+
+#### ▸ generality
+
+- And the second model family that a reviewer would ask for.
 
 <sub>Source: DESIGN_EVIDENCE.md §9; this deck's limits and gap slides; log-probs: src/labeling/run_openvqa.py cumlogprob_all (October 1-MP pools, RadImageNet missing)</sub>
 
@@ -1254,14 +2291,40 @@ remaining baselines, a human rating, and the second model family that a reviewer
 
 **Say:**
 
-To summarise in one sentence: a 918-thousand-parameter probe reading Lingshu-7B's frozen internal states, choosing among
-eight sampled answers at temperature 0.7, improves open-ended medical VQA over the model's own greedy answer on eight benchmarks — by
-0.071 under a judge from another model family that it never trained on, 0.080 under the judge that supplied its labels, and
-0.012 in lenient exact match, all significant on these benchmarks. With benchmarks as the unit, the judge gains stay significant and
-the exact-match gain does not — and that assumes each new benchmark comes with labelled training data. Under the judge it wins on six of
-eight benchmarks and ties on two, where the right answer is among the samples but the probe fails to pick it. On identical candidates it
-beats the training-free selector WED on PathVQA and SLAKE, and ties on VQA-RAD. The mechanism is not new; the setting, the breadth and the
-care of the evaluation are. Thank you — I am happy to go into any part in detail; there are backup slides on every component.
+
+#### ▸ Summary — the claim, stated precisely
+
+- To summarise: a 918-thousand-parameter probe reading Lingshu-7B's frozen internal states.
+- It chooses among eight sampled answers at temperature 0.7.
+- It improves open-ended medical VQA over the model's own greedy answer on eight benchmarks.
+
+#### ▸ cross-family judge
+
+- By 0.071 under a judge from another model family that it never trained on.
+
+#### ▸ training judge
+
+- By 0.080 under the judge that supplied its labels.
+
+#### ▸ lenient exact match
+
+- And 0.012 in lenient exact match — all significant on these benchmarks.
+- With benchmarks as the unit, the judge gains stay significant and the exact-match gain does not.
+- And that assumes each new benchmark comes with labelled training data.
+
+#### ▸ judge: 6 significant wins; 2 ties (VQA-RAD, VQA-Med), both selection failures — the right answer was often in the pool
+
+- Under the judge it wins on six of eight benchmarks and ties on two.
+- On those two the right answer is among the samples but the probe fails to pick it.
+
+#### ▸ vs WED on identical candidates: wins on PathVQA and SLAKE, ties on VQA-RAD
+
+- On identical candidates it beats the training-free selector WED on PathVQA and SLAKE, and ties on VQA-RAD.
+
+#### ▸ mechanism not new; each benchmark needs labelled training questions
+
+- The mechanism is not new; the setting, the breadth and the care of the evaluation are.
+- Thank you — I am happy to go into any part in detail; there are backup slides on every component.
 
 **If asked:**
 
@@ -1277,7 +2340,10 @@ care of the evaluation are. Thank you — I am happy to go into any part in deta
 ### 67 · (section divider)
 **Say:**
 
-(Backup — only if asked.)
+
+#### ▸ Backup slides
+
+- (Backup — only if asked.)
 
 ### 68 · Backup — every benchmark, every metric (shipped method)
 <sub>Source: final_eval_FINAL_cap320_T07.json cells.*.all; headroom captured and micro: numbers_review_part3.json (part3_numbers.py on final_eval_FINAL_cap320_T07_records.json; image-clustered bootstrap, 10,000 resamples)</sub>
