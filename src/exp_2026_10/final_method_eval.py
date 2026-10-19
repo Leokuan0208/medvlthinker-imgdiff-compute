@@ -64,6 +64,11 @@ COMP = ["vqa_rad_closed", "pathvqa_closed", "slake_closed", "vqamed2019_test"]
 CLOSED = {"vqa_rad_closed", "pathvqa_closed", "slake_closed"}
 TMAP = json.load(open(WT + "/results/cascade_methods/artifacts/frozen_temperature_map_2026-10-15.json"))["frozen_T"]
 TMAP_COMP = {"vqa_rad_closed": 0.2, "vqamed2019_test": 0.4}     # make_comparability_queue.py, pre-specified
+# Mixed-temperature pools (2026-10-18): k draws from EACH of the cap320 N=8 pools at T=0.2/0.4/0.7/1.0, so the
+# sampling needs no knowledge of the benchmark. MIX8 = 2+2+2+2 (budget of N=8), MIX16 = 4+4+4+4 (budget of N=16).
+# Pre-specified: equal shares, all four temperatures; compared with T07 / T07_16 at the same budget.
+MIX = {"MIX8": 2, "MIX16": 4}
+MIX_TAGS = ["lingshu7bT02_sc8", "lingshu7bT04_sc8", "lingshu7b_sc8", "lingshu7bT10_sc8"]
 NBOOT, SEED = 10000, 20261017
 FEAT = ""      # "" = the historical 1,003,520-pixel caches; "C320" = caches read at the pools' own cap320 (--feat)
 
@@ -153,7 +158,7 @@ def main():
     ap.add_argument("--cells", nargs="+", default=OPEN8 + COMP)
     # several policies are scored with the SAME fitted probes (they are always fitted on T=0.7 rows), so a
     # policy comparison is paired on probes as well as on questions; one artifact per policy
-    ap.add_argument("--policy", choices=["T07", "Tmap", "T07_16", "Tmap_16"], nargs="+", default=["T07"])
+    ap.add_argument("--policy", choices=["T07", "Tmap", "T07_16", "Tmap_16", "MIX8", "MIX16"], nargs="+", default=["T07"])
     ap.add_argument("--readout", choices=["rank", "rank_vote"], default="rank_vote")
     ap.add_argument("--folds", type=int, nargs="+", default=[0, 1])
     ap.add_argument("--seeds", type=int, default=8)
@@ -163,6 +168,8 @@ def main():
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--legacy_cap320", action="store_true", help="score the stored cap320 pools/caches (validation)")
     ap.add_argument("--frozen_fold0", default=None, help="use these frozen probes for fold 0 instead of fitting")
+    ap.add_argument("--frozen_dir", default=None,
+                    help="use the frozen probes <dir>/fold{0,1} for both folds (e.g. ckpts/train/final_probe_2026-10-16)")
     ap.add_argument("--save_probes", default=None, help="directory to freeze fitted probes into (per fold)")
     ap.add_argument("--xjudge", default=None, help="MedGemma-27B preds jsonl with idx 'cell|q|k' (+ .judge.jsonl)")
     ap.add_argument("--feat", choices=["", "C320"], default="",
@@ -196,6 +203,25 @@ def main():
             fit_X[L].append(X07[L])
         fit_rows += r07; fit_src += [c] * len(r07); fit_isorig += [False] * len(r07)
         for pol in A.policy:
+            if pol in MIX:                         # k samples from each temperature's N=8 pool, no dataset input
+                comps = [(t, MIX[pol]) for t in MIX_TAGS]
+                parts = []
+                for pi, (t, _) in enumerate(comps):
+                    if t == base_pool(legacy):
+                        Xp, rp = X07, r07
+                    else:
+                        st, ds2 = eval_stem(c, t, legacy)
+                        if not os.path.exists(f"{FEATS}/{st}.npz"):
+                            break
+                        Xp, rp = load_cache(st, ds2)
+                    parts.append((Xp, [dict(r, _pool=pi) for r in rp]))
+                if len(parts) < len(comps):
+                    print(f"  [skip] {c} [{pol}]: a component cache is missing", flush=True); continue
+                EV[pol][c] = {"tag": pol, "mix": comps, "rows": [r for _, rp in parts for r in rp],
+                              "X": {L: np.concatenate([Xp[L] for Xp, _ in parts]) for L in ENS}}
+                print(f"  loaded {c:17} [{pol}] mixed pool rows {len(EV[pol][c]['rows'])} ({time.time() - t0:.0f}s)",
+                      flush=True)
+                continue
             tag = pool_tag(c, pol, legacy)
             if tag == base_pool(legacy):
                 Xe, re_ = X07, r07
@@ -249,7 +275,10 @@ def main():
         fold_info[f] = {"train_rows": int(tr.sum()), "train_rows_original_domains": int((tr & Forig).sum()),
                         "eval_images": len(evimg)}
         # probes
-        if f == 0 and A.frozen_fold0:
+        if A.frozen_dir:
+            heads, stats, _ = ER.load_probes(f"{A.frozen_dir}/fold{f}")
+            fold_info[f]["probes"] = f"frozen {A.frozen_dir}/fold{f}"
+        elif f == 0 and A.frozen_fold0:
             heads, stats, _ = ER.load_probes(A.frozen_fold0)
             fold_info[f]["probes"] = f"frozen {A.frozen_fold0}"
         else:
@@ -282,7 +311,29 @@ def main():
                     for m in heads[L]:
                         m.eval(); S.append(m(Z).numpy())
             S = np.stack(S)
-            sc8 = loadj(f"{CK}/ckpt_{c}_{d['tag']}.jsonl")
+            if "mix" in d:
+                pools = [loadj(f"{CK}/ckpt_{c}_{t}.jsonl") for t, _ in d["mix"]]
+                sc8 = {}
+                keep = np.zeros(len(rr), bool)
+                byq0 = defaultdict(list)
+                for i, r in enumerate(rr):
+                    byq0[r["idx"]].append(i)
+                for q, ii in byq0.items():
+                    if not all(q in p for p in pools):
+                        continue
+                    preds, seen = [], set()
+                    for pi, ((t, k), p) in enumerate(zip(d["mix"], pools)):
+                        drawn = p[q]["preds"][:k]
+                        preds += drawn
+                        allowed = {ER.row_norm(a) for a in drawn}
+                        for i in ii:          # one row per distinct answer across the mixed draws
+                            if rr[i]["_pool"] == pi and rr[i]["na"] in allowed and rr[i]["na"] not in seen:
+                                keep[i] = True; seen.add(rr[i]["na"])
+                    sc8[q] = {"preds": preds, "gold": pools[0][q]["gold"]}
+                kept = np.flatnonzero(keep)
+                rr, S = [rr[i] for i in kept], S[:, kept]
+            else:
+                sc8 = loadj(f"{CK}/ckpt_{c}_{d['tag']}.jsonl")
             greedy = loadj(f"{CK}/ckpt_{c}_{gtag}.jsonl")
             gj = {k: int(v["judge_ok"]) for k, v in loadj(f"{CK}/ckpt_{c}_{gtag}.judge.jsonl").items()}
             byq = defaultdict(list)

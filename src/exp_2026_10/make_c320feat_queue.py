@@ -15,13 +15,13 @@ ENV = "export HF_HOME=/data/dan/hf_cache HF_HUB_OFFLINE=1 HF_HUB_DISABLE_XET=1"
 EXT = (f"python3 {WT}/src/training_methods/extract_generator_hidden.py --model_path {L7} --mode generator "
        f"--layers 18 20 22 --out feats_hidden --cap cap320")
 # (cell, temperature tag or None for the T=0.7 pool)
-SPLIT = {0: [("gemex_open", None), ("gemex_open", "T10"), ("omnimed_open", "T10"), ("slake_open", None),
-             ("vqa_rad_open", None), ("vqa_rad_open", "T02"), ("radimagenet_open", None),
-             ("radimagenet_open", "T10"), ("pathvqa_closed", None), ("slake_closed", None),
-             ("vqa_rad_closed", None), ("vqa_rad_closed", "T02")],
-         1: [("__train__", None), ("kvasir_x1_open", None), ("omnimed_open", None), ("vqamed_open", None),
-             ("vqamed_open", "T04"), ("pathvqa_open", None), ("vqamed2019_test", None),
-             ("vqamed2019_test", "T04")]}
+# 2026-10-18: the shipped method is a single T = 0.7 (per-benchmark temperature dropped -- it needs the
+# dataset identity at test time), so only the T = 0.7 pools and the train cache are re-extracted.
+SPLIT = {0: [("gemex_open", None), ("omnimed_open", None), ("slake_open", None), ("vqa_rad_open", None),
+             ("radimagenet_open", None), ("pathvqa_closed", None), ("slake_closed", None),
+             ("vqa_rad_closed", None)],
+         1: [("__train__", None), ("kvasir_x1_open", None), ("vqamed_open", None), ("pathvqa_open", None),
+             ("vqamed2019_test", None)]}
 
 for g, items in SPLIT.items():
     q = []
