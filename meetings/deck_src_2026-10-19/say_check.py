@@ -32,8 +32,8 @@ else:
     for k, t in new.items():
         o = old.get(k, "")
         # group labels copy on-screen text, so their numbers are not spoken claims: count bullets only
-        body = "\n".join(l for l in t.split("\n") if not l.lstrip().startswith("# "))
-        a, b = nums(o), nums(body)
+        strip = lambda x: "\n".join(l for l in x.split("\n") if not l.lstrip().startswith("# "))
+        a, b = nums(strip(o)), nums(strip(t))
         lost = [x for x in set(a) if a.count(x) > b.count(x)]
         added = [x for x in set(b) if b.count(x) > a.count(x)]
         lines = [l for l in t.strip().split("\n") if l.strip()]

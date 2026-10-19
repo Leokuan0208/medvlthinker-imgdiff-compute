@@ -20,6 +20,487 @@ def fit_svg(svg, width):
     return svg.replace(f'width="{m.group(1)}" height="{m.group(2)}"', f'width="{width}" height="{h * width / w:.0f}"', 1)
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Per-paper extras for Part II (Leo, 2026-10-19: "more method details for each paper; show more of the results").
+# For each key paper: `steps` (numbered method on the slide), `step_say` (script bullets for those steps), and `res`
+# (a results slide right after it: an optional results figure cropped from the PDF, a table of the paper's reported
+# numbers with its baselines, and cards). Every number is from PAPER_NOTES_*.md (page/table cited) or the PDF.
+# The rows "result / against us / supports us / related / App. H / our data / also free text / our gap" of each
+# method slide move, with their script groups, onto the results slide.
+# ---------------------------------------------------------------------------------------------------------------
+MOVE = ["result", "against us", "supports us", "related", "App. H", "our data", "also free text", "our gap"]
+
+EXTRA = {
+ "cobbe": dict(
+  steps=["fine-tune a GPT-3 generator on GSM8K for 2 epochs (a calculator evaluates <code>&lt;&lt;…&gt;&gt;</code> annotations)",
+         "sample 100 solutions per training problem; label each correct / incorrect by its <b>final answer only</b>",
+         "train a verifier: a same-size LM initialised from the generator, a scalar head on a special token; MSE loss "
+         "(+ the language-modelling loss), 1 epoch; default = a value after every token (token-level)",
+         "at test time sample 100 solutions at T = 0.7 and return the highest-scored one"],
+  step_say=["Step one: fine-tune the generator on the math problems.",
+            "Step two: sample a hundred solutions per training problem and label each by its final answer only.",
+            "Step three: train a second model of the same size to predict that label — after every token, in their default.",
+            "Step four: at test time, sample a hundred and return the one the verifier scores highest."],
+  res=dict(title="Cobbe et al. 2021 — results", fig="cobbe_res_fig5.png",
+           figcap="Figure 5 from Cobbe et al. 2021 (p.8): fine-tuning vs verification as the training set grows (6B left, 175B right)",
+           tlabel="what the paper reports (GSM8K)", head=["finding", "where"],
+           rows=[["6B + verifier slightly beats a fine-tuned 175B — “approximately equivalent to a 30x model size increase”", "§6 p.12"],
+                 ["below ~1,000 training problems, verification is <b>worse</b> than fine-tuning", "Fig. 5 p.8"],
+                 ["accuracy rises with N up to 400 samples, then falls (adversarial solutions fool the verifier)", "§5.1 p.10, Fig. 7a"],
+                 ["answering directly without a worked solution: 20.6% → 5.2%", "p.7"]],
+           cards=[("what matters", "token-level supervision (solution-level overfits); a large generator with a small verifier beats the reverse (Fig. 6c)"),
+                  ("limits", "needs thousands of labelled problems; more samples eventually hurt; numbers on the plot are not printed — read the curves, not values")],
+           src="Cobbe et al. arXiv:2110.14168: Fig. 5 p.8, §4.3 p.9, §5.1 p.10, Fig. 6c p.10, §6 p.12, p.7 (PAPER_NOTES_A §1.1)",
+           say="""# Figure 5 (left)
+- Each panel: test accuracy against training-set size; blue is plain fine-tuning, orange is fine-tuning plus a verifier.
+- With little data the verifier line is below; with the full set it is far above, for both model sizes.
+# what the paper reports (GSM8K)
+- A 6-billion model with a verifier slightly beats a fine-tuned 175-billion model.
+- With fewer than about a thousand training problems, the verifier does not pay.
+- Up to 400 samples accuracy rises; beyond that it falls, because some wrong solutions fool the verifier.
+- Asking for the answer without a worked solution collapses accuracy from 20.6 to 5.2 percent.
+# what matters
+- A value after every token beat one score per solution.
+- And a big generator with a small verifier beat a small generator with a big verifier.
+# limits
+- It needs thousands of labelled problems, and too many samples eventually hurts.""",
+           look="Figure: the orange (verification) line crossing the blue (fine-tuning) line; then the table rows top to bottom.")),
+
+ "brown": dict(
+  steps=["take an existing model — nothing is trained",
+         "sample k answers per problem at a fixed temperature (MATH / GSM8K 0.6, MiniF2F 0.5, CodeContests 0.6 with top-p 0.95, SWE-bench 1.6), "
+         "k up to 10,000",
+         "<b>coverage</b> = share of problems solved by any sample (unbiased pass@k estimator)",
+         "where an automatic checker exists (unit tests, Lean proof checker) it picks the answer; on GSM8K / MATH compare majority vote, "
+         "a reward model (ArmoRM-Llama3-8B) and reward-weighted vote",
+         "fit coverage vs k with an exponentiated power law; compare models at equal FLOPs"],
+  step_say=["Step one: take existing models; nothing is trained.",
+            "Step two: sample up to ten thousand answers per problem at a fixed temperature.",
+            "Step three: coverage is the share of problems where any sample is right.",
+            "Step four: where a checker exists, like unit tests or a proof checker, it finds the right sample; on math word problems they try voting and reward models instead.",
+            "Step five: fit a scaling curve and compare models at the same compute."],
+  res=dict(title="Brown et al. 2024 — results", fig="brown_res_fig7.png",
+           figcap="Figure 7 from Brown et al. 2024 (p.10): coverage (blue) vs majority vote and reward-model selection",
+           tlabel="what the paper reports", head=["setting", "result", "where"],
+           rows=[["SWE-bench Lite, DeepSeek-Coder-V2", "15.9% (1 sample) → 56% (250); single-sample state of the art 43%", "abstract, Fig. 2"],
+                 ["CodeContests, Gemma-2B", "0.02% → 7.1% with 10,000 samples", "p.2"],
+                 ["SWE-bench cost", "DeepSeek ×5 attempts 29.62%, $10.8 · GPT-4o ×1 24.00%, $39 · Claude 3.5 Sonnet ×1 26.70%, $51", "Table 1 p.7"]],
+           cards=[("what matters", "an automatic checker: with one, coverage becomes accuracy; without one (GSM8K, MATH) voting and reward models plateau"),
+                  ("limits", "at equal FLOPs the small model is not always better (CodeContests: 70B); where the plateau starts is stated inconsistently (~100 vs several hundred samples)")],
+           src="Brown et al. arXiv:2407.21787: Fig. 7 p.10, Fig. 2 p.5, p.2–3, Table 1 p.7, p.7 FLOPs (PAPER_NOTES_A §1.2)",
+           say="""# Figure 7 (top)
+- Four panels, two models on two math sets. The blue line is coverage: some sample is right.
+- The other three lines are the ways to pick without a checker — they flatten out early.
+- On the MATH panels, the gap between blue and the rest is the selection problem.
+# what the paper reports
+- With an automatic checker, sampling is extremely strong: on SWE-bench, one sample solves 15.9 percent, 250 samples 56 percent.
+- On CodeContests a tiny model goes from almost nothing to 7.1 percent with ten thousand samples.
+- And five attempts of a cheap model beat one attempt of GPT-4o, at about a third of the cost.
+# what matters
+- Whether a checker exists. Without one, selection is the bottleneck — our situation.
+# limits
+- At equal compute the small model does not always win.""",
+           look="Figure: blue coverage curve vs the three flat selector curves in the MATH panels; then the table.")),
+
+ "snell": dict(
+  steps=["proposer: PaLM 2-S*, plus a fine-tuned <i>revision</i> model that rewrites its own answer",
+         "verifier: a process reward model (PRM) — PaLM 2-S* fine-tuned with BCE on per-step correctness estimated by Monte-Carlo rollouts",
+         "search against the verifier: best-of-N weighted (sum scores over identical answers), beam search or lookahead; budgets up to 256 generations",
+         "estimate each question's difficulty (5 bins, from 2,048 samples or the PRM score) and choose the best strategy per bin by two-fold cross-validation — “compute-optimal”",
+         "compare with a ~14× larger model at equal FLOPs"],
+  step_say=["Step one: the proposer is a small PaLM 2 model, plus a version trained to revise its own answers.",
+            "Step two: the verifier is a process reward model that scores every reasoning step.",
+            "Step three: search against it — best-of-N, beam search or lookahead.",
+            "Step four: estimate how hard each question is and choose the strategy per difficulty level; they call this compute-optimal.",
+            "Step five: compare against a 14-times larger model at the same compute."],
+  res=dict(title="Snell et al. 2024 — results", fig="snell_res_fig4.png",
+           figcap="Figure 4 from Snell et al. 2024 (p.10): compute-optimal search vs majority and best-of-N baselines, MATH",
+           tlabel="what the paper reports (MATH)", head=["comparison", "result", "where"],
+           rows=[["compute-optimal PRM search vs best-of-N", "matches it with up to 4× less compute (16 vs 64 generations)", "Fig. 4 p.10"],
+                 ["compute-optimal revisions vs best-of-N", "beats it with up to 4× less compute (64 vs 256)", "Fig. 8 p.13"],
+                 ["vs a ~14× larger model, FLOPs-matched (revisions, inference ≪ pretraining)", "easy +21.6% · medium +16.7% · hard +5.4%", "Fig. 1 p.2"],
+                 ["hardest questions (level 5)", "“no method makes much meaningful progress”", "p.9"]],
+           cards=[("what matters", "allocating compute per question by difficulty; a step-level verifier (PRM), whose lead over an outcome verifier grows with N"),
+                  ("limits", "difficulty estimation used 2,048 samples and is not counted in the cost; on hard questions pretraining wins")],
+           src="Snell et al. arXiv:2408.03314: Fig. 4 p.10, Fig. 8 p.13, Fig. 1 p.2, p.9, App. F p.24–25, §3.2 (PAPER_NOTES_A §1.3)",
+           say="""# Figure 4 (left)
+- Accuracy against generation budget. Red is majority vote, the lowest.
+- Purple and green are best-of-N with an outcome and a step verifier; blue and orange choose the strategy per question.
+- The adaptive curves reach the same accuracy with about a quarter of the budget.
+# what the paper reports (MATH)
+- Adaptive search matches plain best-of-N with up to four times less compute.
+- Against a 14-times larger model at the same compute, it wins on easy and medium questions — by 21.6 and 16.7 percent — and only 5.4 on hard ones.
+- On the hardest level, nothing helps much.
+# what matters
+- Spending compute where the question needs it, and a verifier that scores every step.
+# limits
+- Estimating difficulty used two thousand samples per question, which is not counted.""",
+           look="Figure: red (majority) at the bottom vs blue/orange (compute-optimal) at the top; then the 14× row.")),
+
+ "wang": dict(
+  steps=["few-shot chain-of-thought prompt; nothing is trained",
+         "sample m = 40 reasoning paths (T = 0.5–0.7; PaLM: T = 0.7, top-k 40)",
+         "parse each path's final answer",
+         "return the most frequent answer (majority vote); weighted variants use the path's length-normalised probability"],
+  step_say=["Step one: a few worked examples in the prompt, nothing trained.",
+            "Step two: sample forty reasoning paths.",
+            "Step three: read off each path's final answer.",
+            "Step four: return the answer that appears most often."],
+  res=dict(title="Self-consistency (Wang et al. 2023) — results", fig="wang_res_fig2.png",
+           figcap="Figure 2 from Wang et al. 2023 (p.6): accuracy vs number of sampled paths (LaMDA-137B; blue = self-consistency, orange = greedy)",
+           tlabel="PaLM-540B, greedy chain of thought → self-consistency", head=["benchmark", "greedy", "majority vote", "gain"],
+           rows=[["GSM8K", "56.5", "74.4", "+17.9"], ["AQuA", "35.8", "48.3", "+12.5"], ["SVAMP", "79.0", "86.6", "+7.6"],
+                 ["StrategyQA", "75.3", "81.6", "+6.3"], ["ARC-challenge", "85.2", "88.7", "+3.5"]],
+           cards=[("what matters", "how answers are combined (Table 1): majority vote 74.4 ≈ normalised weighted sum 74.1; unnormalised weighting 56.3 — the model's probabilities are poorly calibrated"),
+                  ("limits", "needs answers that repeat exactly; ranking by the model's own likelihood gains much less (Fig. 3)")],
+           src="Wang et al. arXiv:2203.11171 (ICLR 2023): Fig. 2 p.6, Tables 1–3 p.3–5, Fig. 3 p.7 (PAPER_NOTES_DE E1)",
+           say="""# Figure 2 (top)
+- Each panel: accuracy as the number of sampled paths grows. Orange flat line is greedy; blue climbs with more paths and then levels off.
+# PaLM-540B, greedy chain of thought → self-consistency
+- On grade-school math, 56.5 becomes 74.4 — almost 18 points.
+- Smaller gains on commonsense sets, like 3.5 on ARC.
+# what matters
+- How the answers are combined: plain counting works; weighting by the model's own probabilities without normalising fails, 56.3.
+# limits
+- It only works when correct answers repeat exactly, which open medical answers rarely do.""",
+           look="Figure: the blue curves rising above the flat orange greedy lines; then the gains column.")),
+
+ "usc": dict(
+  steps=["sample 8 responses (T = 0.6 for PaLM 2-L, 1.0 for gpt-3.5-turbo)",
+         "concatenate them into one prompt",
+         "ask the same LLM: “Select the most consistent response based on majority consensus”",
+         "return the response it names — one extra call; nothing trained"],
+  step_say=["Step one: sample eight responses.", "Step two: paste them all into one prompt.",
+            "Step three: ask the same model which response is most consistent with the others.",
+            "Step four: return the one it names. One extra model call, nothing trained."],
+  res=dict(title="USC (Chen et al. 2023) — results", fig="usc_res_fig3.png",
+           figcap="Figure 3 from Chen et al. 2023 (p.7): USC accuracy vs number of samples k",
+           tlabel="PaLM 2-L (Tables 1, 4, 7)", head=["benchmark", "greedy", "majority vote", "USC", "oracle of 8"],
+           rows=[["GSM8K", "85.7", "90.4", "90.2", "96.2"], ["MATH", "30.8", "37.9", "37.4", "57.2"],
+                 ["TruthfulQA (GPT-judge)", "62.1", "—", "67.7", "93.8"]],
+           cards=[("what matters", "it works where exact voting cannot (TruthfulQA, summaries) and matches voting where voting works"),
+                  ("limits", "GSM8K accuracy falls at 16 samples (89.2, −1.4 vs voting); far below the oracle of the same samples")],
+           src="Chen et al. arXiv:2311.17311: Fig. 3 p.7, Table 1 p.5, Table 4 p.6, Table 7 p.13, Table 11 p.14 (PAPER_NOTES_DE E2)",
+           say="""# Figure 3 (left)
+- Left: open-ended tasks, flat to slightly rising with more samples. Right: on math, the bottom numbers are USC minus voting — near zero, and negative at 16.
+# PaLM 2-L (Tables 1, 4, 7)
+- On math USC equals majority vote, 90.2 versus 90.4.
+- On TruthfulQA, where voting cannot be used, it lifts 62.1 to 67.7.
+- But the best of the same eight samples is 96.2 and 93.8 — so a lot of selection is left on the table.
+# what matters
+- It extends voting to free text.
+# limits
+- More samples can hurt, and it stays far below the oracle.""",
+           look="Figure: the right panel's bracketed differences to voting; then the oracle column.")),
+
+ "qprobe": dict(
+  steps=["sample k = 48 programs from frozen Code-LLaMA-7B (T = 0.8, top-p 0.95)",
+         "embed prompt + completion with layer 26 of the same model",
+         "score each with a linear probe (4,096 weights + bias)",
+         "train on unit-test success with MSE, cross-entropy or a within-prompt policy-gradient loss (Adam, lr 5e-5, 150 epochs)",
+         "pick by sampling from softmax(score / β); β → 0 is the argmax (best-of-k)"],
+  step_say=["Step one: sample 48 programs from a frozen code model.",
+            "Step two: take one embedding per program from a middle layer.",
+            "Step three: a linear probe gives each program a score.",
+            "Step four: train it on whether the program passes its tests — they try three losses.",
+            "Step five: choose a program by its score; at zero temperature that is simply the top score."],
+  res=dict(title="Q-Probe (Li et al. 2024) — results", fig=None,
+           tlabel="Table 1 (MBPP, code) and Table 3 (GSM8K, math): success with one answer", head=["method", "MBPP", "GSM8K"],
+           rows=[["one sample (pass@1)", "0.29", "0.25"], ["greedy", "0.38", "0.29"], ["prompted reward model", "0.31", "—"],
+                 ["fine-tuned reward model (LoRA)", "0.34", "—"], ["Q-probe, MSE loss", "0.38", "—"], ["Q-probe, cross-entropy", "0.40", "0.43"],
+                 ["<b>Q-probe, policy-gradient loss</b>", "<b>0.46</b>", "<b>0.45</b>"], ["skyline: any of 48 correct", "0.76", "0.80"]],
+           cards=[("what matters", "the loss: within-prompt policy gradient 0.46 &gt; cross-entropy 0.40 &gt; MSE 0.38 — pointwise losses spend capacity on “which prompts are hard” (Fig. 4)"),
+                  ("also", "preferences, GPT-4 win rate: base 37.86, DPO 44.97, KTO 51.46, Q-probe 50.10, KTO + Q-probe 55.01 (Table 4)"),
+                  ("limits", "2–3-layer MLP probes overfit on preference data (§7.2); pointwise losses degrade slightly as k grows")],
+           src="Li et al. arXiv:2402.14688 (ICML 2024): Table 1 p.6, Table 3 p.7, Table 4 p.8, Fig. 4 p.7, §7.2 p.9 (PAPER_NOTES_BC C3)",
+           say="""# Table 1 (MBPP, code) and Table 3 (GSM8K, math): success with one answer
+- One random sample solves 29 percent of MBPP; greedy 38 percent.
+- Off-the-shelf reward models do worse than greedy here.
+- The probe with the policy-gradient loss reaches 0.46, and 0.45 on math.
+- Any of the 48 samples would be right 76 percent of the time — the ceiling.
+# what matters
+- The loss. Scoring each program on its own — the kind of loss we use — gives 0.40; comparing programs within a question gives 0.46.
+# also
+- On preference data a probe alone nearly matches KTO, and adds to it.
+# limits
+- Deeper probes overfit on their preference data.""",
+           look="Table: greedy row, then the three Q-probe rows rising to the bold one; skyline at the bottom.")),
+
+ "swift": dict(
+  steps=["sample N paths per problem (T = 1.0, top-p 0.9, ≤ 1,024 tokens; N = 4–64)",
+         "at every answer token, concatenate the hidden states of all layers (L × d numbers)",
+         "one linear map → a token reward r<sub>t</sub> and a gate g<sub>t</sub> = σ(·)",
+         "answer reward R = Σ g<sub>t</sub>r<sub>t</sub> / Σ g<sub>t</sub> (gate-weighted mean over tokens)",
+         "train with BCE on answer correctness (6,000 problems × 8 paths, AdamW, early stopping); pick argmax R"],
+  step_say=["Step one: sample up to 64 solutions per problem.",
+            "Step two: at every token, stack the hidden states of all layers into one long vector.",
+            "Step three: one linear layer turns it into a token reward and a gate between zero and one.",
+            "Step four: the answer's reward is the gate-weighted average of its token rewards.",
+            "Step five: train with binary cross-entropy on whether the answer is right, and pick the highest reward."],
+  res=dict(title="SWIFT (Guo et al. 2026) — results", fig="swift_res_fig2.png",
+           figcap="Figure 2 from Guo et al. 2026 (p.3): per-layer cross-validated accuracy of predicting correctness from mean-pooled states, Llama-3.1-8B",
+           tlabel="MATH, averaged over models and N (Table 1) and ablations (Tables 7, 8)", head=["comparison", "score"],
+           rows=[["SWIFT vs strongest reward model (Skywork-Llama3.1-8B) vs EurusRM-7B", "57.5 vs 52.9 vs 51.0"],
+                 ["abstract's “12.7% higher” = relative: 57.5 / 51.0", "1.127 (derived)"],
+                 ["loss: BCE · DPO · hinge · InfoNCA · NCA", "57.5 · 57.0 · 56.8 · 55.1 · 54.4"],
+                 ["with vs without the token gate", "57.5 vs 54.8"],
+                 ["GSM8K average: SWIFT vs fine-tuned Eurus", "89.0 vs 88.4"]],
+           cards=[("what matters", "the learned gate (+2.7); later layers (first 4 layers clearly worse than the last 4, Table 10)"),
+                  ("limits", "no majority-vote and no greedy baseline; text only")],
+           src="Guo et al. arXiv:2505.12225 (KDD 2026): Fig. 2 p.3, Table 1 p.5, Tables 7–8 p.17, Table 10 p.16 (PAPER_NOTES_BC C2)",
+           say="""# Figure 2 (left)
+- Each bar is one layer: how well a simple classifier on that layer's averaged states predicts whether the answer is right — about 80 percent at every layer.
+- So the signal is already in the hidden states.
+# MATH, averaged over models and N (Table 1) and ablations (Tables 7, 8)
+- SWIFT scores 57.5, ahead of the best trained reward model at 52.9.
+- The abstract's 12.7 percent is relative to the 51.0 baseline, not points.
+- Binary cross-entropy was the best of five losses.
+- Removing the gate costs 2.7 points.
+- On grade-school math it essentially ties a fine-tuned reward model.
+# what matters
+- The gate, and using later layers.
+# limits
+- No majority-vote or greedy baseline is reported.""",
+           look="Figure: the flat ~0.8 bars across layers; then the gate row in the table.")),
+
+ "hsrm": dict(
+  steps=["sample candidates from a frozen generator (T = 0.7, top-p 0.9; train pools N = 64, evaluation N = 8)",
+         "take final-layer hidden states at reasoning-step boundaries (the token before each line break, ≤ 100 steps)",
+         "reader: linear projection → 2-layer Transformer (d = 256, 4 heads) → mean → LayerNorm → linear score; 2.1–3.4 M parameters",
+         "train on cached states with a pairwise Bradley–Terry loss within each problem (all-right / all-wrong problems dropped); AdamW, lr 1e-4, 1,000 steps",
+         "return the highest-scored candidate; labels from a symbolic checker plus an LLM judge on unresolved cases"],
+  step_say=["Step one: sample candidates from a frozen model — 64 for training, 8 at test time.",
+            "Step two: keep the last layer's state at the end of every reasoning step.",
+            "Step three: a two-layer Transformer reads those states, averages them, and outputs one score — about two million parameters.",
+            "Step four: train it to rank right answers above wrong ones within each problem.",
+            "Step five: return the top-scored candidate."],
+  res=dict(title="HSRM (Li &amp; Zhu 2026) — results", fig="hsrm_res_fig4.png",
+           figcap="Figure 4 from Li &amp; Zhu 2026 (p.7): best-of-8 accuracy vs verification FLOPs per candidate, GSM8K",
+           tlabel="what the verifier reads (Table 1, GSM8K, Qwen3-1.7B) and main results (Table 3, Llama-3.1-8B)", head=["setting", "best-of-8", "AUROC"],
+           rows=[["text only", "82.23", "0.519"], ["last hidden state, last layer", "86.11", "0.691"],
+                 ["step states, top-4 layers (best)", "86.86", "0.724"], ["text + hidden states", "86.23", "0.707"],
+                 ["GSM8K: HSRM / 55M text verifier / oracle", "88.3 / 85.2 / 96.0", ""], ["MATH-500: HSRM / text / oracle", "56.8 / 52.3 / 87.1", ""],
+                 ["loss, GSM8K: Bradley–Terry / ListMLE / BCE", "85.93 / 84.59 / 83.91", ""]],
+           cards=[("what matters", "the input: hidden states 86.1 vs text 82.2; the reader barely matters — a mean-pooled MLP (0.40 M) ≈ the Transformer (Table 10)"),
+                  ("limits", "vs cheap scores (log-probability, entropy, length): wins 12 of 16 settings, by at most +2.4 points (Table 8); N 8 → 64 adds 0.0–1.2")],
+           src="Li &amp; Zhu arXiv:2608.30841: Fig. 4 p.7, Table 1 p.7, Table 3 p.9, Tables 8–10 p.14–15, Table 7 p.13 (PAPER_NOTES_BC C1)",
+           say="""# Figure 4 (left)
+- Accuracy against verification cost, log scale. Blue dots, HSRM, sit at the far left — the cheapest verifier.
+- The 7-billion step verifier, purple, is about five orders of magnitude more expensive for similar accuracy at the larger sizes.
+# what the verifier reads (Table 1, GSM8K, Qwen3-1.7B) and main results (Table 3, Llama-3.1-8B)
+- Reading the text alone gives 82.2; reading the hidden states gives 86.1 to 86.9.
+- Adding the text to the hidden states does not help.
+- With Llama 8B, 88.3 versus 85.2 for the text verifier; the oracle is 96.
+# what matters
+- What you read matters far more than the reader.
+# limits
+- Against cheap scores like the model's own log-probability the margins are small.""",
+           look="Figure: blue (HSRM) at the left vs purple (7B PRM) at the right; then the text-only vs hidden-state rows.")),
+
+ "case": dict(
+  steps=["sample 16–20 candidates per question (τ = 0.7, top-p 0.95)",
+         "read the residual-stream state at the <b>answer token</b> (option letter or final answer token), one teacher-forced pass",
+         "gate = standardise + ℓ2 logistic regression (C = 1.0), 5-fold cross-validation grouped by question",
+         "operating layer: the late layer with the best <b>within-question AUC</b>",
+         "pick the candidate with the highest gate score; compare with majority vote"],
+  step_say=["Step one: sample 16 to 20 answers per question.",
+            "Step two: read one hidden state, at the answer token.",
+            "Step three: a logistic regression scores each answer; cross-validation keeps each question's answers together.",
+            "Step four: choose the layer by within-question AUC — does the score order the answers of one question correctly.",
+            "Step five: pick the top-scored answer and compare it with voting."],
+  res=dict(title="CASE (Wang, Hong, Bagci 2026) — results", fig=None,
+           tlabel="what the paper reports", head=["finding", "number", "where"],
+           rows=[["LogiQA probe quality: random-split CV → grouped CV → within-question", "0.610 → 0.542 → 0.502", "§6.1, Fig. 2a"],
+                 ["OpenBioLLM-8B, medium-difficulty bin, CASE − vote: MedMCQA", "+19.1 [+11.1, +27.0]", "Table 1"],
+                 ["… MedQA / PubMedQA (closed-book)", "+11.9 [+0.6, +23.5] / +17.0", "Table 1"],
+                 ["general models, MedQA: Qwen2.5-7B / Llama-3-8B", "−4.4 / −4.2", "Table 1"],
+                 ["gain law: Δ = 100.8·AUC<sub>wq</sub> − 58.5 (in-sample r = 0.96; held-out r = 0.75)", "break-even AUC ≈ 0.60", "§6.4"],
+                 ["readouts: SWIFT-style pooled · CASE · LiLaVe-style trees", "+4.3 · +9.0 · +10.0", "§6.8"],
+                 ["within-question AUC: text TF-IDF vs hidden-state gate", "0.44 vs 0.70", "§6.8"]],
+           cards=[],
+           src="Wang, Hong, Bagci arXiv:2608.17124: HTML §3, §6.1, §6.4, §6.8, Tables 1, 3, 4; LiLaVe arXiv:2504.16760; ReProbe arXiv:2511.06209 (PAPER_NOTES_I G1–G3)",
+           say="""# what the paper reports
+- First, a warning: ordinary cross-validation says the probe is good, 0.61; measured within each question it is at chance, 0.50.
+- Where it works, it works a lot: on medium-difficulty medical exam questions, 19 points over voting.
+- But for general models on MedQA it loses about four points.
+- Their key result: the gain over voting is predicted by the within-question AUC; below about 0.6 you lose.
+- Reading hidden states beats a text classifier on the same labels, 0.70 versus 0.44.""",
+           look="Table: the 0.610 → 0.502 row first, then the +19.1 row, then the gain law.")),
+
+ "medside": dict(
+  steps=["a VLM answers the image question (6 models, 5 medical VQA sets)",
+         "the same VLM, in a fresh context, is prompted to judge its own answer: CORRECT / INCORRECT / UNCERTAIN",
+         "the true correctness comes from Gemini-2.5-Flash as a semantic judge",
+         "measure verifier error and agreement bias (false-positive rate, Bias, D-Skew) per task × model; mixed-effects models for coupling",
+         "variants: verification by a different model, a larger same-family verifier, a 4-turn feedback loop"],
+  step_say=["Step one: the model answers.",
+            "Step two: the same model, starting fresh, is asked whether its own answer is correct.",
+            "Step three: a separate strong model provides the true label.",
+            "Step four: they measure how often the self-check is wrong, and how often it says yes to a wrong answer.",
+            "Step five: they also try a different checker, a bigger one, and a multi-turn loop."],
+  res=dict(title="Verification Mirage (Jin et al. 2026) — results", fig="mirage_res_fig2.png",
+           figcap="Figure 2 from Jin et al. 2026 (p.7): verifier error vs false-positive rate, bias and skew; each marker a task × model",
+           tlabel="Lingshu as its own verifier (Tables 11–15)", head=["dataset", "verifier accuracy", "accepts wrong answers (FPR)"],
+           rows=[["MedXpertQA", "45.0", "62.8"], ["PathVQA", "51.0", "67.8"], ["PMC-VQA", "48.1", "66.1"], ["SLAKE", "77.0", "62.2"], ["VQA-RAD", "63.4", "72.5"]],
+           cards=[("what matters", "who verifies: a different model cuts false acceptance by ~12–20%; a larger same-family model does not (p = 0.782); "
+                                   "when the generator is wrong, verifier failure is 57× more likely"),
+                  ("limits", "prompted verifiers only — no selection and no trained verifier; Lingshu's size not stated")],
+           src="Jin et al. arXiv:2605.10850: Fig. 2 p.7, Tables 1, 11–15 (pp.24, 28–30), §4.3–4.6, App. B.4 (PAPER_NOTES_BC B2)",
+           say="""# Figure 2 (left)
+- Each marker is one model on one task type. Further right: the self-check is wrong more often; further up: it says yes to wrong answers more often.
+- Almost everything sits up and to the right — the mirage.
+# Lingshu as its own verifier (Tables 11–15)
+- Lingshu accepts 62 to 73 percent of its own wrong answers on every dataset.
+# what matters
+- Who checks: a different model helps somewhat; a bigger model of the same family does not.
+- When the answer is wrong, the check fails 57 times more often — the checker shares the model's blind spots.
+# limits
+- Only prompted checks are tested; no trained verifier and no selection.""",
+           look="Figure: markers crowding the upper right; then the FPR column.")),
+
+ "medprob": dict(
+  steps=["closed questions (yes/no or 4 options) from PathVQA, SLAKE, VQA-RAD; OmniMedVQA for a multi-class check",
+         "read the hidden state of the <b>last input token</b> at every layer — before any answer is written",
+         "per-layer multinomial logistic regression on standardised features (C by 5-fold CV), ≤ 1,000 training examples per dataset",
+         "choose the best layer on a validation split disjoint from the test set",
+         "compare with the model's own prompted answer (and option-likelihood scoring)"],
+  step_say=["Step one: closed questions, turned into multiple choice.",
+            "Step two: read the model's state at the last token of the question, before it answers.",
+            "Step three: a logistic regression predicts the option from that state.",
+            "Step four: pick the layer on a separate validation split.",
+            "Step five: compare with what the model itself answers."],
+  res=dict(title="MedProb (Nourbakhsh et al. 2026) — results", fig="medprob_res_fig5.png",
+           figcap="Figure 5 from Nourbakhsh et al. 2026 (p.7): probe accuracy by layer, Qwen2.5-VL-7B (dashed) and MedVLThinker-7B",
+           tlabel="what the paper reports", head=["finding", "number", "where"],
+           rows=[["probe − prompting, PathVQA: LLaVA-V0-7B / Llama-3.2-11B / Qwen3-VL-8B", "+35.0 / +26.4 / +27.2", "Table 10"],
+                 ["option-likelihood scoring improves prompting; probing adds a further", "59.8 → 64.4; +14.2", "Table 9"],
+                 ["images shuffled", "−6.2 to −18.3 points", "Table 3"],
+                 ["linear vs MLP probe accuracy: Llama-3.2-11B / Qwen3-VL-8B", "81.3 vs 80.9 / 81.4 vs 81.6", "App. L, Table 21"]],
+           cards=[("what matters", "the image (shuffling it costs 6–18 points); medical fine-tuning does not reliably add decodable signal (6 of 14 pairs favour the general model)"),
+                  ("limits", "probes are domain-locked across datasets (Table 11); closed questions only, except App. H")],
+           src="Nourbakhsh et al. arXiv:2609.04336: Fig. 5 p.7, Tables 2, 3, 9, 10, 11, 21; App. H p.27 Table 14 (PAPER_NOTES_BC C4)",
+           say="""# Figure 5 (left)
+- Probe accuracy at each layer: it rises through the network and peaks late — layer 28 for Qwen2.5-VL, 22 for MedVLThinker.
+# what the paper reports
+- Reading the state beats the model's own written answer by 26 to 35 points on PathVQA for three models.
+- Even scoring the options by likelihood leaves 14 points on the table.
+- Shuffling the images costs 6 to 18 points, so the signal uses the image.
+- A linear probe does as well as an MLP in their setting.
+# what matters
+- The image matters, and medical fine-tuning does not consistently help.
+# limits
+- A probe trained on one dataset does poorly on another.""",
+           look="Figure: the curves rising toward the late layers; then the probe − prompting row.")),
+
+ "dualread": dict(
+  steps=["train an actor VLM with GRPO on SLAKE-train (group size 8), then freeze it",
+         "replay its greedy answer with teacher forcing",
+         "read final-layer states: the last prompt token (MLP 256 → 128, class-weighted BCE) and the closing answer token (linear head); "
+         "a visual branch uses the answer-token mean to pool image-token states",
+         "temperature-scale each branch and average their log-odds into one confidence",
+         "readers fit on image-disjoint partitions of SLAKE-train"],
+  step_say=["Step one: train a small medical VLM with reinforcement learning, then freeze it.",
+            "Step two: replay its greedy answer with teacher forcing — the same re-read as ours.",
+            "Step three: small readers look at the state before the answer and at the answer's last token; a third branch looks at the image tokens.",
+            "Step four: calibrate each and average them into one confidence.",
+            "Step five: training splits keep each image on one side."],
+  res=dict(title="DualRead (Xie et al. 2026) — results", fig=None,
+           tlabel="AUROC of the confidence (Tables 1, 3)", head=["setting", "DualRead", "best baseline"],
+           rows=[["Qwen3-VL-2B, SLAKE (in distribution)", "0.952", "SAPLMA 0.942 · BICR 0.934"],
+                 ["Qwen3-VL-2B, average over 6 other datasets", "0.666", ""],
+                 ["MedGemma1.5-4B: SLAKE / other datasets", "0.947 / 0.647", ""],
+                 ["Qwen3-VL-2B, VQA-RAD (out of distribution)", "0.728", "SC@8 0.765 · semantic uncertainty 0.766"]],
+           cards=[("what matters", "inside its training distribution, reading internal states beats the baselines"),
+                  ("limits", "a large drop on new datasets — sampling-based scores beat it on VQA-RAD; it scores one answer and never changes it, so accuracy is unchanged by design")],
+           src="Xie et al. arXiv:2609.06419: Tables 1, 3 (PAPER_NOTES_I G4)",
+           say="""# AUROC of the confidence (Tables 1, 3)
+- On SLAKE, the dataset it trained on, its confidence separates right from wrong very well: 0.952.
+- On six other datasets it falls to 0.666 on average.
+- On VQA-RAD, plain sampling-agreement scores do better, 0.765 versus 0.728.
+# what matters
+- Internal states carry the signal in distribution.
+# limits
+- It does not travel well to new datasets, and it never changes the answer.""",
+           look="Table: 0.952 vs 0.666 — the in- vs out-of-distribution gap.")),
+
+ "wed": dict(
+  steps=["sample until 8 distinct candidates or 16 draws (T ∈ {0.5, 1.0}); strip filler; merge synonyms (SapBERT)",
+         "score each candidate with the same VLM, teacher-forced: as <i>generator</i> (likelihood under a “correct” vs “incorrect” framing) and as <i>verifier</i> (P(correct | image, question, candidate))",
+         "generator and verifier update toward each other with no-regret steps (λ = η = 0.4) — arithmetic on small tables, no further VLM calls",
+         "stop when the Wasserstein-1 distance between their distributions (SapBERT distances) is below δ = 0.2",
+         "return the generator's top candidate under the “correct” signal (authors' code)"],
+  step_say=["Step one: sample at temperatures 0.5 and 1.0 until there are eight different answers — at most sixteen draws — merging synonyms.",
+            "Step two: the same model scores every candidate twice — once as the writer, once as a checker.",
+            "Step three: the two score lists are nudged toward each other, round by round, without calling the model again.",
+            "Step four: stop when they agree, measured so that synonyms count as agreement.",
+            "Step five: return the writer's top candidate."],
+  res=dict(title="WED (Hagen et al. 2026) — results", fig=None,
+           tlabel="gain over greedy, judge accuracy, points (Table 1)", head=["model", "VQA-RAD", "PathVQA"],
+           rows=[["Qwen3-VL-2B", "+3.5", "+2.2"], ["Qwen3-VL-4B", "+3.8", "+3.2"], ["Qwen3-VL-8B", "<b>−1.2</b>", "+1.2"],
+                 ["Gemma-3-4B", "+2.3", "+5.0"], ["MedGemma-4B", "+2.7", "+2.0"]],
+           cards=[("what matters", "the game, not the stopping rule: the Wasserstein rule matches classic BDG accuracy and cuts iterations ~20% (20.17 vs 25.22)"),
+                  ("limits", "gains shrink with model size; the verifier alone sometimes ties or beats it (Qwen-4B PathVQA 13.33 vs 11.14); PathVQA judge accuracy is low (greedy 4.98–23.88)"),
+                  ("on our pools", "we ran its code on our candidates — Part VI")],
+           src="Hagen et al. arXiv:2605.18313: Table 1 p.8, Table 3 p.8, p.7, p.9 (PAPER_NOTES_DE E4)",
+           say="""# gain over greedy, judge accuracy, points (Table 1)
+- Small gains for small models: two to five points.
+- For the largest, Qwen3-VL-8B on VQA-RAD, it is below greedy.
+# what matters
+- The paper's own stopping rule mostly saves iterations; accuracy matches the original game.
+# limits
+- The checker role alone sometimes does as well.
+# on our pools
+- Lingshu-7B is at the top of their size range, which matters for the head-to-head in part six.""",
+           look="Table: the bold −1.2 for the largest model; then the limits card.")),
+
+ "boe": dict(
+  steps=["sample K = 16 answers (Qwen3-VL-30B-A3B, T = 1.1); the pool stays fixed",
+         "start from answer-frequency scores (the majority vote's ranking)",
+         "break candidates into checkable claims (modality, anatomy, finding): a signed candidate–claim graph",
+         "choose claims to check by expected value per cost (budget C = 16; costs 1 / 4 / 8); a 235B judge checks them",
+         "update each candidate's score with the evidence and return the maximum"],
+  step_say=["Step one: sample sixteen answers and keep them fixed.",
+            "Step two: start from how often each answer appears.",
+            "Step three: split the answers into small checkable claims — modality, anatomy, finding.",
+            "Step four: decide which claims are worth checking under a budget; a very large judge checks them.",
+            "Step five: update the scores and return the best answer."],
+  res=dict(title="Best-of-Evidence (Zhang et al. 2026) — results", fig="boe_res_fig3.png",
+           figcap="Figure 3 from Zhang et al. 2026 (p.8): rescue rate on majority-wrong questions (left) and full-set accuracy (right) at C = 16",
+           tlabel="BoE − majority vote, points [95% CI] (Table 2) and pool coverage (Table 1)", head=["dataset", "BoE − vote", "oracle@16"],
+           rows=[["VQA-Med (training partition)", "+0.26 [−0.47, +0.99]", "82.1%"], ["PathVQA open", "+0.43 [+0.05, +0.81]", "61.5%"],
+                 ["PMC-VQA (options hidden)", "+0.58 [+0.19, +0.97]", "65.1%"], ["MedXpertQA-MM", "+0.40 [−0.15, +0.95]", "64.7%"]],
+           cards=[("what matters", "choosing which evidence to buy: VQA-Med +1.11 [+0.43, +1.80] over random claims; coverage caps it (MedXpertQA: 627 of 1,333 majority failures have a correct candidate)"),
+                  ("limits", "weights calibrated in-sample (authors: cross-fitting needed); “exploratory and uncorrected”; no greedy baseline")],
+           src="Zhang et al. arXiv:2607.20950: Fig. 3 p.8, Table 1 p.7, Table 2 p.9, p.9, App. B.4 p.26 (PAPER_NOTES_BC B3)",
+           say="""# Figure 3 (left)
+- Left: how often each method rescues a question where majority vote was wrong — a few percent.
+- Right: full-set accuracy — the bars are almost the same height.
+# BoE − majority vote, points [95% CI] (Table 2) and pool coverage (Table 1)
+- Gains are under one point; two of the four intervals include zero.
+- Even though a correct answer is in the pool 62 to 82 percent of the time.
+# what matters
+- Choosing which claims to check beats checking random claims.
+# limits
+- Its weights were fitted on the same data it reports on — the authors say cross-fitting would be needed.""",
+           look="Figure: right panel, nearly equal bars; then the BoE − vote column.")),
+}
+
+
+def _groups(say):
+    """split a titled-bullet `say` into [(heading, [lines])]."""
+    out = []
+    for line in say.strip().split("\n"):
+        if line.lstrip().startswith("# "):
+            out.append([line.lstrip()[2:].strip(), []])
+        elif out:
+            out[-1][1].append(line)
+    return out
+
+
+def _join(groups):
+    return "\n".join("# " + h + "\n" + "\n".join(ls) for h, ls in groups)
+
+
 def kpi(label, val, sub, tone=""):
     return f'<div class="kpi"><span class="l">{label}</span><span class="big {tone}">{val}</span><span class="s">{sub}</span></div>'
 
@@ -651,16 +1132,80 @@ def build(d):
         return ('<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 30px">'
                 + facts(rows[:half]) + facts(rows[half:]) + '</div>')
 
+    def steps_html(steps):
+        lab = ("font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;"
+               "color:var(--indigo-d);font-weight:600;margin-bottom:6px")
+        lis = "".join(f'<li style="margin:0 0 6px 0;padding-left:2px">{s}</li>' for s in steps)
+        return (f'<div><div style="{lab}">method, step by step</div>'
+                f'<ol style="margin:0;padding-left:22px;font-size:15px;line-height:1.38;color:#2b3045">{lis}</ol></div>')
+
+    def card(label, text):
+        tone = {"what matters": "g", "supports us": "g", "limits": "w", "against us": "r", "result": "t", "our gap": "w"}.get(label, "")
+        return f'<div class="term {tone}"><b class="k">{label}</b><span>{text}</span></div>'
+
+    def results_slide(sid, r, moved_rows, moved_say):
+        tab = ('<table class="d sm"><tr>' + "".join(f"<th>{h}</th>" for h in r["head"]) + "</tr>"
+               + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>" for row in r["rows"]) + "</table>")
+        tl = f'<div style="font-family:\'Roboto Slab\',serif;font-weight:600;font-size:16px;color:var(--indigo-d);margin:4px 0 6px">{r["tlabel"]}</div>'
+        left = ""
+        if r.get("fig"):
+            left += (f'<img src="{fig_b64(r["fig"])}" alt="{r["figcap"]}" style="max-width:100%;max-height:250px;display:block;margin:0 auto;'
+                     f'border:1px solid var(--line);border-radius:6px;background:#fff">'
+                     f'<div class="note" style="text-align:center;margin:5px 0 8px;font-size:12.5px">{r["figcap"]}, shown for illustration</div>')
+        left += tl + tab
+        head_rows = [x for x in moved_rows if x[0] == "result"]
+        rest_rows = [x for x in moved_rows if x[0] != "result"]
+        cards = "".join(card(k, v) for k, v in head_rows + list(r["cards"]) + rest_rows)
+        body = (f'<div class="row"><div class="col w3" style="gap:4px">{left}</div>'
+                f'<div class="col w2" style="gap:10px">{cards}</div></div>')
+        # script order follows the screen: left column groups, then the right-column cards top to bottom
+        g = _groups(r["say"])
+        labels = [k for k, _ in r["cards"]]
+        cut = next((i for i, (h, _) in enumerate(g) if h in labels), len(g))
+        res_g = [x for x in moved_say if x[0] == "result"]
+        other_g = [x for x in moved_say if x[0] != "result"]
+        say = _join(g[:cut] + res_g + g[cut:] + other_g)
+        d.add(sid + "_res", r["title"], body, "II · Key papers", src=r["src"], say=say, look=r["look"],
+              minutes=1.5, qa=list(r.get("qa", [])))
+
     def paper_slide(sid, title, fig, cap, rows, src, say, look, minutes=2.0, qa=(), wide=False, fig_h=430):
-        img = (f'<img src="{fig_b64(fig)}" alt="{cap}" style="max-width:100%;max-height:{fig_h}px;display:block;margin:0 auto;'
+        ex = EXTRA.get(sid)
+        moved_rows, moved_say = [], []
+        if ex:
+            moved_rows = [(k, v) for k, v in rows if k in MOVE]
+            rows = [(k, v) for k, v in rows if k not in MOVE and k != "method"]
+            g = _groups(say)
+            moved_say = [x for x in g if x[0] in MOVE]
+            kept = []
+            for h, ls in g:
+                if h in MOVE:
+                    continue
+                if h == "method":
+                    kept.append(["method, step by step", ["- " + b for b in ex["step_say"]]])
+                else:
+                    kept.append([h, ls])
+            if not any(h == "method, step by step" for h, _ in kept):   # no method group before: insert after benchmarks
+                at = next((i + 1 for i, (h, _) in enumerate(kept) if h == "benchmarks"), len(kept))
+                kept.insert(at, ["method, step by step", ["- " + b for b in ex["step_say"]]])
+            say = _join(kept)
+            look = look.split(";")[0] + "; then the numbered method steps."
+        img = (f'<img src="{fig_b64(fig)}" alt="{cap}" style="max-width:100%;max-height:{min(fig_h, 250) if (ex and wide) else fig_h}px;display:block;margin:0 auto;'
                f'border:1px solid var(--line);border-radius:6px;background:#fff">')
         capd = f'<div class="note" style="text-align:center;margin-top:6px;font-size:13px">{cap}, shown for illustration</div>'
-        if wide:
+        if ex and wide:
+            body = (f'<div>{img}{capd}</div><div class="row" style="margin-top:12px;gap:30px"><div class="col" style="flex:4">{facts(rows)}</div>'
+                    f'<div class="col" style="flex:5">{steps_html(ex["steps"])}</div></div>')
+        elif ex:
+            body = (f'<div class="row"><div class="col" style="flex:5;justify-content:center">{img}{capd}</div>'
+                    f'<div class="col" style="flex:6;gap:12px">{facts(rows)}{steps_html(ex["steps"])}</div></div>')
+        elif wide:
             body = f'<div>{img}{capd}</div><div style="margin-top:16px">{facts(rows, cols=2)}</div>'
         else:
             body = (f'<div class="row"><div class="col w3" style="justify-content:center">{img}{capd}</div>'
                     f'<div class="col w2">{facts(rows)}</div></div>')
         d.add(sid, title, body, "II · Key papers", src=src, say=say, look=look, minutes=minutes, qa=list(qa))
+        if ex:
+            results_slide(sid, ex["res"], moved_rows, moved_say)
 
     # ---- Cobbe 2021
     paper_slide("cobbe", "Trained verifiers: Cobbe et al. 2021 (OpenAI)", "cobbe_fig4.png",
@@ -781,7 +1326,7 @@ def build(d):
                  ("method", "sample m = 40 reasoning paths; majority vote over the final answers; needs answers that match exactly"),
                  ("benchmarks", "GSM8K, SVAMP, AQuA, AddSub, MultiArith, ASDiv, CSQA, StrategyQA, ARC"),
                  ("result", "PaLM-540B, GSM8K: 56.5 → 74.4 (Table 2, p.5)"),
-                 ("for us", "the standard training-free baseline; on our open answers it loses to greedy (next slides)")],
+                 ("for us", "the standard training-free baseline; on our open answers it loses to greedy (voting chart, a few slides on)")],
                 "Wang et al., ICLR 2023, arXiv:2203.11171: Fig. 1 p.2, p.3–5, Table 2 p.5 (PAPER_NOTES_DE E1)",
                 """# Majority vote: self-consistency (Wang et al. 2023)
 - The simplest selector is majority vote, which the field calls self-consistency.
