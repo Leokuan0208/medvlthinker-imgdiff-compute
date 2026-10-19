@@ -48,7 +48,7 @@ comparison with a published method. I will show you exactly where it works and w
 - *Is the +0.08 partly the probe learning the training judge's taste?* — Partly, yes. In this project a newly trained verifier gains about 0.006–0.009 under its training judge from paraphrase drift alone (coadapt_verifier_T04_2026-08-14.json). That is why the cross-family judge, never used in training, is quoted first: +0.0710 [+0.0622, +0.0797]. The gap to +0.0798 is 0.0089, the size of that drift. In a September 2×2 each probe scored best under its own training judge and the cross-judge gain was +0.0565 to +0.0658 (judge_2x2_2026-09-20.json).
 - *Does the exact-match gain generalise beyond these eight benchmarks?* — Not shown. It is significant with images resampled within these eight benchmarks. Treating the benchmarks themselves as the sampling unit (t-interval over the 8 deltas, df 7) the judge gains stay positive — training judge [+0.0277, +0.1319], cross-family [+0.0248, +0.1171] — but lenient exact match becomes a tie, [−0.0234, +0.0475] (numbers_review_part1.json (derived from final_eval_FINAL_cap320_T07.json by review/scr/w1_micro.py)). Dropping OmniMedVQA or RadImageNet alone also makes it a tie (review/rr_lobo.py).
 - *Macro vs micro — what is the question-weighted gain?* — Weighting each question equally instead of each benchmark: training judge +0.1097, cross-family +0.0985, lenient EM +0.0098 (no CI computed; numbers_review_part1.json (derived from final_eval_FINAL_cap320_T07.json by review/scr/w1_micro.py)). Macro is reported so the 10,121-question Kvasir set cannot dominate.
-- *Would it work on a new benchmark you have no labels for?* — Not shown, and probably not as well. The claim is about new questions and images from these 8 benchmarks, each of which contributed labelled training questions. Leaving a benchmark out of training gave no benefit over a probe trained on 4 general domains (pooling slide, Part IV); a new benchmark needs some labelled questions.
+- *Would it work on a new benchmark you have no labels for?* — Not shown, and probably not as well. The claim is about new questions and images from these 8 benchmarks, each of which contributed labelled training questions. Leaving a benchmark out of training gave no benefit over a probe trained on the four-domain set (the PathVQA, SLAKE and VQA-RAD training splits plus Kvasir-VQA) (pooling slide, Part IV); a new benchmark needs some labelled questions.
 - *Is 'exact match' strict?* — No — it is lenient: after removing case, punctuation and a few stop-words, an answer counts as correct if it equals the gold or either string contains the other (em_score in src/audit_2026_09_18/em_rescore_pooled_probe.py, verbatim from run_openvqa.py). Strict equality has not been computed for the final method — not measured.
 - *Why compare against greedy and not against a bigger model?* — Greedy is what you get from the same model with no extra machinery, so the gain is attributable to the selector alone. Against Lingshu-32B greedy we only have an older, four-benchmark comparison: under the judge one loss (VQA-RAD), two ties, one win; under exact match two losses — so we do not claim to beat the 32B (audit_stats_baselines_2026-09-20.json).
 - *What is 'macro'?* — Each benchmark counts one eighth regardless of size, so the 10,121-question Kvasir set cannot dominate the average.
@@ -513,7 +513,7 @@ so exposure affects both arms. The gain is largest on the four benchmarks that a
 is reassuring, but those four also differ in other ways, and one of them, OmniMedVQA, has reported text exposure for the base model,
 so I do not claim this proves anything; the effect of exposure on our gain is not measured.
 The probe's training data is the other image half of every set we score, including three closed-question sets and the VQA-Med 2019
-test, plus about six thousand questions from four extra domains.
+test, plus about six thousand questions from the training splits of PathVQA, SLAKE and VQA-RAD and from Kvasir-VQA.
 
 **If asked:**
 
@@ -617,7 +617,7 @@ counts about 3.8 times. It uses every answer, including questions where all answ
 have to throw away. The optimiser is AdamW with learning rate ten to the minus three and weight decay ten to the minus two, for 30
 epochs at batch size 256, with no early stopping. Eight random seeds for each of the three layers gives the 24 probes.
 The training data is the other half of the images of all eight benchmarks and of the closed-question comparison sets, plus about six
-thousand questions from four extra domains — about 116 thousand answer rows per fold. Two consequences: the probe learns the training
+thousand questions from the PathVQA, SLAKE and VQA-RAD training splits and Kvasir-VQA — about 116 thousand answer rows per fold. Two consequences: the probe learns the training
 judge's idea of correct, which is why we check with a second judge; and it needs labelled data from each benchmark, which I quantify
 later.
 
@@ -695,7 +695,7 @@ independent; resampling individual questions would make the intervals too narrow
 What it costs. Sampling eight answers with a shared prefill costs 2.7 times the time and 3.6 times the energy of greedy,
 measured on short VQA-RAD answers. The probe itself is about 22 million multiply-adds per answer — negligible. The honest caveat is the
 re-reading pass: as we ran it, every distinct answer was re-read at the one-megapixel cap, and that pass is not small — about 6.9 greedy
-passes' worth of arithmetic per question, more than the sampling itself. That figure comes from a different measurement setup, so I do
+passes' worth of arithmetic per question. That figure comes from a different measurement setup, so I do
 not add the two into one total. By design those states can be captured while generating, at no extra cost, and we showed for an earlier
 probe that this gives the same picks; the re-read could also stop at block 22. We have not measured the whole system end to end.
 
@@ -728,8 +728,8 @@ This table is the summary of part four; the next slides give the evidence for ea
 One: almost every design choice was made on one half of the images, half A. Half B played no part in those choices, and on half B
 alone the method gains plus 0.085 under the judge and plus 0.017 in exact match, both significant — so the choices did not inflate the
 headline. Two: most verdicts are measured with the training judge, which also produced the labels, so I show exact match next to it
-wherever it exists. Training a selector holds under both metrics: it beats every training-free way of choosing, it ties a much larger
-untrained verifier, and against the published selector WED it wins on two benchmarks and ties on the third. Some choices are ties
+wherever it exists. Training a selector holds under both metrics: it beats majority vote, the answer prior, random and longest pick, and self-verification;
+it ties a much larger untrained verifier; and against the published selector WED it wins on two benchmarks and ties on the third. Likelihood ranking and USC were not run. Some choices are ties
 where we picked the simpler option; the temperature is the one where the two metrics disagree. One small surprise in the label-source
 row: under exact match, a probe trained on the other judge's labels does a little better — a reminder that every judge has its own taste.
 
@@ -746,7 +746,7 @@ row: under exact match, a probe trained on the other judge's labels does a littl
 
 **Say:**
 
-Why train anything? Every untrained way of choosing among the samples fails. Majority vote loses to greedy. Random
+Why train anything? Every untrained way of choosing that we ran on these pools loses to greedy or to the probe. Majority vote loses to greedy. Random
 choice or the longest answer both lose. Asking Lingshu itself whether its answer is correct did worse than picking at random when we
 tried it.
 One baseline needs care: choosing the answer string that is most often right in training. Over all benchmarks it recovers only about
@@ -866,10 +866,10 @@ metric for another, so under our rule it was not adopted — but if exact match 
 **Say:**
 
 The single biggest improvement in the project was what the probe is trained on. In this run, a probe trained only on
-four general domains gains about 0.03; trained on the training halves of all eight benchmarks, about 0.07 — two and a half times as
+the four-domain set (the PathVQA, SLAKE and VQA-RAD training splits plus Kvasir-VQA) gains about 0.03; trained on the training halves of all eight benchmarks, about 0.07 — two and a half times as
 much, and four times in a later September re-run. The same jump happens on Qwen2.5-VL.
 But this comes with an honest limitation: if you leave a benchmark out of training, the probe does no better on it than the four-domain
-probe. So the claim is about new questions and images from benchmarks we have labels for: a new benchmark needs some labelled
+probe. On the four benchmarks that have no training split in that set the gap is stark: left out plus 0.003, pooled plus 0.099. So the claim is about new questions and images from benchmarks we have labels for: a new benchmark needs some labelled
 questions, although at inference the probe needs no dataset label. These numbers are measured with the training judge only, without
 intervals. The cost of a new benchmark is modest: with zero labels it gains plus 0.0196 overall in a three-seed re-run, five of eight
 benchmarks already gain and a sixth after 50 labels; and on the two hardest cases, RadImageNet and OmniMedVQA, about a hundred labelled
@@ -958,7 +958,7 @@ Two things to read carefully. The column "benchmarks above zero" counts positive
 under the judge, six of eight are significant wins and two are ties. And the last column uses only image half B. Half B played no part in
 the September choices — layers, probe size, loss — nor in the readout tie-break or the temperature decision; the October check that kept
 the cap320 image budget used both halves. The gains on half B are, if anything, slightly larger. Exact match gains much less than the
-judges, and per benchmark it loses on Kvasir and VQA-Med; I will explain why on the next slide.
+judges, and per benchmark it loses on Kvasir, GEMeX and VQA-Med; I will explain why on the next slide.
 
 **If asked:**
 
@@ -1176,7 +1176,7 @@ Finally, what we cannot claim, and what comes next.
 What the evidence does not support. First, the mechanism is not ours: probes on hidden states used as best-of-N
 verifiers already exist in text models, and MedProb showed one on a hundred medical questions. Second, it is not domain-general: every
 one of our eight benchmarks contributed labelled training questions, and a benchmark left out of training gains no more than a probe
-trained on four general domains. Third, it is judge-sensitive: the gains are much larger under the judges than under exact match, and the
+trained on the four-domain set. Third, it is judge-sensitive: the gains are much larger under the judges than under exact match, and the
 main judge is also where the training labels came from — which is why I lead with the cross-family judge. Exact match loses on Kvasir
 and VQA-Med. Fourth, no human has rated this method's answers. The earlier checks were an LLM adjudicator on SLAKE and VQA-RAD and a small
 hand-checked sample on PathVQA, all on older July outputs, and nothing on the other five benchmarks. Fifth, one model family: Lingshu and
@@ -1207,7 +1207,7 @@ How far do the statistics reach? Our main intervals resample images inside each 
 the gain is real on these eight benchmarks. A stricter question: if we drew a new benchmark of the same kind and labelled part of it for
 training, would the gain hold? Treating the eight benchmarks themselves as the sample, both judge gains stay positive, but the
 exact-match interval crosses zero. And that assumes each new benchmark comes with labelled training questions, as all eight of ours did;
-without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on four general domains. The
+without labels from the new benchmark, the leave-one-out result applies — no better than a probe trained on the four-domain set. The
 exact-match gain also depends on two benchmarks: drop either OmniMedVQA or RadImageNet and it becomes a tie.
 What our intervals hold fixed: the trained probes and the image split. Refitting the probes with other seeds or thread counts moves the
 macro by up to about 0.003; resampling the training set or the split was not measured. And they cluster by image, not by question template.
