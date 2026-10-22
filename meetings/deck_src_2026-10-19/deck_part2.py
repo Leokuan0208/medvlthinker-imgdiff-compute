@@ -184,7 +184,7 @@ $$\bar h_i^{(\ell)}=\frac{1}{|\mathcal A(y_i)|}\sum_{t\in\mathcal A(y_i)} h_t^{(
 - How we get these states: each distinct answer is fed back through the frozen model after the image and question — teacher forcing — one pass per answer.
 - Precisely: in our runs this re-reading used a higher image budget than generation — a one-megapixel cap, which our files call "full resolution", instead of 250 thousand pixels.
 - That is a difference between how we ran it and how it would be deployed.
-- The direct test — re-extracting these states at the generation budget — is running now.
+- The direct test — re-extracting these states at the generation budget and refitting — gave a tie in every metric: judge minus 0.0012, interval minus 0.0060 to plus 0.0033.
 - Indirect evidence: regenerating the samples at the one-megapixel cap, so generation and features matched, gave plus 0.0745 instead of plus 0.0790.
 - Matching did not help, but that test also changed the samples.""",
           qa=[("Why the answer tokens and not the last token or the question?", "Measured: mean over the answer span ≥ last token at every layer from 14 up; adding question or image token means adds ≤ +0.0018 (below the refit floor). See the feature-choice slide."),
@@ -328,7 +328,8 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
 - That is at roughly twice the generation cost.""",
           look="Three panels, left to right: the sample column grows, the 24-probe grid stays the same.",
           qa=[("Were the probes trained on 8-sample pools?", "Yes — but the probe is pointwise and ranks are divided by (n−1), so nothing in it depends on N. The N = 16 and N = 32 results above are measured, not assumed."),
-              ("What if you used one probe instead of 24?", "One layer instead of three: −0.0007 (head_final_stack_PVFIXED_2026-09-13.json, pooled_ens − pooled_singlelayer, September). Seeds: an August readout with 2 seeds gave selection efficiency 0.8120 vs 0.8283 with 8 (OPENTEXT_CORRECTIONS_2026-08-19.md §2) — but the same doc shows CPU thread count alone moves that number by up to 0.035, so it is indicative only. A single probe on the final recipe: not measured."),
+              ("What if you used one probe instead of 24?", "One layer instead of three: −0.0007 (head_final_stack_PVFIXED_2026-09-13.json, pooled_ens − pooled_singlelayer, September). Seeds: an August readout with 2 seeds gave selection efficiency 0.8120 vs 0.8283 with 8 (OPENTEXT_CORRECTIONS_2026-08-19.md §2) — but the same doc shows CPU thread count alone moves that number by up to 0.035, so it is indicative only. Measured since on the final probes (2026-10-22, every subset of the 24 re-scored, no refit; probe_count_sweep_T07_2026-10-22.json): 3 layers × 1 seed −0.0062 judge [−0.0100, −0.0023], a loss under both judges; × 2 seeds −0.0038, a loss; × 3 seeds (9 probes) −0.0025 [−0.0053, +0.0003], a tie, and every count from 9 to 21 ties in every metric. One layer with all 8 seeds: layer 22 −0.0054 (loss), layers 18 / 20 ties. So 24 is more than needed, and several layers matter more than several seeds."),
+              ("Why 24 and not 21 or 27?", "24 was not tuned: 3 layers × 8 seeds, the 8 inherited from the August selector. The sweep on the final probes (probe_count_sweep_T07_2026-10-22.json) shows 21 probes (7 seeds per layer) ties 24 (judge −0.0001), and so does anything down to 9 (3 per layer); below that it loses about 0.4–0.6 points under both judges. 27 was not tested, but the curve is flat from 9 upward."),
               ("Is N = 16 better in every metric?", "Under the training judge (+0.0984 vs +0.0798) and lenient EM (+0.0140 vs +0.0121), yes in point estimate. The cross-family number for 16-sample pools (+0.0674) is computed on incomplete MedGemma labels, so it is not a valid comparison yet (final_eval_FINAL_cap320_MIX_T07_16.json).")])
 
     # ---- evaluation protocol
@@ -800,7 +801,7 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
  <div class="col">
   <div class="term"><b class="k">cost</b><span>the 1-MP cap means 2.76× the vision tokens per question (4× on GEMeX)</span></div>
   <div class="term t"><b class="k">verdict</b><span>cap320: cheaper and not worse in both metrics — not claimed better. The earlier move to the 1-MP cap was reversed. Both image halves were used.</span></div>
-  <div class="term w"><b class="k">open detail</b><span>features were read at the 1-MP cap, answers generated at cap320; re-extraction at cap320 is running</span></div>
+  <div class="term w"><b class="k">open detail</b><span>features were read at the 1-MP cap, answers generated at cap320; re-extracted at cap320 since: judge −0.0012 [−0.0060, +0.0033] (tie)</span></div>
  </div>
 </div>""", "IV · Why", src="select_policy_cap320_vs_fullres_T07.json macro.{cap320,fullres}_minus_ref_greedy_{judge,em}; resolution_check_2026-10-15.json (7 cells, no radimagenet_open); image_geometry_all8_2026-10-15.json pooled_question_weighted (2.76×), GEMeX 303 → 1,237 tokens",
           minutes=1.0, look="The top table's first two rows; then the GEMeX row in red.",
@@ -815,5 +816,5 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
 - So the cheaper setting is not worse — we do not claim it is better, because we did not compute a paired interval.
 # open detail
 - One detail is still open: the probe's features were read at the one-megapixel cap.
-- An experiment re-reading everything at the generation budget is running.""",
+- Re-reading everything at the generation budget and refitting since gave a tie in every metric (judge minus 0.0012).""",
           qa=[("Why does a 1-MP cap hurt a 7.8-MP image that is downsized either way?", "Not explained by a measurement. At cap320 a GEMeX X-ray becomes about 303 image tokens on average; at the 1-MP cap about 1,237; at native resolution it would be about 9,092 (image_geometry_all8_2026-10-15.json benchmarks.gemex_open.mean_tokens). So neither setting is native resolution. The model's greedy accuracy is 4 points lower with the longer image sequence; why is not measured.")])

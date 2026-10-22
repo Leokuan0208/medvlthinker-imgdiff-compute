@@ -615,7 +615,7 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
  <div class="col">
   <div class="term"><b class="k">cost</b><span>the 1-MP cap means 2.76× the vision tokens per question (4× on GEMeX)</span></div>
   <div class="term t"><b class="k">verdict</b><span>cap320: cheaper and not worse in both metrics — not claimed better. The earlier move to the 1-MP cap was reversed. Both image halves were used.</span></div>
-  <div class="term w"><b class="k">open detail</b><span>features were read at the 1-MP cap, answers generated at cap320; re-extraction at cap320 is running</span></div>
+  <div class="term w"><b class="k">open detail</b><span>features were read at the 1-MP cap, answers generated at cap320; re-extracted at cap320 since: judge −0.0012 [−0.0060, +0.0033] (tie)</span></div>
  </div>
 </div></div></div><div class="foot"><div class="src">select_policy_cap320_vs_fullres_T07.json macro.{cap320,fullres}_minus_ref_greedy_{judge,em}; resolution_check_2026-10-15.json (7 cells, no radimagenet_open); image_geometry_all8_2026-10-15.json pooled_question_weighted (2.76×), GEMeX 303 → 1,237 tokens</div><div class="n">71</div></div></div></section>
 <section class="slide" id="s-p5" data-title=""><div class="divider" style="position:absolute;inset:0"><div class="num">PART V</div>
@@ -749,7 +749,7 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
 </table>
 <div class="term w" style="margin-top:14px"><b class="k">context, not a ranking</b><span>different generators, graders and N; each row is in its own units. Compare only rows with the same baseline. The one controlled comparison is the WED head-to-head.</span></div></div></div><div class="foot"><div class="src">BoE Table 2 p.9; WED p.5, Table 1 p.8; MedProb Table 14 p.27; Mirage Tables 11–15; ours final_eval_FINAL_cap320_T07.json and extra_numbers.json (probe − vote, paired image-clustered bootstrap)</div><div class="n">84</div></div></div></section>
 <section class="slide" id="s-p7" data-title=""><div class="divider" style="position:absolute;inset:0"><div class="num">PART VII</div>
-<h1>Limits, gaps, and next steps</h1><p>What the evidence does not support, what was never tested, and what is running.</p></div><div class="foot"><div class="src"></div><div class="n">85</div></div></section>
+<h1>Limits, gaps, and next steps</h1><p>What the evidence does not support, what was never tested, and what comes next.</p></div><div class="foot"><div class="src"></div><div class="n">85</div></div></section>
 <section class="slide" id="s-limits" data-title="What the evidence does not support"><div class="rail "></div><div class="frame"><div class="sec ">VII · Limits</div><h1 class="t">What the evidence does not support</h1><div class="body"><div class="fit">
 <div class="row">
  <div class="col">
@@ -783,7 +783,7 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
  </div>
  <div class="col">
   <h3 style="font-family:'Roboto Slab';font-size:17px;color:#283593;margin-bottom:8px">design axes not tested</h3>
-  <ul class="b sm"><li>ranking loss on the final recipe; learned (gated) pooling; LayerNorm in the probe; learning rate for BCE; number of seeds</li>
+  <ul class="b sm"><li>ranking loss on the final recipe; learned (gated) pooling; LayerNorm in the probe; learning rate for BCE</li>
   <li>per-question or per-modality temperature; adaptive N</li><li>temperature grid finer than 0.2 / 0.4 / 0.7 / 1.0; top-p, top-k with the probe</li></ul>
  </div>
  <div class="col">
@@ -796,8 +796,8 @@ $$\begin{aligned} r_i&=\frac1{24}\sum_{\ell,k}\frac{\operatorname{rank}_{\ell,k}
 <section class="slide" id="s-next" data-title="Next steps"><div class="rail "></div><div class="frame"><div class="sec ">VII · Limits</div><h1 class="t">Next steps</h1><div class="body"><div class="fit">
 <div class="row">
  <div class="col">
-  <div class="term t"><b class="k">running now</b><span>features re-extracted at cap320 (done); refit + cross-fitted evaluation running</span></div>
-  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools · probe-count sweep (1–8 seeds × 1 or 3 layers: why 24?)</span></div>
+  <div class="term t"><b class="k">done since: cap320 features</b><span>probes refit on states read at the generation cap: judge −0.0012 [−0.0060, +0.0033] (tie); every metric ties</span></div>
+  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools (probe-count sweep: done — 9 probes tie 24)</span></div>
   <div class="term"><b class="k">temperature without the dataset label</b><span>per-modality T · per-question T or N from the probe's scores</span></div>
  </div>
  <div class="col">

@@ -517,7 +517,7 @@ def build(d):
     # ================================================================== PART VII
     d.part = "VII · Limits"
     d.add("p7", "", """<div class="divider" style="position:absolute;inset:0"><div class="num">PART VII</div>
-<h1>Limits, gaps, and next steps</h1><p>What the evidence does not support, what was never tested, and what is running.</p></div>""",
+<h1>Limits, gaps, and next steps</h1><p>What the evidence does not support, what was never tested, and what comes next.</p></div>""",
           raw=True, minutes=0.2, say="# Limits, gaps, and next steps\n- Finally, what we cannot claim, and what comes next.")
 
     d.add("limits", "What the evidence does not support",
@@ -646,7 +646,7 @@ def build(d):
  </div>
  <div class="col">
   <h3 style="font-family:'Roboto Slab';font-size:17px;color:#283593;margin-bottom:8px">design axes not tested</h3>
-  <ul class="b sm"><li>ranking loss on the final recipe; learned (gated) pooling; LayerNorm in the probe; learning rate for BCE; number of seeds</li>
+  <ul class="b sm"><li>ranking loss on the final recipe; learned (gated) pooling; LayerNorm in the probe; learning rate for BCE</li>
   <li>per-question or per-modality temperature; adaptive N</li><li>temperature grid finer than 0.2 / 0.4 / 0.7 / 1.0; top-p, top-k with the probe</li></ul>
  </div>
  <div class="col">
@@ -676,8 +676,8 @@ def build(d):
           """
 <div class="row">
  <div class="col">
-  <div class="term t"><b class="k">running now</b><span>features re-extracted at cap320 (done); refit + cross-fitted evaluation running</span></div>
-  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools · probe-count sweep (1–8 seeds × 1 or 3 layers: why 24?)</span></div>
+  <div class="term t"><b class="k">done since: cap320 features</b><span>probes refit on states read at the generation cap: judge −0.0012 [−0.0060, +0.0033] (tie); every metric ties</span></div>
+  <div class="term"><b class="k">cheap, CPU-only</b><span>likelihood ranking on the 1-MP pools · within-question AUROC · control task · image-shuffle · judge κ on final pools (probe-count sweep: done — 9 probes tie 24)</span></div>
   <div class="term"><b class="k">temperature without the dataset label</b><span>per-modality T · per-question T or N from the probe's scores</span></div>
  </div>
  <div class="col">
@@ -686,11 +686,10 @@ def build(d):
   <div class="term"><b class="k">generality</b><span>a non-Qwen generator · capture states inside vLLM sampling</span></div>
  </div>
 </div>""", "VII · Limits", src="DESIGN_EVIDENCE.md §9; this deck's limits and gap slides; log-probs: src/labeling/run_openvqa.py cumlogprob_all (October 1-MP pools, RadImageNet missing)", minutes=1.5,
-          say="""# running now
-- One experiment is running now.
-- All features have been re-extracted at the same image budget the answers were generated at, cap320.
-- The probes are being refit and re-evaluated with the same protocol.
-- If it holds, the re-read no longer needs the higher-resolution pass, and the WED comparison becomes symmetric in resolution.
+          say="""# done since: cap320 features
+- All features were re-extracted at the image budget the answers were generated at, cap320, and the probes refit with the same protocol.
+- Result: a tie in every metric — judge minus 0.0012, interval minus 0.0060 to plus 0.0033.
+- So the higher-resolution re-read is not what produces the gain; what is still owed is capturing the states inside the sampling pass itself.
 # cheap, CPU-only
 - After that, the cheap experiments on the CPU.
 - First, ranking by the model's own likelihood, and likelihood plus probe.

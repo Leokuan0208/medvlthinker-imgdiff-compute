@@ -1822,7 +1822,7 @@ def build(d):
 - Our row has all of them except one honest asterisk, column D.
 - In our experiments we re-read each answer in a separate pass, so "no extra pass" is true by design, not yet as run.
 - For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left accuracy unchanged.
-- For the shipped probe, re-extracting the features at the generation resolution is running now.
+- For the shipped probe, re-extracting the features at the generation resolution and refitting ties in every metric (judge minus 0.0012).
 # contribution, stated narrowly
 - So the contribution is the evaluation, not the mechanism.
 - MedProb's appendix tried this on a hundred questions.

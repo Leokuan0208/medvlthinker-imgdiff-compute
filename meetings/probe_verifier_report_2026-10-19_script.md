@@ -1750,7 +1750,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 - Our row has all of them except one honest asterisk, column D.
 - In our experiments we re-read each answer in a separate pass, so "no extra pass" is true by design, not yet as run.
 - For an earlier probe, capturing the states inside generation changed 24 of 2,345 picks and left accuracy unchanged.
-- For the shipped probe, re-extracting the features at the generation resolution is running now.
+- For the shipped probe, re-extracting the features at the generation resolution and refitting ties in every metric (judge minus 0.0012).
 
 #### ▸ contribution, stated narrowly
 
@@ -1960,7 +1960,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 - How we get these states: each distinct answer is fed back through the frozen model after the image and question — teacher forcing — one pass per answer.
 - Precisely: in our runs this re-reading used a higher image budget than generation — a one-megapixel cap, which our files call "full resolution", instead of 250 thousand pixels.
 - That is a difference between how we ran it and how it would be deployed.
-- The direct test — re-extracting these states at the generation budget — is running now.
+- The direct test — re-extracting these states at the generation budget and refitting — gave a tie in every metric: judge minus 0.0012, interval minus 0.0060 to plus 0.0033.
 - Indirect evidence: regenerating the samples at the one-megapixel cap, so generation and features matched, gave plus 0.0745 instead of plus 0.0790.
 - Matching did not help, but that test also changed the samples.
 
@@ -2122,7 +2122,8 @@ Every number comes from a named artifact or paper; the source line at the bottom
 **If asked:**
 
 - *Were the probes trained on 8-sample pools?* — Yes — but the probe is pointwise and ranks are divided by (n−1), so nothing in it depends on N. The N = 16 and N = 32 results above are measured, not assumed.
-- *What if you used one probe instead of 24?* — One layer instead of three: −0.0007 (head_final_stack_PVFIXED_2026-09-13.json, pooled_ens − pooled_singlelayer, September). Seeds: an August readout with 2 seeds gave selection efficiency 0.8120 vs 0.8283 with 8 (OPENTEXT_CORRECTIONS_2026-08-19.md §2) — but the same doc shows CPU thread count alone moves that number by up to 0.035, so it is indicative only. A single probe on the final recipe: not measured.
+- *What if you used one probe instead of 24?* — One layer instead of three: −0.0007 (head_final_stack_PVFIXED_2026-09-13.json, pooled_ens − pooled_singlelayer, September). Seeds: an August readout with 2 seeds gave selection efficiency 0.8120 vs 0.8283 with 8 (OPENTEXT_CORRECTIONS_2026-08-19.md §2) — but the same doc shows CPU thread count alone moves that number by up to 0.035, so it is indicative only. Measured since on the final probes (2026-10-22, every subset of the 24 re-scored, no refit; probe_count_sweep_T07_2026-10-22.json): 3 layers × 1 seed −0.0062 judge [−0.0100, −0.0023], a loss under both judges; × 2 seeds −0.0038, a loss; × 3 seeds (9 probes) −0.0025 [−0.0053, +0.0003], a tie, and every count from 9 to 21 ties in every metric. One layer with all 8 seeds: layer 22 −0.0054 (loss), layers 18 / 20 ties. So 24 is more than needed, and several layers matter more than several seeds.
+- *Why 24 and not 21 or 27?* — 24 was not tuned: 3 layers × 8 seeds, the 8 inherited from the August selector. The sweep on the final probes (probe_count_sweep_T07_2026-10-22.json) shows 21 probes (7 seeds per layer) ties 24 (judge −0.0001), and so does anything down to 9 (3 per layer); below that it loses about 0.4–0.6 points under both judges. 27 was not tested, but the curve is flat from 9 upward.
 - *Is N = 16 better in every metric?* — Under the training judge (+0.0984 vs +0.0798) and lenient EM (+0.0140 vs +0.0121), yes in point estimate. The cross-family number for 16-sample pools (+0.0674) is computed on incomplete MedGemma labels, so it is not a valid comparison yet (final_eval_FINAL_cap320_MIX_T07_16.json).
 
 <sub>Source: coverage_sc16_ci_ALL_2026-09-16.json (September probe, judge); budget_conversion_sc32_2026-09-17.json (RadImageNet N = 32 sampled at T = 1.0); final_eval_FINAL_cap320_MIX_T07_16.json in the main checkout's artifacts/ (MedGemma labels incomplete for 16-sample pools)</sub>
@@ -2581,7 +2582,7 @@ Every number comes from a named artifact or paper; the source line at the bottom
 #### ▸ open detail
 
 - One detail is still open: the probe's features were read at the one-megapixel cap.
-- An experiment re-reading everything at the generation budget is running.
+- Re-reading everything at the generation budget and refitting since gave a tie in every metric (judge minus 0.0012).
 
 **If asked:**
 
@@ -3186,12 +3187,11 @@ Every number comes from a named artifact or paper; the source line at the bottom
 **Say:**
 
 
-#### ▸ running now
+#### ▸ done since: cap320 features
 
-- One experiment is running now.
-- All features have been re-extracted at the same image budget the answers were generated at, cap320.
-- The probes are being refit and re-evaluated with the same protocol.
-- If it holds, the re-read no longer needs the higher-resolution pass, and the WED comparison becomes symmetric in resolution.
+- All features were re-extracted at the image budget the answers were generated at, cap320, and the probes refit with the same protocol.
+- Result: a tie in every metric — judge minus 0.0012, interval minus 0.0060 to plus 0.0033.
+- So the higher-resolution re-read is not what produces the gain; what is still owed is capturing the states inside the sampling pass itself.
 
 #### ▸ cheap, CPU-only
 
