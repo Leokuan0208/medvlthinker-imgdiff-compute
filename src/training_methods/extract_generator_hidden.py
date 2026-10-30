@@ -275,6 +275,19 @@ def main():
     ap.add_argument("--cap", choices=["fullres", "cap640", "cap320"], default="fullres",
                     help="image budget, as run_openvqa.py's --cap (cap320 = max_pixels 250,880, the "
                          "resolution the pools were generated at); default keeps the historical 1,003,520")
+    ap.add_argument("--f32_on_overflow", action="store_true",
+                    help="(added 2026-10-22) keep values that overflow the float16 store instead of refusing to "
+                         "save. Every value float16 CAN represent is rounded to float16 exactly as before (so "
+                         "in-range values are bitwise identical to a default run); only overflowing entries keep "
+                         "float32 precision, in a float32 container, and are counted in the meta. If nothing "
+                         "overflows the arrays are downcast and the file is identical in format to a default run. "
+                         "Needed for layers 23-28 on GEMeX: the default run refused with 43,008 non-finite values.")
+    ap.add_argument("--drop_nonfinite_rows", action="store_true",
+                    help="(added 2026-10-22) a row whose hidden state is non-finite from the MODEL (not storage overflow) -- "
+                         "e.g. an empty answer string, whose answer span has no tokens, so its mean is NaN -- is marked "
+                         "n_tok=-1 (every loader drops it) and listed in the meta, instead of refusing to save the whole "
+                         "cache. Legacy caches predate the non-finite guard and KEPT such rows as NaN, which rank_avg then "
+                         "sorts LAST, i.e. ranks BEST: the shipped Tmap evaluation picked the empty answer on GEMeX q7502.")
     ap.add_argument("--stem_tag", default="",
                     help="appended to the output stem so a new cell cannot overwrite the frozen cache")
     ap.add_argument("--max_train", type=int, default=10364,
@@ -396,8 +409,16 @@ def main():
     # generator is to be judged on, so the overflow would have landed on the headline arm itself.
     DT = np.float16 if A.arch == "qwen" else np.float32
     print(f"[dtype] storing hidden states as {np.dtype(DT).name} (arch={A.arch})", flush=True)
-    h_last = np.zeros((n, len(A.layers), H), dtype=DT)
-    h_span = np.zeros((n, len(A.layers), H), dtype=DT)
+    ST = np.float32 if A.f32_on_overflow else DT       # storage container (see --f32_on_overflow)
+
+    def _st(v):
+        if not A.f32_on_overflow:
+            return v.astype(DT)
+        with np.errstate(over="ignore"):
+            v16 = v.astype(DT)
+        return np.where(np.isfinite(v16), v16.astype(np.float32), v)
+    h_last = np.zeros((n, len(A.layers), H), dtype=ST)
+    h_span = np.zeros((n, len(A.layers), H), dtype=ST)
     # VISUAL FEATURES (--visual_feats). The probe has only ever read h_span -- the mean hidden state
     # over the ANSWER tokens -- so the image reaches it only through whatever the LM already mixed
     # in. The VLM-probing literature pools the image placeholder tokens directly and combines that
@@ -408,8 +429,8 @@ def main():
     #   h_img[L]  mean over the <|image_pad|> positions
     #   h_q[L]    mean over the question tokens, i.e. between the image block and the answer --
     #             the control that says whether any gain is VISUAL or just "more context"
-    h_img = np.zeros((n, len(A.layers), H), dtype=DT) if A.visual_feats else None
-    h_q = np.zeros((n, len(A.layers), H), dtype=DT) if A.visual_feats else None
+    h_img = np.zeros((n, len(A.layers), H), dtype=ST) if A.visual_feats else None
+    h_q = np.zeros((n, len(A.layers), H), dtype=ST) if A.visual_feats else None
     n_img_tok = np.zeros(n, dtype=np.int32)
     yesno = np.full((n, 2), np.nan, dtype=np.float32)
     meta, bad = [], 0
@@ -464,13 +485,13 @@ def main():
                 qs1 = max(qs0, s0)
             for li, L in enumerate(A.layers):
                 h = hs[L][0]
-                h_last[r_i, li] = h[readout].float().cpu().numpy().astype(DT)
-                h_span[r_i, li] = h[s0:].float().mean(0).cpu().numpy().astype(DT)
+                h_last[r_i, li] = _st(h[readout].float().cpu().numpy())
+                h_span[r_i, li] = _st(h[s0:].float().mean(0).cpu().numpy())
                 if A.visual_feats:
                     if len(ipos):
-                        h_img[r_i, li] = h[ipos].float().mean(0).cpu().numpy().astype(DT)
+                        h_img[r_i, li] = _st(h[ipos].float().mean(0).cpu().numpy())
                     if qs1 > qs0:
-                        h_q[r_i, li] = h[qs0:qs1].float().mean(0).cpu().numpy().astype(DT)
+                        h_q[r_i, li] = _st(h[qs0:qs1].float().mean(0).cpu().numpy())
             meta.append({"split": r["split"], "ds": r["ds"], "idx": r["idx"], "na": r["na"], "ans": r["ans"],
                          "y": r["y"], "in_draw": r.get("in_draw", 1),
                          "img_md5": md5, "n_tok": int(ids.shape[0])})
@@ -485,6 +506,27 @@ def main():
             print(f"  {r_i+1}/{n}  {el/60:.1f}min  {(el/(r_i+1)):.3f}s/row  eta {(n-r_i-1)*el/(r_i+1)/60:.1f}min",
                   flush=True)
 
+    overflow = None
+    if A.f32_on_overflow:
+        overflow = {}
+        for _nm, _a in [("h_span", h_span), ("h_last", h_last)] + ([("h_img", h_img), ("h_q", h_q)] if A.visual_feats else []):
+            with np.errstate(over="ignore"):
+                _o = np.isfinite(_a) & ~np.isfinite(_a.astype(DT))
+            overflow[_nm] = {"n_values": int(_o.sum()), "rows": int(_o.any(axis=(1, 2)).sum()),
+                             "per_layer": {str(L): int(_o[:, li].sum()) for li, L in enumerate(A.layers)},
+                             "max_abs": float(np.abs(_a).max())}
+        if not any(v["n_values"] for v in overflow.values()):     # nothing overflowed: identical to a default run
+            h_span, h_last = h_span.astype(DT), h_last.astype(DT)
+            if A.visual_feats:
+                h_img, h_q = h_img.astype(DT), h_q.astype(DT)
+        print(f"[f32_on_overflow] {json.dumps(overflow)}", flush=True)
+    dropped = None
+    if A.drop_nonfinite_rows:
+        _rows = np.flatnonzero(~(np.isfinite(h_span).all(axis=(1, 2)) & np.isfinite(h_last).all(axis=(1, 2))))
+        dropped = [{"row": int(i), "idx": meta[i]["idx"], "ans": meta[i]["ans"]} for i in _rows]
+        for i in _rows:
+            h_span[i] = 0; h_last[i] = 0; meta[i]["n_tok"] = -1; meta[i]["dropped"] = "non-finite hidden state"
+        print(f"[drop_nonfinite_rows] {json.dumps(dropped)}", flush=True)
     extra = {"h_img": h_img, "h_q": h_q} if A.visual_feats else {}
     for _nm, _a in (("h_span", h_span), ("h_last", h_last)):
         _bad = int((~np.isfinite(_a)).sum())
@@ -497,7 +539,10 @@ def main():
     json.dump({"mode": A.mode, "split": A.split, "layers": A.layers, "n": n, "n_failed": bad,
                "model": A.model_path, "adapter": None, "max_pixels": HIGH_PX,
                "sys_prompt": SYS_GRADER if A.mode == "grader" else SYS_GEN,
-               "minutes": round((time.time() - t0) / 60, 1), "rows": meta},
+               "minutes": round((time.time() - t0) / 60, 1),
+               **({"fp16_overflow": overflow, "storage": str(h_span.dtype)} if overflow is not None else {}),
+               **({"dropped_nonfinite_rows": dropped} if dropped is not None else {}),
+               "rows": meta},
               open(os.path.join(outdir, f"{stem}.meta.json"), "w"))
     print(f"saved {outdir}/{stem}.npz  ({n} rows, {bad} failed, {(time.time()-t0)/60:.1f} min)", flush=True)
 

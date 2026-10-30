@@ -134,6 +134,11 @@ for src in ("vqa_rad_train_closed", "vqa_rad_train_open", "pathvqa_train_closed"
         continue
     base = rows[0]["parquet"]
     PQ.setdefault(base, set()).update(int(r["idx"]) for r in rows)
+# open_generic (added 2026-10-22, the cross-fitted SFT baseline): any open-VQA item, image by path or by
+# (parquet base, row) -- resolve its parquet rows with the same loader as the named families above
+for r in sel.get("open_generic", []):
+    if "parquet" in r:
+        PQ.setdefault(r["parquet"], set()).add(int(r["idx"]))
 PQIMG = {}
 for base, idxs in PQ.items():
     print(f"  loading {len(idxs)} images from {base}-*.parquet", flush=True)
@@ -171,6 +176,9 @@ def build_example(r):
         return None, f"{r['question']}\n{MEK_CLOSE}", r["img"], A.train_maxpx, surface(r["answer"])
     if src == "slake_train_open":
         return OPENVQA_SYS, r["question"], r["img"], CAP320, surface(r["answer"])
+    if src == "open_generic":                                     # run_openvqa's prompt + cap320, like *_train_open
+        img = r["img"] if "img" in r else Image.open(io.BytesIO(PQIMG[r["parquet"]][int(r["idx"])]))
+        return OPENVQA_SYS, r["question"], img, CAP320, surface(r["answer"])
     img = Image.open(io.BytesIO(PQIMG[r["parquet"]][int(r["idx"])]))
     if src.endswith("_closed"):
         return None, f"{r['question']}\n{MEK_YESNO}", img, A.train_maxpx, surface(r["answer"])

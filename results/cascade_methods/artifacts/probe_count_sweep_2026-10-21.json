@@ -1,0 +1,2764 @@
+{
+ "title": "Probe-count sweep: what each of the final method's 24 probes buys (why 24?)",
+ "date": "2026-10-21",
+ "no_fabricated_numbers": true,
+ "script": "/home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/probe_count_sweep.py",
+ "question": "Leo 2026-10-19 'why 24 and not 21, 27 etc'; 2026-10-21 'do we actually need 8 seeds'",
+ "held_fixed": {
+  "frozen_probes": "/home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/final_probe_2026-10-16",
+  "policy": "Tmap",
+  "readout": "rank_vote",
+  "folds": [
+   0,
+   1
+  ],
+  "legacy_cap320": true,
+  "xjudge": "/data/dan/exp_2026_10/xjudge_c320/merged.jsonl",
+  "bootstrap": {
+   "n": 10000,
+   "seed": 20261017,
+   "cluster": "img_md5 within cell, paired",
+   "scope": "both folds (all)"
+  }
+ },
+ "n_questions": 36869,
+ "n_configs": 1020,
+ "checks": {
+  "1_shipped_picks_reproduced": {
+   "mismatches": 0,
+   "questions": 36869
+  },
+  "2_shipped_macro_reproduced": {
+   "judge": {
+    "this_script": {
+     "macro": 0.08973650094582712,
+     "ci": [
+      0.0830753259956523,
+      0.09660252918210341
+     ],
+     "verdict": "WIN"
+    },
+    "final_eval_FINAL_cap320_Tmap": {
+     "macro": 0.08973650094582712,
+     "ci": [
+      0.0830753259956523,
+      0.09660252918210341
+     ]
+    },
+    "point_matches": true,
+    "ci_matches": true
+   },
+   "xjudge": {
+    "this_script": {
+     "macro": 0.07826067572025475,
+     "ci": [
+      0.07146860868144507,
+      0.08527191164710261
+     ],
+     "verdict": "WIN"
+    },
+    "final_eval_FINAL_cap320_Tmap": {
+     "macro": 0.07826067572025475,
+     "ci": [
+      0.07146860868144507,
+      0.08527191164710261
+     ]
+    },
+    "point_matches": true,
+    "ci_matches": true
+   },
+   "em": {
+    "this_script": {
+     "macro": 0.016490586864010098,
+     "ci": [
+      0.010656755043209738,
+      0.022426888691089084
+     ],
+     "verdict": "WIN"
+    },
+    "final_eval_FINAL_cap320_Tmap": {
+     "macro": 0.016490586864010098,
+     "ci": [
+      0.010656755043209738,
+      0.022426888691089084
+     ]
+    },
+    "point_matches": true,
+    "ci_matches": true
+   }
+  }
+ },
+ "currencies": {
+  "judge": "MedVLThinker-32B (training judge)",
+  "xjudge": "MedGemma-27B-it (cross-family)",
+  "em": "lenient exact match"
+ },
+ "summary": {
+  "3 layers": {
+   "1": {
+    "n_probes": 3,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.8638354715343514,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08499778142766831,
+     "gain_min": 0.08319097889336874,
+     "gain_max": 0.08627317801289615,
+     "minus_shipped_mean_over_subsets": -0.004738719518158804,
+     "minus_shipped_min": -0.006545522052458379,
+     "minus_shipped_max": -0.0034633229329309773,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08567164638781075,
+       "ci": [
+        0.0789265413153985,
+        0.09263223281638563
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004064854558016372,
+       "ci": [
+        -0.006534581129700268,
+        -0.001530694390189651
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07369267804045235,
+     "gain_min": 0.07190824859214415,
+     "gain_max": 0.07602989242911855,
+     "minus_shipped_mean_over_subsets": -0.004567997679802402,
+     "minus_shipped_min": -0.006352427128110618,
+     "minus_shipped_max": -0.002230783291136208,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07507642932753045,
+       "ci": [
+        0.0683069112406491,
+        0.0821440261760551
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003184246392724315,
+       "ci": [
+        -0.0055369295782092,
+        -0.0007621220122941596
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.013991911092705025,
+     "gain_min": 0.011350754067720948,
+     "gain_max": 0.01686593533766835,
+     "minus_shipped_mean_over_subsets": -0.0024986757713050733,
+     "minus_shipped_min": -0.00513983279628915,
+     "minus_shipped_max": 0.0003753484736582501,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01686593533766835,
+       "ci": [
+        0.011061222828701292,
+        0.02284550261099827
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0003753484736582501,
+       "ci": [
+        -0.001954278527800941,
+        0.0030309121708469336
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "2": {
+    "n_probes": 6,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.904572366254267,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08725691606843834,
+     "gain_min": 0.08651264582527043,
+     "gain_max": 0.0881003235526561,
+     "minus_shipped_mean_over_subsets": -0.0024795848773887597,
+     "minus_shipped_min": -0.0032238551205566804,
+     "minus_shipped_max": -0.0016361773931710284,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08719418895428581,
+       "ci": [
+        0.08054343756939929,
+        0.09411935655459978
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.002542311991541312,
+       "ci": [
+        -0.004279483335231999,
+        -0.000866323944297887
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07599979698091792,
+     "gain_min": 0.07479662244731777,
+     "gain_max": 0.07776219811770228,
+     "minus_shipped_mean_over_subsets": -0.002260878739336839,
+     "minus_shipped_min": -0.0034640532729369763,
+     "minus_shipped_max": -0.0004984776025524654,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07595321930569944,
+       "ci": [
+        0.06918138988590342,
+        0.08288768372496862
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0023074564145553053,
+       "ci": [
+        -0.003947545682696868,
+        -0.0006589763247137057
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015570404206247335,
+     "gain_min": 0.013847478380731788,
+     "gain_max": 0.018541665923256605,
+     "minus_shipped_mean_over_subsets": -0.000920182657762765,
+     "minus_shipped_min": -0.00264310848327831,
+     "minus_shipped_max": 0.0020510790592465095,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.015568417909929052,
+       "ci": [
+        0.009636118010760157,
+        0.021608027420452782
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.000922168954081045,
+       "ci": [
+        -0.002668796710433631,
+        0.0008124099194655267
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "3": {
+    "n_probes": 9,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.928128741528888,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08754184712004776,
+     "gain_min": 0.08643716832829221,
+     "gain_max": 0.08899377278720458,
+     "minus_shipped_mean_over_subsets": -0.0021946538257793654,
+     "minus_shipped_min": -0.00329933261753491,
+     "minus_shipped_max": -0.0007427281586225424,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08790780816612191,
+       "ci": [
+        0.0812706920618331,
+        0.09478627831711184
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0018286927797052086,
+       "ci": [
+        -0.003156843849145046,
+        -0.0004497025759522888
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0762266913722289,
+     "gain_min": 0.07482839722751669,
+     "gain_max": 0.0785049564005492,
+     "minus_shipped_mean_over_subsets": -0.002033984348025857,
+     "minus_shipped_min": -0.0034322784927380565,
+     "minus_shipped_max": 0.000244280680294452,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07712862732395323,
+       "ci": [
+        0.07034623259484253,
+        0.08403489439649961
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0011320483963015095,
+       "ci": [
+        -0.0024886368642852443,
+        0.0002998622689843278
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.014940587070524486,
+     "gain_min": 0.012348133169771756,
+     "gain_max": 0.018406570572828018,
+     "minus_shipped_mean_over_subsets": -0.0015499997934856123,
+     "minus_shipped_min": -0.0041424536942383395,
+     "minus_shipped_max": 0.0019159837088179173,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01602455717452539,
+       "ci": [
+        0.01012334309746447,
+        0.022161120344857076
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.00046602968948471034,
+       "ci": [
+        -0.0021627272760132506,
+        0.0014784543625044203
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "4": {
+    "n_probes": 12,
+    "n_subsets": 70,
+    "pick_agreement_with_shipped_mean": 0.9431535591263276,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08806268910526949,
+     "gain_min": 0.08676467703783536,
+     "gain_max": 0.08948701073591776,
+     "minus_shipped_mean_over_subsets": -0.001673811840557633,
+     "minus_shipped_min": -0.002971823907991765,
+     "minus_shipped_max": -0.00024949020990935595,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08885066106813802,
+       "ci": [
+        0.08219924362384852,
+        0.09576967613256192
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0008858398776891054,
+       "ci": [
+        -0.002182064207037283,
+        0.000384041759450997
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07689223424066814,
+     "gain_min": 0.07572186110733489,
+     "gain_max": 0.0780320138373912,
+     "minus_shipped_mean_over_subsets": -0.0013684414795865883,
+     "minus_shipped_min": -0.002538814612919841,
+     "minus_shipped_max": -0.00022866188286354812,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07782691555470461,
+       "ci": [
+        0.07096369750101207,
+        0.08472745375618299
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0004337601655501312,
+       "ci": [
+        -0.0016497213781380261,
+        0.0007593903532422635
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015443239182600725,
+     "gain_min": 0.013474532003858782,
+     "gain_max": 0.018449456967823307,
+     "minus_shipped_mean_over_subsets": -0.0010473476814093737,
+     "minus_shipped_min": -0.003016054860151316,
+     "minus_shipped_max": 0.0019588701038132086,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.015930723115700846,
+       "ci": [
+        0.009964178926085835,
+        0.021914942557586383
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0005598637483092495,
+       "ci": [
+        -0.0018401403026856863,
+        0.0007000183438678544
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "5": {
+    "n_probes": 15,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.9556693001863742,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08829553027493382,
+     "gain_min": 0.0870047927999182,
+     "gain_max": 0.08961231456162888,
+     "minus_shipped_mean_over_subsets": -0.0014409706708933094,
+     "minus_shipped_min": -0.002731708145908924,
+     "minus_shipped_max": -0.00012418638419823107,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08876474051346149,
+       "ci": [
+        0.08212587476906318,
+        0.09567916207822576
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0009717604323656362,
+       "ci": [
+        -0.002264996895287986,
+        0.00024141992750999693
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07704299902845088,
+     "gain_min": 0.07599128468554923,
+     "gain_max": 0.0783378338261283,
+     "minus_shipped_mean_over_subsets": -0.0012176766918038603,
+     "minus_shipped_min": -0.002269391034705522,
+     "minus_shipped_max": 7.715810587355208e-05,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07737815049128124,
+       "ci": [
+        0.07054514669113449,
+        0.08432676846085191
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0008825252289734991,
+       "ci": [
+        -0.0021406133697248557,
+        0.00035265343452067516
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015390702032050821,
+     "gain_min": 0.013853724420770824,
+     "gain_max": 0.01762974458781051,
+     "minus_shipped_mean_over_subsets": -0.0010998848319592788,
+     "minus_shipped_min": -0.0026368624432392762,
+     "minus_shipped_max": 0.0011391577238004118,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01590833471060966,
+       "ci": [
+        0.009991752840688562,
+        0.02193351630401248
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0005822521534004365,
+       "ci": [
+        -0.0018414365276376158,
+        0.000669603518322284
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "6": {
+    "n_probes": 18,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.9664429660225586,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.0887563037507711,
+     "gain_min": 0.08753597008355339,
+     "gain_max": 0.08949119786738358,
+     "minus_shipped_mean_over_subsets": -0.000980197195056028,
+     "minus_shipped_min": -0.0022005308622737203,
+     "minus_shipped_max": -0.0002453030784435432,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08866032425233446,
+       "ci": [
+        0.08190918281123162,
+        0.09562333496129131
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0010761766934926722,
+       "ci": [
+        -0.0021080446243998373,
+        -0.00012247198307589556
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0774416704332942,
+     "gain_min": 0.07616089789868224,
+     "gain_max": 0.0783683102196687,
+     "minus_shipped_mean_over_subsets": -0.0008190052869605589,
+     "minus_shipped_min": -0.002099777821572499,
+     "minus_shipped_max": 0.00010763449941394169,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07741944542690121,
+       "ci": [
+        0.07060484855930571,
+        0.08439493127492743
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.000841230293353529,
+       "ci": [
+        -0.001846071304382747,
+        6.292243609212014e-05
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015794694990456114,
+     "gain_min": 0.014137039336777084,
+     "gain_max": 0.01681869535487816,
+     "minus_shipped_mean_over_subsets": -0.0006958918735539843,
+     "minus_shipped_min": -0.002353547527233015,
+     "minus_shipped_max": 0.00032810849086806036,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.015591385633073272,
+       "ci": [
+        0.00967664601261968,
+        0.021614588181116254
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0008992012309368268,
+       "ci": [
+        -0.001971118729822299,
+        0.00011578319921557229
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "7": {
+    "n_probes": 21,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.9771115300116628,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08916118275484103,
+     "gain_min": 0.08838930437444537,
+     "gain_max": 0.08958620908823049,
+     "minus_shipped_mean_over_subsets": -0.0005753181909860912,
+     "minus_shipped_min": -0.0013471965713817591,
+     "minus_shipped_max": -0.00015029185759663058,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08928001002312401,
+       "ci": [
+        0.08260898743138238,
+        0.09623057444728556
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.00045649092270311003,
+       "ci": [
+        -0.00147415303744764,
+        0.0005176907293693534
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07780382876170067,
+     "gain_min": 0.0773242705930551,
+     "gain_max": 0.0782586141487085,
+     "minus_shipped_mean_over_subsets": -0.0004568469585540856,
+     "minus_shipped_min": -0.0009364051271996416,
+     "minus_shipped_max": -2.061571546261849e-06,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07743997977570785,
+       "ci": [
+        0.07062856311921466,
+        0.0844404250321624
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0008206959445468887,
+       "ci": [
+        -0.0018002564374029505,
+        9.375993458191416e-05
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015951110992202255,
+     "gain_min": 0.015132293705180298,
+     "gain_max": 0.01672653441255591,
+     "minus_shipped_mean_over_subsets": -0.0005394758718078412,
+     "minus_shipped_min": -0.0013582931588297994,
+     "minus_shipped_max": 0.0002359475485458148,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.016265024174544684,
+       "ci": [
+        0.010290790288483238,
+        0.02231097702857442
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0002255626894654136,
+       "ci": [
+        -0.0013448795139362696,
+        0.0008699942769554998
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "8": {
+    "n_probes": 24,
+    "n_subsets": 1,
+    "pick_agreement_with_shipped_mean": 1.0,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08973650094582712,
+     "gain_min": 0.08973650094582712,
+     "gain_max": 0.08973650094582712,
+     "minus_shipped_mean_over_subsets": 0.0,
+     "minus_shipped_min": 0.0,
+     "minus_shipped_max": 0.0,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08973650094582712,
+       "ci": [
+        0.0830753259956523,
+        0.09660252918210341
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0,
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07826067572025475,
+     "gain_min": 0.07826067572025475,
+     "gain_max": 0.07826067572025475,
+     "minus_shipped_mean_over_subsets": 0.0,
+     "minus_shipped_min": 0.0,
+     "minus_shipped_max": 0.0,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07826067572025475,
+       "ci": [
+        0.07146860868144507,
+        0.08527191164710261
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0,
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.016490586864010098,
+     "gain_min": 0.016490586864010098,
+     "gain_max": 0.016490586864010098,
+     "minus_shipped_mean_over_subsets": 0.0,
+     "minus_shipped_min": 0.0,
+     "minus_shipped_max": 0.0,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.016490586864010098,
+       "ci": [
+        0.010656755043209738,
+        0.022426888691089084
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0,
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   }
+  },
+  "layer 18": {
+   "1": {
+    "n_probes": 1,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.7805100490927337,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08236729071846571,
+     "gain_min": 0.081123501664293,
+     "gain_max": 0.08454375809569542,
+     "minus_shipped_mean_over_subsets": -0.007369210227361413,
+     "minus_shipped_min": -0.008612999281534127,
+     "minus_shipped_max": -0.005192742850131701,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08143281487463558,
+       "ci": [
+        0.07468043087407114,
+        0.08838847111132102
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.008303686071191547,
+       "ci": [
+        -0.0120614456729455,
+        -0.004539106408739923
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07036693487373813,
+     "gain_min": 0.06927334522909422,
+     "gain_max": 0.07147906076710864,
+     "minus_shipped_mean_over_subsets": -0.007893740846516612,
+     "minus_shipped_min": -0.008987330491160527,
+     "minus_shipped_max": -0.006781614953146111,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07104411352818338,
+       "ci": [
+        0.06433699257721807,
+        0.07802016775288535
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0072165621920713754,
+       "ci": [
+        -0.01109780796075365,
+        -0.0033185851277754115
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.012599573008300549,
+     "gain_min": 0.009782258809393317,
+     "gain_max": 0.015267490050553237,
+     "minus_shipped_mean_over_subsets": -0.003891013855709549,
+     "minus_shipped_min": -0.006708328054616781,
+     "minus_shipped_max": -0.0012230968134568619,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.014346919281042045,
+       "ci": [
+        0.008521834897354273,
+        0.02054778883569221
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.002143667582968054,
+       "ci": [
+        -0.0056848455444626,
+        0.0016849768301683517
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "2": {
+    "n_probes": 2,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.7973229542434022,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08439738862825599,
+     "gain_min": 0.08247274991863386,
+     "gain_max": 0.08669160296480263,
+     "minus_shipped_mean_over_subsets": -0.005339112317571136,
+     "minus_shipped_min": -0.007263751027193264,
+     "minus_shipped_max": -0.0030448979810245016,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08311103943727058,
+       "ci": [
+        0.07665718027246965,
+        0.08974937622234132
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0066254615085565415,
+       "ci": [
+        -0.009360827173482172,
+        -0.004077252026685375
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07312027198565312,
+     "gain_min": 0.07032298043424919,
+     "gain_max": 0.07489588675092518,
+     "minus_shipped_mean_over_subsets": -0.005140403734601637,
+     "minus_shipped_min": -0.007937695286005565,
+     "minus_shipped_max": -0.003364788969329566,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07186631954705247,
+       "ci": [
+        0.06535228908404238,
+        0.078395062296781
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.006394356173202286,
+       "ci": [
+        -0.009384391261680588,
+        -0.0035484053299193333
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.01763645316261289,
+     "gain_min": 0.01503821597874788,
+     "gain_max": 0.019673832846683347,
+     "minus_shipped_mean_over_subsets": 0.0011458662986027891,
+     "minus_shipped_min": -0.0014523708852622174,
+     "minus_shipped_max": 0.0031832459826732474,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.017874062271983817,
+       "ci": [
+        0.012229089324431803,
+        0.02362768018749079
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0013834754079737202,
+       "ci": [
+        -0.0016300542441073972,
+        0.0045065203501295364
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "3": {
+    "n_probes": 3,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.8185370597830931,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08558203664114981,
+     "gain_min": 0.08359858439935378,
+     "gain_max": 0.0877304697610991,
+     "minus_shipped_mean_over_subsets": -0.0041544643046773,
+     "minus_shipped_min": -0.0061379165464733485,
+     "minus_shipped_max": -0.0020060311847280186,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.0844886076958169,
+       "ci": [
+        0.0779817410752928,
+        0.0912242249184645
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005247893250010231,
+       "ci": [
+        -0.0077711539602136415,
+        -0.0027108649496379047
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0739195766857084,
+     "gain_min": 0.07105394843843929,
+     "gain_max": 0.07551255586850278,
+     "minus_shipped_mean_over_subsets": -0.004341099034546338,
+     "minus_shipped_min": -0.007206727281815462,
+     "minus_shipped_max": -0.0027481198517519713,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07366026605158572,
+       "ci": [
+        0.06708410190211014,
+        0.08025968394066624
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004600409668669024,
+       "ci": [
+        -0.007455240601946594,
+        -0.0017998266771536418
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.015042227060529078,
+     "gain_min": 0.012683023354262666,
+     "gain_max": 0.016885356063866375,
+     "minus_shipped_mean_over_subsets": -0.001448359803481019,
+     "minus_shipped_min": -0.0038075635097474326,
+     "minus_shipped_max": 0.00039476919985627357,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01590089909896753,
+       "ci": [
+        0.010276901435474075,
+        0.021731509082169538
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0005896877650425668,
+       "ci": [
+        -0.0034967112462219486,
+        0.0025586048366892213
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "4": {
+    "n_probes": 4,
+    "n_subsets": 70,
+    "pick_agreement_with_shipped_mean": 0.8256890225237618,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08636529782248416,
+     "gain_min": 0.08450626548439603,
+     "gain_max": 0.08850141233700767,
+     "minus_shipped_mean_over_subsets": -0.003371203123342993,
+     "minus_shipped_min": -0.00523023546143109,
+     "minus_shipped_max": -0.0012350886088194463,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08594218579652182,
+       "ci": [
+        0.0797461765001833,
+        0.09247404382667782
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003794315149305303,
+       "ci": [
+        -0.006391014746388469,
+        -0.001202348934150687
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07462648770644086,
+     "gain_min": 0.072732857309219,
+     "gain_max": 0.07693102472175951,
+     "minus_shipped_mean_over_subsets": -0.0036341880138138984,
+     "minus_shipped_min": -0.005527818411035747,
+     "minus_shipped_max": -0.0013296509984952408,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07468962385046098,
+       "ci": [
+        0.06828861319603603,
+        0.08120273461274345
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0035710518697937717,
+       "ci": [
+        -0.006517695774432886,
+        -0.0007484853568471298
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.01701419925670768,
+     "gain_min": 0.015045219051119073,
+     "gain_max": 0.018945090629098993,
+     "minus_shipped_mean_over_subsets": 0.0005236123926975858,
+     "minus_shipped_min": -0.0014453678128910244,
+     "minus_shipped_max": 0.0024545037650888927,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01709686766798907,
+       "ci": [
+        0.011608212966541001,
+        0.022776762158096795
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0006062808039789729,
+       "ci": [
+        -0.002384222011762492,
+        0.003817599453488763
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "5": {
+    "n_probes": 5,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.8330624256537625,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08643858519408831,
+     "gain_min": 0.0847509784310238,
+     "gain_max": 0.08862968879237829,
+     "minus_shipped_mean_over_subsets": -0.003297915751738804,
+     "minus_shipped_min": -0.004985522514803312,
+     "minus_shipped_max": -0.0011068121534488452,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08563230832657637,
+       "ci": [
+        0.07907085387341907,
+        0.09260189117476109
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004104192619250747,
+       "ci": [
+        -0.006720678856798702,
+        -0.0014927529952717669
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07489335061768414,
+     "gain_min": 0.07391662546848117,
+     "gain_max": 0.07654396506328734,
+     "minus_shipped_mean_over_subsets": -0.003367325102570599,
+     "minus_shipped_min": -0.004344050251773585,
+     "minus_shipped_max": -0.0017167106569674093,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07450793688376184,
+       "ci": [
+        0.06777431464458974,
+        0.08142105190803892
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003752738836492916,
+       "ci": [
+        -0.006589071899060964,
+        -0.0008901455568472729
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.016003812115698346,
+     "gain_min": 0.014382212224259887,
+     "gain_max": 0.01755102799223179,
+     "minus_shipped_mean_over_subsets": -0.00048677474831175174,
+     "minus_shipped_min": -0.0021083746397502134,
+     "minus_shipped_max": 0.0010604411282216916,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.016946064006685965,
+       "ci": [
+        0.010978627320579776,
+        0.023071522675793037
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0004554771426758652,
+       "ci": [
+        -0.0025476522192636715,
+        0.0036429315405641406
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "6": {
+    "n_probes": 6,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.8370989177900131,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08679621356897253,
+     "gain_min": 0.08562799300712251,
+     "gain_max": 0.08811114944492025,
+     "minus_shipped_mean_over_subsets": -0.0029402873768545742,
+     "minus_shipped_min": -0.00410850793870461,
+     "minus_shipped_max": -0.00162535150090687,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08570686322725699,
+       "ci": [
+        0.0793710593531035,
+        0.09243623989803319
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004029637718570144,
+       "ci": [
+        -0.0064137393652595005,
+        -0.001764384576853021
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07503520149140604,
+     "gain_min": 0.07420210158978797,
+     "gain_max": 0.07632292920359166,
+     "minus_shipped_mean_over_subsets": -0.003225474228848711,
+     "minus_shipped_min": -0.004058574130466772,
+     "minus_shipped_max": -0.0019377465166630855,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.0747602298414467,
+       "ci": [
+        0.06817679074845663,
+        0.08144850386771893
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003500445878808051,
+       "ci": [
+        -0.006253312508173465,
+        -0.000984607059800513
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.017192588785864108,
+     "gain_min": 0.01546360533959847,
+     "gain_max": 0.018160912830793918,
+     "minus_shipped_mean_over_subsets": 0.000702001921854006,
+     "minus_shipped_min": -0.0010269815244116306,
+     "minus_shipped_max": 0.0016703259667838182,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01724607758689836,
+       "ci": [
+        0.011593548938939241,
+        0.023133469179299065
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0007554907228882574,
+       "ci": [
+        -0.002081607416730264,
+        0.00371282497938523
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "7": {
+    "n_probes": 7,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.8406893325015596,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08698916655926335,
+     "gain_min": 0.08595453619349135,
+     "gain_max": 0.08804649101619483,
+     "minus_shipped_mean_over_subsets": -0.002747334386563771,
+     "minus_shipped_min": -0.003781964752335775,
+     "minus_shipped_max": -0.0016900099296322988,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08595453619349135,
+       "ci": [
+        0.07970589613286241,
+        0.09248246868709628
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003781964752335775,
+       "ci": [
+        -0.006375748655100264,
+        -0.001167283053765517
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07544090569237047,
+     "gain_min": 0.07493013078680753,
+     "gain_max": 0.07648641470046655,
+     "minus_shipped_mean_over_subsets": -0.002819770027884279,
+     "minus_shipped_min": -0.0033305449334472136,
+     "minus_shipped_max": -0.0017742610197881996,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07501700328184521,
+       "ci": [
+        0.068661333130375,
+        0.08150775051935437
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003243672438409534,
+       "ci": [
+        -0.006203053505079355,
+        -0.00036118573432628216
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.016468713568393235,
+     "gain_min": 0.0157459028368,
+     "gain_max": 0.017206396198129564,
+     "minus_shipped_mean_over_subsets": -2.187329561686348e-05,
+     "minus_shipped_min": -0.0007446840272101007,
+     "minus_shipped_max": 0.0007158093341194651,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.017158043115712413,
+       "ci": [
+        0.011552792455061474,
+        0.02300036552856433
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0006674562517023158,
+       "ci": [
+        -0.0022465952908260972,
+        0.0038192889594800285
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "8": {
+    "n_probes": 8,
+    "n_subsets": 1,
+    "pick_agreement_with_shipped_mean": 0.8440966665762565,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08645949467155521,
+     "gain_min": 0.08645949467155521,
+     "gain_max": 0.08645949467155521,
+     "minus_shipped_mean_over_subsets": -0.003277006274271914,
+     "minus_shipped_min": -0.003277006274271914,
+     "minus_shipped_max": -0.003277006274271914,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08645949467155521,
+       "ci": [
+        0.08017656230885943,
+        0.09303893462010665
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003277006274271914,
+       "ci": [
+        -0.005931337552538641,
+        -0.0006423798728613961
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07532000963483126,
+     "gain_min": 0.07532000963483126,
+     "gain_max": 0.07532000963483126,
+     "minus_shipped_mean_over_subsets": -0.0029406660854234884,
+     "minus_shipped_min": -0.0029406660854234884,
+     "minus_shipped_max": -0.0029406660854234884,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07532000963483126,
+       "ci": [
+        0.06885174478888009,
+        0.08179388389254476
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0029406660854234884,
+       "ci": [
+        -0.005879275351315651,
+        -3.667381367906199e-05
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.01702415779560454,
+     "gain_min": 0.01702415779560454,
+     "gain_max": 0.01702415779560454,
+     "minus_shipped_mean_over_subsets": 0.0005335709315944393,
+     "minus_shipped_min": 0.0005335709315944393,
+     "minus_shipped_max": 0.0005335709315944393,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01702415779560454,
+       "ci": [
+        0.011431339483000225,
+        0.022841028273424848
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": 0.0005335709315944393,
+       "ci": [
+        -0.0024218805712797062,
+        0.003709863161448674
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   }
+  },
+  "layer 20": {
+   "1": {
+    "n_probes": 1,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.8034154709918901,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.0811186518060183,
+     "gain_min": 0.07831173268633074,
+     "gain_max": 0.08222953468028066,
+     "minus_shipped_mean_over_subsets": -0.008617849139808835,
+     "minus_shipped_min": -0.011424768259496388,
+     "minus_shipped_max": -0.0075069662655464706,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08146351894707507,
+       "ci": [
+        0.0747184247838562,
+        0.08839772098611164
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.00827298199875205,
+       "ci": [
+        -0.011093347307451167,
+        -0.005435177623674657
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.06945980231175129,
+     "gain_min": 0.0668297967450123,
+     "gain_max": 0.07129500403700628,
+     "minus_shipped_mean_over_subsets": -0.008800873408503454,
+     "minus_shipped_min": -0.011430878975242458,
+     "minus_shipped_max": -0.006965671683248464,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07077127234572368,
+       "ci": [
+        0.06410459224879941,
+        0.07769789281017213
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.007489403374531065,
+       "ci": [
+        -0.01023169509749392,
+        -0.004758804358424574
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.009000927977676453,
+     "gain_min": 0.006818953359475316,
+     "gain_max": 0.013086197713833944,
+     "minus_shipped_mean_over_subsets": -0.007489658886333646,
+     "minus_shipped_min": -0.009671633504534781,
+     "minus_shipped_max": -0.0034043891501761535,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.013086197713833944,
+       "ci": [
+        0.007112257824403739,
+        0.0190439209890102
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0034043891501761535,
+       "ci": [
+        -0.006161433254685817,
+        -0.0004911298037707689
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "2": {
+    "n_probes": 2,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.8228302522831802,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08429310597773695,
+     "gain_min": 0.08092143784404174,
+     "gain_max": 0.08673590608299564,
+     "minus_shipped_mean_over_subsets": -0.005443394968090166,
+     "minus_shipped_min": -0.008815063101785382,
+     "minus_shipped_max": -0.003000594862831496,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08465467818046399,
+       "ci": [
+        0.07811386046331102,
+        0.09134389559118167
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005081822765363136,
+       "ci": [
+        -0.008263332197598621,
+        -0.0013042767905501152
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0730464896933061,
+     "gain_min": 0.0692999477908002,
+     "gain_max": 0.07537456070718082,
+     "minus_shipped_mean_over_subsets": -0.005214186026948648,
+     "minus_shipped_min": -0.00896072792945455,
+     "minus_shipped_max": -0.002886115013073928,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07386076790384394,
+       "ci": [
+        0.06732869109932473,
+        0.08056772055776856
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0043999078164108155,
+       "ci": [
+        -0.007583878305470376,
+        -0.0005625714413491072
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.013582584767391945,
+     "gain_min": 0.0113983581288457,
+     "gain_max": 0.015849113307335096,
+     "minus_shipped_mean_over_subsets": -0.0029080020966181543,
+     "minus_shipped_min": -0.005092228735164397,
+     "minus_shipped_max": -0.0006414735566750028,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.013615616355449051,
+       "ci": [
+        0.007890200874697632,
+        0.01923422509997234
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0028749705085610467,
+       "ci": [
+        -0.0056010473608290095,
+        -0.0003566859524522456
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "3": {
+    "n_probes": 3,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.8471392923981819,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08432406645517022,
+     "gain_min": 0.0819293506091441,
+     "gain_max": 0.08620169070389341,
+     "minus_shipped_mean_over_subsets": -0.005412434490656898,
+     "minus_shipped_min": -0.0078071503366830275,
+     "minus_shipped_max": -0.0035348102419337163,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08378355925887875,
+       "ci": [
+        0.07721442208859153,
+        0.09066425010558385
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005952941686948377,
+       "ci": [
+        -0.00837692126650884,
+        -0.0035780204441905007
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07262097255256036,
+     "gain_min": 0.07019188346632366,
+     "gain_max": 0.07457412668778146,
+     "minus_shipped_mean_over_subsets": -0.005639703167694396,
+     "minus_shipped_min": -0.008068792253931093,
+     "minus_shipped_max": -0.003686549032473288,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07293121574380614,
+       "ci": [
+        0.06646292607444279,
+        0.07969655099664459
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005329459976448609,
+       "ci": [
+        -0.00760469528280209,
+        -0.0031149903717135616
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.011053088094591405,
+     "gain_min": 0.008735100404344592,
+     "gain_max": 0.013712063338691963,
+     "minus_shipped_mean_over_subsets": -0.005437498769418693,
+     "minus_shipped_min": -0.007755486459665506,
+     "minus_shipped_max": -0.002778523525318135,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.012203032667645799,
+       "ci": [
+        0.0062515911440751285,
+        0.018153424518034398
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004287554196364299,
+       "ci": [
+        -0.007114364980390807,
+        -0.001479518538829306
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "4": {
+    "n_probes": 4,
+    "n_subsets": 70,
+    "pick_agreement_with_shipped_mean": 0.8554596777005847,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.0856607502859825,
+     "gain_min": 0.08353578860746265,
+     "gain_max": 0.08713548451443337,
+     "minus_shipped_mean_over_subsets": -0.0040757506598446324,
+     "minus_shipped_min": -0.006200712338364471,
+     "minus_shipped_max": -0.002601016431393762,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08548768456383238,
+       "ci": [
+        0.07887450647191695,
+        0.09232837064931039
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004248816381994748,
+       "ci": [
+        -0.006564193933340041,
+        -0.0018996673463883593
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07408029707216232,
+     "gain_min": 0.07176961967154719,
+     "gain_max": 0.07660999099144908,
+     "minus_shipped_mean_over_subsets": -0.00418037864809243,
+     "minus_shipped_min": -0.006491056048707556,
+     "minus_shipped_max": -0.0016506847288056607,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07449296912714161,
+       "ci": [
+        0.06797898551419096,
+        0.08120953392055069
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0037677065931131315,
+       "ci": [
+        -0.006085283084925864,
+        -0.0014720278241679874
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.012663008583730937,
+     "gain_min": 0.010872680953740412,
+     "gain_max": 0.01417542946883716,
+     "minus_shipped_mean_over_subsets": -0.0038275782802791613,
+     "minus_shipped_min": -0.005617905910269686,
+     "minus_shipped_max": -0.0023151573951729378,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.011938871037179997,
+       "ci": [
+        0.006075639297136245,
+        0.017687712496003444
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004551715826830102,
+       "ci": [
+        -0.007301604007619066,
+        -0.002004258814953454
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "5": {
+    "n_probes": 5,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.8645082202237264,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08525232020616912,
+     "gain_min": 0.08382915575164027,
+     "gain_max": 0.0871694127018558,
+     "minus_shipped_mean_over_subsets": -0.004484180739658,
+     "minus_shipped_min": -0.005907345194186845,
+     "minus_shipped_max": -0.002567088243971322,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08441220481140253,
+       "ci": [
+        0.07763438524755835,
+        0.09161514601308075
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005324296134424584,
+       "ci": [
+        -0.00796818071698631,
+        -0.0027248678844129224
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07330751821991112,
+     "gain_min": 0.07180096342512823,
+     "gain_max": 0.07534413159514085,
+     "minus_shipped_mean_over_subsets": -0.0049531575003436395,
+     "minus_shipped_min": -0.006459712295126521,
+     "minus_shipped_max": -0.0029165441251138924,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07221001427205881,
+       "ci": [
+        0.06527407485919548,
+        0.07931257546689137
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.006050661448195946,
+       "ci": [
+        -0.008937866212705908,
+        -0.0034375246059120193
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.011523277630237777,
+     "gain_min": 0.010433535994113327,
+     "gain_max": 0.013202273199092618,
+     "minus_shipped_mean_over_subsets": -0.004967309233772322,
+     "minus_shipped_min": -0.0060570508698967705,
+     "minus_shipped_max": -0.003288313664917479,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01108035544977528,
+       "ci": [
+        0.004950651289884367,
+        0.017193276631911714
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005410231414234819,
+       "ci": [
+        -0.007939748816661716,
+        -0.002952938849947081
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "6": {
+    "n_probes": 6,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.8692038995206968,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08597470812836401,
+     "gain_min": 0.08447810881423387,
+     "gain_max": 0.08705055420613211,
+     "minus_shipped_mean_over_subsets": -0.0037617928174631214,
+     "minus_shipped_min": -0.0052583921315932595,
+     "minus_shipped_max": -0.0026859467396950056,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08510074448829624,
+       "ci": [
+        0.07837874526726323,
+        0.09206922198520133
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004635756457530876,
+       "ci": [
+        -0.007174501174898667,
+        -0.002156089339005449
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07416443978826362,
+     "gain_min": 0.07293001557924034,
+     "gain_max": 0.07523938515912174,
+     "minus_shipped_mean_over_subsets": -0.004096235931991127,
+     "minus_shipped_min": -0.005330660141014417,
+     "minus_shipped_max": -0.0030212905611330223,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07303621755754212,
+       "ci": [
+        0.06621184238819908,
+        0.0800700207476707
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005224458162712626,
+       "ci": [
+        -0.008099142916418247,
+        -0.0026725839072329304
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.012516057885157774,
+     "gain_min": 0.011327970118676688,
+     "gain_max": 0.014068039622713819,
+     "minus_shipped_mean_over_subsets": -0.003974528978852324,
+     "minus_shipped_min": -0.00516261674533341,
+     "minus_shipped_max": -0.00242254724129628,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.012255753017837984,
+       "ci": [
+        0.006177644573736532,
+        0.018199488564986915
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004234833846172114,
+       "ci": [
+        -0.006691110025355386,
+        -0.0019083346074463452
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "7": {
+    "n_probes": 7,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.8736370663701212,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08555738545735064,
+     "gain_min": 0.08502097841815347,
+     "gain_max": 0.0866545492093454,
+     "minus_shipped_mean_over_subsets": -0.004179115488476479,
+     "minus_shipped_min": -0.004715522527673653,
+     "minus_shipped_max": -0.0030819517364817205,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08552664860860179,
+       "ci": [
+        0.07881640664392721,
+        0.09257487883325807
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004209852337225324,
+       "ci": [
+        -0.00675196982791084,
+        -0.0017437503515660559
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07340701359064968,
+     "gain_min": 0.07287109544833953,
+     "gain_max": 0.07437949167312816,
+     "minus_shipped_mean_over_subsets": -0.004853662129605079,
+     "minus_shipped_min": -0.005389580271915216,
+     "minus_shipped_max": -0.003881184047126587,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07355916099470168,
+       "ci": [
+        0.0667564163446527,
+        0.08061626322633875
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004701514725553067,
+       "ci": [
+        -0.007599703751534841,
+        -0.002101160065311872
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.011944694659638246,
+     "gain_min": 0.01145446938360261,
+     "gain_max": 0.012520889614418782,
+     "minus_shipped_mean_over_subsets": -0.004545892204371854,
+     "minus_shipped_min": -0.005036117480407488,
+     "minus_shipped_max": -0.003969697249591317,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.012009536221176101,
+       "ci": [
+        0.005903350300890266,
+        0.018056609674333854
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004481050642833996,
+       "ci": [
+        -0.006957835061585961,
+        -0.0021410578496444425
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "8": {
+    "n_probes": 8,
+    "n_subsets": 1,
+    "pick_agreement_with_shipped_mean": 0.8762646125471263,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08553468871087683,
+     "gain_min": 0.08553468871087683,
+     "gain_max": 0.08553468871087683,
+     "minus_shipped_mean_over_subsets": -0.004201812234950291,
+     "minus_shipped_min": -0.004201812234950291,
+     "minus_shipped_max": -0.004201812234950291,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08553468871087683,
+       "ci": [
+        0.07884886296265071,
+        0.09249669205614139
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004201812234950291,
+       "ci": [
+        -0.006697400671821003,
+        -0.0018230210703979956
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07363647330268902,
+     "gain_min": 0.07363647330268902,
+     "gain_max": 0.07363647330268902,
+     "minus_shipped_mean_over_subsets": -0.004624202417565734,
+     "minus_shipped_min": -0.004624202417565734,
+     "minus_shipped_max": -0.004624202417565734,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07363647330268902,
+       "ci": [
+        0.06678108283434708,
+        0.08070584631772751
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004624202417565734,
+       "ci": [
+        -0.007503394236348879,
+        -0.0020605009739043736
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.012193408325883913,
+     "gain_min": 0.012193408325883913,
+     "gain_max": 0.012193408325883913,
+     "minus_shipped_mean_over_subsets": -0.004297178538126186,
+     "minus_shipped_min": -0.004297178538126186,
+     "minus_shipped_max": -0.004297178538126186,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.012193408325883913,
+       "ci": [
+        0.006159718111548891,
+        0.018267508550893246
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004297178538126186,
+       "ci": [
+        -0.0066916584002962715,
+        -0.002111056419253424
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   }
+  },
+  "layer 22": {
+   "1": {
+    "n_probes": 1,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.787202663484228,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.080608592572321,
+     "gain_min": 0.07890732475179951,
+     "gain_max": 0.08210447228248496,
+     "minus_shipped_mean_over_subsets": -0.00912790837350613,
+     "minus_shipped_min": -0.01082917619402761,
+     "minus_shipped_max": -0.0076320286633421615,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08135755611672701,
+       "ci": [
+        0.07435930282022296,
+        0.08864950242679535
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.008378944829100104,
+       "ci": [
+        -0.011605492388593656,
+        -0.005117568369752509
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.06870090885587914,
+     "gain_min": 0.0672381204755633,
+     "gain_max": 0.07058697759437457,
+     "minus_shipped_mean_over_subsets": -0.009559766864375614,
+     "minus_shipped_min": -0.011022555244691458,
+     "minus_shipped_max": -0.007673698125880178,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07058697759437457,
+       "ci": [
+        0.0634542758085059,
+        0.07798130250301308
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.007673698125880178,
+       "ci": [
+        -0.010965873584669883,
+        -0.0043710920129234766
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.009867444429477068,
+     "gain_min": 0.006410384174848635,
+     "gain_max": 0.013013202441506895,
+     "minus_shipped_mean_over_subsets": -0.0066231424345330305,
+     "minus_shipped_min": -0.010080202689161464,
+     "minus_shipped_max": -0.0034773844225032026,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.013013202441506895,
+       "ci": [
+        0.007038875041859116,
+        0.01903283867196099
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0034773844225032026,
+       "ci": [
+        -0.006340124209409028,
+        -0.0007128803733312449
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "2": {
+    "n_probes": 2,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.8031040401731226,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08361217483541371,
+     "gain_min": 0.08085550345109391,
+     "gain_max": 0.08555420179756615,
+     "minus_shipped_mean_over_subsets": -0.006124326110413416,
+     "minus_shipped_min": -0.00888099749473321,
+     "minus_shipped_max": -0.0041822991482609855,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08159685897771278,
+       "ci": [
+        0.07523661880653588,
+        0.0882074994183898
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.008139641968114345,
+       "ci": [
+        -0.010931265934331583,
+        -0.005310556768869133
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07211093199148713,
+     "gain_min": 0.06986055022513012,
+     "gain_max": 0.0746905787739862,
+     "minus_shipped_mean_over_subsets": -0.006149743728767601,
+     "minus_shipped_min": -0.00840012549512463,
+     "minus_shipped_max": -0.003570096946268554,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07001659310887076,
+       "ci": [
+        0.06365268210993662,
+        0.07666846283422893
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.00824408261138399,
+       "ci": [
+        -0.011168604540391367,
+        -0.005214721448277237
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.014588306643143928,
+     "gain_min": 0.009963773214711424,
+     "gain_max": 0.019539730303540892,
+     "minus_shipped_mean_over_subsets": -0.0019022802208661686,
+     "minus_shipped_min": -0.006526813649298673,
+     "minus_shipped_max": 0.0030491434395307935,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.013616856294850248,
+       "ci": [
+        0.007937990151962193,
+        0.01941076226246284
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0028737305691598487,
+       "ci": [
+        -0.005668779804594757,
+        -2.9940846726634206e-05
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "3": {
+    "n_probes": 3,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.8237621230379375,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08365355034385502,
+     "gain_min": 0.08094822636106888,
+     "gain_max": 0.08672579871813402,
+     "minus_shipped_mean_over_subsets": -0.006082950601972095,
+     "minus_shipped_min": -0.008788274584758251,
+     "minus_shipped_max": -0.00301070222769312,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08411096837560676,
+       "ci": [
+        0.07737469667831547,
+        0.09132358018898311
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0056255325702203665,
+       "ci": [
+        -0.008731367820800891,
+        -0.0024135601180673002
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07162575028165452,
+     "gain_min": 0.06838127793584972,
+     "gain_max": 0.07409991803888594,
+     "minus_shipped_mean_over_subsets": -0.006634925438600224,
+     "minus_shipped_min": -0.009879397784405018,
+     "minus_shipped_max": -0.004160757681368817,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07224611389663213,
+       "ci": [
+        0.06533175356907955,
+        0.07935433169240536
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.006014561823622614,
+       "ci": [
+        -0.009197022323784231,
+        -0.002826589153855146
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.011495428279342499,
+     "gain_min": 0.007227319716047568,
+     "gain_max": 0.014003800073205949,
+     "minus_shipped_mean_over_subsets": -0.004995158584667599,
+     "minus_shipped_min": -0.00926326714796253,
+     "minus_shipped_max": -0.0024867867908041504,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01067272031870309,
+       "ci": [
+        0.004809231665387172,
+        0.01673857978286142
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005817866545307009,
+       "ci": [
+        -0.008793434510318037,
+        -0.002843758027890695
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "4": {
+    "n_probes": 4,
+    "n_subsets": 70,
+    "pick_agreement_with_shipped_mean": 0.8310520258986449,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08545905153319536,
+     "gain_min": 0.08336084232205815,
+     "gain_max": 0.08801572488215899,
+     "minus_shipped_mean_over_subsets": -0.004277449412631764,
+     "minus_shipped_min": -0.006375658623768977,
+     "minus_shipped_max": -0.0017207760636681344,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08688249754725555,
+       "ci": [
+        0.08067820029982593,
+        0.09337899714640371
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0028540033985715784,
+       "ci": [
+        -0.005558017791442441,
+        4.279759688542588e-05
+       ],
+       "verdict": "TIE"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07343445252286764,
+     "gain_min": 0.07018686337998306,
+     "gain_max": 0.07576814374166854,
+     "minus_shipped_mean_over_subsets": -0.004826223197387089,
+     "minus_shipped_min": -0.008073812340271685,
+     "minus_shipped_max": -0.0024925319785862013,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07432404085608071,
+       "ci": [
+        0.06799024053293941,
+        0.08088206757233528
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.003936634864174036,
+       "ci": [
+        -0.00663341331891032,
+        -0.0009571784957971658
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.013805160373330594,
+     "gain_min": 0.011074671662111697,
+     "gain_max": 0.01626019360660093,
+     "minus_shipped_mean_over_subsets": -0.0026854264906795025,
+     "minus_shipped_min": -0.005415915201898401,
+     "minus_shipped_max": -0.00023039325740916968,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.013894055642580724,
+       "ci": [
+        0.008203350463663321,
+        0.01969969121205578
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0025965312214293744,
+       "ci": [
+        -0.005259629603874266,
+        0.0001474964246106294
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "5": {
+    "n_probes": 5,
+    "n_subsets": 56,
+    "pick_agreement_with_shipped_mean": 0.838326236133337,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08495722348590254,
+     "gain_min": 0.08312351361178842,
+     "gain_max": 0.08742748857064625,
+     "minus_shipped_mean_over_subsets": -0.004779277459924585,
+     "minus_shipped_min": -0.006612987334038703,
+     "minus_shipped_max": -0.0023090123751808777,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.0855418561515391,
+       "ci": [
+        0.07896187188384468,
+        0.09243337160604281
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.004194644794288024,
+       "ci": [
+        -0.00714479521386147,
+        -0.0011565009190016569
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.07304222165983044,
+     "gain_min": 0.07112747336349334,
+     "gain_max": 0.07464008070447124,
+     "minus_shipped_mean_over_subsets": -0.005218454060424308,
+     "minus_shipped_min": -0.007133202356761407,
+     "minus_shipped_max": -0.003620595015783507,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07314028867293246,
+       "ci": [
+        0.06656199224168838,
+        0.08011464728893317
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.005120387047322303,
+       "ci": [
+        -0.008155521928410802,
+        -0.0019876575932962
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.01224768400953317,
+     "gain_min": 0.009774509832588383,
+     "gain_max": 0.014341482657531275,
+     "minus_shipped_mean_over_subsets": -0.004242902854476929,
+     "minus_shipped_min": -0.006716077031421715,
+     "minus_shipped_max": -0.0021491042064788243,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.012585747215445392,
+       "ci": [
+        0.006727162093143976,
+        0.01859121155431867
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0039048396485647065,
+       "ci": [
+        -0.006758538883884274,
+        -0.0011222672143271066
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "6": {
+    "n_probes": 6,
+    "n_subsets": 28,
+    "pick_agreement_with_shipped_mean": 0.8424295672322468,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08617297585932633,
+     "gain_min": 0.08472631943747062,
+     "gain_max": 0.08757587046088063,
+     "minus_shipped_mean_over_subsets": -0.0035635250865007875,
+     "minus_shipped_min": -0.005010181508356495,
+     "minus_shipped_max": -0.0021606304849465007,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08691742594404181,
+       "ci": [
+        0.08040046287325296,
+        0.09370079392761042
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0028190750017853218,
+       "ci": [
+        -0.004814352042643165,
+        -0.0006017359557893775
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0741154813550718,
+     "gain_min": 0.07262875488161802,
+     "gain_max": 0.07539415475639827,
+     "minus_shipped_mean_over_subsets": -0.004145194365182949,
+     "minus_shipped_min": -0.005631920838636736,
+     "minus_shipped_max": -0.002866520963856486,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07490720020245674,
+       "ci": [
+        0.06829508436968058,
+        0.08170605913443779
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0033534755177980088,
+       "ci": [
+        -0.0054604947587902734,
+        -0.0010632161102901107
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.013837698977204771,
+     "gain_min": 0.012469428669015757,
+     "gain_max": 0.015027121761031064,
+     "minus_shipped_mean_over_subsets": -0.0026528878868053263,
+     "minus_shipped_min": -0.004021158194994341,
+     "minus_shipped_max": -0.0014634651029790337,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.014602885073131192,
+       "ci": [
+        0.008705217114870474,
+        0.020534866947638508
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0018877017908789052,
+       "ci": [
+        -0.004048279267696716,
+        0.000410576683185248
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   },
+   "7": {
+    "n_probes": 7,
+    "n_subsets": 8,
+    "pick_agreement_with_shipped_mean": 0.845964767148553,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08552364930650366,
+     "gain_min": 0.0843092472770067,
+     "gain_max": 0.08681457449568973,
+     "minus_shipped_mean_over_subsets": -0.004212851639323454,
+     "minus_shipped_min": -0.005427253668820434,
+     "minus_shipped_max": -0.0029219264501373857,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08681457449568973,
+       "ci": [
+        0.08011774939495392,
+        0.09388926068050762
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0029219264501373857,
+       "ci": [
+        -0.005582599260605725,
+        -7.943116333694174e-05
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.073767353316927,
+     "gain_min": 0.07275698701500166,
+     "gain_max": 0.07484228664030558,
+     "minus_shipped_mean_over_subsets": -0.00449332240332774,
+     "minus_shipped_min": -0.005503688705253078,
+     "minus_shipped_max": -0.0034183890799491727,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.07484228664030558,
+       "ci": [
+        0.06806225850278488,
+        0.08193925901615605
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0034183890799491727,
+       "ci": [
+        -0.0061177318264242254,
+        -0.0004967706125148107
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.012639605993589906,
+     "gain_min": 0.011949616805904218,
+     "gain_max": 0.013483730544146982,
+     "minus_shipped_mean_over_subsets": -0.0038509808704201916,
+     "minus_shipped_min": -0.004540970058105878,
+     "minus_shipped_max": -0.0030068563198631143,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.01321290808729439,
+       "ci": [
+        0.007342185991985531,
+        0.01926990147169432
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0032776787767157083,
+       "ci": [
+        -0.00612643307502247,
+        -0.0005419557756475286
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    }
+   },
+   "8": {
+    "n_probes": 8,
+    "n_subsets": 1,
+    "pick_agreement_with_shipped_mean": 0.8482736174021536,
+    "judge": {
+     "gain_over_greedy_mean_over_subsets": 0.08730405594914015,
+     "gain_min": 0.08730405594914015,
+     "gain_max": 0.08730405594914015,
+     "minus_shipped_mean_over_subsets": -0.0024324449966869636,
+     "minus_shipped_min": -0.0024324449966869636,
+     "minus_shipped_max": -0.0024324449966869636,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.08730405594914015,
+       "ci": [
+        0.08078039006225458,
+        0.09405151783793646
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0024324449966869636,
+       "ci": [
+        -0.004338730885522004,
+        -0.0003089972743540778
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "xjudge": {
+     "gain_over_greedy_mean_over_subsets": 0.0752462498620056,
+     "gain_min": 0.0752462498620056,
+     "gain_max": 0.0752462498620056,
+     "minus_shipped_mean_over_subsets": -0.0030144258582491586,
+     "minus_shipped_min": -0.0030144258582491586,
+     "minus_shipped_max": -0.0030144258582491586,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.0752462498620056,
+       "ci": [
+        0.06857306571423565,
+        0.08202033501384942
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0030144258582491586,
+       "ci": [
+        -0.0050861915689419425,
+        -0.0007592369419816822
+       ],
+       "verdict": "LOSS"
+      }
+     }
+    },
+    "em": {
+     "gain_over_greedy_mean_over_subsets": 0.014410945145671119,
+     "gain_min": 0.014410945145671119,
+     "gain_max": 0.014410945145671119,
+     "minus_shipped_mean_over_subsets": -0.0020796417183389804,
+     "minus_shipped_min": -0.0020796417183389804,
+     "minus_shipped_max": -0.0020796417183389804,
+     "prespecified_seeds_0_to_K-1": {
+      "gain_over_greedy": {
+       "macro": 0.014410945145671119,
+       "ci": [
+        0.008514311851880693,
+        0.020417351975243393
+       ],
+       "verdict": "WIN"
+      },
+      "minus_shipped": {
+       "macro": -0.0020796417183389804,
+       "ci": [
+        -0.004192814396858265,
+        0.00014508208993669065
+       ],
+       "verdict": "TIE"
+      }
+     }
+    }
+   }
+  }
+ },
+ "seconds": 956.0,
+ "COMPLETE": true
+}

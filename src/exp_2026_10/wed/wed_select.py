@@ -48,6 +48,13 @@ ap.add_argument("--limit", type=int, default=None, help="only the first N questi
 ap.add_argument("--threads", type=int, default=8)
 ap.add_argument("--candidates_only", action="store_true", help="no VLM: only build WED's candidate sets (diagnostic); "
                 "questions WED actually has to decide (>=2 candidates) get pick_index=null")
+ap.add_argument("--own_sampling", action="store_true",
+                help="WED AS PUBLISHED (added 2026-10-22): the authors' own QwenBackend.build_candidate_set samples the "
+                     "candidates (their two sampling prompts, temperatures (0.5, 1.0), n_oversample 12, top_p 0.98, "
+                     "24 new tokens, truncation filter) instead of our fixed pool; the pool file only supplies the "
+                     "question list. Picks are WED's own strings, so they need their own judge pass. When the authors' "
+                     "builder finds no candidate (their main.py skips the question) we answer with the greedy answer.")
+ap.add_argument("--shard", type=int, default=0); ap.add_argument("--nshard", type=int, default=1)
 A = ap.parse_args()
 if not A.gpu: os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -77,6 +84,7 @@ assert wed_utils.HAS_POT, "POT missing: pip install --target /data/dan/repos/wed
 # ---- pool + images -------------------------------------------------------------------------------------------
 rows = [json.loads(l) for l in open(A.pool) if l.strip()]
 if A.limit: rows = rows[:A.limit]
+rows = rows[A.shard::A.nshard]
 m = re.match(r"ckpt_(.+?_open(?:_train)?)_", os.path.basename(A.pool))
 cell = m.group(1)
 JSON_CELLS = {"radimagenet_open": "/data/dan/dataset/radimagenet_vqa/radimagenet_open_2000.json",
@@ -108,6 +116,10 @@ def load_items(cell):
     return out
 
 items = load_items(cell)
+GREEDY = {}
+if A.own_sampling:
+    _g = os.path.join(os.path.dirname(A.pool), f"ckpt_{cell}_lingshu7b.jsonl")
+    GREEDY = {d["idx"]: d["preds"][0] for d in (json.loads(l) for l in open(_g) if l.strip())}
 def get_image(src):
     return Image.open(io.BytesIO(src) if isinstance(src, (bytes, bytearray)) else src).convert("RGB")
 
@@ -160,9 +172,19 @@ with open(A.out, "w") as fo:
         q_item, src = items[r["idx"]]
         assert q_item.strip() == r["question"].strip(), f"question mismatch at idx {r['idx']} (stale pool?)"
         question, preds = r["question"], r["preds"]
-        tq = time.time(); Y, D = build_Y(question, preds)
+        tq = time.time()
+        if A.own_sampling:                               # WED as published: the authors sample their own candidates
+            try:
+                cr = backend.build_candidate_set(question, get_image(src), cfg, embedder); Y, D = cr.Y, cr.D
+            except RuntimeError:
+                Y, D = None, None
+        else:
+            Y, D = build_Y(question, preds)
         rec = {"idx": r["idx"]}
-        if Y is None:                                    # authors skip; we must answer -> modal pool answer
+        if Y is None and A.own_sampling:                 # authors skip; we must answer -> the greedy answer
+            n_fb += 1
+            rec.update(pick_text=GREEDY[r["idx"]], pick_index=None, fallback="no_valid_candidate_greedy", n_cand=0)
+        elif Y is None:                                  # authors skip; we must answer -> modal pool answer
             mi = modal_index(preds); n_fb += 1
             rec.update(pick_text=preds[mi], pick_index=mi, fallback="no_valid_candidate", n_cand=0)
         else:
@@ -182,6 +204,10 @@ with open(A.out, "w") as fo:
                 it = res_w.n_iters
                 rec.update(converged=bool(res_w.converged), converge_reason=res_w.converge_reason)
             pick = ans["bdg_wasserstein"]
+            if A.own_sampling:                           # WED's own strings: not in our pool
+                rec.update(pick_text=pick, pick_index=None, wed_answer=pick, n_cand=len(Y), n_iters=it, candidates=Y,
+                           alt=dict((m, a) for m, a in ans.items() if m != "bdg_wasserstein"))
+                rec["sec"] = round(time.time() - tq, 2); fo.write(json.dumps(rec) + "\n"); fo.flush(); continue
             pi = next(i for i, p in enumerate(preds) if canon_key(p) == pick.lower().strip())
             rec.update(pick_text=preds[pi], pick_index=pi, wed_answer=pick, n_cand=len(Y), n_iters=it,
                        alt={m: next(i for i, p in enumerate(preds) if canon_key(p) == a.lower().strip())

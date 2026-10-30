@@ -1,0 +1,189 @@
+[
+ {
+  "name": "modality",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/predict_modality.py",
+  "timeout": "3h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "xj_lf0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/lf_part0.jsonl",
+  "timeout": "8h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "xj_lf1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/lf_part1.jsonl",
+  "timeout": "8h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "loraver_f0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/lora_verifier_crossfit.py --fold 0",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "loraver_f1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/lora_verifier_crossfit.py --fold 1",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "sft_f0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/training_methods/train_cheap_leg.py --manifest /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/fold0.json --quota '{\"open_generic\": 1000000}' --out_dir ckpts/train/sft_crossfit_1022_f0 --seed 0 --deadline_s 36000 && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/training_methods/merge_cheapleg_lora.py --adapter /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/sft_crossfit_1022_f0 --out /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged && { python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset pathvqa_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_pathvqa_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset slake_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_slake_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset vqa_rad_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_vqa_rad_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset radimagenet_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_radimagenet_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset kvasir_x1_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_kvasir_x1_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset omnimed_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_omnimed_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset vqamed_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_vqamed_open_fold0.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f0_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset gemex_open --tag sft1022f0 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_gemex_open_fold0.json ; }",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "sft_f1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/training_methods/train_cheap_leg.py --manifest /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/fold1.json --quota '{\"open_generic\": 1000000}' --out_dir ckpts/train/sft_crossfit_1022_f1 --seed 0 --deadline_s 36000 && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/training_methods/merge_cheapleg_lora.py --adapter /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/train/sft_crossfit_1022_f1 --out /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged && { python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset pathvqa_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_pathvqa_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset slake_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_slake_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset vqa_rad_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_vqa_rad_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset radimagenet_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_radimagenet_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset kvasir_x1_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_kvasir_x1_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset omnimed_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_omnimed_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset vqamed_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_vqamed_open_fold1.json ; python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_openvqa.py --model_path /data/dan/exp_2026_10/sft_crossfit_1022_f1_merged --ckpt_dir /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/sft_crossfit_1022 --tp 1 --max_model_len 4096 --dataset gemex_open --tag sft1022f1 --n_samples 1 --temp 0.0 --cap cap320 --idx_file /home/jamesyang/medvlthinker-imgdiff-compute/data/sft_crossfit_2026-10-22/heldout_gemex_open_fold1.json ; }",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "usc_T07",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/usc_select.py --policy T07",
+  "timeout": "6h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "usc_Tmap",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/usc_select.py --policy Tmap",
+  "timeout": "6h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "xj_g32_0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/g32_part0.jsonl",
+  "timeout": "8h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "xj_g32_1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/g32_part1.jsonl",
+  "timeout": "8h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_pathvqa_s0",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_pathvqa_open_s0.jsonl --gpu --cap cap320 --own_sampling --shard 0 --nshard 4",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_pathvqa_s1",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_pathvqa_open_s1.jsonl --gpu --cap cap320 --own_sampling --shard 1 --nshard 4",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_pathvqa_s2",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_pathvqa_open_s2.jsonl --gpu --cap cap320 --own_sampling --shard 2 --nshard 4",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_pathvqa_s3",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_pathvqa_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_pathvqa_open_s3.jsonl --gpu --cap cap320 --own_sampling --shard 3 --nshard 4",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_slake",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_slake_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_slake_open.jsonl --gpu --cap cap320 --own_sampling ",
+  "timeout": "16h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "wed_vqa_rad",
+  "cmd": "mkdir -p /data/dan/exp_2026_10/wed_published && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/wed/wed_select.py --pool /home/jamesyang/medvlthinker-imgdiff-compute/ckpts/openvqa/cheap_lingshu7b/ckpt_vqa_rad_open_lingshu7b_sc8.jsonl --out /data/dan/exp_2026_10/wed_published/wed_pub_vqa_rad_open.jsonl --gpu --cap cap320 --own_sampling ",
+  "timeout": "8h",
+  "deps": [],
+  "gpus": 1
+ },
+ {
+  "name": "build_picks",
+  "cmd": "python3 /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/build_xjudge_inputs.py merge && python3 /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/build_xjudge_inputs.py picks",
+  "timeout": "10m",
+  "deps": [
+   "xj_lf0",
+   "xj_lf1",
+   "xj_g32_0",
+   "xj_g32_1",
+   "usc_T07",
+   "usc_Tmap",
+   "loraver_f0",
+   "loraver_f1"
+  ],
+  "gpus": 1
+ },
+ {
+  "name": "xj_picks0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/picks_part0.jsonl",
+  "timeout": "8h",
+  "deps": [
+   "build_picks"
+  ],
+  "gpus": 1
+ },
+ {
+  "name": "xj_picks1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/picks_part1.jsonl",
+  "timeout": "8h",
+  "deps": [
+   "build_picks"
+  ],
+  "gpus": 1
+ },
+ {
+  "name": "judge_new",
+  "cmd": "python3 /home/jamesyang/medvlthinker-imgdiff-compute/.claude/worktrees/exp-2026-10-15/src/exp_2026_10/build_xjudge_inputs.py new && python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --tp 2 --preds /data/dan/exp_2026_10/xjudge_1022/new_all.jsonl",
+  "timeout": "8h",
+  "deps": [
+   "sft_f0",
+   "sft_f1",
+   "wed_slake",
+   "wed_vqa_rad",
+   "wed_pathvqa_s0",
+   "wed_pathvqa_s1",
+   "wed_pathvqa_s2",
+   "wed_pathvqa_s3"
+  ],
+  "gpus": 2
+ },
+ {
+  "name": "xj_new0",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/new_part0.jsonl",
+  "timeout": "8h",
+  "deps": [
+   "judge_new"
+  ],
+  "gpus": 1
+ },
+ {
+  "name": "xj_new1",
+  "cmd": "python3 -u /home/jamesyang/medvlthinker-imgdiff-compute/src/labeling/run_judge.py --judge_model /data/dan/hf_cache/hub/models--google--medgemma-27b-it/snapshots/2d3e00ea38b50018bf5dd3aa1009457cd2d5a48f/ --tp 1 --gpu_mem 0.90 --preds /data/dan/exp_2026_10/xjudge_1022/new_part1.jsonl",
+  "timeout": "8h",
+  "deps": [
+   "judge_new"
+  ],
+  "gpus": 1
+ }
+]
